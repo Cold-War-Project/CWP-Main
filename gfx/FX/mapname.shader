@@ -43,7 +43,7 @@ PixelShader =
 			PDX_MAIN
 			{
 				float Alpha = CalcAlphaDistanceField( FontAtlas, Input.TexCoord );
-				float3 Color = float3( 0.0f, 0.0f, 0.0f );
+				float3 Color = float3( 0.9f, 0.9f, 0.9f );
 				float3 FlatmapColor = Color; // Pre effects color
 
 				// Fog of war
