@@ -11,7 +11,7 @@ Our main Goal is to preserve the design philosophy of vanilla Victoria 3 by crea
 # Roadmap
 
 * New laws and policies to dictate the trajectory of your nation
-* Events for landmark moments in history (e.g. the Cuban Missile Crisis)
+* Events and decisions for landmark moments in history (e.g. the Cuban Missile Crisis)
 * A world tension system resembling the Doomsday Clock of the Bulletin of the Atomic Scientists
 * New production chains and resources
 * New technologies to research
@@ -27,4 +27,4 @@ If you want to contribute to the development of this mod, please feel free to do
 If you have any questions, or if you want to discuss the mod, you can do so in the discussion section of this repository.
 
 # License
-This software is licensed under the GNU General Public License v3.0. See the LICENCE file for details.
+**TBD**
