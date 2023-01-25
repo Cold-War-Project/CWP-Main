@@ -1,4 +1,4 @@
-# Victoria 3: Cold War
+# Cold War Project: A Victoria 3 mod
 
 This mod is a work in progress. It aims to recreate the political and economic situation from the Paris Peace Treaties of 1947 through the late 20th century and in into the early 21st century. 
 
@@ -6,7 +6,7 @@ Our main Goal is to preserve the design philosophy of vanilla Victoria 3 by crea
 
 # Features
 
-* A new map of the world with the borders of 1947
+* A new map of the world with the borders of 1946
 
 # Roadmap
 
