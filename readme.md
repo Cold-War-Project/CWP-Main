@@ -7,6 +7,10 @@ Our main Goal is to preserve the design philosophy of vanilla Victoria 3 by crea
 # Features
 
 * A new map of the world with the borders of 1946
+* Custom Corruption Mechanic
+* Custom United Nations Mechanic
+* Accurate populations for entire world at 1946
+* Custom diplomatic pacts for Allied Occupation Zones
 
 # Roadmap
 
