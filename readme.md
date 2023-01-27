@@ -2,11 +2,15 @@
 
 This mod is a work in progress. It aims to recreate the political and economic situation from the Paris Peace Treaties of 1946 through the late 20th century and in into the early 21st century. 
 
-Our main Goal is to preserve the design philosophy of vanilla Victoria 3 by creating a sandbox without a focus on historical simulation. We want to create a mod that is fun to play and that allows for a wide variety of playstyles.
+Our main Goal is to preserve the design philosophy of vanilla Victoria 3 by creating a sandbox without set historical railroading but with plenty of flavor and mechanics to allow for accurate(or wacky) outcomes should conditions be met. We want to create a mod that is fun to play and that allows for a wide variety of playstyles.
 
 # Features
 
 * A new map of the world with the borders of 1946
+* Custom Corruption Mechanic
+* Custom United Nations Mechanic
+* Accurate populations for entire world at 1946
+* Custom diplomatic pacts for Allied Occupation Zones
 
 # Roadmap
 
