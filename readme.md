@@ -28,7 +28,7 @@ However please feel free to download the mod and contribute to the development.
 # Contributing
 If you want to contribute to the development of this mod, please feel free to do so. We are always looking for new ideas and people to help us implement them. You can use the issue tracker to report bugs or suggest new features. If you want to contribute code, please fork the repository and create a pull request.
 
-If you have any questions, or if you want to discuss the mod, you can do so in the discussion section of this repository.
+If you have any questions, or if you want to discuss the mod, you can join our discord @ https://discord.gg/GWptgGnmgN
 
 # License
 **TBD**
