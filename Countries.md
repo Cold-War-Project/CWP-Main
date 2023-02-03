@@ -2,39 +2,46 @@
 # Americas
 ## USA: 
   - **Leader** [Harry S. Truman](https://en.wikipedia.org/wiki/Harry_S._Truman) 
-  - **Government** Federal, Presidential, Constitutional Republic 
-  - **Ideology** Free-market Capitalism 
+  - **Government** Federal Presidential Republic 
+  - **Ideology** Market Liberal 
   - **Political Parties** Republican, Democrat
+  - **Interest Group** Rural Folk
 ## Mexico:
   - **Leader** [Manuel Ávila Camacho](https://en.wikipedia.org/wiki/Manuel_%C3%81vila_Camacho)
-  - **Government** Federal, Presidential, Republic
-  - **Ideology** #todo
+  - **Government** Federal Presidential Republic
+  - **Ideology** Moderate
   - **Political Parties** Partido Revolucionario Institucional, Partido Revolucionario de Unificación Nacional [source](https://en.wikipedia.org/wiki/1940_Mexican_general_election)
+  - **Interest Group** Industrialists
 ## Canada:
   - **Leader**[William Lyon Mackenzie King](https://en.wikipedia.org/wiki/William_Lyon_Mackenzie_King)
-  - **Government** Federal, Parliamentary, Constitutional Monarchy
-  - **Ideology** #todo
+  - **Government** Federal Parliamentary Constitutional Monarchy
+  - **Ideology** Reformer
   - **Political Parties** Liberal, Progressive Conservative, Co-opperative Commonwealth, Social Credit, Bloc Populaire, Labor-Progressive [source](https://en.wikipedia.org/wiki/1945_Canadian_federal_election)
+  - **Interest Group** Intelligentsia
 ## Cuba: 
   - **Leader** [Ramón Grau San Martín](https://en.wikipedia.org/wiki/Ram%C3%B3n_Grau)
-  - **Government** Unitary, Semi-Presidential, Republic
-  - **Ideology** #todo
+  - **Government** Unitary Semi-Presidential Republic
+  - **Ideology** Social Democrat *(Corporatism)*
   - **Political Parties** Auténtico, Coalición Socialista Democrática
+  - **Interest Group** Intelligentsia
 ## Guatemala:
   - **Leader** [Juan José Arévalo](https://en.wikipedia.org/wiki/Juan_Jos%C3%A9_Ar%C3%A9valo)
-  - **Government** Unitary, Presidential, Republic
-  - **Ideology** #todo
+  - **Government** Unitary Presidential Republic
+  - **Ideology** Social Democrat
   - **Political Parties** United Front, National Front
+  - **Interest Group** Intelligentsia, Trade unions
 ## El Salvador: 
   - **Leader** [Salvador Castaneda Castro](https://en.wikipedia.org/wiki/Salvador_Castaneda_Castro)
   - **Government** Military Dictatorship
-  - **Ideology** #todo
+  - **Ideology** Moderate *(Cuadillismo)*
   - **Political Parties** n/a
+  - **Interest Group** Armed forces
 ## Honduras: 
   - **Leader** [Tiburcio Carías Andino](https://en.wikipedia.org/wiki/Tiburcio_Car%C3%ADas_Andino)
-  - **Government** Unitary Presidential Republic
+  - **Government** Unitary Dictatorial Presidential Republic
   - **Ideology** #todo
   - **Political Parties** National Party, Liberal Party [source](https://en.wikipedia.org/wiki/1932_Honduran_general_election)
+  - **Interest Group** Petite bourgeoisie
 ## Nicaragua: 
   - **Leader** [Anastasio Somoza García](https://en.wikipedia.org/wiki/Anastasio_Somoza_Garc%C3%ADa)
   - **Government** Military Dictatorship
