@@ -47,7 +47,7 @@ types country_panel_types
 					text = "COUNTRY_PANEL_INFORMATION_TAB"
 				}
 				blockoverride "first_button_click" {
-					onclick = "[InformationPanel.SelectTab('information')]"
+					onclick = "[InformationPanel.SelectTab('default')]"
 				}
 				blockoverride "first_button_visibility" {
 					using = information_tab_visibility
@@ -62,6 +62,9 @@ types country_panel_types
 				# Politics
 				blockoverride "second_button" {
 					text = "COUNTRY_PANEL_POLITICS_TAB"
+				}
+				blockoverride "second_button_tooltip" {
+					tooltip = "COUNTRY_PANEL_POLITICS_TAB"
 				}
 				blockoverride "second_button_click" {
 					onclick = "[InformationPanel.SelectTab('politics')]"
@@ -83,6 +86,9 @@ types country_panel_types
 				blockoverride "third_button" {
 					text = "COUNTRY_PANEL_DIPLOMACY_TAB"
 				}
+				blockoverride "third_button_tooltip" {
+					tooltip = "COUNTRY_PANEL_DIPLOMACY_TAB"
+				}
 				blockoverride "third_button_click" {
 					onclick = "[InformationPanel.SelectTab('diplomacy')]"
 				}
@@ -102,6 +108,9 @@ types country_panel_types
 				# Modifiers
 				blockoverride "fourth_button" {
 					text = "COUNTRY_PANEL_MODIFIERS_TAB"
+				}
+				blockoverride "fourth_button_tooltip" {
+					tooltip = "COUNTRY_PANEL_MODIFIERS_TAB"
 				}
 				blockoverride "fourth_button_click" {
 					onclick = "[InformationPanel.SelectTab('modifiers')]"
@@ -502,7 +511,7 @@ types country_panel_types
 						autoresize = yes
 						visible = "[Not(CountryPanel.GetCountry.IsColonizable)]"
 						text = "#variable @flotillas! [Country.GetWarships|0]#!"
-						tooltip = PANEL_MILITARY_NAVY_CURRENT_WARSHIPS_TOOLTIP
+						tooltip = PANEL_MILITARY_NAVY_CURRENT_FLOTILLAS_TOOLTIP
 						using = fontsize_mega
 						minimumsize = { 60 -1 }
 						align = right|nobaseline
@@ -610,13 +619,13 @@ types country_panel_types
 				country_stats_entry = {
 					alpha = "[TransparentIfZero_int32(Country.GetWarships)]"
 					blockoverride "stats_tooltip" {
-						tooltip = PANEL_MILITARY_NAVY_CURRENT_WARSHIPS_TOOLTIP
+						tooltip = PANEL_MILITARY_NAVY_CURRENT_FLOTILLAS_TOOLTIP
 					}
 					blockoverride "information_icon" {
 						texture = "gfx/interface/icons/generic_icons/flotillas.dds"
 					}
 					blockoverride "stats_label" {
-						text = "WARSHIPS"
+						text = "FLOTILLAS"
 					}
 					blockoverride "stats_value" {
 						text = "#variable [Country.GetWarships|0]#!"
@@ -625,6 +634,10 @@ types country_panel_types
 
 				#GDP
 				country_stats_entry = {	
+					onmousehierarchyenter = "[SelectMapModeByKey('mm_gdp')]"
+					onmousehierarchyleave = "[UnforceMapMode]"
+					alwaystransparent = no
+					
 					blockoverride "stats_tooltip" {
 						using = GDP_tooltip_with_graph
 					}
@@ -641,6 +654,10 @@ types country_panel_types
 
 				##POPULATION
 				country_stats_entry = {
+					onmousehierarchyenter = "[SelectMapModeByKey('mm_population')]"
+					onmousehierarchyleave = "[UnforceMapMode]"
+					alwaystransparent = no
+
 					blockoverride "stats_tooltip" {
 						using = population_tooltip_with_graph
 					}
@@ -673,6 +690,10 @@ types country_panel_types
 
 				##STANDARD OF LIVING
 				country_stats_entry = {
+					onmousehierarchyenter = "[SelectMapModeByKey('mm_standard_of_living')]"
+					onmousehierarchyleave = "[UnforceMapMode]"
+					alwaystransparent = no
+
 					blockoverride "stats_tooltip" {
 						using = average_standard_of_living_tooltip_with_graph
 					}
@@ -952,6 +973,9 @@ types diplomatic
 				tooltip = "[Country.GetInfamyDesc]"
 				visible = "[Not(Country.IsColonizable)]"
 				minimumsize = { 100 80 }
+				onmousehierarchyenter = "[SelectMapModeByKey('mm_infamy')]"
+				onmousehierarchyleave = "[UnforceMapMode]"
+				alwaystransparent = no
 
 				textbox = {
 					text = "INFAMY"
@@ -1531,24 +1555,53 @@ types war_panel
 	}
 
 	type diplomatic_action_acceptance_icon = container {
-		parentanchor = right|vcenter
-		
+		block "parentanchor" {
+			parentanchor = right|vcenter
+		}
 		container = {
 			visible = "[And(DiplomaticAction.RequiresApproval,Not(DiplomaticAction.GetSecondCountry.IsPlayer))]"
 			
 			icon = {
 				visible = "[DiplomaticAction.WillAIAccept]"
 				tooltip = "AI_WILL_ACCEPT_DESC"
-				size = { 30 30 }
+				block "icon_size" {
+					size = { 30 30 }
+				}
 				texture = "gfx/interface/icons/generic_icons/approval_icon.dds"
 			}
 
-			icon = {
+			container = {
 				visible = "[Not(DiplomaticAction.WillAIAccept)]"
-				tooltip = "AI_WILL_NOT_ACCEPT_DESC"
-				size = { 30 30 }
-				texture = "gfx/interface/icons/generic_icons/disapproval_icon.dds"
-			}			
+				icon = {
+					visible = "[And( DiplomaticAction.CanCallInObligation, DiplomaticAction.WillAIAcceptWithCallInObligation)]"
+					tooltip = "AI_WILL_ACCEPT_WITH_CALL_IN_OBLIGATION_DESC"
+					
+					block "icon_size" {
+						size = { 30 30 }
+					}
+					texture = "gfx/interface/icons/generic_icons/obligation.dds"
+				}
+
+				icon = {
+					visible = "[DiplomaticAction.WillAIAcceptWithOweObligation]"
+					tooltip = "AI_WILL_ACCEPT_WITH_OWE_OBLIGATION_DESC"
+					alpha = 0.5
+					
+					block "icon_size" {
+						size = { 30 30 }
+					}
+					texture = "gfx/interface/icons/generic_icons/obligation.dds"
+				}
+
+				icon = {
+					visible = "[And(Not(DiplomaticAction.WillAIAcceptWithOweObligation), Not(And( DiplomaticAction.CanCallInObligation, DiplomaticAction.WillAIAcceptWithCallInObligation)))]"
+					tooltip = "AI_WILL_NOT_ACCEPT_DESC"
+					block "icon_size" {
+						size = { 30 30 }
+					}
+					texture = "gfx/interface/icons/generic_icons/disapproval_icon.dds"
+				}
+			}
 		}
 		
 		container = {
@@ -1556,7 +1609,9 @@ types war_panel
 			
 			icon = {
 				tooltip = "PLAYER_MIGHT_ACCEPT_DESC"
-				size = { 30 30 }
+				block "icon_size" {
+					size = { 30 30 }
+				}
 				texture = "gfx/interface/icons/generic_icons/undecided_icon.dds"
 			}			
 		}		
@@ -1651,7 +1706,9 @@ types war_panel
 		textbox = {
 			size = { 410 50 }
 			position = { 55 0 }
-			text = "[DiplomaticPlayType.GetName] ([State.GetName])"
+			block "text" {
+				text = "[DiplomaticPlayType.GetName] ([State.GetName])"
+			}
 			align = left|nobaseline
 			parentanchor = left|vcenter
 			widgetanchor = left|vcenter
@@ -1697,7 +1754,7 @@ types country_info
 				autoresize = yes
 				visible = "[Not(CountryPanel.GetCountry.IsColonizable)]"
 				text = "#variable @flotillas![Country.GetWarships|0]#!"
-				tooltip = PANEL_MILITARY_NAVY_CURRENT_WARSHIPS_TOOLTIP
+				tooltip = PANEL_MILITARY_NAVY_CURRENT_FLOTILLAS_TOOLTIP
 				using = fontsize_mega
 				minimumsize = { 60 -1 }
 				align = center|nobaseline
