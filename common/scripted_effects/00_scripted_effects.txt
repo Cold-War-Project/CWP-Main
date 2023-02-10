@@ -583,57 +583,66 @@ ai_expedition_simulator_end = {
 ### CWP Effects ###
 ###################
 #in every state, if the number of skyscrapers is greater than the number of urban centers, then the state is too urbanized. A modifier is applied to the state that greatly increases the upkeep of each skyscraper. The modifier is removed when the number of skyscrapers is less than the number of urban centers.
-too_many_skyscrapers = {
-	every_scope_state = {
-		limit = {
-			has_building = building_skyscraper
-		}
-		every_scope_building = {
-			limit = {
-				is_building_type = building_urban_center
-			}
-			set_local_variable = {
-				name = urban_center_count
-				value = level
-			}
-		}
-		if = {
-			limit = {
-				any_scope_building = {
-					AND = {
-						is_building_type = building_skyscraper
-						level > local_var:urban_center_count
-					}
-				}
-			}
-			#apply the modifier to skyscrapers in the state to reduce their throughput by (1/3)x^2 where x is the level of skyscrapers in the state
-			any_scope_building = {
-				limit = {
-					is_building_type = building_skyscraper
-				}
-				set_local_variable = {
-					name = skyscraper_multiplier
-					value = -1
-					multiply = 0.333
-					multiply = level
-					multiply = level
-				}
-			}
-			add_modifier = {
-				name = building_throughput_mult
-				multiplier = local_var:skyscraper_multiplier
-			}
-		}
+lower_skyscraper_throughput = {
+	set_variable = {
+		name = skyscraper_throughput_mult
+		value = $amount$
 	}
-	else = {
-		any_scope_building = {
-			limit = {
-				is_building_type = building_skyscraper
-			}
-			add_modifier = {
-				name = building_throughput_mult
-				multiplier = local_var:skyscraper_multiplier
-			}
+	every_scope_building = {
+		limit = {
+			is_building_type = building_skyscraper
 		}
+		building_skyscraper_throughput_mult = var:skyscraper_throughput_mult
 	}
 }
+
+# every_scope_state = {
+# 	limit = {
+# 		has_building = building_skyscraper
+# 	}
+# 	#count the number of urban centers in the state
+# 	set_variable = {
+# 		name = urban_center_count
+# 		value = 0
+# 	}
+# 	every_scope_building = {
+# 		limit = {
+# 			is_building_type = building_urban_center
+# 		}
+# 		change_variable = {
+# 			name = urban_center_count
+# 			add = 1
+# 		}
+# 	}
+# 	if = {
+# 		limit = {
+# 			every_scope_building = {
+# 				limit = {
+# 					is_building_type = building_skyscraper
+# 				}
+# 				level > var:urban_center_count
+# 			}
+# 		}
+# 		#apply the modifier to skyscrapers in the state to reduce their throughput by (1/3)x^2 where x is the level of skyscrapers in the state
+# 		every_scope_building = {
+# 			limit = {
+# 				is_building_type = building_skyscraper
+# 			}
+# 			add_modifier = {
+# 				name = building_skyscraper_throughput_mult
+# 				multiplier = -1*0.333*level*level
+# 			}
+# 		}
+# 	}
+# 	else = {
+# 		every_scope_building = {
+# 			limit = {
+# 				is_building_type = building_skyscraper
+# 			}
+# 			add_modifier = {
+# 				name = building_skyscraper_throughput_mult
+# 				multiplier = 0
+# 			}
+# 		}
+# 	}
+# }
