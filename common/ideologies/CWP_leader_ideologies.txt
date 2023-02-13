@@ -1,0 +1,158 @@
+﻿ideology_marxist_leninist = {
+	icon = "gfx/interface/icons/ideology_icons/ideology_leader/ideology_leader_vanguardist.dds"
+	
+	character_ideology = yes
+
+	lawgroup_governance_principles = {
+		law_monarchy = strongly_disapprove
+		law_presidential_republic = disapprove
+		law_parliamentary_republic = disapprove
+		law_theocracy = strongly_disapprove
+		law_council_republic = strongly_approve
+	}
+
+	lawgroup_distribution_of_power = {
+		law_oligarchy = approve
+		law_autocracy = approve
+		law_anarchy = disapprove
+		law_universal_suffrage = disapprove
+		law_census_voting = strongly_disapprove
+		law_wealth_voting = strongly_disapprove
+		law_landed_voting = strongly_disapprove
+	}
+	
+	lawgroup_economic_system = {	
+		law_command_economy = strongly_approve
+		law_interventionism = neutral
+		law_agrarianism = disapprove
+		law_traditionalism = disapprove		
+		law_laissez_faire = strongly_disapprove
+	}
+	
+	lawgroup_trade_policy = {
+		law_protectionism = approve
+		law_mercantilism = neutral		
+		law_isolationism = disapprove
+		law_free_trade = strongly_disapprove
+	}
+
+	lawgroup_bureaucracy = {
+		law_hereditary_bureaucrats = strongly_disapprove
+		law_career_bureaucrats = neutral
+		law_political_bureaucrats = strongly_approve
+		law_elected_bureaucrats = neutral
+	}
+	
+	possible = {
+		owner = { has_technology_researched = socialism }
+		scope:interest_group = {
+			OR = {
+				is_interest_group_type = ig_rural_folk
+				is_interest_group_type = ig_intelligentsia
+				is_interest_group_type = ig_trade_unions
+				is_interest_group_type = ig_armed_forces
+			}
+		}
+		scope:interest_group = {
+			NOR = {
+				has_variable = chose_anarchism
+				has_variable = chose_communism
+				has_variable = chose_fascism
+				has_variable = chose_conservatism
+				has_variable = chose_ethno_nationalism
+			}
+		}
+	}
+	
+	leader_weight = {
+		value = 100
+		# More likely for angry IG's outside of council republic
+		if = {
+			limit = {
+				owner = {
+					NOT = { has_law = law_type:law_council_republic }
+				}
+				scope:interest_group = {
+					ig_approval <= -5
+					NOT = { is_interest_group_type = ig_armed_forces }
+				}
+			}
+			add = 100
+		}
+		# More likely when SoL is low outside of council republic
+		if = {
+			limit = {
+				owner = {
+					NOT = { has_law = law_type:law_council_republic }
+					average_sol <= 10
+				}
+			}
+			add = 50
+		}
+		# More likely in an autocracy
+		if = {
+			limit = {
+				owner = {
+					OR = {
+						has_law = law_type:law_autocracy
+						has_law = law_type:law_oligarchy
+					}
+				}
+			}
+			add = 50
+		}
+		# Unlikely for content IG's under anarchism
+		if = {
+			limit = {
+				owner = {
+					has_law = law_type:law_anarchy
+				}
+				scope:interest_group = {
+					ig_approval >= 5
+				}
+			}
+			add = -100
+		}
+		# Extremely likely for content Armed Forces in Council Republic
+		if = {
+			limit = {
+				owner = {
+					has_law = law_type:law_council_republic
+				}
+				scope:interest_group = {
+					is_interest_group_type = ig_armed_forces
+					ig_approval >= 0
+				}
+			}
+			add = 1000
+		}
+		# Power corrupts
+		if = {
+			limit = {
+				owner = {
+					has_law = law_type:law_council_republic
+					OR = {
+						has_law = law_type:law_autocracy
+						has_law = law_type:law_oligarchy
+					}
+				}
+				scope:interest_group = {
+					is_in_government = yes
+				}
+			}
+			add = 50
+		}
+		if = {
+			limit = {
+				owner = { has_variable = communism_1_done }
+			}
+			multiply = 3
+		}
+		if = {
+			limit = {
+				owner = { has_variable = election_vanguardist_support }
+			}
+			multiply = 2
+		}
+	}
+}
