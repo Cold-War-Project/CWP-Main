@@ -11,25 +11,25 @@
   - **Government** Federal Presidential Republic
   - **Ideology** Moderate
   - **Political Parties** Partido Revolucionario Institucional, Partido Revolucionario de Unificación Nacional [source](https://en.wikipedia.org/wiki/1940_Mexican_general_election)
-  - **Interest Group** Industrialists
+  - **Interest Group** conglomerates
 ## Canada:
   - **Leader**[William Lyon Mackenzie King](https://en.wikipedia.org/wiki/William_Lyon_Mackenzie_King)
   - **Government** Federal Parliamentary Constitutional Monarchy
   - **Ideology** Reformer
   - **Political Parties** Liberal, Progressive Conservative, Co-opperative Commonwealth, Social Credit, Bloc Populaire, Labor-Progressive [source](https://en.wikipedia.org/wiki/1945_Canadian_federal_election)
-  - **Interest Group** Intelligentsia
+  - **Interest Group** intellectuals
 ## Cuba: 
   - **Leader** [Ramón Grau San Martín](https://en.wikipedia.org/wiki/Ram%C3%B3n_Grau)
   - **Government** Unitary Semi-Presidential Republic
   - **Ideology** Social Democrat *(Corporatism)*
   - **Political Parties** Auténtico, Coalición Socialista Democrática
-  - **Interest Group** Intelligentsia
+  - **Interest Group** intellectuals
 ## Guatemala:
   - **Leader** [Juan José Arévalo](https://en.wikipedia.org/wiki/Juan_Jos%C3%A9_Ar%C3%A9valo)
   - **Government** Unitary Presidential Republic
   - **Ideology** Social Democrat
   - **Political Parties** United Front, National Front
-  - **Interest Group** Intelligentsia, Trade unions
+  - **Interest Group** intellectuals, Trade unions
 ## El Salvador: 
   - **Leader** [Salvador Castaneda Castro](https://en.wikipedia.org/wiki/Salvador_Castaneda_Castro)
   - **Government** Military Dictatorship
