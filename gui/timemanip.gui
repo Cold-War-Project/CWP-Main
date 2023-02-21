@@ -278,9 +278,8 @@ types timekeeper
 	}
 	
 
-	type timemanip = widget {
+	type timemanip = container {
 		name = "timemanip"
-		size = { 440 119 }
 		alwaystransparent = no
 		using = clickthrough_blocker
 		visible = "[And( And( Not( IsPauseMenuShown ), Not( IsGameOverScreenShown )), IsInGame)]"
@@ -288,9 +287,182 @@ types timekeeper
 		
 		using = default_fade_in_out
 		
+		### CONSTRUCTION
+		widget = {
+			name = "tutorial_highlight_outliner_construction"
+			size = { 410 75 }
+			position = { 0 76 }
+			parentanchor = right
+			using = fullscreen_hide
+			
+			background = {
+				texture = "gfx/interface/main_hud/topbar_bg.dds"
+				mirror = horizontal
+				shaderfile = "gfx/FX/pdxgui_default.shader"
+				spriteType = Corneredstretched
+				spriteborder = { 0 0 }
+				spriteborder_bottom = 94
+				spriteborder_right = 100
+				texture_density = 3
+				using = hud_elements_alpha
+				
+				modify_texture = {
+					texture = "gfx/interface/backgrounds/default_bg_shading.dds"
+					spriteType = Corneredstretched
+					spriteborder = { 0 0 }
+					blend_mode = overlay
+					alpha = 0.5
+				}
+				modify_texture = {
+					using = texture_velvet
+				}
+				modify_texture = {
+					using = fancy_pattern
+				}
+			}
+			icon = {
+				size = { 100% 100% }
+				texture = "gfx/interface/main_hud/topbar_side_dec_simple.dds"
+				mirror = horizontal
+				spriteType = Corneredstretched
+				spriteborder = { 0 0 }
+				spriteborder_bottom = 94
+				spriteborder_right = 110
+				texture_density = 3
+				
+				using = hud_shiny_effect
+			}
+			
+			flowcontainer = {
+				position = { 30 5 }
+				parentanchor = vtop
+				datacontext = "[AccessMetaPlayer.AccessPlayedOrObservedCountry]"
+				spacing = 10
+
+				button = {
+					size = { 100 38 }
+					using = default_button
+					onclick = "[InformationPanelBar.OpenPanelTab('production_methods', 'construction_queues')]"
+					enabled = "[Country.IsValid]"
+					tooltip = "CONSTRUCTION_QUEUE_TOOLTIP"
+					input_action = construction_queue
+
+					flowcontainer = {
+						direction = horizontal
+						parentanchor = vcenter
+						widget = {
+							parentanchor = vcenter
+							size = { 32 32 }
+							
+							icon = {
+								visible = "[Not(Country.IsConstructionPaused)]"
+								parentanchor = vcenter
+								size = { 24 24 }
+								position = { 8 0 }
+								#onclick = "[Execute( Country.PauseConstruction )]"
+								#enabled = "[And(IsValid( Country.PauseConstruction ), Country.HasConstructionQueued)]"
+								texture = "gfx/interface/icons/state_status_icons/has_construction.dds"
+							}
+
+							icon = {
+								parentanchor = vcenter
+								#onclick = "[Execute( Country.ResumeConstruction )]"
+								#enabled = "[IsValid( Country.ResumeConstruction )]"
+								position = { 8 0 }
+								size = { 24 24 }
+								visible = "[Country.IsConstructionPaused]"
+								texture = "gfx/interface/icons/state_status_icons/has_construction_paused.dds"
+							}
+						}
+
+						textbox = {
+							parentanchor = vcenter
+							align = left|nobaseline
+							text = "CONSTRUCTION_VALUE"
+							autoresize = yes
+							fontsize_min = 12
+							maximumsize = { 100 -1 }
+							minimumsize = { 100 -1 }
+							margin_left = 8
+							margin_top = 0
+						}
+					}
+				}
+
+				#MINI CONSTRUCTION QUEUE
+				flowcontainer = {
+					direction = vertical
+					parentanchor = vcenter
+					mini_construction_queue = {
+						blockoverride "alpha" {
+							#alpha = "[TransparentIfZero_int32(Country.GetNumInactiveAndNonShownGovernmentConstructionQueueElements)]"
+						}
+
+						blockoverride "tooltip" {
+							tooltip = "NUM_GOVERNMENT_CONSTRUCTION_TOOLTIP"
+						}
+
+						blockoverride "icon" {
+							texture = "gfx/interface/icons/generic_icons/government_building_icon.dds"
+						}
+
+						blockoverride "text" {
+							raw_text = "[Country.GetNumInactiveAndNonShownGovernmentConstructionQueueElements|v=]"
+						}
+
+						blockoverride "text_visible" {
+							#visible = "[GreaterThan_int32(Country.GetNumInactiveAndNonShownGovernmentConstructionQueueElements, '(int32)15')]"
+						}
+
+						blockoverride "buildings_datamodel" {
+							datamodel = "[Country.AccessShownCurrentlyConstructingGovernmentQueue]"
+						}
+					}
+	
+					mini_construction_queue = {
+						blockoverride "alpha" {	
+							#alpha = "[TransparentIfZero_int32(Country.GetNumInactiveAndNonShownPrivateConstructionQueueElements)]"
+						}
+
+						blockoverride "tooltip" {
+							tooltip = "NUM_PRIVATE_CONSTRUCTION_TOOLTIP"
+						}
+
+						blockoverride "icon" {
+							texture = "gfx/interface/icons/generic_icons/privately_owned_building_icon.dds"
+						}
+
+						blockoverride "text" {
+							raw_text = "[Country.GetNumInactiveAndNonShownPrivateConstructionQueueElements|v=]"
+						}
+
+						blockoverride "text_visible" {
+							#visible = "[GreaterThan_int32(Country.GetNumInactiveAndNonShownPrivateConstructionQueueElements, '(int32)15')]"
+						}
+
+						blockoverride "buildings_datamodel" {
+							datamodel = "[Country.AccessShownCurrentlyConstructingPrivateQueue]"
+						}
+					}
+				}
+				
+				textbox = {
+					autoresize = yes
+					visible = "[Not(GetPlayer.HasConstructionQueued)]"
+					parentanchor = vcenter
+					align = left|nobaseline
+					text = "NOTHING_CONSTRUCTING"
+					minimumsize = { 215 -1 }
+					maximumsize = { 215 -1 }
+					margin_left = 25
+					margin_top = 0
+				}
+			}
+		}
+
 		### TOP RIGHT STUFF
 		widget = {
-			size = { 600 90 }
+			size = { 460 80 }
 			parentanchor = right
 			alwaystransparent = no
 
@@ -351,8 +523,8 @@ types timekeeper
 
 			### DATE
 			widget = {
-				position = { 80 10 }
-				size = { 170 70 }
+				position = { 60 2 }
+				size = { 170 68 }
 					
 				### PAUSED DATE
 				textbox = {
@@ -364,7 +536,6 @@ types timekeeper
 					visible = "[TimeKeeper.IsPaused]"
 					default_format = "#variable"
 					alpha = 0.7
-					using = font_time
 				}
 				### NOT PAUSED DATE
 				textbox = {
@@ -375,13 +546,12 @@ types timekeeper
 					autoresize = yes
 					visible = "[Not(TimeKeeper.IsPaused)]"
 					default_format = "#variable"
-					using = font_time
 				}
 				
 				### TICKS (week)
 				widget = {
 					size = { 100% 16 }
-					position = { 0 15 }
+					position = { 0 5 }
 					parentanchor = vcenter
 					
 					### PAUSED PROGRESSBAR
@@ -455,21 +625,19 @@ types timekeeper
 						using = fontsize_small
 						default_format = "#variable"
 					}
-					
 				}
-				container = {
-					position = { 180 42 }
-					### PAUSED TEXT
-					textbox = {
-						visible = "[TimeKeeper.IsPaused]"
-						parentanchor = bottom
-						text = "CLOCK_PAUSED"
-						autoresize = yes
-						using = fontsize_small
-						default_format = "#variable"
-						align = left|nobaseline
-						alpha = 0.5
-					}
+				
+				### PAUSED TEXT
+				textbox = {
+					position = { -5 -22 }
+					visible = "[TimeKeeper.IsPaused]"
+					parentanchor = bottom|right
+					text = "CLOCK_PAUSED"
+					autoresize = yes
+					using = fontsize_small
+					default_format = "#variable"
+					align = left|nobaseline
+					alpha = 0.5
 				}
 			}
 			
@@ -913,11 +1081,24 @@ types timekeeper
 				spacing = 2
 				
 				### menu
-				button_icon_menu = {
-					size = { 32 32 }
-					onclick = "[ToggleMainMenu]"
-					enabled = "[Not( IsGameOverScreenShown )]"
+				flowcontainer = {
+					direction = horizontal
 					parentanchor = hcenter
+					spacing = 2
+
+					button_icon_settings = {
+						size = { 24 24 }
+						onclick = "[ToggleMessageSettings]"
+						parentanchor = vcenter
+					}
+
+					button_icon_menu = {
+						size = { 32 32 }
+						onclick = "[ToggleMainMenu]"
+						enabled = "[Not( IsGameOverScreenShown )]"
+						parentanchor = vcenter
+					}
+
 				}
 				
 				flowcontainer = {
@@ -936,146 +1117,90 @@ types timekeeper
 				}
 			}
 		}
-		
-		### CONSTRUCTION
+	}
+}
+
+types construction_in_outliner
+{
+	type mini_construction_queue = widget {
+		visible = "[Country.HasConstructionQueued]"
+		size = { 265 32 }
+
+		block "alpha" {}
+
+		block "tooltip" {
+			tooltip = "NUM_GOVERNMENT_CONSTRUCTION_TOOLTIP"
+		}
+
 		widget = {
-			name = "tutorial_highlight_outliner_construction"
-			position = { 0 11 }
-			size = { 425 44 }
-			parentanchor = right|bottom
-			using = fullscreen_hide
-			
-			background = {
-				texture = "gfx/interface/main_hud/topbar_bg.dds"
-				mirror = horizontal
-				shaderfile = "gfx/FX/pdxgui_default.shader"
-				spriteType = Corneredstretched
-				spriteborder = { 0 0 }
-				spriteborder_bottom = 94
-				spriteborder_right = 100
-				texture_density = 3
-				using = hud_elements_alpha
-				
-				modify_texture = {
-					texture = "gfx/interface/backgrounds/default_bg_shading.dds"
-					spriteType = Corneredstretched
-					spriteborder = { 0 0 }
-					blend_mode = overlay
-					alpha = 0.5
-				}
-				modify_texture = {
-					using = texture_velvet
-				}
-				modify_texture = {
-					using = fancy_pattern
-				}
-			}
+			size = { 32 32 }
+			parentanchor = vcenter
+		
 			icon = {
+				block "icon" {}
+
 				size = { 100% 100% }
-				texture = "gfx/interface/main_hud/topbar_side_dec_simple.dds"
-				mirror = horizontal
-				spriteType = Corneredstretched
-				spriteborder = { 0 0 }
-				spriteborder_bottom = 94
-				spriteborder_right = 110
-				texture_density = 3
-				
-				using = hud_shiny_effect
-			}
-			
-			flowcontainer = {
-				position = { 40 -2 }
 				parentanchor = vcenter
-				spacing = 5
-				datacontext = "[GetMetaPlayer.GetPlayedOrObservedCountry]"
+				position = { 0 -2 }
+			}
+		}
 
-				icon = {
-					parentanchor = vcenter
-					size = { 28 28 }
-					texture = "gfx/interface/icons/state_status_icons/has_construction.dds"
-					visible = "[Not(Country.IsConstructionPaused)]"
-				}
+		textbox = {
+			block "text" {}
+			block "text_visible" {}
 
-				icon = {
-					parentanchor = vcenter
-					size = { 28 28 }
-					texture = "gfx/interface/icons/state_status_icons/has_construction_paused.dds"
-					visible = "[Country.IsConstructionPaused]"
-				}
+			autoresize = yes
+			align = right|nobaseline
+			parentanchor = vcenter|right
+			minimumsize = { 60 -1 }
+			maximumsize = { 60 -1 }
+			margin_right = 10
+		}
 
-				textbox = {
-					parentanchor = vcenter
-					align = left|nobaseline
-					text = "CONSTRUCTION_VALUE"
-					tooltip = "CONSTRUCTION_QUEUE_TOOLTIP"
-					autoresize = yes
-					fontsize_min = 12
-					maximumsize = { 90 -1 }
-					minimumsize = { 90 -1 }
-				}
+		overlappingitembox = {
+			parentanchor = vcenter
+			position = { 33 0 }
+			size = { 172 30 }
 
-				flowcontainer = {
-					spacing = 5 
-					visible = "[Country.HasConstructionQueued]"
-					alpha = "[TransparentIfZero_int32(Country.GetNumGovernmentConstructionsInQueue)]"
-					parentanchor = vcenter
-					tooltip = "NUM_GOVERNMENT_CONSTRUCTION_TOOLTIP"
-					icon = {
+			block "buildings_datamodel" {}
+
+			item = {
+				widget = {
+					size = { 32 30 }
+					button = {
+						parentanchor = vcenter
+						datacontext = "[ConstructionQueueElement.GetBuilding]"
+						tooltipwidget = {
+							FancyTooltip_Building = {}
+						}
+						onclick = "[InformationPanelBar.OpenBuildingDetailsPanel(Building.AccessSelf)]"
+
 						size = { 30 30 }
-						texture = "gfx/interface/icons/generic_icons/government_building_icon.dds"
-						parentanchor = vcenter
+						texture = "[Building.GetTexture]"
+
+						default_progressbar_horizontal = {
+							datacontext = "[ConstructionQueueElement.GetBuilding]"
+							size = { 24 2 }
+							parentanchor = hcenter
+							position = { 0 4 }
+							
+							blockoverride "values" {
+								value = "[ConstructionQueueElement.CalcPercentComplete]"
+								min = 0 
+								max = 1 
+							}
+						}
 					}
-
-					textbox = {
-						autoresize = yes
-						text = "[Country.GetNumGovernmentConstructionsInQueue|v]"
-						align = nobaseline
-						parentanchor = vcenter
-						minimumsize = { 70 -1 }
-					}
-				}
-
-				flowcontainer = {
-					spacing = 5 
-					visible = "[Country.HasConstructionQueued]"
-					alpha = "[TransparentIfZero_int32(Country.GetNumPrivateConstructionsInQueue)]"
-					parentanchor = vcenter
-					tooltip = "NUM_PRIVATE_CONSTRUCTION_TOOLTIP"
-					icon = {
-						size = { 30 30 }
-						texture = "gfx/interface/icons/generic_icons/privately_owned_building_icon.dds"
-						parentanchor = vcenter
-					}
-
-					textbox = {
-						autoresize = yes
-						text = "[Country.GetNumPrivateConstructionsInQueue|v]"
-						align = nobaseline
-						parentanchor = vcenter
-						minimumsize = { 70 -1 }
-					}
-				}
-
-				textbox = {
-					autoresize = yes
-					visible = "[Not(GetPlayer.HasConstructionQueued)]"
-					parentanchor = vcenter
-					align = left|nobaseline
-					text = "NOTHING_CONSTRUCTING"
-					minimumsize = { 215 -1 }
-					maximumsize = { 215 -1 }
-				}
-
-				button_icon_goto = {
-					size = { 25 25 }
-					onclick = "[InformationPanelBar.OpenPanelTab('production_methods', 'construction_queues')]"
-					enabled = "[Country.IsValid]"
-					datacontext = "[GetPlayer]"
-					tooltip = "CONSTRUCTION_QUEUE_TOOLTIP"
-					input_action = construction_queue
-					parentanchor = vcenter
 				}
 			}
+		}
+
+		background = {
+			using = entry_bg_simple
+			margin_left = -10
+			margin_top = -5
+			margin_bottom = -5
+			margin_right = 0
 		}
 	}
 }
