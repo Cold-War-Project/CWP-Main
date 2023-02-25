@@ -33,7 +33,16 @@ types un_panel
 		}
 
 		blockoverride "window_header_name" {
+			margin_left = 20
 			raw_text = "[concept_united_nations]"
+			icon = {
+				position = { -80 -10 }
+				texture = "gfx/interface/icons/cwp_icons/united_nations.dds"
+				tooltip = "[concept_united_nations_desc]"
+				size = { 70 70 }
+				background = {
+				}
+			}
 		}
 
 		blockoverride "scrollarea_content"
@@ -75,37 +84,62 @@ types un_panel
 						margin_bottom = -13
 						margin_left = 40
 						layoutpolicy_vertical = expanding
-						tab_button = {
+						button = {
+							visible = "[GetVariableSystem.Exists('international_community')]"
 							size = { 250 50 }
+							using = expand_button_bg_no_fade
 							raw_text = "International Community"
 							onclick = "[GetVariableSystem.Toggle('international_community')]"
 							onclick = "[GetVariableSystem.Clear('un_floor')]"
 							onclick = "[GetVariableSystem.Clear('un_resolutions')]"
-							onclick = "[GetVariableSystem.Clear('un_passed')]"
 						}
-						tab_button = {
+						button = {
+							visible = "[Not(GetVariableSystem.Exists('international_community'))]"
 							size = { 250 50 }
+							using = expand_button_bg_no_fade
+							raw_text = "International Community"
+							onclick = "[GetVariableSystem.Toggle('international_community')]"
+							onclick = "[GetVariableSystem.Clear('un_floor')]"
+							onclick = "[GetVariableSystem.Clear('un_resolutions')]"
+							alpha = 0.5
+						}
+						button = {
+							visible = "[GetVariableSystem.Exists('un_floor')]"
+							size = { 250 50 }
+							using = expand_button_bg_no_fade
 							raw_text = "UN Floor"
 							onclick = "[GetVariableSystem.Toggle('un_floor')]"
 							onclick = "[GetVariableSystem.Clear('international_community')]"
 							onclick = "[GetVariableSystem.Clear('un_resolutions')]"
-							onclick = "[GetVariableSystem.Clear('un_passed')]"
 						}
-						tab_button = {
+						button = {
+							visible = "[Not(GetVariableSystem.Exists('un_floor'))]"
 							size = { 250 50 }
+							using = expand_button_bg_no_fade
+							raw_text = "UN Floor"
+							onclick = "[GetVariableSystem.Toggle('un_floor')]"
+							onclick = "[GetVariableSystem.Clear('international_community')]"
+							onclick = "[GetVariableSystem.Clear('un_resolutions')]"
+							alpha = 0.5
+						}
+						button = {
+							visible = "[GetVariableSystem.Exists('un_resolutions')]"
+							size = { 250 50 }
+							using = expand_button_bg_no_fade
 							raw_text = "Resolutions"
 							onclick = "[GetVariableSystem.Toggle('un_resolutions')]"
 							onclick = "[GetVariableSystem.Clear('un_floor')]"
 							onclick = "[GetVariableSystem.Clear('international_community')]"
-							onclick = "[GetVariableSystem.Clear('un_passed')]"
 						}
-						tab_button = {
+						button = {
+							visible = "[Not(GetVariableSystem.Exists('un_resolutions'))]"
 							size = { 250 50 }
-							raw_text = "Passed Resolutions"
-							onclick = "[GetVariableSystem.Toggle('un_passed')]"
+							using = expand_button_bg_no_fade
+							raw_text = "Resolutions"
+							onclick = "[GetVariableSystem.Toggle('un_resolutions')]"
 							onclick = "[GetVariableSystem.Clear('un_floor')]"
-							onclick = "[GetVariableSystem.Clear('un_resolutions')]"
 							onclick = "[GetVariableSystem.Clear('international_community')]"
+							alpha = 0.5
 						}
 					}
 				flowcontainer = { # International Community
@@ -315,7 +349,7 @@ types un_panel
 								align = center
 								textbox = {
 									margin_right = 345
-									raw_text = "#T Proposal on the#! #i Resolution of Law and Sea XVII"
+									raw_text = "[GetPlayer.GetCustom('current_resolution')]"
 								}
 							}
 						}
@@ -363,16 +397,16 @@ types un_panel
 										layoutpolicy_horizontal = expanding
 										layoutpolicy_vertical = expanding
 										blockoverride "scrollbox_content" {
-											fixedgridbox = {
-												addcolumn = 50
-												addrow = 50
+											dynamicgridbox = {
 												datamodel_wrap = 1
 												flipdirection = yes
 												datamodel = "[GetGlobalList('un_members_list')]"
 												item = {
 													flowcontainer = {
+														margin_bottom = 10
 														datacontext = "[Scope.AccessCountry]"
 														small_flag = {
+															visible = "[Country.MakeScope.Var('is_opposing').IsSet]"
 															parentanchor = vcenter
 															using = tooltip_above
 															datacontext = "[Scope.AccessCountry]"						
@@ -388,41 +422,55 @@ types un_panel
 								}
 								button = {
 									using = default_button_primary
-									size = { 170 40 }
-									raw_text = "Oppose"
-									down = "[GetVariableSystem.Exists('ui_library_down_state')]"
+									size = { 170 50 }
+									raw_text = "OPPOSE_OPTION"
+									onclick = "[GetScriptedGui('add_opposing').Execute( GuiScope.SetRoot( GetPlayer.MakeScope ).End )]"
+									#enabled = "[GetGlobalVariable('pending_resolution').IsSet]"
 								}
 							}
 							flowcontainer = { # Voting Bar
 								position = { 0 0 }
 								direction = vertical
-								margin_top = 395
+								margin_top = 360
 								spacing = 5
 								widget = {
 									size = { 50 50 }
 									parentanchor = hcenter
+									round_progress_default = {
+										position = { -5 -7 }
+										size = { 60 60 }
+										value = 0.7
+									}
 									textbox = {
 										margin_bottom = -40
 										margin_left = 10
-										raw_text = "-20"
+										text = "VOTING_BALANCE"
 										using = fontsize_large
 									}
 									background = {
-										using = circle_bg_simple
+										using = circle_bg_simple_dark
 									}
-								}
-								default_progressbar_horizontal = {
-									blockoverride "values" {
-										value = 60
-									}
-									size = { 720 15 }
+									
 								}
 								double_direction_progressbar = {
+
+									blockoverride "negative_min_max_values" {
+										min = -0.75
+										max = 0
+									}
+			
+									blockoverride "positive_min_max_values" {
+										min = 0
+										max = 0.75
+									}
+
 									blockoverride "value_left" {
-										value = -0.0
+										value = "[GetPlayer.MakeScope.ScriptValue('doubleprogressbar_dynamic')]"
+										max = "[GetPlayer.MakeScope.ScriptValue('doubleprogressbar_max')]"
 									}
 									blockoverride "value_right" {
-										value = 0.5
+										value = "[GetPlayer.MakeScope.ScriptValue('doubleprogressbar_dynamic')]"
+										max = "[GetPlayer.MakeScope.ScriptValue('doubleprogressbar_max')]"
 									}
 									size = { 720 15 }
 								}
@@ -444,16 +492,16 @@ types un_panel
 										layoutpolicy_horizontal = expanding
 										layoutpolicy_vertical = expanding
 										blockoverride "scrollbox_content" {
-											fixedgridbox = {
-												addcolumn = 50
-												addrow = 50
+											dynamicgridbox = {
 												datamodel_wrap = 1
 												flipdirection = yes
 												datamodel = "[GetGlobalList('un_members_list')]"
 												item = {
 													flowcontainer = {
+														margin_bottom = 10
 														datacontext = "[Scope.AccessCountry]"
 														small_flag = {
+															visible = "[Country.MakeScope.Var('is_supporting').IsSet]"
 															parentanchor = vcenter
 															using = tooltip_above
 															datacontext = "[Scope.AccessCountry]"						
@@ -469,9 +517,10 @@ types un_panel
 								}
 								button = {
 									using = default_button_primary
-									size = { 170 40 }
-									raw_text = "Support"
-									down = "[GetVariableSystem.Exists('ui_library_down_state')]"
+									size = { 170 50 }
+									raw_text = "SUPPORT_OPTION"
+									onclick = "[GetScriptedGui('add_supporting').Execute( GuiScope.SetRoot( GetPlayer.MakeScope ).End )]"
+									#enabled = "[GetGlobalVariable('pending_resolution').IsSet]"
 								}
 							}
 						}
@@ -482,7 +531,7 @@ types un_panel
 									margin_top = 30
 									parentanchor = center|top
 									align = center|nobaseline
-									raw_text = "Neutral"
+									raw_text = "Abstaining"
 									using = fontsize_mega
 								}
 								flowcontainer = { # Flag List
@@ -490,19 +539,19 @@ types un_panel
 								parentanchor = center|top
 									scrollbox = {
 										minimumsize = { 670 150 }
+										maximumsize = { @panel_width_minus_10 -1 }
 										layoutpolicy_horizontal = expanding
 										layoutpolicy_vertical = expanding
 										blockoverride "scrollbox_content" {
-											fixedgridbox = {
-												addcolumn = 60
-												addrow = 50
-												datamodel_wrap = 11
+											dynamicgridbox = {
 												flipdirection = yes
+
 												datamodel = "[GetGlobalList('un_members_list')]"
 												item = {
 													flowcontainer = {
-														datacontext = "[Scope.AccessCountry]"
+														margin = { 5 5 }
 														small_flag = {
+															visible = "[Not(Or(Country.MakeScope.Var('is_supporting').IsSet, Country.MakeScope.Var('is_opposing').IsSet))]"
 															parentanchor = vcenter
 															using = tooltip_above
 															datacontext = "[Scope.AccessCountry]"						
@@ -513,6 +562,14 @@ types un_panel
 													}
 												}
 											}
+										}
+										button = {
+											parentanchor = right|bottom
+											using = default_button
+											size = { 170 40 }
+											raw_text = "Abstain"
+											onclick = "[GetScriptedGui('add_abstaining').Execute( GuiScope.SetRoot( GetPlayer.MakeScope ).End )]"
+											#enabled = "[GetGlobalVariable('pending_resolution').IsSet]"
 										}
 									}
 								}
@@ -529,6 +586,78 @@ types un_panel
 					minimumsize = { 1100 650 }
 					background = {
 						using = dropdown_background
+					}
+					flowcontainer = {
+						direction = horizontal
+						margin = { 20 20 }
+						textbox = {
+							raw_text = "NO CURRENT RESOLUTION"
+							using = fontsize_large
+						}
+					}
+					scrollbox = {
+						minimumsize = { 1050 510 }
+						hbox = {
+							layoutpolicy_horizontal = expanding
+							position = { 0 0 }
+							align = center|top
+							addcolumn = 100
+							addrow = 24
+							flowcontainer = {
+								direction = vertical
+								tab_button = {
+									size = { 250 60 }
+									raw_text = "Industry & Commerce"
+								}
+								scrollbox = {
+									minimumsize = { 250 400 }
+								}
+							}
+							flowcontainer = {
+								direction = vertical
+								tab_button = {
+									size = { 250 60 }
+									raw_text = "Politics & Culture"
+								}
+								scrollbox = {
+									layoutpolicy_vertical = expanding
+									minimumsize = { 250 400 }
+									flowcontainer = {
+										direction = horizontal
+										button = {
+											size = { 210 45 }
+											using = expand_button_bg_no_fade
+											text = "[concept_human_rights_resolution]"
+											using = fontsize_medium
+										}
+										button_icon_check = {
+											position = { 215 10 }
+											size = { 40 40 }
+										}
+									}
+								}
+							}
+							flowcontainer = {
+								direction = vertical
+								tab_button = {
+									size = { 250 60 }
+									raw_text = "Environment & Technology"
+								}
+								scrollbox = {
+									minimumsize = { 250 400 }
+								}
+							}
+							flowcontainer = {
+								direction = vertical
+								tab_button = {
+									size = { 250 60 }
+									raw_text = "War & Peacekeeping"
+								}
+								scrollbox = {
+									minimumsize = { 250 400 }
+								}
+							}
+						}
 					}
 				}
 				flowcontainer = {
