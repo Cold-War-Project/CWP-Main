@@ -1,0 +1,985 @@
+types ongoing_outliner_items {
+	### WARS ITEM
+	type outliner_war_item = widget {
+		size = { 116 85 }
+		
+		tooltipwidget = {
+			FancyTooltip_War = {}
+		}
+
+		vfx = {
+			blockoverride "size" {
+				size = { 500% 500% }
+			}
+			blockoverride "parent_anchor" {
+				parentanchor = center
+			}
+			blockoverride "camera_position" {
+				camera_position = { 0 0 -2 }
+			}
+			blockoverride "entity_instance" {
+				entity_instance = vfx_entity_ui_sidebar_war
+			}			
+		}
+		
+		icon = {
+			using = rotate_glow_animation_02
+			size = { 200 200 }
+			parentanchor = center
+		}
+
+		button = {
+			texture = "gfx/interface/outliner/war_button_icon_outliner.dds"
+			size = { 116 85 }
+			onclick = "[WarManager.ToggleWarPanel( War.AccessSelf )]"
+			parentanchor = center
+		}
+		
+		### LEFT COUNTRY
+		widget = {
+			size = { 40 40 }
+			datacontext = "[War.AccessLeftSideLeaderParticipant.GetCountry]"
+			parentanchor = center
+			position = { -22 11 }
+
+			tiny_flag_no_interact = {
+				parentanchor = right
+				position = { -2 0 }
+				mobilization_icon_flag = {}
+			}
+			textbox = {
+				name = "warscore"
+				size = { 40 18 }
+				position = { 0 20 }
+				text = "WAR_SUPPORT_LEFT_SIDE"
+				tooltip = "WAR_LEFT_LEADER_TOOLTIP"
+				align = center|nobaseline
+				using = fontsize_small
+				parentanchor = hcenter
+			}
+		}
+
+		### RIGHT COUNTRY
+		widget = {
+			size = { 40 40 }
+			datacontext = "[War.AccessRightSideLeaderParticipant.GetCountry]"
+			parentanchor = center
+			position = { 22 11 }
+
+			tiny_flag_no_interact = {
+				parentanchor = left
+				position = { 2 0 }
+				mobilization_icon_flag = {}
+			}
+			textbox = {
+				name = "warscore"
+				size = { 40 18 }
+				position = { 0 20 }
+				text = "WAR_SUPPORT_RIGHT_SIDE"
+				tooltip = "WAR_RIGHT_LEADER_TOOLTIP"
+				align = center|nobaseline
+				using = fontsize_small
+				parentanchor = hcenter
+			}
+		}
+
+		
+	}
+	
+	### WARS GRIDBOX
+	type outliner_wars = fixedgridbox {
+		datamodel_wrap = 3
+		addcolumn = 116
+		addrow = 85
+		flipdirection = yes
+		layoutanchor = topright
+		
+		datacontext = "[Outliner.AccessCategory('wars')]"
+		datamodel = "[OutlinerEntry.AccessSubEntries]"
+		visible = "[OutlinerEntry.IsShown]"
+
+		item = {
+			outliner_war_item = {
+				datacontext = "[OutlinerEntry.AccessScope.AccessWar]"
+			}
+		}
+	}
+
+	### DIPLO PLAYS ITEM
+	type diplomatic_play_item = widget {
+		name = "diplo_play_item"
+		size = { 350 62 }
+		tooltip = "DIPLOMATIC_PLAY_OUTLINER_TOOLTIP"
+		
+		button = {
+			size = { 100% 55 }
+			parentanchor = center
+			using = default_button
+			onclick = "[InformationPanelBar.OpenDiplomaticPlayPanel( DiplomaticPlay.AccessSelf )]"
+			
+			button = {
+				texture = "gfx/interface/outliner/diplo_play_dec_outliner.dds"
+				size = { 121 57 }
+				parentanchor = hcenter
+				position = { 0 -7 }
+				alwaystransparent = yes
+			}
+		}
+
+		### phases
+		widget = {
+			size = { 62 62 }
+			parentanchor = hcenter
+		
+			### progressbar
+			animated_progresspie = {
+				texture = "gfx/interface/diplomatic_plays/escalation_progress.dds"
+				size = { 56 56 }
+				framesize = { 492 492 }
+				frame = 2
+				value = "[FixedPointToFloat(DiplomaticPlay.GetEscalationProgress)]"
+				parentanchor = center
+			}
+
+			### phase images
+			icon = {
+				texture = "gfx/interface/diplomatic_plays/phase_opening_moves_small.dds"
+				size = { 46 46 }
+				parentanchor = center
+				visible = "[LessThan_int32(DiplomaticPlay.GetEscalation, GetDefine('NDiplomacy', 'DIPLOMATIC_PLAY_OPENING_PHASE_END'))]"
+			}
+			icon = {
+				texture = "gfx/interface/diplomatic_plays/phase_diplomatic_maneuvers_small.dds"
+				size = { 46 46 }
+				parentanchor = center
+				visible = "[And(GreaterThanOrEqualTo_int32(DiplomaticPlay.GetEscalation, GetDefine('NDiplomacy', 'DIPLOMATIC_PLAY_OPENING_PHASE_END')),LessThan_int32(DiplomaticPlay.GetEscalation, GetDefine('NDiplomacy', 'DIPLOMATIC_PLAY_CLOSING_PHASE_START')))]"
+			}
+			icon = {
+				texture = "gfx/interface/diplomatic_plays/phase_countdown_to_war_small.dds"
+				size = { 46 46 }
+				parentanchor = center
+				visible = "[GreaterThanOrEqualTo_int32(DiplomaticPlay.GetEscalation, GetDefine('NDiplomacy', 'DIPLOMATIC_PLAY_CLOSING_PHASE_START'))]"
+			}
+			
+			### progress frame
+			icon = {
+				texture = "gfx/interface/diplomatic_plays/escalation_progress_frame_small.dds"
+				size = { 100% 100% }
+				parentanchor = center
+			}
+		}
+		
+		### left side
+		flowcontainer = {
+			datacontext = "[DiplomaticPlay.GetInitiator]"
+			parentanchor = vcenter|left
+			position = { 10 0 }
+			spacing = 5
+			
+			tiny_flag_no_interact = {
+				parentanchor = vcenter
+			}
+			
+			flowcontainer = {
+				direction = vertical
+				
+				flowcontainer = {
+					#tooltip = "DIPLO_PLAY_COUNTRY_BATTALIONS_BREAKDOWN"
+					margin_top = 2
+					parentanchor = left
+
+					icon = {
+						size = { 20 20 }
+						texture = "gfx/interface/icons/generic_icons/battalions.dds"
+						parentanchor = vcenter
+					}
+					textbox = {
+						autoresize = yes
+						raw_text = "#variable [DiplomaticPlay.GetTotalNumMobilizedBattalionsForSide( Country.Self ) ]#!"
+						align = nobaseline
+						#using = fontsize_small
+					}
+					textbox = {
+						autoresize = yes
+						raw_text = "/"
+						align = nobaseline
+						#using = fontsize_small
+					}
+					textbox = {
+						autoresize = yes
+						raw_text = "#variable [DiplomaticPlay.GetTotalNumBattalionsForSide( Country.Self ) ]#!"
+						align = nobaseline
+						#using = fontsize_small
+						alpha = 0.5
+					}
+				}
+				
+				flowcontainer = {
+					#tooltip = "DIPLO_PLAY_COUNTRY_FLOTILLAS_BREAKDOWN"
+					parentanchor = left
+
+					icon = {
+						size = { 20 20 }
+						texture = "gfx/interface/icons/generic_icons/flotillas.dds"
+						parentanchor = vcenter
+					}
+					textbox = {
+						autoresize = yes
+						raw_text = "#variable [Country.GetWarships]#!"
+						align = nobaseline
+						#using = fontsize_small
+					}
+				}
+			}
+		}
+		
+		### right side
+		flowcontainer = {
+			datacontext = "[DiplomaticPlay.GetTarget]"
+			parentanchor = vcenter|right
+			position = { -10 0 }
+			spacing = 5
+			
+			flowcontainer = {
+				direction = vertical
+				
+				flowcontainer = {
+					#tooltip = "DIPLO_PLAY_COUNTRY_BATTALIONS_BREAKDOWN"
+					parentanchor = right
+					margin_top = 2
+
+					textbox = {
+						autoresize = yes
+						raw_text = "#variable [DiplomaticPlay.GetTotalNumMobilizedBattalionsForSide( Country.Self ) ]#!"
+						align = nobaseline
+						#using = fontsize_small
+					}
+					textbox = {
+						autoresize = yes
+						raw_text = "/"
+						align = nobaseline
+						#using = fontsize_small
+					}
+					textbox = {
+						autoresize = yes
+						raw_text = "#variable [DiplomaticPlay.GetTotalNumBattalionsForSide( Country.Self ) ]#!"
+						align = nobaseline
+						#using = fontsize_small
+						alpha = 0.5
+					}
+					icon = {
+						size = { 20 20 }
+						texture = "gfx/interface/icons/generic_icons/battalions.dds"
+						parentanchor = vcenter
+					}
+				}
+				
+				flowcontainer = {
+					#tooltip = "DIPLO_PLAY_COUNTRY_FLOTILLAS_BREAKDOWN"
+					parentanchor = right
+
+					textbox = {
+						autoresize = yes
+						raw_text = "#variable [Country.GetWarships]#!"
+						align = nobaseline
+						#using = fontsize_small
+					}
+					icon = {
+						size = { 20 20 }
+						texture = "gfx/interface/icons/generic_icons/flotillas.dds"
+						parentanchor = vcenter
+					}
+				}
+			}
+			
+			tiny_flag_no_interact = {
+				parentanchor = vcenter
+			}
+		}
+	}
+
+	### DIPLO PLAYS LIST
+	type outliner_diplomatic_plays = flowcontainer {
+		direction = vertical
+		parentanchor = right
+		
+		datacontext = "[Outliner.AccessCategory('diplo_plays')]"
+		datamodel = "[OutlinerEntry.AccessSubEntries]"
+		visible = "[OutlinerEntry.IsShown]"
+
+		item = {
+			diplomatic_play_item = {
+				datacontext = "[OutlinerEntry.AccessScope.AccessDiplomaticPlay]"
+			}
+		}
+	}
+
+	### LAW ENACTMENT
+	type outliner_law_enactment = button {
+		datacontext = "[GetPlayer.GetLawBeingEnacted]"
+		visible = "[Law.IsBeingEnacted]"
+		onclick = "[InformationPanelBar.OpenChangeLaw(Law.AccessSelf)]"
+		using = default_button_primary
+		size = { 350 65 }
+
+		hbox = {
+			margin_left = 7
+			margin_right = 5
+			
+			icon = {
+				size = { 60 60 }
+				texture = "gfx/interface/backgrounds/round_button_bg.dds"
+				
+				round_progress_default = {
+					size = { 54 54 }
+					datacontext = "[GetPlayer.GetLawBeingEnacted]"
+					value = "[FixedPointToFloat(GetPlayer.GetLawEnactmentProgress)]"
+					tooltip = "[GetPlayer.GetLawEnactmentProgressDesc]"
+					parentanchor = center
+				}
+				
+				law_icon = {
+					size = { 50 50 }
+					parentanchor = center
+				}
+			}
+			
+			vbox = {
+				layoutpolicy_horizontal = expanding
+				spacing = 5
+			
+				textbox = {
+					layoutpolicy_horizontal = expanding
+					size = { 0 20 }
+					align = center|nobaseline
+					elide = right
+					fontsize_min = 12
+					
+					text = "ENACTING_TO_LAW"
+					
+					background = {
+						using = default_header_bg
+						alpha = 1
+						margin_bottom = 5
+						margin_top = 5
+						
+						modify_texture = {
+							texture = "gfx/interface/masks/fade_horizontal_center.dds"
+							blend_mode = alphamultiply
+						}
+					}
+				}
+
+				textbox = {
+					layoutpolicy_horizontal = expanding
+					size = { 0 20 }
+					align = center|nobaseline
+					elide = right
+					fontsize_min = 12
+					
+					tooltip = "CHECKPOINT_SUCCESS_CHANCE_BREAKDOWN"
+					text = "OUTCOME_SUCCESS"
+				}
+			}
+		}
+	}
+
+	### DIPLO PACTS ITEM
+	type outliner_diplomatic_pact_item = button {
+		size = { 350 35 }
+		using = default_button
+
+		onclick = "[InformationPanelBar.OpenCountryPanel(Country.Self)]"
+		onrightclick = "[RightClickMenuManager.ShowForCountry(Country.AccessSelf)]"
+		onmousehierarchyenter = "[AccessHighlightManager.HighlightCountry(Country.Self)]"
+		onmousehierarchyleave = "[AccessHighlightManager.RemoveHighlight]"
+
+		hbox = {
+			layoutpolicy_horizontal = expanding
+			margin = { 10 0 }
+			spacing = 10
+				
+			icon = {
+				size = { 30 30 }
+				texture = [DiplomaticPact.GetDiplomaticActionType.GetTexture]
+				tooltip = "[DiplomaticPact.GetTooltip]"
+			}
+			
+			tiny_flag = {}
+			
+			hbox = {
+				layoutpolicy_horizontal = expanding
+				spacing = 5
+				tooltip = "[GetPlayer.GetRelationsTooltip( Country.Self )]"
+				
+				textbox = {
+					layoutpolicy_horizontal = expanding
+					size = { 0 20 }
+					raw_text = "#BOLD [Country.GetRelationsWithDesc( GetPlayer )]#! ([Country.GetRelationsWith(GetPlayer)|+])"
+					elide = right
+					fontsize_min = 10
+					align = nobaseline
+				}
+				
+				default_progressbar_horizontal = {
+					size = { 90 4 }
+					
+					blockoverride "values" {
+						value = "[FixedPointToFloat(Country.GetRelationsProgress( GetPlayer ))]"
+						min = "[GetDefine('NDiplomacy', 'MIN_RELATIONS')]"
+						max = "[GetDefine('NDiplomacy', 'MAX_RELATIONS')]"
+					}
+				}
+			}
+		}
+	}
+
+	### DIPLO PACTS LIST
+	type outliner_diplomatic_pacts = flowcontainer {
+		direction = vertical
+		parentanchor = right
+		
+		datacontext = "[Outliner.AccessCategory('diplo_pacts')]"
+		datamodel = "[OutlinerEntry.AccessSubEntries]"
+
+		visible = "[OutlinerEntry.IsShown]"
+
+		item = {
+			outliner_diplomatic_pact_item = {
+				datacontext = "[OutlinerEntry.AccessScope.AccessDiplomaticPact]"
+				datacontext = "[DiplomaticPact.GetSecondCountry]"
+			}
+		}
+	}
+
+	### SITUATION ITEM
+	type situation_item = widget {
+		datacontext = "[OutlinerEntry.AccessSituation]"
+		size = { 350 35 }
+		tooltip = "[Event.GetTooltip]"
+		
+		widget = {
+			# TODO [SW]: PSGE-5093 - workaround to make data function sound always play
+			size = { 0 0 }
+			state = {
+				name = _show
+				trigger_on_create = yes
+				duration = 0.5
+				alpha = 1
+				start_sound = {
+					soundeffect = "[Event.GetOnCreatedSoundEvent]"
+				}
+			}
+		}
+		
+		button = {
+			parentanchor = vcenter
+			size = { 347 30 }
+			using = default_button
+			onclick = "[PopupManager.OpenEvent(Event.AccessSelf)]"
+			using = shimmer
+			
+			# highlight when 60 days left
+			highlight_tutorial = {
+				size = { 340 24 }
+				visible = "[LessThanOrEqualTo_int32( Event.GetNumRemainingDays, '(int32)60')]"
+			}
+		}
+		
+		hbox = {
+			spacing = 5
+
+			icon = {
+				size = { 35 35 }
+				texture = "[Event.GetEventIcon]"
+			}
+			
+			textbox = {
+				layoutpolicy_horizontal = expanding
+				size = { 0 20 }
+				text = "[Event.GetTitle]"
+				align = left|nobaseline
+				fontsize_min = 14
+				elide = right
+			}
+
+			textbox = {
+				size = { 75 20 }
+				text = "EVENT_REMAINING_DAYS"
+				align = right|nobaseline
+				elide = right
+				using = fontsize_small
+				margin_right = 10
+			}
+		}
+	}
+	
+	### SITUATIONS LIST
+	type outliner_situations = flowcontainer {
+		direction = vertical
+		parentanchor = right
+		
+		datacontext = "[Outliner.AccessCategory('situations')]"
+		datamodel = "[OutlinerEntry.AccessSubEntries]"
+
+		item = {
+			situation_item = {}
+		}
+	}
+	
+	### JOURNAL ENTRY
+	type outliner_journal_entry = journal_entry {
+		using = default_list_position
+		blockoverride "button_style" {
+			using = glow_button
+		}
+		blockoverride "background" {
+			background = {
+				using = dark_area
+				alpha = 0.3
+				
+				modify_texture = {
+					texture = "gfx/interface/masks/fade_horizontal_center.dds"
+					blend_mode = alphamultiply
+					alpha = 1
+				}
+			}
+			
+			divider_clean = {
+				size = { 95% 2 }
+				parentanchor = hcenter|bottom
+			}
+		}
+
+		visible = "[And(JournalEntry.IsValid, JournalEntry.IsPinnedInOutliner)]"
+		
+		blockoverride "flowcontainer_properties" {
+			margin = { 4 4 }
+			spacing = 4
+		}
+		blockoverride "minimumsize" {
+			minimumsize = { 340 -1 }
+		}
+		blockoverride "textsize" {
+			maximumsize = { 275 50 }
+			minimumsize = { 275 -1 }
+			fontsize_min = 14
+		}
+		blockoverride "fontsize" {}
+		blockoverride "iconsize" {
+			size = { 27 27 }
+		}
+		blockoverride "completing_iconsize" {
+			size = { 18 18 }
+		}
+		blockoverride "progressbar_size" {
+			size = { 235 6 }
+		}
+	}
+	
+	### JOURNAL ENTRIES LIST
+	type outliner_journal_entries = flowcontainer {
+		direction = vertical
+		parentanchor = hcenter
+		
+		# OBJECTIVES / TUTORIAL
+		textbox = {
+			visible = "[GetPlayer.HasObjective]"
+			raw_text = "#title [AccessPlayer.GetObjective.GetName]#!"
+			autoresize = yes
+			multiline = yes
+			align = left|nobaseline
+			minimumsize = { 340 -1 }
+			maximumsize = { 340 -1 }
+			margin = { 10 6 }
+			
+			background = {
+				using = default_header_bg
+				margin = { -2 0 }
+			}
+
+			flowcontainer = {
+				visible = "[Not(AccessPlayer.IsObjectiveIdle)]"
+				parentanchor = right|vcenter
+				position = { -3 0 }
+
+				flowcontainer = {
+					visible = "[And(GetPlayer.HasObjective, Not(IsDataModelEmpty(AccessPlayer.AccessActivePlayerObjectiveJournalEntries)))]"
+
+					flowcontainer = {
+						visible = "[NotEqualTo_int32(GetDataModelSize(AccessPlayer.AccessActivePlayerObjectiveJournalEntries), GetDataModelSize(AccessPlayer.AccessActivePinnedPlayerObjectiveJournalEntries))]"
+						spacing = 5
+
+						textbox = {
+							text = "NUMBER_OF_PLAYER_OBJECTIVE_JOURNAL_ENTRIES_SHORT"
+							autoresize = yes
+							align = left|nobaseline
+						}
+						
+						button_icon_goto = {
+							size = { 25 25 }
+							onclick = "[InformationPanelBar.OpenPanelTab('journal', 'default')]"
+							tooltip = "GO_TO_BUTTON_JOURNAL"
+						}
+					}
+				}
+
+			}
+		}
+
+		textbox = {
+			visible = "[GetPlayer.IsObjectiveIdle]"
+			text = "[AccessPlayer.GetObjective.GetObjectiveType.GetIdleHeader]"
+			autoresize = yes
+			multiline = yes
+			align = nobaseline
+			minimumsize = { 340 -1 }
+			maximumsize = { 340 -1 }
+			margin = { 10 0 }
+			margin_top = 5
+			using = fontsize_large
+		}
+
+		textbox = {
+			visible = "[GetPlayer.IsObjectiveIdle]"
+			text = "[AccessPlayer.GetObjective.GetObjectiveType.GetIdleHint]"
+			autoresize = yes
+			multiline = yes
+			align = nobaseline
+			minimumsize = { 340 -1 }
+			maximumsize = { 340 -1 }
+			margin = { 10 0 }
+			margin_bottom = 5
+		}
+
+
+		flowcontainer = {
+			direction = vertical
+			parentanchor = hcenter
+			datamodel = "[AccessPlayer.AccessActivePlayerObjectiveJournalEntries]"
+			
+			item = {
+				outliner_journal_entry = {}
+			}
+		}
+		
+		# OTHER JOURNAL ENTRIES
+		textbox = {
+			text = "ACTIVE_JOURNAL_ENTRIES"
+			autoresize = yes
+			multiline = yes
+			align = left|nobaseline
+			minimumsize = { 340 -1 }
+			maximumsize = { 340 -1 }
+			margin = { 10 6 }
+			
+			background = {
+				using = default_header_bg
+				margin = { -2 0 }
+			}
+
+			flowcontainer = {
+				visible = "[And( Not( IsDataModelEmpty(AccessPlayer.AccessActiveNonPlayerObjectiveJournalEntries) ), NotEqualTo_int32( GetDataModelSize(AccessPlayer.AccessActiveNonPlayerObjectiveJournalEntries), GetDataModelSize(AccessPlayer.AccessActivePinnedNonPlayerObjectiveJournalEntries)))]"
+				parentanchor = right|vcenter
+				position = { -3 0 }
+				spacing = 5
+
+				textbox = {
+					text = "NUMBER_OF_NON_PLAYER_OBJECTIVE_JOURNAL_ENTRIES_SHORT"
+					autoresize = yes
+					align = left|nobaseline
+				}
+				
+				button_icon_goto = {
+					size = { 25 25 }
+					onclick = "[InformationPanelBar.OpenPanelTab('journal', 'default')]"
+					tooltip = "GO_TO_BUTTON_JOURNAL"
+				}
+			}
+		}
+
+		flowcontainer = {
+			direction = vertical
+			parentanchor = hcenter
+			visible = "[Not(IsDataModelEmpty(AccessPlayer.AccessActivePinnedNonPlayerObjectiveJournalEntries))]"
+			datamodel = "[AccessPlayer.AccessActivePinnedNonPlayerObjectiveJournalEntries]"
+
+			item = {
+				outliner_journal_entry = {}
+			}
+		}
+
+		textbox = {
+			visible = "[IsDataModelEmpty(AccessPlayer.AccessActiveNonPlayerObjectiveJournalEntries)]"
+			text = "NO_JOURNAL_ENTRIES_OUTLINER"
+			autoresize = yes
+			multiline = yes
+			align = hcenter|nobaseline
+			minimumsize = { 340 -1 }
+			maximumsize = { 340 -1 }
+			margin = { 10 5 }
+		}
+	}
+	
+	### POLITICAL MOVEMENT ITEM
+	type outliner_political_movement_item = button {
+		size = { 350 85 }
+		onclick = "[InformationPanelBar.OpenChangeLaw(PoliticalMovement.AccessLaw)]"
+		using = default_button
+		
+		hbox = {
+			layoutpolicy_horizontal = expanding
+			margin = { 5 0 }
+			spacing = 5
+			
+			law_icon = {
+				datacontext = "[PoliticalMovement.GetLaw]"
+				size = { 40 40 }
+			}
+		
+			vbox = {
+				layoutpolicy_horizontal = expanding
+				spacing = 5
+				
+				textbox = {
+					layoutpolicy_horizontal = expanding
+					size = { 0 20 }
+					align = center|nobaseline
+					elide = right
+					fontsize_min = 12
+					
+					text = "[PoliticalMovement.GetName]"
+					
+					background = {
+						using = dark_area
+						alpha = 0.3
+						margin_bottom = 4
+						margin_top = 2
+						
+						modify_texture = {
+							texture = "gfx/interface/masks/fade_horizontal_center.dds"
+							blend_mode = alphamultiply
+						}
+					}
+				}
+				
+				hbox = {
+					layoutpolicy_horizontal = expanding
+					margin = { 10 0 }
+					
+					hbox = {
+						layoutpolicy_horizontal = preferred
+						layoutpolicy_vertical = preferred
+						visible = "[Not(IsDataModelEmpty(PoliticalMovement.AccessSupportingInterestGroups))]"
+
+						dynamicgridbox = {
+							datamodel = "[PoliticalMovement.AccessSupportingInterestGroups]"
+							datamodel_wrap = 4
+							flipdirection = yes
+
+							item = {
+								ig_button = {
+									size = { 25 25 }
+									tooltip = "CLOUT_PIECHART"
+								}
+							}
+						}
+					}
+
+					vbox = {
+						layoutpolicy_horizontal = expanding
+						layoutpolicy_vertical = preferred
+
+						textbox = {
+							layoutpolicy_horizontal = expanding
+							size = { 0 20 }
+							align = right|nobaseline
+							elide = right
+							fontsize_min = 12
+							text = "POLITICAL_MOVEMENT_SUPPORT_WITH_LABEL"
+						}
+
+						textbox = {
+							layoutpolicy_horizontal = expanding
+							visible = "[Not(PoliticalMovement.IsPlacated)]"
+							size = { 0 20 }
+							align = right|nobaseline
+							elide = right
+							fontsize_min = 12
+							text = "POLITICAL_MOVEMENT_RADICALISM_WITH_LABEL"
+						}
+
+						textbox = {
+							layoutpolicy_horizontal = expanding
+							size = { 0 20 }
+							align = right|nobaseline
+							elide = right
+							fontsize_min = 12
+							
+							visible = "[PoliticalMovement.IsPlacated]"
+							text = "[concept_political_movement_placated]"
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	### POLITICAL MOVEMENT LIST
+	type outliner_political_movement = flowcontainer {
+		datamodel = "[AccessPlayer.AccessPoliticalMovements]"
+		visible = "[Not(IsDataModelEmpty(AccessPlayer.AccessPoliticalMovements))]"
+		direction = vertical
+		parentanchor = right
+		
+		item = {
+			outliner_political_movement_item = {}
+		}
+	}
+
+	### ELECTION
+	type outliner_election = button {
+		using = default_list_position
+		size = { 350 35 }
+		using = default_button
+		visible = "[AccessPlayer.IsInElectionCampaignPeriod]"
+		onclick = "[InformationPanelBar.OpenElectionPanel(AccessPlayer)]"
+		tooltip = "[AccessPlayer.GetElectionPollTooltip]"
+
+		hbox = {
+			layoutpolicy_horizontal = expanding
+			margin = { 10 0 }
+			spacing = 5
+
+			icon = {
+				size = { 30 30 }
+				texture = "gfx/interface/icons/event_icons/event_default.dds"
+			}
+
+			textbox = {
+				text = "DAYS_UNTIL_ELECTION"
+				layoutpolicy_horizontal = expanding
+				size = { 0 20 }
+				align = left|nobaseline
+				elide = right
+			}
+
+			textbox = {
+				text = "ELECTION_REMAINING_DAYS"
+				autoresize = yes
+				align = nobaseline
+			}
+		}
+	}
+
+	### CIVIL WARS LIST
+	type outliner_civil_wars = flowcontainer {
+		using = default_list_position
+		datamodel = "[AccessPlayer.AccessCivilWars]"
+		visible = "[Not(IsDataModelEmpty(AccessPlayer.AccessCivilWars))]"
+		direction = vertical
+		spacing = 2
+
+		item = {
+			flowcontainer = {
+				direction = vertical
+				alwaystransparent = no
+				onmousehierarchyenter = "[AccessHighlightManager.HighlightCivilWarCountry( CivilWar.Self )]"
+				onmousehierarchyleave = "[AccessHighlightManager.RemoveHighlight]"
+				visible = "[Not( CivilWar.HasBrokenOut )]"
+				spacing = 6
+
+				#### REVOLUTION PROGRESSBAR ####
+				bad_progressbar_horizontal = {
+					visible = "[And(CivilWar.IsRevolution, CivilWar.HasPoliticalMovement)]"
+					size = { 342 30 }
+					tooltip = "REVOLUTIONS_PROGRESS_TOOLTIP"
+
+					blockoverride "values" {
+						value = "[FixedPointToFloat( CivilWar.GetProgress )]"
+						min = 0
+						max = 1
+					}
+
+					flowcontainer = {
+						parentanchor = vcenter
+						margin_left = 10
+						spacing = 7
+						dynamicgridbox = {
+							datamodel = "[CivilWar.AccessInsurrectionaryIGs( GetPlayer.Self )]"
+							flipdirection = yes
+							item = {
+								ig_button = {
+									size = { 23 23 }
+								}
+							}
+						}
+						### revolution header
+						textbox = {
+							text = "REVOLUTIONS_HEADER"
+							tooltip = "REVOLUTIONS_HEADER_TOOLTIP"
+							align = nobaseline
+							autoresize = yes
+						}
+					}
+
+					textbox = {
+						text = "[CivilWar.GetProgress|%0v]"
+						autoresize = yes
+						align = nobaseline
+						parentanchor = right|vcenter
+						margin_right = 35
+					}
+					
+					blockoverride "in_government_icon"{}
+
+					icon = {
+						parentanchor = right|vcenter
+						size = { 25 25 }
+						texture = "gfx/interface/icons/politics_icons/radicalized.dds"
+						position = { -5 0 }
+					}
+				}
+
+				#### SECESSION PROGRESSBAR ####
+				bad_progressbar_horizontal = {
+					visible = "[CivilWar.IsSecession]"
+					size = { 342 30 }
+					tooltip = "SECESSION_PROGRESS_TOOLTIP"
+
+					blockoverride "values" {
+						value = "[FixedPointToFloat( CivilWar.GetProgress )]"
+						min = 0
+						max = 1
+					}
+
+					### secession header
+					textbox = {
+						text = "SECESSION_HEADER"
+						tooltip = "SECESSION_HEADER_TOOLTIP"
+						elide = right
+						align = nobaseline
+						autoresize = yes
+						parentanchor = vcenter
+						margin_left = 10
+					}
+
+					textbox = {
+						text = "[CivilWar.GetProgress|%0v]"
+						autoresize = yes
+						align = nobaseline
+						parentanchor = right|vcenter
+						margin_right = 35
+					}
+
+					icon = {
+						parentanchor = right|vcenter
+						size = { 25 25 }
+						texture = "gfx/interface/icons/war_goals/secession.dds"
+						position = { -5 0 }
+					}
+				}
+			}
+		}
+	}
+}
