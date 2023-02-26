@@ -1,32 +1,19 @@
 ﻿# triggered by UN Resolution Screen
 je_declaration_of_human_rights = {
-	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+	icon = "gfx/interface/icons/cwp_icons/united_nations.dds"
 
-	on_monthly_pulse = {
+	possible = {
+		OR = {
+			has_variable = un_member
+			has_variable = unsc_member
+		}
+	}
+
+	on_weekly_pulse = {
 		effect = {
-			if = {
-				limit = {
-					NOT = { has_law = law_type:law_monarchy }
-					NOT = {
-						any_civil_war = {
-							civil_war_progress > 0.5
-							is_civil_war_type = revolution
-						}
-					}
-					NOT = {
-						any_interest_group = {
-							law_stance = {
-								law = law_type:law_monarchy
-								value > neutral
-							}
-							is_powerful = yes
-						}
-					}
-				}
-				change_variable = {
-					name = abolishing_monarchy_var
-					add = 1
-				}
+			change_global_variable = {
+				name = pending_resolution_progress
+				add = 0.1
 			}
 		}
 	}
@@ -35,56 +22,40 @@ je_declaration_of_human_rights = {
 		scope:journal_entry = {
 			is_goal_complete = yes
 		}
-		NOT = { has_law = law_type:law_monarchy }
-		NOT = {
-			any_civil_war = {
-				civil_war_progress > 0.5
-				is_civil_war_type = revolution
-			}
+		custom_tooltip = {
+			text = "WILLCOMPLETEUN"
+			un_support_value > un_oppose_value
 		}
-		NOT = {
-			any_interest_group = {
-				law_stance = {
-					law = law_type:law_monarchy
-					value > neutral
-				}
-				is_powerful = yes
-			}
+	}
+
+	fail = {
+		scope:journal_entry = {
+			is_goal_complete = yes
+		}
+		custom_tooltip = {
+			text = "WILLFAILUN"
+			un_oppose_value > un_support_value
 		}
 	}
 
 	on_complete = {
-		trigger_event = {
-			id = 1848.2
-		}
-		if = {
-			limit = { has_journal_entry = je_warlord_china }
-			post_notification = warlord_china_explosion_point_remove
-			change_variable = {
-				name = china_warlord_explosion
-				subtract = 1
-			}
-			set_variable = china_warlord_abolished_monarchy
-		}
+		trigger_event = declaration_of_human_rights.1
+		remove_global_variable = pending_resolution
+		effect_reset_un_lists = yes
 	}
 
-	invalid = {
-		NOR = {
-			is_enacting_law = law_type:law_presidential_republic
-			is_enacting_law = law_type:law_parliamentary_republic
-			is_enacting_law = law_type:law_council_republic
-			has_law = law_type:law_presidential_republic
-			has_law = law_type:law_parliamentary_republic
-			has_law = law_type:law_council_republic
-		}
+	on_fail = {
+		trigger_event = declaration_of_human_rights.2
+		remove_global_variable = pending_resolution
+		effect_reset_un_lists = yes
 	}
 
 	current_value = {
-		value = root.var:abolishing_monarchy_var
+		value = global_var:pending_resolution_progress
 	}
 
 	goal_add_value = {
-		add = 60
+		add = 100
 	}
 
 	progressbar = yes
