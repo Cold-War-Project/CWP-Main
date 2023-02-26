@@ -403,16 +403,30 @@ types un_panel
 												datamodel = "[GetGlobalList('un_members_list')]"
 												item = {
 													flowcontainer = {
+														direction = vertical
 														margin_bottom = 10
 														datacontext = "[Scope.AccessCountry]"
-														small_flag = {
-															visible = "[Country.MakeScope.Var('is_opposing').IsSet]"
-															parentanchor = vcenter
-															using = tooltip_above
-															datacontext = "[Scope.AccessCountry]"						
-															tooltip = "[ContextualDiplomaticPact.GetTooltip]"
-															onclick = "[GetVariableSystem.Clear('un_panel')]"
-															onclick = "[GetVariableSystem.Clear('international_open')]"
+														flowcontainer = {
+															spacing = 30
+															margin_bottom = -10
+															direction = vertical
+															small_flag = {
+																visible = "[Country.MakeScope.Var('is_opposing').IsSet]"
+																parentanchor = vcenter
+																using = tooltip_above
+																datacontext = "[Scope.AccessCountry]"						
+																tooltip = "[ContextualDiplomaticPact.GetTooltip]"
+																onclick = "[GetVariableSystem.Clear('un_panel')]"
+																onclick = "[GetVariableSystem.Clear('international_open')]"
+															}
+															textbox = {
+																margin_left = 50
+																margin_top = 5
+																align = center
+																visible = "[Country.MakeScope.Var('is_opposing').IsSet]"
+																raw_text = "[Country.MakeScope.ScriptValue('diplomatic_weight')]"
+																using = fontsize_small
+															}
 														}
 													}
 												}
@@ -421,12 +435,21 @@ types un_panel
 									}
 								}
 								button = {
-									using = default_button_primary
+									using = default_button_map_interaction
 									size = { 170 50 }
 									raw_text = "OPPOSE_OPTION"
 									onclick = "[GetScriptedGui('add_opposing').Execute( GuiScope.SetRoot( GetPlayer.MakeScope ).End )]"
-									#enabled = "[GetGlobalVariable('pending_resolution').IsSet]"
+									enabled = "[GetGlobalVariable('pending_resolution').IsSet]"
 								}
+								button = {
+									visible = "[GetPlayer.MakeScope.Var('unsc_member').IsSet]"
+									using = default_button_primary
+									position = { -50 -80 }
+									size = { 170 40 }
+									raw_text = "VETO_OPTION"
+									onclick = "[GetScriptedGui('add_veto').Execute( GuiScope.SetRoot( GetPlayer.MakeScope ).End )]"
+									enabled = "[GetGlobalVariable('pending_resolution').IsSet]"
+								}	
 							}
 							flowcontainer = { # Voting Bar
 								position = { 0 0 }
@@ -434,49 +457,56 @@ types un_panel
 								margin_top = 360
 								spacing = 5
 								widget = {
-									size = { 50 50 }
+									size = { 720 50 }
 									parentanchor = hcenter
-									round_progress_default = {
-										position = { -5 -7 }
-										size = { 60 60 }
-										value = 0.7
-									}
-									textbox = {
-										margin_bottom = -40
-										margin_left = 10
-										text = "VOTING_BALANCE"
-										using = fontsize_large
-									}
-									background = {
-										using = circle_bg_simple_dark
-									}
-									
-								}
-								flowcontainer = {
-									direction = horizontal
-									double_direction_progressbar = {
-										blockoverride "value_left" {
-											value = "[Negate_float(FixedPointToFloat(GetPlayer.MakeScope.ScriptValue('voting_balance')))]"
-											max = "[GetPlayer.MakeScope.ScriptValue('doubleprogressbar_max')]"
+									flowcontainer = {
+										position = { 333 -10 }
+										round_progress_default = {
+											visible = "[GetGlobalVariable('pending_resolution').IsSet]"
+											size = { 60 60 }
+											value = "[FixedPointToFloat(GetPlayer.MakeScope.ScriptValue('pending_resolution_progress_value_round'))]"
 										}
-										blockoverride "value_right" {
-											value = "[FixedPointToFloat(GetPlayer.MakeScope.ScriptValue('voting_balance'))]"
-											max = "[GetPlayer.MakeScope.ScriptValue('doubleprogressbar_max')]"
+										round_progress_default = {
+											size = { 60 60 }
+											value = "0"
+											visible = "[Not(GetGlobalVariable('pending_resolution').IsSet)]"
+											enabled = no
 										}
-										size = { 745 25 }
-									}
-#									bad_progressbar_horizontal = {
-#										size = { 360 25 }
-#										blockoverride "values" {
-#											value = 60
-#										}
-#									}
-#									green_progressbar_horizontal = {
-#										size = { 360 25 }
-#										blockoverride "values" {
-#											value = 60
-#										}
-#									}
+										textbox = {
+											margin_bottom = 40
+											margin_left = -100
+											text = "[GetPlayer.GetCustom('un_voting_balance')]"
+											using = fontsize_medium
+										}
+										background = {
+											using = dropdown_background
+										}
+
+									}	
+									flowcontainer = {
+										position = { 3 55 }
+										direction = horizontal
+										double_direction_progressbar = {
+											size = { 715 25 }					
+											blockoverride "negative_min_max_values" {
+												min = -0.75
+												max = "[FixedPointToFloat(GetPlayer.MakeScope.ScriptValue('doubleprogressbar_max'))]"
+											}
+					
+											blockoverride "positive_min_max_values" {
+												min = 0
+												max = "[FixedPointToFloat(GetPlayer.MakeScope.ScriptValue('doubleprogressbar_max'))]"
+											}
+											
+											blockoverride "value_left" {
+												value = "[FixedPointToFloat(GetPlayer.MakeScope.ScriptValue('un_support_value'))]"
+											}
+											blockoverride "value_right" {
+												value = "[FixedPointToFloat(GetPlayer.MakeScope.ScriptValue('un_support_value'))]"
+											}
+											enabled = "[GetGlobalVariable('pending_resolution').IsSet]"
+										}
+									}		
 								}
 							}
 							flowcontainer = { # Supporters
@@ -502,16 +532,30 @@ types un_panel
 												datamodel = "[GetGlobalList('un_members_list')]"
 												item = {
 													flowcontainer = {
+														direction = vertical
 														margin_bottom = 10
 														datacontext = "[Scope.AccessCountry]"
-														small_flag = {
-															visible = "[Country.MakeScope.Var('is_supporting').IsSet]"
-															parentanchor = vcenter
-															using = tooltip_above
-															datacontext = "[Scope.AccessCountry]"						
-															tooltip = "[ContextualDiplomaticPact.GetTooltip]"
-															onclick = "[GetVariableSystem.Clear('un_panel')]"
-															onclick = "[GetVariableSystem.Clear('international_open')]"
+														flowcontainer = {
+															spacing = 30
+															margin_bottom = -10
+															direction = vertical
+															small_flag = {
+																visible = "[Country.MakeScope.Var('is_supporting').IsSet]"
+																parentanchor = vcenter
+																using = tooltip_above
+																datacontext = "[Scope.AccessCountry]"						
+																tooltip = "[ContextualDiplomaticPact.GetTooltip]"
+																onclick = "[GetVariableSystem.Clear('un_panel')]"
+																onclick = "[GetVariableSystem.Clear('international_open')]"
+															}
+															textbox = {
+																margin_left = 50
+																margin_top = 5
+																align = center
+																visible = "[Country.MakeScope.Var('is_supporting').IsSet]"
+																raw_text = "[Country.MakeScope.ScriptValue('diplomatic_weight')]"
+																using = fontsize_small
+															}
 														}
 													}
 												}
@@ -520,11 +564,11 @@ types un_panel
 									}
 								}
 								button = {
-									using = default_button_primary
+									using = default_button_map_interaction
 									size = { 170 50 }
 									raw_text = "SUPPORT_OPTION"
 									onclick = "[GetScriptedGui('add_supporting').Execute( GuiScope.SetRoot( GetPlayer.MakeScope ).End )]"
-									#enabled = "[GetGlobalVariable('pending_resolution').IsSet]"
+									enabled = "[GetGlobalVariable('pending_resolution').IsSet]"
 								}
 							}
 						}
@@ -547,15 +591,17 @@ types un_panel
 										layoutpolicy_horizontal = expanding
 										layoutpolicy_vertical = expanding
 										blockoverride "scrollbox_content" {
-											dynamicgridbox = {
-												flipdirection = yes
-
+											fixedgridbox = {
+												addcolumn = 60
+                                                addrow = 50
+                                                datamodel_wrap = 10
+                                                flipdirection = yes
 												datamodel = "[GetGlobalList('un_members_list')]"
 												item = {
 													flowcontainer = {
 														margin = { 5 5 }
 														small_flag = {
-															visible = "[Not(Or(Country.MakeScope.Var('is_supporting').IsSet, Country.MakeScope.Var('is_opposing').IsSet))]"
+															enabled = "[Not(Or(Country.MakeScope.Var('is_supporting').IsSet, Country.MakeScope.Var('is_opposing').IsSet))]"
 															parentanchor = vcenter
 															using = tooltip_above
 															datacontext = "[Scope.AccessCountry]"						
@@ -573,14 +619,14 @@ types un_panel
 											size = { 170 40 }
 											raw_text = "Abstain"
 											onclick = "[GetScriptedGui('add_abstaining').Execute( GuiScope.SetRoot( GetPlayer.MakeScope ).End )]"
-											#enabled = "[GetGlobalVariable('pending_resolution').IsSet]"
+											enabled = "[GetGlobalVariable('pending_resolution').IsSet]"
 										}
 									}
 								}
 							}
 					}
 				}
-				flowcontainer = {
+				flowcontainer = { ####### UN RESOLUTIONS
 					visible = "[And(GetVariableSystem.Exists('un_panel'), GetVariableSystem.Exists('un_resolutions'))]"
 					direction = vertical
 					parentanchor = left|top
@@ -599,14 +645,12 @@ types un_panel
 							using = fontsize_large
 						}
 					}
-					scrollbox = {
+					scrollbox = { ### Categories
 						minimumsize = { 1050 510 }
 						hbox = {
 							layoutpolicy_horizontal = expanding
 							position = { 0 0 }
 							align = center|top
-							addcolumn = 100
-							addrow = 24
 							flowcontainer = {
 								direction = vertical
 								tab_button = {
@@ -632,11 +676,15 @@ types un_panel
 											size = { 210 45 }
 											using = expand_button_bg_no_fade
 											text = "[concept_human_rights_resolution]"
+											onclick = "[GetScriptedGui('activate_declaration_of_human_rights_je').Execute( GuiScope.SetRoot( GetPlayer.MakeScope ).End )]"
 											using = fontsize_medium
+											enabled = "[GetScriptedGui('declaration_of_human_rights_varcheck').IsShown( GuiScope.End )]"
 										}
 										button_icon_check = {
 											position = { 215 10 }
 											size = { 40 40 }
+											onclick = "[GetScriptedGui('activate_declaration_of_human_rights_je').Execute( GuiScope.SetRoot( GetPlayer.MakeScope ).End )]"
+											enabled = "[GetScriptedGui('declaration_of_human_rights_varcheck').IsShown( GuiScope.End )]"											
 										}
 									}
 								}
@@ -662,18 +710,6 @@ types un_panel
 								}
 							}
 						}
-					}
-				}
-				flowcontainer = {
-					visible = "[And(GetVariableSystem.Exists('un_panel'), GetVariableSystem.Exists('un_passed'))]"
-					direction = vertical
-					parentanchor = left|top
-					spacing = 10
-					margin = { 20 20 }
-					position = { 150 147 }
-					minimumsize = { 1100 650 }
-					background = {
-						using = dropdown_background
 					}
 				}
 		}
