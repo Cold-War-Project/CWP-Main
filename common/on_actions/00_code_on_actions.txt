@@ -17,6 +17,111 @@ on_yearly_pulse_country = {
 	}
 }
 
+on_monthly_pulse_country = {
+	# Pollution Calculations
+	effect = {
+		if = {
+			limit = {
+				exists = global_var:global_var_pollution
+				exists = global_var:global_var_temperature_celsius
+			}
+			set_global_variable = {
+				name = global_var_pollution
+				value = global_pollution_value
+			}
+			set_global_variable = {
+				name = global_var_temperature_celsius
+				value = global_temperature_value_celsius
+			}
+			#debug_log = debug_loc_string_pollution
+		}
+		#Corruption Calculations
+		if = {
+			limit = {
+				var:var_corruption < 0
+			}
+			set_variable = {
+				name = var_corruption
+				value = 0
+			}
+		}
+		if = {
+			limit = {
+				var:var_corruption >= 100
+			}
+			set_variable = {
+				name = var_corruption
+				value = 100
+			}
+		}
+		if = {
+			limit = {
+				var:var_corruption >= corruption_baseline
+			}
+			change_variable = {
+				name = var_corruption
+				subtract = corruption_decay
+			}
+		}
+		if = {
+			limit = {
+				var:var_corruption <= corruption_baseline
+			}
+			change_variable = {
+				name = var_corruption
+				add = corruption_growth
+			}
+		}
+		# Adds appropriate modifier
+		if = {
+			limit = {
+				NOT = {
+					has_variable = var_corruption
+				}
+			}
+			set_variable = {
+				name = var_corruption
+				value = 0
+			}
+		}
+		if = {
+			limit = {
+				exists = var:var_corruption
+			}
+			remove_modifier = corruption_modifier_effects
+			add_modifier = {
+				name = corruption_modifier_effects
+				multiplier = corruption_modifier
+			}
+		}
+		else_if = {
+			set_variable = {
+				name = var_corruption
+				value = corruption_value
+			}
+		}
+		# UN Calculations
+		if = {
+			limit = {
+				exists = global_var:var_un_memberlist
+			}
+			set_global_variable = {
+				name = var_un_memberlist
+				value = 0
+			}
+			every_country = {
+				limit = {
+					has_variable = un_member
+				}
+				change_global_variable = {
+					name = var_un_memberlist
+					add = 1
+				}
+			}
+		}
+	}
+}
+
 on_half_yearly_pulse_country = {
 }
 
