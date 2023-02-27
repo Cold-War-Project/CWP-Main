@@ -18,7 +18,7 @@ je_declaration_of_human_rights = {
 	}
 
 	goal_add_value = {
-		add = 100
+		add = 100 # was 100, temp testing value
 	}
 
 	on_weekly_pulse = {
@@ -29,11 +29,9 @@ je_declaration_of_human_rights = {
 			}
 			#### Updates Diplo weight for countries
 			if = {
-				limit = {
-					NOT = {
-						has_global_variable = listvarupdated
-					}
-				}
+				limit = { NOT = { has_global_variable = weekly_reset } }
+				
+				# reset the variables to 0
 				set_global_variable = {
 					name = is_supporting_list
 					value = 0
@@ -42,13 +40,14 @@ je_declaration_of_human_rights = {
 					name = is_opposing_list
 					value = 0
 				}
-				remove_global_variable = listvarupdated
+				set_global_variable = {
+					name = weekly_reset
+					days = 1
+				}
 			}
 			if = {
 				limit = {
-					THIS = {
-						has_variable = is_supporting
-					}
+					has_variable = is_supporting
 				}
 				change_global_variable = {
 					name = is_supporting_list
@@ -57,18 +56,16 @@ je_declaration_of_human_rights = {
 			}
 			if = {
 				limit = {
-					THIS = {
-						has_variable = is_opposing
-					}
+					has_variable = is_opposing
 				}
 				change_global_variable = {
 					name = is_opposing_list
 					add = diplomatic_weight
 				}
 			}
-			set_global_variable = listvarupdated
 		}
 	}
+	##### TODO, #32 Journal completion does NOT trigger event
 	complete = {
 		and = {
 			scope:journal_entry = {
@@ -80,6 +77,7 @@ je_declaration_of_human_rights = {
 			}
 		}
 	}
+
 	fail = {
 		or = {
 			AND = {
@@ -97,21 +95,31 @@ je_declaration_of_human_rights = {
 			}
 		}
 	}
+
 	on_complete = {
-		trigger_event = un_resolution_events.1
+		every_country = {
+			trigger_event = { id = un_resolution_events.1 }
+		}
 		effect_reset_un_lists = yes
 		set_global_variable = declaration_of_human_rightscomplete
 	}
+
 	on_fail = {
-		trigger_event = un_resolution_events.2
+		every_country = {
+			trigger_event =  { id = un_resolution_events.2 }
+		}
 		effect_reset_un_lists = yes
 		set_global_variable = {
 			name = declaration_of_human_rightsfail
 			days = 365
 		}
 	}
-
-
+	current_value = {
+		value = pending_resolution_progress_value
+	}
+	goal_add_value = {
+		add = 100
+	}
 	progressbar = yes
 	weight = 100
 }
