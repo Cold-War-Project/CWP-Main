@@ -113,7 +113,7 @@ military_party = {
 	# scope:number - the number of IGs that would join this party before the root IG
 	join_weight = {
 		value = {
-			value = -5
+			value = 0
 			desc = "base_value"
 		}
 		if = {
@@ -1433,6 +1433,100 @@ military_party = {
 				value = 1
 			}
 		}
+		# If the nation doesn't have a professional army, the armed forces are more likely to join the party
+		if = {
+			limit = {
+				is_interest_group_type = ig:ig_armed_forces
+				NOT = {
+					is_marginal = yes
+				}
+				owner = {
+					NOT = {
+						has_law = law_professional_army
+					}
+				}
+			}
+			multiply = {
+				value = 2
+				desc = "from_no_professional_army"
+			}
+		}
+		# If a national already has a professional army, the armed forces will likely seek another party to join
+		else_if = {
+			limit = {
+				is_interest_group_type = ig:ig_armed_forces
+				NOT = {
+					is_marginal = yes
+				}
+				owner = {
+					has_law = law_professional_army
+				}
+			}
+			multiply = {
+				value = 0.5
+				desc = "from_professional_army"
+			}
+		}
+		if = {
+			# nobody will join if the military don't join
+			limit = {
+				NOT = {
+					is_interest_group_type = ig:ig_armed_forces
+				}
+				OR = {
+					NOT = {
+						exists = owner.py:military_party
+					}
+					AND = {
+						exists = owner.py:military_party
+						owner = {
+							ig:ig_armed_forces = {
+								NOT = {
+									is_member_of_party = owner.py:military_party
+								}
+							}
+						}
+					}
+				}
+			}
+			# this should probably never actually display in game because the party won't exist unless miraculously it does
+			multiply = {
+				value = 0.5
+				desc = "from_no_armed_forces_in_party"
+			}
+		}
+		# Leader Ideology weights
+		# If the IG leader likes the army, and the IG is powerful, they're more likely to join
+		# You either like or LOVE the army or you have no opinion of it
+		if = {
+			limit = {
+				is_powerful = yes
+				leader = {
+					or = {
+						has_ideology = ideology_neo_fascist
+					}
+				}
+			}
+			multiply = {
+				value = 1.5
+				desc = "from_powerful_leader_ideology"
+			}
+		}
+		# If the IG leader LOVES the army, they'll probably join
+		if = {
+			limit = {
+				leader = {
+					or = {
+						has_ideology = ideology_irredentist
+					}
+				}
+			}
+			multiply = {
+				value = 2
+				desc = "from_leader_ideology"
+			}
+		}
+		# Party Size weights
 		if = {
 			limit = {
 				scope:number = 1
