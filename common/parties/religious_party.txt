@@ -188,7 +188,7 @@ religious_party = {
 	# scope:number - the number of IGs that would join this party before the root IG
 	join_weight = {
 		value = {
-			value = -5
+			value = 0
 			desc = "base_value"
 		}
 		if = {
@@ -785,6 +785,72 @@ religious_party = {
 				value = 1
 			}
 		}
+		if = {
+			# nobody will join if the church doesn't join
+			limit = {
+				NOT = {
+					is_interest_group_type = ig:ig_devout
+				}
+				OR = {
+					NOT = {
+						exists = owner.py:religious_party
+					}
+					AND = {
+						exists = owner.py:religious_party
+						owner = {
+							ig:ig_armed_forces = {
+								NOT = {
+									is_member_of_party = owner.py:religious_party
+								}
+							}
+						}
+					}
+				}
+			}
+			# this should probably never actually display in game because the party won't exist unless miraculously it does
+			multiply = {
+				value = 0.5
+				desc = "from_no_armed_forces_in_party"
+			}
+		}
+		# Leader Ideology weights
+		# If the leader LOVES state religion, they're more likely to join
+		if = {
+			limit = {
+				leader = {
+					has_ideology = ideology_political_islamist
+				}
+			}
+			multiply = {
+				value = 2
+				desc = "from_leader_ideology"
+			}
+		}
+		# If the leader hates or dislikes state atheism, or likes or approves of freedom_of_conscience, and the IG is powerful, they're more likely to join
+		if = {
+			limit = {
+				is_powerful = yes
+				leader = {
+					or = {
+						has_ideology = ideology_liberation_theologist
+						has_ideology = ideology_christian_democrat
+						has_ideology = ideology_political_islamist
+					}
+				}
+			}
+			multiply = {
+				value = 1.5
+				desc = "from_leader_ideology"
+			}
+		}
+		# Otherwise they're not likely to join
+		else = {
+			multiply = {
+				value = 0.5
+				desc = "from_leader_ideology"
+			}
+		}
+		# Party Size weights
 		if = {
 			limit = {
 				scope:number = 1
