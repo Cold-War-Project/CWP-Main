@@ -1,12 +1,6 @@
 ﻿ai_strategy_maintain_power_balance = {
 	icon = "gfx/interface/icons/ai_strategy_icons/maintain_power_balance.dds"
 	type = diplomatic
-	wanted_army_ratio = {
-		value = 200000
-	}
-	wanted_navy_ratio = {
-		value = 400000
-	}
 	undesirable_infamy_level = {
 		value = 25
 	}
@@ -40,12 +34,6 @@
 				}
 			}
 			add = 0.25
-			if = {
-				limit = {
-					has_technology_researched = civilizing_mission
-				}
-				add = 0.5
-			}
 		}
 		# Less aggressive against countries we're just antagonistic against, rather than belligerent/domineering
 		if = {
@@ -93,15 +81,23 @@
 		liberate_country = 1.5
 	}
 	possible = {
-		always = yes
+		NOT = {
+			country_rank = rank_value:superpower
+		}
 	}
 	weight = {
 		value = 10
 		if = {
 			limit = {
-				country_rank < rank_value:major_power
+				country_rank <= rank_value:great_power
 			}
 			add = 10
+		}
+		if = {
+			limit = {
+				country_is_in_europe = yes
+			}
+			add = 100
 		}
 	}
 }
@@ -110,10 +106,10 @@ ai_strategy_territorial_expansion = {
 	icon = "gfx/interface/icons/ai_strategy_icons/territorial_expansion.dds"
 	type = diplomatic
 	wanted_army_ratio = {
-		value = 150000
+		value = 300000
 	}
 	wanted_navy_ratio = {
-		value = 400000
+		value = 600000
 	}
 	undesirable_infamy_level = {
 		value = 50
@@ -192,7 +188,9 @@ ai_strategy_territorial_expansion = {
 		return_state = 1.5
 	}
 	possible = {
-		always = yes
+		NOT = {
+			country_rank = rank_value:superpower
+		}
 	}
 	weight = {
 		value = 10
@@ -388,6 +386,9 @@ ai_strategy_colonial_expansion = {
 			has_law = law_type:law_colonial_resettlement
 			has_law = law_type:law_colonial_exploitation
 		}
+		NOT = {
+			country_rank = rank_value:superpower
+		}
 	}
 	weight = {
 		value = 10
@@ -415,12 +416,6 @@ ai_strategy_colonial_expansion = {
 			}
 			multiply = 1.5
 		}
-		if = {
-			limit = {
-				has_technology_researched = civilizing_mission
-			}
-			multiply = 1.25
-		}
 	}
 }
 
@@ -428,10 +423,10 @@ ai_strategy_armed_isolationism = {
 	icon = "gfx/interface/icons/ai_strategy_icons/armed_isolationism.dds"
 	type = diplomatic
 	wanted_army_ratio = {
-		value = 150000
+		value = 250000
 	}
 	wanted_navy_ratio = {
-		value = 500000
+		value = 700000
 	}
 	undesirable_infamy_level = {
 		value = 1
@@ -473,7 +468,7 @@ ai_strategy_armed_isolationism = {
 	}
 	possible = {
 		NOT = {
-			country_rank = rank_value:great_power
+			country_rank = rank_value:superpower
 		}
 	}
 	weight = {
@@ -500,13 +495,13 @@ ai_strategy_armed_isolationism = {
 			limit = {
 				country_rank = rank_value:great_power
 			}
-			multiply = 0.1
+			multiply = 0.05
 		}
 		if = {
 			limit = {
 				country_rank = rank_value:major_power
 			}
-			multiply = 0.5
+			multiply = 0.15
 		}
 	}
 }
@@ -760,5 +755,201 @@ ai_strategy_economic_imperialism = {
 			}
 			multiply = 1.5
 		}
+		if = {
+			limit = {
+				country_is_in_europe = yes
+			}
+			multiply = 0.1
+		}
+	}
+}
+
+ai_strategy_global_liberalism = {
+	icon = "gfx/interface/icons/ai_strategy_icons/economic_imperialism.dds"
+	type = diplomatic
+	wanted_army_ratio = {
+		value = 500000
+	}
+	wanted_navy_ratio = {
+		value = 300000
+	}
+	undesirable_infamy_level = {
+		value = 25
+	}
+	unacceptable_infamy_level = {
+		value = 50
+	}
+	ideological_opinion_effect_mult = {
+		value = 1
+	}
+	wargoal_maneuvers_fraction = {
+		value = 0
+		if = {
+			limit = {
+				scope:enemy_country = {
+					is_country_type = unrecognized
+				}
+			}
+			add = 0.25
+		}
+	}
+	diplomatic_play_neutrality = {
+		value = 10
+	}
+	diplomatic_play_boldness = {
+		value = -10
+	}
+	recklessness = {
+		value = -0.1
+	}
+	aggression = {
+		value = 0.5
+		if = {
+			limit = {
+				NOT = {
+					is_country_type = unrecognized
+				}
+				scope:target_country = {
+					is_country_type = unrecognized
+				}
+			}
+			add = 0.5
+			if = {
+				limit = {
+					has_technology_researched = civilizing_mission
+				}
+				add = 0.5
+			}
+		}
+		if = {
+			limit = {
+				has_technology_researched = civilizing_mission
+				scope:target_country = {
+					has_law = law_type:law_isolationism
+					capital.region = sr:region_japan
+				}
+			}
+			add = 10
+		}
+		# Less aggressive against countries we're just antagonistic against, rather than belligerent/domineering
+		if = {
+			limit = {
+				has_attitude = {
+					who = scope:target_country
+					attitude = antagonistic
+				}
+			}
+			multiply = 0.25
+		}
+		# More aggressive against ideological enemies, a bit less aggressive against ideological allies
+		if = {
+			limit = {
+				"ai_ideological_opinion(scope:target_country)" < 0
+			}
+			multiply = {
+				value = "ai_ideological_opinion(scope:target_country)"
+				multiply = -0.2
+				add = 1
+				max = 4
+			}
+		}
+		else = {
+			multiply = {
+				value = "ai_ideological_opinion(scope:target_country)"
+				multiply = -0.05
+				add = 1
+				min = 0.5
+			}
+		}
+	}
+	building_group_weights = {
+		bg_navy = 1.5
+	}
+	secret_goal_scores = {
+		dominate = {
+			if = {
+				limit = {
+					has_strategic_adjacency = scope:target_country
+					scope:target_country = {
+						has_law = law_type:law_isolationism
+						capital.region = sr:region_japan
+					}
+				}
+				add = 1000
+			}
+			if = {
+				limit = {
+					has_strategic_adjacency = scope:target_country
+					scope:target_country = {
+						has_law = law_type:law_isolationism
+						NOT = {
+							capital.region = sr:region_japan
+						}
+					}
+				}
+				add = 100
+			}
+			if = {
+				limit = {
+					has_strategic_adjacency = scope:target_country
+					root.country_rank > scope:target_country.country_rank
+					scope:target_country = {
+						NOR = {
+							has_law = law_type:law_free_trade
+							has_law = law_type:law_isolationism
+						}
+					}
+				}
+				add = 50
+			}
+		}
+		conquer = {
+			if = {
+				limit = {
+					has_strategic_adjacency = scope:target_country
+					scope:target_country = {
+						is_country_type = unrecognized
+					}
+				}
+				add = 50
+			}
+			if = {
+				limit = {
+					scope:target_country = {
+						NOT = {
+							is_country_type = unrecognized
+						}
+					}
+				}
+				multiply = 0.5
+			}
+		}
+	}
+	wargoal_weights = {
+		take_treaty_port = 1.5
+		make_puppet = 1.5
+		make_dominion = 1.5
+		make_vassal = 1.5
+	}
+	wargoal_scores = {
+		open_market = {
+			value = 0
+			if = {
+				limit = {
+					can_reach_target_country = yes
+					scope:target_country = {
+						has_law = law_type:law_isolationism
+					}
+				}
+				add = 1000
+			}
+		}
+	}
+	possible = {
+		country_rank = rank_value:superpower
+	}
+	weight = {
+		value = 10000
+
 	}
 }
