@@ -2,21 +2,6 @@
 on_yearly_pulse_country = {
 }
 
-on_yearly_pulse_country = {
-	effect = {
-		# IG leader death
-		random_list = {
-			1 = {
-				trigger_event = {
-					id = character_events.100
-				}
-			}
-			1 = {
-			}
-		}
-	}
-}
-
 on_monthly_pulse_country = {
 	effect = {
 		# Pollution Calculations
@@ -71,20 +56,20 @@ on_monthly_pulse_country = {
 		}
 		if = {
 			limit = {
-				var:var_corruption >= corruption_baseline 
-			}
-			change_variable = {
-				name = var_corruption
-				subtract = corruption_growth
-			}
-		}
-		if = {
-			limit = {
 				var:var_corruption <= corruption_baseline
 			}
 			change_variable = {
 				name = var_corruption
 				add = corruption_growth
+			}
+		}
+		if = {
+			limit = {
+				var:var_corruption >= corruption_baseline
+			}
+			change_variable = {
+				name = var_corruption
+				subtract = corruption_decay
 			}
 		}
 		# Adds appropriate modifier
@@ -127,6 +112,72 @@ on_monthly_pulse_country = {
 }
 
 on_half_yearly_pulse_country = {
+	effect = {# Nuclear Stockpile calculations
+#		if = { # Adds to nuclear stockpile if pms are active
+#			limit = {
+#				has_modifier = nuclear_capable
+#				this = {
+#					any_scope_state = {
+#						limit = {
+#							has_building = building_nuclear_weapons_facility
+#						}
+#						any_scope_building = {
+#							or = {
+#								is_production_method_active = {
+#									building_type = building_nuclear_weapons_facility
+#									production_method  = pm_atomic_warhead
+#								}
+#								is_production_method_active = {
+#									building_type = building_nuclear_weapons_facility
+#									production_method  = pm_thermonuclear_warhead
+#								}
+#							}
+#							is_production_method_active = {
+#								building_type = building_nuclear_weapons_facility
+#								production_method  = pm_nuclear_production_enabled
+#							}
+#						}
+#					}
+#				}
+#			}
+#			change_variable = {
+#				name = nuclear_stockpile
+#				add = 1
+#			}
+#		}
+#		if = { # Removes nuclear stockpile if pms are inactive
+#			limit = {
+#				has_modifier = nuclear_capable
+#				this = {
+#					any_scope_state = {
+#						limit = {
+#							has_building = building_nuclear_weapons_facility
+#						}
+#						any_scope_building = {
+#							or = {
+#								is_production_method_active = {
+#									building_type = building_nuclear_weapons_facility
+#									production_method  = pm_atomic_warhead
+#								}
+#								is_production_method_active = {
+#									building_type = building_nuclear_weapons_facility
+#									production_method  = pm_thermonuclear_warhead
+#								}
+#							}
+#							is_production_method_active = {
+#								building_type = building_nuclear_weapons_facility
+#								production_method  = pm_nuclear_production_disabled
+#							}
+#						}
+#					}
+#				}
+#			}
+#			change_variable = {
+#				name = nuclear_stockpile
+#				subtract = 1
+#			}
+#		}
+	}
 }
 
 on_five_year_pulse_country = {
@@ -230,17 +281,6 @@ on_create_market = {
 # Root = The applicable country
 # scope:technology = The technology type they started to research
 on_research_technology_started = {
-	effect = {
-		if = {
-			limit = {
-				has_journal_entry = je_tutorial_research_technology
-			}
-			je:je_tutorial_research_technology = {
-				set_target_technology = scope:technology
-			}
-			set_variable = tut_began_new_research
-		}
-	}
 }
 
 # Root = The applicable country
@@ -701,7 +741,7 @@ on_country_released_as_own_subject = {
 			}
 			if = {
 				limit = {
-					country_has_state_religion = rel:vajrayana
+					country_has_state_religion = rel:gelugpa
 				}
 				ig:ig_devout = {
 					set_interest_group_name = ig_vajrayana_monks
@@ -805,7 +845,7 @@ on_country_released_as_overlord_subject = {
 			}
 			if = {
 				limit = {
-					country_has_state_religion = rel:vajrayana
+					country_has_state_religion = rel:gelugpa
 				}
 				ig:ig_devout = {
 					set_interest_group_name = ig_vajrayana_monks
@@ -1044,17 +1084,6 @@ on_sway_offer_rejected = {
 
 # Root = Building
 on_production_method_changed = {
-	effect = {
-		owner = {
-			if = {
-				limit = {
-					has_journal_entry = je_tutorial_change_production_method
-					je:je_tutorial_change_production_method.target = root
-				}
-				set_variable = has_changed_production_method
-			}
-		}
-	}
 }
 
 # Root = owner Country of the Law
@@ -1163,7 +1192,6 @@ on_revolution_start = {
 	effect = {
 		if = {
 			limit = {
-				has_journal_entry = je_warlord_china
 				NOT = {
 					has_variable = china_warlord_explosion_revolution
 				}
@@ -1271,12 +1299,6 @@ on_secession_country_helped_by_home_country = {
 # Root = Home Country
 # scope:target = Secession country
 on_secession_country_not_helped_by_home_country = {
-	effect = {
-		trigger_event = {
-			id = civil_war_events.1
-			days = 0
-		}
-	}
 }
 
 # Root = Diplomatic Play
@@ -1398,7 +1420,7 @@ on_objective_completed = {
 # scope:target = Party created
 on_party_created = {
 	effect = {
-		debug_log = "[SCOPE.sParty('target').GetNameNoFormatting] Created"
+		# debug_log = "[SCOPE.sParty('target').GetNameNoFormatting] Created"
 	}
 }
 
@@ -1406,7 +1428,7 @@ on_party_created = {
 # scope:target = Party disbanded
 on_party_disbanded = {
 	effect = {
-		debug_log = "[SCOPE.sParty('target').GetNameNoFormatting] Disbanded"
+		# debug_log = "[SCOPE.sParty('target').GetNameNoFormatting] Disbanded"
 	}
 }
 
@@ -1568,31 +1590,6 @@ on_repudiate_obligation = {
 
 # Root = Character
 on_character_recruitment = {
-	effect = {
-		owner = {
-			if = {
-				limit = {
-					has_journal_entry = je_tutorial_recruit_promote_commander
-					# TODO PRCAL-22740
-					# je:je_tutorial_recruit_promote_commander = {
-					#	NOT = {
-					#		has_variable = tut_commander_target
-					#	}
-					# }
-				}
-				je:je_tutorial_recruit_promote_commander = {
-					set_variable = {
-						name = tut_commander_target
-						value = root
-					}
-					set_variable = {
-						name = tut_commander_target_initial_rank
-						value = root.commander_rank
-					}
-				}
-			}
-		}
-	}
 }
 
 # Root = invaded country
@@ -1648,6 +1645,27 @@ on_monthly_pulse_state = {
 			}
 			else = {
 				remove_modifier = too_many_skyscrapers
+			}
+		}
+		if = { # Adjust Nuclear Stockpile growth
+			limit = {
+				has_modifier = nuclear_capable
+			}
+			every_nuclear_facility = {
+				if = {
+				   limit = { has_active_production_method = pm_nuclear_production_enabled }
+					change_variable = {
+						name = nuclear_stockpile
+						add = 1
+					}
+				}
+				else_if = {
+				   limit = { has_active_production_method = pm_nuclear_production_disabled }
+					change_variable = {
+						name = nuclear_stockpile
+						subtract = 1
+					}
+				}
 			}
 		}
 	}
