@@ -1,0 +1,193 @@
+### this is an imported file. please make as little changes to this file as possible.
+### when you make a change please mark it very clearly using a pair of comment lines with the text '### v3' and '### to here'
+### texture paths and audio event ids are an exception to this and can be changed without marking
+
+window = {
+	name = "save_game_window"
+	size = { 100% 100% }
+	movable = no
+	layer = confirmation
+
+	using = Animation_ShowHide_Quick
+	using = Background_Full_Dim
+
+	button_normal = {
+		size = { 100% 100% }
+		onclick = "[SaveGameWindow.Cancel]"
+		### v3 outcomment
+		using = close_button_sound
+		# onclick = "[PdxGuiTriggerAllAnimations('bookmarks_reset')]"
+		### to here
+	}
+
+	widget = {
+		size = { 700 760 }
+		parentanchor = center
+		alwaystransparent = no
+
+		using = Window_Background
+		using = Window_Decoration_Spike
+
+		vbox = {
+			using = Window_Margins
+			spacing = 5
+
+			header_pattern = {
+				layoutpolicy_horizontal = expanding
+
+				blockoverride "header_text"
+				{
+					text = "SAVE_GAME"
+				}
+
+				blockoverride "button_close" {
+					onclick = "[SaveGameWindow.Cancel]"
+					### v3 outcomment
+					shortcut = "close_window"
+					# onclick = "[PdxGuiTriggerAllAnimations('bookmarks_reset')]"
+					### to here
+				}
+			}
+
+			vbox = {
+				layoutpolicy_horizontal = expanding
+				margin = { 15 0 }
+
+				spacing = 2
+
+				editbox_standard_with_label = {
+					layoutpolicy_horizontal = expanding
+					blockoverride "editbox_label"
+					{
+						text = "SAVE_NAME_LABEL"
+					}
+					blockoverride "editbox_properties" {
+		                name = "save_name"
+		                text = "[SaveGameWindow.GetDefaultSaveName]"
+		            	ontextedited = "[SaveGameWindow.UpdateSaveName]"
+						onreturnpressed = "[SaveGameWindow.Save]"
+						focus_on_visible = yes
+		            }
+				}
+
+				text_single = {
+					text = "FILE_NAME_INVALID"
+					alwaystransparent = yes
+					visible = "[Not(SaveGameWindow.IsSaveNameOk)]"
+				}
+
+				hbox = {
+				layoutpolicy_horizontal = expanding
+				margin = { 15 5 }
+				spacing = 10
+
+					hbox = {
+						name = "cloud_save_area"
+						layoutpolicy_horizontal = expanding
+
+						spacing = 4
+
+						cloud_save_checkbutton = {
+							datacontext = "[SaveGameWindow.AccessCloudData]"
+							using = check_button_sound
+						}
+
+						text_single = {
+							text = "SAVE_TO_CLOUD_LABEL"
+						}
+
+						cloud_save_icon = {}
+
+						expand = {}
+					}
+
+					hbox = {
+						spacing = 2
+
+						button_checkbox_label = {
+							onclick = "[SaveGameWindow.ToggleShowInvalid]"
+
+							blockoverride "checkbox" 
+							{
+								checked = "[SaveGameWindow.IsShowInvalid]"
+							}
+
+							blockoverride "text"
+							{
+								text = "SAVE_WINDOW_SHOW_INVALID"
+							}
+						}
+					}
+				}
+
+			}
+
+			scrollbox = {
+				layoutpolicy_horizontal = growing
+				layoutpolicy_vertical = expanding
+
+				blockoverride "scrollbox_content"
+				{
+					vbox = {
+						datamodel = "[SaveGameWindow.GetSaveGames]"
+						spacing = 3
+
+						item = {
+							button_saved_games = {
+								size = { 600 115 }
+								visible = "[Or( SaveGameItem.IsValid, SaveGameWindow.IsShowInvalid )]"
+							}
+						}
+					}
+				}
+			}
+
+			vbox = {
+				layoutpolicy_horizontal = expanding
+				margin = { 15 5 }
+				spacing = 10
+
+
+				hbox = {
+					spacing = 5
+					margin = { 0 5 }
+	
+					button_standard = {
+						name = "cancel_button"
+						text = "CANCEL"
+						onclick = "[SaveGameWindow.Cancel]"
+						### v3 outcomment
+						using = close_button_sound
+						# onclick = "[PdxGuiTriggerAllAnimations('bookmarks_reset')]"
+						### to here
+						enabled = "[Not(SaveGameWindow.IsSaving)]"
+					}
+	
+					### v3 action button
+					button = {
+						using = default_button_primary_action
+						size = { 170 33 }
+					#button_primary = {
+						name = "save_button"
+						text = "SAVE_WINDOW_SAVE"
+						onclick = "[SaveGameWindow.Save]"
+						enabled = "[And(SaveGameWindow.IsSaveNameOk, Not(SaveGameWindow.IsSaving))]"
+						### v3 replacement
+						using = confirm_button_sound
+						### to here
+					}
+				}
+			}
+		}
+	}
+
+	container_saving_indicator = {
+		parentanchor = center
+		visible = "[SaveGameWindow.IsSaving]"
+
+		blockoverride "csi_text"
+		{
+			text = "SAVE_IN_PROGRESS"
+		}
+	}
+}
