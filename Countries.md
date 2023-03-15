@@ -3,14 +3,14 @@
 ## USA: 
   - **Leader** [Harry S. Truman](https://en.wikipedia.org/wiki/Harry_S._Truman) 
   - **Government** Federal Presidential Republic 
-  - **Ideology** Market Liberal 
+  - **Ideology** National Liberal 
   - **Political Parties** Republican, Democrat
-  - **Interest Group** Rural Folk
+  - **Interest Group** Entrepreneurs 
 ## Mexico:
   - **Leader** [Manuel Ávila Camacho](https://en.wikipedia.org/wiki/Manuel_%C3%81vila_Camacho)
   - **Government** Federal Presidential Republic
   - **Ideology** Moderate
-  - **Political Parties** Partido Revolucionario Institucional, Partido Revolucionario de Unificación Nacional [source](https://en.wikipedia.org/wiki/1940_Mexican_general_election)
+  - **Political Parties** [source](https://en.wikipedia.org/wiki/1940_Mexican_general_election)
   - **Interest Group** conglomerates
 ## Canada:
   - **Leader**[William Lyon Mackenzie King](https://en.wikipedia.org/wiki/William_Lyon_Mackenzie_King)
@@ -22,7 +22,7 @@
   - **Leader** [Ramón Grau San Martín](https://en.wikipedia.org/wiki/Ram%C3%B3n_Grau)
   - **Government** Unitary Semi-Presidential Republic
   - **Ideology** Social Democrat *(Corporatism)*
-  - **Political Parties** Auténtico, Coalición Socialista Democrática
+  - **Political Parties** 
   - **Interest Group** intellectuals
 ## Guatemala:
   - **Leader** [Juan José Arévalo](https://en.wikipedia.org/wiki/Juan_Jos%C3%A9_Ar%C3%A9valo)
