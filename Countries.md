@@ -15,13 +15,13 @@
 ## Canada:
   - **Leader**[William Lyon Mackenzie King](https://en.wikipedia.org/wiki/William_Lyon_Mackenzie_King)
   - **Government** Federal Parliamentary Constitutional Monarchy
-  - **Ideology** Reformer
+  - **Ideology** 
   - **Political Parties** Liberal, Progressive Conservative, Co-opperative Commonwealth, Social Credit, Bloc Populaire, Labor-Progressive [source](https://en.wikipedia.org/wiki/1945_Canadian_federal_election)
   - **Interest Group** intellectuals
 ## Cuba: 
   - **Leader** [Ramón Grau San Martín](https://en.wikipedia.org/wiki/Ram%C3%B3n_Grau)
   - **Government** Unitary Semi-Presidential Republic
-  - **Ideology** Social Democrat *(Corporatism)*
+  - **Ideology** 
   - **Political Parties** 
   - **Interest Group** intellectuals
 ## Guatemala:
@@ -33,7 +33,7 @@
 ## El Salvador: 
   - **Leader** [Salvador Castaneda Castro](https://en.wikipedia.org/wiki/Salvador_Castaneda_Castro)
   - **Government** Military Dictatorship
-  - **Ideology** Moderate *(Cuadillismo)*
+  - **Ideology** Moderate
   - **Political Parties** n/a
   - **Interest Group** Armed forces
 ## Honduras: 
@@ -62,12 +62,12 @@
 ## Colombia: 
   - **Leader** [Alfonso López Pumarejo](https://en.wikipedia.org/wiki/Alfonso_L%C3%B3pez_Pumarejo)
   - **Government** Unitary, Presidential, Republic
-  - **Ideology** Communist (comintern)
+  - **Ideology** 
   - **Political Parties** Colombian Liberal Party [source](https://en.wikipedia.org/wiki/1942_colombian_presidential_election)
 ## Venezuela: 
   - **Leader** [Rómulo Betancourt](https://en.wikipedia.org/wiki/R%C3%B3mulo_Betancourt)
   - **Government** Military Junta
-  - **Ideology** Socialist
+  - **Ideology** 
   - **Political Parties** Democratic Action
 ## Ecuador: 
   - **Leader** [José María Velasco Ibarra](https://en.wikipedia.org/wiki/Jos%C3%A9_Mar%C3%ADa_Velasco_Ibarra)
