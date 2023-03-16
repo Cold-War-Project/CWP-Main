@@ -129,12 +129,12 @@
 ## Iceland: 
   - **Leader** [Sveinn Björnsson](https://en.wikipedia.org/wiki/Sveinn_Bj%C3%B6rnsson)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Anti-Colonial
   - **Political Parties**
 ## Ireland: 
   - **Leader** [Seán T. O'Kelly](https://en.wikipedia.org/wiki/Se%C3%A1n_T._O%27Kelly)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Christian democrat
   - **Political Parties**
 ## United Kingom: 
   - **Leader** [Clement Attlee](https://en.wikipedia.org/wiki/Clement_Attlee)
@@ -144,42 +144,42 @@
 ## France: 
   - **Leader** [Charles de Gaulle](https://en.wikipedia.org/wiki/Charles_de_Gaulle)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Conservative
   - **Political Parties**
 ## Spain: 
   - **Leader** [Francisco Franco](https://en.wikipedia.org/wiki/Francisco_Franco)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Fascist 
   - **Political Parties**
 ## Portugal: 
   - **Leader** [Óscar Carmona](https://en.wikipedia.org/wiki/%C3%93scar_Carmona)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Corporatist
   - **Political Parties**
 ## Belgium: 
   - **Leader** [Achille Van Acker](https://en.wikipedia.org/wiki/Achille_Van_Acker)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Social Democrat
   - **Political Parties**
 ## Netherlands: 
   - **Leader** [Willem Schermerhorn](https://en.wikipedia.org/wiki/Willem_Schermerhorn)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Social Democrat
   - **Political Parties**
 ## Luxembourg: 
   - **Leader** [Pierre Dupong](https://en.wikipedia.org/wiki/Pierre_Dupong)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Christian Democrat
   - **Political Parties**
 ## Switzerland: 
-  - **Leader** [*Federal Council*](https://en.wikipedia.org/wiki/Federal_Council_(Switzerland))
+  - **Leader** [Karl Kobelt](https://en.wikipedia.org/wiki/Federal_Council_(Switzerland))
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Social Liberal
   - **Political Parties**
 ## Italy: 
-  - **Leader** [Enrico De Nicola](https://en.wikipedia.org/wiki/Enrico_De_Nicola)
+  - **Leader** [Alcide De Gasperi](https://en.wikipedia.org/wiki/Enrico_De_Nicola)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Christian Democrat
   - **Political Parties**
 ## Andorra: 
   - #todo due to the andorran political situation (co-princes) this should just be owned by france directly
@@ -191,7 +191,7 @@
 ## Vatican City: 
   - **Leader** [Pope St John XXIII](https://en.wikipedia.org/wiki/Pope_St_John_XXIII)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Theocrat
   - **Political Parties**
 ## Liechtenstein: 
   - **Leader** [(prince) Franz Joseph II](https://en.wikipedia.org/wiki/Franz_Joseph_II_of_Liechtenstein)
@@ -207,68 +207,68 @@
 ## West Germany: 
   - **Leader** [Konrad Adenauer](https://en.wikipedia.org/wiki/Konrad_Adenauer)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Christian Democrat
   - **Political Parties**
 ## East Germany: 
   - **Leader** [Wilhelm Pieck](https://en.wikipedia.org/wiki/Wilhelm_Pieck)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Marxist Leninist
   - **Political Parties**
 ## Denmark: 
   - **Leader** [Knud Kristensen](https://en.wikipedia.org/wiki/Knud_Kristensen)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Liberal Conservative
   - **Political Parties**
 ## Norway: 
   - **Leader** [Einar Gerhardsen](https://en.wikipedia.org/wiki/Einar_Gerhardsen)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Social Democrat
   - **Political Parties**
 ## Sweden: 
   - **Leader** [Per Albin Hansson](https://en.wikipedia.org/wiki/Per_Albin_Hansson)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Social Democrat
   - **Political Parties**
 ## Finland: 
-  - **Leader** [Juho Kusti Paasikivi](https://en.wikipedia.org/wiki/Juho_Kusti_Paasikivi)
+  - **leader** [Carl Gustaf Emil Mannerheim]
   - **Government**
-  - **Ideology** #todo
+  - **Ideology**  Irridenist
   - **Political Parties**
 ## Czechoslovakia: 
   - **Leader** [Klement Gottwald](https://en.wikipedia.org/wiki/Klement_Gottwald)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Marxist Leninist
   - **Political Parties**
 ## Hungary: 
   - **Leader** [Zoltán Tilly](https://en.wikipedia.org/wiki/Zolt%C3%A1n_Tilly)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Reactionary
   - **Political Parties**
 ## Yugoslavia: 
-  - **Leader** [Ivan Ribar](https://en.wikipedia.org/wiki/Ivan_Ribar)
+  - **Leader** [Tito]
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Titoism
   - **Political Parties**
 ## Albania: 
   - **Leader** [Omer Nishani](https://en.wikipedia.org/wiki/Omer_Nishani)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Maoist/Marxist leninist
   - **Political Parties**
 ## Greece: 
   - *Kingdom*: 
-  - **Leader** [Regent Archbishop Damaskinos of Athens](https://en.wikipedia.org/wiki/Damaskinos_of_Athens) 
+  - **Leader** [George Glucksburg the second]
     - **Government**
-    - **Ideology** #todo
+    - **Ideology** Autocratic
     - **Political Parties**
   - *Provisional Communist **Government***: 
   - **Leader** [Nikos Zachariadis](https://en.wikipedia.org/wiki/Nikos_Zachariadis)
     - **Government**
-    - **Ideology** #todo
+    - **Ideology** Marxist Leninist
     - **Political Parties**
 ## Turkey: 
   - **Leader** [Īsmet Īnönü](https://en.wikipedia.org/wiki/%C4%B0smet_%C4%B0n%C3%B6n%C3%BC)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Kermalist
   - **Political Parties**
 ## USSR: 
   - **Leader** [Joseph Stalin](https://en.wikipedia.org/wiki/Joseph_Stalin)
@@ -276,10 +276,11 @@
   - **Ideology** Marxist Leninist
   - **Political Parties**
 ## Bulgaria: 
-  - **Leader** [Vasil Kolarov](https://en.wikipedia.org/wiki/Vasil_Kolarov)
+  - **Leader** [Tsar Simeon saxe-coburg-gotha]
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Moderate 
   - **Political Parties**
+  *note: Simeon must change his ideology to conservative if he gets ousted 
 ## Romania: 
   - **Leader** [Constantin Ion Parhon](https://en.wikipedia.org/wiki/Constantin_Ion_Parhon)
   - **Government**
