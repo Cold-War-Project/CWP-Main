@@ -101,29 +101,29 @@
   - *note 2: He was an independent and I literally cannot find any info on his policies or ideology so im going to label him as moderate and go to bed
 ## Uruguay: 
   - **Leader** [Juan José de Amézaga](https://en.wikipedia.org/wiki/Juan_Jos%C3%A9_de_Am%C3%A9zaga)
-  - **Government** 
-  - **Ideology** #todo
-  - **Political Parties**
+  - **Government** Presidential republic
+  - **Ideology** Social Liberal
+  - **Political Parties** Colorado Party
 ## Paraguay: 
   - **Leader** [Higinio Morínigo](https://en.wikipedia.org/wiki/Higinio_Mor%C3%ADnigo)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Paternalistic Conservative
   - **Political Parties**
-  
+  *note: Civil war in 1947 resulted in the "colorado party" being the only legal party
 ## Brazil: 
   - **Leader** [Eurico Gaspar Dutra](https://en.wikipedia.org/wiki/Eurico_Gaspar_Dutra)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** National Liberal
   - **Political Parties**
 ## Haiti: 
   - **Leader** [Élie Lescot](https://en.wikipedia.org/wiki/%C3%89lie_Lescot)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Social Liberal
   - **Political Parties**
   ## Dominican Republic: 
   - **Leader** [Rafael Trujillo](https://en.wikipedia.org/wiki/Rafael_Trujillo)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Paternalistic Conservative
   - **Political Parties**
 # Europe
 ## Iceland: 
@@ -139,7 +139,7 @@
 ## United Kingom: 
   - **Leader** [Clement Attlee](https://en.wikipedia.org/wiki/Clement_Attlee)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Social Democrat
   - **Political Parties**
 ## France: 
   - **Leader** [Charles de Gaulle](https://en.wikipedia.org/wiki/Charles_de_Gaulle)
