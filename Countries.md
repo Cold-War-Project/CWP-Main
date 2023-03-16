@@ -273,7 +273,7 @@
 ## USSR: 
   - **Leader** [Joseph Stalin](https://en.wikipedia.org/wiki/Joseph_Stalin)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Marxist Leninist
   - **Political Parties**
 ## Bulgaria: 
   - **Leader** [Vasil Kolarov](https://en.wikipedia.org/wiki/Vasil_Kolarov)
@@ -465,7 +465,7 @@
 ## Union of South Africa: 
   - **Leader** [Gideon Brand van Zyl](https://en.wikipedia.org/wiki/Gideon_Brand_van_Zyl)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** colonialist
   - **Political Parties**
 ## Bechuanaland: 
   - **Leader** [Tshekedi Khama](https://en.wikipedia.org/wiki/Tshekedi_Khama)
