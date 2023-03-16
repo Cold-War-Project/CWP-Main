@@ -39,18 +39,18 @@
 ## Honduras: 
   - **Leader** [Tiburcio Carías Andino](https://en.wikipedia.org/wiki/Tiburcio_Car%C3%ADas_Andino)
   - **Government** Unitary Dictatorial Presidential Republic
-  - **Ideology** #todo
+  - **Ideology** National Liberal
   - **Political Parties** National Party, Liberal Party [source](https://en.wikipedia.org/wiki/1932_Honduran_general_election)
   - **Interest Group** Petite bourgeoisie
 ## Nicaragua: 
   - **Leader** [Anastasio Somoza García](https://en.wikipedia.org/wiki/Anastasio_Somoza_Garc%C3%ADa)
   - **Government** Military Dictatorship
-  - **Ideology** #todo
+  - **Ideology** National Liberal
   - **Political Parties** Nationalist Liberal Party
 ## Costa Rica: 
   - **Leader** [Teodoro Picado Michalski](https://en.wikipedia.org/wiki/Teodoro_Picado_Michalski)
   - **Government** Unitary, Presidential, Republic
-  - **Ideology** #todo
+  - **Ideology** National Liberal
   - **Political Parties** National Republican, Democratic [source](https://en.wikipedia.org/wiki/1944_Costa_Rican_general_election)
   - *note: is exiled in 1948, [costa rican civil war](https://en.wikipedia.org/wiki/Costa_Rican_civil_war)*
 ## Panama: 
