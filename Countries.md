@@ -56,8 +56,8 @@
 ## Panama: 
   - **Leader** [Enrique Adolfo Jiménez](https://en.wikipedia.org/wiki/Enrique_Adolfo_Jim%C3%A9nez)
   - **Government** Unitary, Presidential, Constitutional Republic
-  - **Ideology** #todo
-  - **Political Parties** Liberal Democratic Party
+  - **Ideology** National Liberal
+  - **Political Parties** Liberal Democratic Party, National Liberal Party
   - *note: the panamanian general assembly elected him due to vacancy*
 ## Colombia: 
   - **Leader** [Alfonso López Pumarejo](https://en.wikipedia.org/wiki/Alfonso_L%C3%B3pez_Pumarejo)
@@ -72,29 +72,33 @@
 ## Ecuador: 
   - **Leader** [José María Velasco Ibarra](https://en.wikipedia.org/wiki/Jos%C3%A9_Mar%C3%ADa_Velasco_Ibarra)
   - **Government** Unitary, Presidential, Republic
-  - **Ideology** #todo
+  - **Ideology** Social Liberal
   - **Political Parties** Conservative, Equadorian Radical Liberal Party, National Democratic Civic Movement
 ## Peru: 
   - **Leader** [José Luis Bustamante y Rivero](https://en.wikipedia.org/wiki/Jos%C3%A9_Luis_Bustamante_y_Rivero)
   - **Government** Unitary, Semi-Presidential, Republic
-  - **Ideology** #todo
+  - **Ideology** Social Liberal (at game start)
   - **Political Parties** National Democratic Front, Revolutionary Union, Socialist Party of Peru
+  - *note: This man took power as a social liberal in 1945 and was exiled as a populist dictator in 1948
 ## Bolivia: 
   - **Leader** [Gualberto Villarroel](https://en.wikipedia.org/wiki/Gualberto_Villarroel)
   - **Government** Military Dictatorship
-  - **Ideology** #todo
+  - **Ideology** Neo Fascist
   - **Political Parties** Revolutionary Nationalist Movement
   - *note: is a fascist, is executed mussolini style July 1946* 
 ## Chile: 
   - **Leader** [Juan Antonio Ríos](https://en.wikipedia.org/wiki/Juan_Antonio_R%C3%ADos)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Social Liberal
   - **Political Parties**
+  - *note: died in june 1946 from cancer
 ## Argentina: 
   - **Leader** [Edelmiro Julián Farrell](https://en.wikipedia.org/wiki/Edelmiro_Juli%C3%A1n_Farrell)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Moderate
   - **Political Parties**
+  - *Note: everyone liked his VP more than him so he was pressured into stepping down by mid 1946
+  - *note 2: He was an independent and I literally cannot find any info on his policies or ideology so im going to label him as moderate and go to bed
 ## Uruguay: 
   - **Leader** [Juan José de Amézaga](https://en.wikipedia.org/wiki/Juan_Jos%C3%A9_de_Am%C3%A9zaga)
   - **Government** 
