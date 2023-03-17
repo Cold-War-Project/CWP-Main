@@ -372,22 +372,23 @@
 ## British Libya: 
   - **Leader** [Peter Bevil Edward Acland](https://en.wikipedia.org/wiki/Peter_Bevil_Edward_Acland)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Moderate
   - **Political Parties**
 ## Tunisia: 
   - **Leader** [Slaheddine Baccouche](https://en.wikipedia.org/wiki/Slaheddine_Baccouche)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Absolutist, armed forces
   - **Political Parties**
 ## Algeria: 
   - **Leader** [Yves Chataigneau](https://en.wikipedia.org/wiki/Yves_Chataigneau)
   - **Government**
   - **Ideology** #todo
   - **Political Parties**
+  - *note: might be added later, but irl algeria was considered to be part of france proper
 ## Morocco: 
   - **Leader** [Gabriel Puaux](https://en.wikipedia.org/wiki/Gabriel_Puaux)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Conservative, Devout
   - **Political Parties**
 ## Spanish Morocco: 
   - **Leader** [José Enrique Varela](https://en.wikipedia.org/wiki/Jos%C3%A9_Enrique_Varela)
@@ -399,52 +400,52 @@
   - **Government**
   - **Ideology** #todo
   - **Political Parties**
-
+*note: the same with algeria, spanish west africa and morocco will be part of spain at game start
 # SUBSAHARAN AFRICA
 ## French West Africa: 
   - **Leader** [Pierre Charles Cournarie](https://en.wikipedia.org/wiki/Pierre_Charles_Cournarie)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** colonialist, Elite
   - **Political Parties**
 ## The Gambia: 
   - **Leader** [Sir Hilary Blood](https://en.wikipedia.org/wiki/Hilary_Blood)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Colonialist, Elite
   - **Political Parties**
 ## Portuguese Guinea: 
   - **Leader** [Manuel Maria Sarmento Rodrigues](https://en.wikipedia.org/wiki/Manuel_Maria_Sarmento_Rodrigues)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Colonialist
   - **Political Parties**
 ## Sierra Leone: 
   - **Leader** [Sir Hubert Craddock Stevenson](https://en.wikipedia.org/wiki/Hubert_Craddock_Stevenson)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Colonialist
   - **Political Parties**
 ## Liberia: 
   - **Leader** [William Tubman](https://en.wikipedia.org/wiki/William_Tubman)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Conservative
   - **Political Parties**
 ## Gold Coast: 
   - **Leader** [Sir Alan Cuthbert Maxwell Burns](https://en.wikipedia.org/wiki/Alan_Cuthbert_Maxwell_Burns)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Colonialist
   - **Political Parties**
 ## Togoland: 
   - **Leader** [(Governed by the gold coast)](https://en.wikipedia.org/wiki/Alan_Cuthbert_Maxwell_Burns)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Colonialist
   - **Political Parties**
 ## Nigeria: 
   - **Leader** [Sir Arthur Richards](https://en.wikipedia.org/wiki/Arthur_Richards)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Colonialist
   - **Political Parties**
 ## French Cameroon: 
   - **Leader** [Henri Pierre Nicolas](https://en.wikipedia.org/wiki/Henri_Pierre_Nicolas)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** colonialist
   - **Political Parties**
 ## Spanish Guinea: 
   - **Leader** [Juan María Bonelli Rubio](https://en.wikipedia.org/wiki/Juan_Mar%C3%ADa_Bonelli_Rubio)
@@ -459,7 +460,7 @@
 ## Belgian Congo: 
   - **Leader** [Pierre Ryckmans](https://en.wikipedia.org/wiki/Pierre_Ryckmans)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Colonialist
   - **Political Parties**
 ## Ruanda-Urundi: 
   - **Leader** [Eugène Jungers](https://en.wikipedia.org/wiki/Eug%C3%A8ne_Jungers)
