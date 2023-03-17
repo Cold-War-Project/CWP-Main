@@ -288,73 +288,81 @@
   - **Political Parties**
 
 # Middle East
+*note: we (Mercur3 and User_) are adding the interest groups of all the leaders in this reigon as well as any important details
 ## Syria: 
   - **Leader** [Shukri al-Quwatli](https://en.wikipedia.org/wiki/Shukri_al-Quwatli)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Reactionary, Elite
   - **Political Parties**
+  - *note: violent coups were the most common type of government refrom
 ## Lebanon: 
   - **Leader** [Bechara Khoury](https://en.wikipedia.org/wiki/Bechara_Khoury)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** National Liberal, entrepooner, Eastern Catholic
   - **Political Parties**
 ## Palestine: 
   - #todo
 ## Egypt: 
   - **Leader** [Farouk I](https://en.wikipedia.org/wiki/Farouk_I)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Absolutist, Elite
   - **Political Parties**
 ## Saudi Arabia: 
   - **Leader** [Abdul Aziz](https://en.wikipedia.org/wiki/Abdul_Aziz)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Absolutist, Elite
   - **Political Parties**
 ## Kuwait: 
   - **Leader** [Ahmad Al-Jaber Al-Sabah](https://en.wikipedia.org/wiki/Ahmad_Al-Jaber_Al-Sabah)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Absolutist, Elite
   - **Political Parties**
 ## Bahrain: 
   - **Leader** [Salman bin Hamad Al Khalifa](https://en.wikipedia.org/wiki/Salman_bin_Hamad_Al_Khalifa)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Absolutist, Elite
   - **Political Parties**
 ## Trucial States: 
   - **Leader** [Shakhbut bin Sultan Al Nathan](https://en.wikipedia.org/wiki/Shakhbut_bin_Sultan_Al_Nathan)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Absolutist, Elite
   - **Political Parties**
+  *note: add a journal entry to form the UAE and get claims around the gulf. call it "uniting the emerites" and require a certain degree of centralisation
 ## Oman: 
   - **Leader** [Said bin Taimur](https://en.wikipedia.org/wiki/Said_bin_Taimur)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Absolutist, Elite
   - **Political Parties**
 ## Aden Colony: 
   - **Leader** [Reginald Stuart Champion](https://en.wikipedia.org/wiki/Reginald_Stuart_Champion)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Colonialist, Elite
   - **Political Parties**
 ## Yemen: 
   - **Leader** [Ahmad bin Yahya](https://en.wikipedia.org/wiki/Ahmad_bin_Yahya)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Absolutist, Elite
   - **Political Parties**
 ## Iraq: 
-  - **Leader** [Nuri al-Said](https://en.wikipedia.org/wiki/Nuri_al-Said)
+  - **Leader** [Arshad al-Umari](https://en.wikipedia.org/wiki/Nuri_al-Said)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Moderate, Entrepooner
   - **Political Parties**
 ## Persia: 
   - **Leader** [Mohammad Reza Shah](https://en.wikipedia.org/wiki/Mohammad_Reza_Shah)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Absolutist, Elite
   - **Political Parties**
 ## Azerbaijan: 
-  - #todo
+  - **leader** Ja'far Pishevari
+  - **government**
+  - **ideology** marxist leninist
+  - **political parties**
 ## Kurdistan: 
-  - #todo
-
+  - **leader** Qazi Muhammad
+  - **government**
+  - **ideology** Marxist Leninist
+  - **political parties**
 # North Africa
 ## Fezzan-Ghadames Military Territory : 
   - **Leader** [Gov. Pierre Florimond](https://en.wikipedia.org/wiki/Pierre_Florimond)
