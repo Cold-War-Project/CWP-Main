@@ -571,7 +571,7 @@
 ## Afghanistan: 
   - **Leader** [Mohammed Zahir Shah](https://en.wikipedia.org/wiki/Mohammad_Zahir_Shah)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** absolutist
   - **Political Parties**
 ## Nepal: 
   - **Leader** [Tribhuvan Bir Bikram Shah](https://en.wikipedia.org/wiki/Tribhuvan_Bir_Bikram_Shah)
@@ -586,19 +586,19 @@
 ## Tibet: 
   - **Leader** [Dalai Lama Tenzin Gyatso](https://en.wikipedia.org/wiki/Dalai_Lama)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Progressive
   - **Political Parties**
 
 # East Asia
 ## Republic of China: 
   - **Leader** [Chiang Kai-shek](https://en.wikipedia.org/wiki/Chiang_Kai-shek)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** National Liberal
   - **Political Parties**
 ## People's Republic of China: 
   - **Leader** [Mao Zedong](https://en.wikipedia.org/wiki/Mao_Zedong)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Maoist
   - **Political Parties**
 ## Mongolia: 
   - **Leader** [Gonchigiin Bumtsend](https://en.wikipedia.org/wiki/Gonchigiin_Bumtsend)  
@@ -626,7 +626,7 @@
 ## French Indochina: 
   - **Leader** [Georges Thierry d'Argenlieu](https://en.wikipedia.org/wiki/Georges_Thierry_d%27Argenlieu)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** colonialist
   - **Political Parties**
 ## Siam/Thailand: 
   - **Leader** [Thawan Thamrongnawasawat](https://en.wikipedia.org/wiki/Thawan_Thamrongnawasawat)
@@ -642,7 +642,7 @@
 ## Dutch East Indies: 
   - **Leader** [Hubertus van Mook](https://en.wikipedia.org/wiki/Hubertus_van_Mook)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** colonialist
   - **Political Parties**
 ## Philippines (commonwealth): 
   - **Leader** [Sergio Osmeña](https://en.wikipedia.org/wiki/Sergio_Osme%C3%B1a) 
@@ -677,10 +677,10 @@
 ## Guam: 
   - **Leader** [Henry Louis Larsen (Military Administration)](https://en.wikipedia.org/wiki/Henry_Louis_Larsen)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** moderate
   - **Political Parties**
 ## British West Pacific Territories: 
   - **Leader** [Sir Alexander Grantham](https://en.wikipedia.org/wiki/Alexander_Grantham)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** colonialist
   - **Political Parties**
