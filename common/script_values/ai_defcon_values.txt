@@ -1,0 +1,103 @@
+﻿defcon_value = {
+	value = var:defcon_level
+}
+
+ai_raise_defcon_value = {
+	if = { # If any rival country has a high DEFCON level
+		limit = {
+			any_rival_country = {
+				defcon_value >= 4
+			}
+		}
+		add = 80
+	}
+	if = { # If all neighboring friendly countries are at peace.
+		any_neighbouring_state = {
+			owner = {
+				is_at_war = no
+				relations:root < relations_threshold:cordial 
+			}
+		}
+		add = 50
+	}
+}
+
+ai_lower_defcon_value = {
+	# If any rival country has a lower DEFCON level
+	if = {
+		limit = {
+			any_rival_country = {
+				defcon_value <= 3
+			}
+		}
+		add = 20
+	}
+	if = {
+		limit = {
+			any_rival_country = {
+				defcon_value <= 3
+				army_size > root.army_size
+			}
+		}
+		add = 50
+	}
+	# From AI Strategies
+	if = {
+		limit = {
+			has_strategy = ai_strategy_economic_imperialism
+			defcon_value >= 4
+		}
+		add = 50
+	}
+	if = {
+		limit = {
+			has_strategy = ai_strategy_territorial_expansion
+			defcon_value >= 3
+		}
+		add = 50
+	}
+	if = {
+		limit = {
+			has_strategy = ai_strategy_armed_isolationism
+			defcon_value <= 4
+		}
+		add = -50
+	}
+	if = { # If ROOT is involved in diplomatic play
+		limit = {
+			is_diplomatic_play_committed_participant = yes
+			is_at_war = yes
+			defcon_value >= 3	
+		}
+		add = 100
+	}
+	if = { # If any friendly neighboring country is at war with ROOT
+		limit = {
+			any_neighbouring_state = {
+				owner = {
+					is_at_war = yes
+					relations:root < relations_threshold:cordial 
+				}
+			}
+		}
+		add = 50
+	}
+	if = { # If any neighboring country has a domineering attitude towards ROOT
+		limit = { 
+			any_neighbouring_state = { 
+				owner = { 
+					has_attitude = { 
+						who = root  
+						attitude = domineering 
+					} 
+				} 
+			}
+		}
+		add = 30
+	}
+}
+
+ai_expected_defcon_value = { # If value is negative, AI will lower DEFCON, if positive AI will raise
+	add = ai_raise_defcon_value
+	subtract = ai_lower_defcon_value
+}
