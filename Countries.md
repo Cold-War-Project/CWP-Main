@@ -450,13 +450,15 @@
 ## Spanish Guinea: 
   - **Leader** [Juan María Bonelli Rubio](https://en.wikipedia.org/wiki/Juan_Mar%C3%ADa_Bonelli_Rubio)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** colonialist
   - **Political Parties**
+  *note: as with the other spanish colonies, I highly recomend we just make this part of spain proper as an unincorporated state
 ## São Tomé and Príncipe: 
   - **Leader** [Carlos de Sousa Gorgulho](https://en.wikipedia.org/wiki/Carlos_de_Sousa_Gorgulho)
   - **Government**
   - **Ideology** #todo
   - **Political Parties**
+  *note: next to 0 english sources on this, when googled in seems that Carlos SG was involved in some massacre in 1953, but I can't find anything else
 ## Belgian Congo: 
   - **Leader** [Pierre Ryckmans](https://en.wikipedia.org/wiki/Pierre_Ryckmans)
   - **Government**
@@ -465,12 +467,12 @@
 ## Ruanda-Urundi: 
   - **Leader** [Eugène Jungers](https://en.wikipedia.org/wiki/Eug%C3%A8ne_Jungers)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** colonialist
   - **Political Parties**
 ## Angola Overseas Province of Portugal: 
   - **Leader** [Vasco Lopes Alves](https://en.wikipedia.org/wiki/Vasco_Lopes_Alves)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** colonialist
   - **Political Parties**
 ## Union of South Africa: 
   - **Leader** [Gideon Brand van Zyl](https://en.wikipedia.org/wiki/Gideon_Brand_van_Zyl)
@@ -480,64 +482,65 @@
 ## Bechuanaland: 
   - **Leader** [Tshekedi Khama](https://en.wikipedia.org/wiki/Tshekedi_Khama)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Absolutist
   - **Political Parties**
 ## Basutoland: 
   - **Leader** [Simon Seeiso Griffith](https://en.wikipedia.org/wiki/Simon_Seeiso_Griffith)
   - **Government**
   - **Ideology** #todo
   - **Political Parties**
+  *note: Simon died in 1940 so im kind of at a loss here
 ## Swaziland: 
   - **Leader** [Sobhuza II (The longest reigning monarch in all of recorded history)](https://en.wikipedia.org/wiki/Sobhuza_II)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Anti-Colonial
   - **Political Parties**
 ## Southern Rhodesia: 
   - **Leader** [Godfrey Huggins](https://en.wikipedia.org/wiki/Godfrey_Huggins)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Colonialist
   - **Political Parties**
 ## Northern Rhodesia: 
   - **Leader** [Sir John Waddington](https://en.wikipedia.org/wiki/John_Waddington)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** Colonialist
   - **Political Parties**
 ## Nyasaland: 
   - **Leader** [Edmund Charles Smith Richards](https://en.wikipedia.org/wiki/Edmund_Charles_Smith_Richards)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** colonialist
   - **Political Parties**
 ## Moçambique: 
   - **Leader** [João Tristão de Bettencourt](https://en.wikipedia.org/wiki/Jo%C3%A3o_Trist%C3%A3o_de_Bettencourt)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** colonialist
   - **Political Parties**
 
 # Horn of Africa
 ## Tanganyika: 
   - **Leader** [Sir William Denis Battershill](https://en.wikipedia.org/wiki/William_Denis_Battershill)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** colonialist
   - **Political Parties**
 ## Kenya: 
   - **Leader** [Sir Philip Mitchell](https://en.wikipedia.org/wiki/Philip_Mitchell)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** colonialist
   - **Political Parties**
 ## Uganda: 
   - **Leader** [John Hathorn Hall](https://en.wikipedia.org/wiki/John_Hathorn_Hall)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** colonialist
   - **Political Parties**
 ## British Somaliland: 
   - **Leader** [Gerald Thomas Fisher](https://en.wikipedia.org/wiki/Gerald_Thomas_Fisher)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** colonialist
   - **Political Parties**
 ## British Military Administration in Somaliland: 
   - **Leader** [Denis Wickham](https://en.wikipedia.org/wiki/Denis_Wickham)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** moderate
   - **Political Parties**
 ## British Military Administration in Eritrea: 
   - [Francis Drew] (british occupation is ended and Eritrea is annexed by Ethopia via UN resolution 390 in 1952)
@@ -545,12 +548,12 @@
 ## French Somaliland: 
   - **Leader** [Jean Chalvet](https://en.wikipedia.org/wiki/Jean_Chalvet)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** colonialist
   - **Political Parties**
 ## Anglo-Egyptian Sudan: 
   - **Leader** [Sir Hubert Jervoise Huddleston](https://en.wikipedia.org/wiki/Hubert_Jervoise_Huddleston)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** autocratic
   - **Political Parties**
 
 # Central Asia
