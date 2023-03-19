@@ -619,7 +619,7 @@
 ## Japan: 
   - **Leader** [Kijūrō Shidehara](https://en.wikipedia.org/wiki/Kij%C5%ABr%C5%8D_Shidehara)
   - **Government**
-  - **Ideology** #todo
+  - **Ideology** National Liberal
   - **Political Parties**
 
 # South East Asia
