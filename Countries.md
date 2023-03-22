@@ -3,26 +3,26 @@
 ## USA: 
   - **Leader** [Harry S. Truman](https://en.wikipedia.org/wiki/Harry_S._Truman) 
   - **Government** Federal Presidential Republic 
-  - **Ideology** Market Liberal 
+  - **Ideology** National Liberal 
   - **Political Parties** Republican, Democrat
-  - **Interest Group** Rural Folk
+  - **Interest Group** Entrepreneurs 
 ## Mexico:
   - **Leader** [Manuel Ávila Camacho](https://en.wikipedia.org/wiki/Manuel_%C3%81vila_Camacho)
   - **Government** Federal Presidential Republic
   - **Ideology** Moderate
-  - **Political Parties** Partido Revolucionario Institucional, Partido Revolucionario de Unificación Nacional [source](https://en.wikipedia.org/wiki/1940_Mexican_general_election)
+  - **Political Parties** [source](https://en.wikipedia.org/wiki/1940_Mexican_general_election)
   - **Interest Group** conglomerates
 ## Canada:
   - **Leader**[William Lyon Mackenzie King](https://en.wikipedia.org/wiki/William_Lyon_Mackenzie_King)
   - **Government** Federal Parliamentary Constitutional Monarchy
-  - **Ideology** Reformer
+  - **Ideology** 
   - **Political Parties** Liberal, Progressive Conservative, Co-opperative Commonwealth, Social Credit, Bloc Populaire, Labor-Progressive [source](https://en.wikipedia.org/wiki/1945_Canadian_federal_election)
   - **Interest Group** intellectuals
 ## Cuba: 
   - **Leader** [Ramón Grau San Martín](https://en.wikipedia.org/wiki/Ram%C3%B3n_Grau)
   - **Government** Unitary Semi-Presidential Republic
-  - **Ideology** Social Democrat *(Corporatism)*
-  - **Political Parties** Auténtico, Coalición Socialista Democrática
+  - **Ideology** 
+  - **Political Parties** 
   - **Interest Group** intellectuals
 ## Guatemala:
   - **Leader** [Juan José Arévalo](https://en.wikipedia.org/wiki/Juan_Jos%C3%A9_Ar%C3%A9valo)
@@ -33,13 +33,13 @@
 ## El Salvador: 
   - **Leader** [Salvador Castaneda Castro](https://en.wikipedia.org/wiki/Salvador_Castaneda_Castro)
   - **Government** Military Dictatorship
-  - **Ideology** Moderate *(Cuadillismo)*
+  - **Ideology** Moderate
   - **Political Parties** n/a
   - **Interest Group** Armed forces
 ## Honduras: 
   - **Leader** [Tiburcio Carías Andino](https://en.wikipedia.org/wiki/Tiburcio_Car%C3%ADas_Andino)
   - **Government** Unitary Dictatorial Presidential Republic
-  - **Ideology** National Liberal
+  - **Ideology** Corporatist
   - **Political Parties** National Party, Liberal Party [source](https://en.wikipedia.org/wiki/1932_Honduran_general_election)
   - **Interest Group** Petite bourgeoisie
 ## Nicaragua: 
@@ -62,12 +62,12 @@
 ## Colombia: 
   - **Leader** [Alfonso López Pumarejo](https://en.wikipedia.org/wiki/Alfonso_L%C3%B3pez_Pumarejo)
   - **Government** Unitary, Presidential, Republic
-  - **Ideology** Communist (comintern)
+  - **Ideology** 
   - **Political Parties** Colombian Liberal Party [source](https://en.wikipedia.org/wiki/1942_colombian_presidential_election)
 ## Venezuela: 
   - **Leader** [Rómulo Betancourt](https://en.wikipedia.org/wiki/R%C3%B3mulo_Betancourt)
   - **Government** Military Junta
-  - **Ideology** Socialist
+  - **Ideology** 
   - **Political Parties** Democratic Action
 ## Ecuador: 
   - **Leader** [José María Velasco Ibarra](https://en.wikipedia.org/wiki/Jos%C3%A9_Mar%C3%ADa_Velasco_Ibarra)
