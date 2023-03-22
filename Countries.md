@@ -3,26 +3,26 @@
 ## USA: 
   - **Leader** [Harry S. Truman](https://en.wikipedia.org/wiki/Harry_S._Truman) 
   - **Government** Federal Presidential Republic 
-  - **Ideology** National Liberal 
+  - **Ideology** Market Liberal 
   - **Political Parties** Republican, Democrat
-  - **Interest Group** Entrepreneurs 
+  - **Interest Group** Rural Folk
 ## Mexico:
   - **Leader** [Manuel Ávila Camacho](https://en.wikipedia.org/wiki/Manuel_%C3%81vila_Camacho)
   - **Government** Federal Presidential Republic
   - **Ideology** Moderate
-  - **Political Parties** [source](https://en.wikipedia.org/wiki/1940_Mexican_general_election)
+  - **Political Parties** Partido Revolucionario Institucional, Partido Revolucionario de Unificación Nacional [source](https://en.wikipedia.org/wiki/1940_Mexican_general_election)
   - **Interest Group** conglomerates
 ## Canada:
   - **Leader**[William Lyon Mackenzie King](https://en.wikipedia.org/wiki/William_Lyon_Mackenzie_King)
   - **Government** Federal Parliamentary Constitutional Monarchy
-  - **Ideology** 
+  - **Ideology** Reformer
   - **Political Parties** Liberal, Progressive Conservative, Co-opperative Commonwealth, Social Credit, Bloc Populaire, Labor-Progressive [source](https://en.wikipedia.org/wiki/1945_Canadian_federal_election)
   - **Interest Group** intellectuals
 ## Cuba: 
   - **Leader** [Ramón Grau San Martín](https://en.wikipedia.org/wiki/Ram%C3%B3n_Grau)
   - **Government** Unitary Semi-Presidential Republic
-  - **Ideology** 
-  - **Political Parties** 
+  - **Ideology** Social Democrat *(Corporatism)*
+  - **Political Parties** Auténtico, Coalición Socialista Democrática
   - **Interest Group** intellectuals
 ## Guatemala:
   - **Leader** [Juan José Arévalo](https://en.wikipedia.org/wiki/Juan_Jos%C3%A9_Ar%C3%A9valo)
@@ -33,72 +33,68 @@
 ## El Salvador: 
   - **Leader** [Salvador Castaneda Castro](https://en.wikipedia.org/wiki/Salvador_Castaneda_Castro)
   - **Government** Military Dictatorship
-  - **Ideology** Moderate
+  - **Ideology** Moderate *(Cuadillismo)*
   - **Political Parties** n/a
   - **Interest Group** Armed forces
 ## Honduras: 
   - **Leader** [Tiburcio Carías Andino](https://en.wikipedia.org/wiki/Tiburcio_Car%C3%ADas_Andino)
   - **Government** Unitary Dictatorial Presidential Republic
-  - **Ideology** Corporatist
+  - **Ideology** #todo
   - **Political Parties** National Party, Liberal Party [source](https://en.wikipedia.org/wiki/1932_Honduran_general_election)
   - **Interest Group** Petite bourgeoisie
 ## Nicaragua: 
   - **Leader** [Anastasio Somoza García](https://en.wikipedia.org/wiki/Anastasio_Somoza_Garc%C3%ADa)
   - **Government** Military Dictatorship
-  - **Ideology** National Liberal
+  - **Ideology** #todo
   - **Political Parties** Nationalist Liberal Party
 ## Costa Rica: 
   - **Leader** [Teodoro Picado Michalski](https://en.wikipedia.org/wiki/Teodoro_Picado_Michalski)
   - **Government** Unitary, Presidential, Republic
-  - **Ideology** National Liberal
+  - **Ideology** #todo
   - **Political Parties** National Republican, Democratic [source](https://en.wikipedia.org/wiki/1944_Costa_Rican_general_election)
   - *note: is exiled in 1948, [costa rican civil war](https://en.wikipedia.org/wiki/Costa_Rican_civil_war)*
 ## Panama: 
   - **Leader** [Enrique Adolfo Jiménez](https://en.wikipedia.org/wiki/Enrique_Adolfo_Jim%C3%A9nez)
   - **Government** Unitary, Presidential, Constitutional Republic
-  - **Ideology** National Liberal
-  - **Political Parties** Liberal Democratic Party, National Liberal Party
+  - **Ideology** #todo
+  - **Political Parties** Liberal Democratic Party
   - *note: the panamanian general assembly elected him due to vacancy*
 ## Colombia: 
   - **Leader** [Alfonso López Pumarejo](https://en.wikipedia.org/wiki/Alfonso_L%C3%B3pez_Pumarejo)
   - **Government** Unitary, Presidential, Republic
-  - **Ideology** 
+  - **Ideology** Communist (comintern)
   - **Political Parties** Colombian Liberal Party [source](https://en.wikipedia.org/wiki/1942_colombian_presidential_election)
 ## Venezuela: 
   - **Leader** [Rómulo Betancourt](https://en.wikipedia.org/wiki/R%C3%B3mulo_Betancourt)
   - **Government** Military Junta
-  - **Ideology** 
+  - **Ideology** Socialist
   - **Political Parties** Democratic Action
 ## Ecuador: 
   - **Leader** [José María Velasco Ibarra](https://en.wikipedia.org/wiki/Jos%C3%A9_Mar%C3%ADa_Velasco_Ibarra)
   - **Government** Unitary, Presidential, Republic
-  - **Ideology** Social Liberal
+  - **Ideology** #todo
   - **Political Parties** Conservative, Equadorian Radical Liberal Party, National Democratic Civic Movement
 ## Peru: 
   - **Leader** [José Luis Bustamante y Rivero](https://en.wikipedia.org/wiki/Jos%C3%A9_Luis_Bustamante_y_Rivero)
   - **Government** Unitary, Semi-Presidential, Republic
-  - **Ideology** Social Liberal (at game start)
+  - **Ideology** #todo
   - **Political Parties** National Democratic Front, Revolutionary Union, Socialist Party of Peru
-  - *note: This man took power as a social liberal in 1945 and was exiled as a populist dictator in 1948
 ## Bolivia: 
   - **Leader** [Gualberto Villarroel](https://en.wikipedia.org/wiki/Gualberto_Villarroel)
   - **Government** Military Dictatorship
-  - **Ideology** Neo Fascist
+  - **Ideology** #todo
   - **Political Parties** Revolutionary Nationalist Movement
   - *note: is a fascist, is executed mussolini style July 1946* 
 ## Chile: 
   - **Leader** [Juan Antonio Ríos](https://en.wikipedia.org/wiki/Juan_Antonio_R%C3%ADos)
   - **Government**
-  - **Ideology** Social Liberal
+  - **Ideology** #todo
   - **Political Parties**
-  - *note: died in june 1946 from cancer
 ## Argentina: 
   - **Leader** [Edelmiro Julián Farrell](https://en.wikipedia.org/wiki/Edelmiro_Juli%C3%A1n_Farrell)
   - **Government**
-  - **Ideology** Moderate
+  - **Ideology** #todo
   - **Political Parties**
-  - *Note: everyone liked his VP more than him so he was pressured into stepping down by mid 1946
-  - *note 2: He was an independent and I literally cannot find any info on his policies or ideology so im going to label him as moderate and go to bed
 ## Uruguay: 
   - **Leader** [Juan José de Amézaga](https://en.wikipedia.org/wiki/Juan_Jos%C3%A9_de_Am%C3%A9zaga)
   - **Government** 
