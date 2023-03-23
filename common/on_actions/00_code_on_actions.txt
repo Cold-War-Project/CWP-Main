@@ -249,12 +249,14 @@ on_battle_lost = {
 
 # Root = Building
 on_building_built = {
-	if = {
-		limit = {
-			is_building_type = building_nuclear_research_facility
-		}
-		owner = {
-			set_variable = nuclear_facility_established
+	effect = {
+		if = {
+			limit = {
+				is_building_type = building_nuclear_research_facility
+			}
+			owner = {
+				set_variable = nuclear_facility_established
+			}
 		}
 	}
 }
@@ -1633,38 +1635,46 @@ on_monthly_pulse_state = {
 			}
 			every_scope_building = {
 				limit = {
-					is_building_type = building_skyscraper
-				}
-				save_scope_as = skyscraper_scope
-			}
-			every_scope_building = {
-				limit = {
 					is_building_type = building_urban_center
 				}
 				save_scope_as = urban_center_scope
 			}
-			#apply the modifier to skyscrapers in the state to reduce their throughput by (1/3)x^2 where x is the level of skyscrapers in the state
-			if = {
+			every_scope_building = {
 				limit = {
-					scope:skyscraper_scope = {
-						AND = {
-							level > scope:urban_center_scope.level
-							NOT = {
-								has_modifier = too_many_skyscrapers
-							}
+					is_building_type = building_skyscraper
+				}
+				save_scope_as = skyscraper_scope
+				# get the total urban centers and divide by 3, thats the max number of skyscrapers allowed
+				set_local_variable = {
+					name = urban_center_threshold
+					value = scope:urban_center_scope.level
+				}
+				change_local_variable = {
+					name = urban_center_threshold
+					divide = 3
+				}
+				if = {
+					limit = {
+						scope:skyscraper_scope = {
+							level > local_var:urban_center_threshold
 						}
 					}
-				}
-				scope:skyscraper_scope = {
-					add_modifier = {
-						name = too_many_skyscrapers
-						multiplier = 100
-						#TODO value is placeholder, should be dynamic as described above however, getting this to work has been difficult as the multiplier field doesn't accept inline math or a variable as a value.
+					scope:skyscraper_scope = {
+						set_local_variable = {
+							name = skyscraper_level
+							value = level
+						}
+					}
+					#modifier must be removed then reapplied, cannot be dynamically changed afaik
+					remove_modifier = too_many_skyscrapers
+					set_too_many_skyscrapers = {
+						LEVEL = local_var:skyscraper_level
 					}
 				}
-			}
-			else = {
-				remove_modifier = too_many_skyscrapers
+				else = {
+					#if the number of skyscrapers is less than the threshold, remove the modifier
+					remove_modifier = too_many_skyscrapers
+				}
 			}
 		}
 		if = {
