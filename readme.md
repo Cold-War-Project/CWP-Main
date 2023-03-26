@@ -11,14 +11,15 @@ Our main Goal is to preserve the design philosophy of vanilla Victoria 3 by crea
 * Custom United Nations Mechanic
 * Accurate populations for entire world at 1946
 * Custom diplomatic pacts for Allied Occupation Zones
+* New laws and policies to dictate the trajectory of your nation
+* New production chains and resources
+* New technologies to research
 
 # Roadmap
 
-* New laws and policies to dictate the trajectory of your nation
 * Events and decisions for landmark moments in history (e.g. the Cuban Missile Crisis)
 * A world tension system resembling the Doomsday Clock of the Bulletin of the Atomic Scientists
-* New production chains and resources
-* New technologies to research
+
   
 # Installation
 Installation is not recommended at this time. The mod is still in a very early stage of development and is not yet playable.
