@@ -41,7 +41,7 @@
 		}
 		custom_tooltip = {
 			text = DIPLO_ACTION_RELATIONS_POOR_OR_LESS_NOT
-			scope:target_country.relations:root > relations_threshold:neutral
+			scope:target_country.relations:root >= relations_threshold:neutral
 		}
 		has_diplomatic_relevance = scope:target_country
 	}
@@ -74,17 +74,15 @@
 			custom_tooltip = {
 				text = DIPLO_ACTION_RELATIONS_POOR_OR_LESS
 				# make sure to update is_about_to_auto_break when changing this:
-				scope:target_country.relations:root <= relations_threshold:poor
+				scope:target_country.relations:root <= relations_threshold:hostile
 			}
 		}
 		should_invalidate = {
 			OR = {
 				has_war_with = scope:target_country
-				is_subject_of = scope:target_country
 				scope:target_country = {
 					is_subject_of = root
 				}
-				in_default = yes
 			}
 		}
 		break_effect = {
@@ -134,6 +132,10 @@
 		max_influence_spending_fraction = 0.25
 		propose_score = {
 			value = 5
+			add = {
+				value = scope:target_country.country_rank
+				multiply = 3
+			}
 			if = {
 				limit = {
 					scope:target_country = {
@@ -194,6 +196,35 @@
 				multiply = 2
 			}
 		}
+		propose_break_score = {
+			value = -30
+			if = {
+				limit = {
+					scope:target_country = {
+						has_variable = western_bloc_leader
+					}
+					or = {
+						is_stinky_lib = no
+						has_voting_rights = no
+					}
+				}
+				add = 30
+			}
+			if = {
+				limit = {
+					scope:target_country = {
+						has_variable = eastern_bloc_leader
+					}
+					or = {
+						is_stinky_lib = yes
+						has_voting_rights = yes
+						has_radical_leftist_economy = no
+						has_radical_leftist_government = no
+					}
+				}
+				add = 30
+			}
+		}
 		will_propose = {
 			OR = {
 				AND = {
@@ -220,12 +251,7 @@
 		will_break = {
 			NOR = {
 				scope:target_country = {
-					country_rank < rank_value:superpower
-				}
-				custom_tooltip = {
-					text = DIPLO_ACTION_RELATIONS_POOR_OR_LESS
-					# make sure to update is_about_to_auto_break when changing this:
-					scope:target_country.relations:root <= relations_threshold:poor
+					country_rank < rank_value:great_power
 				}
 			}
 		}
