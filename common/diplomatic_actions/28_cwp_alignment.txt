@@ -50,7 +50,7 @@
 		is_two_sided_pact = no
 		show_in_outliner = yes
 		relations_progress_per_day = 3		# At 100, +1 relations
-		relations_improvement_max = 80
+		relations_improvement_max = 100
 		weekly_effect = {
 			custom_tooltip = {
 				text = bankroll_weekly_obligation_effect
@@ -131,152 +131,101 @@
 	}
 	
 	ai = {
-		max_influence_spending_fraction = 0.2
+		max_influence_spending_fraction = 0.25
 		propose_score = {
-			value = 10
-		}
-		will_propose = {
-			scaled_debt <= 0
-			is_at_war = no
-			has_attitude = {
-				who = scope:target_country
-				attitude = protective
-			}
-			OR = {
-				num_income_transfer_pacts < 1
-				AND = {
-					num_income_transfer_pacts < 2
-					weekly_net_fixed_income >= 200000
-				}
-				AND = {
-					num_income_transfer_pacts < 3
-					weekly_net_fixed_income >= 400000
-				}
-			}
-			OR = {
-				root = {
-					owes_obligation_to = scope:target_country
-				}
-				NOT = {
+			value = 5
+			if = {
+				limit = {
 					scope:target_country = {
-						owes_obligation_to = root
+						has_variable = western_bloc_leader
+					}
+					or = {
+						is_stinky_lib = yes
+						has_voting_rights = yes
 					}
 				}
-				AND = {
-					is_at_war = no
+				add = 30
+			}
+			if = {
+				limit = {
 					scope:target_country = {
-						is_at_war = yes
+						has_variable = eastern_bloc_leader
+					}
+					or = {
+						is_stinky_lib = no
+						has_voting_rights = no
+						has_radical_leftist_economy = yes
+						has_radical_leftist_government = yes
 					}
 				}
+				add = 30
 			}
-			# We want to have at least five times their income, and at least 50k income in general
-			OR = {
-				AND = {
-					weekly_net_fixed_income >= 50000
-					scope:target_country.income <= 10000
-				}
-				AND = {
-					weekly_net_fixed_income >= 75000
-					scope:target_country.income <= 15000
-				}
-				AND = {
-					weekly_net_fixed_income >= 100000
-					scope:target_country.income <= 20000
-				}
-				AND = {
-					weekly_net_fixed_income >= 125000
-					scope:target_country.income <= 25000
-				}
-				AND = {
-					weekly_net_fixed_income >= 150000
-					scope:target_country.income <= 30000
-				}
-				AND = {
-					weekly_net_fixed_income >= 175000
-					scope:target_country.income <= 35000
-				}
-				AND = {
-					weekly_net_fixed_income >= 200000
-					scope:target_country.income <= 40000
-				}
-				AND = {
-					weekly_net_fixed_income >= 225000
-					scope:target_country.income <= 45000
-				}
-				AND = {
-					weekly_net_fixed_income >= 250000
-					scope:target_country.income <= 50000
-				}
-			}
-		}
-		will_break = {
-			OR = {
-				scaled_debt > 0.25
-				AND = {
-					scaled_debt > 0
-					is_at_war = yes
-				}
-				NOT = {
+			if = {
+				limit = {
 					has_attitude = {
 						who = scope:target_country
 						attitude = protective
 					}
 				}
-				num_income_transfer_pacts > 2
-				NOR = {
-					root = {
-						owes_obligation_to = scope:target_country
+				add = 5
+			}
+			if = {
+				limit = {
+					has_attitude = {
+						who = scope:target_country
+						attitude = conciliatory
 					}
-					NOT = {
+				}
+				add = 20
+			}
+			add = {
+				value = scope:target_country.country_rank
+				multiply = 3
+			}
+			if = {
+				limit = {
+					OR = {
+						is_subject_of = scope:target_country
 						scope:target_country = {
-							owes_obligation_to = root
-						}
-					}
-					AND = {
-						is_at_war = no
-						scope:target_country = {
-							is_at_war = yes
+							is_subject_of = root
 						}
 					}
 				}
-				# We want to have at least five times their income, and at least 50k income in general
-				NOR = {
-					AND = {
-						weekly_net_fixed_income >= 50000
-						scope:target_country.weekly_net_fixed_income <= 10000
+				multiply = 2
+			}
+		}
+		will_propose = {
+			OR = {
+				AND = {
+					has_attitude = {
+						who = scope:target_country
+						attitude = cooperative
 					}
-					AND = {
-						weekly_net_fixed_income >= 75000
-						scope:target_country.weekly_net_fixed_income <= 15000
-					}
-					AND = {
-						weekly_net_fixed_income >= 100000
-						scope:target_country.weekly_net_fixed_income <= 20000
-					}
-					AND = {
-						weekly_net_fixed_income >= 125000
-						scope:target_country.weekly_net_fixed_income <= 25000
-					}
-					AND = {
-						weekly_net_fixed_income >= 150000
-						scope:target_country.weekly_net_fixed_income <= 30000
-					}
-					AND = {
-						weekly_net_fixed_income >= 175000
-						scope:target_country.weekly_net_fixed_income <= 35000
-					}
-					AND = {
-						weekly_net_fixed_income >= 200000
-						scope:target_country.weekly_net_fixed_income <= 40000
-					}
-					AND = {
-						weekly_net_fixed_income >= 225000
-						scope:target_country.weekly_net_fixed_income <= 45000
-					}
-					AND = {
-						weekly_net_fixed_income >= 250000
-						scope:target_country.weekly_net_fixed_income <= 50000
-					}
+					country_rank <= scope:target_country.country_rank
+				}
+				has_attitude = {
+					who = scope:target_country
+					attitude = conciliatory
+				}
+				has_attitude = {
+					who = scope:target_country
+					attitude = genial
+				}
+				has_attitude = {
+					who = scope:target_country
+					attitude = protective
+				}
+			}
+		}
+		will_break = {
+			NOR = {
+				scope:target_country = {
+					country_rank < rank_value:superpower
+				}
+				custom_tooltip = {
+					text = DIPLO_ACTION_RELATIONS_POOR_OR_LESS
+					# make sure to update is_about_to_auto_break when changing this:
+					scope:target_country.relations:root <= relations_threshold:poor
 				}
 			}
 		}
