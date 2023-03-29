@@ -101,85 +101,85 @@
   - *note 2: He was an independent and I literally cannot find any info on his policies or ideology so im going to label him as moderate and go to bed
 ## Uruguay: 
   - **Leader** [Juan José de Amézaga](https://en.wikipedia.org/wiki/Juan_Jos%C3%A9_de_Am%C3%A9zaga)
-  - **Government** Presidential republic
-  - **Ideology** Social Liberal
-  - **Political Parties** Colorado Party
+  - **Government** 
+  - **Ideology** #todo
+  - **Political Parties**
 ## Paraguay: 
   - **Leader** [Higinio Morínigo](https://en.wikipedia.org/wiki/Higinio_Mor%C3%ADnigo)
   - **Government**
-  - **Ideology** Paternalistic Conservative
+  - **Ideology** #todo
   - **Political Parties**
-  *note: Civil war in 1947 resulted in the "colorado party" being the only legal party
+  
 ## Brazil: 
   - **Leader** [Eurico Gaspar Dutra](https://en.wikipedia.org/wiki/Eurico_Gaspar_Dutra)
   - **Government**
-  - **Ideology** National Liberal
+  - **Ideology** #todo
   - **Political Parties**
 ## Haiti: 
   - **Leader** [Élie Lescot](https://en.wikipedia.org/wiki/%C3%89lie_Lescot)
   - **Government**
-  - **Ideology** Social Liberal
+  - **Ideology** #todo
   - **Political Parties**
   ## Dominican Republic: 
   - **Leader** [Rafael Trujillo](https://en.wikipedia.org/wiki/Rafael_Trujillo)
   - **Government**
-  - **Ideology** Paternalistic Conservative
+  - **Ideology** #todo
   - **Political Parties**
 # Europe
 ## Iceland: 
   - **Leader** [Sveinn Björnsson](https://en.wikipedia.org/wiki/Sveinn_Bj%C3%B6rnsson)
   - **Government**
-  - **Ideology** Anti-Colonial
+  - **Ideology** #todo
   - **Political Parties**
 ## Ireland: 
   - **Leader** [Seán T. O'Kelly](https://en.wikipedia.org/wiki/Se%C3%A1n_T._O%27Kelly)
   - **Government**
-  - **Ideology** Christian democrat
+  - **Ideology** #todo
   - **Political Parties**
 ## United Kingom: 
   - **Leader** [Clement Attlee](https://en.wikipedia.org/wiki/Clement_Attlee)
   - **Government**
-  - **Ideology** Social Democrat
+  - **Ideology** #todo
   - **Political Parties**
 ## France: 
   - **Leader** [Charles de Gaulle](https://en.wikipedia.org/wiki/Charles_de_Gaulle)
   - **Government**
-  - **Ideology** Conservative
+  - **Ideology** #todo
   - **Political Parties**
 ## Spain: 
   - **Leader** [Francisco Franco](https://en.wikipedia.org/wiki/Francisco_Franco)
   - **Government**
-  - **Ideology** Fascist 
+  - **Ideology** #todo
   - **Political Parties**
 ## Portugal: 
   - **Leader** [Óscar Carmona](https://en.wikipedia.org/wiki/%C3%93scar_Carmona)
   - **Government**
-  - **Ideology** Corporatist
+  - **Ideology** #todo
   - **Political Parties**
 ## Belgium: 
   - **Leader** [Achille Van Acker](https://en.wikipedia.org/wiki/Achille_Van_Acker)
   - **Government**
-  - **Ideology** Social Democrat
+  - **Ideology** #todo
   - **Political Parties**
 ## Netherlands: 
   - **Leader** [Willem Schermerhorn](https://en.wikipedia.org/wiki/Willem_Schermerhorn)
   - **Government**
-  - **Ideology** Social Democrat
+  - **Ideology** #todo
   - **Political Parties**
 ## Luxembourg: 
   - **Leader** [Pierre Dupong](https://en.wikipedia.org/wiki/Pierre_Dupong)
   - **Government**
-  - **Ideology** Christian Democrat
+  - **Ideology** #todo
   - **Political Parties**
 ## Switzerland: 
-  - **Leader** [Karl Kobelt](https://en.wikipedia.org/wiki/Federal_Council_(Switzerland))
+  - **Leader** [*Federal Council*](https://en.wikipedia.org/wiki/Federal_Council_(Switzerland))
   - **Government**
-  - **Ideology** Social Liberal
+  - **Ideology** #todo
   - **Political Parties**
 ## Italy: 
-  - **Leader** [Alcide De Gasperi](https://en.wikipedia.org/wiki/Enrico_De_Nicola)
+  - **Leader** [Enrico De Nicola](https://en.wikipedia.org/wiki/Enrico_De_Nicola)
   - **Government**
-  - **Ideology** Christian Democrat
+  - **Ideology** #todo
   - **Political Parties**
 ## Andorra: 
   - #todo due to the andorran political situation (co-princes) this should just be owned by france directly
@@ -191,7 +191,7 @@
 ## Vatican City: 
   - **Leader** [Pope St John XXIII](https://en.wikipedia.org/wiki/Pope_St_John_XXIII)
   - **Government**
-  - **Ideology** Theocrat
+  - **Ideology** #todo
   - **Political Parties**
 ## Liechtenstein: 
   - **Leader** [(prince) Franz Joseph II](https://en.wikipedia.org/wiki/Franz_Joseph_II_of_Liechtenstein)
@@ -207,80 +207,79 @@
 ## West Germany: 
   - **Leader** [Konrad Adenauer](https://en.wikipedia.org/wiki/Konrad_Adenauer)
   - **Government**
-  - **Ideology** Christian Democrat
+  - **Ideology** #todo
   - **Political Parties**
 ## East Germany: 
   - **Leader** [Wilhelm Pieck](https://en.wikipedia.org/wiki/Wilhelm_Pieck)
   - **Government**
-  - **Ideology** Marxist Leninist
+  - **Ideology** #todo
   - **Political Parties**
 ## Denmark: 
   - **Leader** [Knud Kristensen](https://en.wikipedia.org/wiki/Knud_Kristensen)
   - **Government**
-  - **Ideology** Liberal Conservative
+  - **Ideology** #todo
   - **Political Parties**
 ## Norway: 
   - **Leader** [Einar Gerhardsen](https://en.wikipedia.org/wiki/Einar_Gerhardsen)
   - **Government**
-  - **Ideology** Social Democrat
+  - **Ideology** #todo
   - **Political Parties**
 ## Sweden: 
   - **Leader** [Per Albin Hansson](https://en.wikipedia.org/wiki/Per_Albin_Hansson)
   - **Government**
-  - **Ideology** Social Democrat
+  - **Ideology** #todo
   - **Political Parties**
 ## Finland: 
-  - **leader** [Carl Gustaf Emil Mannerheim]
+  - **Leader** [Juho Kusti Paasikivi](https://en.wikipedia.org/wiki/Juho_Kusti_Paasikivi)
   - **Government**
-  - **Ideology**  Irridenist
+  - **Ideology** #todo
   - **Political Parties**
 ## Czechoslovakia: 
   - **Leader** [Klement Gottwald](https://en.wikipedia.org/wiki/Klement_Gottwald)
   - **Government**
-  - **Ideology** Marxist Leninist
+  - **Ideology** #todo
   - **Political Parties**
 ## Hungary: 
   - **Leader** [Zoltán Tilly](https://en.wikipedia.org/wiki/Zolt%C3%A1n_Tilly)
   - **Government**
-  - **Ideology** Reactionary
+  - **Ideology** #todo
   - **Political Parties**
 ## Yugoslavia: 
-  - **Leader** [Tito]
+  - **Leader** [Ivan Ribar](https://en.wikipedia.org/wiki/Ivan_Ribar)
   - **Government**
-  - **Ideology** Titoism
+  - **Ideology** #todo
   - **Political Parties**
 ## Albania: 
   - **Leader** [Omer Nishani](https://en.wikipedia.org/wiki/Omer_Nishani)
   - **Government**
-  - **Ideology** Maoist/Marxist leninist
+  - **Ideology** #todo
   - **Political Parties**
 ## Greece: 
   - *Kingdom*: 
-  - **Leader** [George Glucksburg the second]
+  - **Leader** [Regent Archbishop Damaskinos of Athens](https://en.wikipedia.org/wiki/Damaskinos_of_Athens) 
     - **Government**
-    - **Ideology** Autocratic
+    - **Ideology** #todo
     - **Political Parties**
   - *Provisional Communist **Government***: 
   - **Leader** [Nikos Zachariadis](https://en.wikipedia.org/wiki/Nikos_Zachariadis)
     - **Government**
-    - **Ideology** Marxist Leninist
+    - **Ideology** #todo
     - **Political Parties**
 ## Turkey: 
   - **Leader** [Īsmet Īnönü](https://en.wikipedia.org/wiki/%C4%B0smet_%C4%B0n%C3%B6n%C3%BC)
   - **Government**
-  - **Ideology** Kermalist
+  - **Ideology** #todo
   - **Political Parties**
 ## USSR: 
   - **Leader** [Joseph Stalin](https://en.wikipedia.org/wiki/Joseph_Stalin)
   - **Government**
-  - **Ideology** Marxist Leninist
+  - **Ideology** #todo
   - **Political Parties**
 ## Bulgaria: 
-  - **Leader** [Tsar Simeon saxe-coburg-gotha]
+  - **Leader** [Vasil Kolarov](https://en.wikipedia.org/wiki/Vasil_Kolarov)
   - **Government**
-  - **Ideology** Moderate 
+  - **Ideology** #todo
   - **Political Parties**
-  *note: Simeon must change his ideology to conservative if he gets ousted 
 ## Romania: 
   - **Leader** [Constantin Ion Parhon](https://en.wikipedia.org/wiki/Constantin_Ion_Parhon)
   - **Government**
@@ -288,81 +287,73 @@
   - **Political Parties**
 
 # Middle East
-*note: we (Mercur3 and User_) are adding the interest groups of all the leaders in this reigon as well as any important details
 ## Syria: 
   - **Leader** [Shukri al-Quwatli](https://en.wikipedia.org/wiki/Shukri_al-Quwatli)
   - **Government**
-  - **Ideology** Reactionary, Elite
+  - **Ideology** #todo
   - **Political Parties**
-  - *note: violent coups were the most common type of government refrom
 ## Lebanon: 
   - **Leader** [Bechara Khoury](https://en.wikipedia.org/wiki/Bechara_Khoury)
   - **Government**
-  - **Ideology** National Liberal, entrepooner, Eastern Catholic
+  - **Ideology** #todo
   - **Political Parties**
 ## Palestine: 
   - #todo
 ## Egypt: 
   - **Leader** [Farouk I](https://en.wikipedia.org/wiki/Farouk_I)
   - **Government**
-  - **Ideology** Absolutist, Elite
+  - **Ideology** #todo
   - **Political Parties**
 ## Saudi Arabia: 
   - **Leader** [Abdul Aziz](https://en.wikipedia.org/wiki/Abdul_Aziz)
   - **Government**
-  - **Ideology** Absolutist, Elite
+  - **Ideology** #todo
   - **Political Parties**
 ## Kuwait: 
   - **Leader** [Ahmad Al-Jaber Al-Sabah](https://en.wikipedia.org/wiki/Ahmad_Al-Jaber_Al-Sabah)
   - **Government**
-  - **Ideology** Absolutist, Elite
+  - **Ideology** #todo
   - **Political Parties**
 ## Bahrain: 
   - **Leader** [Salman bin Hamad Al Khalifa](https://en.wikipedia.org/wiki/Salman_bin_Hamad_Al_Khalifa)
   - **Government**
-  - **Ideology** Absolutist, Elite
+  - **Ideology** #todo
   - **Political Parties**
 ## Trucial States: 
   - **Leader** [Shakhbut bin Sultan Al Nathan](https://en.wikipedia.org/wiki/Shakhbut_bin_Sultan_Al_Nathan)
   - **Government**
-  - **Ideology** Absolutist, Elite
+  - **Ideology** #todo
   - **Political Parties**
-  *note: add a journal entry to form the UAE and get claims around the gulf. call it "uniting the emerites" and require a certain degree of centralisation
 ## Oman: 
   - **Leader** [Said bin Taimur](https://en.wikipedia.org/wiki/Said_bin_Taimur)
   - **Government**
-  - **Ideology** Absolutist, Elite
+  - **Ideology** #todo
   - **Political Parties**
 ## Aden Colony: 
   - **Leader** [Reginald Stuart Champion](https://en.wikipedia.org/wiki/Reginald_Stuart_Champion)
   - **Government**
-  - **Ideology** Colonialist, Elite
+  - **Ideology** #todo
   - **Political Parties**
 ## Yemen: 
   - **Leader** [Ahmad bin Yahya](https://en.wikipedia.org/wiki/Ahmad_bin_Yahya)
   - **Government**
-  - **Ideology** Absolutist, Elite
+  - **Ideology** #todo
   - **Political Parties**
 ## Iraq: 
-  - **Leader** [Arshad al-Umari](https://en.wikipedia.org/wiki/Nuri_al-Said)
+  - **Leader** [Nuri al-Said](https://en.wikipedia.org/wiki/Nuri_al-Said)
   - **Government**
-  - **Ideology** Moderate, Entrepooner
+  - **Ideology** #todo
   - **Political Parties**
 ## Persia: 
   - **Leader** [Mohammad Reza Shah](https://en.wikipedia.org/wiki/Mohammad_Reza_Shah)
   - **Government**
-  - **Ideology** Absolutist, Elite
+  - **Ideology** #todo
   - **Political Parties**
 ## Azerbaijan: 
-  - **leader** Ja'far Pishevari
-  - **government**
-  - **ideology** marxist leninist
-  - **political parties**
+  - #todo
 ## Kurdistan: 
-  - **leader** Qazi Muhammad
-  - **government**
-  - **ideology** Marxist Leninist
-  - **political parties**
+  - #todo
+
 # North Africa
 ## Fezzan-Ghadames Military Territory : 
   - **Leader** [Gov. Pierre Florimond](https://en.wikipedia.org/wiki/Pierre_Florimond)
@@ -372,23 +363,22 @@
 ## British Libya: 
   - **Leader** [Peter Bevil Edward Acland](https://en.wikipedia.org/wiki/Peter_Bevil_Edward_Acland)
   - **Government**
-  - **Ideology** Moderate
+  - **Ideology** #todo
   - **Political Parties**
 ## Tunisia: 
   - **Leader** [Slaheddine Baccouche](https://en.wikipedia.org/wiki/Slaheddine_Baccouche)
   - **Government**
-  - **Ideology** Absolutist, armed forces
+  - **Ideology** #todo
   - **Political Parties**
 ## Algeria: 
   - **Leader** [Yves Chataigneau](https://en.wikipedia.org/wiki/Yves_Chataigneau)
   - **Government**
   - **Ideology** #todo
   - **Political Parties**
-  - *note: might be added later, but irl algeria was considered to be part of france proper
 ## Morocco: 
   - **Leader** [Gabriel Puaux](https://en.wikipedia.org/wiki/Gabriel_Puaux)
   - **Government**
-  - **Ideology** Conservative, Devout
+  - **Ideology** #todo
   - **Political Parties**
 ## Spanish Morocco: 
   - **Leader** [José Enrique Varela](https://en.wikipedia.org/wiki/Jos%C3%A9_Enrique_Varela)
@@ -400,147 +390,144 @@
   - **Government**
   - **Ideology** #todo
   - **Political Parties**
-*note: the same with algeria, spanish west africa and morocco will be part of spain at game start
+
 # SUBSAHARAN AFRICA
 ## French West Africa: 
   - **Leader** [Pierre Charles Cournarie](https://en.wikipedia.org/wiki/Pierre_Charles_Cournarie)
   - **Government**
-  - **Ideology** colonialist, Elite
+  - **Ideology** #todo
   - **Political Parties**
 ## The Gambia: 
   - **Leader** [Sir Hilary Blood](https://en.wikipedia.org/wiki/Hilary_Blood)
   - **Government**
-  - **Ideology** Colonialist, Elite
+  - **Ideology** #todo
   - **Political Parties**
 ## Portuguese Guinea: 
   - **Leader** [Manuel Maria Sarmento Rodrigues](https://en.wikipedia.org/wiki/Manuel_Maria_Sarmento_Rodrigues)
   - **Government**
-  - **Ideology** Colonialist
+  - **Ideology** #todo
   - **Political Parties**
 ## Sierra Leone: 
   - **Leader** [Sir Hubert Craddock Stevenson](https://en.wikipedia.org/wiki/Hubert_Craddock_Stevenson)
   - **Government**
-  - **Ideology** Colonialist
+  - **Ideology** #todo
   - **Political Parties**
 ## Liberia: 
   - **Leader** [William Tubman](https://en.wikipedia.org/wiki/William_Tubman)
   - **Government**
-  - **Ideology** Conservative
+  - **Ideology** #todo
   - **Political Parties**
 ## Gold Coast: 
   - **Leader** [Sir Alan Cuthbert Maxwell Burns](https://en.wikipedia.org/wiki/Alan_Cuthbert_Maxwell_Burns)
   - **Government**
-  - **Ideology** Colonialist
+  - **Ideology** #todo
   - **Political Parties**
 ## Togoland: 
   - **Leader** [(Governed by the gold coast)](https://en.wikipedia.org/wiki/Alan_Cuthbert_Maxwell_Burns)
   - **Government**
-  - **Ideology** Colonialist
+  - **Ideology** #todo
   - **Political Parties**
 ## Nigeria: 
   - **Leader** [Sir Arthur Richards](https://en.wikipedia.org/wiki/Arthur_Richards)
   - **Government**
-  - **Ideology** Colonialist
+  - **Ideology** #todo
   - **Political Parties**
 ## French Cameroon: 
   - **Leader** [Henri Pierre Nicolas](https://en.wikipedia.org/wiki/Henri_Pierre_Nicolas)
   - **Government**
-  - **Ideology** colonialist
+  - **Ideology** #todo
   - **Political Parties**
 ## Spanish Guinea: 
   - **Leader** [Juan María Bonelli Rubio](https://en.wikipedia.org/wiki/Juan_Mar%C3%ADa_Bonelli_Rubio)
   - **Government**
-  - **Ideology** colonialist
+  - **Ideology** #todo
   - **Political Parties**
-  *note: as with the other spanish colonies, I highly recomend we just make this part of spain proper as an unincorporated state
 ## São Tomé and Príncipe: 
   - **Leader** [Carlos de Sousa Gorgulho](https://en.wikipedia.org/wiki/Carlos_de_Sousa_Gorgulho)
   - **Government**
   - **Ideology** #todo
   - **Political Parties**
-  *note: next to 0 english sources on this, when googled in seems that Carlos SG was involved in some massacre in 1953, but I can't find anything else
 ## Belgian Congo: 
   - **Leader** [Pierre Ryckmans](https://en.wikipedia.org/wiki/Pierre_Ryckmans)
   - **Government**
-  - **Ideology** Colonialist
+  - **Ideology** #todo
   - **Political Parties**
 ## Ruanda-Urundi: 
   - **Leader** [Eugène Jungers](https://en.wikipedia.org/wiki/Eug%C3%A8ne_Jungers)
   - **Government**
-  - **Ideology** colonialist
+  - **Ideology** #todo
   - **Political Parties**
 ## Angola Overseas Province of Portugal: 
   - **Leader** [Vasco Lopes Alves](https://en.wikipedia.org/wiki/Vasco_Lopes_Alves)
   - **Government**
-  - **Ideology** colonialist
+  - **Ideology** #todo
   - **Political Parties**
 ## Union of South Africa: 
   - **Leader** [Gideon Brand van Zyl](https://en.wikipedia.org/wiki/Gideon_Brand_van_Zyl)
   - **Government**
-  - **Ideology** colonialist
+  - **Ideology** #todo
   - **Political Parties**
 ## Bechuanaland: 
   - **Leader** [Tshekedi Khama](https://en.wikipedia.org/wiki/Tshekedi_Khama)
   - **Government**
-  - **Ideology** Absolutist
+  - **Ideology** #todo
   - **Political Parties**
 ## Basutoland: 
   - **Leader** [Simon Seeiso Griffith](https://en.wikipedia.org/wiki/Simon_Seeiso_Griffith)
   - **Government**
   - **Ideology** #todo
   - **Political Parties**
-  *note: Simon died in 1940 so im kind of at a loss here
 ## Swaziland: 
   - **Leader** [Sobhuza II (The longest reigning monarch in all of recorded history)](https://en.wikipedia.org/wiki/Sobhuza_II)
   - **Government**
-  - **Ideology** Anti-Colonial
+  - **Ideology** #todo
   - **Political Parties**
 ## Southern Rhodesia: 
   - **Leader** [Godfrey Huggins](https://en.wikipedia.org/wiki/Godfrey_Huggins)
   - **Government**
-  - **Ideology** Colonialist
+  - **Ideology** #todo
   - **Political Parties**
 ## Northern Rhodesia: 
   - **Leader** [Sir John Waddington](https://en.wikipedia.org/wiki/John_Waddington)
   - **Government**
-  - **Ideology** Colonialist
+  - **Ideology** #todo
   - **Political Parties**
 ## Nyasaland: 
   - **Leader** [Edmund Charles Smith Richards](https://en.wikipedia.org/wiki/Edmund_Charles_Smith_Richards)
   - **Government**
-  - **Ideology** colonialist
+  - **Ideology** #todo
   - **Political Parties**
 ## Moçambique: 
   - **Leader** [João Tristão de Bettencourt](https://en.wikipedia.org/wiki/Jo%C3%A3o_Trist%C3%A3o_de_Bettencourt)
   - **Government**
-  - **Ideology** colonialist
+  - **Ideology** #todo
   - **Political Parties**
 
 # Horn of Africa
 ## Tanganyika: 
   - **Leader** [Sir William Denis Battershill](https://en.wikipedia.org/wiki/William_Denis_Battershill)
   - **Government**
-  - **Ideology** colonialist
+  - **Ideology** #todo
   - **Political Parties**
 ## Kenya: 
   - **Leader** [Sir Philip Mitchell](https://en.wikipedia.org/wiki/Philip_Mitchell)
   - **Government**
-  - **Ideology** colonialist
+  - **Ideology** #todo
   - **Political Parties**
 ## Uganda: 
   - **Leader** [John Hathorn Hall](https://en.wikipedia.org/wiki/John_Hathorn_Hall)
   - **Government**
-  - **Ideology** colonialist
+  - **Ideology** #todo
   - **Political Parties**
 ## British Somaliland: 
   - **Leader** [Gerald Thomas Fisher](https://en.wikipedia.org/wiki/Gerald_Thomas_Fisher)
   - **Government**
-  - **Ideology** colonialist
+  - **Ideology** #todo
   - **Political Parties**
 ## British Military Administration in Somaliland: 
   - **Leader** [Denis Wickham](https://en.wikipedia.org/wiki/Denis_Wickham)
   - **Government**
-  - **Ideology** moderate
+  - **Ideology** #todo
   - **Political Parties**
 ## British Military Administration in Eritrea: 
   - [Francis Drew] (british occupation is ended and Eritrea is annexed by Ethopia via UN resolution 390 in 1952)
@@ -548,12 +535,12 @@
 ## French Somaliland: 
   - **Leader** [Jean Chalvet](https://en.wikipedia.org/wiki/Jean_Chalvet)
   - **Government**
-  - **Ideology** colonialist
+  - **Ideology** #todo
   - **Political Parties**
 ## Anglo-Egyptian Sudan: 
   - **Leader** [Sir Hubert Jervoise Huddleston](https://en.wikipedia.org/wiki/Hubert_Jervoise_Huddleston)
   - **Government**
-  - **Ideology** autocratic
+  - **Ideology** #todo
   - **Political Parties**
 
 # Central Asia
@@ -571,7 +558,7 @@
 ## Afghanistan: 
   - **Leader** [Mohammed Zahir Shah](https://en.wikipedia.org/wiki/Mohammad_Zahir_Shah)
   - **Government**
-  - **Ideology** absolutist
+  - **Ideology** #todo
   - **Political Parties**
 ## Nepal: 
   - **Leader** [Tribhuvan Bir Bikram Shah](https://en.wikipedia.org/wiki/Tribhuvan_Bir_Bikram_Shah)
@@ -586,19 +573,19 @@
 ## Tibet: 
   - **Leader** [Dalai Lama Tenzin Gyatso](https://en.wikipedia.org/wiki/Dalai_Lama)
   - **Government**
-  - **Ideology** Progressive
+  - **Ideology** #todo
   - **Political Parties**
 
 # East Asia
 ## Republic of China: 
   - **Leader** [Chiang Kai-shek](https://en.wikipedia.org/wiki/Chiang_Kai-shek)
   - **Government**
-  - **Ideology** National Liberal
+  - **Ideology** #todo
   - **Political Parties**
 ## People's Republic of China: 
   - **Leader** [Mao Zedong](https://en.wikipedia.org/wiki/Mao_Zedong)
   - **Government**
-  - **Ideology** Maoist
+  - **Ideology** #todo
   - **Political Parties**
 ## Mongolia: 
   - **Leader** [Gonchigiin Bumtsend](https://en.wikipedia.org/wiki/Gonchigiin_Bumtsend)  
@@ -619,14 +606,14 @@
 ## Japan: 
   - **Leader** [Kijūrō Shidehara](https://en.wikipedia.org/wiki/Kij%C5%ABr%C5%8D_Shidehara)
   - **Government**
-  - **Ideology** National Liberal
+  - **Ideology** #todo
   - **Political Parties**
 
 # South East Asia
 ## French Indochina: 
   - **Leader** [Georges Thierry d'Argenlieu](https://en.wikipedia.org/wiki/Georges_Thierry_d%27Argenlieu)
   - **Government**
-  - **Ideology** colonialist
+  - **Ideology** #todo
   - **Political Parties**
 ## Siam/Thailand: 
   - **Leader** [Thawan Thamrongnawasawat](https://en.wikipedia.org/wiki/Thawan_Thamrongnawasawat)
@@ -642,7 +629,7 @@
 ## Dutch East Indies: 
   - **Leader** [Hubertus van Mook](https://en.wikipedia.org/wiki/Hubertus_van_Mook)
   - **Government**
-  - **Ideology** colonialist
+  - **Ideology** #todo
   - **Political Parties**
 ## Philippines (commonwealth): 
   - **Leader** [Sergio Osmeña](https://en.wikipedia.org/wiki/Sergio_Osme%C3%B1a) 
@@ -677,10 +664,10 @@
 ## Guam: 
   - **Leader** [Henry Louis Larsen (Military Administration)](https://en.wikipedia.org/wiki/Henry_Louis_Larsen)
   - **Government**
-  - **Ideology** moderate
+  - **Ideology** #todo
   - **Political Parties**
 ## British West Pacific Territories: 
   - **Leader** [Sir Alexander Grantham](https://en.wikipedia.org/wiki/Alexander_Grantham)
   - **Government**
-  - **Ideology** colonialist
+  - **Ideology** #todo
   - **Political Parties**
