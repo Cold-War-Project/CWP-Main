@@ -1,0 +1,260 @@
+﻿diplomatic_alignment = {
+	requires_approval = no
+	should_notify_third_parties = no
+
+	potential = {
+		NOT = {
+			is_country_type = decentralized
+			country_rank >= rank_value:superpower
+			is_subject = yes
+		}
+		scope:target_country = {
+			or = {
+				country_rank >= rank_value:superpower
+				has_variable = western_bloc_leader
+				has_variable = eastern_bloc_leader
+			}
+		}
+		trigger_if = {
+			limit = { 
+				scope:target_country = {
+					has_variable = eastern_bloc_leader
+				}
+			}
+			not = {
+				has_variable = western_bloc_member
+			}
+		}
+		trigger_if = {
+			limit = { 
+				scope:target_country = {
+					has_variable = western_bloc_leader
+				}
+			}
+			not = {
+				has_variable = eastern_bloc_member
+			}
+		}
+	}
+	possible = {
+		NOT = {
+			has_war_with = scope:target_country
+		}
+		custom_tooltip = {
+			text = DIPLO_ACTION_RELATIONS_POOR_OR_LESS_NOT
+			scope:target_country.relations:root >= relations_threshold:neutral
+		}
+		has_diplomatic_relevance = scope:target_country
+	}
+	pact = {
+		cost = 50
+		is_two_sided_pact = no
+		show_in_outliner = yes
+		relations_progress_per_day = 3		# At 100, +1 relations
+		relations_improvement_max = 100
+		weekly_effect = {
+			custom_tooltip = {
+				text = bankroll_weekly_obligation_effect
+				if = {
+					limit = {
+						root = {
+							owes_obligation_to = scope:target_country	
+						}
+					}
+					random_list = { 
+						998 = {}
+						2 = { root = { set_owes_obligation_to = { country = scope:target_country setting = no } } }
+					}				
+				}	
+			}
+		}
+		is_about_to_auto_break = {
+			scope:target_country.relations:root <= -20			# this: poor + 3
+		}
+		should_auto_break = {
+			custom_tooltip = {
+				text = DIPLO_ACTION_RELATIONS_POOR_OR_LESS
+				# make sure to update is_about_to_auto_break when changing this:
+				scope:target_country.relations:root <= relations_threshold:hostile
+			}
+		}
+		should_invalidate = {
+			OR = {
+				has_war_with = scope:target_country
+				scope:target_country = {
+					is_subject_of = root
+				}
+			}
+		}
+		break_effect = {
+			change_relations = {
+				country = scope:target_country
+				value = -40
+			}
+			# AI may not take leaving their customs union well...
+			if = {
+				limit = {
+					scope:target_country = {
+						has_variable = western_bloc_leader
+					}
+				}
+				remove_variable = western_bloc_member
+			}
+			if = {
+				limit = {
+					scope:target_country = {
+						has_variable = eastern_bloc_leader
+					}
+				}
+				remove_variable = eastern_bloc_member
+			}
+		}
+	}
+	accept_effect = {
+		if = {
+			limit = {
+				scope:target_country = {
+					has_variable = western_bloc_leader
+				}
+			}
+			set_variable = western_bloc_member
+		}
+		if = {
+			limit = {
+				scope:target_country = {
+					has_variable = eastern_bloc_leader
+				}
+			}
+			set_variable = eastern_bloc_member
+		}
+	}
+	
+	ai = {
+		max_influence_spending_fraction = 0.25
+		propose_score = {
+			value = 5
+			add = {
+				value = scope:target_country.country_rank
+				multiply = 3
+			}
+			if = {
+				limit = {
+					scope:target_country = {
+						has_variable = western_bloc_leader
+					}
+					or = {
+						is_liberal = yes
+						has_voting_rights = yes
+					}
+				}
+				add = 30
+			}
+			if = {
+				limit = {
+					scope:target_country = {
+						has_variable = eastern_bloc_leader
+					}
+					or = {
+						is_liberal = no
+						has_voting_rights = no
+						has_radical_leftist_economy = yes
+						has_radical_leftist_government = yes
+					}
+				}
+				add = 30
+			}
+			if = {
+				limit = {
+					has_attitude = {
+						who = scope:target_country
+						attitude = protective
+					}
+				}
+				add = 5
+			}
+			if = {
+				limit = {
+					has_attitude = {
+						who = scope:target_country
+						attitude = conciliatory
+					}
+				}
+				add = 20
+			}
+			add = {
+				value = scope:target_country.country_rank
+				multiply = 3
+			}
+			if = {
+				limit = {
+					OR = {
+						is_subject_of = scope:target_country
+						scope:target_country = {
+							is_subject_of = root
+						}
+					}
+				}
+				multiply = 2
+			}
+		}
+		propose_break_score = {
+			value = -30
+			if = {
+				limit = {
+					scope:target_country = {
+						has_variable = western_bloc_leader
+					}
+					or = {
+						is_liberal = no
+						has_voting_rights = no
+					}
+				}
+				add = 30
+			}
+			if = {
+				limit = {
+					scope:target_country = {
+						has_variable = eastern_bloc_leader
+					}
+					or = {
+						is_liberal = yes
+						has_voting_rights = yes
+						has_radical_leftist_economy = no
+						has_radical_leftist_government = no
+					}
+				}
+				add = 30
+			}
+		}
+		will_propose = {
+			OR = {
+				AND = {
+					has_attitude = {
+						who = scope:target_country
+						attitude = cooperative
+					}
+					country_rank <= scope:target_country.country_rank
+				}
+				has_attitude = {
+					who = scope:target_country
+					attitude = conciliatory
+				}
+				has_attitude = {
+					who = scope:target_country
+					attitude = genial
+				}
+				has_attitude = {
+					who = scope:target_country
+					attitude = protective
+				}
+			}
+		}
+		will_break = {
+			NOR = {
+				scope:target_country = {
+					country_rank < rank_value:great_power
+				}
+			}
+		}
+	}
+}
