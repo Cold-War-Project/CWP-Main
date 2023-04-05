@@ -146,59 +146,6 @@ on_monthly_pulse_country = {
 				subtract = nuclear_stockpile_decay
 			}
 		}
-		# AI DEFCON Calculation
-		if = {
-			limit = {
-				or = {
-					not = {
-						has_variable = defcon_level
-					}
-					var:defcon_level < 1
-				}
-			}
-			set_variable = {
-				name = defcon_level
-				value = 1
-			}
-		}
-		if = {
-			limit = {
-				has_variable = defcon_level
-				is_ai = yes
-				ai_raise_defcon_value < ai_lower_defcon_value
-				not = {
-					has_variable = defcon_lowered
-					var:defcon_level > 1
-				}
-			}
-			change_variable = {
-				name = defcon_level
-				subtract = 1
-			}
-			set_variable = {
-				name = defcon_lowered
-				days = 50
-			}
-		}
-		if = {
-			limit = {
-				is_ai = yes
-				ai_raise_defcon_value > ai_lower_defcon_value
-				not = {
-					has_variable = defcon_lowered
-					var:defcon_level >= 1
-					var:defcon_level <= 5
-				}
-			}
-			change_variable = {
-				name = defcon_level
-				add = 1
-			}
-			set_variable = {
-				name = defcon_lowered
-				days = 50
-			}
-		}
 		#UN Voting for AI
 		if = {
 			limit = {
@@ -206,10 +153,77 @@ on_monthly_pulse_country = {
 			}
 			trigger_event = un_ai_voting.1
 		}
+		# Readiness Calculations
+		if = {
+			limit = {
+				has_variable = var_readiness
+				has_variable = var_increase_readiness
+				var:var_readiness < 100
+			}
+			change_variable = {
+				name = var_readiness
+				add = readiness_sum_value
+			}
+		}
+		if = {
+			limit = {
+				has_variable = var_readiness
+				has_variable = var_decrease_readiness
+				var:var_readiness >= 0
+			}
+			change_variable = {
+				name = var_readiness
+				subtract = readiness_decrease_value
+			}
+		}
+		if = {
+			limit = {
+				has_variable = var_readiness
+				var:var_readiness < 0
+			}
+			set_variable = {
+				name = var_readiness
+				value = 0
+			}
+		}
+		if = {
+			limit = {
+				has_variable = var_readiness
+				var:var_readiness > 100
+			}
+			set_variable = {
+				name = var_readiness
+				value = 100
+			}
+		}
+		if = {
+			limit = {
+				has_variable = var_readiness
+			}
+			remove_modifier = readiness_modifier
+			add_modifier = {
+				name = readiness_modifier
+				multiplier = readiness
+			}
+		}
+		# AI Calculations
+		if = {
+			limit = {
+				has_variable = var_readiness
+			}
+			trigger_event = ai_readiness_calculations.1
+		}
 	}
 }
 
 on_half_yearly_pulse_country = {
+	first_valid = {
+		delay = { days = {0 90}}
+		economic_events.1
+		economic_events.3
+		economic_events.5
+		economic_events.6
+	}
 	effect = {
 	}
 }
@@ -408,17 +422,7 @@ on_spreading_technology = {
 # scope:diplomatic_play = The diplomatic play that has been started
 on_diplomatic_play_started = {
 	effect = {
-		if = {
-			limit = {
-				this = {
-					var:defcon_level >= 3
-				}
-			}
-			change_variable = {
-				name = defcon_level
-				subtract = 1
-			}
-		}
+
 	}
 }
 
@@ -1625,27 +1629,6 @@ on_revolution_start = {
 		}
 		add_modifier = {
 			name = last_stand
-		}
-		if = {
-			limit = {
-				scope:target = {
-					not ={
-						has_variable = defcon_level
-					}
-				}
-			}
-			scope:target = {
-				set_variable = {
-					name = defcon_level
-					value = 3
-				}
-			}
-		}
-		if = {
-			limit = {
-				var:defcon_level >= 3
-			}
-			lower_defcon = yes
 		}
 		# Currency
 		if = {

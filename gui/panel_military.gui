@@ -126,72 +126,85 @@ types panel_military {
 					textbox = {
 						parentanchor = hcenter
 						align = hcenter
-						raw_text = "[GetPlayer.GetCustom('defcon_level_loc')]"
+						raw_text = "Readiness"
 						using = header_font_fancy
-						using = fontsize_mega
-						tooltipwidget = {
-							# defcon_tooltip = {}
-						}
+						fontsize = 30
+					}
+					flowcontainer = { # Readiness System
+						direction = vertical
+						margin_left = -2
+						readiness_bar = {}
 					}
 					flowcontainer = {
 						direction = vertical
-						icon = {
-							visible = "[EqualTo_CFixedPoint(Country.MakeScope.Var('defcon_level').GetValue, '(CFixedPoint)5')]"
-							texture = "gfx/interface/icons/cwp_icons/defcon5.dds"
-							size = { 224 56 }
-							tooltip = "DEFCON5_TOOLTIP"
+						spacing = 20
+						parentanchor = hcenter
+						textbox = {
+							align = hcenter
+							raw_text = "Currently at #v [Country.MakeScope.ScriptValue('readiness')]%#! [concept_readiness]"
 						}
-						icon = {
-							visible = "[EqualTo_CFixedPoint(Country.MakeScope.Var('defcon_level').GetValue, '(CFixedPoint)4')]"
-							texture = "gfx/interface/icons/cwp_icons/defcon4.dds"
-							size = { 224 56 }
-							tooltip = "DEFCON4_TOOLTIP"
-						}
-						icon = {
-							visible = "[EqualTo_CFixedPoint(Country.MakeScope.Var('defcon_level').GetValue, '(CFixedPoint)3')]"
-							texture = "gfx/interface/icons/cwp_icons/defcon3.dds"
-							size = { 224 56 }
-							tooltip = "DEFCON3_TOOLTIP"
-						}
-						icon = {
-							visible = "[EqualTo_CFixedPoint(Country.MakeScope.Var('defcon_level').GetValue, '(CFixedPoint)2')]"
-							texture = "gfx/interface/icons/cwp_icons/defcon2.dds"
-							size = { 224 56 }
-							tooltip = "DEFCON2_TOOLTIP"
-						}
-						icon = {
-							visible = "[EqualTo_CFixedPoint(Country.MakeScope.Var('defcon_level').GetValue, '(CFixedPoint)1')]"
-							texture = "gfx/interface/icons/cwp_icons/defcon1.dds"
-							size = { 224 56 }
-							tooltip = "DEFCON1_TOOLTIP"
-						}
-						icon = {
-							visible = "[EqualTo_CFixedPoint(Country.MakeScope.Var('defcon_level').GetValue, '(CFixedPoint)0')]"
-							texture = "gfx/interface/icons/cwp_icons/alert.dds"
-							size = { 224 56 }
+						textbox = {
+							align = hcenter
+							raw_text = "Changes by #v [Country.MakeScope.ScriptValue('readiness_sum_value')]#! every month"
 						}
 					}
 					flowcontainer = {
-						direction = vertical
+						parentanchor = hcenter
 						button = {
-							tooltip = "DEFCON_RAISE_TOOLTIP"
 							using = default_button_map_interaction
-							size = { 225 40 }
-							raw_text = "Increase DEFCON"
-							onclick = "[GetScriptedGui('defcon_raise').Execute( GuiScope.SetRoot( GetPlayer.MakeScope ).End )]"
-							enabled = "[And(LessThan_CFixedPoint(Country.MakeScope.Var('defcon_level').GetValue, '(CFixedPoint)5') , Not(Country.MakeScope.Var('defcon_lowered').IsSet))]"
+							using = shimmer
+							size = { 65 35 }
+							tooltip = "LOWER_READINESS"
+							enabled = "[Not(GetVariableSystem.Exists('lower_readiness'))]"
+							icon = {
+								texture = "gfx/interface/icons/generic_icons/arrow_left.dds"
+								size = { 30 30 }
+								position = { 10 2 }
+							}
+							onclick = "[GetScriptedGui('decrease_readiness_sgui').Execute( GuiScope.SetRoot( GetPlayer.MakeScope ).End )]"
+							onclick = "[GetVariableSystem.Toggle('lower_readiness')]"
+							onclick = "[GetVariableSystem.Clear('maintain_readiness')]"
+							onclick = "[GetVariableSystem.Clear('raise_readiness')]"
 						}
 						button = {
-							tooltip = "DEFCON_LOWER_TOOLTIP"
 							using = default_button_map_interaction
-							size = { 225 40 }
-							raw_text = "Decrease DEFCON"
-							onclick = "[GetScriptedGui('defcon_lower').Execute( GuiScope.SetRoot( GetPlayer.MakeScope ).End )]"
-							enabled = "[And(GreaterThan_CFixedPoint(Country.MakeScope.Var('defcon_level').GetValue, '(CFixedPoint)1'), Not(Country.MakeScope.Var('defcon_lowered').IsSet))]"
+							using = shimmer
+							size = { 65 35 }
+							tooltip = "MAINTAIN_READINESS"
+							enabled = "[Not(GetVariableSystem.Exists('maintain_readiness'))]"
+							icon = {
+								texture = "gfx/interface/icons/infamy_icons/reputable.dds"
+								size = { 30 30 }
+								position = { 18 2 }
+							}
+							onclick = "[GetScriptedGui('maintain_readiness_sgui').Execute( GuiScope.SetRoot( GetPlayer.MakeScope ).End )]"
+							onclick = "[GetVariableSystem.Toggle('maintain_readiness')]"
+							onclick = "[GetVariableSystem.Clear('lower_readiness')]"
+							onclick = "[GetVariableSystem.Clear('raise_readiness')]"
+						}
+						button = {
+							using = default_button_map_interaction
+							using = shimmer
+							size = { 65 35 }
+							tooltip = "INCREASE_READINESS"
+							enabled = "[Not(GetVariableSystem.Exists('raise_readiness'))]"
+							icon = {
+								texture = "gfx/interface/icons/generic_icons/arrow_right.dds"
+								size = { 30 30 }
+								position = { 20 2 }
+							}
+							onclick = "[GetScriptedGui('increase_readiness_sgui').Execute( GuiScope.SetRoot( GetPlayer.MakeScope ).End )]"
+							onclick = "[GetVariableSystem.Toggle('raise_readiness')]"
+							onclick = "[GetVariableSystem.Clear('maintain_readiness')]"
+							onclick = "[GetVariableSystem.Clear('lower_readiness')]"
 						}
 					}
 				}
 				flowcontainer = {
+					divider_clean = {
+						parentanchor = hcenter
+						size = { 200 2 }
+					}
 					direction = vertical
 					spacing = 20
 					margin = { 5 10 }
@@ -214,6 +227,7 @@ types panel_military {
 								size = { 30 30 }
 								position = { 5 6 }
 							}
+							enabled = no
 						}
 						button_icon_round_action = {
 							size = { 40 40 }
@@ -223,6 +237,7 @@ types panel_military {
 								size = { 30 30 }
 								position = { 5 6 }
 							}
+							enabled = no
 						}
 						button_icon_round_action = {
 							size = { 40 40 }
@@ -232,12 +247,15 @@ types panel_military {
 								size = { 30 30 }
 								position = { 5 6 }
 							}
+							enabled = no
 						}
 					}
 					button = {
 						using = default_button_primary_big_action
 						raw_text = "Launch Nuclear Weapons" 
+						tooltip = "DISABLED"
 						size = { 225 47 }
+						enabled = no
 					}
 				}
 			}	
