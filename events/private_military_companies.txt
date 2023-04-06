@@ -1,29 +1,26 @@
 ﻿namespace = private_military_companies
 
-private_military_companies.1 = {
+private_military_companies.1 = { # PMC takeover
 	type = country_event
-
 	title = private_military_companies.1.t
 	desc = private_military_companies.1.d
 	flavor = private_military_companies.1.f
-
 	icon = "gfx/interface/icons/event_icons/event_military.dds"
 	event_image = {
 		texture = "gfx/interface/event_pictures/pmc_takeover.dds"
 	}
 	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
 	on_opened_soundeffect = "event:/SFX/Events/middleeast/courtroom_upheaval"
-
 	duration = 3
-
 	trigger = {
 		is_enacting_law = law_type:law_private_army
 		ig:ig_armed_forces = {
 			exists = yes
-			NOT = {has_ideology = ideology_profit_driven}
+			NOT = {
+				has_ideology = ideology_profit_driven
+			}
 		}
-		}
-
+	}
 	option = {
 		name = private_military_companies.1.a
 		ig:ig_armed_forces = {
@@ -34,22 +31,18 @@ private_military_companies.1 = {
 	}
 }
 
-private_military_companies.2 = {
+private_military_companies.2 = { # PMC deposed
 	type = country_event
-
 	title = private_military_companies.2.t
 	desc = private_military_companies.2.d
 	flavor = private_military_companies.2.f
-
 	icon = "gfx/interface/icons/event_icons/event_military.dds"
 	event_image = {
 		texture = "gfx/interface/event_pictures/pmc_deposed.dds"
 	}
 	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
 	on_opened_soundeffect = "event:/SFX/Events/middleeast/courtroom_upheaval"
-
 	duration = 3
-
 	trigger = {
 		OR = {
 			is_enacting_law = law_type:law_professional_army
@@ -61,10 +54,299 @@ private_military_companies.2 = {
 			exists = yes
 			has_ideology = ideology_profit_driven
 		}
-		}
+	}
 
 	option = {
 		name = private_military_companies.2.a
+		ig:ig_armed_forces = {
+			remove_ideology = ideology_profit_driven
+			add_ideology = ideology_jingoist
+			set_interest_group_name = ig_armed_forces
+		}
+	}
+}
+
+private_military_companies.3 = { # PMC offers to take over
+	type = country_event
+
+	title = private_military_companies.3.t
+	desc = private_military_companies.3.d
+	flavor = private_military_companies.3.f
+
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+	event_image = {
+		texture = "gfx/interface/event_pictures/pmc_takeover.dds"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/middleeast/courtroom_upheaval"
+
+	duration = 3
+
+	trigger = {
+		is_at_war = yes
+		OR = {
+			has_law = law_type:law_irregular_army
+			has_law = law_type:law_guerilla_army
+		}
+		ig:ig_armed_forces = {
+			exists = yes
+			NOT = {has_ideology = ideology_profit_driven}
+			is_insurrectionary = no
+		}
+		country_rank < rank_value:major_power
+		NOT = {var:refused_pmcs = yes}
+		is_subject = no
+		has_technology_researched = mercenaries
+	}
+
+	option = {
+		name = private_military_companies.3.a
+		ig:ig_armed_forces = {
+			add_ideology = ideology_profit_driven
+			remove_ideology = ideology_jingoist
+			set_interest_group_name = ig_private_military_companies
+		}
+		add_modifier = {
+			name = hired_pmc
+			months = normal_modifier_time
+		}
+		capital = {
+			create_building = {
+				building = building_barracks
+				level = 10
+				reserves = 1
+			}
+		}
+		hidden_effect = {
+			create_character = {
+				first_name = culture
+				last_name = culture
+				culture = cu:russian
+				age = {35 45}
+				ig_leader = yes
+				is_general = yes
+				commander_rank = commander_rank_5
+				ruler = no
+				interest_group = ig_armed_forces
+				traits = {
+					bandit
+				}
+				trait_generation = {
+					add_random_trait = skill
+					add_random_trait = skill
+					add_random_trait = skill
+				}
+			}
+			trigger_event = {
+				id = private_military_companies.4
+				days = 1
+			}
+			trigger_event = {
+				id = private_military_companies.5
+				days = 1635
+			}
+		}
+	}
+	option = {
+		name = private_military_companies.3.b
+		default_option = yes
+		set_variable = {
+			name = refused_pmcs
+			days = very_long_modifier_time
+		}
+	}
+}
+
+private_military_companies.4 = { # PMC hiring for barracks
+	type = country_event
+	hidden = yes
+	immediate = {
+		capital = {
+			b:building_barracks = {
+				remove_modifier = pm_offense_defense_readjustment
+				remove_modifier = pm_offense_defense_readjustment_minor
+				add_modifier = {
+					name = pmc_recruitment
+					months = 2.5
+					is_decaying = no
+				}
+			}
+		}
+	}
+}
+
+private_military_companies.5 = { # Renew PMC contract
+	type = country_event
+
+	title = private_military_companies.5.t
+	desc = private_military_companies.5.d
+	flavor = private_military_companies.5.f
+
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+	event_image = {
+		texture = "gfx/interface/event_pictures/pmc_takeover.dds"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/middleeast/courtroom_upheaval"
+
+	duration = 3
+
+	trigger = {
+		NOT = {has_law = law_type:law_private_army}
+		ig:ig_armed_forces = {
+			exists = yes
+			has_ideology = ideology_profit_driven
+		}
+		has_modifier = hired_pmc
+	}
+
+	option = {
+		name = private_military_companies.5.a
+		default_option = yes
+		hidden_effect = {
+			remove_modifier = hired_pmc
+			trigger_event = {
+				id = private_military_companies.5
+				days = 1635
+			}
+		}
+		add_modifier = {
+			name = hired_pmc
+			months = normal_modifier_time
+		}
+	}
+
+	option = {
+		name = private_military_companies.5.b
+		add_modifier = {
+			name = pmc_conflict
+			months = 3
+			is_decaying = yes
+		}
+		hidden_effect = {
+			random_list = {
+				66 = {
+					trigger_event = {
+						id = private_military_companies.6 # PMC Refuses to step down
+						days = {0 10}
+					}
+				}
+				34 = {
+					trigger_event = {
+						id = private_military_companies.7 # PMC Steps down
+						days = {0 10}
+					}
+				}
+			}
+		}
+	}
+}
+
+private_military_companies.6 = { # PMC refuses to step down
+	type = country_event
+
+	title = private_military_companies.6.t
+	desc = private_military_companies.6.d
+	flavor = private_military_companies.6.f
+
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+	event_image = {
+		texture = "gfx/interface/event_pictures/pmc_takeover.dds"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/middleeast/courtroom_upheaval"
+
+	duration = 3
+
+	trigger = {
+		NOT = {has_law = law_type:law_private_army}
+		ig:ig_armed_forces = {
+			exists = yes
+			has_ideology = ideology_profit_driven
+		}
+	}
+
+	immediate = {
+		remove_modifier = hired_pmc
+		add_modifier = {
+			name = hired_pmc
+			months = short_modifier_time
+		}
+	}
+
+	option = {
+		name = private_military_companies.6.a
+		default_option = yes
+		hidden_effect = {
+			remove_modifier = hired_pmc
+			remove_modifier = pmc_conflict
+			trigger_event = {
+				id = private_military_companies.5
+				days = 1730
+			}
+		}
+		add_modifier = {
+			name = hired_pmc
+			months = normal_modifier_time
+		}
+	}
+
+	option = {
+		name = private_military_companies.6.b
+		add_modifier = {
+			name = pmc_conflict
+			months = short_modifier_time
+		}
+		hidden_effect = {
+			random_list = {
+				66 = {
+					trigger_event = {
+						id = private_military_companies.6 # PMC Refuses to step down
+						days = {90 275}
+					}
+				}
+				34 = {
+					trigger_event = {
+						id = private_military_companies.7 # PMC Steps down
+						days = {90 275}
+					}
+				}
+			}
+		}
+	}
+}
+
+private_military_companies.7 = { # PMC steps down
+	type = country_event
+
+	title = private_military_companies.7.t
+	desc = private_military_companies.7.d
+	flavor = private_military_companies.7.f
+
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+	event_image = {
+		texture = "gfx/interface/event_pictures/pmc_takeover.dds"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/middleeast/courtroom_upheaval"
+
+	duration = 3
+
+	trigger = {
+		NOT = {has_law = law_type:law_private_army}
+		ig:ig_armed_forces = {
+			exists = yes
+			has_ideology = ideology_profit_driven
+		}
+	}
+
+	immediate = {
+		remove_modifier = hired_pmc
+		remove_modifier = pmc_conflict
+	}
+
+	option = {
+		name = private_military_companies.7.a
 		ig:ig_armed_forces = {
 			remove_ideology = ideology_profit_driven
 			add_ideology = ideology_jingoist
