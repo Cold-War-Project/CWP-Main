@@ -196,3 +196,100 @@ je_unclos1 = { # UNCLOS 1
 	can_deactivate = yes
 	weight = 100
 }
+
+je_korean_resolution = { # Korean 1
+	icon = "gfx/interface/icons/cwp_icons/united_nations.dds"
+	should_be_pinned_by_default = yes
+	possible = {
+		OR = {
+			has_variable = un_member
+			has_variable = unsc_member
+		}
+		NOR = {
+			has_global_variable = korean_resolution_complete
+			has_global_variable = korean_resolution_fail
+			has_global_variable = vetoed
+		}
+		and = {
+			exists = c:STK
+			exists = c:NRK
+		}
+	}
+	current_value = {
+		value = pending_resolution_progress_value
+	}
+	goal_add_value = {
+		add = 100		# was 100, temp testing value
+	}
+	on_weekly_pulse = {
+		effect = {
+			change_global_variable = {
+				name = pending_resolution_progress
+				add = 0.1
+			}
+		}
+	}
+	##### TODO, #32 Journal completion does NOT trigger event
+	complete = {
+		and = {
+			scope:journal_entry = {
+				is_goal_complete = yes
+			}
+			custom_tooltip = {
+				text = "WILLCOMPLETEUN"
+				supporting_value_total > opposing_value_total
+			}
+		}
+	}
+	fail = {
+		or = {
+			AND = {
+				scope:journal_entry = {
+					is_goal_complete = yes
+				}
+				custom_tooltip = {
+					text = "WILLFAILUN"
+					opposing_value_total > supporting_value_total
+				}
+			}
+			custom_tooltip = {
+				text = "ISVETOED"
+				has_global_variable = vetoed
+			}
+		}
+	}
+	on_complete = {
+		hidden_effect = {
+			every_country = {
+				trigger_event = {
+					id = un_resolution_events.5
+				}
+			}
+			c:USA = {
+				trigger_event = {
+					id = korean_un_unification.1
+				}
+			}
+		}
+		effect_reset_un_lists = yes
+		set_global_variable = korean_resolution_complete
+		
+	}
+	on_fail = {
+		hidden_effect = {
+			every_country = {
+				trigger_event = {
+					id = un_resolution_events.6
+				}
+			}
+		}
+		effect_reset_un_lists = yes
+		set_global_variable = {
+			name = korean_resolution_fail
+			days = 365
+		}
+	}
+	progressbar = yes
+	can_deactivate = yes
+	weight = 100
+}
