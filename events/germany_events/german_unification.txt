@@ -743,20 +743,82 @@ west_german_unification.6 = {  # Austrian Question
 	duration = 3
 	trigger = {
 		NOT = { has_variable = austrian_question_triggered }
-		OR = {
-			has_variable = germany_reunited_independent
-			has_variable = germany_reunited_dominion
-			has_variable = germany_reunited_protectorate
-			has_variable = germany_reunited_puppet
-		}
 	}
 	immediate = {
 		set_variable = austrian_question_triggered
-		set_global_variable = austrian_question_complete
 	}
-	option = { # First victims of Nazi Germany
+	option = { # Create a neutral government with the soviets
 		name = west_german_unification.6.a
 		default_option = yes
+		if = {
+			limit = {
+				exists = c:RUS
+				c:RUS = {
+					has_diplomatic_pact = {
+						who = c:AUS
+						type = military_occupation
+					}
+				}
+				NOT = {has_war_with = c:RUS}
+			}
+			c:RUS = {
+				trigger_event = {
+					id = west_german_unification.12 # Soviet Austria
+					days = {1 7}
+				}
+			}
+		}
+		if = {
+			limit = { exists = s:STATE_AUSTRIA.region_state:AOZ }
+			create_country = {
+				tag = AOA
+				origin = this
+				state = s:STATE_AUSTRIA.region_state:AOZ
+			}
+			if = {
+				limit = { exists = s:STATE_TYROL.region_state:FOZ }
+				s:STATE_TYROL.region_state:FOZ = { set_state_owner = c:AOA }
+			}
+			if = {
+				limit = { exists = s:STATE_TYROL.region_state:BOZ }
+				s:STATE_TYROL.region_state:BOZ = { set_state_owner = c:AOA }
+			}
+			if = {
+				limit = { exists = s:STATE_TYROL.region_state:AOZ }
+				s:STATE_TYROL.region_state:AOZ = { set_state_owner = c:AOA }
+			}
+			if = {
+				limit = { exists = s:STATE_STYRIA.region_state:BOZ }
+				s:STATE_STYRIA.region_state:BOZ = { set_state_owner = c:AOA }
+			}
+			c:AOA = {
+				add_modifier = {
+					name = enforced_neutrality
+				}
+			}
+			create_diplomatic_pact = {
+				country = c:AOA
+				type = military_occupation
+			}
+		}
+		hidden_effect = {
+			if = {
+				limit = { exists = c:AOA}
+				c:AOA = {
+					trigger_event = {
+					id = west_german_unification.11
+					days = { 1 2 }
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = { # Keep them separate from the soviet sphere
+		name = west_german_unification.6.b
+		default_option = no
 		if = {
 			limit = { exists = s:STATE_AUSTRIA.region_state:AOZ }
 			create_country = {
@@ -791,16 +853,45 @@ west_german_unification.6 = {  # Austrian Question
 		hidden_effect = {
 			if = {
 				limit = { exists = c:AOA}
-				trigger_event = {
+				c:AOA = {
+					trigger_event = {
 					id = west_german_unification.11
-					days = { 1800 3650 }
+					days = { 1 2 }
+					}
 				}
 			}
+			set_global_variable = austrian_question_complete
+		}
+		ai_chance = {
+			base = 10
 		}
 	}
-	option = { # Lump them in
-		name = west_german_unification.6.b
-		set_global_variable =austrian_question_complete
+	option = { # Deny Their Soverignty
+		name = west_german_unification.6.c
+		set_global_variable = austrian_question_complete
+		default_option = no
+		if = {
+			limit = { exists = s:STATE_TYROL.region_state:FOZ }
+			s:STATE_TYROL.region_state:FOZ = { add_radicals = 0.25 }
+		}
+		if = {
+			limit = { exists = s:STATE_TYROL.region_state:BOZ }
+			s:STATE_TYROL.region_state:BOZ = { add_radicals = 0.25 }
+		}
+		if = {
+			limit = { exists = s:STATE_TYROL.region_state:AOZ }
+			s:STATE_TYROL.region_state:AOZ = { add_radicals = 0.25 }
+		}
+		if = {
+			limit = { exists = s:STATE_STYRIA.region_state:BOZ }
+			s:STATE_STYRIA.region_state:BOZ = { add_radicals = 0.25 }
+		}
+		hidden_effect = {
+			set_global_variable = austrian_question_complete
+		}
+		ai_chance = {
+			base = 1
+		}
 	}
 }
 
@@ -897,9 +988,91 @@ west_german_unification.10 = {  # Operation Paperclip
 	option = {
 		name = west_german_unification.10.a
 		default_option = yes
+		add_modifier = {
+			name = operation_paperclip
+		}
+	}
+	option = {
+		name = west_german_unification.10.b
+		default_option = no
 	}
 }
 
 west_german_unification.11 = {
+	type = country_event
+	title = west_german_unification.11.t
+	desc = west_german_unification.11.d
+	flavor = west_german_unification.11.f
+	icon = "gfx/interface/icons/event_icons/event_diplomacy.dds"
+	event_image = {
+		texture = "gfx/interface/event_pictures/west_german_unification.dds"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/middleeast/courtroom_upheaval"
+	duration = 3
+	trigger = {
+		NOT = { has_variable = austrian_independence_triggered }
+	}
+	immediate = {
+		set_variable = austrian_independence_triggered
+	}
+	option = {
+		name = west_german_unification.11.a
+		default_option = yes
+		make_independent = yes
+		if = {
+			limit = {
+				NOT = {exists = c:AUS}
+				}
+			change_tag = AUS
+			}
+		}
+	}
 
-}
+west_german_unification.12 = {
+	type = country_event
+	title = west_german_unification.12.t
+	desc = west_german_unification.12.d
+	flavor = west_german_unification.12.f
+	icon = "gfx/interface/icons/event_icons/event_diplomacy.dds"
+	event_image = {
+		texture = "gfx/interface/event_pictures/west_german_unification.dds"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/middleeast/courtroom_upheaval"
+	duration = 3
+	trigger = {
+		NOT = { has_variable = austrian_unification_triggered }
+		exists = c:AUS
+		has_diplomatic_pact = {
+			who = c:AUS
+			type = military_occupation
+		}
+	}
+	immediate = {
+		set_variable = austrian_unification_triggered
+	}
+	option = { # Allow the merge
+		name = west_german_unification.12.a
+		default_option = yes
+		hidden_effect = {
+			set_global_variable = austrian_question_complete
+		}
+		if = {
+			limit = {
+				exists = c:AOA
+			}
+			c:AOA = {
+				annex = c:AUS
+			}
+		}
+
+	}
+	option = { # Deny the merge
+		name = west_german_unification.12.b
+		hidden_effect = {
+			set_global_variable = austrian_question_complete
+			}
+		}
+	}
+
