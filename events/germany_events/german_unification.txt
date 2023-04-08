@@ -12,11 +12,8 @@ west_german_unification.1 = { # GP consent to west_german_unification
 	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
 	on_opened_soundeffect = "event:/SFX/Events/middleeast/courtroom_upheaval"
 	duration = 3
-	immediate = {
-		set_variable = occupation_zone_unification_question
-	}
+
 	trigger = {
-		NOT = {has_variable = occupation_zone_unification_question}
 		OR = {
 			NOT = {this = c:FRA}
 			game_date >= 1948.2.1
@@ -105,6 +102,67 @@ west_german_unification.1 = { # GP consent to west_german_unification
 		}
 		custom_tooltip = {
 			text = german_unification_1_b_tt
+		}
+	}
+
+	option = {
+		name = west_german_unification.1.c
+		ai_chance = {
+			base = 35
+		}
+		custom_tooltip = {
+			text = german_unification_1_c_tt
+		}
+		hidden_effect = {
+			set_global_variable = FRA_consents_germany
+			trigger_event = {
+				id = west_german_unification.301 # Rhineland
+				days = 0
+			}
+		}
+		trigger = {
+			exists = c:FRA
+			this = c:FRA
+			has_diplomatic_pact = {
+				who = c:FOZ
+				type = military_occupation
+			}
+		}
+	}
+}
+
+west_german_unification.301 = {
+	type = country_event
+	hidden = yes
+	immediate = {
+		if = {
+			limit = { exists = s:STATE_RHINELAND.region_state:FOZ }
+			create_country = {
+				tag = RHI
+				origin = this
+				state = s:STATE_RHINELAND.region_state:FOZ
+			}
+			c:RHI = { effect_currency_dem = yes}
+			if = {
+				limit = { exists = s:STATE_NORTH_RHINE.region_state:FOZ }
+				s:STATE_TYROL.region_state:FOZ = { set_state_owner = c:AOA }
+			}
+		}
+		if = {
+			limit = { exists = c:AOA}
+			create_diplomatic_pact = {
+				country = c:AOA
+				type = military_occupation
+			}
+		}
+		if = {
+			limit = { exists = c:AOA}
+			c:AOA = {
+				trigger_event = {
+				id = west_german_unification.11
+				days = { 1800 3650 }
+				}
+			}
 		}
 	}
 }
@@ -919,6 +977,90 @@ west_german_unification.6 = {  # Austrian Question
 		trigger = {
 			global_var:german_reunification_voting > 0
 		}
+		
+		hidden_effect = {
+			trigger_event = {
+				id = west_german_unification.201 # Austrian Non-Neutral
+				days = 0
+			}
+			set_global_variable = german_reunification_austrian_question
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+
+	option = { # Create a neutral government with the soviets
+	name = west_german_unification.6.b
+	default_option = yes
+	trigger = {
+		global_var:german_reunification_voting > 2
+	}
+	every_country = {
+		limit = {
+			exists = c:AUS
+			has_diplomatic_pact = {
+				who = c:AUS
+				type = military_occupation
+			}
+		}
+		trigger_event = {
+			id = west_german_unification.12 # Soviet Austria
+			days = {1 7}
+		}
+	}
+	
+	hidden_effect = {
+		trigger_event = {
+			id = west_german_unification.202 # Austrian Neutral
+			days = 0
+		}
+	}
+	ai_chance = {
+		base = 85
+	}
+	custom_tooltip = {
+		text = west_german_unification_6_a_tt
+	}
+}
+	option = { # Form the federation of the Danube
+		name = west_german_unification.6.c
+		trigger = {
+			global_var:german_reunification_voting > 4
+		}
+		default_option = no
+		every_country = {
+			limit = {
+				exists = c:AUS
+				has_diplomatic_pact = {
+					who = c:AUS
+					type = military_occupation
+				}
+			}
+			trigger_event = {
+				id = west_german_unification.12 # Soviet Austria
+				days = {1 7}
+			}
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = west_german_unification.203 # Danube Federation
+				days = 0
+			}
+		}
+		ai_chance = {
+			base = 5 # Change for release
+		}
+		custom_tooltip = {
+			text = west_german_unification_6_c_tt
+		}
+	}
+}
+
+west_german_unification.201 = {
+	type = country_event
+	hidden = yes
+	immediate = {
 		if = {
 			limit = { exists = s:STATE_AUSTRIA.region_state:AOZ }
 			create_country = {
@@ -926,6 +1068,7 @@ west_german_unification.6 = {  # Austrian Question
 				origin = this
 				state = s:STATE_AUSTRIA.region_state:AOZ
 			}
+			c:AOA = { effect_currency_dem = yes}
 			if = {
 				limit = { exists = s:STATE_TYROL.region_state:FOZ }
 				s:STATE_TYROL.region_state:FOZ = { set_state_owner = c:AOA }
@@ -950,75 +1093,55 @@ west_german_unification.6 = {  # Austrian Question
 				type = military_occupation
 			}
 		}
-		hidden_effect = {
-			if = {
-				limit = { exists = c:AOA}
-				c:AOA = {
-					trigger_event = {
-					id = west_german_unification.11
-					days = { 1800 3650 }
-					}
+		if = {
+			limit = { exists = c:AOA}
+			c:AOA = {
+				trigger_event = {
+				id = west_german_unification.11
+				days = { 1800 3650 }
 				}
 			}
-			set_global_variable = german_reunification_austrian_question
-		}
-		ai_chance = {
-			base = 9
 		}
 	}
-
-	option = { # Create a neutral government with the soviets
-	name = west_german_unification.6.b
-	default_option = yes
-	trigger = {
-		global_var:german_reunification_voting > 2
-	}
-	every_country = {
-		limit = {
-			has_diplomatic_pact = {
-				who = c:AUS
+}
+west_german_unification.202 = {
+	type = country_event
+	hidden = yes
+	immediate = {
+		if = {
+			limit = { exists = s:STATE_AUSTRIA.region_state:AOZ }
+			create_country = {
+				tag = AOA
+				origin = this
+				state = s:STATE_AUSTRIA.region_state:AOZ
+			}
+			c:AOA = { effect_currency_dem = yes}
+			if = {
+				limit = { exists = s:STATE_TYROL.region_state:FOZ }
+				s:STATE_TYROL.region_state:FOZ = { set_state_owner = c:AOA }
+			}
+			if = {
+				limit = { exists = s:STATE_TYROL.region_state:BOZ }
+				s:STATE_TYROL.region_state:BOZ = { set_state_owner = c:AOA }
+			}
+			if = {
+				limit = { exists = s:STATE_TYROL.region_state:AOZ }
+				s:STATE_TYROL.region_state:AOZ = { set_state_owner = c:AOA }
+			}
+			if = {
+				limit = { exists = s:STATE_STYRIA.region_state:BOZ }
+				s:STATE_STYRIA.region_state:BOZ = { set_state_owner = c:AOA }
+			}
+			c:AOA = {
+				add_modifier = {
+					name = forced_neutrality
+				}
+			}
+			create_diplomatic_pact = {
+				country = c:AOA
 				type = military_occupation
 			}
 		}
-		trigger_event = {
-			id = west_german_unification.12 # Soviet Austria
-			days = {1 7}
-		}
-	}
-	if = {
-		limit = { exists = s:STATE_AUSTRIA.region_state:AOZ }
-		create_country = {
-			tag = AOA
-			origin = this
-			state = s:STATE_AUSTRIA.region_state:AOZ
-		}
-		if = {
-			limit = { exists = s:STATE_TYROL.region_state:FOZ }
-			s:STATE_TYROL.region_state:FOZ = { set_state_owner = c:AOA }
-		}
-		if = {
-			limit = { exists = s:STATE_TYROL.region_state:BOZ }
-			s:STATE_TYROL.region_state:BOZ = { set_state_owner = c:AOA }
-		}
-		if = {
-			limit = { exists = s:STATE_TYROL.region_state:AOZ }
-			s:STATE_TYROL.region_state:AOZ = { set_state_owner = c:AOA }
-		}
-		if = {
-			limit = { exists = s:STATE_STYRIA.region_state:BOZ }
-			s:STATE_STYRIA.region_state:BOZ = { set_state_owner = c:AOA }
-		}
-		c:AOA = {
-			add_modifier = {
-				name = forced_neutrality
-			}
-		}
-		create_diplomatic_pact = {
-			country = c:AOA
-			type = military_occupation
-		}
-	}
-	hidden_effect = {
 		if = {
 			limit = { exists = c:AOA}
 			c:AOA = {
@@ -1029,31 +1152,11 @@ west_german_unification.6 = {  # Austrian Question
 			}
 		}
 	}
-	ai_chance = {
-		base = 90
-	}
-	custom_tooltip = {
-		text = west_german_unification_6_a_tt
-	}
 }
-	option = { # Form the federation of the Danube
-		name = west_german_unification.6.c
-		trigger = {
-			global_var:german_reunification_voting > 4
-		}
-		default_option = no
-		every_country = {
-			limit = {
-				has_diplomatic_pact = {
-					who = c:AUS
-					type = military_occupation
-				}
-			}
-			trigger_event = {
-				id = west_german_unification.12 # Soviet Austria
-				days = {1 7}
-			}
-		}
+west_german_unification.203 = { # Danube Federation
+	type = country_event
+	hidden = yes
+	immediate = {
 		if = {
 			limit = { exists = s:STATE_AUSTRIA.region_state:AOZ }
 			create_country = {
@@ -1061,6 +1164,7 @@ west_german_unification.6 = {  # Austrian Question
 				origin = this
 				state = s:STATE_AUSTRIA.region_state:AOZ
 			}
+			c:KUK = { effect_currency_dem = yes}
 			if = {
 				limit = { exists = s:STATE_TYROL.region_state:FOZ }
 				s:STATE_TYROL.region_state:FOZ = { set_state_owner = c:KUK }
@@ -1103,23 +1207,14 @@ west_german_unification.6 = {  # Austrian Question
 				type = military_occupation
 			}
 		}
-		hidden_effect = {
-			set_global_variable = german_reunification_austrian_question
-			if = {
-				limit = { exists = c:KUK}
-				c:KUK = {
-					trigger_event = {
-					id = west_german_unification.11
-					days = { 1825 3650 }
-					}
+		if = {
+			limit = { exists = c:KUK}
+			c:KUK = {
+				trigger_event = {
+				id = west_german_unification.11
+				days = { 1800 3650 } # Change for Release
 				}
 			}
-		}
-		ai_chance = {
-			base = 1000 # Change for release
-		}
-		custom_tooltip = {
-			text = west_german_unification_6_c_tt
 		}
 	}
 }
@@ -1407,8 +1502,16 @@ west_german_unification.11 = { # Austrian Independence
 	duration = 3
 	trigger = {
 		NOT = { has_variable = austrian_independence_triggered }
-		exists = c:AOA
-		this = c:AOA
+		OR = {	
+			AND = { 
+				exists = c:AOA
+				this = c:AOA
+			}
+			AND = {
+				exists = c:KUK
+				this = c:KUK
+			}
+		}
 	}
 	immediate = {
 		set_variable = austrian_independence_triggered
@@ -1450,57 +1553,122 @@ west_german_unification.12 = { # Soviets merge Austrian occupation zones
 	immediate = {
 		set_variable = austrian_unification_triggered
 	}
-	option = { # Allow the merge
+	option = { # Allow the merge, allow hungary to join confederation
 		name = west_german_unification.12.a
 		default_option = yes
 		hidden_effect = {
 			set_global_variable = german_reunification_austrian_question
-		}
-		if = {
-			limit = {
-				exists = c:AOA
+			if = {
+				limit = {
+					exists = c:AOA
+				}
+				if = {
+					limit = {
+						c:AUS = {
+							is_player = yes
+						}
+					}
+					c:AUS = {
+						play_as = c:AOA
+					}
+				}
+				c:AOA = {
+					annex = c:AUS
+				}
 			}
 			if = {
 				limit = {
+					exists = c:KUK
+				}
+				if = {
+					limit = {
+						c:AUS = {
+							is_player = yes
+						}
+					}
 					c:AUS = {
-						is_player = yes
+						play_as = c:KUK
 					}
 				}
-				c:AUS = {
-					play_as = c:AOA
+				c:KUK = {
+					annex = c:AUS
 				}
-			}
-			c:AOA = {
-				annex = c:AUS
-			}
-		}
-		if = {
-			limit = {
-				exists = c:KUK
 			}
 			if = {
 				limit = {
-					c:AUS = {
-						is_player = yes
+					exists = c:HUN
+				}
+				c:HUN = {
+					trigger_event = {
+					id = west_german_unification.14
 					}
 				}
-				c:AUS = {
-					play_as = c:KUK
-				}
 			}
-			c:KUK = {
-				annex = c:AUS
-			}
+		}
+		custom_tooltip = {
+			text = west_german_unification_12_a_tt
 		}
 		ai_chance = {
-			base = 100
+			base = 15
+		}
+	}
+	option = { # Allow the merge, don't allow hungary to join confederation
+		name = west_german_unification.12.b
+		default_option = yes
+		hidden_effect = {
+			set_global_variable = german_reunification_austrian_question
+			if = {
+				limit = {
+					exists = c:AOA
+				}
+				if = {
+					limit = {
+						c:AUS = {
+							is_player = yes
+						}
+					}
+					c:AUS = {
+						play_as = c:AOA
+					}
+				}
+				c:AOA = {
+					annex = c:AUS
+				}
+			}
+			if = {
+				limit = {
+					exists = c:KUK
+				}
+				if = {
+					limit = {
+						c:AUS = {
+							is_player = yes
+						}
+					}
+					c:AUS = {
+						play_as = c:KUK
+					}
+				}
+				c:KUK = {
+					annex = c:AUS
+				}
+			}
+		}
+		custom_tooltip = {
+			text = west_german_unification_12_b_tt
+		}
+		ai_chance = {
+			base = 85
 		}
 	}
 	option = { # Deny the merge
-		name = west_german_unification.12.b
+		name = west_german_unification.12.c
 		hidden_effect = {
 			set_global_variable = german_reunification_austrian_question
 			}
+		custom_tooltip = {
+			text = west_german_unification_12_c_tt
+		}
 		ai_chance = {
 			base = 0
 		}
@@ -1575,6 +1743,60 @@ west_german_unification.13 = { # Soviets can combine east and west germany
 		}
 		hidden_effect = {
 			set_global_variable = german_reunification_east_and_west_complete
+		}
+	}
+}
+
+west_german_unification.14 = {
+	type = country_event
+	title = west_german_unification.14.t
+	desc = west_german_unification.14.d
+	flavor = west_german_unification.14.f
+	icon = "gfx/interface/icons/event_icons/event_diplomacy.dds"
+	event_image = {
+		texture = "gfx/interface/event_pictures/west_german_unification.dds"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/middleeast/courtroom_upheaval"
+	duration = 3
+	trigger = {
+		exists = c:HUN
+		this = c:HUN
+		exists = c:KUK
+	}
+	option = { # Allow the merge
+		name = west_german_unification.14.a
+		default_option = yes
+		hidden_effect = {
+			if = {
+				limit = {
+					exists = c:KUK
+				}
+				if = {
+					limit = {
+						c:HUN = {
+							is_player = yes
+						}
+					}
+					c:HUN = {
+						play_as = c:KUK
+					}
+				}
+				c:KUK = {
+					annex = c:HUN
+				}
+			}
+		}
+		ai_chance = {
+			base = 75
+		}
+	}
+	option = { # Deny the merge
+		name = west_german_unification.14.b
+		hidden_effect = {
+			}
+		ai_chance = {
+			base = 25
 		}
 	}
 }
@@ -1679,6 +1901,9 @@ west_german_unification.101 = { # Voting Austrian Unification
 		ai_chance = {
 			base = 10
 		}
+		custom_tooltip = { 
+			text = west_german_unification.101.a.tooltip
+		}
 	}
 	option = {
 		name = west_german_unification.101.b
@@ -1717,6 +1942,9 @@ west_german_unification.101 = { # Voting Austrian Unification
 		ai_chance = {
 			base = 65
 		}
+		custom_tooltip = {
+			text = west_german_unification.101.b.tt
+		}
 	}
 	option = {
 		name = west_german_unification.101.c
@@ -1751,6 +1979,9 @@ west_german_unification.101 = { # Voting Austrian Unification
 				}
 				set_global_variable = FRA_voted_german_reunification
 			}
+		}
+		custom_tooltip = {
+			text = west_german_unification.101.c.tt
 		}
 		ai_chance = {
 			base = 25
@@ -1839,7 +2070,7 @@ west_german_unification.102 = { # Voting denazification
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 25
 		}
 	}
 	option = {
@@ -2001,7 +2232,7 @@ west_german_unification.103 = { # Voting neutrality
 			}
 		}
 		ai_chance = {
-			base = 10
+			base = 25
 		}
 	}
 	option = {
@@ -2077,7 +2308,7 @@ west_german_unification.103 = { # Voting neutrality
 			}
 		}
 		ai_chance = {
-			base = 65
+			base = 25
 		}
 	}
 }
@@ -2127,6 +2358,7 @@ west_german_unification.104 = { # Voting Independence
 	}
 	immediate = {
 		set_variable = independence_voting_held
+		set_global_variable = german_reunification_independence_vote_held
 	}
 	option = {
 		name = west_german_unification.104.a
