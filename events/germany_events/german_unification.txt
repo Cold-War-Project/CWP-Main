@@ -12,8 +12,25 @@ west_german_unification.1 = { # GP consent to west_german_unification
 	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
 	on_opened_soundeffect = "event:/SFX/Events/middleeast/courtroom_upheaval"
 	duration = 3
-
+	immediate = {
+		set_variable = occupation_zone_unification_question
+	}
 	trigger = {
+		NOT = {has_variable = occupation_zone_unification_question}
+		OR = {
+			NOT = {this = c:FRA}
+			game_date >= 1946.8.1  # Change for release
+		}
+		AND = {
+			has_global_variable = german_reunification_denazification
+			has_global_variable = german_reunification_austrian_question
+			NOR = {
+				has_global_variable = german_reunification_combined_zones_complete
+				has_global_variable = german_reunification_neutrality_complete
+				has_global_variable = german_reunification_east_and_west_complete
+				has_global_variable = german_reunification_independence_complete
+			}
+		}
 		OR = {
 			AND = {
 				this = c:GBR
@@ -106,6 +123,7 @@ west_german_unification.2 = { # Annexation
 	duration = 3
 
 	trigger = {
+		has_variable = west_german_unifier
 		OR = {
 			AND = {
 				exists = c:AOZ
@@ -200,6 +218,9 @@ west_german_unification.3 = { # End of event chain, as Germany
 	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
 	on_opened_soundeffect = "event:/SFX/Events/middleeast/courtroom_upheaval"
 	duration = 3
+	trigger = {
+		has_variable = west_german_unifier
+	}
 	immediate = {
 		change_tag = GER
 		make_independent = yes
@@ -274,6 +295,9 @@ west_german_unification.4 = { # End of event chain, leader
 	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
 	on_opened_soundeffect = "event:/SFX/Events/middleeast/courtroom_upheaval"
 	duration = 3
+	trigger = {
+		has_variable = west_german_leader
+	}
 	immediate = {
 		if = {
 			limit = {
@@ -300,6 +324,9 @@ west_german_unification.4 = { # End of event chain, leader
 			country = c:GER
 			type = defensive_pact
 		}
+		trigger = {
+			global_var:german_reunification_voting > 0
+		}
 		hidden_effect = {
 			set_global_variable = germany_reunited_independent
 		}
@@ -313,6 +340,10 @@ west_german_unification.4 = { # End of event chain, leader
 		create_diplomatic_pact = {
 			country = c:GER
 			type = dominion
+		}
+		trigger = {
+			global_var:german_reunification_voting > 3
+			NOT = { has_global_variable = german_reunification_neutral_germany }
 		}
 		hidden_effect = {
 			set_global_variable = germany_reunited_dominion
@@ -329,6 +360,10 @@ west_german_unification.4 = { # End of event chain, leader
 			country = c:GER
 			type = protectorate
 		}
+		trigger = {
+			global_var:german_reunification_voting > 6
+			NOT = { has_global_variable = german_reunification_neutral_germany }
+		}
 		hidden_effect = {
 			set_global_variable = germany_reunited_protectorate
 		}
@@ -343,6 +378,10 @@ west_german_unification.4 = { # End of event chain, leader
 		create_diplomatic_pact = {
 			country = c:GER
 			type = puppet
+		}
+		trigger = {
+			global_var:german_reunification_voting > 8
+			NOT = { has_global_variable = german_reunification_neutral_germany }
 		}
 		hidden_effect = {
 			set_global_variable = germany_reunited_puppet
@@ -367,15 +406,36 @@ west_german_unification.5 = {  # Denazification
 	on_opened_soundeffect = "event:/SFX/Events/middleeast/courtroom_upheaval"
 	duration = 3
 	trigger = {
+		has_global_variable = german_reunification_voting_finished
 		NOT = { has_variable = denazification_question_triggered }
+		AND = {
+			has_global_variable = german_reunification_austrian_question
+			NOR = {
+				has_global_variable = german_reunification_voting_cooldown
+				has_global_variable = german_reunification_denazification
+				has_global_variable = german_reunification_combined_zones_complete
+				has_global_variable = german_reunification_neutrality_complete
+				has_global_variable = german_reunification_east_and_west_complete
+				has_global_variable = german_reunification_independence_complete
+			}
+		}
+		has_variable = west_german_leader
 	}
 	immediate = {
 		set_variable = denazification_question_triggered
+		trigger_event = {
+			id = west_german_unification.100
+			days = 91
+		}
+		set_global_variable = german_reunification_voting_cooldown
 	}
 	option = {
 		name = west_german_unification.5.a
 		default_option = yes
-		set_global_variable = denazification_complete
+		set_global_variable = german_reunification_denazification
+		trigger = {
+			global_var:german_reunification_voting > 0
+		}
 		custom_tooltip = {
 			text = west_german_unification_5_a_tt
 		}
@@ -384,7 +444,10 @@ west_german_unification.5 = {  # Denazification
 	option = {
 		name = west_german_unification.5.b
 		default_option = no
-		set_global_variable = denazification_complete
+		set_global_variable = german_reunification_denazification
+		trigger = {
+			global_var:german_reunification_voting > 3
+		}
 		add_modifier = {
 			name = pushing_denazification
 			years = 10
@@ -429,335 +492,337 @@ west_german_unification.5 = {  # Denazification
 	option = { # Germania delenda est - The Morgenthau Plan
 		name = west_german_unification.5.c
 		default_option = no
-		set_global_variable = denazification_complete
+		set_global_variable = german_reunification_denazification
 		set_global_variable = germania_delanda_est
+		trigger = {
+			global_var:german_reunification_voting > 6
+		}
 		change_infamy = 100
-		if = {
-			limit = {
-				exists = c:BOZ
-			}
-			c:BOZ = {
-				every_scope_state = {
-					remove_building = building_food_industry
-					remove_building = building_distilleries
-					remove_building = building_textile_manufactories
-					remove_building = building_furniture_manufactories
-					remove_building = building_glassworks
-					remove_building = building_tool_manufactories
-					remove_building = building_paper_manufactories
-					remove_building = building_chemical_plants
-					remove_building = building_synthetics_plant
-					remove_building = building_steelworks
-					remove_building = building_aluminum_refinery
-					remove_building = building_motor_industry
-					remove_building = building_automobile_manufactories
-					remove_building = building_shipyards
-					remove_building = building_drydocks
-					remove_building = building_advanced_military_manufactories
-					remove_building = building_electronics_manufactories
-					remove_building = building_small_arms_manufactories
-					remove_building = building_explosives_industry
-					remove_building = building_fuel_refineries
-					remove_building = building_semiconductor_manufactories
-					remove_building = building_aircraft_manufactories
-					remove_building = building_uranium_refineries
-					remove_building = building_battery_manufactories
-					remove_building = building_pharmaceutical_industry
-					remove_building = building_computer_manufactories
-					remove_building = building_consumer_electronics_manufactories
-					remove_building = building_rye_farm
-					remove_building = building_wheat_farm
-					remove_building = building_rice_farm
-					remove_building = building_maize_farm
-					remove_building = building_millet_farm
-					remove_building = building_livestock_ranch
-					remove_building = building_coal_mine
-					remove_building = building_iron_mine
-					remove_building = building_copper_mine
-					remove_building = building_rare_earth_elements_mine
-					remove_building = building_bauxite_mine
-					remove_building = building_uranium_mine
-					remove_building = building_lead_mine
-					remove_building = building_phosphorus_mine
-					remove_building = building_gold_mine
-					remove_building = building_coffee_plantation
-					remove_building = building_cotton_plantation
-					remove_building = building_dye_plantation
-					remove_building = building_opium_plantation
-					remove_building = building_tea_plantation
-					remove_building = building_tobacco_plantation
-					remove_building = building_sugar_plantation
-					remove_building = building_banana_plantation
-					remove_building = building_silk_plantation
-					remove_building = building_barracks
-					remove_building = building_conscription_center
-					remove_building = building_naval_base
-					remove_building = building_urban_center
-					remove_building = building_combustion_plant
-					remove_building = building_nuclear_power_plant
-					remove_building = building_solar_power_plant
-					remove_building = building_wind_power_plant
-					remove_building = building_hydro_power_plant
-					remove_building = building_geothermal_power_plant
-					remove_building = building_telecommunications
-					remove_building = building_tourism_industry
-					remove_building = building_financial_services
-					remove_building = building_media_industry
-					remove_building = building_hospitals
-					remove_building = building_slums
-					remove_building = building_port
-					remove_building = building_government_administration
-					remove_building = building_university
-					remove_building = building_logging_camp
-					remove_building = building_rubber_plantation
-					remove_building = building_fishing_wharf
-					remove_building = building_conventional_oil_well
-					remove_building = building_un_conventional_oil_well
-					remove_building = building_offshore_oil_well
-					remove_building = building_conventional_gas_well
-					remove_building = building_un_conventional_gas_well
-					remove_building = building_offshore_gas_well
-					remove_building = building_suez_canal
-					remove_building = building_panama_canal
-					remove_building = building_south_shore_canal
-					remove_building = building_beauharnois_canal
-					remove_building = building_wiley-dondero_canal
-					remove_building = building_iroquois_canal
-					remove_building = building_welland_canal
-					remove_building = building_detroit_river
-					remove_building = building_st_marys_canal
-					remove_building = building_infrastructure
-					remove_building = building_trade_center
-					remove_building = building_skyscraper
-					remove_building = building_spaceport
-					remove_building = building_mission_control
-					remove_building = building_airport
-					remove_building = building_construction_sector
-					remove_building = building_housing
-					remove_building = building_nuclear_weapons_facility
-					remove_building = building_chemical_weapons_facility
-					remove_building = building_biological_weapons_facility
+		hidden_effect = {
+			if = {
+				limit = {
+					exists = c:BOZ
+				}
+				c:BOZ = {
+					every_scope_state = {
+						remove_building = building_food_industry
+						remove_building = building_distilleries
+						remove_building = building_textile_manufactories
+						remove_building = building_furniture_manufactories
+						remove_building = building_glassworks
+						remove_building = building_tool_manufactories
+						remove_building = building_paper_manufactories
+						remove_building = building_chemical_plants
+						remove_building = building_synthetics_plant
+						remove_building = building_steelworks
+						remove_building = building_aluminum_refinery
+						remove_building = building_motor_industry
+						remove_building = building_automobile_manufactories
+						remove_building = building_shipyards
+						remove_building = building_drydocks
+						remove_building = building_advanced_military_manufactories
+						remove_building = building_electronics_manufactories
+						remove_building = building_small_arms_manufactories
+						remove_building = building_explosives_industry
+						remove_building = building_fuel_refineries
+						remove_building = building_semiconductor_manufactories
+						remove_building = building_aircraft_manufactories
+						remove_building = building_uranium_refineries
+						remove_building = building_battery_manufactories
+						remove_building = building_pharmaceutical_industry
+						remove_building = building_computer_manufactories
+						remove_building = building_consumer_electronics_manufactories
+						remove_building = building_rye_farm
+						remove_building = building_wheat_farm
+						remove_building = building_rice_farm
+						remove_building = building_maize_farm
+						remove_building = building_millet_farm
+						remove_building = building_livestock_ranch
+						remove_building = building_coal_mine
+						remove_building = building_iron_mine
+						remove_building = building_copper_mine
+						remove_building = building_rare_earth_elements_mine
+						remove_building = building_bauxite_mine
+						remove_building = building_uranium_mine
+						remove_building = building_lead_mine
+						remove_building = building_phosphorus_mine
+						remove_building = building_gold_mine
+						remove_building = building_coffee_plantation
+						remove_building = building_cotton_plantation
+						remove_building = building_dye_plantation
+						remove_building = building_opium_plantation
+						remove_building = building_tea_plantation
+						remove_building = building_tobacco_plantation
+						remove_building = building_sugar_plantation
+						remove_building = building_banana_plantation
+						remove_building = building_silk_plantation
+						remove_building = building_barracks
+						remove_building = building_conscription_center
+						remove_building = building_naval_base
+						remove_building = building_urban_center
+						remove_building = building_combustion_plant
+						remove_building = building_nuclear_power_plant
+						remove_building = building_solar_power_plant
+						remove_building = building_wind_power_plant
+						remove_building = building_hydro_power_plant
+						remove_building = building_geothermal_power_plant
+						remove_building = building_telecommunications
+						remove_building = building_tourism_industry
+						remove_building = building_financial_services
+						remove_building = building_media_industry
+						remove_building = building_hospitals
+						remove_building = building_slums
+						remove_building = building_port
+						remove_building = building_government_administration
+						remove_building = building_university
+						remove_building = building_logging_camp
+						remove_building = building_rubber_plantation
+						remove_building = building_fishing_wharf
+						remove_building = building_conventional_oil_well
+						remove_building = building_un_conventional_oil_well
+						remove_building = building_offshore_oil_well
+						remove_building = building_conventional_gas_well
+						remove_building = building_un_conventional_gas_well
+						remove_building = building_offshore_gas_well
+						remove_building = building_suez_canal
+						remove_building = building_panama_canal
+						remove_building = building_south_shore_canal
+						remove_building = building_beauharnois_canal
+						remove_building = building_wiley-dondero_canal
+						remove_building = building_iroquois_canal
+						remove_building = building_welland_canal
+						remove_building = building_detroit_river
+						remove_building = building_st_marys_canal
+						remove_building = building_infrastructure
+						remove_building = building_trade_center
+						remove_building = building_skyscraper
+						remove_building = building_spaceport
+						remove_building = building_mission_control
+						remove_building = building_airport
+						remove_building = building_construction_sector
+						remove_building = building_housing
+						remove_building = building_nuclear_weapons_facility
+						remove_building = building_chemical_weapons_facility
+						remove_building = building_biological_weapons_facility
+					}
 				}
 			}
-		}
-		if = {
-			limit = {
-				exists = c:AOZ
-			}
-			c:AOZ = {
-				every_scope_state = {
-					remove_building = building_food_industry
-					remove_building = building_distilleries
-					remove_building = building_textile_manufactories
-					remove_building = building_furniture_manufactories
-					remove_building = building_glassworks
-					remove_building = building_tool_manufactories
-					remove_building = building_paper_manufactories
-					remove_building = building_chemical_plants
-					remove_building = building_synthetics_plant
-					remove_building = building_steelworks
-					remove_building = building_aluminum_refinery
-					remove_building = building_motor_industry
-					remove_building = building_automobile_manufactories
-					remove_building = building_shipyards
-					remove_building = building_drydocks
-					remove_building = building_advanced_military_manufactories
-					remove_building = building_electronics_manufactories
-					remove_building = building_small_arms_manufactories
-					remove_building = building_explosives_industry
-					remove_building = building_fuel_refineries
-					remove_building = building_semiconductor_manufactories
-					remove_building = building_aircraft_manufactories
-					remove_building = building_uranium_refineries
-					remove_building = building_battery_manufactories
-					remove_building = building_pharmaceutical_industry
-					remove_building = building_computer_manufactories
-					remove_building = building_consumer_electronics_manufactories
-					remove_building = building_rye_farm
-					remove_building = building_wheat_farm
-					remove_building = building_rice_farm
-					remove_building = building_maize_farm
-					remove_building = building_millet_farm
-					remove_building = building_livestock_ranch
-					remove_building = building_coal_mine
-					remove_building = building_iron_mine
-					remove_building = building_copper_mine
-					remove_building = building_rare_earth_elements_mine
-					remove_building = building_bauxite_mine
-					remove_building = building_uranium_mine
-					remove_building = building_lead_mine
-					remove_building = building_phosphorus_mine
-					remove_building = building_gold_mine
-					remove_building = building_coffee_plantation
-					remove_building = building_cotton_plantation
-					remove_building = building_dye_plantation
-					remove_building = building_opium_plantation
-					remove_building = building_tea_plantation
-					remove_building = building_tobacco_plantation
-					remove_building = building_sugar_plantation
-					remove_building = building_banana_plantation
-					remove_building = building_silk_plantation
-					remove_building = building_barracks
-					remove_building = building_conscription_center
-					remove_building = building_naval_base
-					remove_building = building_urban_center
-					remove_building = building_combustion_plant
-					remove_building = building_nuclear_power_plant
-					remove_building = building_solar_power_plant
-					remove_building = building_wind_power_plant
-					remove_building = building_hydro_power_plant
-					remove_building = building_geothermal_power_plant
-					remove_building = building_telecommunications
-					remove_building = building_tourism_industry
-					remove_building = building_financial_services
-					remove_building = building_media_industry
-					remove_building = building_hospitals
-					remove_building = building_slums
-					remove_building = building_port
-					remove_building = building_government_administration
-					remove_building = building_university
-					remove_building = building_logging_camp
-					remove_building = building_rubber_plantation
-					remove_building = building_fishing_wharf
-					remove_building = building_conventional_oil_well
-					remove_building = building_un_conventional_oil_well
-					remove_building = building_offshore_oil_well
-					remove_building = building_conventional_gas_well
-					remove_building = building_un_conventional_gas_well
-					remove_building = building_offshore_gas_well
-					remove_building = building_suez_canal
-					remove_building = building_panama_canal
-					remove_building = building_south_shore_canal
-					remove_building = building_beauharnois_canal
-					remove_building = building_wiley-dondero_canal
-					remove_building = building_iroquois_canal
-					remove_building = building_welland_canal
-					remove_building = building_detroit_river
-					remove_building = building_st_marys_canal
-					remove_building = building_infrastructure
-					remove_building = building_trade_center
-					remove_building = building_skyscraper
-					remove_building = building_spaceport
-					remove_building = building_mission_control
-					remove_building = building_airport
-					remove_building = building_construction_sector
-					remove_building = building_housing
-					remove_building = building_nuclear_weapons_facility
-					remove_building = building_chemical_weapons_facility
-					remove_building = building_biological_weapons_facility
+			if = {
+				limit = {
+					exists = c:AOZ
+				}
+				c:AOZ = {
+					every_scope_state = {
+						remove_building = building_food_industry
+						remove_building = building_distilleries
+						remove_building = building_textile_manufactories
+						remove_building = building_furniture_manufactories
+						remove_building = building_glassworks
+						remove_building = building_tool_manufactories
+						remove_building = building_paper_manufactories
+						remove_building = building_chemical_plants
+						remove_building = building_synthetics_plant
+						remove_building = building_steelworks
+						remove_building = building_aluminum_refinery
+						remove_building = building_motor_industry
+						remove_building = building_automobile_manufactories
+						remove_building = building_shipyards
+						remove_building = building_drydocks
+						remove_building = building_advanced_military_manufactories
+						remove_building = building_electronics_manufactories
+						remove_building = building_small_arms_manufactories
+						remove_building = building_explosives_industry
+						remove_building = building_fuel_refineries
+						remove_building = building_semiconductor_manufactories
+						remove_building = building_aircraft_manufactories
+						remove_building = building_uranium_refineries
+						remove_building = building_battery_manufactories
+						remove_building = building_pharmaceutical_industry
+						remove_building = building_computer_manufactories
+						remove_building = building_consumer_electronics_manufactories
+						remove_building = building_rye_farm
+						remove_building = building_wheat_farm
+						remove_building = building_rice_farm
+						remove_building = building_maize_farm
+						remove_building = building_millet_farm
+						remove_building = building_livestock_ranch
+						remove_building = building_coal_mine
+						remove_building = building_iron_mine
+						remove_building = building_copper_mine
+						remove_building = building_rare_earth_elements_mine
+						remove_building = building_bauxite_mine
+						remove_building = building_uranium_mine
+						remove_building = building_lead_mine
+						remove_building = building_phosphorus_mine
+						remove_building = building_gold_mine
+						remove_building = building_coffee_plantation
+						remove_building = building_cotton_plantation
+						remove_building = building_dye_plantation
+						remove_building = building_opium_plantation
+						remove_building = building_tea_plantation
+						remove_building = building_tobacco_plantation
+						remove_building = building_sugar_plantation
+						remove_building = building_banana_plantation
+						remove_building = building_silk_plantation
+						remove_building = building_barracks
+						remove_building = building_conscription_center
+						remove_building = building_naval_base
+						remove_building = building_urban_center
+						remove_building = building_combustion_plant
+						remove_building = building_nuclear_power_plant
+						remove_building = building_solar_power_plant
+						remove_building = building_wind_power_plant
+						remove_building = building_hydro_power_plant
+						remove_building = building_geothermal_power_plant
+						remove_building = building_telecommunications
+						remove_building = building_tourism_industry
+						remove_building = building_financial_services
+						remove_building = building_media_industry
+						remove_building = building_hospitals
+						remove_building = building_slums
+						remove_building = building_port
+						remove_building = building_government_administration
+						remove_building = building_university
+						remove_building = building_logging_camp
+						remove_building = building_rubber_plantation
+						remove_building = building_fishing_wharf
+						remove_building = building_conventional_oil_well
+						remove_building = building_un_conventional_oil_well
+						remove_building = building_offshore_oil_well
+						remove_building = building_conventional_gas_well
+						remove_building = building_un_conventional_gas_well
+						remove_building = building_offshore_gas_well
+						remove_building = building_suez_canal
+						remove_building = building_panama_canal
+						remove_building = building_south_shore_canal
+						remove_building = building_beauharnois_canal
+						remove_building = building_wiley-dondero_canal
+						remove_building = building_iroquois_canal
+						remove_building = building_welland_canal
+						remove_building = building_detroit_river
+						remove_building = building_st_marys_canal
+						remove_building = building_infrastructure
+						remove_building = building_trade_center
+						remove_building = building_skyscraper
+						remove_building = building_spaceport
+						remove_building = building_mission_control
+						remove_building = building_airport
+						remove_building = building_construction_sector
+						remove_building = building_housing
+						remove_building = building_nuclear_weapons_facility
+						remove_building = building_chemical_weapons_facility
+						remove_building = building_biological_weapons_facility
+					}
 				}
 			}
-		}
-		if = {
-			limit = {
-				exists = c:FOZ
-			}
-			c:FOZ = {
-				every_scope_state = {
-					remove_building = building_food_industry
-					remove_building = building_distilleries
-					remove_building = building_textile_manufactories
-					remove_building = building_furniture_manufactories
-					remove_building = building_glassworks
-					remove_building = building_tool_manufactories
-					remove_building = building_paper_manufactories
-					remove_building = building_chemical_plants
-					remove_building = building_synthetics_plant
-					remove_building = building_steelworks
-					remove_building = building_aluminum_refinery
-					remove_building = building_motor_industry
-					remove_building = building_automobile_manufactories
-					remove_building = building_shipyards
-					remove_building = building_drydocks
-					remove_building = building_advanced_military_manufactories
-					remove_building = building_electronics_manufactories
-					remove_building = building_small_arms_manufactories
-					remove_building = building_explosives_industry
-					remove_building = building_fuel_refineries
-					remove_building = building_semiconductor_manufactories
-					remove_building = building_aircraft_manufactories
-					remove_building = building_uranium_refineries
-					remove_building = building_battery_manufactories
-					remove_building = building_pharmaceutical_industry
-					remove_building = building_computer_manufactories
-					remove_building = building_consumer_electronics_manufactories
-					remove_building = building_rye_farm
-					remove_building = building_wheat_farm
-					remove_building = building_rice_farm
-					remove_building = building_maize_farm
-					remove_building = building_millet_farm
-					remove_building = building_livestock_ranch
-					remove_building = building_coal_mine
-					remove_building = building_iron_mine
-					remove_building = building_copper_mine
-					remove_building = building_rare_earth_elements_mine
-					remove_building = building_bauxite_mine
-					remove_building = building_uranium_mine
-					remove_building = building_lead_mine
-					remove_building = building_phosphorus_mine
-					remove_building = building_gold_mine
-					remove_building = building_coffee_plantation
-					remove_building = building_cotton_plantation
-					remove_building = building_dye_plantation
-					remove_building = building_opium_plantation
-					remove_building = building_tea_plantation
-					remove_building = building_tobacco_plantation
-					remove_building = building_sugar_plantation
-					remove_building = building_banana_plantation
-					remove_building = building_silk_plantation
-					remove_building = building_barracks
-					remove_building = building_conscription_center
-					remove_building = building_naval_base
-					remove_building = building_urban_center
-					remove_building = building_combustion_plant
-					remove_building = building_nuclear_power_plant
-					remove_building = building_solar_power_plant
-					remove_building = building_wind_power_plant
-					remove_building = building_hydro_power_plant
-					remove_building = building_geothermal_power_plant
-					remove_building = building_telecommunications
-					remove_building = building_tourism_industry
-					remove_building = building_financial_services
-					remove_building = building_media_industry
-					remove_building = building_hospitals
-					remove_building = building_slums
-					remove_building = building_port
-					remove_building = building_government_administration
-					remove_building = building_university
-					remove_building = building_logging_camp
-					remove_building = building_rubber_plantation
-					remove_building = building_fishing_wharf
-					remove_building = building_conventional_oil_well
-					remove_building = building_un_conventional_oil_well
-					remove_building = building_offshore_oil_well
-					remove_building = building_conventional_gas_well
-					remove_building = building_un_conventional_gas_well
-					remove_building = building_offshore_gas_well
-					remove_building = building_suez_canal
-					remove_building = building_panama_canal
-					remove_building = building_south_shore_canal
-					remove_building = building_beauharnois_canal
-					remove_building = building_wiley-dondero_canal
-					remove_building = building_iroquois_canal
-					remove_building = building_welland_canal
-					remove_building = building_detroit_river
-					remove_building = building_st_marys_canal
-					remove_building = building_infrastructure
-					remove_building = building_trade_center
-					remove_building = building_skyscraper
-					remove_building = building_spaceport
-					remove_building = building_mission_control
-					remove_building = building_airport
-					remove_building = building_construction_sector
-					remove_building = building_housing
-					remove_building = building_nuclear_weapons_facility
-					remove_building = building_chemical_weapons_facility
-					remove_building = building_biological_weapons_facility
+			if = {
+				limit = {
+					exists = c:FOZ
+				}
+				c:FOZ = {
+					every_scope_state = {
+						remove_building = building_food_industry
+						remove_building = building_distilleries
+						remove_building = building_textile_manufactories
+						remove_building = building_furniture_manufactories
+						remove_building = building_glassworks
+						remove_building = building_tool_manufactories
+						remove_building = building_paper_manufactories
+						remove_building = building_chemical_plants
+						remove_building = building_synthetics_plant
+						remove_building = building_steelworks
+						remove_building = building_aluminum_refinery
+						remove_building = building_motor_industry
+						remove_building = building_automobile_manufactories
+						remove_building = building_shipyards
+						remove_building = building_drydocks
+						remove_building = building_advanced_military_manufactories
+						remove_building = building_electronics_manufactories
+						remove_building = building_small_arms_manufactories
+						remove_building = building_explosives_industry
+						remove_building = building_fuel_refineries
+						remove_building = building_semiconductor_manufactories
+						remove_building = building_aircraft_manufactories
+						remove_building = building_uranium_refineries
+						remove_building = building_battery_manufactories
+						remove_building = building_pharmaceutical_industry
+						remove_building = building_computer_manufactories
+						remove_building = building_consumer_electronics_manufactories
+						remove_building = building_rye_farm
+						remove_building = building_wheat_farm
+						remove_building = building_rice_farm
+						remove_building = building_maize_farm
+						remove_building = building_millet_farm
+						remove_building = building_livestock_ranch
+						remove_building = building_coal_mine
+						remove_building = building_iron_mine
+						remove_building = building_copper_mine
+						remove_building = building_rare_earth_elements_mine
+						remove_building = building_bauxite_mine
+						remove_building = building_uranium_mine
+						remove_building = building_lead_mine
+						remove_building = building_phosphorus_mine
+						remove_building = building_gold_mine
+						remove_building = building_coffee_plantation
+						remove_building = building_cotton_plantation
+						remove_building = building_dye_plantation
+						remove_building = building_opium_plantation
+						remove_building = building_tea_plantation
+						remove_building = building_tobacco_plantation
+						remove_building = building_sugar_plantation
+						remove_building = building_banana_plantation
+						remove_building = building_silk_plantation
+						remove_building = building_barracks
+						remove_building = building_conscription_center
+						remove_building = building_naval_base
+						remove_building = building_urban_center
+						remove_building = building_combustion_plant
+						remove_building = building_nuclear_power_plant
+						remove_building = building_solar_power_plant
+						remove_building = building_wind_power_plant
+						remove_building = building_hydro_power_plant
+						remove_building = building_geothermal_power_plant
+						remove_building = building_telecommunications
+						remove_building = building_tourism_industry
+						remove_building = building_financial_services
+						remove_building = building_media_industry
+						remove_building = building_hospitals
+						remove_building = building_slums
+						remove_building = building_port
+						remove_building = building_government_administration
+						remove_building = building_university
+						remove_building = building_logging_camp
+						remove_building = building_rubber_plantation
+						remove_building = building_fishing_wharf
+						remove_building = building_conventional_oil_well
+						remove_building = building_un_conventional_oil_well
+						remove_building = building_offshore_oil_well
+						remove_building = building_conventional_gas_well
+						remove_building = building_un_conventional_gas_well
+						remove_building = building_offshore_gas_well
+						remove_building = building_suez_canal
+						remove_building = building_panama_canal
+						remove_building = building_south_shore_canal
+						remove_building = building_beauharnois_canal
+						remove_building = building_wiley-dondero_canal
+						remove_building = building_iroquois_canal
+						remove_building = building_welland_canal
+						remove_building = building_detroit_river
+						remove_building = building_st_marys_canal
+						remove_building = building_infrastructure
+						remove_building = building_trade_center
+						remove_building = building_skyscraper
+						remove_building = building_spaceport
+						remove_building = building_mission_control
+						remove_building = building_airport
+						remove_building = building_construction_sector
+						remove_building = building_housing
+						remove_building = building_nuclear_weapons_facility
+						remove_building = building_chemical_weapons_facility
+						remove_building = building_biological_weapons_facility
+					}
 				}
 			}
-		}
-		custom_tooltip = {
-			text = west_german_unification_5_c_tt
 		}
 	}
 }
@@ -775,30 +840,43 @@ west_german_unification.6 = {  # Austrian Question
 	on_opened_soundeffect = "event:/SFX/Events/middleeast/courtroom_upheaval"
 	duration = 3
 	trigger = {
+		has_global_variable = german_reunification_voting_finished
 		NOT = { has_variable = austrian_question_triggered }
+		NOR = {
+			has_global_variable = german_reunification_voting_cooldown
+			has_global_variable = german_reunification_austrian_question
+			has_global_variable = german_reunification_denazification
+			has_global_variable = german_reunification_combined_zones_complete
+			has_global_variable = german_reunification_neutrality_complete
+			has_global_variable = german_reunification_east_and_west_complete
+			has_global_variable = german_reunification_independence_complete
+		}
+		has_variable = west_german_leader
 	}
 	immediate = {
 		set_variable = austrian_question_triggered
+		trigger_event = {
+			id = west_german_unification.100
+			days = 91
+		}
+		set_global_variable = german_reunification_voting_cooldown
 	}
 	option = { # Create a neutral government with the soviets
 		name = west_german_unification.6.a
 		default_option = yes
-		if = {
+		trigger = {
+			global_var:german_reunification_voting > 0
+		}
+		every_country = {
 			limit = {
-				exists = c:RUS
-				c:RUS = {
-					has_diplomatic_pact = {
-						who = c:AUS
-						type = military_occupation
-					}
+				has_diplomatic_pact = {
+					who = c:AUS
+					type = military_occupation
 				}
-				NOT = {has_war_with = c:RUS}
 			}
-			c:RUS = {
-				trigger_event = {
-					id = west_german_unification.12 # Soviet Austria
-					days = {1 7}
-				}
+			trigger_event = {
+				id = west_german_unification.12 # Soviet Austria
+				days = {1 7}
 			}
 		}
 		if = {
@@ -840,7 +918,7 @@ west_german_unification.6 = {  # Austrian Question
 				c:AOA = {
 					trigger_event = {
 					id = west_german_unification.11
-					days = { 1 2 }
+					days = { 0 92 }
 					}
 				}
 			}
@@ -855,6 +933,9 @@ west_german_unification.6 = {  # Austrian Question
 	option = { # Keep them separate from the soviet sphere
 		name = west_german_unification.6.b
 		default_option = no
+		trigger = {
+			global_var:german_reunification_voting > 3
+		}
 		if = {
 			limit = { exists = s:STATE_AUSTRIA.region_state:AOZ }
 			create_country = {
@@ -896,7 +977,7 @@ west_german_unification.6 = {  # Austrian Question
 					}
 				}
 			}
-			set_global_variable = austrian_question_complete
+			set_global_variable = german_reunification_austrian_question
 		}
 		ai_chance = {
 			base = 10
@@ -904,7 +985,9 @@ west_german_unification.6 = {  # Austrian Question
 	}
 	option = { # Deny Their sovereignty
 		name = west_german_unification.6.c
-		set_global_variable = austrian_question_complete
+		trigger = {
+			global_var:german_reunification_voting > 6
+		}
 		default_option = no
 		if = {
 			limit = { exists = s:STATE_TYROL.region_state:FOZ }
@@ -923,7 +1006,7 @@ west_german_unification.6 = {  # Austrian Question
 			s:STATE_STYRIA.region_state:BOZ = { add_radicals = 0.25 }
 		}
 		hidden_effect = {
-			set_global_variable = austrian_question_complete
+			set_global_variable = german_reunification_austrian_question
 		}
 		ai_chance = {
 			base = 1
@@ -968,19 +1051,120 @@ west_german_unification.8 = {  # Neutrality
 	on_opened_soundeffect = "event:/SFX/Events/middleeast/courtroom_upheaval"
 	duration = 3
 	trigger = {
+		has_global_variable = german_reunification_voting_finished
 		NOT = { has_variable = neutrality_question_triggered }
+		AND = {
+			has_global_variable = german_reunification_denazification
+			has_global_variable = german_reunification_austrian_question
+			has_global_variable = german_reunification_combined_zones_complete
+			NOR = {
+				has_global_variable = german_reunification_voting_cooldown
+				has_global_variable = german_reunification_neutrality_complete
+				has_global_variable = german_reunification_east_and_west_complete
+				has_global_variable = german_reunification_independence_complete
+			}
+		}
+		has_variable = west_german_leader
 	}
 	immediate = {
 		set_variable = neutrality_question_triggered
+		trigger_event = {
+			id = west_german_unification.100
+			days = 91
+		}
+		set_global_variable = german_reunification_voting_cooldown
 	}
-	option = {
+	option = { # Re-militarize Germany
 		name = west_german_unification.8.a
+		trigger = {
+			global_var:german_reunification_voting > 0
+		}
+		default_option = no
+		hidden_effect = {
+			set_global_variable = german_reunification_neutrality_complete
+		}
+		custom_tooltip = {
+			text = west_german_unification_8_a_tt
+		}
+	}
+	option = { # Keep Germany Demilitarized
+		name = west_german_unification.8.b
+		trigger = {
+			global_var:german_reunification_voting > 3
+		}
 		default_option = yes
-		set_global_variable = german_neutrality_complete
+		hidden_effect = {
+			set_global_variable = german_reunification_neutrality_complete
+			if = {
+				limit = {
+					exists = c:BOZ
+				}
+				c:BOZ = {
+					add_modifier = { name = demilitarized_nation }
+				}
+			}
+			if = {
+				limit = {
+					exists = c:AOZ
+				}
+				c:AOZ = {
+					add_modifier = { name = demilitarized_nation }
+				}
+			}
+			if = {
+				limit = {
+					exists = c:FOZ
+				}
+				c:FOZ = {
+					add_modifier = { name = demilitarized_nation }
+				}
+			}
+		}
+		custom_tooltip = {
+			text = west_german_unification_8_b_tt
+		}
+	}
+	option = { # Make Germany Neutral
+		name = west_german_unification.8.c
+		trigger = {
+			global_var:german_reunification_voting > 6
+		}
+		default_option = no
+		hidden_effect = {
+			set_global_variable = german_reunification_neutrality_complete
+			set_global_variable = german_reunification_neutral_germany	
+			if = {
+				limit = {
+					exists = c:BOZ
+				}
+				c:BOZ = {
+					add_modifier = { name = forced_neutrality }
+				}
+			}
+			if = {
+				limit = {
+					exists = c:AOZ
+				}
+				c:AOZ = {
+					add_modifier = { name = forced_neutrality }
+				}
+			}
+			if = {
+				limit = {
+					exists = c:FOZ
+				}
+				c:FOZ = {
+					add_modifier = { name = forced_neutrality }
+				}
+			}
+		}
+		custom_tooltip = {
+			text = west_german_unification_8_c_tt
+		}
 	}
 }
 
-west_german_unification.9 = { # German Unification
+west_german_unification.9 = { # East and West Unification
 	type = country_event
 	title = west_german_unification.9.t
 	desc = west_german_unification.9.d
@@ -993,15 +1177,53 @@ west_german_unification.9 = { # German Unification
 	on_opened_soundeffect = "event:/SFX/Events/middleeast/courtroom_upheaval"
 	duration = 3
 	trigger = {
+		has_global_variable = german_reunification_neutral_germany	
 		NOT = { has_variable = german_unity_question_triggered }
+		AND = {
+			has_global_variable = german_reunification_denazification
+			has_global_variable = german_reunification_austrian_question
+			has_global_variable = german_reunification_combined_zones_complete
+			has_global_variable = german_reunification_neutrality_complete
+			NOR = {
+				has_global_variable = german_reunification_voting_cooldown
+				has_global_variable = german_reunification_east_and_west_complete
+				has_global_variable = german_reunification_independence_complete
+			}
+		}
 	}
 	immediate = {
 		set_variable = german_unity_question_triggered
 	}
-	option = {
+	option = { # Reunite East and West Germany
 		name = west_german_unification.9.a
+		default_option = no
+		trigger = {
+			exists = c:RUS
+			exists = c:DDR
+			c:RUS = {
+				has_diplomatic_pact = {
+					who = c:DDR
+					type = military_occupation
+				}
+			}
+		}
+		c:RUS = {
+			trigger_event = {
+				id = west_german_unification.13 # Soviet Reunification of Germany
+				days = { 10 30 }
+			}
+		}
+		custom_tooltip = {
+			text = west_german_unification_9_a_tt
+		}
+	}
+	option = { # Keep East and West Germany Separate
+		name = west_german_unification.9.b
 		default_option = yes
-		set_global_variable = german_unity_complete
+		set_global_variable = german_reunification_east_and_west_complete
+		custom_tooltip = {
+			text = west_german_unification_9_b_tt
+		}
 	}
 }
 
@@ -1020,6 +1242,7 @@ west_german_unification.10 = {  # Operation Paperclip
 	duration = 3
 	trigger = {
 		NOT = { has_variable = operation_paperclip_triggered }
+		has_variable = west_german_leader
 	}
 	immediate = {
 		set_variable = operation_paperclip_triggered
@@ -1043,7 +1266,7 @@ west_german_unification.10 = {  # Operation Paperclip
 	}
 }
 
-west_german_unification.11 = {
+west_german_unification.11 = { # Austrian Independence
 	type = country_event
 	title = west_german_unification.11.t
 	desc = west_german_unification.11.d
@@ -1057,6 +1280,8 @@ west_german_unification.11 = {
 	duration = 3
 	trigger = {
 		NOT = { has_variable = austrian_independence_triggered }
+		exists = c:AOA
+		this = c:AOA
 	}
 	immediate = {
 		set_variable = austrian_independence_triggered
@@ -1074,7 +1299,7 @@ west_german_unification.11 = {
 		}
 	}
 
-west_german_unification.12 = {
+west_german_unification.12 = { # Soviets merge Austrian occupation zones
 	type = country_event
 	title = west_german_unification.12.t
 	desc = west_german_unification.12.d
@@ -1101,7 +1326,7 @@ west_german_unification.12 = {
 		name = west_german_unification.12.a
 		default_option = yes
 		hidden_effect = {
-			set_global_variable = austrian_question_complete
+			set_global_variable = german_reunification_austrian_question
 		}
 		if = {
 			limit = {
@@ -1111,13 +1336,712 @@ west_german_unification.12 = {
 				annex = c:AUS
 			}
 		}
-
+		ai_chance = {
+			base = 100
+		}
 	}
 	option = { # Deny the merge
 		name = west_german_unification.12.b
 		hidden_effect = {
-			set_global_variable = austrian_question_complete
+			set_global_variable = german_reunification_austrian_question
+			}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+west_german_unification.13 = { # Soviets can combine east and west germany
+	type = country_event
+	title = west_german_unification.13.t
+	desc = west_german_unification.13.d
+	flavor = west_german_unification.13.f
+	icon = "gfx/interface/icons/event_icons/event_diplomacy.dds"
+	event_image = {
+		texture = "gfx/interface/event_pictures/west_german_unification.dds"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/middleeast/courtroom_upheaval"
+	duration = 3
+	option = { # LOL, Lmao even
+		name = west_german_unification.13.a
+		default_option = no # Change for release
+		hidden_effect = {
+			set_global_variable = german_reunification_east_and_west_complete
+		}
+	}
+	option = { # Combine east and west
+		name = west_german_unification.13.b
+		default_option = yes #Change for release
+		if = {
+			limit = {
+				exists = c:DDR
+			}
+			if = {
+				limit = {
+					exists = c:BOZ
+					c:BOZ = {
+						has_variable = west_german_unifier
+					}
+				}
+				c:BOZ = {
+					annex = c:DDR
+				}
+			}
+			if = {
+				limit = {
+					exists = c:AOZ
+					c:AOZ = {
+						has_variable = west_german_unifier
+					}
+				}
+				c:AOZ = {
+					annex = c:DDR
+				}
+			}
+			if = {
+				limit = {
+					exists = c:FOZ
+					c:FOZ = {
+						has_variable = west_german_unifier
+					}
+				}
+				c:FOZ = {
+					annex = c:DDR
+				}
+			}
+		}
+		hidden_effect = {
+			set_global_variable = german_reunification_east_and_west_complete
+		}
+	}
+}
+
+west_german_unification.100 = {
+	type = country_event
+	hidden = yes
+	duration = 0
+	trigger = {
+		has_global_variable = GBR_voted_german_reunification
+		has_global_variable = USA_voted_german_reunification
+		has_global_variable = FRA_voted_german_reunification
+	}
+	immediate = {
+		remove_global_variable = GBR_voted_german_reunification
+		remove_global_variable = USA_voted_german_reunification
+		remove_global_variable = FRA_voted_german_reunification
+		remove_global_variable = german_reunification_voting
+		remove_global_variable = german_reunification_voting_finished
+		remove_global_variable = german_reunification_voting_cooldown
+	}
+
+}
+west_german_unification.101 = { # Voting Austrian Unification
+	type = country_event
+	title = west_german_unification.101.t
+	desc = west_german_unification.101.d
+	flavor = west_german_unification.101.f
+	icon = "gfx/interface/icons/event_icons/event_diplomacy.dds"
+	event_image = {
+		texture = "gfx/interface/event_pictures/west_german_unification.dds"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/middleeast/courtroom_upheaval"
+	duration = 3
+	trigger = {
+		NOT = { has_variable = austrian_voting_held }
+		NOR = {
+			has_global_variable = german_reunification_voting_cooldown
+			has_global_variable = german_reunification_austrian_question
+			has_global_variable = german_reunification_denazification
+			has_global_variable = german_reunification_combined_zones_complete
+			has_global_variable = german_reunification_neutrality_complete
+			has_global_variable = german_reunification_east_and_west_complete
+			has_global_variable = german_reunification_independence_complete
+		}
+		OR = {
+			AND = {
+				exists = c:GBR
+				this = c:GBR
+				not = { has_global_variable = GBR_voted_german_reunification }
+			}
+			AND = {
+				exists = c:USA
+				this = c:USA
+				not = { has_global_variable = USA_voted_german_reunification }
+			}
+			AND = {
+				exists = c:FRA
+				this = c:FRA
+				not = { has_global_variable = FRA_voted_german_reunification }
 			}
 		}
 	}
+	immediate = {
+		set_variable = austrian_voting_held
+	}
+	option = {
+		name = west_german_unification.101.a
+		default_option = yes
+		set_global_variable = {
+			name = german_reunification_voting
+			value = { 
+				if = {
+					limit = { has_global_variable = german_reunification_voting }
+					add = global_var:german_reunification_voting }
+					add = { integer_range = { min = 100 max = 100 } } } # Change for Release
+		}
+		hidden_effect = {
+			if = {
+				limit = {
+					exists = c:GBR
+					this = c:GBR
+				}
+				set_global_variable = GBR_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:USA
+					this = c:USA
+				}
+				set_global_variable = USA_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:FRA
+					this = c:FRA
+				}
+				set_global_variable = FRA_voted_german_reunification
+			}
+		}
+	}
+	option = {
+		name = west_german_unification.101.b
+		default_option = no
+		set_global_variable = {
+			name = german_reunification_voting
+			value = { 
+				if = {
+					limit = { has_global_variable = german_reunification_voting }
+					add = global_var:german_reunification_voting } 
+					add = { integer_range = { min = 1 max = 2 } } }
+		}
+		hidden_effect = {
+			if = {
+				limit = {
+					exists = c:GBR
+					this = c:GBR
+				}
+				set_global_variable = GBR_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:USA
+					this = c:USA
+				}
+				set_global_variable = USA_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:FRA
+					this = c:FRA
+				}
+				set_global_variable = FRA_voted_german_reunification
+			}
+		}
+	}
+	option = {
+		name = west_german_unification.101.c
+		default_option = no
+		set_global_variable = { 
+			name = german_reunification_voting
+			value = { 
+				if = {
+					limit = { has_global_variable = german_reunification_voting }
+					add = global_var:german_reunification_voting } 
+					add = { integer_range = { min = 0 max = 1 } } }
+		}
+		hidden_effect = {
+			if = {
+				limit = {
+					exists = c:GBR
+					this = c:GBR
+				}
+				set_global_variable = GBR_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:USA
+					this = c:USA
+				}
+				set_global_variable = USA_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:FRA
+					this = c:FRA
+				}
+				set_global_variable = FRA_voted_german_reunification
+			}
+		}
+	}
+}
 
+west_german_unification.102 = { # Voting denazification
+	type = country_event
+	title = west_german_unification.102.t
+	desc = west_german_unification.102.d
+	flavor = west_german_unification.102.f
+	icon = "gfx/interface/icons/event_icons/event_diplomacy.dds"
+	event_image = {
+		texture = "gfx/interface/event_pictures/west_german_unification.dds"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/middleeast/courtroom_upheaval"
+	duration = 3
+	trigger = {
+		NOT = { has_variable = denazification_voting_held }
+		AND = {
+			has_global_variable = german_reunification_austrian_question
+			NOR = {
+				has_global_variable = german_reunification_voting_cooldown
+				has_global_variable = german_reunification_denazification
+				has_global_variable = german_reunification_combined_zones_complete
+				has_global_variable = german_reunification_neutrality_complete
+				has_global_variable = german_reunification_east_and_west_complete
+				has_global_variable = german_reunification_independence_complete
+			}
+		}
+		OR = {
+			AND = {
+				exists = c:GBR
+				this = c:GBR
+				not = { has_global_variable = GBR_voted_german_reunification }
+			}
+			AND = {
+				exists = c:USA
+				this = c:USA
+				not = { has_global_variable = USA_voted_german_reunification }
+			}
+			AND = {
+				exists = c:FRA
+				this = c:FRA
+				not = { has_global_variable = FRA_voted_german_reunification }
+			}
+		}
+	}
+	immediate = {
+		set_variable = denazification_voting_held
+	}
+	option = {
+		name = west_german_unification.102.a
+		default_option = yes
+		set_global_variable = {
+			name = german_reunification_voting
+			value = { 
+				if = {
+					limit = { has_global_variable = german_reunification_voting }
+					add = global_var:german_reunification_voting } 
+					add = { integer_range = { min = 100 max = 100 } } } # Change for release
+		}
+		hidden_effect = {
+			if = {
+				limit = {
+					exists = c:GBR
+					this = c:GBR
+				}
+				set_global_variable = GBR_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:USA
+					this = c:USA
+				}
+				set_global_variable = USA_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:FRA
+					this = c:FRA
+				}
+				set_global_variable = FRA_voted_german_reunification
+			}
+		}
+	}
+	option = {
+		name = west_german_unification.102.b
+		default_option = no
+		set_global_variable = {
+			name = german_reunification_voting
+			value = { 
+				if = {
+					limit = { has_global_variable = german_reunification_voting }
+					add = global_var:german_reunification_voting } 
+					add = { integer_range = { min = 1 max = 2 } } }
+		}
+		hidden_effect = {
+			if = {
+				limit = {
+					exists = c:GBR
+					this = c:GBR
+				}
+				set_global_variable = GBR_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:USA
+					this = c:USA
+				}
+				set_global_variable = USA_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:FRA
+					this = c:FRA
+				}
+				set_global_variable = FRA_voted_german_reunification
+			}
+		}
+	}
+	option = {
+		name = west_german_unification.102.c
+		default_option = no
+		set_global_variable = {
+			name = german_reunification_voting
+			value = { 
+				if = {
+					limit = { has_global_variable = german_reunification_voting }
+					add = global_var:german_reunification_voting } 
+					add = { integer_range = { min = 0 max = 1 } } }
+		}
+		hidden_effect = {
+			if = {
+				limit = {
+					exists = c:GBR
+					this = c:GBR
+				}
+				set_global_variable = GBR_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:USA
+					this = c:USA
+				}
+				set_global_variable = USA_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:FRA
+					this = c:FRA
+				}
+				set_global_variable = FRA_voted_german_reunification
+			}
+		}
+	}
+}
+
+west_german_unification.103 = { # Voting neutrality
+	type = country_event
+	title = west_german_unification.103.t
+	desc = west_german_unification.103.d
+	flavor = west_german_unification.103.f
+	icon = "gfx/interface/icons/event_icons/event_diplomacy.dds"
+	event_image = {
+		texture = "gfx/interface/event_pictures/west_german_unification.dds"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/middleeast/courtroom_upheaval"
+	duration = 3
+	trigger = {
+		NOT = { has_variable = neutrality_voting_held }
+		AND = {
+			has_global_variable = german_reunification_denazification
+			has_global_variable = german_reunification_austrian_question
+			has_global_variable = german_reunification_combined_zones_complete
+			NOR = {
+				has_global_variable = german_reunification_voting_cooldown
+				has_global_variable = german_reunification_neutrality_complete
+				has_global_variable = german_reunification_east_and_west_complete
+				has_global_variable = german_reunification_independence_complete
+			}
+		}
+		OR = {
+			AND = {
+				exists = c:GBR
+				this = c:GBR
+				not = { has_global_variable = GBR_voted_german_reunification }
+			}
+			AND = {
+				exists = c:USA
+				this = c:USA
+				not = { has_global_variable = USA_voted_german_reunification }
+			}
+			AND = {
+				exists = c:FRA
+				this = c:FRA
+				not = { has_global_variable = FRA_voted_german_reunification }
+			}
+		}
+	}
+	immediate = {
+		set_variable = neutrality_voting_held
+	}
+	option = {
+		name = west_german_unification.103.a
+		default_option = yes
+		set_global_variable = {
+			name = german_reunification_voting
+			value = { 
+				if = {
+					limit = { has_global_variable = german_reunification_voting }
+					add = global_var:german_reunification_voting } 
+					add = { integer_range = { min = 100 max = 100 } } } # Change for release
+		}
+		hidden_effect = {
+			if = {
+				limit = {
+					exists = c:GBR
+					this = c:GBR
+				}
+				set_global_variable = GBR_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:USA
+					this = c:USA
+				}
+				set_global_variable = USA_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:FRA
+					this = c:FRA
+				}
+				set_global_variable = FRA_voted_german_reunification
+			}
+		}
+	}
+	option = {
+		name = west_german_unification.103.b
+		default_option = no
+		set_global_variable = {
+			name = german_reunification_voting
+			value = { 
+				if = {
+					limit = { has_global_variable = german_reunification_voting }
+					add = global_var:german_reunification_voting } 
+					add = { integer_range = { min = 1 max = 2 } } }
+		}
+		hidden_effect = {
+			if = {
+				limit = {
+					exists = c:GBR
+					this = c:GBR
+				}
+				set_global_variable = GBR_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:USA
+					this = c:USA
+				}
+				set_global_variable = USA_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:FRA
+					this = c:FRA
+				}
+				set_global_variable = FRA_voted_german_reunification
+			}
+		}
+	}
+	option = {
+		name = west_german_unification.103.c
+		default_option = no
+		set_global_variable = {
+			name = german_reunification_voting
+			value = { 
+				if = {
+					limit = { has_global_variable = german_reunification_voting }
+					add = global_var:german_reunification_voting } 
+					add = { integer_range = { min = 0 max = 1 } } }
+		}
+		hidden_effect = {
+			if = {
+				limit = {
+					exists = c:GBR
+					this = c:GBR
+				}
+				set_global_variable = GBR_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:USA
+					this = c:USA
+				}
+				set_global_variable = USA_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:FRA
+					this = c:FRA
+				}
+				set_global_variable = FRA_voted_german_reunification
+			}
+		}
+	}
+}
+
+west_german_unification.104 = { # Voting Independence
+	type = country_event
+	title = west_german_unification.104.t
+	desc = west_german_unification.104.d
+	flavor = west_german_unification.104.f
+	icon = "gfx/interface/icons/event_icons/event_diplomacy.dds"
+	event_image = {
+		texture = "gfx/interface/event_pictures/west_german_unification.dds"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/middleeast/courtroom_upheaval"
+	duration = 3
+	trigger = {
+		NOT = { has_variable = independence_voting_held }
+		AND = {
+			has_global_variable = german_reunification_austrian_question
+			has_global_variable = german_reunification_denazification
+			has_global_variable = german_reunification_combined_zones_complete
+			has_global_variable = german_reunification_neutrality_complete
+			has_global_variable = german_reunification_east_and_west_complete
+			NOR = { 
+				has_global_variable = german_reunification_voting_cooldown
+				has_global_variable = german_reunification_independence_complete 
+			}
+		}
+		OR = {
+			AND = {
+				exists = c:GBR
+				this = c:GBR
+				not = { has_global_variable = GBR_voted_german_reunification }
+			}
+			AND = {
+				exists = c:USA
+				this = c:USA
+				not = { has_global_variable = USA_voted_german_reunification }
+			}
+			AND = {
+				exists = c:FRA
+				this = c:FRA
+				not = { has_global_variable = FRA_voted_german_reunification }
+			}
+		}
+	}
+	immediate = {
+		set_variable = independence_voting_held
+	}
+	option = {
+		name = west_german_unification.104.a
+		default_option = yes
+		set_global_variable = {
+			name = german_reunification_voting
+			value = { 
+				if = {
+					limit = { has_global_variable = german_reunification_voting }
+					add = global_var:german_reunification_voting } 
+					add = { integer_range = { min = 100 max = 100 } } } # Change for release
+		}
+		hidden_effect = {
+			if = {
+				limit = {
+					exists = c:GBR
+					this = c:GBR
+				}
+				set_global_variable = GBR_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:USA
+					this = c:USA
+				}
+				set_global_variable = USA_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:FRA
+					this = c:FRA
+				}
+				set_global_variable = FRA_voted_german_reunification
+			}
+		}
+	}
+	option = {
+		name = west_german_unification.104.b
+		default_option = no
+		set_global_variable = {
+			name = german_reunification_voting
+			value = { 
+				if = {
+					limit = { has_global_variable = german_reunification_voting }
+					add = global_var:german_reunification_voting } 
+					add = { integer_range = { min = 1 max = 2 } } }
+		}
+		hidden_effect = {
+			if = {
+				limit = {
+					exists = c:GBR
+					this = c:GBR
+				}
+				set_global_variable = GBR_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:USA
+					this = c:USA
+				}
+				set_global_variable = USA_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:FRA
+					this = c:FRA
+				}
+				set_global_variable = FRA_voted_german_reunification
+			}
+		}
+	}
+	option = {
+		name = west_german_unification.104.c
+		default_option = no
+		set_global_variable = {
+			name = german_reunification_voting
+			value = { 
+				if = {
+					limit = { has_global_variable = german_reunification_voting }
+					add = global_var:german_reunification_voting } 
+					add = { integer_range = { min = 0 max = 1 } } }
+		}
+		hidden_effect = {
+			if = {
+				limit = {
+					exists = c:GBR
+					this = c:GBR
+				}
+				set_global_variable = GBR_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:USA
+					this = c:USA
+				}
+				set_global_variable = USA_voted_german_reunification
+			}
+			if = {
+				limit = {
+					exists = c:FRA
+					this = c:FRA
+				}
+				set_global_variable = FRA_voted_german_reunification
+			}
+		}
+	}
+}
