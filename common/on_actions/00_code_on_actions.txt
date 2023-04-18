@@ -39,68 +39,93 @@ on_monthly_pulse_country = {
 		#Corruption Calculations
 		if = {
 			limit = {
-				NOT = {
-					has_variable = var_corruption
+				is_player = yes
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_variable = var_corruption
+					}
+				}
+				set_variable = {
+					name = var_corruption
+					value = corruption_baseline
 				}
 			}
-			set_variable = {
-				name = var_corruption
-				value = 0
-			}
-		}
-		if = {
-			limit = {
-				var:var_corruption < 0
-			}
-			set_variable = {
-				name = var_corruption
-				value = 0
-			}
-		}
-		if = {
-			limit = {
-				var:var_corruption >= 100
-			}
-			set_variable = {
-				name = var_corruption
-				value = 100
-			}
-		}
-		if = {
-			limit = {
-				var:var_corruption <= corruption_baseline
-			}
-			change_variable = {
-				name = var_corruption
-				add = corruption_growth
-			}
-		}
-		if = {
-			limit = {
-				var:var_corruption >= corruption_baseline
-			}
-			change_variable = {
-				name = var_corruption
-				subtract = corruption_decay
-			}
-		}
-		# Adds appropriate modifier
-		if = {
-			limit = {
-				var:var_corruption = {
-					exists = yes
+			else_if = {
+				limit = {
+					var:var_corruption < 0
+				}
+				set_variable = {
+					name = var_corruption
+					value = 0
 				}
 			}
-			remove_modifier = corruption_modifier_effects
-			add_modifier = {
-				name = corruption_modifier_effects
-				multiplier = corruption_modifier
+			else_if = {
+				limit = {
+					var:var_corruption >= 100
+				}
+				set_variable = {
+					name = var_corruption
+					value = 100
+				}
+			}
+			if = {
+				limit = {
+					var:var_corruption <= corruption_baseline
+				}
+				change_variable = {
+					name = var_corruption
+					add = {
+						value = corruption_baseline
+						subtract = var:var_corruption
+						max = 0.5
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					var:var_corruption >= corruption_baseline
+				}
+				change_variable = {
+					name = var_corruption
+					add = {
+						value = corruption_baseline
+						subtract = var:var_corruption
+						min = -0.5
+					}
+				}
+			}
+			# Adds appropriate modifier
+			if = {
+				limit = {
+					var:var_corruption = {
+						exists = yes
+					}
+				}
+				remove_modifier = corruption_modifier_effects
+				add_modifier = {
+					name = corruption_modifier_effects
+					multiplier = corruption_modifier
+				}
+			}
+			else = {
+				set_variable = {
+					name = var_corruption
+					value = corruption_value
+				}
 			}
 		}
-		else = {
-			set_variable = {
-				name = var_corruption
-				value = corruption_value
+		else_if = {
+			limit = {
+				has_variable = var_corruption
+			}
+			remove_variable = var_corruption
+			if = {
+				limit = {
+					has_modifier = corruption_modifier_effects
+				}
+				remove_modifier = corruption_modifier_effects
 			}
 		}
 		# UN Calculations
