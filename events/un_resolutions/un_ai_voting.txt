@@ -227,3 +227,245 @@ un_ai_voting.1 = {# AI voting mechanism
 	}
 
 }
+un_ai_voting.2 = {# AI Application voting mechanism
+	type = country_event	
+	placement = ROOT
+
+	trigger = {
+		is_ai = yes
+		OR = {
+			has_variable = un_member
+			has_variable = unsc_member
+		}
+		not = {
+			has_variable = has_voted_on_application
+		}
+		any_country = {
+			has_variable = application_progress_un
+		}
+	}
+
+	immediate = {
+		random_country = {
+			limit = {
+				has_variable = application_progress_un
+			}
+			save_scope_as = applicant_country_scope
+		}
+	}
+
+	# TODO - AI SCRIPTING
+	option = {
+		name = un_ai_voting.2.a
+		set_variable = {
+			name = has_voted_on_application
+			days = 50
+		}
+		if = {
+			limit = {
+				or = {
+					supporting_countries <= un_memberstates
+					not = {
+						exists = un_supporting_list_size
+					}
+				}
+			}
+			scope:applicant_country_scope = {
+				if = {
+					limit = {
+						not = {
+							is_target_in_variable_list = {
+								name = un_supporting
+								target = ROOT
+							}
+						}
+					}
+					change_variable = {
+						name = un_supporting_list_size
+						add = 1
+					}
+					add_to_variable_list = {
+						name = un_supporting
+						target = ROOT
+					}
+				}
+				if = {
+					limit = {
+						is_target_in_variable_list = {
+							name = un_rejecting
+							target = ROOT
+						}
+					}
+					change_variable = {
+						name = un_supporting_list_size
+						add = 1
+					}
+				}
+				remove_list_variable = {
+					name = un_rejecting
+					target = ROOT
+				}
+				remove_list_variable = {
+					name = un_abstaining
+					target = ROOT
+				}
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = { 
+				trigger = {
+					scope:applicant_country_scope = {
+						relations:root >= relations_threshold:cordial
+					}
+				}
+				add = 100
+			}
+
+		}
+	}
+	option = {
+		name = un_ai_voting.2.b
+		set_variable = {
+			name = has_voted_on_application
+			days = 50
+		}
+		if = {
+			limit = {
+				or = {
+					supporting_countries <= un_memberstates
+					not = {
+						exists = un_supporting_list_size
+					}
+				}
+			}
+			scope:applicant_country_scope = {
+				add_to_variable_list = {
+					name = un_abstaining
+					target = ROOT
+				}
+				if = {
+					limit = {
+						is_target_in_variable_list = {
+							name = un_supporting
+							target = ROOT
+						}
+					}
+					change_variable = {
+						name = un_supporting_list_size
+						subtract = 1
+					}
+				}
+				if = {
+					limit = {
+						is_target_in_variable_list = {
+							name = un_rejecting
+							target = ROOT
+						}
+					}
+					change_variable = {
+						name = un_supporting_list_size
+						add = 1
+					}
+				}
+				remove_list_variable = {
+					name = un_supporting
+					target = ROOT
+				}
+				remove_list_variable = {
+					name = un_rejecting
+					target = ROOT
+				}
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = { 
+				trigger = {
+					scope:applicant_country_scope = {
+						relations:root = relations_threshold:neutral
+					}
+				}
+				add = 5
+			}
+
+		}
+	}
+	option = {
+		name = un_ai_voting.2.c
+		set_variable = {
+			name = has_voted_on_application
+			days = 50
+		}
+		if = {
+			limit = {
+				or = {
+					supporting_countries <= un_memberstates
+					not = {
+						exists = un_supporting_list_size
+					}
+				}
+			}
+			scope:applicant_country_scope = {
+				if = {
+					limit = {
+						not = {
+							is_target_in_variable_list = {
+								name = un_rejecting
+								target = ROOT
+							}
+						}
+					}
+					change_variable = {
+						name = un_supporting_list_size
+						subtract = 1
+					}
+					add_to_variable_list = {
+						name = un_rejecting
+						target = ROOT
+					}
+				}
+				if = {
+					limit = {
+						is_target_in_variable_list = {
+							name = un_supporting	
+							target = ROOT
+						}
+					}
+					change_variable = {
+						name = un_supporting_list_size
+						subtract = 1
+					}
+				}
+				remove_list_variable = {
+					name = un_supporting
+					target = ROOT
+				}
+				remove_list_variable = {
+					name = un_abstaining
+					target = ROOT
+				}
+			}
+		}
+		ai_chance = {
+			base = 5
+			modifier = { 
+				trigger = {
+					scope:applicant_country_scope = {
+						relations:root < relations_threshold:neutral
+					}
+				}
+				add = 30
+			}
+			modifier = { 
+				trigger = {
+					scope:applicant_country_scope = {
+						relations:root <= relations_threshold:hostile
+					}
+				}
+				add = 30
+			}
+		}
+	}
+
+}
