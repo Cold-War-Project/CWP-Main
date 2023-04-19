@@ -1,14 +1,14 @@
 ﻿# scope:state
-habitability_effects = {
+set_habitability_effects = {
 	# Get the habitability of the region
 	set_local_variable = {
 		name = local_habitability_level
 		value = var:habitability
 	}
-	# Change that habitability to an integer from a float (-100 <-> 100)
+	# effectively sets the max habitability to 15% and the min to -15%
 	change_local_variable = {
 		name = local_habitability_level
-		multiply = 100
+		multiply = 15
 	}
 	# add or remove arable land (removes if negative)
 	this.state_region = {
@@ -37,6 +37,118 @@ habitability_effects = {
 		add_modifier = {
 			name = building_habitability_effect
 			multiplier = local_var:local_habitability_level
+		}
+	}
+}
+
+#scope:state
+#This is process power intensive, only run this at the start of the game
+calc_starting_habitability = {
+	set_variable = {
+		name = habitability
+		value = 0
+	}
+	set_local_variable = {
+		name = local_arable_land_total
+		value = 0
+	}
+	state_region = {
+		every_scope_state = {
+			change_local_variable = {
+				name = local_arable_land_total
+				add = arable_land
+			}
+		}
+	}
+	if = {
+		limit = {
+			is_coastal = yes
+		}
+		change_variable = {
+			name = habitability
+			add = 0.1
+		}
+	}
+	if = {
+		limit = {
+			local_var:local_arable_land_total > 100
+		}
+		change_variable = {
+			name = habitability
+			add = 0.2
+		}
+	}
+	else = {
+		change_variable = {
+			name = habitability
+			add = -0.2
+		}
+	}
+	calc_devastation_habitability = yes
+	calc_pollution_habitability = yes
+}
+
+calc_monthly_habitability = {
+	if = {
+		limit = {
+			has_variable = habitability
+		}
+		calc_temp_change_habitability = yes
+		calc_devastation_habitability = yes
+		calc_pollution_habitability = yes
+	}
+}
+
+calc_temp_change_habitability = {
+	if = {
+		limit = {
+			global_temp_target_celsius > 16
+		}
+		change_variable = {
+			name = habitability
+			add = -0.01
+		}
+	}
+	else_if = {
+		limit = {
+			global_temp_target_celsius < 16
+		}
+		change_variable = {
+			name = habitability
+			add = 0.01
+		}
+	}
+}
+
+calc_pollution_habitability = {
+	if = {
+		limit = {
+			pollution_generation > 0
+		}
+		change_variable = {
+			name = habitability
+			add = {
+				value = -0.01
+				multiply = {
+					value = 0.001
+					multiply = pollution_generation
+				}
+			}
+		}
+	}
+}
+
+calc_devastation_habitability = {
+	if = {
+		limit = {
+			devastation > 1
+		}
+		change_variable = {
+			name = habitability
+			add = {
+				value = -0.01
+				multiply = devastation
+			}
 		}
 	}
 }
