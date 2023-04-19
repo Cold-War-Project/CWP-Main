@@ -903,6 +903,60 @@ aroai_collect_data_for_construction_and_downsizing = {
         }
     }
 
+
+    # Set up variables to calculate unutilized workforce ratio
+        set_variable = {
+            name = aroai_unutilized_workforce
+            value = 0
+        }
+
+    every_scope_state = {
+        root = {
+            change_variable = {
+                name = aroai_unutilized_workforce
+                add = {
+                    value = prev.state_population
+                    multiply = prev.state_unemployment_rate
+                }
+            }
+        }
+    }
+
+    every_scope_building = {
+            limit = {
+                level > 0 # Active buildings only
+            }
+
+            # Add occupation of subsistence building to available workforce in its state
+            if = {
+                limit = {
+                    is_subsistence_building = yes
+                }
+                root = {
+                    change_variable = {
+                        name = aroai_unutilized_workforce
+                        add = {
+                            value = prev.aroai_occupied_levels
+                            if = {
+                                limit = {
+                                    prev = {
+                                        is_building_type = building_subsistence_rice_paddies
+                                    }
+                                }
+                                multiply = 35000 # Rice paddies have ~35k workers per level
+                                multiply = 0.98 # But not all of them are peasants
+                            }
+                            else = {
+                                multiply = 15000 # All the other ones have ~15k workers per level
+                                multiply = 0.94 # But not all of them are peasants
+                            }
+                        }
+                    }
+                }
+            }
+    }
+
+
     # Calculate unutilized workforce percent
     set_variable = {
         name = aroai_unutilized_workforce_percent
