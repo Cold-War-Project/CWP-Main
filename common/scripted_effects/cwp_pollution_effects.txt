@@ -1,0 +1,143 @@
+﻿# scope:state
+set_habitability_effects = {
+	# Get the habitability of the region
+	set_local_variable = {
+		name = local_habitability_level
+		value = var:habitability
+	}
+	# effectively sets the max habitability to 15% and the min to -15%
+	change_local_variable = {
+		name = local_habitability_level
+		multiply = 15
+	}
+	# add or remove arable land (removes if negative)
+	this.state_region = {
+		add_arable_land = {
+			value = 1
+			multiply = local_var:local_habitability_level
+		}
+	}
+	# Add other modifiers to the state, its owner, its buildings, as well as extra modifiers for coastal states. 
+	# Negative value for negative effects, positive value for positive effects
+	##
+	remove_modifier = state_habitability_effect
+	add_modifier = {
+		name = state_habitability_effect
+		multiplier = local_var:local_habitability_level
+	}
+}
+
+#scope:state
+#This is process power intensive, only run this at the start of the game
+calc_starting_habitability = {
+	set_variable = {
+		name = habitability
+		value = 0
+	}
+	set_local_variable = {
+		name = local_arable_land_total
+		value = 0
+	}
+	state_region = {
+		every_scope_state = {
+			change_local_variable = {
+				name = local_arable_land_total
+				add = arable_land
+			}
+		}
+	}
+	if = {
+		limit = {
+			is_coastal = yes
+		}
+		change_variable = {
+			name = habitability
+			add = 0.1
+		}
+	}
+	if = {
+		limit = {
+			local_var:local_arable_land_total > 100
+		}
+		change_variable = {
+			name = habitability
+			add = 0.2
+		}
+	}
+	else = {
+		change_variable = {
+			name = habitability
+			add = -0.2
+		}
+	}
+	calc_devastation_habitability = yes
+	calc_pollution_habitability = yes
+}
+
+calc_monthly_habitability = {
+	if = {
+		limit = {
+			has_variable = habitability
+		}
+		calc_temp_change_habitability = yes
+		calc_devastation_habitability = yes
+		calc_pollution_habitability = yes
+	}
+}
+
+# HACK: Rudimentary evaluation of temperature change, as temps remain above 16C, habitability will decrease linearly. Ideally at 22C every state between the tropics would be uninhabitable. Since the effects of habitability are not linear, this is not a good solution. To model this basically, the effects of habitability stop at 15% and -15% to avoid constantly decreasing habitability at a linear rate. 
+calc_temp_change_habitability = {
+	if = {
+		limit = {
+			global_temp_target_celsius > 16
+		}
+		change_variable = {
+			name = habitability
+			add = -0.01
+		}
+	}
+	else_if = {
+		limit = {
+			global_temp_target_celsius < 16
+		}
+		change_variable = {
+			name = habitability
+			add = 0.01
+		}
+	}
+}
+
+#HACK Currently the generation from the state has a minimum effect on habitability, but there may be a better way to interpret this value
+calc_pollution_habitability = {
+	if = {
+		limit = {
+			pollution_generation > 0
+		}
+		change_variable = {
+			name = habitability
+			add = {
+				value = -0.01
+				multiply = {
+					value = 0.0001
+					multiply = pollution_generation
+				}
+			}
+		}
+	}
+}
+
+#Removes 1% habitability for every point of devastation
+calc_devastation_habitability = {
+	if = {
+		limit = {
+			devastation > 1
+		}
+		change_variable = {
+			name = habitability
+			add = {
+				value = -0.01
+				multiply = devastation
+			}
+		}
+	}
+}
