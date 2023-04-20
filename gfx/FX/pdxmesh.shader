@@ -16,7 +16,7 @@ Includes = {
 	"sharedconstants.fxh"
 	"fog_of_war.fxh"
 	"distance_fog.fxh"
-	"cwecoloroverlay.fxh"
+	"cwpcoloroverlay.fxh"
 	"ssao_struct.fxh"
 }
 
