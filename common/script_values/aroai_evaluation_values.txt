@@ -598,6 +598,8 @@ aroai_target_minus_half_unincorporated_gdp_per_capita_scaling = {
 }
 
 # If a country is forced to spend most of its money on government administrations, we need to lower other shares
+# Called : building, port, university share
+# Range : [0.25, 1]
 aroai_target_multiplier_with_high_government_spending = {
     value = 1
     subtract = {
@@ -617,6 +619,7 @@ aroai_target_multiplier_with_high_government_spending = {
 
 
 # If construction is largely sponsored by investment pool, we want to raise non-construction shares
+# Range : [1, 2.2]
 aroai_target_multiplier_with_investment_pool = {
     value = 1.00
     add = {
@@ -635,9 +638,11 @@ aroai_target_multiplier_with_investment_pool = {
 # Bureaucracy target
 # ------------------
 
+# Range : [0.2, 0.49]
 aroai_building_government_administration_spending_share = {
     value = 0.20
-    multiply = aroai_target_multiplier_with_investment_pool
+    multiply = aroai_target_multiplier_with_investment_pool     # [1, 2.2]
+    # [0, 0.05]
     add = {
         value = 0.05
         multiply = {
@@ -1067,11 +1072,12 @@ aroai_innovation_current = {
 # University target
 # -----------------
 
+# Range : [0.025, 0.22]
 aroai_building_university_spending_share = {
     value = 0.10
-    multiply = aroai_target_multiplier_with_high_government_spending
-    multiply = aroai_target_multiplier_with_investment_pool
-    add = {
+    multiply = aroai_target_multiplier_with_high_government_spending    # [0.25, 1]
+    multiply = aroai_target_multiplier_with_investment_pool             # [1, 2.2]
+    add = {     # [0, 0.025]
         value = 0.025
         multiply = {
             value = 1.10
@@ -1260,6 +1266,7 @@ aroai_unutilized_workforce_percent_total_threshold_halved = {
     add = aroai_unutilized_workforce_percent_lower_threshold
 }
 
+# Range : [0, 1]
 aroai_unutilized_workforce_percent_multiplier = { # = 1 when no workforce, 0 when workforce >= threshold
     if = {
         limit = {
@@ -1268,12 +1275,12 @@ aroai_unutilized_workforce_percent_multiplier = { # = 1 when no workforce, 0 whe
         value = 1.00
         subtract = {
             value = var:aroai_unutilized_workforce_percent
-            subtract = aroai_unutilized_workforce_percent_lower_threshold
+            subtract = aroai_unutilized_workforce_percent_lower_threshold       # 0.05
             min = 0.00
-            multiply = {
+            multiply = {    # = 8
                 value = 1
                 divide = {
-                    value = aroai_unutilized_workforce_percent_higher_threshold
+                    value = aroai_unutilized_workforce_percent_higher_threshold # 0.125
                     min = 0.01
                 }
             }
@@ -1286,14 +1293,16 @@ aroai_unutilized_workforce_percent_multiplier = { # = 1 when no workforce, 0 whe
 }
 
 # Income is divided by this to make it equal to high tax income, but it gets back to normal when workforce < threshold
+# Range : [0.835, 1]
 aroai_building_construction_sector_spending_factor = {
-    value = aroai_high_tax_level_factor
+    value = aroai_high_tax_level_factor         # 0.835
     add = {
         value = 1.00
-        subtract = aroai_high_tax_level_factor
+        subtract = aroai_high_tax_level_factor                      # 0.835
         multiply = aroai_unutilized_workforce_percent_multiplier
     }
 }
+
 
 aroai_sum_of_all_fixed_shares_with_excess_and_factor = {
     value = aroai_building_university_spending_share
@@ -1328,38 +1337,19 @@ aroai_sum_of_all_fixed_shares_with_excess_and_factor = {
     }
 
     # All the shares above are relative to medium tax level, but with construction target tax level is flexible
-    multiply = aroai_building_construction_sector_spending_factor
+    multiply = aroai_building_construction_sector_spending_factor   # [0.835, 1]
 }
 
-aroai_building_construction_sector_spending_target = {
-    value = aroai_building_construction_sector_spending_government
-    add = {
-        value = aroai_investment_pool_expected
-        max = {
-            value = aroai_building_construction_sector_spending_government
 
-            #
-            divide = {
-                value = 1.00
-                subtract = aroai_max_percent_of_autonomous_construction_points
-                add = {
-                    value = aroai_max_percent_of_autonomous_construction_points
-                    multiply = aroai_building_construction_sector_share_of_wages_in_expenses
-                }
-                min = 0.01
-            }
-        }
-    }
-    multiply = aroai_construction_of_ai_countries
-}
-
+# Effective construction share of income
+# Min : 1 - sum of every other theoretical share
 aroai_building_construction_sector_spending_government = {
     value = aroai_country_active_income
     if = {
         limit = {
             is_player = no
         }
-        divide = aroai_building_construction_sector_spending_factor
+        divide = aroai_building_construction_sector_spending_factor     # [0.835, 1]
     }
     multiply = {
         value = 1.00
@@ -1375,7 +1365,7 @@ aroai_building_construction_sector_spending_government = {
                     limit = {
                         is_player = no
                     }
-                    divide = aroai_building_construction_sector_spending_factor
+                    divide = aroai_building_construction_sector_spending_factor     # [0.835, 1]
                 }
                 min = 1
             }
@@ -1408,39 +1398,62 @@ aroai_building_construction_sector_spending_government = {
     }
 }
 
+# How much should we aim to spend in construction
+# Assume we pay for 100% of the construction
+aroai_building_construction_sector_spending_target = {
+    value = aroai_building_construction_sector_spending_government
+    add = {
+        value = aroai_investment_pool_expected
+        max = {
+            value = aroai_building_construction_sector_spending_government
+
+            divide = {
+                value = 1.00
+                subtract = aroai_max_percent_of_autonomous_construction_points
+                add = {
+                    value = aroai_max_percent_of_autonomous_construction_points
+                    multiply = aroai_building_construction_sector_share_of_wages_in_expenses
+                }
+                min = 0.01
+            }
+        }
+    }
+    multiply = aroai_construction_of_ai_countries   # [0, 1]
+}
+
 aroai_building_construction_sector_spending_1 = {
     value = aroai_building_construction_sector_spending_target
-    divide = 1.400
+    multiply = 0.7
 }
 
 aroai_building_construction_sector_spending_2 = {
     value = aroai_building_construction_sector_spending_target
-    divide = 1.342
+    multiply = 0.745
 }
 
 aroai_building_construction_sector_spending_3 = {
     value = aroai_building_construction_sector_spending_target
-    divide = 1.285
+    multiply = 0.778
 }
 
 aroai_building_construction_sector_spending_4 = {
     value = aroai_building_construction_sector_spending_target
-    divide = 1.228
+    multiply = 0.8
 }
 
 aroai_building_construction_sector_spending_5 = {
     value = aroai_building_construction_sector_spending_target
-    divide = 1.171
+    multiply = 0.85
 }
 
 aroai_building_construction_sector_spending_6 = {
     value = aroai_building_construction_sector_spending_target
-    divide = 1.114
+    multiply = 0.9
 }
 
 aroai_building_construction_sector_spending_7 = {
     value = aroai_building_construction_sector_spending_target
-    divide = 1.057
+    multiply = 0.95
 }
 
 aroai_building_construction_sector_spending_8 = {
@@ -1483,6 +1496,8 @@ aroai_building_construction_sector_spending_ceiling = {
     }
 }
 
+# Effective Construction Spending
+# Does NOT assume that we pay for every construction point
 aroai_building_construction_sector_spending_value = {
     if = {
         limit = {
@@ -1492,7 +1507,7 @@ aroai_building_construction_sector_spending_value = {
         multiply = aroai_construction_points_from_sectors_current
     }
     else = {
-        value = 0 ###########
+        value = 0
     }
     min = 0
     max = 1000000000 #billion
@@ -1553,10 +1568,11 @@ aroai_infrastructure_7 = {
 # Convoy target
 # -------------
 
+# Range = [0.025, 0.22]
 aroai_building_port_spending_share = {
     value = 0.10
-    multiply = aroai_target_multiplier_with_high_government_spending
-    multiply = aroai_target_multiplier_with_investment_pool
+    multiply = aroai_target_multiplier_with_high_government_spending    # [0.25, 1]
+    multiply = aroai_target_multiplier_with_investment_pool             # [1, 2.2]
     if = {
         limit = {
             is_player = yes
@@ -1788,10 +1804,11 @@ aroai_convoys_current = {
 # Battalion target
 # ----------------
 
+# Range : [0.075, 0.66]
 aroai_military_spending_share = {
     value = 0.30
-    multiply = aroai_target_multiplier_with_high_government_spending
-    multiply = aroai_target_multiplier_with_investment_pool
+    multiply = aroai_target_multiplier_with_high_government_spending    # [0.25, 1]
+    multiply = aroai_target_multiplier_with_investment_pool             # [1, 2.2]
 }
 
 aroai_building_barracks_vs_naval_base_share = {
