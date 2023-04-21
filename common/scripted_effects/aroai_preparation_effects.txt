@@ -427,32 +427,6 @@ aroai_collect_data_for_construction_and_downsizing = {
                     }
                 }
             }
-            root = {
-                aroai_add_to_variable = {
-                    name = aroai_chinese_population
-                    value = prev.state_population
-                }
-            }
-        }
-        else_if = {
-            limit = {
-                OR = {
-                    AND = {
-                        exists = sr:region_north_india
-                        region = sr:region_north_india
-                    }
-                    AND = {
-                        exists = sr:region_south_india
-                        region = sr:region_south_india
-                    }
-                }
-            }
-            root = {
-                aroai_add_to_variable = {
-                    name = aroai_indian_population
-                    value = prev.state_population
-                }
-            }
         }
 
         # To calculate median construction efficiency a value of the state is added to the list multiple times
@@ -643,12 +617,14 @@ aroai_collect_data_for_construction_and_downsizing = {
                                     is_building_type = building_subsistence_rice_paddies
                                 }
                             }
-                            multiply = 10000 # Rice paddies have ~10k workers per level
+                            multiply = 35000 # Rice paddies have ~35k workers per level
+                            multiply = 0.98 # But not all of them are peasants
                         }
                         else = {
-                            multiply = 5000 # All the other ones have ~5k workers per level
+                            multiply = 15000 # All the other ones have ~15k workers per level
+                            multiply = 0.94 # But not all of them are peasants
                         }
-                        multiply = 0.90 # But not all of them are peasants
+
                     }
                 }
             }
@@ -900,6 +876,60 @@ aroai_collect_data_for_construction_and_downsizing = {
             }
         }
     }
+
+
+    # Set up variables to calculate unutilized workforce ratio
+        set_variable = {
+            name = aroai_unutilized_workforce
+            value = 0
+        }
+
+    every_scope_state = {
+        root = {
+            change_variable = {
+                name = aroai_unutilized_workforce
+                add = {
+                    value = prev.state_population
+                    multiply = prev.state_unemployment_rate
+                }
+            }
+        }
+    }
+
+    every_scope_building = {
+            limit = {
+                level > 0 # Active buildings only
+            }
+
+            # Add occupation of subsistence building to available workforce in its state
+            if = {
+                limit = {
+                    is_subsistence_building = yes
+                }
+                root = {
+                    change_variable = {
+                        name = aroai_unutilized_workforce
+                        add = {
+                            value = prev.aroai_occupied_levels
+                            if = {
+                                limit = {
+                                    prev = {
+                                        is_building_type = building_subsistence_rice_paddies
+                                    }
+                                }
+                                multiply = 35000 # Rice paddies have ~35k workers per level
+                                multiply = 0.98 # But not all of them are peasants
+                            }
+                            else = {
+                                multiply = 15000 # All the other ones have ~15k workers per level
+                                multiply = 0.94 # But not all of them are peasants
+                            }
+                        }
+                    }
+                }
+            }
+    }
+
 
     # Calculate unutilized workforce percent
     set_variable = {
@@ -2119,3 +2149,157 @@ aroai_collect_states_of_same_owner_connected_by_land = {
         }
     }
 }
+
+
+
+
+
+aroia_check_upgrade_port_pm = {
+    if = {
+        limit = {
+            any_scope_state = {
+                can_activate_production_method = {
+                    building_type = building_port
+                    production_method = pm_smart_port
+                }
+            }
+        }
+        activate_production_method = {
+            building_type = building_port
+            production_method = pm_smart_port
+        }
+    }
+    else_if = {
+        limit = {
+            any_scope_state = {
+                can_activate_production_method = {
+                    building_type = building_port
+                    production_method = container_port
+                }
+            }
+        }
+        activate_production_method = {
+            building_type = building_port
+            production_method = container_port
+        }
+    }
+    else_if = {
+        limit = {
+            any_scope_state = {
+                can_activate_production_method = {
+                    building_type = building_port
+                    production_method = pm_industrial_port
+                }
+            }
+        }
+        activate_production_method = {
+            building_type = building_port
+            production_method = pm_industrial_port
+        }
+    }
+    else_if = {
+        limit = {
+            any_scope_state = {
+                can_activate_production_method = {
+                    building_type = building_port
+                    production_method = pm_basic_port
+                }
+            }
+        }
+        activate_production_method = {
+            building_type = building_port
+            production_method = pm_basic_port
+        }
+    }
+}
+
+aroia_check_upgrade_university_pm = {
+    if = {
+        limit = {
+            any_scope_state = {
+                can_activate_production_method = {
+                    building_type = building_university
+                    production_method = pm_humanities_education
+                }
+            }
+        }
+        activate_production_method = {
+            building_type = building_university
+            production_method = pm_humanities_education
+        }
+    }
+    else_if = {
+        limit = {
+            any_scope_state = {
+                can_activate_production_method = {
+                    building_type = building_university
+                    production_method = pm_business_schools
+                }
+            }
+        }
+        activate_production_method = {
+            building_type = building_university
+            production_method = pm_business_schools
+        }
+    }
+    else_if = {
+        limit = {
+            any_scope_state = {
+                can_activate_production_method = {
+                    building_type = building_university
+                    production_method = pm_computer_science
+                }
+            }
+        }
+        activate_production_method = {
+            building_type = building_university
+            production_method = pm_computer_science
+        }
+    }
+    else_if = {
+        limit = {
+            any_scope_state = {
+                can_activate_production_method = {
+                    building_type = building_university
+                    production_method = pm_advanced_analytics
+                }
+            }
+        }
+        activate_production_method = {
+            building_type = building_university
+            production_method = pm_advanced_analytics
+        }
+    }
+    else_if = {
+        limit = {
+            any_scope_state = {
+                can_activate_production_method = {
+                    building_type = building_university
+                    production_method = pm_interdisciplinary_studies
+                }
+            }
+        }
+        activate_production_method = {
+            building_type = building_university
+            production_method = pm_interdisciplinary_studies
+        }
+    }
+    else_if = {
+        limit = {
+            any_scope_state = {
+                can_activate_production_method = {
+                    building_type = building_university
+                    production_method = pm_scientific_education
+                }
+            }
+        }
+        activate_production_method = {
+            building_type = building_university
+            production_method = pm_scientific_education
+        }
+    }
+}
+
+
+
+
