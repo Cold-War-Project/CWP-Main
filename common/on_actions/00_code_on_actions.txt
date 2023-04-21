@@ -2272,55 +2272,30 @@ on_naval_invasion = {
 
 # State Scope
 on_monthly_pulse_state = {
-	#in every state, if the number of skyscrapers is greater than the number of urban centers, then the state is too urbanized. A modifier is applied to the state that greatly increases the upkeep of each skyscraper. The modifier is removed when the number of skyscrapers is less than the number of urban centers.
 	effect = {
 		if = {
 			limit = {
-				has_building = building_skyscraper
-			}
-			every_scope_building = {
-				limit = {
-					is_building_type = building_urban_center
-				}
-				save_scope_as = urban_center_scope
-			}
-			every_scope_building = {
-				limit = {
-					is_building_type = building_skyscraper
-				}
-				save_scope_as = skyscraper_scope
-				# get the total urban centers and divide by 3, thats the max number of skyscrapers allowed
-				set_local_variable = {
-					name = urban_center_threshold
-					value = scope:urban_center_scope.level
-				}
-				change_local_variable = {
-					name = urban_center_threshold
-					divide = 3
-				}
-				if = {
-					limit = {
-						scope:skyscraper_scope = {
-							level > local_var:urban_center_threshold
-						}
-					}
-					scope:skyscraper_scope = {
-						set_local_variable = {
-							name = skyscraper_level
-							value = level
-						}
-					}
-					#modifier must be removed then reapplied, cannot be dynamically changed afaik
-					remove_modifier = too_many_skyscrapers
-					set_too_many_skyscrapers = {
-						LEVEL = local_var:skyscraper_level
-					}
-				}
-				else = {
-					#if the number of skyscrapers is less than the threshold, remove the modifier
-					remove_modifier = too_many_skyscrapers
+				this = {
+					total_urbanization >= 1000
 				}
 			}
+			remove_modifier = state_skyscraper_modifier
+			add_modifier = {
+				name = state_skyscraper_modifier
+				multiplier = {
+					value = total_urbanization
+					divide = 1000
+					round = yes
+				}
+			}
+		}
+		if = {
+			limit = {
+				this = {
+					total_urbanization < 1000
+				}
+			}
+			remove_modifier = state_skyscraper_modifier
 		}
 		if = {
 			limit = {
