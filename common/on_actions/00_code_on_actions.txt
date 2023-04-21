@@ -1,4 +1,5 @@
 ﻿# For on_actions launched by the code itself.
+# ROOT = country
 on_yearly_pulse_country = {
 	effect = {
 		# IG leader death
@@ -14,29 +15,10 @@ on_yearly_pulse_country = {
 	}
 }
 
+#ROOT = country
 on_monthly_pulse_country = {
 	effect = {
-		# Pollution Calculations
-		if = {
-			limit = {
-				global_var:global_var_pollution = {
-					exists = yes
-				}
-				global_var:global_var_temperature_celsius = {
-					exists = yes
-				}
-			}
-			set_global_variable = {
-				name = global_var_pollution
-				value = global_pollution_value
-			}
-			set_global_variable = {
-				name = global_var_temperature_celsius
-				value = global_temperature_value_celsius
-			}
-			# debug_log = debug_loc_string_pollution
-		}
-		#Corruption Calculations
+		# Corruption Calculations
 		if = {
 			limit = {
 				NOT = {
@@ -155,6 +137,7 @@ on_monthly_pulse_country = {
 				has_variable = un_member
 			}
 			trigger_event = un_ai_voting.1
+			trigger_event = un_ai_voting.2
 		}
 		# Readiness Calculations
 		if = {
@@ -216,6 +199,60 @@ on_monthly_pulse_country = {
 			}
 			trigger_event = ai_readiness_calculations.1
 		}
+		# UN Applications
+		if = {
+			limit = {
+				has_variable = application_progress_un
+				application_progress_un <= 100
+			}
+			change_variable = {
+				name = application_progress_un
+				add = 3
+			}
+		}
+		if = {
+			limit = {
+				has_variable = application_progress_un
+				application_progress_un <= 100
+				supporting_countries > required_support_un
+			}
+			change_variable = {
+				name = application_progress_un
+				add = 2
+			}
+		}
+		if = {
+			limit = {
+				has_variable = application_progress_un
+				application_progress_un >= 100
+				application_progress_un <= 150
+			}
+			change_variable = {
+				name = application_progress_un
+				add = 1
+			}
+		}
+		if = {
+			limit = {
+				has_variable = application_progress_un
+				var:application_progress_un >= 100
+				supporting_countries >= required_support_un
+			}
+			effect_un_application_approved = yes
+			rebuild_un_memberlist = yes
+			trigger_event = un_dynamic_resolution_events.4
+		}
+		if = {
+			limit = {
+				has_variable = application_progress_un
+				var:application_progress_un >= 150
+				not = {
+					supporting_countries >= required_support_un
+				}
+			}
+			effect_un_application_rejected = yes
+			trigger_event = un_dynamic_resolution_events.5
+		}
 	}
 	events = {
 		treaty_of_san_francisco.1
@@ -239,6 +276,7 @@ on_half_yearly_pulse_country = {
 		economic_events.3
 		economic_events.5
 		economic_events.6
+		economic_events.7
 	}
 	effect = {
 	}
@@ -329,7 +367,9 @@ on_building_built = {
 		if = {
 			limit = {
 				is_building_type = building_renewable_energy_facility
-				Root.state = {is_excellent_solar_capacity = yes}
+				Root.state = {
+					is_excellent_solar_capacity = yes
+				}
 			}
 			add_modifier = {
 				name = excellent_solar_capacity
@@ -338,16 +378,20 @@ on_building_built = {
 		if = {
 			limit = {
 				is_building_type = building_renewable_energy_facility
-				Root.state = {is_excellent_wind_capacity = yes}
+				Root.state = {
+					is_excellent_wind_capacity = yes
+				}
 			}
-			add_modifier = { 
+			add_modifier = {
 				name = excellent_wind_capacity
 			}
 		}
 		if = {
 			limit = {
 				is_building_type = building_renewable_energy_facility
-				Root.state = {is_excellent_hydroelectric_capacity = yes}
+				Root.state = {
+					is_excellent_hydroelectric_capacity = yes
+				}
 			}
 			add_modifier = {
 				name = excellent_hydroelectric_capacity
@@ -356,7 +400,9 @@ on_building_built = {
 		if = {
 			limit = {
 				is_building_type = building_renewable_energy_facility
-				Root.state = {is_moderate_solar_capacity = yes}
+				Root.state = {
+					is_moderate_solar_capacity = yes
+				}
 			}
 			add_modifier = {
 				name = moderate_solar_capacity
@@ -365,7 +411,9 @@ on_building_built = {
 		if = {
 			limit = {
 				is_building_type = building_renewable_energy_facility
-				Root.state = {is_moderate_wind_capacity = yes}
+				Root.state = {
+					is_moderate_wind_capacity = yes
+				}
 			}
 			add_modifier = {
 				name = moderate_wind_capacity
@@ -374,7 +422,9 @@ on_building_built = {
 		if = {
 			limit = {
 				is_building_type = building_renewable_energy_facility
-				Root.state = {is_moderate_hydroelectric_capacity = yes}
+				Root.state = {
+					is_moderate_hydroelectric_capacity = yes
+				}
 			}
 			add_modifier = {
 				name = moderate_hydroelectric_capacity
@@ -383,7 +433,9 @@ on_building_built = {
 		if = {
 			limit = {
 				is_building_type = building_renewable_energy_facility
-				Root.state = {is_poor_solar_capacity = yes}
+				Root.state = {
+					is_poor_solar_capacity = yes
+				}
 			}
 			add_modifier = {
 				name = poor_solar_capacity
@@ -392,7 +444,9 @@ on_building_built = {
 		if = {
 			limit = {
 				is_building_type = building_renewable_energy_facility
-				Root.state = {is_poor_wind_capacity = yes}
+				Root.state = {
+					is_poor_wind_capacity = yes
+				}
 			}
 			add_modifier = {
 				name = poor_wind_capacity
@@ -401,7 +455,9 @@ on_building_built = {
 		if = {
 			limit = {
 				is_building_type = building_renewable_energy_facility
-				Root.state = {is_poor_hydroelectric_capacity = yes}
+				Root.state = {
+					is_poor_hydroelectric_capacity = yes
+				}
 			}
 			add_modifier = {
 				name = poor_hydroelectric_capacity
@@ -453,58 +509,27 @@ on_acquired_technology = {
 		}
 		if = {
 			limit = {
-				is_player = yes
-				has_technology_researched = oil_refineries
-				NOT = {
-					has_variable = first_oil_discovered
-				}
+				has_technology_researched = liquid-liquid_extraction
 			}
-			set_variable = first_oil_discovered
 			if = {
 				limit = {
 					any_scope_state = {
-						has_potential_resource = bg_oil_rig
+						has_potential_resource = bg_rare_earth_elements_mining
 					}
 				}
-				random_scope_state = {
+				every_scope_state = {
 					limit = {
-						has_potential_resource = bg_oil_rig
+						has_potential_resource = bg_rare_earth_elements_mining
 					}
-					force_resource_discovery = bg_oil_rig
+					force_resource_discovery = bg_rare_earth_elements_mining
 				}
 			}
-			else_if = {
-				limit = {
-					any_country = {
-						has_overlapping_interests = ROOT
-						any_scope_state = {
-							has_potential_resource = bg_oil_rig
-						}
-					}
-				}
-				random_country = {
-					limit = {
-						has_overlapping_interests = ROOT
-						any_scope_state = {
-							has_potential_resource = bg_oil_rig
-						}
-					}
-					random_scope_state = {
-						limit = {
-							has_potential_resource = bg_oil_rig
-						}
-						force_resource_discovery = bg_oil_rig
-					}
-				}
+		}
+		if = {
+			limit = {
+				has_technology_researched = early_climatology
 			}
-			else = {
-				random_state = {
-					limit = {
-						has_potential_resource = bg_oil_rig
-					}
-					force_resource_discovery = bg_oil_rig
-				}
-			}
+			set_variable = has_climate_research
 		}
 	}
 }
@@ -2247,55 +2272,30 @@ on_naval_invasion = {
 
 # State Scope
 on_monthly_pulse_state = {
-	#in every state, if the number of skyscrapers is greater than the number of urban centers, then the state is too urbanized. A modifier is applied to the state that greatly increases the upkeep of each skyscraper. The modifier is removed when the number of skyscrapers is less than the number of urban centers.
 	effect = {
 		if = {
 			limit = {
-				has_building = building_skyscraper
-			}
-			every_scope_building = {
-				limit = {
-					is_building_type = building_urban_center
-				}
-				save_scope_as = urban_center_scope
-			}
-			every_scope_building = {
-				limit = {
-					is_building_type = building_skyscraper
-				}
-				save_scope_as = skyscraper_scope
-				# get the total urban centers and divide by 3, thats the max number of skyscrapers allowed
-				set_local_variable = {
-					name = urban_center_threshold
-					value = scope:urban_center_scope.level
-				}
-				change_local_variable = {
-					name = urban_center_threshold
-					divide = 3
-				}
-				if = {
-					limit = {
-						scope:skyscraper_scope = {
-							level > local_var:urban_center_threshold
-						}
-					}
-					scope:skyscraper_scope = {
-						set_local_variable = {
-							name = skyscraper_level
-							value = level
-						}
-					}
-					#modifier must be removed then reapplied, cannot be dynamically changed afaik
-					remove_modifier = too_many_skyscrapers
-					set_too_many_skyscrapers = {
-						LEVEL = local_var:skyscraper_level
-					}
-				}
-				else = {
-					#if the number of skyscrapers is less than the threshold, remove the modifier
-					remove_modifier = too_many_skyscrapers
+				this = {
+					total_urbanization >= 1000
 				}
 			}
+			remove_modifier = state_skyscraper_modifier
+			add_modifier = {
+				name = state_skyscraper_modifier
+				multiplier = {
+					value = total_urbanization
+					divide = 1000
+					round = yes
+				}
+			}
+		}
+		if = {
+			limit = {
+				this = {
+					total_urbanization < 1000
+				}
+			}
+			remove_modifier = state_skyscraper_modifier
 		}
 		if = {
 			limit = {
@@ -2317,5 +2317,8 @@ on_monthly_pulse_state = {
 			}
 			remove_modifier = state_slum_modifier
 		}
+		# Habitability Calculations 
+		calc_monthly_habitability = yes
+		set_habitability_effects = yes
 	}
 }
