@@ -625,30 +625,54 @@ aroai_allocate_building_infrastructure = {
 
 aroai_consider_building_port = {
     has_technology_researched = early_production
-    aroai_building_is_allowed = {
-        critical = 5 # Can be constructed as critical, 5 is id of building type
-    }
     any_scope_state = {
         is_coastal = yes
     }
-    OR = {
-        is_player = no
-        AND = {
-            has_game_rule = aroai_autobuild_for_players_allowed
-            has_variable = aroai_autobuild
-            NOT = {
-                has_variable = aroai_autobuild_port
-            }
-        }
-    }
-    aroai_need_additional_ports = yes
+    aroai_need_additional_ports_low = yes
     OR = {
         always = yes
         $id$ = 0
     }
 }
 
-aroai_evaluate_building_port = {
+aroai_evaluate_building_port= {
+    trigger_if = {
+        limit = {
+            $priority$ >= 1
+            $priority$ <= 10
+            OR = {
+                NOT = {
+                    has_variable = aroai_building_port_cooldown
+                }
+                $priority$ = 1
+            }
+        }
+        switch = {
+            trigger = $priority$
+            1 = {
+                aroai_need_additional_ports_critical = yes
+            }
+            2 = {
+                aroai_need_additional_ports_high = yes
+            }
+            3 = {
+                aroai_need_additional_ports_medium = yes
+            }
+            4 = {
+                aroai_need_additional_ports_low = yes
+            }
+            fallback = {
+                always = no
+            }
+        }
+    }
+    trigger_else = {
+        always = no
+    }
+}
+
+#Old function, just there if new function has bug or something, for the sake of comparison, to be deleted once everything is working
+aroai_evaluate_building_port_old = {
 
     trigger_if = {
         limit = {
@@ -879,7 +903,42 @@ aroai_sanction_building_port = {
     }
 }
 
+
 aroai_allocate_building_port = {
+    aroai_sanction_infrastructure = {
+        key = building_port
+        conditions = 0
+        shortage = 0
+        profitable = 0
+    }
+    switch = {
+        trigger = $aptitude$
+        1 = {
+            root.aroai_building_type_5_collected_data_1 = 1
+            aroai_need_additional_ports_critical = yes
+        }
+        2 = {
+            root.aroai_building_type_5_collected_data_1 = 2
+            aroai_need_additional_ports_high = yes
+        }
+        3 = {
+            root.aroai_building_type_5_collected_data_1 = 3
+            aroai_need_additional_ports_medium = yes
+        }
+        4 = {
+            root.aroai_building_type_5_collected_data_1 >= 4
+            aroai_need_additional_ports_low = yes
+        }
+        fallback = {
+            always = no
+        }
+    }
+}
+
+
+
+
+aroai_allocate_building_port_old = {
     switch = {
         trigger = $aptitude$
         1 = {
