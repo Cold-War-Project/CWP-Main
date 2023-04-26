@@ -1,24 +1,46 @@
-﻿global_pollution_value = {
+﻿### VARS ###
+# todo make these into defines?
+# Maximum pollution level in the world, any above this amount is ignored for now  
+#todo: make it not ignored and instead have it be game over?
+@global_pollution_max = 1000000
+# Pollution level at which the world temperature starts to be affected by pollution
+@global_pollution_threshold = 7000
+# Min temperature in Kelvin (12 degrees Celsius)
+@global_temperature_floor_kelvins = 285.15
+@global_temperature_base_kelvins = 287.19
+@global_temperature_base_celsius = 14.04
+### SCRIPTED VALUES ###
+global_pollution_max = @global_pollution_max
+global_pollution_threshold = @global_pollution_threshold
+# Maximum distance from the pollution threshold that the world can be.
+maximum_distance_from_pollution_threshold = @[global_pollution_max-global_pollution_threshold]
+global_temperature_floor_kelvins = @global_temperature_floor_kelvins
+global_pollution_generation = {
 	value = 0
-	every_state_region = {
-		limit = {
-			pollution_amount > 0
+	every_country = {
+		every_scope_state = {
+			add = pollution_generation
+			round = yes
 		}
-		add = pollution_amount
 	}
 }
 
-global_pollution_sv = {
-	value = global_var:global_var_pollution
+distance_from_pollution_threshold = {
+	value = global_pollution_generation
+	subtract = global_pollution_threshold
 }
 
-global_pollution_max = 100000
-global_temperature_value_celsius = {
-	value = 14.04
-	if = {
-		limit = {
-			global_var:global_var_pollution > 100
-		}
-		add = 0.01
-	}
+percent_from_pollution_threshold = {
+	value = distance_from_pollution_threshold
+	divide = maximum_distance_from_pollution_threshold
+}
+
+global_temp_target = {
+	value = @global_temperature_base_kelvins
+	add = percent_from_pollution_threshold
+}
+
+global_temp_target_celsius = {
+	value = global_temp_target
+	subtract = 273.15
 }

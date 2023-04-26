@@ -318,6 +318,22 @@ PixelShader = {
 				GetGradiantBorderBlendValues( ProvinceOverlayColorWithAlpha, PreLightingBlend, PostLightingBlend );
 			}
 
+			#ifndef LOW_QUALITY_SHADERS
+				#if defined( TERRAIN_FLAT_MAP ) || defined( TERRAIN_FLAT_MAP_LERP )
+					float DetailScale1 = 10.0f;
+					float DetailScale2 = 3.0f;
+					float DetailTexture1 = PdxTex2D( FlatmapNoiseMap, float2( ( ColorMapCoords.x * DetailScale1 * 2.0f ), 1.0f - ( ColorMapCoords.y * DetailScale1 ) ) ).g;
+					float DetailTexture2 = PdxTex2D( FlatmapNoiseMap, float2( ( ColorMapCoords.x * DetailScale2 * 2.0f ), 1.0f - ( ColorMapCoords.y * DetailScale2 ) ) ).g;
+					float DetailTexture3 = GetOverlay( DetailTexture1,  DetailTexture2, 1.0f );
+
+					// Don't blend in mapmodes
+					if ( !_UseMapmodeTextures )
+					{
+						ColorOverlay = saturate( GetOverlay( ColorOverlay, vec3( 1.0f - DetailTexture3 ), FlatMapLerp ) );
+					}
+				#endif
+			#endif
+
 			ApplyCoaColorBlend( ColorMapCoords, ParalaxCoord.xz, ColorOverlay, PreLightingBlend, PostLightingBlend );
 		}
 
