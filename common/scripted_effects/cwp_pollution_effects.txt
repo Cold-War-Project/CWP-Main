@@ -1,29 +1,47 @@
 ﻿# scope:state
 set_habitability_effects = {
 	# Get the habitability of the region
-	set_local_variable = {
-		name = local_habitability_level
-		value = var:habitability
+	if = {
+		limit = {
+			has_variable = habitability
+		}
+		set_local_variable = {
+			name = local_habitability_level
+			value = var:habitability
+		}
 	}
+	else = {
+		set_local_variable = {
+			name = local_habitability_level
+			value = 0
+		}
+	}
+	
 	# effectively sets the max habitability to 15% and the min to -15%
 	change_local_variable = {
 		name = local_habitability_level
 		multiply = 15
 	}
-	# add or remove arable land (removes if negative)
-	this.state_region = {
-		add_arable_land = {
-			value = 1
-			multiply = local_var:local_habitability_level
-		}
-	}
+
 	# Add other modifiers to the state, its owner, its buildings, as well as extra modifiers for coastal states. 
 	# Negative value for negative effects, positive value for positive effects
 	##
-	remove_modifier = state_habitability_effect
-	add_modifier = {
-		name = state_habitability_effect
-		multiplier = local_var:local_habitability_level
+	remove_modifier = state_negative_habitability_effect
+	remove_modifier = state_positive_habitability_effect
+	if = {
+		limit = {
+			local_var:local_habitability_level < 0
+		}
+		add_modifier = {
+			name = state_negative_habitability_effect
+			multiplier = local_var:local_habitability_level
+		}
+	}
+	else = {
+		add_modifier = {
+			name = state_positive_habitability_effect
+			multiplier = local_var:local_habitability_level
+		}
 	}
 }
 
@@ -31,8 +49,8 @@ set_habitability_effects = {
 #This is process power intensive, only run this at the start of the game
 calc_starting_habitability = {
 	set_variable = {
-		name = habitability
-		value = 0
+		name = max_habitability
+		value = 0.5
 	}
 	set_local_variable = {
 		name = local_arable_land_total
@@ -51,7 +69,7 @@ calc_starting_habitability = {
 			is_coastal = yes
 		}
 		change_variable = {
-			name = habitability
+			name = max_habitability
 			add = 0.1
 		}
 	}
@@ -60,18 +78,18 @@ calc_starting_habitability = {
 			local_var:local_arable_land_total > 100
 		}
 		change_variable = {
-			name = habitability
-			add = 0.2
+			name = max_habitability
+			add = 0.4
 		}
 	}
-	else = {
-		change_variable = {
-			name = habitability
-			add = -0.2
-		}
+	set_variable = {
+		name = habitability
+		value = var:max_habitability
 	}
-	calc_devastation_habitability = yes
-	calc_pollution_habitability = yes
+	set_variable = {
+		name = min_habitability
+		value = -1
+	}
 }
 
 calc_monthly_habitability = {
@@ -80,8 +98,13 @@ calc_monthly_habitability = {
 			has_variable = habitability
 		}
 		calc_temp_change_habitability = yes
-		calc_devastation_habitability = yes
 		calc_pollution_habitability = yes
+	}
+	else = {
+		set_variable = {
+			name = habitability
+			value = 0
+		}
 	}
 }
 
@@ -89,20 +112,70 @@ calc_monthly_habitability = {
 calc_temp_change_habitability = {
 	if = {
 		limit = {
-			global_temp_target_celsius > 16
+			global_temp_target_celsius < 15
 		}
 		change_variable = {
 			name = habitability
-			add = -0.01
+			add = 0.0005
 		}
 	}
-	else_if = {
+	if = {
 		limit = {
 			global_temp_target_celsius < 16
 		}
 		change_variable = {
 			name = habitability
-			add = 0.01
+			add = 0.001
+		}
+	}
+	if = {
+		limit = {
+			global_temp_target_celsius < 17
+		}
+		change_variable = {
+			name = habitability
+			add = 0.0015
+		}
+	}
+	if = {
+		limit = {
+			global_temp_target_celsius < 18
+		}
+		change_variable = {
+			name = habitability
+			add = 0.0015
+		}
+	}
+	if = {
+		limit = {
+			global_temp_target_celsius < 19
+		}
+		change_variable = {
+			name = habitability
+			add = 0.0020
+		}
+	}
+	if = {
+		limit = {
+			has_variable = max_habitability
+		}
+		if = {
+			limit = {
+				var:habitability > var:max_habitability
+			}
+			set_variable = {
+				name = habitability
+				value = var:max_habitability
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			var:habitability > 1
+		}
+		set_variable = {
+			name = habitability
+			value = 1
 		}
 	}
 }
@@ -115,29 +188,75 @@ calc_pollution_habitability = {
 		}
 		change_variable = {
 			name = habitability
-			add = {
-				value = -0.01
-				multiply = {
-					value = 0.0001
-					multiply = pollution_generation
-				}
-			}
+			add = -0.0001
 		}
 	}
-}
-
-#Removes 1% habitability for every point of devastation
-calc_devastation_habitability = {
 	if = {
 		limit = {
-			devastation > 1
+			pollution_generation > 50
 		}
 		change_variable = {
 			name = habitability
-			add = {
-				value = -0.01
-				multiply = devastation
+			add = -0.0005
+		}
+	}
+	if = {
+		limit = {
+			pollution_generation > 100
+		}
+		change_variable = {
+			name = habitability
+			add = -0.001
+		}
+	}
+	if = {
+		limit = {
+			pollution_generation > 150
+		}
+		change_variable = {
+			name = habitability
+			add = -0.0015
+		}
+	}
+	if = {
+		limit = {
+			pollution_generation > 200
+		}
+		change_variable = {
+			name = habitability
+			add = -0.0020
+		}
+	}
+	if = {
+		limit = {
+			pollution_generation > 250
+		}
+		change_variable = {
+			name = habitability
+			add = -0.0025
+		}
+	}
+	if = {
+		limit = {
+			has_variable = min_habitability
+		}
+		if = {
+			limit = {
+				var:habitability < var:min_habitability
 			}
+			set_variable = {
+				name = habitability
+				value = var:min_habitability
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			var:habitability < -1
+		}
+		set_variable = {
+			name = habitability
+			value = -1
 		}
 	}
 }
