@@ -502,7 +502,7 @@ Effect standard_atlasShadow
 	RasterizerState = ShadowRasterizerState
 }
 
-# Standard + alpha blend
+# Standard + 	 blend
 Effect standard_alpha_blend
 {
 	VertexShader = "VS_standard"
