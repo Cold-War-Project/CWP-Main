@@ -18,6 +18,70 @@ aroai_95_percent_of_credit = {
     multiply = 0.95
 }
 
+aroai_gold_reserves_percent = {
+    value = gold_reserves
+    divide = {
+        value = gold_reserves_limit
+        min = 1
+    }
+}
+
+aroai_weeks_of_reserves = {
+    if = {
+        limit = {
+            aroai_country_budget_surplus < 0
+            gold_reserves > 0
+        }
+        value = gold_reserves
+        divide = {
+            value = 0
+            subtract = {
+                if = {
+                    limit = {
+                        aroai_country_budget_surplus < 0
+                    }
+                    value = aroai_country_budget_surplus
+                }
+                else = {
+                    value = aroai_country_budget_surplus_percent
+                    subtract = 0.10
+                    max = -0.05
+                    multiply = aroai_country_fixed_income
+                }
+            }
+            min = 1
+        }
+        max = 9000
+    }
+    else = {
+        value = 0
+    }
+}
+
+aroai_weeks_of_credit = {
+    if = {
+        limit = {
+            aroai_country_budget_surplus < 0
+            aroai_country_current_treasury > 0
+        }
+        value = credit
+        add  = aroai_country_current_treasury
+        divide = {
+            value = 0
+            subtract = aroai_country_budget_surplus
+            min = 1
+        }
+        min = 0
+    }
+    else = {
+        value = 1000000
+    }
+}
+
+# Give the country budget surplus
+# WTF is he doing ?
+# todo test if this make sense
+# Range :
 aroai_country_budget_surplus = {
     if = {
         limit = {
@@ -75,7 +139,7 @@ aroai_total_building_expenses = {
             value = var:aroai_total_building_expenses
             subtract = {
                 value = var:aroai_total_building_expenses
-                floor = yes
+                floor = yes 
             }
             multiply = 100
         }
@@ -85,6 +149,7 @@ aroai_total_building_expenses = {
     }
 }
 
+# Income scaled by tax_level, for management stability
 aroai_country_fixed_income = {
     value = income
     if = {
@@ -192,7 +257,7 @@ aroai_investment_pool_transfer = {
             value = var:aroai_investment_pool_transfer
             subtract = {
                 value = var:aroai_investment_pool_transfer
-                floor = yes
+                floor = yes 
             }
             multiply = 100
         }
@@ -230,6 +295,8 @@ aroai_investment_pool_potential = {
     }
 }
 
+# The total expense of the private construction sector
+# only used in pool_potential
 aroai_construction_expenses_of_private_queue = {
     if = {
         limit = {
@@ -256,7 +323,7 @@ aroai_investment_pool_expected = {
             value = var:aroai_investment_pool_expected
             subtract = {
                 value = var:aroai_investment_pool_expected
-                floor = yes
+                floor = yes 
             }
             multiply = 100
         }
@@ -459,42 +526,40 @@ aroai_country_budget_surplus_for_health_3 = {
 
 aroai_weeks_of_reserves_for_health_3 = 312
 
-aroai_gold_reserves_percent = {
-    value = gold_reserves
-    divide = {
-        value = gold_reserves_limit
-        min = 1
-    }
+# does NOT assume that we pay for private queue
+# How many construction point is needed max if workforce is the bottleneck
+aroai_max_wanted_constructions_depense_from_pop = {
+    value = aroai_max_wanted_constructions_points_from_pop
+    max = 11000 #AROAI struggle to use more
+    multiply = aroai_building_construction_sector_expenses_per_point
 }
 
-aroai_weeks_of_reserves = {
-    if = {
-        limit = {
-            aroai_country_budget_surplus < 0
-            gold_reserves > 0
-        }
-        value = gold_reserves
-        divide = {
-            value = 0
-            subtract = {
-                if = {
-                    limit = {
-                        aroai_country_budget_surplus < 0
-                    }
-                    value = aroai_country_budget_surplus
-                }
-                else = {
-                    value = aroai_country_budget_surplus_percent
-                    subtract = 0.10
-                    max = -0.05
-                    multiply = aroai_country_fixed_income
-                }
-            }
-            min = 1
-        }
-        max = 9000
-    }
-    else = {
-        value = 0
-    }
+# does NOT assume that we pay for private queue
+# What would be the share of remaining budget if workforce is the bottleneck
+aroai_max_wanted_constructions_revenue_share_from_pop = {
+    value = aroai_max_wanted_constructions_depense_from_pop
+    divide = { value = aroai_revenue_left_for_construction_military min = 1 }
 }
+
+
+# SUM MUST be = 1
+# Budget is bottleneck
+aroai_construction_share_developing = {
+    value = 0.75
+}
+# Budget is bottleneck
+aroai_military_share_developing = {
+    value = 0.25
+}
+# Workforce is bottleneck
+aroai_construction_share_developed = {
+    value = aroai_max_wanted_constructions_revenue_share_from_pop
+}
+# Workforce is bottleneck
+aroai_military_share_developed = {
+    value = 1
+    subtract = aroai_max_wanted_constructions_revenue_share_from_pop
+}
+
+
+
