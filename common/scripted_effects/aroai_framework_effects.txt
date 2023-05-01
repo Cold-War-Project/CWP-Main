@@ -219,72 +219,58 @@ aroai_add_to_local_variable = {
 # As a workaround, a custom solution is used that stores data about resources as a variable in state region scope.
 # Check happens during initialization of a new game and then periodically, but not really often.
 aroai_check_agriculture_resources_in_state_regions = {
-    if = {
+    every_state_region = {
         limit = {
-            OR = {
-                NOT = {
-                    has_global_variable = aroai_date_of_last_check_of_agriculture_resources
-                }
-                aroai_days_since_agriculture_resources_were_checked >= 365
+            is_state_region_land = yes
+            NOT = {
+                has_variable = aroai_available_agriculture_resources
             }
         }
-        set_global_variable = {
-            name = aroai_date_of_last_check_of_agriculture_resources
-            value = game_date
+        set_local_variable = {
+            name = aroai_added_arable_land
+            value = 0
         }
-        every_state_region = {
+
+        # Arable land is added preemptively to check resources through creating building
+        while = {
             limit = {
-                is_state_region_land = yes
-                NOT = {
-                    has_variable = aroai_available_agriculture_resources
+                local_var:aroai_added_arable_land < 100
+                any_scope_state = {
+                    free_arable_land < 2
                 }
             }
-            set_local_variable = {
+            add_arable_land = 1
+            change_local_variable = {
                 name = aroai_added_arable_land
-                value = 0
+                add = 1
             }
+        }
 
-            # Arable land is added preemptively to check resources through creating building
-            while = {
-                limit = {
-                    local_var:aroai_added_arable_land < 100
-                    any_scope_state = {
-                        free_arable_land < 2
-                    }
-                }
-                add_arable_land = 1
-                change_local_variable = {
-                    name = aroai_added_arable_land
-                    add = 1
-                }
+        # As this is (hopefully) a temporary solution, code below is not integrated into attribute delivery system
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_rye_farm cipher = 1 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_wheat_farm cipher = 2 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_rice_farm cipher = 3 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_maize_farm cipher = 4 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_millet_farm cipher = 5 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_livestock_ranch cipher = 10 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_cotton_plantation cipher = 20 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_silk_plantation cipher = 200 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_banana_plantation cipher = 1000 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_sugar_plantation cipher = 2000 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_tea_plantation cipher = 10000 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_coffee_plantation cipher = 20000 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_tobacco_plantation cipher = 100000 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_opium_plantation cipher = 200000 }
+
+        # Added arable land is removed
+        while = {
+            limit = {
+                local_var:aroai_added_arable_land > 0
             }
-
-            # As this is (hopefully) a temporary solution, code below is not integrated into attribute delivery system
-            aroai_check_if_state_region_has_agriculture_resource = { key = building_rye_farm cipher = 1 }
-            aroai_check_if_state_region_has_agriculture_resource = { key = building_wheat_farm cipher = 2 }
-            aroai_check_if_state_region_has_agriculture_resource = { key = building_rice_farm cipher = 3 }
-            aroai_check_if_state_region_has_agriculture_resource = { key = building_maize_farm cipher = 4 }
-            aroai_check_if_state_region_has_agriculture_resource = { key = building_millet_farm cipher = 5 }
-            aroai_check_if_state_region_has_agriculture_resource = { key = building_livestock_ranch cipher = 10 }
-            aroai_check_if_state_region_has_agriculture_resource = { key = building_cotton_plantation cipher = 20 }
-            aroai_check_if_state_region_has_agriculture_resource = { key = building_silk_plantation cipher = 200 }
-            aroai_check_if_state_region_has_agriculture_resource = { key = building_banana_plantation cipher = 1000 }
-            aroai_check_if_state_region_has_agriculture_resource = { key = building_sugar_plantation cipher = 2000 }
-            aroai_check_if_state_region_has_agriculture_resource = { key = building_tea_plantation cipher = 10000 }
-            aroai_check_if_state_region_has_agriculture_resource = { key = building_coffee_plantation cipher = 20000 }
-            aroai_check_if_state_region_has_agriculture_resource = { key = building_tobacco_plantation cipher = 100000 }
-            aroai_check_if_state_region_has_agriculture_resource = { key = building_opium_plantation cipher = 200000 }
-
-            # Added arable land is removed
-            while = {
-                limit = {
-                    local_var:aroai_added_arable_land > 0
-                }
-                add_arable_land = -1
-                change_local_variable = {
-                    name = aroai_added_arable_land
-                    subtract = 1
-                }
+            add_arable_land = -1
+            change_local_variable = {
+                name = aroai_added_arable_land
+                subtract = 1
             }
         }
     }
@@ -690,12 +676,6 @@ aroai_apply_accelerated_construction_modifiers = {
     if = {
         limit = {
             OR = {
-                NOT = {
-                    has_global_variable = aroai_date_of_last_applying_of_construction_modifiers
-                }
-                aroai_days_since_construction_modifiers_were_applied >= 30
-            }
-            OR = {
                 has_game_rule = aroai_construction_of_ai_countries_110
                 has_game_rule = aroai_construction_of_ai_countries_120
                 has_game_rule = aroai_construction_of_ai_countries_130
@@ -728,10 +708,6 @@ aroai_apply_accelerated_construction_modifiers = {
                     }
                 }
             }
-        }
-        set_global_variable = {
-            name = aroai_date_of_last_applying_of_construction_modifiers
-            value = game_date
         }
         every_country = {
             limit = {
@@ -1115,7 +1091,7 @@ aroai_add_local_variable_to_array_variable = {
                 }
             }
         }
-        
+
         remove_local_variable = aroai_num_elements_in_array
     }
 
@@ -1138,44 +1114,41 @@ aroai_clear_country_cycle_variables = {
         clear_variable_list = aroai_ongoing_constructions
     }
     aroai_clear_weekly_loop_variables = yes
-    
+
     remove_variable = aroai_median_construction_efficiency
 }
 
 aroai_clear_country_iteration_variables = {
-    
+
     remove_variable = aroai_army_size_equal_to_average_threat
     remove_variable = aroai_navy_size_equal_to_average_threat
     remove_variable = aroai_army_size_equal_to_biggest_threat
     remove_variable = aroai_navy_size_equal_to_biggest_threat
-    
+
     remove_variable = aroai_resource_weight_factor
     remove_variable = aroai_agriculture_weight_factor
     remove_variable = aroai_industry_weight_factor
-    
+
     remove_variable = aroai_incorporated_population
     remove_variable = aroai_total_coastal_population
     remove_variable = aroai_incorporated_coastal_population
     remove_variable = aroai_incorporated_gdp
-    
+
     remove_variable = aroai_surplus_bureaucracy_target
-    
+
     remove_variable = aroai_square_root_of_minus_half_unincorporated_gdp_per_capita
     remove_variable = aroai_square_root_of_construction_points
-    
-    remove_variable = aroai_chinese_population
-    remove_variable = aroai_indian_population
-    
+
     remove_variable = aroai_unutilized_workforce_percent
 
     remove_variable = aroai_median_building_profitability
     remove_variable = aroai_median_building_productivity
-    
+
     remove_variable = aroai_num_states_of_market_capital_coastline
     clear_variable_list = aroai_states_of_market_capital_coastline
     clear_variable_list = aroai_coastline_of_overseas_lands
     clear_variable_list = aroai_safe_to_delete_ports_in_overseas_lands
-    
+
     # Variables from downsizing that are used in building as well
     remove_variable = aroai_building_government_administration_total
     remove_variable = aroai_building_university_total
@@ -1184,11 +1157,11 @@ aroai_clear_country_iteration_variables = {
     remove_variable = aroai_building_port_total
     #remove_variable = aroai_building_barracks_total
     remove_variable = aroai_building_naval_base_total
-    
+
     clear_variable_list = aroai_states_suitable_for_construction
-    
+
     remove_variable = aroai_tried_special_buildings
-    
+
     aroai_perform_for_every_building_type = {
         effect = 9 # aroai_clear_building_type_variables
     }
