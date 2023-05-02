@@ -598,6 +598,8 @@ aroai_target_minus_half_unincorporated_gdp_per_capita_scaling = {
 }
 
 # If a country is forced to spend most of its money on government administrations, we need to lower other shares
+# Called : building, port, university share
+# Range : [0.25, 1]
 aroai_target_multiplier_with_high_government_spending = {
     value = 1
     subtract = {
@@ -617,6 +619,7 @@ aroai_target_multiplier_with_high_government_spending = {
 
 
 # If construction is largely sponsored by investment pool, we want to raise non-construction shares
+# Range : [1, 2.2]
 aroai_target_multiplier_with_investment_pool = {
     value = 1.00
     add = {
@@ -635,9 +638,11 @@ aroai_target_multiplier_with_investment_pool = {
 # Bureaucracy target
 # ------------------
 
+# Range : [0.2, 0.49]
 aroai_building_government_administration_spending_share = {
     value = 0.20
-    multiply = aroai_target_multiplier_with_investment_pool
+    multiply = aroai_target_multiplier_with_investment_pool     # [1, 2.2]
+    # [0, 0.05]
     add = {
         value = 0.05
         multiply = {
@@ -1067,11 +1072,12 @@ aroai_innovation_current = {
 # University target
 # -----------------
 
+# Range : [0.025, 0.22]
 aroai_building_university_spending_share = {
     value = 0.10
-    multiply = aroai_target_multiplier_with_high_government_spending
-    multiply = aroai_target_multiplier_with_investment_pool
-    add = {
+    multiply = aroai_target_multiplier_with_high_government_spending    # [0.25, 1]
+    multiply = aroai_target_multiplier_with_investment_pool             # [1, 2.2]
+    add = {     # [0, 0.025]
         value = 0.025
         multiply = {
             value = 1.10
@@ -1237,6 +1243,31 @@ aroai_building_university_ceiling = {
     }
 }
 
+aroai_building_research_institute_spending_value = {
+    if = {
+        limit = {
+            has_variable = aroai_building_research_institute_spending
+            var:aroai_building_research_institute_spending > 0
+        }
+        value = var:aroai_building_research_institute_spending
+        floor = yes
+        divide = {
+            value = var:aroai_building_research_institute_spending
+            subtract = {
+                value = var:aroai_building_research_institute_spending
+                floor = yes
+            }
+            multiply = 100
+        }
+    }
+    else = {
+        value = 0
+    }
+    min = 0
+    max = 1000000000 #billion
+}
+
+
 # --------------------------
 # Construction points target
 # --------------------------
@@ -1260,6 +1291,7 @@ aroai_unutilized_workforce_percent_total_threshold_halved = {
     add = aroai_unutilized_workforce_percent_lower_threshold
 }
 
+# Range : [0, 1]
 aroai_unutilized_workforce_percent_multiplier = { # = 1 when no workforce, 0 when workforce >= threshold
     if = {
         limit = {
@@ -1268,12 +1300,12 @@ aroai_unutilized_workforce_percent_multiplier = { # = 1 when no workforce, 0 whe
         value = 1.00
         subtract = {
             value = var:aroai_unutilized_workforce_percent
-            subtract = aroai_unutilized_workforce_percent_lower_threshold
+            subtract = aroai_unutilized_workforce_percent_lower_threshold       # 0.05
             min = 0.00
-            multiply = {
+            multiply = {    # = 8
                 value = 1
                 divide = {
-                    value = aroai_unutilized_workforce_percent_higher_threshold
+                    value = aroai_unutilized_workforce_percent_higher_threshold # 0.125
                     min = 0.01
                 }
             }
@@ -1286,18 +1318,21 @@ aroai_unutilized_workforce_percent_multiplier = { # = 1 when no workforce, 0 whe
 }
 
 # Income is divided by this to make it equal to high tax income, but it gets back to normal when workforce < threshold
+# Range : [0.835, 1]
 aroai_building_construction_sector_spending_factor = {
-    value = aroai_high_tax_level_factor
+    value = aroai_high_tax_level_factor         # 0.835
     add = {
         value = 1.00
-        subtract = aroai_high_tax_level_factor
+        subtract = aroai_high_tax_level_factor                      # 0.835
         multiply = aroai_unutilized_workforce_percent_multiplier
     }
 }
 
+
 aroai_sum_of_all_fixed_shares_with_excess_and_factor = {
     value = aroai_building_university_spending_share
-    add = aroai_building_port_spending_share
+    # commented because of launch error
+    # add = aroai_building_port_spending_share
     multiply = 1.20
 
     # For government administration expenses it may be legit to be much higher than share, so we take share
@@ -1328,171 +1363,113 @@ aroai_sum_of_all_fixed_shares_with_excess_and_factor = {
     }
 
     # All the shares above are relative to medium tax level, but with construction target tax level is flexible
-    multiply = aroai_building_construction_sector_spending_factor
+    multiply = aroai_building_construction_sector_spending_factor   # [0.835, 1]
 }
 
-aroai_building_construction_sector_spending_target = {
-    value = aroai_building_construction_sector_spending_government
-    add = {
-        value = aroai_investment_pool_expected
-        max = {
-            value = aroai_building_construction_sector_spending_government
+# gold reserve in weeks of income
+aroai_gold_reserve_scaled = {
+    value = gold_reserves
+    divide = income
+    min = 0
 
-            #
-            divide = {
-                value = 1.00
-                subtract = aroai_max_percent_of_autonomous_construction_points
-                add = {
-                    value = aroai_max_percent_of_autonomous_construction_points
-                    multiply = aroai_building_construction_sector_share_of_wages_in_expenses
-                }
-                min = 0.01
+}
+
+# [0.7, INF], = 1 when you have 20 x income in gold reserve
+aroai_gold_reserve_scaled_factor = {
+    value = aroai_gold_reserve_scaled
+    multiply = 0.3 # without this, factor would be 1.7 at x week
+
+    divide = 10
+    add = 0.7
+}
+
+# [0, 0.7], = 0 at half of allowed credit
+aroai_debt_scaled_factor = {
+    value = 0.5
+    subtract = scaled_debt
+    min = 0
+    multiply = 2    # to get a [0, 1] range
+    multiply = 0.7  # to get a [0, 0.7] range
+}
+
+# We take the max value between the two
+# The purpose of this  functions is to keep budget balanced.
+# Sometimes, the ai will spend more than they should on military this leads to less gold reserve, so smaller factor so smaller expense.
+# Sometimes, the ai will spend less than allocated on military. This leads to bigger gold reserve, money that should be spend. The factor will then artificially raise the budget for construction and military.
+# The balance is X weeks of revenue for the gold reserve.
+aroai_revenue_factor_construction_military = {
+    value = {
+        if = {
+            limit = {
+                aroai_debt_scaled_factor < 0.7
             }
+            value = aroai_debt_scaled_factor
+        }
+        else = {
+             value = aroai_gold_reserve_scaled_factor
         }
     }
-    multiply = aroai_construction_of_ai_countries
 }
 
-aroai_building_construction_sector_spending_government = {
-    value = aroai_country_active_income
-    if = {
-        limit = {
-            is_player = no
-        }
-        divide = aroai_building_construction_sector_spending_factor
+
+# Effective construction share of income
+# Min : 1 - sum of every other theoretical share
+aroai_revenue_left_for_construction_military = {
+    value = income
+
+    subtract = {
+        value = aroai_building_government_administration_spending_value
+        add = aroai_building_university_spending_value
+        add = aroai_building_port_spending_value
+        add = aroai_building_research_institute_spending
+        add = var:aroai_total_subsidies
     }
-    multiply = {
-        value = 1.00
-        subtract = {
-            value = aroai_building_government_administration_spending_value
-            add = aroai_building_university_spending_value
-            add = aroai_building_port_spending_value
-            add = aroai_building_barracks_spending_value
-            add = aroai_building_naval_base_spending_value
-            divide = {
-                value = aroai_country_active_income
-                if = {
-                    limit = {
-                        is_player = no
-                    }
-                    divide = aroai_building_construction_sector_spending_factor
-                }
-                min = 1
+
+    multiply = aroai_revenue_factor_construction_military
+}
+
+aroai_construction_sector_spending_share = {
+   value = {
+        # If construction spending is capped, this means that now military spending is uncapped
+        if = {
+            limit = {
+                aroai_construction_share_developed < aroai_construction_share_developing # = 0.75
             }
+            value = aroai_construction_share_developed
         }
-        min = {
-            value = {
-                value = 1.00
-                subtract = aroai_sum_of_all_fixed_shares_with_excess_and_factor
-            }
-            min = 0.10
+        else = {
+            value = aroai_construction_share_developing
         }
     }
-    
-    if = {
-        limit = {
-            is_player = no
-        }
-        
-        # Target is multiplied by this so AI spends more, and then spends less when workforce < threshold
-        multiply = {
-            value = 0.900
-            add = {
-                value = 0.325
-                multiply = {
-                    value = 1.00
-                    subtract = aroai_unutilized_workforce_percent_multiplier
-                }
-            }
-        }
-    }
+    multiply = aroai_revenue_left_for_construction_military
+    multiply = aroai_revenue_factor_construction_military
+    divide = income
 }
 
-aroai_building_construction_sector_spending_1 = {
-    value = aroai_building_construction_sector_spending_target
-    divide = 1.400
+aroai_construction_sector_spending_value_target = {
+    value = aroai_construction_sector_spending_share
+    multiply = income
 }
 
-aroai_building_construction_sector_spending_2 = {
-    value = aroai_building_construction_sector_spending_target
-    divide = 1.342
+aroai_max_wanted_constructions_points_from_budget = {
+    value = aroai_construction_sector_spending_value_target
+    divide = aroai_building_construction_sector_expenses_per_point
 }
 
-aroai_building_construction_sector_spending_3 = {
-    value = aroai_building_construction_sector_spending_target
-    divide = 1.285
-}
 
-aroai_building_construction_sector_spending_4 = {
-    value = aroai_building_construction_sector_spending_target
-    divide = 1.228
-}
 
-aroai_building_construction_sector_spending_5 = {
-    value = aroai_building_construction_sector_spending_target
-    divide = 1.171
-}
 
-aroai_building_construction_sector_spending_6 = {
-    value = aroai_building_construction_sector_spending_target
-    divide = 1.114
-}
-
-aroai_building_construction_sector_spending_7 = {
-    value = aroai_building_construction_sector_spending_target
-    divide = 1.057
-}
-
-aroai_building_construction_sector_spending_8 = {
-    value = aroai_building_construction_sector_spending_target
-}
-
-aroai_building_construction_sector_spending_paucity = {
-    value = aroai_building_construction_sector_spending_target
-    multiply = 0.80
-}
-
-aroai_building_construction_sector_spending_floor = {
-    value = aroai_building_construction_sector_spending_target
-    multiply = 0.60
-}
-
-aroai_building_construction_sector_spending_excess = {
-    value = aroai_building_construction_sector_spending_target
-    if = {
-        limit = {
-            aroai_are_military_expenses_higher_than_usual = no
-        }
-        multiply = 1.20
-    }
-    else = {
-        multiply = 1.50
-    }
-}
-
-aroai_building_construction_sector_spending_ceiling = {
-    value = aroai_building_construction_sector_spending_target
-    if = {
-        limit = {
-            aroai_are_military_expenses_higher_than_usual = no
-        }
-        multiply = 1.40
-    }
-    else = {
-        multiply = 2.00
-    }
-}
-
+# Effective Construction Spending
+# Does NOT assume that we pay for every construction point
 aroai_building_construction_sector_spending_value = {
     if = {
         limit = {
-            aroai_building_construction_sector_expenses_per_point > 0
+            has_variable = aroai_previous_building_construction_sector_expenses
         }
-        value = aroai_building_construction_sector_expenses_per_point
-        multiply = aroai_construction_points_from_sectors_current
+        value = var:aroai_previous_building_construction_sector_expenses
     }
     else = {
-        value = 0 ###########
+        value = 0
     }
     min = 0
     max = 1000000000 #billion
@@ -1520,6 +1497,12 @@ aroai_building_construction_sector_spending_expected = {
 # ---------------------
 # Infrastructure target
 # ---------------------
+
+# Made up number of how many infrastructure point should the state have as margin, depending on the size of the construction sector
+aroai_infrastructure_per_construction_point = {
+    value = aroai_construction_points_current
+    divide = 400
+}
 
 aroai_infrastructure_1 = {
     value = 0.60
@@ -1553,52 +1536,10 @@ aroai_infrastructure_7 = {
 # Convoy target
 # -------------
 
-aroai_building_port_spending_share = {
-    value = 0.10
-    multiply = aroai_target_multiplier_with_high_government_spending
-    multiply = aroai_target_multiplier_with_investment_pool
-    if = {
-        limit = {
-            is_player = yes
-        }
-        if = {
-            limit = {
-                tax_level = high
-            }
-            divide = aroai_high_tax_level_factor
-        }
-        else_if = {
-            limit = {
-                tax_level = very_high
-            }
-            divide = aroai_very_high_tax_level_factor
-        }
-    }
-}
-
-aroai_building_port_spending_target = {
-    value = aroai_country_active_income
-    multiply = aroai_building_port_spending_share
-}
-
-aroai_building_port_spending_paucity = {
-    value = aroai_building_port_spending_target
-    multiply = 0.80
-}
-
-aroai_building_port_spending_floor = {
-    value = aroai_building_port_spending_target
-    multiply = 0.60
-}
-
-aroai_building_port_spending_ceiling = {
-    value = aroai_building_port_spending_target
-    multiply = 1.40
-}
-
-aroai_building_port_spending_excess = {
-    value = aroai_building_port_spending_target
-    multiply = 1.20
+# Effective port share of income
+aroai_building_porty_spending_share = {
+    value = aroai_building_port_spending_value
+    divide = income
 }
 
 aroai_building_port_spending_value = {
@@ -1613,38 +1554,24 @@ aroai_building_port_spending_value = {
             value = var:aroai_building_port_spending
             subtract = {
                 value = var:aroai_building_port_spending
-                floor = yes 
+                floor = yes
             }
             multiply = 100
         }
     }
+    # TODO find data to make better approximation (gdp*a + b ?)
     else = {
-        value = aroai_country_active_income
-        multiply = aroai_building_port_spending_share
-        multiply = 1.10
+        value =  income
+        multiply = 0.1
     }
     min = 0
     max = 1000000000 #billion
 }
 
-aroai_building_port_spending_expected = {
-    value = aroai_building_port_spending_value
-    add = {
-        if = {
-            limit = {
-                aroai_building_port_spending_value > 0
-                has_variable = aroai_building_port_total
-                var:aroai_building_port_total > 0
-            }
-            value = aroai_building_port_spending_value
-            divide = var:aroai_building_port_total
-        }
-        else = {
-            value = 1000
-        }
-        multiply = aroai_construction_limit_3_6
-    }
-}
+
+
+
+
 
 aroai_ports_on_market_capital_coastline = {
     value = 1
@@ -1660,138 +1587,26 @@ aroai_ports_on_market_capital_coastline = {
     }
 }
 
-aroai_convoys_5 = {
-    value = aroai_convoys_target
-    divide = 2.80
-}
-
-aroai_convoys_6 = {
-    value = aroai_convoys_target
-    divide = 2.20
-}
-
-aroai_convoys_7 = {
-    value = aroai_convoys_target
-    divide = 1.60
-}
-
-aroai_convoys_8 = {
-    value = aroai_convoys_target
-}
-
-aroai_convoys_9 = {
-    value = aroai_convoys_target
-    multiply = 1.05
-}
-
-aroai_convoys_10 = {
-    value = aroai_convoys_target
-    multiply = 1.10
-}
-
-aroai_convoys_11 = {
-    value = aroai_convoys_target
-    multiply = 1.15
-}
-
-aroai_convoys_12 = {
-    value = aroai_convoys_target
-    multiply = 1.20
-}
-
-aroai_convoys_target = {
-    value = aroai_minus_half_unincorporated_population
-    divide = 1000000
-    multiply = 500
-    if = {
-        limit = {
-            has_law = law_type:law_isolationism
-        }
-        multiply = 0.10
-    }
-    multiply = aroai_target_minus_half_unincorporated_gdp_per_capita_scaling
-}
-
-aroai_convoys_paucity = {
-    value = aroai_convoys_target
-    multiply = 0.80
-}
-
-aroai_convoys_floor = {
-    value = aroai_convoys_target
-    multiply = 0.60
-}
-
-aroai_convoys_excess = {
-    value = aroai_convoys_target
-    multiply = 1.1666
-    multiply = 1.20
-    min = {
-        value = aroai_convoys_target
-        add = {
-            if = {
-                limit = {
-                    has_technology_researched = robotics_integrated_manufacturing
-                }
-                value = 500
-            }
-            else_if = {
-                limit = {
-                    has_technology_researched = packaging
-                }
-                value = 350
-            }
-            else = {
-                value = 200
-            }
-            multiply = 1.20
-        }
-    }
-}
-
-aroai_convoys_ceiling = {
-    value = aroai_convoys_target
-    multiply = 1.1428
-    multiply = 1.40
-    min = {
-        value = aroai_convoys_target
-        add = {
-            if = {
-                limit = {
-                    has_technology_researched = robotics_integrated_manufacturing
-                }
-                value = 500
-            }
-            else_if = {
-                limit = {
-                    has_technology_researched = packaging
-                }
-                value = 350
-            }
-            else = {
-                value = 200
-            }
-            multiply = 1.40
-        }
-    }
-}
-
-aroai_convoys_current = {
-    value = modifier:country_convoys_capacity_add
-    multiply = {
-        value = modifier:country_convoys_capacity_mult
-        add = 1
-    }
-}
 
 # ----------------
 # Battalion target
 # ----------------
 
+
+
 aroai_military_spending_share = {
-    value = 0.30
-    multiply = aroai_target_multiplier_with_high_government_spending
-    multiply = aroai_target_multiplier_with_investment_pool
+    if = {
+        # If construction spending is capped, this means that now military spending is uncapped
+        limit = {
+            aroai_construction_share_developed < aroai_construction_share_developing
+        }
+        value = aroai_military_share_developed
+    }
+    else = {
+        value = aroai_military_share_developing
+    }
+    multiply = aroai_revenue_left_for_construction_military
+    divide = income
 }
 
 aroai_building_barracks_vs_naval_base_share = {
@@ -1876,7 +1691,7 @@ aroai_building_barracks_spending_share = {
 }
 
 aroai_building_barracks_spending_target = {
-    value = aroai_country_active_income
+    value = income
     multiply = aroai_building_barracks_spending_share
 }
 
@@ -1908,7 +1723,7 @@ aroai_building_barracks_spending_value = {
         }
     }
     else = {
-        value = aroai_country_active_income
+        value = income
         multiply = aroai_building_barracks_spending_share
         multiply = 1.10
     }
@@ -2106,29 +1921,6 @@ aroai_battalion_ceiling = {
             }
         }
     }
-    else_if = {
-        limit = {
-            exists = c:PRU
-            this = c:PRU
-            year < 1870
-        }
-        if = {
-            limit = {
-                year < 1850
-            }
-            multiply = 1.5
-        }
-        else = {
-            multiply = {
-                value = 1.0
-                add = {
-                    value = 1870
-                    subtract = year
-                    multiply = 0.025
-                }
-            }
-        }
-    }
 }
 
 aroai_battalion_paucity = {
@@ -2186,7 +1978,7 @@ aroai_building_naval_base_spending_share = {
 }
 
 aroai_building_naval_base_spending_target = {
-    value = aroai_country_active_income
+    value = income
     multiply = aroai_building_naval_base_spending_share
 }
 
@@ -2239,29 +2031,6 @@ aroai_building_naval_base_spending_excess = {
             }
         }
     }
-    else_if = {
-        limit = {
-            exists = c:PRU
-            this = c:PRU
-            year < 1870
-        }
-        if = {
-            limit = {
-                year < 1850
-            }
-            multiply = 1.5
-        }
-        else = {
-            multiply = {
-                value = 1.0
-                add = {
-                    value = 1870
-                    subtract = year
-                    multiply = 0.025
-                }
-            }
-        }
-    }
 }
 
 aroai_building_naval_base_spending_ceiling = {
@@ -2294,29 +2063,6 @@ aroai_building_naval_base_spending_ceiling = {
         limit = {
             exists = c:TUR
             this = c:TUR
-            year < 1870
-        }
-        if = {
-            limit = {
-                year < 1850
-            }
-            multiply = 1.5
-        }
-        else = {
-            multiply = {
-                value = 1.0
-                add = {
-                    value = 1870
-                    subtract = year
-                    multiply = 0.025
-                }
-            }
-        }
-    }
-    else_if = {
-        limit = {
-            exists = c:PRU
-            this = c:PRU
             year < 1870
         }
         if = {
