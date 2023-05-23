@@ -36,7 +36,7 @@ PixelShader = {
 	}
 
 	#// Highlight in Red
-	#// Occupatioon in Green
+	#// Occupation in Green
 	TextureSampler HighlightGradient
 	{
 		Ref = HighlightGradient
@@ -285,6 +285,13 @@ PixelShader = {
 			float LandMask = PdxTex2DLod0( LandMaskMap, float2( ColorMapCoords.x, 1.0f - ColorMapCoords.y ) ).r;
 			float EndLandMask = 0.0f;
 			float ShoreLinesStripes = 0.0f;
+
+			// Neutralize colors to combat overexposed colors for countries on the map
+			// This will reduce the color intensity down to the percentage specified
+			// float4 NeutralizeColor = float4( 0.5f, 0.5f, 0.5f, 1.0f );
+			// PrimaryColor *= NeutralizeColor;
+			// SecondaryColor *= NeutralizeColor;
+			// AlternateColor *= NeutralizeColor;
 
 			// Primary as texture or color
 			if ( !_UseMapmodeTextures )

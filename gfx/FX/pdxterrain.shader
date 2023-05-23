@@ -162,17 +162,17 @@ PixelShader =
 		SampleModeV = "Clamp"
 	}
 
-	TextureSampler Equator
-	{
-		Index = 10
-		MagFilter = "Linear"
-		MinFilter = "Linear"
-		MipFilter = "Linear"
-		SampleModeU = "Wrap"
-		SampleModeV = "Clamp"
-		File = "gfx/map/textures/equator_line.dds"
-		srgb = yes
-	}
+	// TextureSampler Equator
+	// {
+	// 	Index = 10
+	// 	MagFilter = "Linear"
+	// 	MinFilter = "Linear"
+	// 	MipFilter = "Linear"
+	// 	SampleModeU = "Wrap"
+	// 	SampleModeV = "Clamp"
+	// 	File = "gfx/map/textures/equator_line.dds"
+	// 	srgb = yes
+	// }
 
 	Code
 	[[
@@ -182,38 +182,38 @@ PixelShader =
 			clip( vec2(1.0) - ( Input.WorldSpacePos.xz - float2( lerp( 0.1, 2.0, LerpFactor ), 0.0 ) ) * _WorldSpaceToTerrain0To1 );
 		}
 
-		float3 ApplyFlatmapEquator( float3 Flatmap, float2 MapCoords, float Opacity )
-		{
-			float2 TextureSize;
-			PdxTex2DSize( Equator, TextureSize );
+		// float3 ApplyFlatmapEquator( float3 Flatmap, float2 MapCoords, float Opacity )
+		// {
+		// 	float2 TextureSize;
+		// 	PdxTex2DSize( Equator, TextureSize );
 
-			float2 EquatorUV = MapCoords;
-			float AspectRatioMap = MapSize.y / MapSize.x;
-			float AspectRatioTexture = TextureSize.x / TextureSize.y;
-			float SizeY = MapSize.y / TextureSize.y;
-			EquatorUV.y = 1.0 - EquatorUV.y - _FlatmapEquatorPosition;
-			EquatorUV.y *= AspectRatioMap * AspectRatioTexture;
+		// 	float2 EquatorUV = MapCoords;
+		// 	float AspectRatioMap = MapSize.y / MapSize.x;
+		// 	float AspectRatioTexture = TextureSize.x / TextureSize.y;
+		// 	float SizeY = MapSize.y / TextureSize.y;
+		// 	EquatorUV.y = 1.0 - EquatorUV.y - _FlatmapEquatorPosition;
+		// 	EquatorUV.y *= AspectRatioMap * AspectRatioTexture;
 
-			if ( _FlatmapEquatorTiling > 0.0 )
-			{
-				EquatorUV *= _FlatmapEquatorTiling;
-			}
-			float4 EquatorTexture = PdxTex2D( Equator, EquatorUV );
+		// 	if ( _FlatmapEquatorTiling > 0.0 )
+		// 	{
+		// 		EquatorUV *= _FlatmapEquatorTiling;
+		// 	}
+		// 	float4 EquatorTexture = PdxTex2D( Equator, EquatorUV );
 
-			if ( EquatorUV.y > 0.0 && EquatorUV.y < 1.0)
-			{
-				// Edge fade
-				float FadeAlpha = 1.0f;
-				float FadeDistance = 0.05f;
-				float FadeRight = RemapClamped( EquatorUV.y, 0.0, FadeDistance, 0.0, 1.0 );
-				float FadeLeft = RemapClamped( EquatorUV.y, 1.0 - FadeDistance, 1.0, 1.0, 0.0 );
-				FadeAlpha = FadeRight * FadeLeft;
+		// 	if ( EquatorUV.y > 0.0 && EquatorUV.y < 1.0)
+		// 	{
+		// 		// Edge fade
+		// 		float FadeAlpha = 1.0f;
+		// 		float FadeDistance = 0.05f;
+		// 		float FadeRight = RemapClamped( EquatorUV.y, 0.0, FadeDistance, 0.0, 1.0 );
+		// 		float FadeLeft = RemapClamped( EquatorUV.y, 1.0 - FadeDistance, 1.0, 1.0, 0.0 );
+		// 		FadeAlpha = FadeRight * FadeLeft;
 
-				Flatmap = lerp( Flatmap, EquatorTexture.rgb, EquatorTexture.a * Opacity * FadeAlpha );
-			}
+		// 		Flatmap = lerp( Flatmap, EquatorTexture.rgb, EquatorTexture.a * Opacity * FadeAlpha );
+		// 	}
 
-			return Flatmap;
-		}
+		// 	return Flatmap;
+		// }
 
 		float3 ApplyFlatmapOverlay( float3 Flatmap, float2 MapCoords )
 		{
@@ -223,7 +223,7 @@ PixelShader =
 			float LandAlpha = ( 1.0 - ( LandMask * ( 1.0 - _FlatmapOverlayLandOpacity ) ) );
 			Flatmap = lerp( Flatmap, _FlatmapFoldsColor.rgb, OverlayTexture.r * _FlatmapFoldsColor.a * LandAlpha );
 			Flatmap = lerp( Flatmap, _FlatmapLinesColor.rgb, OverlayTexture.g * _FlatmapLinesColor.a * LandAlpha );
-			Flatmap = ApplyFlatmapEquator( Flatmap, MapCoords, LandAlpha * OverlayTexture.b );
+			// Flatmap = ApplyFlatmapEquator( Flatmap, MapCoords, LandAlpha * OverlayTexture.b );
 
 			Flatmap = SoftLight( Flatmap, _FlatmapDetailsColor.rgb, saturate( OverlayTexture.a ) * _FlatmapDetailsColor.a );
 			return Flatmap;
