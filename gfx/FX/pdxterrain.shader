@@ -367,7 +367,7 @@ PixelShader =
 					#ifdef TERRAIN_FLAT_MAP_LERP
 						// Flatmap texture and style
 						float3 Flatmap = PdxTex2D( FlatmapTexture, float2( MapCoords.x, 1.0 - MapCoords.y ) ).rgb;
-						Flatmap = ApplyDynamicFlatmap( Flatmap, ProvinceCoords, Input.WorldSpacePos.xz );
+						Flatmap = lerp(Flatmap, ApplyDynamicFlatmap(Flatmap, ProvinceCoords, Input.WorldSpacePos.xz), 0.35);
 
 						// Border color overlay on flatmap
 						Flatmap *= lerp( vec3( 1.0 ), ColorOverlay, saturate( PreLightingBlend + PostLightingBlend ) );
@@ -448,7 +448,7 @@ PixelShader =
 					// Blend from Terrain to Flatmap
 					#ifdef TERRAIN_FLAT_MAP_LERP
 						// Flatmap texture and style
-						Flatmap = ApplyDynamicFlatmap( Flatmap, ProvinceCoords, Input.WorldSpacePos.xz );
+						Flatmap = lerp(Flatmap, ApplyDynamicFlatmap(Flatmap, ProvinceCoords, Input.WorldSpacePos.xz), 0.35);
 
 						// Border color overlay on flatmap
 						Flatmap *= lerp( vec3( 1.0 ), ColorOverlay, saturate( PreLightingBlend + PostLightingBlend ) );
@@ -484,7 +484,7 @@ PixelShader =
 
 				// Flatmap texture and style
 				float3 Flatmap = PdxTex2D( FlatmapTexture, float2( MapCoords.x, 1.0 - MapCoords.y ) ).rgb;
-				Flatmap = ApplyDynamicFlatmap( Flatmap, ProvinceCoords, Input.WorldSpacePos.xz );
+				Flatmap = lerp(Flatmap, ApplyDynamicFlatmap(Flatmap, ProvinceCoords, Input.WorldSpacePos.xz), 0.35);
 
 				// Border color overlay
 				float3 ColorOverlay;
