@@ -517,12 +517,12 @@ container = {
 	}
 	
 	icon = {
-		visible = "[LessThanOrEqualTo_int32( Event.GetNumRemainingDays, '(int32)60')]"
+		visible = "[Or( Or(Event.HasCategory('enactment'), Event.HasCategory('revolution')), LessThanOrEqualTo_int32( Event.GetNumRemainingDays, '(int32)60'))]"
 		using = highlighted_circle_selection_small
 	}
 
 	textbox = {
-		raw_text = "#bold [EventMarker.GetAnyEvent.GetRemainingDays]#!"
+		text = "EVENT_REMAINING_DAYS"
 		autoresize = yes
 		parentanchor = hcenter|bottom
 		position = { -4 -4 }
@@ -562,7 +562,7 @@ container = {
 		button = {
 			enabled = "[WarGoal.IsValid]"
 			onclick = "[Execute( WarGoal.ToggleIsPressedInPotentialPeaceDeal( GetPlayer.Self ) )]"
-			visible = "[IsValid( WarGoal.ToggleIsPressedInPotentialPeaceDeal( GetPlayer.Self ) )]"		
+			visible = "[IsValid( WarGoal.ToggleIsPressedInPotentialPeaceDeal( GetPlayer.Self ) )]"
 			using = default_button
 			size = { 100% 100% }
 
@@ -1364,7 +1364,7 @@ container = {
 	parentanchor = bottom|hcenter
 	
 	button = {
-		datacontext = "[ColonyMarker.GetState]"
+		datacontext = "[ColonyMarker.AccessState]"
 		tooltip = "STATE_COLONY_TOOLTIP"
 		size = { 97 26 }
 		onclick = "[InformationPanelBar.OpenStatePanel(ColonyMarker.AccessState)]"
@@ -1423,86 +1423,61 @@ flowcontainer = {
 	margin_bottom = 5
 	parentanchor = bottom|hcenter
 	
-	flowcontainer = {
-		visible = no
-		direction = vertical
-		using = default_list_position
-		dynamicgridbox = {
-			using = default_list_position
-			datamodel = "[State.AccessCappedRuralBuildings]"
-			flipdirection = yes
-		
-			item = {
-				icon = {
-					size = { 30 30 }
-					texture = "[Building.GetTexture]"
-					tooltip = "[Building.GetEmploymentTooltip]"
-				}
-			}
-		}
-
-		dynamicgridbox = {
-			using = default_list_position
-			datamodel = "[State.AccessUncappedRuralBuildings]"
-			flipdirection = yes
-
-			item = {
-				icon = {
-					size = { 30 30 }
-					texture = "[Building.GetTexture]"
-					tooltip = "[Building.GetEmploymentTooltip]"
-				}
-			}
-		}
-	}
-
-	widget = { size = { 4 4 }}
 
 	flowcontainer = {
 		direction = vertical
 		tooltip = "STATE_PRODUCTION_MARKER_TOOLTIP"
+		visible = "[Or(IsZoomLevelNear, And(Not(IsZoomLevelNear), ObjectsEqual(State.AccessSelf, State.AccessStateRegion.GetLargestStateInRegion)))]"
 
 		background = {
+			visible = "[IsZoomLevelNear]"
 			using = default_background
-			margin = { 12 5 }
+			margin = { 11 6 }
+		}
+
+		flowcontainer = {
+			visible = "[Not(IsDataModelEmpty(State.AccessStateRegion.AccessTraits))]"
+			datamodel = "[State.AccessStateRegion.AccessTraits]"
+			spacing = 2
+			parentanchor = hcenter
+			margin_top = 2
+		}
+
+		item = {
+			flowcontainer = {
+				onmousehierarchyenter = "[AccessHighlightManager.HighlightStateTrait(StateTrait.Self)]"
+				onmousehierarchyleave = "[AccessHighlightManager.RemoveHighlight]"
+				alwaystransparent = no
+				tooltip = TOOLTIP_STATE_TRAIT
+				icon = {
+					size = { 36 36 }
+					texture = "[StateTrait.GetTexture]"
+					visible = "[Not(IsZoomLevelFar)]"
+				}
+				icon = {
+					size = { 25 25 }
+					texture = "[StateTrait.GetTexture]"
+					visible = "[IsZoomLevelFar]"
+				}
+			}
 		}
 
 		textbox = {
+			visible = "[IsZoomLevelNear]"
 			using = default_list_position
-			using = fontsize_small
-			text = "STATE_INFRASTRUCTURE_PRODUCTION_MARKER"
-			autoresize = yes
-			align = left|nobaseline
-		}
-
-		divider_clean = {}
-
-		textbox = {
-			using = default_list_position
-			using = fontsize_small
-			text = "STATE_UNEMPLOYED"
-			visible = "[GreaterThan_int32(State.GetNumUnemployedWorkingAdults, '(int32)0')]"
-			autoresize = yes
-			align = left|nobaseline
-		}
-
-		divider_clean = {
-			visible = "[GreaterThan_int32(State.GetNumUnemployedWorkingAdults, '(int32)0')]"}
-
-		textbox = {
-			using = default_list_position
-			using = fontsize_small
-			text = "STATE_PEASANTS"
-			visible = "[GreaterThan_int32(State.GetNumSubsistenceWorkingAdults, '(int32)0')]"
+			text = "MAP_LIST_STATE_AVAILABLE_LABOR"
+			tooltip = "STATE_AVAILABLE_LABOR_TOOLTIP"
 			autoresize = yes
 			align = left|nobaseline
 		}
 	}
 
 	widget = {
-		size = { 5 5 }
+		size = { 3 3 }
+		visible = "[IsZoomLevelNear]"
 	}
 	widget = {
+		visible = "[IsZoomLevelNear]"
 		using = default_list_position
 		using = small_nib
 	}
@@ -1511,18 +1486,18 @@ flowcontainer = {
 ### BATTLE
 container = {
 	name = "battle_marker"
-	datacontext = "[BattleMarker.AccessBattle]"
 	using = clickthrough_blocker
 	layer = layer_map_markers
-	onmousehierarchyenter = "[AccessHighlightManager.HighlightBattle(Battle.Self)]"
-	onmousehierarchyleave = "[AccessHighlightManager.RemoveHighlight]"
-	alwaystransparent = no
 	parentanchor = bottom|hcenter
 
 	
 	### ONGOING BATTLE
 	container = {
+		datacontext = "[BattleMarker.AccessBattle]"
 		visible = "[Or(Or(IsMapModeSelected( 'mm_military' ), IsMapModeSelected( 'mm_military_with_past_battles' )), Battle.IsRelevantForCountry( GetMetaPlayer.GetPlayedOrObservedCountry.Self ))]"
+		onmousehierarchyenter = "[AccessHighlightManager.HighlightBattle(Battle.Self)]"
+		onmousehierarchyleave = "[AccessHighlightManager.RemoveHighlight]"
+		alwaystransparent = no
 		parentanchor = bottom|hcenter
 		
 		widget = {
@@ -2618,6 +2593,141 @@ flowcontainer = {
 		}
 	}
 }
+### REVOLUTIONARY MOVEMENT
+container = {
+	name = "revolutionary_movement_marker"
+	datacontext = "[RevolutionaryMovementMarker.GetPoliticalMovement]"
+	datacontext = "[RevolutionaryMovementMarker.GetPoliticalMovement.GetPrimaryInterestGroup]"
+	using = clickthrough_blocker
+	alwaystransparent = no
+	ignoreinvisible = yes
+	layer = layer_map_markers
+	parentanchor = bottom|hcenter
+
+	onmousehierarchyenter = "[AccessHighlightManager.HighlightPoliticalMovement(PoliticalMovement.Self)]"
+	onmousehierarchyleave = "[AccessHighlightManager.RemoveHighlight]"
+
+
+	tooltipwidget = {
+		FancyTooltip_PoliticalMovement = {}
+	}
+
+	### REVOLUTION VFX
+	widget = {
+		size = { 70 70 }
+		parentanchor = hcenter
+
+		vfx = {
+			blockoverride "position" {
+				position = { 2 6 }
+			}
+
+			blockoverride "camera_position" {
+				camera_position = { 0 0 -4 }
+			}
+
+			blockoverride "parent_anchor" {
+				parentanchor = center
+			}
+
+			blockoverride "size" {
+				size = { 350% 350% }
+			}
+
+			blockoverride "entity_instance"{
+				entity_instance = vfx_entity_ui_revolution_map_marker
+			}
+		}
+	}
+
+	### MOVEMENT HIGHLIGHTED
+	widget = {
+		visible = "[PoliticalMovement.IsBeingHighlighted]"
+		size = { 0 40 }
+		parentanchor = vcenter
+
+		state = {
+			name = _show
+			size = { 150 40 }
+			position_x = 80
+			duration = 0.2
+			alpha = 1
+			using = Animation_Curve_Default
+		}
+		state = {
+			name = _hide
+			size = { 0 40 }
+			position_x = 40
+			duration = 0.2
+			alpha = 0
+			using = Animation_Curve_Default
+		}
+
+		widget = {
+			size = { 80% 100% }
+			parentanchor = right|vcenter
+
+			bad_progressbar_horizontal = {
+				parentanchor = right|vcenter
+				datacontext = "[PoliticalMovement.GetRevolution]"
+				size = { 80% 100% }
+
+				blockoverride "values" {
+					value = "[FixedPointToFloat( PoliticalMovement.GetRevolution.GetProgress )]"
+					min = 0
+					max = 1
+				}
+
+				blockoverride "in_government_icon" {}
+			}
+
+			textbox = {
+				parentanchor = right|vcenter
+				align = right|nobaseline
+				autoresize = yes
+				raw_text = "#v [PoliticalMovement.GetRevolution.GetProgress|0%]#!"
+				position = { -40 0 }
+			}
+
+			icon = {
+				parentanchor = right|vcenter
+				size = { 30 30 }
+				texture = "gfx/interface/icons/politics_icons/radicalized.dds"
+				position = { -5 0 }
+			}
+		}
+	}
+
+	widget = {
+		size = { 70 70 }
+		parentanchor = hcenter
+
+		round_progress_bad = {
+			size = { 100% 100% }
+			value = "[FixedPointToFloat(PoliticalMovement.GetRevolution.GetClockTime)]"
+			parentanchor = center
+		}
+
+		ig_button = {
+			size = { 70% 70% }
+			parentanchor = center
+			blockoverride "influential" {}
+
+			blockoverride "tooltip" {}
+
+			blockoverride "onclick" {
+				onclick = "[InformationPanelBar.OpenPoliticalMovementPanel(PoliticalMovement.AccessSelf)]"
+			}
+		}
+
+		icon = {
+			size = { 105% 105% }
+			parentanchor = center
+			texture = "gfx/interface/map_markers/revolutionary_movement_frame.dds"
+		}
+
+	}
+}
 
 ### NATIONAL FOCUS
 flowcontainer = {
@@ -2884,7 +2994,9 @@ container = {
 							autoresize = yes
 							text = "HQ_IN_RESERVE"
 							align = hcenter|nobaseline
-							minimumsize = { 120 -1 }
+							# Set a height, otherwise autoresize would calculate a rational height (21.66666) which in some way leads to map marker flickering:
+							# at one frame the map marker is small and cursor intersects it, at the next frame the map marker expands but the same cursor position doesn't intersect it
+							minimumsize = { 120 22 }
 						}
 					}
 					
@@ -2908,7 +3020,9 @@ container = {
 						textbox = {
 							visible = "[And(GreaterThan_int32(Hq.GetReserveUnitsRaw, '(int32)0'), NotEqualTo_int32(Hq.GetTotalUnits, Hq.GetReserveUnitsRaw))]"
 							tooltip = "HQ_PANEL_FLOTILLAS_IN_RESERVE"
-							minimumsize = { 120 -1 }
+							# Set a height, otherwise autoresize would calculate a rational height (21.66666) which in some way leads to map marker flickering:
+							# at one frame the map marker is small and cursor intersects it, at the next frame the map marker expands but the same cursor position doesn't intersect it
+							minimumsize = { 120 22 } 
 							alpha = 0.6
 							autoresize = yes
 							text = "HQ_IN_RESERVE"
@@ -2982,6 +3096,9 @@ container = {
 	layer = layer_map_markers
 	datacontext = "[StateMarker.GetState]"
 	using = small_nib
+	blockoverride "nib_position" {
+		position = { 0 -3 }
+	}
 	parentanchor = bottom|hcenter
 
 	background = {
@@ -2989,8 +3106,17 @@ container = {
 	}
 	
 	flowcontainer = {
-		margin = { 7 7 }
+		margin = { 9 5 }
 		direction = vertical
+
+		textbox = {
+			raw_text = "@warning! [State.CalcTaxCapacityBalance|0+=]"
+			visible = "[GreaterThan_CFixedPoint(State.CalcTaxCapacityUsage, State.CalcTaxCapacity)]"
+			autoresize = yes
+			align = nobaseline
+			parentanchor = hcenter
+			tooltip = "STATE_TAX_CAPACITY_DESC"
+		}
 
 		textbox = {
 			visible = "[GreaterThan_CFixedPoint(State.GetTaxationRevenue, '(CFixedPoint)0')]"
@@ -3111,6 +3237,9 @@ template small_nib {
 		icon = {
 			size = { 11 8 }
 			position = { 0 0 }
+			block "nib_position" {
+				position = { 0 0 }
+			}
 			texture = "/gfx/interface/map_markers/small_nib.dds"
 			alpha = 1
 		}
