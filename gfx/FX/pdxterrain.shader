@@ -1,5 +1,5 @@
 Includes = {
-	"cw/pdxterrain.fxh"
+	"cw/terrain.fxh"
 	"cw/heightmap.fxh"
 	"cw/utility.fxh"
 	"cw/lighting.fxh"
@@ -12,7 +12,7 @@ Includes = {
 	"sharedconstants.fxh"
 	"standardfuncsgfx.fxh"
 	"distance_fog.fxh"
-	"cwpcoloroverlay.fxh"
+	"cwp_coloroverlay.fxh"
 	"dynamic_masks.fxh"
 	"fog_of_war.fxh"
 	"ssao_struct.fxh"
@@ -40,10 +40,10 @@ VertexShader =
 			STerrainVertex Vertex = CalcTerrainVertex( WithinNodePos, NodeOffset, NodeScale, LodDirection, LodLerpFactor );
 
 			#ifdef TERRAIN_FLAT_MAP_LERP
-				Vertex.WorldSpacePos.y = lerp( Vertex.WorldSpacePos.y, FlatMapHeight, FlatMapLerp );
+				Vertex.WorldSpacePos.y = lerp( Vertex.WorldSpacePos.y, FlatmapHeight, FlatmapLerp );
 			#endif
 			#ifdef TERRAIN_FLAT_MAP
-				Vertex.WorldSpacePos.y = FlatMapHeight;
+				Vertex.WorldSpacePos.y = FlatmapHeight;
 			#endif
 
 			VS_OUTPUT_PDX_TERRAIN Out;
@@ -152,9 +152,9 @@ PixelShader =
 		SampleModeV = "Clamp"
 		Type = "Cube"
 	}
-	TextureSampler FlatMapTexture
+	TextureSampler FlatmapTexture
 	{
-		Ref = TerrainFlatMap
+		Ref = Flatmap
 		MagFilter = "Linear"
 		MinFilter = "Linear"
 		MipFilter = "Linear"
@@ -167,7 +167,20 @@ PixelShader =
 		void CropToWorldSize( in VS_OUTPUT_PDX_TERRAIN Input )
 		{
 			float LerpFactor = saturate( ( Input.Position.z - 0.9 ) * 10.0 );
-			clip( vec2(1.0) - ( Input.WorldSpacePos.xz - float2( lerp( 0.1, 2.0, LerpFactor ), 0.0 ) ) * WorldSpaceToTerrain0To1 );
+			clip( vec2(1.0) - ( Input.WorldSpacePos.xz - float2( lerp( 0.1, 2.0, LerpFactor ), 0.0 ) ) * _WorldSpaceToTerrain0To1 );
+		}
+
+		float3 ApplyFlatmapOverlay( float3 Flatmap, float2 MapCoords )
+		{
+			float4 OverlayTexture = PdxTex2D( FlatmapOverlayTexture, float2( MapCoords.x, 1.0 - MapCoords.y ) );
+
+			float LandMask = PdxTex2DLod0( LandMaskMap, float2( MapCoords.x, 1.0 - MapCoords.y ) ).r;
+			float LandAlpha = ( 1.0 - ( LandMask * ( 1.0 - _FlatmapOverlayLandOpacity ) ) );
+			Flatmap = lerp( Flatmap, _FlatmapFoldsColor.rgb, OverlayTexture.r * _FlatmapFoldsColor.a * LandAlpha );
+			Flatmap = lerp( Flatmap, _FlatmapLinesColor.rgb, OverlayTexture.g * _FlatmapLinesColor.a * LandAlpha );
+
+			Flatmap = SoftLight( Flatmap, _FlatmapDetailsColor.rgb, saturate( OverlayTexture.a ) * _FlatmapDetailsColor.a );
+			return Flatmap;
 		}
 	]]
 
@@ -257,7 +270,7 @@ PixelShader =
 				float4 DetailMaterial = vec4( 1.0 );
 
 				// UV Coordinates
-				float2 MapCoords = Input.WorldSpacePos.xz * WorldSpaceToTerrain0To1;
+				float2 MapCoords = Input.WorldSpacePos.xz * _WorldSpaceToTerrain0To1;
 				float2 ProvinceCoords = Input.WorldSpacePos.xz / ProvinceMapSize;
 
 				// Get terrain material
@@ -298,29 +311,28 @@ PixelShader =
 				float3 FinalColor = GameCalculateEnvironmentLighting( MaterialProps, LightingProps );
 				FinalColor += GameCalculateSunLighting( MaterialProps, LightingProps, Input.WorldSpacePos, IridescenceMask );
 
+				// Effects, post light
 				#ifndef UNDERWATER
-					// Effects, post light
-					#ifdef TERRAIN_COLOR_OVERLAY
-						FinalColor = ApplyColorOverlay( FinalColor, ColorOverlay, PostLightingBlend );
-					#endif
+					FinalColor = ApplyColorOverlay( FinalColor, ColorOverlay, PostLightingBlend );
 					FinalColor = ApplyFogOfWar( FinalColor, Input.WorldSpacePos );
 					FinalColor = GameApplyDistanceFog( FinalColor, Input.WorldSpacePos );
 
 					// Blend from Terrain to Flatmap
 					#ifdef TERRAIN_FLAT_MAP_LERP
 						// Flatmap texture and style
-						float3 FlatMap = PdxTex2D( FlatMapTexture, float2( MapCoords.x, 1.0 - MapCoords.y ) ).rgb;
-						FlatMap = lerp(FlatMap, ApplyDynamicFlatmap( FlatMap, ProvinceCoords, Input.WorldSpacePos.xz ), 0.25);
+						float3 Flatmap = PdxTex2D( FlatmapTexture, float2( MapCoords.x, 1.0 - MapCoords.y ) ).rgb;
+						Flatmap = lerp(Flatmap, ApplyDynamicFlatmap(Flatmap, ProvinceCoords, Input.WorldSpacePos.xz), 0.35);
 
 						// Border color overlay on flatmap
-						FlatMap *= lerp( vec3( 1.0 ), ColorOverlay, saturate( PreLightingBlend + PostLightingBlend ) );
-						FinalColor = lerp( FinalColor, FlatMap, FlatMapLerp );
+						Flatmap *= lerp( vec3( 1.0 ), ColorOverlay, saturate( PreLightingBlend + PostLightingBlend ) );
+
+						Flatmap = ApplyFlatmapOverlay( Flatmap, MapCoords );
+
+						FinalColor = lerp( FinalColor, Flatmap, FlatmapLerp );
 					#endif
 
 					// Highlight color overlay
-					#ifdef TERRAIN_COLOR_OVERLAY
-						FinalColor = ApplyHighlight( FinalColor, ProvinceCoords );
-					#endif
+					FinalColor = ApplyHighlight( FinalColor, ProvinceCoords );
 				#endif //not UNDERWATER
 
 				// Underwater
@@ -339,9 +351,7 @@ PixelShader =
 				Out.Color = float4( FinalColor, Alpha );
 				float3 SSAOAlphaFixed = vec3( 1.0f ) - SSAOAlphaTerrain; // Reduces the applied SSAO on terrain
 				#ifndef UNDERWATER
-					#ifdef TERRAIN_COLOR_OVERLAY
-						SSAOAlphaFixed = SSAOAlphaFixed + PostLightingBlend;
-					#endif
+					SSAOAlphaFixed = SSAOAlphaFixed + PostLightingBlend;
 				#endif
 				Out.SSAOColor = float4( saturate( SSAOAlphaFixed ), saturate( Alpha - GameCalculateDistanceFogFactor ( Input.WorldSpacePos ) ) );
 
@@ -361,16 +371,16 @@ PixelShader =
 				PS_COLOR_SSAO Out;
 
 				float LerpFactor = saturate( ( Input.Position.z - 0.9 ) * 10.0 );
-				clip( vec2(1.0) - ( Input.WorldSpacePos.xz - float2( lerp( 0.1, 2.0, LerpFactor ), 0.0 ) ) * WorldSpaceToTerrain0To1 );
+				clip( vec2(1.0) - ( Input.WorldSpacePos.xz - float2( lerp( 0.1, 2.0, LerpFactor ), 0.0 ) ) * _WorldSpaceToTerrain0To1 );
 
 				float3 DetailDiffuse = Input.DetailDiffuse;
 				float4 DetailMaterial = Input.DetailMaterial;
 				float3 ColorMap = Input.ColorMap;
-				float3 FlatMap = Input.FlatMap;
+				float3 Flatmap = Input.Flatmap;
 				float3 Normal = Input.Normal;
 
 				// UV Coordinates
-				float2 MapCoords = Input.WorldSpacePos.xz * WorldSpaceToTerrain0To1;
+				float2 MapCoords = Input.WorldSpacePos.xz * _WorldSpaceToTerrain0To1;
 				float2 ProvinceCoords = Input.WorldSpacePos.xz / ProvinceMapSize;
 
 				// Colormap overlay
@@ -385,39 +395,35 @@ PixelShader =
 
 				#ifndef UNDERWATER
 					// Effects, post light
-					#ifdef TERRAIN_COLOR_OVERLAY
-						Diffuse = ApplyColorOverlay( Diffuse, ColorOverlay, PostLightingBlend );
-					#endif
+					Diffuse = ApplyColorOverlay( Diffuse, ColorOverlay, PostLightingBlend );
 					Diffuse = ApplyFogOfWar( Diffuse, Input.WorldSpacePos );
 					Diffuse = GameApplyDistanceFog( Diffuse, Input.WorldSpacePos );
 
 					// Blend from Terrain to Flatmap
 					#ifdef TERRAIN_FLAT_MAP_LERP
 						// Flatmap texture and style
-						FlatMap = lerp(FlatMap, ApplyDynamicFlatmap( FlatMap, ProvinceCoords, Input.WorldSpacePos.xz ), 0.25);
+						Flatmap = lerp(Flatmap, ApplyDynamicFlatmap(Flatmap, ProvinceCoords, Input.WorldSpacePos.xz), 0.35);
 
 						// Border color overlay on flatmap
-						FlatMap *= lerp( vec3( 1.0 ), ColorOverlay, saturate( PreLightingBlend + PostLightingBlend ) );
-						Diffuse = lerp( Diffuse, FlatMap, FlatMapLerp );
+						Flatmap *= lerp( vec3( 1.0 ), ColorOverlay, saturate( PreLightingBlend + PostLightingBlend ) );
+						Diffuse = lerp( Diffuse, Flatmap, FlatmapLerp );
 					#endif
 
 					// Highlight color overlay
-					#ifdef TERRAIN_COLOR_OVERLAY
-						Diffuse = ApplyHighlight( Diffuse, ProvinceCoords );
-					#endif
-				#endif//not UNDERWATER
+					Diffuse = ApplyHighlight( Diffuse, ProvinceCoords );
+
+				#endif //not UNDERWATER
 
 				// Output
 				Out.Color = float4( Diffuse, 1.0f );
 				Out.SSAOColor = float4( vec4(1.0f) );
 
 				return Out;
-
 			}
 		]]
 	}
 
-	MainCode PixelShaderFlatMap
+	MainCode PixelShaderFlatmap
 	{
 		Input = "VS_OUTPUT_PDX_TERRAIN"
 		Output = "PDX_COLOR"
@@ -427,31 +433,27 @@ PixelShader =
 			{
 				CropToWorldSize( Input );
 
-				float2 MapCoords = Input.WorldSpacePos.xz * WorldSpaceToTerrain0To1;
+				float2 MapCoords = Input.WorldSpacePos.xz * _WorldSpaceToTerrain0To1;
 				float2 ProvinceCoords = Input.WorldSpacePos.xz / ProvinceMapSize;
 
 				// Flatmap texture and style
-				float3 FlatMap = PdxTex2D( FlatMapTexture, float2( MapCoords.x, 1.0 - MapCoords.y ) ).rgb;
-				FlatMap = lerp(FlatMap, ApplyDynamicFlatmap( FlatMap, ProvinceCoords, Input.WorldSpacePos.xz ), 0.25);
-
+				float3 Flatmap = PdxTex2D( FlatmapTexture, float2( MapCoords.x, 1.0 - MapCoords.y ) ).rgb;
+				Flatmap = lerp(Flatmap, ApplyDynamicFlatmap(Flatmap, ProvinceCoords, Input.WorldSpacePos.xz), 0.35);
 
 				// Border color overlay
-				#ifdef TERRAIN_COLOR_OVERLAY
-					float3 ColorOverlay;
-					float PreLightingBlend;
-					float PostLightingBlend;
-					GameProvinceOverlayAndBlend( ProvinceCoords, Input.WorldSpacePos, ColorOverlay, PreLightingBlend, PostLightingBlend );
+				float3 ColorOverlay;
+				float PreLightingBlend;
+				float PostLightingBlend;
+				GameProvinceOverlayAndBlend( ProvinceCoords, Input.WorldSpacePos, ColorOverlay, PreLightingBlend, PostLightingBlend );
+				Flatmap *= lerp( vec3( 1.0 ), ColorOverlay, saturate( PreLightingBlend + PostLightingBlend ) );
 
-					FlatMap *= lerp( vec3( 1.0 ), ColorOverlay, saturate( PreLightingBlend + PostLightingBlend ) );
-				#endif
+				Flatmap = ApplyFlatmapOverlay( Flatmap, MapCoords );
 
 				// Flatmap color
-				float3 FinalColor = FlatMap;
+				float3 FinalColor = Flatmap;
 
 				// Highlight color overlay
-				#ifdef TERRAIN_COLOR_OVERLAY
-					FinalColor = ApplyHighlight( FinalColor, ProvinceCoords );
-				#endif
+				FinalColor = ApplyHighlight( FinalColor, ProvinceCoords );
 
 				// Debug
 				#ifdef TERRAIN_DEBUG
@@ -492,7 +494,7 @@ Effect PdxTerrain
 	VertexShader = "VertexShader"
 	PixelShader = "PixelShader"
 
-	Defines = { "TERRAIN_COLOR_OVERLAY" "TERRAIN_WRAP_X" }
+	Defines = { "TERRAIN_WRAP_X" }
 }
 
 Effect PdxTerrainLowSpec
@@ -500,7 +502,7 @@ Effect PdxTerrainLowSpec
 	VertexShader = "VertexShaderLowSpec"
 	PixelShader = "PixelShaderLowSpec"
 
-	Defines = { "TERRAIN_COLOR_OVERLAY" "TERRAIN_WRAP_X" }
+	Defines = { "TERRAIN_WRAP_X" }
 }
 
 Effect PdxTerrainSkirt
@@ -508,7 +510,7 @@ Effect PdxTerrainSkirt
 	VertexShader = "VertexShaderSkirt"
 	PixelShader = "PixelShader"
 
-	Defines = { "TERRAIN_COLOR_OVERLAY" "TERRAIN_WRAP_X" }
+	Defines = { "TERRAIN_WRAP_X" }
 }
 
 Effect PdxTerrainLowSpecSkirt
@@ -516,13 +518,13 @@ Effect PdxTerrainLowSpecSkirt
 	VertexShader = "VertexShaderLowSpecSkirt"
 	PixelShader = "PixelShaderLowSpec"
 
-	Defines = { "TERRAIN_COLOR_OVERLAY" "TERRAIN_WRAP_X" }
+	Defines = { "TERRAIN_WRAP_X" }
 }
 
 Effect PdxTerrainFlat
 {
 	VertexShader = "VertexShader"
-	PixelShader = "PixelShaderFlatMap"
+	PixelShader = "PixelShaderFlatmap"
 
 	Defines = { "TERRAIN_FLAT_MAP" }
 }
@@ -530,7 +532,7 @@ Effect PdxTerrainFlat
 Effect PdxTerrainFlatSkirt
 {
 	VertexShader = "VertexShaderSkirt"
-	PixelShader = "PixelShaderFlatMap"
+	PixelShader = "PixelShaderFlatmap"
 
 	Defines = { "TERRAIN_FLAT_MAP" }
 }

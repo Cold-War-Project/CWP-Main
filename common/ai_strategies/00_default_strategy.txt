@@ -63,16 +63,171 @@ ai_strategy_default = {
 			add = -0.1
 		}
 	}
-	# How many barracks relative to incorporated population should the AI have
-	# Using a different value in a strategy will override this value
-	wanted_army_ratio = {
-		value = 3000000		# 1 barrack per 3M incorporated population
+# How many levels of barracks should the AI have
+	# Using this value in other strategies will function additively
+	wanted_army_size = {
+		value = 0
+		
+		# To increase base army size for small countries, capped at 1 million population
+		add = {
+			value = cached_ai_incorporated_population
+			divide = 100000 # 1 level of barracks per 100k incorporated population	
+			
+			max = 10
+		}			
+	
+		add = {
+			value = cached_ai_incorporated_population
+			divide = 250000 # 1 level of barracks per 250k incorporated population	
+		}		
+		
+		add = {
+			value = cached_ai_unincorporated_population
+			divide = 1000000 # 1 level of barracks per 1 million unincorporated population	
+		}
+		
+		max = 250 # No more than 250 from population
+
+		add = {
+			value = gdp
+			divide = 500000 # 1 level of barracks per 500k gdp
+		}				
+
+		# Factor in strategies
+		if = {
+			limit = { 
+				OR = {
+					has_strategy = ai_strategy_territorial_expansion 
+				}
+			}
+			multiply = 1.25
+		}		
+
+		max = 500
+		min = 1
 	}
-	# How many naval bases relative to incorporated coastal population should the AI have
-	# Using a different value in a strategy will override this value
-	wanted_navy_ratio = {
-		value = 10000000		# 1 naval base per 5M coastal incorporated population
+	
+	# How many levels of naval base should the AI have
+	# Using this value in other strategies will function additively
+	wanted_navy_size = {
+		value = 0
+	
+		# 1 level of naval base per 350k coastal incorporated population							
+		add = {
+			value = cached_ai_incorporated_coastal_population
+			divide = 350000 
+		}
+
+		# 1 level of naval base per 1 million coastal unincorporated population					
+		add = {
+			value = cached_ai_unincorporated_coastal_population
+			divide = 1000000 
+		}
+
+		# 1 level of naval base per 1 million population in direct overseas subjects	
+		add = {
+			value = cached_ai_overseas_subject_population
+			divide = 1000000 
+		}	
+
+		max = 250 # No more than 250 from population		
+
+		# 1 level of naval base per 1 million gdp, multiplied by relative incorporated coastal population to total incorporated population
+		add = {
+			value = gdp
+			divide = cached_ai_incorporated_population
+			multiply = cached_ai_incorporated_coastal_population
+			divide = 1000000 
+		}			
+
+		# Factor in strategies
+		if = {
+			limit = { 
+				OR = {
+					has_strategy = ai_strategy_colonial_expansion 
+					has_strategy = ai_strategy_economic_imperialism
+				}
+			}
+			multiply = 1.25
+		}
+
+		if = {
+			limit = { has_strategy = ai_strategy_armed_isolationism }
+			multiply = 0.75
+		}
+		
+		if = {
+			limit = { country_rank < rank_value:major_power }
+			multiply = 0.75
+		}						
+		
+		if = {
+			limit = { is_country_type = unrecognized }
+			multiply = 0.5
+		}	
+
+		max = 500
+		min = 0		
 	}
+	
+	# How many levels of naval base should the AI have
+	# Using this value in other strategies will function additively
+	wanted_navy_size = {
+		value = 0
+	
+		# 1 level of naval base per 350k coastal incorporated population							
+		add = {
+			value = cached_ai_incorporated_coastal_population
+			divide = 350000 
+		}
+
+		# 1 level of naval base per 1 million coastal unincorporated population					
+		add = {
+			value = cached_ai_unincorporated_coastal_population
+			divide = 1000000 
+		}
+
+		# 1 level of naval base per 1 million population in direct overseas subjects	
+		add = {
+			value = cached_ai_overseas_subject_population
+			divide = 1000000 
+		}	
+
+		max = 250 # No more than 250 from population		
+
+		# 1 level of naval base per 1 million gdp, multiplied by relative incorporated coastal population to total incorporated population
+		add = {
+			value = gdp
+			divide = cached_ai_incorporated_population
+			multiply = cached_ai_incorporated_coastal_population
+			divide = 1000000 
+		}			
+		
+
+		# Factor in strategies
+		if = {
+			limit = { 
+				OR = {
+					has_strategy = ai_strategy_colonial_expansion 
+					has_strategy = ai_strategy_economic_imperialism
+				}
+			}
+			multiply = 1.25
+		}
+
+		if = {
+			limit = { has_strategy = ai_strategy_armed_isolationism }
+			multiply = 0.75
+		}
+		
+		if = {
+			limit = { country_rank < rank_value:major_power }
+			multiply = 0.75
+		}						
+
+		max = 500
+		min = 0		
+	}	
 	# Chance each update that the AI is willing to start changing a law (1 = 1%)
 	# Using this value in other strategies will function additively
 	change_law_chance = {
@@ -461,7 +616,7 @@ ai_strategy_default = {
 	# How important is it that the AI maintains an interest in a specific strategic region (added on top of region value calculations set in defines)
 	# Using this value in other strategies will function additively
 	strategic_region_scores = {
-		sr:region_middle_east = {
+		region_middle_east = {
 			if = {
 				limit = {
 					country_rank >= rank_value:great_power
@@ -476,7 +631,7 @@ ai_strategy_default = {
 				add = 250
 			}
 		}
-		sr:region_central_europe = {
+		region_central_europe = {
 			if = {
 				limit = {
 					country_is_in_europe = yes
@@ -491,7 +646,7 @@ ai_strategy_default = {
 				add = 250
 			}
 		}
-		sr:region_balkans = {
+		region_balkans = {
 			if = {
 				limit = {
 					country_is_in_europe = yes
@@ -500,7 +655,7 @@ ai_strategy_default = {
 				add = 50
 			}
 		}
-		sr:region_western_europe = {
+		region_western_europe = {
 			if = {
 				limit = {
 					country_is_in_europe = yes
@@ -509,34 +664,38 @@ ai_strategy_default = {
 				add = 50
 			}
 		}
-		sr:region_north_america = {
+		region_north_america = {
 			if = {
 				limit = {
-					has_variable = monroe_doctrine
+					country_is_in_north_america = yes
+					country_rank >= rank_value:great_power
 				}
 				add = 1000
 			}
 		}
-		sr:region_golden_circle = {
+		region_golden_circle = {
 			if = {
 				limit = {
-					has_variable = monroe_doctrine
+					country_is_in_north_america = yes
+					country_rank >= rank_value:great_power
 				}
 				add = 1000
 			}
 		}
-		sr:region_amazon = {
+		region_amazon = {
 			if = {
 				limit = {
-					has_variable = monroe_doctrine
+					country_is_in_north_america = yes
+					country_rank >= rank_value:great_power
 				}
 				add = 1000
 			}
 		}
-		sr:region_andes = {
+		region_andes = {
 			if = {
 				limit = {
-					has_variable = monroe_doctrine
+					country_is_in_north_america = yes
+					country_rank >= rank_value:great_power
 				}
 				add = 1000
 			}
@@ -1760,6 +1919,41 @@ ai_strategy_default = {
 			min = 0
 			max = 0
 		}
+		transfer_subject = {
+			if = {
+				limit = {
+					OR = {
+						has_secret_goal = {
+							who = scope:target_country
+							secret_goal = protect
+						}
+						has_secret_goal = {
+							who = scope:target_country
+							secret_goal = dominate
+						}						
+					}
+				}
+			
+				add = {
+					value = 50
+				
+					add = {
+						value = scope:target_country.gdp
+						divide = 200000
+						max = 50						
+					}
+
+					if = {
+						limit = {
+							has_strategic_adjacency = scope:target_country
+						}
+						multiply = 1.25
+					}						
+				}	
+			}
+			min = 0
+			max = 100			
+		}		
 		make_puppet = {
 			if = {
 				limit = {
@@ -1824,7 +2018,7 @@ ai_strategy_default = {
 				add = 100
 			}
 			if = {
-				#Indian suzerain will be aggressive against Afganistan, if Afghanistan is threatened by Russia.
+				#Indian suzerain will be aggressive against Afghanistan, if Afghanistan is threatened by Russia.
 				limit = {
 					AND = {
 						c:RUS = {

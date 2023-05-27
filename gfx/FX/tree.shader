@@ -1,6 +1,6 @@
 Includes = {
 	"cw/pdxmesh.fxh"
-	"cw/pdxterrain.fxh"
+	"cw/terrain.fxh"
 	"cw/utility.fxh"
 	"cw/shadow.fxh"
 	"cw/alpha_to_coverage.fxh"
@@ -11,7 +11,7 @@ Includes = {
 	"sharedconstants.fxh"
 	"distance_fog.fxh"
 	"dynamic_masks.fxh"
-	"cwpcoloroverlay.fxh"
+	"cwp_coloroverlay.fxh"
 	"fog_of_war.fxh"
 	"ssao_struct.fxh"
 }
@@ -309,7 +309,7 @@ PixelShader =
 				float3 Normal = normalize( mul( NormalSample, TBN ) );
 				float4 Properties = PdxTex2D( PropertiesMap, Input.UV0 );
 
-				float2 MapCoords = Input.WorldSpacePos.xz * WorldSpaceToTerrain0To1;
+				float2 MapCoords = Input.WorldSpacePos.xz * _WorldSpaceToTerrain0To1;
 				float2 ProvinceCoords = Input.WorldSpacePos.xz / ProvinceMapSize;
 
 				// Dynamic mask, pre light
@@ -355,7 +355,7 @@ PixelShader =
 				Diffuse.rgb = ApplyHighlight( Diffuse.rgb, ProvinceCoords );
 
 				// Alpha
-				Diffuse.a *= ( 1.0f - FlatMapLerp );
+				Diffuse.a *= ( 1.0f - FlatmapLerp );
 				Diffuse.a = ApplyOpacity( Diffuse.a, Input.Position.xy, Input.InstanceIndex );
 				Diffuse.a = RescaleAlphaByMipLevel( Diffuse.a, Input.UV0, DiffuseMap) ;
 				Diffuse.a = SharpenAlpha( Diffuse.a, 0.7f ) ;
@@ -387,7 +387,7 @@ PixelShader =
 				float Alpha = PdxTex2D( PDXMESH_AlphaBlendShadowMap, Input.UV_InstanceIndex.xy ).a;
 
 				// Devastation
-				float2 MapCoords = Input.WorldSpacePos.xz * WorldSpaceToTerrain0To1;
+				float2 MapCoords = Input.WorldSpacePos.xz * _WorldSpaceToTerrain0To1;
 				float Devastation = GetDevastation( MapCoords ) * 2.0f;
 				float DevastatedAlpha = smoothstep( DevastationTreeAlphaReduce, 1.0f, Alpha );
 				Alpha = lerp( Alpha, DevastatedAlpha, Devastation );
@@ -425,7 +425,7 @@ PixelShader =
 				float Alpha = PdxTex2D( PDXMESH_AlphaBlendShadowMap, Input.UV ).a;
 
 				// Devastation
-				float2 MapCoords = Input.WorldSpacePos.xz * WorldSpaceToTerrain0To1;
+				float2 MapCoords = Input.WorldSpacePos.xz * _WorldSpaceToTerrain0To1;
 				float Devastation = GetDevastation( MapCoords ) * 2.0f;
 				float DevastatedAlpha = smoothstep( DevastationTreeAlphaReduce, 1.0f, Alpha );
 				Alpha = lerp( Alpha, DevastatedAlpha, Devastation );
@@ -441,11 +441,8 @@ PixelShader =
 BlendState BlendState
 {
 	BlendEnable = no
-	#SourceBlend = "src_alpha"
-	#DestBlend = "inv_src_alpha"
 	alphatocoverage = yes
 }
-
 
 RasterizerState RasterizerState
 {
@@ -471,62 +468,6 @@ Effect treeShadow
 	RasterizerState = ShadowRasterizerState
 }
 
-Effect tree_bush
-{
-	VertexShader = VS_standard
-	PixelShader = PS_leaf
-	Defines = { "TREE_BUSH" }
-}
-Effect tree_bushShadow
-{
-	VertexShader = VS_standard_shadow
-	PixelShader = PS_tree_shadow
-	Defines = { "TREE_BUSH" }
-	RasterizerState = ShadowRasterizerState
-}
-
-Effect tree_medium
-{
-	VertexShader = VS_standard
-	PixelShader = PS_leaf
-	Defines = { "TREE_MEDIUM" }
-}
-Effect tree_mediumShadow
-{
-	VertexShader = VS_standard_shadow
-	PixelShader = PS_tree_shadow
-	Defines = { "TREE_MEDIUM" }
-	RasterizerState = ShadowRasterizerState
-}
-
-Effect tree_tall
-{
-	VertexShader = VS_standard
-	PixelShader = PS_leaf
-	Defines = { "TREE_TALL" }
-}
-Effect tree_tallShadow
-{
-	VertexShader = VS_standard_shadow
-	PixelShader = PS_tree_shadow
-	Defines = { "TREE_TALL" }
-	RasterizerState = ShadowRasterizerState
-}
-
-Effect tree_snap_to_terrain
-{
-	VertexShader = VS_standard
-	PixelShader = PS_leaf
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" }
-}
-Effect tree_snap_to_terrainShadow
-{
-	VertexShader = VS_standard_shadow
-	PixelShader = PS_tree_shadow
-	RasterizerState = ShadowRasterizerState
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" }
-}
-
 # Map object shaders
 Effect tree_mapobject
 {
@@ -538,60 +479,4 @@ Effect treeShadow_mapobject
 	VertexShader = VS_mapobject_shadow
 	PixelShader = PS_tree_shadow_mapobject
 	RasterizerState = ShadowRasterizerState
-}
-
-Effect tree_bush_mapobject
-{
-	VertexShader = VS_mapobject
-	PixelShader = PS_leaf
-	Defines = { "TREE_BUSH" }
-}
-Effect tree_bushShadow_mapobject
-{
-	VertexShader = VS_mapobject_shadow
-	PixelShader = PS_tree_shadow_mapobject
-	Defines = { "TREE_BUSH" }
-	RasterizerState = ShadowRasterizerState
-}
-
-Effect tree_medium_mapobject
-{
-	VertexShader = VS_mapobject
-	PixelShader = PS_leaf
-	Defines = { "TREE_MEDIUM" }
-}
-Effect tree_mediumShadow_mapobject
-{
-	VertexShader = VS_mapobject_shadow
-	PixelShader = PS_tree_shadow_mapobject
-	Defines = { "TREE_MEDIUM" }
-	RasterizerState = ShadowRasterizerState
-}
-
-Effect tree_tall_mapobject
-{
-	VertexShader = VS_mapobject
-	PixelShader = PS_leaf
-	Defines = { "TREE_TALL" }
-}
-Effect tree_tallShadow_mapobject
-{
-	VertexShader = VS_mapobject_shadow
-	PixelShader = PS_tree_shadow_mapobject
-	Defines = { "TREE_TALL" }
-	RasterizerState = ShadowRasterizerState
-}
-
-Effect tree_snap_to_terrain_mapobject
-{
-	VertexShader = VS_mapobject
-	PixelShader = PS_leaf
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" }
-}
-Effect tree_snap_to_terrainShadow_mapobject
-{
-	VertexShader = VS_mapobject_shadow
-	PixelShader = "PS_jomini_mapobject_shadow_alphablend"
-	RasterizerState = ShadowRasterizerState
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" }
 }
