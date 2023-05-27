@@ -1,10 +1,10 @@
 Includes = {
 	"jomini/jomini_river_surface.fxh"
 	"jomini/jomini_province_overlays.fxh"
-	"cw/pdxterrain.fxh"
+	"cw/terrain.fxh"
 	"sharedconstants.fxh"
 	"distance_fog.fxh"
-	"cwpcoloroverlay.fxh"
+	"cwp_coloroverlay.fxh"
 	"fog_of_war.fxh"
 	"ssao_struct.fxh"
 	"lowspec_water.fxh"
@@ -34,7 +34,7 @@ PixelShader =
 			{
 				PS_COLOR_SSAO Out;
 
-				float2 MapCoords = Input.WorldSpacePos.xz * WorldSpaceToTerrain0To1;
+				float2 MapCoords = Input.WorldSpacePos.xz * _WorldSpaceToTerrain0To1;
 				float2 ProvinceCoords = Input.WorldSpacePos.xz / ProvinceMapSize;
 
 				// Light and shadow
@@ -59,7 +59,7 @@ PixelShader =
 				Color.rgb = ApplyHighlight( Color.rgb, ProvinceCoords );
 
 				// Flagmap fade-out
-				Color.a *= 1.0f - FlatMapLerp;
+				Color.a *= 1.0f - FlatmapLerp;
 
 				// Output
 				Out.Color = Color;
