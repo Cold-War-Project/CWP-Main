@@ -4,12 +4,13 @@
 law_arbitrary_justice = {
 	group = lawgroup_criminal_justice
 	icon = "gfx/interface/icons/law_icons/autocracy.dds"
-	progressiveness = -200
+	progressiveness = -100
 	unlocking_technologies = {
 	}
 	unlocking_laws = {
 	}
 	disallowing_laws = {
+		law_protected_speech
 	}
 	on_activate = {
 	}
@@ -24,8 +25,12 @@ law_arbitrary_justice = {
 		law_criminal_rehabilitation
 	}
 	ai_will_do = {
+		always = no
+		# This is just terrible
 	}
 	pop_support = {
+		value = 0
+		# No one likes this
 	}
 }
 
@@ -33,13 +38,13 @@ law_political_incarceration = {
 	group = lawgroup_criminal_justice
 	icon = "gfx/interface/icons/law_icons/oligarchy.dds"
 	progressiveness = -50
-	unlocking_technologies = {
-	}
-	unlocking_laws = {
-	}
+
 	disallowing_laws = {
+		law_protected_speech
+		law_decentralized_police
 	}
 	on_activate = {
+		recalculate_pop_ig_support = yes
 	}
 	institution = institution_criminal_justice_system
 	institution_modifier = {
@@ -51,11 +56,28 @@ law_political_incarceration = {
 	possible_political_movements = {
 		law_arbitrary_justice
 		law_labor_camps
+		law_penal_correction
 	}
 	ai_will_do = {
+		AND = {
+			produced_authority > 500
+			government_legitimacy > 75
+		}
 	}
 	pop_support = {
-		
+		value = 0
+		# People don't like arbitrary justice
+		add = {
+			desc = "POP_ALL"
+			if = {
+				limit = {
+					owner = {
+						has_law = law_type:law_arbitrary_justice
+					}
+				}
+				value = 0.15
+			}
+		}
 	}
 }
 
@@ -64,13 +86,11 @@ law_labor_camps = {
 	group = lawgroup_criminal_justice
 	icon = "gfx/interface/icons/law_icons/census_voting.dds"
 	progressiveness = 0
-	unlocking_technologies = {
-	}
-	unlocking_laws = {
-	}
 	disallowing_laws = {
+		law_decentralized_police
 	}
 	on_activate = {
+		recalculate_pop_ig_support = yes
 	}
 	institution = institution_criminal_justice_system
 	institution_modifier = {
@@ -82,9 +102,21 @@ law_labor_camps = {
 		law_penal_correction
 		law_criminal_rehabilitation
 	}
-	ai_will_do = {
-	}
+
 	pop_support = {
+		value = 0
+		# People don't like arbitrary justice
+		add = {
+			desc = "POP_ALL"
+			if = {
+				limit = {
+					owner = {
+						has_law = law_type:law_arbitrary_justice
+					}
+				}
+				value = 0.15
+			}
+		}
 	}
 }
 
@@ -92,13 +124,11 @@ law_penal_correction = {
 	group = lawgroup_criminal_justice
 	icon = "gfx/interface/icons/law_icons/universal_suffrage.dds"
 	progressiveness = 50
-	unlocking_technologies = {
-	}
-	unlocking_laws = {
-	}
 	disallowing_laws = {
+		law_decentralized_police
 	}
 	on_activate = {
+		recalculate_pop_ig_support = yes
 	}
 	institution = institution_criminal_justice_system
 	institution_modifier = {
@@ -107,10 +137,25 @@ law_penal_correction = {
 	possible_political_movements = {
 		law_labor_camps
 		law_criminal_rehabilitation
-	}
-	ai_will_do = {
+		law_criminal_restitution
 	}
 	pop_support = {
+		add = {
+			desc = "POP_LOWER_STRATA"
+			if = {
+				limit = {
+					strata = lower
+					owner = {
+						OR = {
+							has_law = law_type:law_labor_camps
+							has_law = law_type:law_political_incarceration
+							has_law = law_type:law_arbitrary_justice
+						}
+					}
+				}
+				value = 0.15
+			}
+		}
 	}
 }
 
@@ -119,10 +164,14 @@ law_criminal_rehabilitation = {
 	icon = "gfx/interface/icons/law_icons/universal_suffrage.dds"
 	progressiveness = 100
 	unlocking_technologies = {
+		civil_rights
 	}
 	unlocking_laws = {
+		law_penal_correction
+		law_criminal_restitution
 	}
 	disallowing_laws = {
+		law_decentralized_police
 	}
 	institution = institution_criminal_justice_system
 	institution_modifier = {
@@ -134,10 +183,21 @@ law_criminal_rehabilitation = {
 		law_penal_correction
 	}
 	on_activate = {
+		recalculate_pop_ig_support = yes
 	}
 	ai_will_do = {
 	}
 	pop_support = {
+		value = 0 
+		add = {
+			desc = "POP_MIDDLE_STRATA"
+			if = {
+				limit = {
+					strata = middle
+				}
+				value = 0.15
+			}
+		}
 	}
 }
 
@@ -146,8 +206,10 @@ law_criminal_restitution = {
 	icon = "gfx/interface/icons/law_icons/direct_democracy.dds"
 	progressiveness = 50
 	unlocking_technologies = {
+		civil_rights
 	}
 	unlocking_laws = {
+		law_corporate_friendly_policies
 	}
 	institution = institution_criminal_justice_system
 	institution_modifier = {
@@ -160,9 +222,19 @@ law_criminal_restitution = {
 		law_labor_camps
 	}
 	on_activate = {
-	}
-	ai_will_do = {
+		recalculate_pop_ig_support = yes
 	}
 	pop_support = {
+		value = 0
+		add = {
+			desc = "POP_WEALTH"
+			# Wealth 20 gives 0.1 pop support, 22 -> 0.2, 24 -> 0.3, ..., 30 -> 0.6
+			value = wealth
+			subtract = 18
+			divide = 2
+			multiply = 0.1
+			min = 0
+			max = 0.6
+		}
 	}
 }
