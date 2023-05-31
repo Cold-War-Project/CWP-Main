@@ -1,13 +1,13 @@
 Includes = {
 	"cw/shadow.fxh"
-	"cw/pdxterrain.fxh"
+	"cw/terrain.fxh"
 	"cw/utility.fxh"
 	"jomini/jomini_lighting.fxh"
 	"jomini/jomini_spline.fxh"
 	"jomini/jomini_province_overlays.fxh"
 	"sharedconstants.fxh"
 	"distance_fog.fxh"
-	"cwpcoloroverlay.fxh"
+	"cwp_coloroverlay.fxh"
 	"dynamic_masks.fxh"
 	"fog_of_war.fxh"
 }
@@ -89,7 +89,7 @@ PixelShader =
 			float4 Properties;
 			float3 Normal;
 
-			float2 MapCoords = Input.WorldSpacePos.xz * WorldSpaceToTerrain0To1;
+			float2 MapCoords = Input.WorldSpacePos.xz * _WorldSpaceToTerrain0To1;
 			float2 ProvinceCoords = Input.WorldSpacePos.xz / ProvinceMapSize;
 
 			// Using ddx and ddy because there is a code path that supportes stacking texture on top
@@ -100,7 +100,7 @@ PixelShader =
 			// Alpha
 			Diffuse.a *= MaskValue;
 			Diffuse.a *= JominiFlatSplineEdgeOpacity( Input.UV.x / UVScale, Input.MaxU / UVScale, EdgeOpacityThresholdInWorldSpace);
-			Diffuse.a *= 1.0f - FlatMapLerp;	// Flat map fade
+			Diffuse.a *= 1.0f - FlatmapLerp;	// Flat map fade
 			clip( Diffuse.a - 0.0001f );
 
 

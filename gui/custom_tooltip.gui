@@ -62,7 +62,7 @@ types TooltipTypes
 		}
 
 		blockoverride "name" {
-			text = "[LawType.GetNameNoFormatting]"
+			raw_text = "[LawType.GetNameNoFormatting] ([LawType.GetGroup.GetName])"
 		}
 
 		blockoverride "type" {
@@ -151,14 +151,14 @@ types TooltipTypes
 		}
 	}
 	
-	# This type pretends to be a Game Concept so we can reference it directly from GUI in cases where an IG is Invalid / Politically Inactive
-	type FancyTooltip_PoliticallyInactive = FancyTooltipWidgetType {
+	# This type pretends to be a Game Concept so we can reference it directly from GUI in cases where an IG is Invalid / Politically Unaligned
+	type FancyTooltip_PoliticallyUnaligned = FancyTooltipWidgetType {
 		blockoverride "text" {
-			text = "[concept_politically_inactive_involved_desc]"
+			text = "[concept_politically_unaligned_aligned_desc]"
 		}
 
 		blockoverride "name" {
-			text = "concept_politically_inactive"
+			text = "concept_politically_unaligned"
 		}
 
 		blockoverride "type" {
@@ -166,7 +166,7 @@ types TooltipTypes
 		}
 
 		blockoverride "icon_texture" {
-			texture = "gfx/interface/icons/ig_icons/politically_inactive.dds"
+			texture = "gfx/interface/icons/ig_icons/politically_unaligned.dds"
 		}
 	}
 	
@@ -180,6 +180,7 @@ types TooltipTypes
 				parentanchor = center
 				size = { 52 52 }
 				blockoverride "tooltip" {}
+				blockoverride "in_government_icon" {}
 			}
 		}
 
@@ -620,7 +621,45 @@ types TooltipTypes
 		}
 
 		blockoverride "name" {
-			text = "[Pop.GetPopType.GetNameNoIcon]"
+			text = "[Pop.GetNameNoIcon]"
+		}
+
+		blockoverride "type" {
+			text = "TOOLTIP_TYPE_POP"
+		}
+
+		blockoverride "color" {
+			color = "[Pop.GetPopType.GetColor]"
+		}
+
+		blockoverride "buttons" {
+			flowcontainer = {
+				margin_top = 14
+				using = default_list_position
+
+				button = {
+					using = default_button
+					text = "BUTTON_DETAILS"
+					size = { 300 40 }
+					input_action = "go_to_details"
+					tooltip = "GO_TO_DETAILS"
+					onclick = "[InformationPanelBar.OpenPopDetailsPanel(Pop.AccessSelf)]"
+				}
+			}
+		}
+	}
+
+	type FancyTooltip_PopSupporters = FancyTooltipWidgetType {
+		blockoverride "text" {
+			text = "DATA_POP_SUPPORTERS_NAME_TOOLTIP"
+		}
+
+		blockoverride "icon_texture" {
+			texture = "[Pop.GetPopType.GetTexture]"
+		}
+
+		blockoverride "name" {
+			text = "[Pop.GetName]"
 		}
 
 		blockoverride "type" {
@@ -908,7 +947,7 @@ types TooltipTypes
 		}
 
 		blockoverride "name" {
-			text = "[Character.GetFullNameWithTitleNoFormatting]"
+			text = "CHARACTER_TOOLTIP_HEADER_NAME"
 		}
 
 		blockoverride "type" {
@@ -1064,6 +1103,149 @@ types TooltipTypes
 						onshift = "[Execute(Technology.AddToQueueWithUnlocks(GetPlayer.Self))]"
 					}
 				}
+			}
+		}
+	}
+
+	type FancyTooltip_PoliticalMovement = FancyTooltipWidgetType {
+		blockoverride "text" {
+			text = "DATA_POLITICAL_MOVEMENT_NAME_TOOLTIP"
+		}
+
+		blockoverride "icon_texture" {
+			texture = "[PoliticalMovement.GetTexture]"
+		}
+		
+		blockoverride "name" {
+			text = "POLITICAL_MOVEMENT_TOOLTIP_HEADER"
+		}
+
+		blockoverride "type" {
+			text = "TOOLTIP_TYPE_POLITICAL_MOVEMENT"
+		}
+
+		blockoverride "tooltip_content_after" {
+
+			DefaultTooltipTextBox = {
+				text = "POLITICAL_MOVEMENT_SUPPORTING_INTEREST_GROUPS_HEADER"
+				margin_bottom = 0
+				autoresize = yes
+				multiline = yes
+				maximumsize = { 550 -1 }
+				fonttintcolor = "[TooltipInfo.GetTintColor]"
+			}
+
+			dynamicgridbox = {
+				visible = "[Not(IsDataModelEmpty(PoliticalMovement.GetSupportingInterestGroups))]"
+				datamodel = "[PoliticalMovement.GetSupportingInterestGroups]"
+
+				item = {
+					flowcontainer = {
+						spacing = 5
+
+						ig_button = {
+
+							blockoverride = "button_size" {
+								size = { 40 40 }
+							}
+
+							blockoverride "onclick" {
+								onclick = "[InformationPanelBar.OpenInterestGroupPanel(InterestGroup.AccessSelf)]"
+							}
+						}
+
+						DefaultTooltipTextBox = {
+							parentanchor = vcenter
+							text = "INTEREST_GROUP_NAME_WITH_CLOUT_VALUE"
+							align = nobaseline
+							autoresize = yes
+							multiline = yes
+							maximumsize = { 500 -1 }
+							fonttintcolor = "[TooltipInfo.GetTintColor]"
+						}
+
+						button_icon_goto = {
+							parentanchor = vcenter
+							size = { 30 30 }
+
+							blockoverride "icon_size" {
+								size = { 100% 100% }
+							}
+
+ 							onclick = "[InformationPanelBar.OpenInterestGroupPanel(InterestGroup.AccessSelf)]"
+							tooltip = "GO_TO_BUTTON_INTEREST_GROUP"
+ 						}
+					}
+				}
+			}
+
+			DefaultTooltipTextBox = {
+				text = "POLITICAL_MOVEMENT_SUPPORTING_AGITATORS_HEADER"
+				margin_bottom = 0
+				autoresize = yes
+				multiline = yes
+				maximumsize = { 550 -1 }
+				fonttintcolor = "[TooltipInfo.GetTintColor]"
+			}
+
+			dynamicgridbox = {
+				visible = "[Not(IsDataModelEmpty(PoliticalMovement.GetSupportingCharacters))]"
+				datamodel = "[PoliticalMovement.GetSupportingCharacters]"
+
+				item = {
+					flowcontainer = {
+						spacing = 5
+
+						character_portrait_small = {
+							blockoverride "portrait_button_onrightclick" {}
+
+							character_ig_icon = {
+								parentanchor = bottom|right
+								size = { 15 15 }
+
+								blockoverride "tooltip" {
+									tooltipwidget = {
+										FancyTooltip_IG = {
+											datacontext = "[Character.AccessInterestGroup]"
+										}
+									}
+								}
+							}
+						}
+
+						DefaultTooltipTextBox = {
+							parentanchor = vcenter
+							text = "CHARACETR_NAME_WITH_POPULARITY"
+							align = nobaseline
+							autoresize = yes
+							multiline = yes
+							maximumsize = { 500 -1 }
+							fonttintcolor = "[TooltipInfo.GetTintColor]"
+						}
+
+						button_icon_goto = {
+							parentanchor = vcenter
+							size = { 30 30 }
+
+							blockoverride "icon_size" {
+								size = { 100% 100% }
+							}
+
+ 							onclick = "[InformationPanelBar.OpenCommanderPanel(Character.AccessSelf)]"
+							tooltip = "GO_TO_BUTTON_CHARACTER"
+ 						}
+					}
+				}
+			}
+
+			DefaultTooltipTextBox = {
+				visible = "[PoliticalMovement.IsRevolutionary]"
+				text = "DATA_POLITICAL_MOVEMENT_STATES_SECEDED"
+				margin_bottom = 0
+				autoresize = yes
+				multiline = yes
+				maximumsize = { 550 -1 }
+				fonttintcolor = "[TooltipInfo.GetTintColor]"
 			}
 		}
 	}
@@ -1288,6 +1470,24 @@ types TooltipTypes
 		}
 	}
 
+	type FancyTooltip_BattleCondition = FancyTooltipWidgetType {
+		blockoverride "text" {
+			text = "BATTLE_CONDITION_TOOLTIP"
+		}
+
+		blockoverride "icon_texture" {
+			texture = "[BattleCondition.GetTexture]"
+		}
+
+		blockoverride "name" {
+			text = "[BattleCondition.GetNameNoFormatting]"
+		}
+
+		blockoverride "type" {
+			text = "[concept_battle_condition]"
+		}
+	}
+
 	type corruption_tooltip = TooltipWidgetType {
 		dynamicgridbox = {
 			minimumsize = { 450 450 }
@@ -1384,20 +1584,6 @@ types TooltipTypes
 						raw_text = "#D Global Temp. Target: #! [GetPlayer.MakeScope.ScriptValue('global_temp_target_celsius')]"
 					}
 				}
-				flowcontainer = {
-					margin_top = 110
-					direction = vertical
-					spacing = 20
-					flowcontainer = {
-						margin_bottom = 100
-						parentanchor = top
-						direction = vertical
-						textbox = {
-							text = "POLLUTION_COUNTER_TOOLTIP"
-							using = fontsize_medium
-						}
-					}
-				}	
 			}
 		}
 	}

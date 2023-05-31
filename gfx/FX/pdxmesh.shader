@@ -1,6 +1,6 @@
 Includes = {
 	"cw/pdxmesh.fxh"
-	"cw/pdxterrain.fxh"
+	"cw/terrain.fxh"
 	"cw/utility.fxh"
 	"cw/curve.fxh"
 	"cw/shadow.fxh"
@@ -16,8 +16,9 @@ Includes = {
 	"sharedconstants.fxh"
 	"fog_of_war.fxh"
 	"distance_fog.fxh"
-	"cwpcoloroverlay.fxh"
+	"cwp_coloroverlay.fxh"
 	"ssao_struct.fxh"
+	"constants_ig_colors.fxh"
 }
 
 PixelShader =
@@ -92,6 +93,15 @@ VertexStruct VS_OUTPUT
 	float3 WorldSpacePos	: TEXCOORD5;
 	uint InstanceIndex 	: TEXCOORD6;
 };
+
+Code
+[[
+	uint GetUserDataUint( uint InstanceIndex )
+	{
+		return uint( Data[ InstanceIndex + PDXMESH_USER_DATA_OFFSET + 0 ].x );
+	}
+]]
+
 
 VertexShader =
 {
@@ -197,7 +207,7 @@ VertexShader =
 					Input.Position.y = SnapToWaterLevel( Input.Position.y, WorldMatrix );
 				#endif
 
-				VS_OUTPUT Out = ConvertOutput( PdxMeshVertexShader( PdxMeshConvertInput( Input ), Input.InstanceIndex24_Opacity8, UnpackAndGetMapObjectWorldMatrix( Input.InstanceIndex24_Opacity8 ) ) );
+				VS_OUTPUT Out = ConvertOutput( PdxMeshVertexShader( PdxMeshConvertInput( Input ), 0/*Not supported*/, UnpackAndGetMapObjectWorldMatrix( Input.InstanceIndex24_Opacity8 ) ) );
 				Out.InstanceIndex = Input.InstanceIndex24_Opacity8;
 
 				#ifdef PDX_MESH_SNAP_VERTICES_TO_TERRAIN
@@ -240,10 +250,36 @@ VertexShader =
 		[[
 			PDX_MAIN
 			{
-				#ifdef PDX_MESH_UV1
-				CalculateSineAnimation( Input.UV1, Input.Position, Input.Normal, Input.Tangent );
-				#endif
-				VS_OUTPUT Out = ConvertOutput( PdxMeshVertexShaderStandard( Input ) );
+				VS_OUTPUT Out;
+
+				float4 Position = float4( Input.Position.xyz, 1.0 );
+				float4x4 WorldMatrix = PdxMeshGetWorldMatrix( Input.InstanceIndices.y );
+
+				// Reset Rotation
+				WorldMatrix[0][0] = 1;
+				WorldMatrix[0][1] = 0;
+				WorldMatrix[0][2] = 0;
+				WorldMatrix[1][0] = 0;
+				WorldMatrix[1][1] = 1;
+				WorldMatrix[1][2] = 0;
+				WorldMatrix[2][0] = 0;
+				WorldMatrix[2][1] = 0;
+				WorldMatrix[2][2] = 1;
+
+				// Wave animation
+				CalculateSineAnimation( Input.UV1, Position.xyz, Input.Normal, Input.Tangent, float3( GetMatrixData( WorldMatrix, 0, 3 ), GetMatrixData( WorldMatrix, 1, 3 ), GetMatrixData( WorldMatrix, 2, 3 ) ) );
+
+				Out.Normal = normalize( mul( CastTo3x3( WorldMatrix ), Input.Normal ) );
+				Out.Tangent = normalize( mul( CastTo3x3( WorldMatrix ), Input.Tangent ) );
+				Out.Bitangent = normalize( cross( Out.Normal, Out.Tangent ) * Input.Tangent.w );
+				Out.Position = mul( WorldMatrix, Position );
+				Out.WorldSpacePos = Out.Position.xyz;
+				Out.WorldSpacePos /= WorldMatrix[3][3];
+				Out.Position = FixProjectionAndMul( ViewProjectionMatrix, Out.Position );
+
+				Out.UV0 = Input.UV0;
+				Out.UV1 = Input.UV1;
+
 				Out.InstanceIndex = Input.InstanceIndices.y;
 
 				return Out;
@@ -258,8 +294,111 @@ VertexShader =
 		[[
 			PDX_MAIN
 			{
-				CalculateSineAnimation( Input.UV1, Input.Position, Input.Normal, Input.Tangent );
-				return PdxMeshVertexShaderShadowStandard( Input );
+				VS_OUTPUT_PDXMESHSHADOWSTANDARD Out;
+
+				float4 Position = float4( Input.Position.xyz, 1.0 );
+				float4x4 WorldMatrix = PdxMeshGetWorldMatrix( Input.InstanceIndices.y );
+
+				// Reset Rotation
+				WorldMatrix[0][0] = 1;
+				WorldMatrix[0][1] = 0;
+				WorldMatrix[0][2] = 0;
+				WorldMatrix[1][0] = 0;
+				WorldMatrix[1][1] = 1;
+				WorldMatrix[1][2] = 0;
+				WorldMatrix[2][0] = 0;
+				WorldMatrix[2][1] = 0;
+				WorldMatrix[2][2] = 1;
+
+				// Wave Animation
+				CalculateSineAnimation( Input.UV1, Position.xyz, Input.Normal, Input.Tangent, float3( GetMatrixData( WorldMatrix, 3, 0 ), GetMatrixData( WorldMatrix, 3, 1 ), GetMatrixData( WorldMatrix, 3, 2 ) ) );
+
+				Out.Position = mul( WorldMatrix, Position );
+				Out.Position = FixProjectionAndMul( ViewProjectionMatrix, Out.Position );
+				Out.UV_InstanceIndex.xy = Input.UV0;
+				Out.UV_InstanceIndex.z = Input.InstanceIndices.y;
+
+				return Out;
+			}
+		]]
+	}
+
+	MainCode VS_sine_animation_mapobject
+	{
+		Input = "VS_INPUT_PDXMESH_MAPOBJECT"
+		Output = "VS_OUTPUT"
+		Code
+		[[
+			PDX_MAIN
+			{
+				VS_OUTPUT Out;
+
+				float4 Position = float4( Input.Position.xyz, 1.0 );
+				float4x4 WorldMatrix = UnpackAndGetMapObjectWorldMatrix( Input.InstanceIndex24_Opacity8 );
+
+				// Reset Rotation
+				WorldMatrix[0][0] = 1;
+				WorldMatrix[0][1] = 0;
+				WorldMatrix[0][2] = 0;
+				WorldMatrix[1][0] = 0;
+				WorldMatrix[1][1] = 1;
+				WorldMatrix[1][2] = 0;
+				WorldMatrix[2][0] = 0;
+				WorldMatrix[2][1] = 0;
+				WorldMatrix[2][2] = 1;
+
+				// Wave animation
+				CalculateSineAnimation( Input.UV1, Position.xyz, Input.Normal, Input.Tangent, float3( GetMatrixData( WorldMatrix, 0, 3 ), GetMatrixData( WorldMatrix, 1, 3 ), GetMatrixData( WorldMatrix, 2, 3 ) ) );
+
+				Out.Normal = normalize( mul( CastTo3x3( WorldMatrix ), Input.Normal ) );
+				Out.Tangent = normalize( mul( CastTo3x3( WorldMatrix ), Input.Tangent ) );
+				Out.Bitangent = normalize( cross( Out.Normal, Out.Tangent ) * Input.Tangent.w );
+				Out.Position = mul( WorldMatrix, Position );
+				Out.WorldSpacePos = Out.Position.xyz;
+				Out.WorldSpacePos /= WorldMatrix[3][3];
+				Out.Position = FixProjectionAndMul( ViewProjectionMatrix, Out.Position );
+
+				Out.UV0 = Input.UV0;
+				Out.UV1 = Input.UV1;
+
+				Out.InstanceIndex = Input.InstanceIndex24_Opacity8;
+
+				return Out;
+			}
+		]]
+	}
+	MainCode VS_sine_animation_shadow_mapobject
+	{
+		Input = "VS_INPUT_PDXMESH_MAPOBJECT"
+		Output = "VS_OUTPUT_MAPOBJECT_SHADOW"
+		Code
+		[[
+			PDX_MAIN
+			{
+				VS_OUTPUT_MAPOBJECT_SHADOW Out;
+
+				float4 Position = float4( Input.Position.xyz, 1.0 );
+				float4x4 WorldMatrix = UnpackAndGetMapObjectWorldMatrix( Input.InstanceIndex24_Opacity8 );
+
+				// Reset Rotation
+				WorldMatrix[0][0] = 1;
+				WorldMatrix[0][1] = 0;
+				WorldMatrix[0][2] = 0;
+				WorldMatrix[1][0] = 0;
+				WorldMatrix[1][1] = 1;
+				WorldMatrix[1][2] = 0;
+				WorldMatrix[2][0] = 0;
+				WorldMatrix[2][1] = 0;
+				WorldMatrix[2][2] = 1;
+
+				// Wave Animation
+				CalculateSineAnimation( Input.UV1, Position.xyz, Input.Normal, Input.Tangent, float3( GetMatrixData( WorldMatrix, 3, 0 ), GetMatrixData( WorldMatrix, 3, 1 ), GetMatrixData( WorldMatrix, 3, 2 ) ) );
+
+				Out.Position = mul( WorldMatrix, Position );
+				Out.Position = FixProjectionAndMul( ViewProjectionMatrix, Out.Position );
+				Out.InstanceIndex24_Opacity8 = Input.InstanceIndex24_Opacity8;
+
+				return Out;
 			}
 		]]
 	}
@@ -299,7 +438,7 @@ PixelShader =
 					clip( _WaterHeight - Input.WorldSpacePos.y + 0.1 ); // +0.1 to avoid gap between water and mesh
 				#endif
 
-				float2 MapCoords = Input.WorldSpacePos.xz * WorldSpaceToTerrain0To1;
+				float2 MapCoords = Input.WorldSpacePos.xz * _WorldSpaceToTerrain0To1;
 				float2 ProvinceCoords = Input.WorldSpacePos.xz / ProvinceMapSize;
 				float LocalHeight = Input.WorldSpacePos.y - GetHeight( Input.WorldSpacePos.xz );
 
@@ -324,8 +463,19 @@ PixelShader =
 				float3x3 TBN = Create3x3( normalize( Input.Tangent ), normalize( Input.Bitangent ), InNormal );
 				float3 Normal = normalize( mul( NormalSample, TBN ) );
 
+				// Revolution flag
+				#ifdef REVOLUTIONFLAG
+						#if defined( IG_USERDATA )
+							uint InterestGroupColorIndex = GetUserDataUint( Input.InstanceIndex );
+							float4 InterestGroupColor = GetInterestGroupColorUserdata( InterestGroupColorIndex );
+						#else
+							float4 InterestGroupColor = GetInterestGroupColorDefine();
+						#endif
+					Diffuse.rgb = Overlay( Diffuse.rgb, ToLinear( HSVtoRGB( InterestGroupColor.rgb ) ) );
+				#endif
+
 				// Baked AO
-				#if defined( ATLAS )
+				#if defined( TINT_COLOR )
 					float4 Unique = PdxTex2D( UniqueMap, UNIQUE_UV_SET );
 					Diffuse.rgb = Overlay( Diffuse.rgb, Unique.rgb );
 				#endif
@@ -376,12 +526,12 @@ PixelShader =
 						Color = ApplyColorOverlay( Color, ColorOverlay, PostLightingBlend );
 					#endif
 					#ifndef NO_FOG
-						if( FlatMapLerp < 1.0 )
+						if( FlatmapLerp < 1.0 )
 						{
 							float3 Unfogged = Color;
 							Color = ApplyFogOfWar( Color, Input.WorldSpacePos );
 							Color = GameApplyDistanceFog( Color, Input.WorldSpacePos );
-							Color = lerp( Color, Unfogged, FlatMapLerp );
+							Color = lerp( Color, Unfogged, FlatmapLerp );
 						}
 					#endif
 				#endif
@@ -396,9 +546,8 @@ PixelShader =
 
 				// Flatmap
 				#ifdef FLATMAP
-					float OpacityOnLand = 0.25;
 				 	float LandMask = PdxTex2DLod0( LandMaskMap, float2( MapCoords.x, 1.0 - MapCoords.y ) ).r;
-					Diffuse.a *= ( 1.0 - ( LandMask * ( 1.0 - OpacityOnLand ) ) );
+					Diffuse.a *= ( 1.0 - ( LandMask * ( 1.0 - _FlatmapOverlayLandOpacity ) ) );
 				#endif
 
 				// Debug
@@ -474,35 +623,7 @@ Effect standardShadow
 	RasterizerState = ShadowRasterizerState
 }
 
-# Standard + no second sun
-Effect standard_singlesun
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-	Defines = { "ATLAS" "SINGLESUN" }
-}
-Effect standard_singlesunShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshStandardShadow"
-	RasterizerState = ShadowRasterizerState
-}
-
-# Standard + atlas
-Effect standard_atlas
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-	Defines = { "ATLAS" }
-}
-Effect standard_atlasShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshStandardShadow"
-	RasterizerState = ShadowRasterizerState
-}
-
-# Standard + 	 blend
+# Standard + alpha blend
 Effect standard_alpha_blend
 {
 	VertexShader = "VS_standard"
@@ -533,78 +654,6 @@ Effect standard_alpha_to_coverageShadow
 	Defines = { "ALPHA_TO_COVERAGE" }
 }
 
-# Standard + a2c + snap to water
-Effect standard_alpha_to_coverage_snap_to_water
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-	BlendState = "alpha_to_coverage"
-	Defines = { "ALPHA_TO_COVERAGE" "SNAP_TO_WATER" }
-}
-Effect standard_alpha_to_coverage_snap_to_waterShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshAlphaBlendShadow"
-	RasterizerState = ShadowRasterizerState
-	Defines = { "ALPHA_TO_COVERAGE" "SNAP_TO_WATER" }
-}
-
-# Standard + colormap + no second sun
-Effect standard_colormap_singlesun
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-	Defines = { "COLORMAP" "SINGLESUN" }
-}
-Effect standard_colormap_singlesunShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshStandardShadow"
-	RasterizerState = ShadowRasterizerState
-}
-
-# Standard + colormap
-Effect standard_colormap
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-	Defines = { "COLORMAP" }
-}
-Effect standard_colormapShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshStandardShadow"
-	RasterizerState = ShadowRasterizerState
-}
-
-# Standard + atlas + colormap
-Effect standard_atlas_colormap
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-	Defines = { "ATLAS" "COLORMAP" }
-}
-Effect standard_atlas_colormapShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshStandardShadow"
-	RasterizerState = ShadowRasterizerState
-}
-
-# Standard + atlas + colormap + no second sun
-Effect standard_atlas_colormap_singlesun
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-	Defines = { "ATLAS" "COLORMAP" "SINGLESUN" }
-}
-Effect standard_atlas_colormap_singlesunmapShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshStandardShadow"
-	RasterizerState = ShadowRasterizerState
-}
-
 # Flag animation
 Effect standard_flag_basic
 {
@@ -617,234 +666,22 @@ Effect standard_flag_basicShadow
 	PixelShader = "PixelPdxMeshStandardShadow"
 	RasterizerState = ShadowRasterizerState
 }
-
-# Standard + no borders
-Effect standard_no_borders
+Effect standard_flag_revolution
 {
-	VertexShader = "VS_standard"
+	VertexShader = "VS_sine_animation"
 	PixelShader = "PS_standard"
-	Defines = { "NO_BORDERS"  }
+
+	Defines = { "REVOLUTIONFLAG" "IG_USERDATA" }
 }
-Effect standard_no_bordersShadow
+Effect standard_flag_revolutionShadow
 {
-	VertexShader = "VS_standard_shadow"
+	VertexShader = "VS_sine_animation_shadow"
 	PixelShader = "PixelPdxMeshStandardShadow"
 	RasterizerState = ShadowRasterizerState
-}
-
-# Snap
-Effect snap_to_terrain
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" }
-}
-Effect snap_to_terrainShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshStandardShadow"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" }
-	RasterizerState = ShadowRasterizerState
-}
-
-# Snap + atlas
-Effect snap_to_terrain_atlas
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "ATLAS" }
-}
-Effect snap_to_terrain_atlasShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshStandardShadow"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "ATLAS" }
-	RasterizerState = ShadowRasterizerState
-}
-
-# Snap + a2c
-Effect snap_to_terrain_alpha_to_coverage
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-	BlendState = "alpha_to_coverage"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "ALPHA_TO_COVERAGE" }
-}
-Effect snap_to_terrain_alpha_to_coverageShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshAlphaBlendShadow"
-	RasterizerState = ShadowRasterizerState
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "ALPHA_TO_COVERAGE" }
-}
-
-# Snap + atlas + a2c
-Effect snap_to_terrain_atlas_alpha_to_coverage
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-	BlendState = "alpha_to_coverage"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "ATLAS" "ALPHA_TO_COVERAGE" }
-}
-Effect snap_to_terrain_atlas_alpha_to_coverageShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshAlphaBlendShadow"
-	RasterizerState = ShadowRasterizerState
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "ALPHA_TO_COVERAGE" }
-}
-
-# Snap + a2c + colormap
-Effect snap_to_terrain_alpha_to_coverage_colormap
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-	BlendState = "alpha_to_coverage"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "COLORMAP" "ALPHA_TO_COVERAGE" }
-}
-Effect snap_to_terrain_alpha_to_coverage_colormapShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshAlphaBlendShadow"
-	RasterizerState = ShadowRasterizerState
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "ALPHA_TO_COVERAGE" }
-}
-
-# Snap + a2c + colormap + no second sun
-Effect snap_to_terrain_alpha_to_coverage_colormap_singlesun
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-	BlendState = "alpha_to_coverage"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "COLORMAP" "ALPHA_TO_COVERAGE" "SINGLESUN" }
-}
-Effect snap_to_terrain_alpha_to_coverage_colormap_singlesunShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshAlphaBlendShadow"
-	RasterizerState = ShadowRasterizerState
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "ALPHA_TO_COVERAGE" }
-}
-
-# Snap + atlas + a2c + colormap
-Effect snap_to_terrain_atlas_alpha_to_coverage_colormap
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-	BlendState = "alpha_to_coverage"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "ATLAS" "COLORMAP" "ALPHA_TO_COVERAGE" }
-}
-Effect snap_to_terrain_atlas_alpha_to_coverage_colormapShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshAlphaBlendShadow"
-	RasterizerState = ShadowRasterizerState
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "ALPHA_TO_COVERAGE" }
-}
-
-
-# Tree trunk
-Effect standard_treetrunk
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-	Defines = { "WINDTRANSFORM" }
-}
-Effect standard_treetrunkShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshAlphaBlendShadow"
-	RasterizerState = ShadowRasterizerState
-	Defines = { "WINDTRANSFORM" }
-}
-
-Effect snap_to_terrain_treetrunk
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "WINDTRANSFORM" }
-}
-Effect snap_to_terrain_treetrunkShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshAlphaBlendShadow"
-	RasterizerState = ShadowRasterizerState
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "WINDTRANSFORM" }
-}
-
-Effect standard_treetrunk_medium
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-	Defines = { "WINDTRANSFORM" "TREE_MEDIUM" }
-}
-Effect standard_treetrunk_mediumShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshAlphaBlendShadow"
-	RasterizerState = ShadowRasterizerState
-	Defines = { "WINDTRANSFORM" "TREE_MEDIUM" }
-}
-
-Effect snap_to_terrain_treetrunk_medium
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "WINDTRANSFORM" "TREE_MEDIUM" }
-}
-Effect snap_to_terrain_treetrunk_mediumShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshAlphaBlendShadow"
-	RasterizerState = ShadowRasterizerState
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "WINDTRANSFORM" "TREE_MEDIUM" }
-}
-
-Effect standard_treetrunk_tall
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-	Defines = { "WINDTRANSFORM" "TREE_TALL" }
-}
-Effect standard_treetrunk_tallShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshAlphaBlendShadow"
-	RasterizerState = ShadowRasterizerState
-	Defines = { "WINDTRANSFORM" "TREE_TALL" }
-}
-
-Effect snap_to_terrain_treetrunk_tall
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "WINDTRANSFORM" "TREE_TALL" }
-}
-Effect snap_to_terrain_treetrunk_tallShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshAlphaBlendShadow"
-	RasterizerState = ShadowRasterizerState
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "WINDTRANSFORM" "TREE_TALL" }
 }
 
 
 # Flatmap
-Effect flatmap_alpha_blend
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-	BlendState = "alpha_blend"
-	DepthStencilState = "depth_test_no_write"
-	RasterizerState = FlatmapRasterizerState
-	Defines = { "NO_FOG" }
-}
-Effect flatmap_alpha_blendShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshAlphaBlendShadow"
-	Defines = { "NO_FOG" }
-}
 Effect flatmap_alpha_blend_no_borders
 {
 	VertexShader = "VS_standard"
@@ -859,38 +696,6 @@ Effect flatmap_alpha_blend_no_bordersShadow
 	VertexShader = "VS_standard_shadow"
 	PixelShader = "PixelPdxMeshAlphaBlendShadow"
 	Defines = { "NO_FOG" }
-	RasterizerState = ShadowRasterizerState
-}
-
-# Standard flat light
-Effect standard_flat
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-
-	Defines = { "FLATLIGHT" }
-}
-Effect standard_flatShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshStandardShadow"
-	RasterizerState = ShadowRasterizerState
-}
-
-# Standard flat light + alpha blend
-Effect standard_flat_alpha_blend
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_standard"
-	BlendState = "alpha_blend"
-	DepthStencilState = "depth_test_no_write"
-
-	Defines = { "FLATLIGHT" }
-}
-Effect standard_flat_alpha_blendShadow
-{
-	VertexShader = "VS_standard_shadow"
-	PixelShader = "PixelPdxMeshAlphaBlendShadow"
 	RasterizerState = ShadowRasterizerState
 }
 
@@ -913,48 +718,6 @@ Effect standard_mapobject
 	PixelShader = "PS_standard"
 }
 Effect standardShadow_mapobject
-{
-	VertexShader = "VS_jomini_mapobject_shadow"
-	PixelShader = "PS_jomini_mapobject_shadow"
-	RasterizerState = ShadowRasterizerState
-}
-
-# Standard + no second sun
-Effect standard_singlesun_mapobject
-{
-	VertexShader = "VS_mapobject"
-	PixelShader = "PS_standard"
-	Defines = { "ATLAS" "SINGLESUN" }
-}
-Effect standard_singlesunShadow_mapobject
-{
-	VertexShader = "VS_jomini_mapobject_shadow"
-	PixelShader = "PS_jomini_mapobject_shadow"
-	RasterizerState = ShadowRasterizerState
-}
-
-# Standard + no second sun
-Effect standard_singlesun_mapobject
-{
-	VertexShader = "VS_mapobject"
-	PixelShader = "PS_standard"
-	Defines = { "ATLAS" "SINGLESUN" }
-}
-Effect standard_singlesun_mapobjectShadow
-{
-	VertexShader = "VS_jomini_mapobject_shadow"
-	PixelShader = "PS_jomini_mapobject_shadow"
-	RasterizerState = ShadowRasterizerState
-}
-
-# Standard + atlas
-Effect standard_atlas_mapobject
-{
-	VertexShader = "VS_mapobject"
-	PixelShader = "PS_standard"
-	Defines = { "ATLAS" }
-}
-Effect standard_atlasShadow_mapobject
 {
 	VertexShader = "VS_jomini_mapobject_shadow"
 	PixelShader = "PS_jomini_mapobject_shadow"
@@ -992,148 +755,33 @@ Effect standard_alpha_to_coverageShadow_mapobject
 	Defines = { "ALPHA_TO_COVERAGE" }
 }
 
-# Standard + a2c + snap to water
-Effect standard_alpha_to_coverage_snap_to_water
+# Flag animation
+Effect standard_flag_basic_mapobject
 {
-	VertexShader = "VS_mapobject"
+	VertexShader = "VS_sine_animation_mapobject"
 	PixelShader = "PS_standard"
-	BlendState = "alpha_to_coverage"
-	Defines = { "ALPHA_TO_COVERAGE" "SNAP_TO_WATER" }
 }
-Effect standard_alpha_to_coverage_snap_to_waterShadow
+Effect standard_flag_basicShadow_mapobject
 {
-	VertexShader = "VS_mapobject_shadow"
-	PixelShader = "PS_jomini_mapobject_shadow_alphablend"
-	RasterizerState = ShadowRasterizerState
-	Defines = { "ALPHA_TO_COVERAGE" "SNAP_TO_WATER" }
-}
-
-# Standard + colormap
-Effect standard_colormap_mapobject
-{
-	VertexShader = "VS_mapobject"
-	PixelShader = "PS_standard"
-	Defines = { "COLORMAP" }
-}
-Effect standard_colormapShadow_mapobject
-{
-	VertexShader = "VS_jomini_mapobject_shadow"
+	VertexShader = "VS_sine_animation_shadow_mapobject"
 	PixelShader = "PS_jomini_mapobject_shadow"
 	RasterizerState = ShadowRasterizerState
 }
-
-# Standard + colormap + no second sun
-Effect standard_colormap_singlesun_mapobject
+Effect standard_flag_revolution_mapobject
 {
-	VertexShader = "VS_mapobject"
+	VertexShader = "VS_sine_animation_mapobject"
 	PixelShader = "PS_standard"
-	Defines = { "COLORMAP" "SINGLESUN" }
+
+	Defines = { "REVOLUTIONFLAG" "IG_USERDATA" }
 }
-Effect standard_colormap_singlesunShadow_mapobject
+Effect standard_flag_revolutionShadow_mapobject
 {
-	VertexShader = "VS_jomini_mapobject_shadow"
+	VertexShader = "VS_sine_animation_shadow_mapobject"
 	PixelShader = "PS_jomini_mapobject_shadow"
 	RasterizerState = ShadowRasterizerState
-}
-
-# Standard + atlas + colormap
-Effect standard_atlas_colormap_mapobject
-{
-	VertexShader = "VS_mapobject"
-	PixelShader = "PS_standard"
-	Defines = { "COLORMAP" "ATLAS" }
-}
-Effect standard_atlas_colormapShadow_mapobject
-{
-	VertexShader = "VS_jomini_mapobject_shadow"
-	PixelShader = "PS_jomini_mapobject_shadow"
-	RasterizerState = ShadowRasterizerState
-}
-
-# Standard + atlas + colormap + no second sun
-Effect standard_atlas_colormap_singlesunShadow_mapobject
-{
-	VertexShader = "VS_mapobject"
-	PixelShader = "PS_standard"
-	Defines = { "ATLAS" "COLORMAP" "SINGLESUN" }
-}
-Effect standard_atlas_colormap_singlesun_mapobjectShadow
-{
-	VertexShader = "VS_jomini_mapobject_shadow"
-	PixelShader = "PS_jomini_mapobject_shadow"
-	RasterizerState = ShadowRasterizerState
-}
-
-Effect standard_no_borders_mapobject
-{
-	VertexShader = "VS_mapobject"
-	PixelShader = "PS_standard"
-	Defines = { "NO_BORDERS"  }
-}
-Effect standard_no_bordersShadow_mapobject
-{
-	VertexShader = "VS_jomini_mapobject_shadow"
-	PixelShader = "PS_jomini_mapobject_shadow"
-	RasterizerState = ShadowRasterizerState
-}
-
-# Tree trunk
-Effect snap_to_terrain_treetrunk_mapobject
-{
-	VertexShader = "VS_mapobject"
-	PixelShader = "PS_standard"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "WINDTRANSFORM" }
-}
-Effect snap_to_terrain_treetrunkShadow_mapobject
-{
-	VertexShader = "VS_jomini_mapobject_shadow"
-	PixelShader = "PS_jomini_mapobject_shadow"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "WINDTRANSFORM" }
-}
-
-Effect snap_to_terrain_treetrunk_medium_mapobject
-{
-	VertexShader = "VS_mapobject"
-	PixelShader = "PS_standard"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "WINDTRANSFORM" "TREE_MEDIUM" }
-}
-Effect snap_to_terrain_treetrunk_mediumShadow_mapobject
-{
-	VertexShader = "VS_jomini_mapobject_shadow"
-	PixelShader = "PS_jomini_mapobject_shadow"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "WINDTRANSFORM" "TREE_MEDIUM" }
-}
-
-Effect snap_to_terrain_treetrunk_tall_mapobject
-{
-	VertexShader = "VS_mapobject"
-	PixelShader = "PS_standard"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "WINDTRANSFORM" "TREE_TALL" }
-}
-Effect snap_to_terrain_treetrunk_tallShadow_mapobject
-{
-	VertexShader = "VS_jomini_mapobject_shadow"
-	PixelShader = "PS_jomini_mapobject_shadow"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "WINDTRANSFORM" "TREE_TALL" }
 }
 
 # Flatmap
-Effect flatmap_alpha_blend_mapobject
-{
-	VertexShader = "VS_mapobject"
-	PixelShader = "PS_standard"
-	BlendState = "alpha_blend"
-	DepthStencilState = "depth_test_no_write"
-	RasterizerState = FlatmapRasterizerState
-	Defines = { "NO_FOG" "FLATMAP" }
-}
-Effect flatmap_alpha_blendShadow_mapobject
-{
-	VertexShader = "VS_jomini_mapobject_shadow"
-	PixelShader = "PS_jomini_mapobject_shadow_alphablend"
-	RasterizerState = ShadowRasterizerState
-	Defines = { "NO_FOG" "FLATMAP" "FLATMAP" }
-}
 Effect flatmap_alpha_blend_no_borders_mapobject
 {
 	VertexShader = "VS_mapobject"
@@ -1148,147 +796,5 @@ Effect flatmap_alpha_blend_no_bordersShadow_mapobject
 	VertexShader = "VS_jomini_mapobject_shadow"
 	PixelShader = "PS_jomini_mapobject_shadow_alphablend"
 	Defines = { "NO_FOG" "FLATMAP" }
-	RasterizerState = ShadowRasterizerState
-}
-
-# Snap
-Effect snap_to_terrain_mapobject
-{
-	VertexShader = "VS_mapobject"
-	PixelShader = "PS_standard"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN"  }
-}
-Effect snap_to_terrainShadow_mapobject
-{
-	VertexShader = "VS_jomini_mapobject_shadow"
-	PixelShader = "PS_jomini_mapobject_shadow"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" }
-	RasterizerState = ShadowRasterizerState
-}
-
-# Snap + atlas
-Effect snap_to_terrain_atlas_mapobject
-{
-	VertexShader = "VS_mapobject"
-	PixelShader = "PS_standard"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "ATLAS" }
-}
-Effect snap_to_terrain_atlasShadow_mapobject
-{
-	VertexShader = "VS_jomini_mapobject_shadow"
-	PixelShader = "PS_jomini_mapobject_shadow"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" }
-	RasterizerState = ShadowRasterizerState
-}
-
-# Snap + a2c
-Effect snap_to_terrain_alpha_to_coverage_mapobject
-{
-	VertexShader = "VS_mapobject"
-	PixelShader = "PS_standard"
-	BlendState = "alpha_to_coverage"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "ALPHA_TO_COVERAGE" }
-}
-Effect snap_to_terrain_alpha_to_coverageShadow_mapobject
-{
-	VertexShader = "VS_jomini_mapobject_shadow"
-	PixelShader = "PS_jomini_mapobject_shadow_alphablend"
-	RasterizerState = ShadowRasterizerState
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "ALPHA_TO_COVERAGE" }
-}
-
-# Snap + atlas + a2c
-Effect snap_to_terrain_atlas_alpha_to_coverage_mapobject
-{
-	VertexShader = "VS_mapobject"
-	PixelShader = "PS_standard"
-	BlendState = "alpha_to_coverage"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "ATLAS" "ALPHA_TO_COVERAGE" }
-}
-Effect snap_to_terrain_atlas_alpha_to_coverageShadow_mapobject
-{
-	VertexShader = "VS_jomini_mapobject_shadow"
-	PixelShader = "PS_jomini_mapobject_shadow_alphablend"
-	RasterizerState = ShadowRasterizerState
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "ALPHA_TO_COVERAGE" }
-}
-
-# Snap + a2c + colormap
-Effect snap_to_terrain_alpha_to_coverage_colormap_mapobject
-{
-	VertexShader = "VS_mapobject"
-	PixelShader = "PS_standard"
-	BlendState = "alpha_to_coverage"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "COLORMAP" "ALPHA_TO_COVERAGE" }
-}
-Effect snap_to_terrain_alpha_to_coverage_colormapShadow_mapobject
-{
-	VertexShader = "VS_jomini_mapobject_shadow"
-	PixelShader = "PS_jomini_mapobject_shadow_alphablend"
-	RasterizerState = ShadowRasterizerState
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "ALPHA_TO_COVERAGE" }
-}
-
-# Snap + a2c + colormap + no second sun
-Effect snap_to_terrain_alpha_to_coverage_colormap_singlesun_mapobject
-{
-	VertexShader = "VS_mapobject"
-	PixelShader = "PS_standard"
-	BlendState = "alpha_to_coverage"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "COLORMAP" "ALPHA_TO_COVERAGE" "SINGLESUN" }
-}
-Effect snap_to_terrain_alpha_to_coverage_colormap_singlesunShadow_mapobject
-{
-	VertexShader = "VS_jomini_mapobject_shadow"
-	PixelShader = "PS_jomini_mapobject_shadow_alphablend"
-	RasterizerState = ShadowRasterizerState
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "ALPHA_TO_COVERAGE" }
-}
-
-# Snap + atlas + a2c + colormap
-Effect snap_to_terrain_atlas_alpha_to_coverage_colormap_mapobject
-{
-	VertexShader = "VS_mapobject"
-	PixelShader = "PS_standard"
-	BlendState = "alpha_to_coverage"
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "ATLAS" "COLORMAP" "ALPHA_TO_COVERAGE" }
-}
-Effect snap_to_terrain_atlas_alpha_to_coverage_colormapShadow_mapobject
-{
-	VertexShader = "VS_jomini_mapobject_shadow"
-	PixelShader = "PS_jomini_mapobject_shadow_alphablend"
-	RasterizerState = ShadowRasterizerState
-	Defines = { "PDX_MESH_SNAP_VERTICES_TO_TERRAIN" "ALPHA_TO_COVERAGE" }
-}
-
-# Standard flat light
-Effect standard_flat_mapobject
-{
-	VertexShader = "VS_mapobject"
-	PixelShader = "PS_standard"
-
-	Defines = { "FLATLIGHT" }
-}
-Effect standard_flatShadow_mapobject
-{
-	VertexShader = "VS_jomini_mapobject_shadow"
-	PixelShader = "PS_jomini_mapobject_shadow"
-	RasterizerState = ShadowRasterizerState
-}
-
-# Standard flat light + alpha blend
-Effect standard_flat_alpha_blend_mapobject
-{
-	VertexShader = "VS_mapobject"
-	PixelShader = "PS_standard"
-	BlendState = "alpha_blend"
-	DepthStencilState = "depth_test_no_write"
-
-	Defines = { "FLATLIGHT" }
-}
-Effect standard_flat_alpha_blendShadow_mapobject
-{
-	VertexShader = "VS_jomini_mapobject_shadow"
-	PixelShader = "PS_jomini_mapobject_shadow_alphablend"
 	RasterizerState = ShadowRasterizerState
 }
