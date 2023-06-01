@@ -1,12 +1,12 @@
 Includes = {
 	"cw/shadow.fxh"
-	"cw/pdxterrain.fxh"
+	"cw/terrain.fxh"
 	"jomini/jomini_lighting.fxh"
 	"jomini/jomini_decals.fxh"
 	"jomini/jomini_province_overlays.fxh"
 	"dynamic_masks.fxh"
 	"distance_fog.fxh"
-	"cwpcoloroverlay.fxh"
+	"cwp_coloroverlay.fxh"
 	"fog_of_war.fxh"
 }
 
@@ -68,7 +68,7 @@ PixelShader =
 	[[
 		float4 CalcDecal( float2 UV, float3 Bitangent, float3 WorldSpacePos, float4 Diffuse, float Alpha )
 		{
-			float2 MapCoords = WorldSpacePos.xz * WorldSpaceToTerrain0To1;
+			float2 MapCoords = WorldSpacePos.xz * _WorldSpaceToTerrain0To1;
 			float2 ProvinceCoords = WorldSpacePos.xz / ProvinceMapSize;
 
 			float4 Properties = PdxTex2D( PropertiesTexture, UV );
@@ -77,10 +77,10 @@ PixelShader =
 
 			// Alpha blend two sources
 			Diffuse.a = CalcHeightBlendFactors( float4( Diffuse.a, 0.3, 0.0, 0.0 ), float4( Alpha, 1.0 - Alpha, 0.0, 0.0 ), 0.25 ).r;
-			
+
 			// Devastation
 			ApplyDevastationDecal( Diffuse, WorldSpacePos.xz, 1.0 - Properties.r );
-			
+
 			float3 Normal = CalculateNormal( WorldSpacePos.xz );
 			#ifdef TANGENT_SPACE_NORMALS
 				float3 Tangent = cross( Bitangent, Normal );
@@ -146,18 +146,18 @@ PixelShader =
 			{
 				float Alpha = PdxTex2D( DecalAlphaTexture, Input.UV0 ).r;
 				Alpha = PdxMeshApplyOpacity( Alpha, Input.Position.xy, GetOpacity( Input.InstanceIndex ) );
-				
+
 
 				float2 DetailUV = Input.WorldSpacePos.xz;
-				#if defined( TILING_1024 )			
-					DetailUV *= float2( DECAL_TILING_1024_SCALE, -DECAL_TILING_1024_SCALE );				
-				#else				
+				#if defined( TILING_1024 )
+					DetailUV *= float2( DECAL_TILING_1024_SCALE, -DECAL_TILING_1024_SCALE );
+				#else
 					DetailUV *= float2( DECAL_TILING_SCALE, -DECAL_TILING_SCALE );
 				#endif
 
 				float4 Diffuse = PdxTex2D( DiffuseTexture, DetailUV );
 				Diffuse = CalcDecal( DetailUV, Input.Bitangent, Input.WorldSpacePos, Diffuse, Alpha );
-				
+
 				return float4( Diffuse.rgb, Diffuse.a );
 			}
 		]]
@@ -198,22 +198,6 @@ Effect decal_world_mapobject
 {
 	VertexShader = "VS_mapobject"
 	PixelShader = "PS_world"
-}
-
-Effect decal_world_1024
-{
-	VertexShader = "VS_standard"
-	PixelShader = "PS_world"
-
-	Defines = { "TILING_1024" }
-}
-
-Effect decal_world_1024_mapobject
-{
-	VertexShader = "VS_mapobject"
-	PixelShader = "PS_world"
-
-	Defines = { "TILING_1024" }
 }
 
 Effect decal_local
