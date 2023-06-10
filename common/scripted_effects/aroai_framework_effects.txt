@@ -1,165 +1,4 @@
-﻿aroai_calculate_square_root = {
-    if = {
-        limit = {
-            $input$ <= 0
-        }
-        set_variable = {
-            name = $output$
-            value = 0
-        }
-    }
-    else = {
-        set_local_variable = {
-            name = aroai_csr_root
-            value = 0
-        }
-        if = {
-            limit = {
-                $precision$ = 1
-            }
-            change_local_variable = {
-                name = aroai_csr_root
-                add = 0.1
-            }
-        }
-        else_if = {
-            limit = {
-                $precision$ = 2
-            }
-            change_local_variable = {
-                name = aroai_csr_root
-                add = 0.01
-            }
-        }
-        else = {
-            change_local_variable = {
-                name = aroai_csr_root
-                add = 1
-            }
-        }
-        set_local_variable = {
-            name = aroai_csr_square
-            value = {
-                value = local_var:aroai_csr_root
-                multiply = local_var:aroai_csr_root
-            }
-        }
-        if = {
-            limit = {
-                $precision$ = 1
-            }
-            while = {
-                limit = {
-                    $input$ > aroai_csr_square
-                }
-                aroai_calculate_square_root_1 = {
-                    input = $input$
-                }
-            }
-        }
-        else_if = {
-            limit = {
-                $precision$ = 2
-            }
-            while = {
-                limit = {
-                    $input$ > aroai_csr_square
-                }
-                aroai_calculate_square_root_2 = {
-                    input = $input$
-                }
-            }
-        }
-        else = {
-            while = {
-                limit = {
-                    $input$ > aroai_csr_square
-                }
-                aroai_calculate_square_root_0 = {
-                    input = $input$
-                }
-            }
-        }
-        set_variable = {
-            name = $output$
-            value = local_var:aroai_csr_root
-        }
-    }
-}
-
-aroai_calculate_square_root_1 = {
-    while = {
-        limit = {
-            $input$ > aroai_csr_square
-            local_var:aroai_csr_root < 100
-        }
-        change_local_variable = {
-            name = aroai_csr_root
-            add = 0.1
-        }
-        change_local_variable = {
-            name = aroai_csr_square
-            add = {
-                value = 0
-                subtract = local_var:aroai_csr_square
-                add = {
-                    value = local_var:aroai_csr_root
-                    multiply = local_var:aroai_csr_root
-                }
-            }
-        }
-    }
-}
-
-aroai_calculate_square_root_2 = {
-    while = {
-        limit = {
-            $input$ > aroai_csr_square
-            local_var:aroai_csr_root < 10
-        }
-        change_local_variable = {
-            name = aroai_csr_root
-            add = 0.01
-        }
-        change_local_variable = {
-            name = aroai_csr_square
-            add = {
-                value = 0
-                subtract = local_var:aroai_csr_square
-                add = {
-                    value = local_var:aroai_csr_root
-                    multiply = local_var:aroai_csr_root
-                }
-            }
-        }
-    }
-}
-
-aroai_calculate_square_root_0 = {
-    while = {
-        limit = {
-            $input$ > aroai_csr_square
-            local_var:aroai_csr_root < 1000
-        }
-        change_local_variable = {
-            name = aroai_csr_root
-            add = 1
-        }
-        change_local_variable = {
-            name = aroai_csr_square
-            add = {
-                value = 0
-                subtract = local_var:aroai_csr_square
-                add = {
-                    value = local_var:aroai_csr_root
-                    multiply = local_var:aroai_csr_root
-                }
-            }
-        }
-    }
-}
-
-aroai_renew_modifier = {
+﻿aroai_renew_modifier = {
     remove_modifier = $name$
     add_modifier = {
         name = $name$
@@ -215,121 +54,14 @@ aroai_add_to_local_variable = {
     }
 }
 
-# There's no trigger to check if an agriculture resource is available in the state as of 1.2.2.
-# As a workaround, a custom solution is used that stores data about resources as a variable in state region scope.
-# Check happens during initialization of a new game and then periodically, but not really often.
-aroai_check_agriculture_resources_in_state_regions = {
-    every_state_region = {
-        limit = {
-            is_state_region_land = yes
-            NOT = {
-                has_variable = aroai_available_agriculture_resources
-            }
-        }
-        set_local_variable = {
-            name = aroai_added_arable_land
-            value = 0
-        }
 
-        # Arable land is added preemptively to check resources through creating building
-        while = {
-            limit = {
-                local_var:aroai_added_arable_land < 100
-                any_scope_state = {
-                    free_arable_land < 2
-                }
-            }
-            add_arable_land = 1
-            change_local_variable = {
-                name = aroai_added_arable_land
-                add = 1
-            }
-        }
 
-        # As this is (hopefully) a temporary solution, code below is not integrated into attribute delivery system
-        aroai_check_if_state_region_has_agriculture_resource = { key = building_rye_farm cipher = 1 }
-        aroai_check_if_state_region_has_agriculture_resource = { key = building_wheat_farm cipher = 2 }
-        aroai_check_if_state_region_has_agriculture_resource = { key = building_rice_farm cipher = 3 }
-        aroai_check_if_state_region_has_agriculture_resource = { key = building_maize_farm cipher = 4 }
-        aroai_check_if_state_region_has_agriculture_resource = { key = building_millet_farm cipher = 5 }
-        aroai_check_if_state_region_has_agriculture_resource = { key = building_livestock_ranch cipher = 10 }
-        aroai_check_if_state_region_has_agriculture_resource = { key = building_cotton_plantation cipher = 20 }
-        aroai_check_if_state_region_has_agriculture_resource = { key = building_silk_plantation cipher = 200 }
-        aroai_check_if_state_region_has_agriculture_resource = { key = building_banana_plantation cipher = 1000 }
-        aroai_check_if_state_region_has_agriculture_resource = { key = building_sugar_plantation cipher = 2000 }
-        aroai_check_if_state_region_has_agriculture_resource = { key = building_tea_plantation cipher = 10000 }
-        aroai_check_if_state_region_has_agriculture_resource = { key = building_coffee_plantation cipher = 20000 }
-        aroai_check_if_state_region_has_agriculture_resource = { key = building_tobacco_plantation cipher = 100000 }
-        aroai_check_if_state_region_has_agriculture_resource = { key = building_opium_plantation cipher = 200000 }
-
-        # Added arable land is removed
-        while = {
-            limit = {
-                local_var:aroai_added_arable_land > 0
-            }
-            add_arable_land = -1
-            change_local_variable = {
-                name = aroai_added_arable_land
-                subtract = 1
-            }
-        }
-    }
-}
-
-# First check if such building already exists in the state, otherwise try to create it and check if it may be expanded.
-aroai_check_if_state_region_has_agriculture_resource = {
-    if = {
-        limit = {
-            any_scope_state = {
-                any_scope_building = {
-                    is_building_type = $key$
-                }
-            }
-        }
-        aroai_add_to_variable = {
-            name = aroai_available_agriculture_resources
-            value = $cipher$
-        }
-    }
-    else = {
-        every_scope_state = {
-            limit = {
-                free_arable_land >= 2
-            }
-            if = {
-                limit = {
-                    NOT = {
-                        has_local_variable = aroai_agriculture_resource_was_found
-                    }
-                }
-                create_building = {
-                    building = $key$
-                    level = 1
-                }
-                if = {
-                    limit = {
-                        any_scope_building = {
-                            is_building_type = $key$
-                            can_queue_building_levels = 1
-                        }
-                    }
-                    state_region = {
-                        aroai_add_to_variable = {
-                            name = aroai_available_agriculture_resources
-                            value = $cipher$
-                        }
-                    }
-                    set_local_variable = aroai_agriculture_resource_was_found
-                }
-                remove_building = $key$
-            }
-        }
-        remove_local_variable = aroai_agriculture_resource_was_found
-    }
-}
-
+#
+# tag           : tag_aroai_count_barracks_and_conscription_centers_of_all_countries
+# Called by     : aroai_framework_events.1
 # Normally this stuff is counted during building cycle, but every country depends on counts of all the other ones
 # for military calculations, so we just count them all at game start.
+#
 aroai_count_barracks_and_conscription_centers_of_all_countries = {
     if = {
         limit = {
@@ -388,10 +120,14 @@ aroai_count_barracks_and_conscription_centers_of_all_countries = {
     }
 }
 
+#
+# tag           : tag_aroai_set_date_of_next_iteration_for_all_countries
+# Called by     : aroai_framework_events.1
 # At game start we should give every country date of next iteration.
 # A lot of weightning is done to ensure even distribution and to reduce load in first months of the game.
 # while = { random_country = { } } is used instead of every_country = { } to avoid results being deterministic.
 # TODO rework fixed days into usage of values such as aroai_days_in_the_iteration
+#
 aroai_set_date_of_next_iteration_for_all_countries = {
     if = {
         limit = {
@@ -671,249 +407,14 @@ aroai_set_date_of_next_iteration_for_all_countries = {
     }
 }
 
-# If a game rule to buff AI construction is set, we achieve this through country wide construction efficiency modifiers
-aroai_apply_accelerated_construction_modifiers = {
-    if = {
-        limit = {
-            OR = {
-                has_game_rule = aroai_construction_of_ai_countries_110
-                has_game_rule = aroai_construction_of_ai_countries_120
-                has_game_rule = aroai_construction_of_ai_countries_130
-                has_game_rule = aroai_construction_of_ai_countries_140
-                has_game_rule = aroai_construction_of_ai_countries_150
-                has_game_rule = aroai_construction_of_ai_countries_160
-                has_game_rule = aroai_construction_of_ai_countries_170
-                has_game_rule = aroai_construction_of_ai_countries_180
-                has_game_rule = aroai_construction_of_ai_countries_190
-                has_game_rule = aroai_construction_of_ai_countries_200
-                AND = {
-                    OR = {
-                        has_game_rule = aroai_construction_of_player_subjects_110
-                        has_game_rule = aroai_construction_of_player_subjects_120
-                        has_game_rule = aroai_construction_of_player_subjects_130
-                        has_game_rule = aroai_construction_of_player_subjects_140
-                        has_game_rule = aroai_construction_of_player_subjects_150
-                        has_game_rule = aroai_construction_of_player_subjects_160
-                        has_game_rule = aroai_construction_of_player_subjects_170
-                        has_game_rule = aroai_construction_of_player_subjects_180
-                        has_game_rule = aroai_construction_of_player_subjects_190
-                        has_game_rule = aroai_construction_of_player_subjects_200
-                    }
-                    any_country = {
-                        aroai_is_country_allowed = yes
-                        is_player = no
-                        market.owner = {
-                            is_player = yes
-                        }
-                    }
-                }
-            }
-        }
-        every_country = {
-            limit = {
-                aroai_is_country_allowed = yes
-                is_player = no
-            }
-            if = {
-                limit = {
-                    OR = {
-                        has_game_rule = aroai_construction_of_player_subjects_same
-                        market.owner = {
-                            is_player = no
-                        }
-                    }
-                }
-                if = {
-                    limit = {
-                        has_game_rule = aroai_construction_of_ai_countries_110
-                    }
-                    aroai_renew_modifier = {
-                        name = aroai_10_percent_accelerated_construction
-                        days = 31
-                    }
-                }
-                else_if = {
-                    limit = {
-                        has_game_rule = aroai_construction_of_ai_countries_120
-                    }
-                    aroai_renew_modifier = {
-                        name = aroai_20_percent_accelerated_construction
-                        days = 31
-                    }
-                }
-                else_if = {
-                    limit = {
-                        has_game_rule = aroai_construction_of_ai_countries_130
-                    }
-                    aroai_renew_modifier = {
-                        name = aroai_30_percent_accelerated_construction
-                        days = 31
-                    }
-                }
-                else_if = {
-                    limit = {
-                        has_game_rule = aroai_construction_of_ai_countries_140
-                    }
-                    aroai_renew_modifier = {
-                        name = aroai_40_percent_accelerated_construction
-                        days = 31
-                    }
-                }
-                else_if = {
-                    limit = {
-                        has_game_rule = aroai_construction_of_ai_countries_150
-                    }
-                    aroai_renew_modifier = {
-                        name = aroai_50_percent_accelerated_construction
-                        days = 31
-                    }
-                }
-                else_if = {
-                    limit = {
-                        has_game_rule = aroai_construction_of_ai_countries_160
-                    }
-                    aroai_renew_modifier = {
-                        name = aroai_60_percent_accelerated_construction
-                        days = 31
-                    }
-                }
-                else_if = {
-                    limit = {
-                        has_game_rule = aroai_construction_of_ai_countries_170
-                    }
-                    aroai_renew_modifier = {
-                        name = aroai_70_percent_accelerated_construction
-                        days = 31
-                    }
-                }
-                else_if = {
-                    limit = {
-                        has_game_rule = aroai_construction_of_ai_countries_180
-                    }
-                    aroai_renew_modifier = {
-                        name = aroai_80_percent_accelerated_construction
-                        days = 31
-                    }
-                }
-                else_if = {
-                    limit = {
-                        has_game_rule = aroai_construction_of_ai_countries_190
-                    }
-                    aroai_renew_modifier = {
-                        name = aroai_90_percent_accelerated_construction
-                        days = 31
-                    }
-                }
-                else_if = {
-                    limit = {
-                        has_game_rule = aroai_construction_of_ai_countries_200
-                    }
-                    aroai_renew_modifier = {
-                        name = aroai_100_percent_accelerated_construction
-                        days = 31
-                    }
-                }
-            }
-            else = {
-                if = {
-                    limit = {
-                        has_game_rule = aroai_construction_of_player_subjects_110
-                    }
-                    aroai_renew_modifier = {
-                        name = aroai_10_percent_accelerated_construction
-                        days = 31
-                    }
-                }
-                else_if = {
-                    limit = {
-                        has_game_rule = aroai_construction_of_player_subjects_120
-                    }
-                    aroai_renew_modifier = {
-                        name = aroai_20_percent_accelerated_construction
-                        days = 31
-                    }
-                }
-                else_if = {
-                    limit = {
-                        has_game_rule = aroai_construction_of_player_subjects_130
-                    }
-                    aroai_renew_modifier = {
-                        name = aroai_30_percent_accelerated_construction
-                        days = 31
-                    }
-                }
-                else_if = {
-                    limit = {
-                        has_game_rule = aroai_construction_of_player_subjects_140
-                    }
-                    aroai_renew_modifier = {
-                        name = aroai_40_percent_accelerated_construction
-                        days = 31
-                    }
-                }
-                else_if = {
-                    limit = {
-                        has_game_rule = aroai_construction_of_player_subjects_150
-                    }
-                    aroai_renew_modifier = {
-                        name = aroai_50_percent_accelerated_construction
-                        days = 31
-                    }
-                }
-                else_if = {
-                    limit = {
-                        has_game_rule = aroai_construction_of_player_subjects_160
-                    }
-                    aroai_renew_modifier = {
-                        name = aroai_60_percent_accelerated_construction
-                        days = 31
-                    }
-                }
-                else_if = {
-                    limit = {
-                        has_game_rule = aroai_construction_of_player_subjects_170
-                    }
-                    aroai_renew_modifier = {
-                        name = aroai_70_percent_accelerated_construction
-                        days = 31
-                    }
-                }
-                else_if = {
-                    limit = {
-                        has_game_rule = aroai_construction_of_player_subjects_180
-                    }
-                    aroai_renew_modifier = {
-                        name = aroai_80_percent_accelerated_construction
-                        days = 31
-                    }
-                }
-                else_if = {
-                    limit = {
-                        has_game_rule = aroai_construction_of_player_subjects_190
-                    }
-                    aroai_renew_modifier = {
-                        name = aroai_90_percent_accelerated_construction
-                        days = 31
-                    }
-                }
-                else_if = {
-                    limit = {
-                        has_game_rule = aroai_construction_of_player_subjects_200
-                    }
-                    aroai_renew_modifier = {
-                        name = aroai_100_percent_accelerated_construction
-                        days = 31
-                    }
-                }
-            }
-        }
-    }
-}
-
+#
+# tag           : tag_aroai_add_local_variable_to_array_variable
+# Called by     : aroai_weekly_check_of_building_data
 # $zero$ parameter controls behaviour between input and array when either of them have value equal to 0.
 # 1 = add, same behaviour as if it was any other value, input is just added to array as usual.
 # 2 - overwrite, input value of 0 will erase all other values in array, and non-0 input will overwrite array if it's 0.
 # 3 = ignore, array is untouched, potentially even stays uninitialized.
+#
 aroai_add_local_variable_to_array_variable = {
 
     if = {
@@ -1104,6 +605,12 @@ aroai_add_local_variable_to_array_variable = {
     }
 }
 
+
+#
+# tag           : tag_aroai_clear_country_cycle_variables
+# called by     : aroai_framework_events.1 aroai_weekly_loop_events.1 aroai_construction_events.1 aroai_evaluation_events.1
+# Clear a bunch of variables
+#
 aroai_clear_country_cycle_variables = {
     remove_variable = aroai_date_of_next_iteration
     remove_variable = aroai_building_construction_sector_total
@@ -1136,8 +643,8 @@ aroai_clear_country_iteration_variables = {
 
     remove_variable = aroai_surplus_bureaucracy_target
 
-    remove_variable = aroai_square_root_of_minus_half_unincorporated_gdp_per_capita
-    remove_variable = aroai_square_root_of_construction_points
+    #remove_variable = aroai_square_root_of_minus_half_unincorporated_gdp_per_capita
+    #remove_variable = aroai_square_root_of_construction_points
 
     remove_variable = aroai_unutilized_workforce_percent
 
@@ -1176,6 +683,11 @@ aroai_clear_country_iteration_variables = {
     }
 }
 
+#
+# tag           : tag_aroai_clear_building_type_variables
+# called by     : aroai_clear_country_iteration_variables
+# Clear a bunch of variables
+#
 aroai_clear_building_type_variables = {
     remove_variable = aroai_building_type_$id$_collected_data
     clear_variable_list = aroai_building_type_$id$_allocation_1
@@ -1190,6 +702,12 @@ aroai_clear_building_type_variables = {
     clear_variable_list = aroai_building_type_$id$_allocation_10
 }
 
+
+#
+# tag           : tag_aroai_clear_building_type_variables
+# called by     : aroai_start_building_construction aroai_add_ongoing_constructions_to_counter
+#
+#
 aroai_add_to_building_type_counter = {
     if = {
         limit = {
@@ -1299,211 +817,6 @@ aroai_perform_for_building_type = {
     }
 }
 
-# Generated with a modding tool, don't edit this manually.
-aroai_refresh_list_of_compatibility_patches = {
-    clear_global_variable_list = aroai_compatibility_patches
-    aroai_add_to_list_of_compatibility_patches_1 = yes aroai_add_to_list_of_compatibility_patches_2 = yes
-    aroai_add_to_list_of_compatibility_patches_3 = yes aroai_add_to_list_of_compatibility_patches_4 = yes
-    aroai_add_to_list_of_compatibility_patches_5 = yes aroai_add_to_list_of_compatibility_patches_6 = yes
-    aroai_add_to_list_of_compatibility_patches_7 = yes aroai_add_to_list_of_compatibility_patches_8 = yes
-    aroai_add_to_list_of_compatibility_patches_9 = yes aroai_add_to_list_of_compatibility_patches_10 = yes
-    aroai_add_to_list_of_compatibility_patches_11 = yes aroai_add_to_list_of_compatibility_patches_12 = yes
-    aroai_add_to_list_of_compatibility_patches_13 = yes aroai_add_to_list_of_compatibility_patches_14 = yes
-    aroai_add_to_list_of_compatibility_patches_15 = yes aroai_add_to_list_of_compatibility_patches_16 = yes
-    aroai_add_to_list_of_compatibility_patches_17 = yes aroai_add_to_list_of_compatibility_patches_18 = yes
-    aroai_add_to_list_of_compatibility_patches_19 = yes aroai_add_to_list_of_compatibility_patches_20 = yes
-    aroai_add_to_list_of_compatibility_patches_21 = yes aroai_add_to_list_of_compatibility_patches_22 = yes
-    aroai_add_to_list_of_compatibility_patches_23 = yes aroai_add_to_list_of_compatibility_patches_24 = yes
-    aroai_add_to_list_of_compatibility_patches_25 = yes aroai_add_to_list_of_compatibility_patches_26 = yes
-    aroai_add_to_list_of_compatibility_patches_27 = yes aroai_add_to_list_of_compatibility_patches_28 = yes
-    aroai_add_to_list_of_compatibility_patches_29 = yes aroai_add_to_list_of_compatibility_patches_30 = yes
-    aroai_add_to_list_of_compatibility_patches_31 = yes aroai_add_to_list_of_compatibility_patches_32 = yes
-    aroai_add_to_list_of_compatibility_patches_33 = yes aroai_add_to_list_of_compatibility_patches_34 = yes
-    aroai_add_to_list_of_compatibility_patches_35 = yes aroai_add_to_list_of_compatibility_patches_36 = yes
-    aroai_add_to_list_of_compatibility_patches_37 = yes aroai_add_to_list_of_compatibility_patches_38 = yes
-    aroai_add_to_list_of_compatibility_patches_39 = yes aroai_add_to_list_of_compatibility_patches_40 = yes
-    aroai_add_to_list_of_compatibility_patches_41 = yes aroai_add_to_list_of_compatibility_patches_42 = yes
-    aroai_add_to_list_of_compatibility_patches_43 = yes aroai_add_to_list_of_compatibility_patches_44 = yes
-    aroai_add_to_list_of_compatibility_patches_45 = yes aroai_add_to_list_of_compatibility_patches_46 = yes
-    aroai_add_to_list_of_compatibility_patches_47 = yes aroai_add_to_list_of_compatibility_patches_48 = yes
-    aroai_add_to_list_of_compatibility_patches_49 = yes aroai_add_to_list_of_compatibility_patches_50 = yes
-    aroai_add_to_list_of_compatibility_patches_51 = yes aroai_add_to_list_of_compatibility_patches_52 = yes
-    aroai_add_to_list_of_compatibility_patches_53 = yes aroai_add_to_list_of_compatibility_patches_54 = yes
-    aroai_add_to_list_of_compatibility_patches_55 = yes aroai_add_to_list_of_compatibility_patches_56 = yes
-    aroai_add_to_list_of_compatibility_patches_57 = yes aroai_add_to_list_of_compatibility_patches_58 = yes
-    aroai_add_to_list_of_compatibility_patches_59 = yes aroai_add_to_list_of_compatibility_patches_60 = yes
-    aroai_add_to_list_of_compatibility_patches_61 = yes aroai_add_to_list_of_compatibility_patches_62 = yes
-    aroai_add_to_list_of_compatibility_patches_63 = yes aroai_add_to_list_of_compatibility_patches_64 = yes
-    aroai_add_to_list_of_compatibility_patches_65 = yes aroai_add_to_list_of_compatibility_patches_66 = yes
-    aroai_add_to_list_of_compatibility_patches_67 = yes aroai_add_to_list_of_compatibility_patches_68 = yes
-    aroai_add_to_list_of_compatibility_patches_69 = yes aroai_add_to_list_of_compatibility_patches_70 = yes
-    aroai_add_to_list_of_compatibility_patches_71 = yes aroai_add_to_list_of_compatibility_patches_72 = yes
-    aroai_add_to_list_of_compatibility_patches_73 = yes aroai_add_to_list_of_compatibility_patches_74 = yes
-    aroai_add_to_list_of_compatibility_patches_75 = yes aroai_add_to_list_of_compatibility_patches_76 = yes
-    aroai_add_to_list_of_compatibility_patches_77 = yes aroai_add_to_list_of_compatibility_patches_78 = yes
-    aroai_add_to_list_of_compatibility_patches_79 = yes aroai_add_to_list_of_compatibility_patches_80 = yes
-    aroai_add_to_list_of_compatibility_patches_81 = yes aroai_add_to_list_of_compatibility_patches_82 = yes
-    aroai_add_to_list_of_compatibility_patches_83 = yes aroai_add_to_list_of_compatibility_patches_84 = yes
-    aroai_add_to_list_of_compatibility_patches_85 = yes aroai_add_to_list_of_compatibility_patches_86 = yes
-    aroai_add_to_list_of_compatibility_patches_87 = yes aroai_add_to_list_of_compatibility_patches_88 = yes
-    aroai_add_to_list_of_compatibility_patches_89 = yes aroai_add_to_list_of_compatibility_patches_90 = yes
-    aroai_add_to_list_of_compatibility_patches_91 = yes aroai_add_to_list_of_compatibility_patches_92 = yes
-    aroai_add_to_list_of_compatibility_patches_93 = yes aroai_add_to_list_of_compatibility_patches_94 = yes
-    aroai_add_to_list_of_compatibility_patches_95 = yes aroai_add_to_list_of_compatibility_patches_96 = yes
-    aroai_add_to_list_of_compatibility_patches_97 = yes aroai_add_to_list_of_compatibility_patches_98 = yes
-    aroai_add_to_list_of_compatibility_patches_99 = yes aroai_add_to_list_of_compatibility_patches_100 = yes
-    aroai_add_to_list_of_compatibility_patches_101 = yes aroai_add_to_list_of_compatibility_patches_102 = yes
-    aroai_add_to_list_of_compatibility_patches_103 = yes aroai_add_to_list_of_compatibility_patches_104 = yes
-    aroai_add_to_list_of_compatibility_patches_105 = yes aroai_add_to_list_of_compatibility_patches_106 = yes
-    aroai_add_to_list_of_compatibility_patches_107 = yes aroai_add_to_list_of_compatibility_patches_108 = yes
-    aroai_add_to_list_of_compatibility_patches_109 = yes aroai_add_to_list_of_compatibility_patches_110 = yes
-    aroai_add_to_list_of_compatibility_patches_111 = yes aroai_add_to_list_of_compatibility_patches_112 = yes
-    aroai_add_to_list_of_compatibility_patches_113 = yes aroai_add_to_list_of_compatibility_patches_114 = yes
-    aroai_add_to_list_of_compatibility_patches_115 = yes aroai_add_to_list_of_compatibility_patches_116 = yes
-    aroai_add_to_list_of_compatibility_patches_117 = yes aroai_add_to_list_of_compatibility_patches_118 = yes
-    aroai_add_to_list_of_compatibility_patches_119 = yes aroai_add_to_list_of_compatibility_patches_120 = yes
-    aroai_add_to_list_of_compatibility_patches_121 = yes aroai_add_to_list_of_compatibility_patches_122 = yes
-    aroai_add_to_list_of_compatibility_patches_123 = yes aroai_add_to_list_of_compatibility_patches_124 = yes
-    aroai_add_to_list_of_compatibility_patches_125 = yes aroai_add_to_list_of_compatibility_patches_126 = yes
-    aroai_add_to_list_of_compatibility_patches_127 = yes aroai_add_to_list_of_compatibility_patches_128 = yes
-    aroai_add_to_list_of_compatibility_patches_129 = yes aroai_add_to_list_of_compatibility_patches_130 = yes
-    aroai_add_to_list_of_compatibility_patches_131 = yes aroai_add_to_list_of_compatibility_patches_132 = yes
-    aroai_add_to_list_of_compatibility_patches_133 = yes aroai_add_to_list_of_compatibility_patches_134 = yes
-    aroai_add_to_list_of_compatibility_patches_135 = yes aroai_add_to_list_of_compatibility_patches_136 = yes
-    aroai_add_to_list_of_compatibility_patches_137 = yes aroai_add_to_list_of_compatibility_patches_138 = yes
-    aroai_add_to_list_of_compatibility_patches_139 = yes aroai_add_to_list_of_compatibility_patches_140 = yes
-    aroai_add_to_list_of_compatibility_patches_141 = yes aroai_add_to_list_of_compatibility_patches_142 = yes
-    aroai_add_to_list_of_compatibility_patches_143 = yes aroai_add_to_list_of_compatibility_patches_144 = yes
-    aroai_add_to_list_of_compatibility_patches_145 = yes aroai_add_to_list_of_compatibility_patches_146 = yes
-    aroai_add_to_list_of_compatibility_patches_147 = yes aroai_add_to_list_of_compatibility_patches_148 = yes
-    aroai_add_to_list_of_compatibility_patches_149 = yes aroai_add_to_list_of_compatibility_patches_150 = yes
-    aroai_add_to_list_of_compatibility_patches_151 = yes aroai_add_to_list_of_compatibility_patches_152 = yes
-    aroai_add_to_list_of_compatibility_patches_153 = yes aroai_add_to_list_of_compatibility_patches_154 = yes
-    aroai_add_to_list_of_compatibility_patches_155 = yes aroai_add_to_list_of_compatibility_patches_156 = yes
-    aroai_add_to_list_of_compatibility_patches_157 = yes aroai_add_to_list_of_compatibility_patches_158 = yes
-    aroai_add_to_list_of_compatibility_patches_159 = yes aroai_add_to_list_of_compatibility_patches_160 = yes
-    aroai_add_to_list_of_compatibility_patches_161 = yes aroai_add_to_list_of_compatibility_patches_162 = yes
-    aroai_add_to_list_of_compatibility_patches_163 = yes aroai_add_to_list_of_compatibility_patches_164 = yes
-    aroai_add_to_list_of_compatibility_patches_165 = yes aroai_add_to_list_of_compatibility_patches_166 = yes
-    aroai_add_to_list_of_compatibility_patches_167 = yes aroai_add_to_list_of_compatibility_patches_168 = yes
-    aroai_add_to_list_of_compatibility_patches_169 = yes aroai_add_to_list_of_compatibility_patches_170 = yes
-    aroai_add_to_list_of_compatibility_patches_171 = yes aroai_add_to_list_of_compatibility_patches_172 = yes
-    aroai_add_to_list_of_compatibility_patches_173 = yes aroai_add_to_list_of_compatibility_patches_174 = yes
-    aroai_add_to_list_of_compatibility_patches_175 = yes aroai_add_to_list_of_compatibility_patches_176 = yes
-    aroai_add_to_list_of_compatibility_patches_177 = yes aroai_add_to_list_of_compatibility_patches_178 = yes
-    aroai_add_to_list_of_compatibility_patches_179 = yes aroai_add_to_list_of_compatibility_patches_180 = yes
-    aroai_add_to_list_of_compatibility_patches_181 = yes aroai_add_to_list_of_compatibility_patches_182 = yes
-    aroai_add_to_list_of_compatibility_patches_183 = yes aroai_add_to_list_of_compatibility_patches_184 = yes
-    aroai_add_to_list_of_compatibility_patches_185 = yes aroai_add_to_list_of_compatibility_patches_186 = yes
-    aroai_add_to_list_of_compatibility_patches_187 = yes aroai_add_to_list_of_compatibility_patches_188 = yes
-    aroai_add_to_list_of_compatibility_patches_189 = yes aroai_add_to_list_of_compatibility_patches_190 = yes
-    aroai_add_to_list_of_compatibility_patches_191 = yes aroai_add_to_list_of_compatibility_patches_192 = yes
-    aroai_add_to_list_of_compatibility_patches_193 = yes aroai_add_to_list_of_compatibility_patches_194 = yes
-    aroai_add_to_list_of_compatibility_patches_195 = yes aroai_add_to_list_of_compatibility_patches_196 = yes
-    aroai_add_to_list_of_compatibility_patches_197 = yes aroai_add_to_list_of_compatibility_patches_198 = yes
-    aroai_add_to_list_of_compatibility_patches_199 = yes aroai_add_to_list_of_compatibility_patches_200 = yes
-}
-
-aroai_add_to_list_of_compatibility_patches_1 = {} aroai_add_to_list_of_compatibility_patches_2 = {}
-aroai_add_to_list_of_compatibility_patches_3 = {} aroai_add_to_list_of_compatibility_patches_4 = {}
-aroai_add_to_list_of_compatibility_patches_5 = {} aroai_add_to_list_of_compatibility_patches_6 = {}
-aroai_add_to_list_of_compatibility_patches_7 = {} aroai_add_to_list_of_compatibility_patches_8 = {}
-aroai_add_to_list_of_compatibility_patches_9 = {} aroai_add_to_list_of_compatibility_patches_10 = {}
-aroai_add_to_list_of_compatibility_patches_11 = {} aroai_add_to_list_of_compatibility_patches_12 = {}
-aroai_add_to_list_of_compatibility_patches_13 = {} aroai_add_to_list_of_compatibility_patches_14 = {}
-aroai_add_to_list_of_compatibility_patches_15 = {} aroai_add_to_list_of_compatibility_patches_16 = {}
-aroai_add_to_list_of_compatibility_patches_17 = {} aroai_add_to_list_of_compatibility_patches_18 = {}
-aroai_add_to_list_of_compatibility_patches_19 = {} aroai_add_to_list_of_compatibility_patches_20 = {}
-aroai_add_to_list_of_compatibility_patches_21 = {} aroai_add_to_list_of_compatibility_patches_22 = {}
-aroai_add_to_list_of_compatibility_patches_23 = {} aroai_add_to_list_of_compatibility_patches_24 = {}
-aroai_add_to_list_of_compatibility_patches_25 = {} aroai_add_to_list_of_compatibility_patches_26 = {}
-aroai_add_to_list_of_compatibility_patches_27 = {} aroai_add_to_list_of_compatibility_patches_28 = {}
-aroai_add_to_list_of_compatibility_patches_29 = {} aroai_add_to_list_of_compatibility_patches_30 = {}
-aroai_add_to_list_of_compatibility_patches_31 = {} aroai_add_to_list_of_compatibility_patches_32 = {}
-aroai_add_to_list_of_compatibility_patches_33 = {} aroai_add_to_list_of_compatibility_patches_34 = {}
-aroai_add_to_list_of_compatibility_patches_35 = {} aroai_add_to_list_of_compatibility_patches_36 = {}
-aroai_add_to_list_of_compatibility_patches_37 = {} aroai_add_to_list_of_compatibility_patches_38 = {}
-aroai_add_to_list_of_compatibility_patches_39 = {} aroai_add_to_list_of_compatibility_patches_40 = {}
-aroai_add_to_list_of_compatibility_patches_41 = {} aroai_add_to_list_of_compatibility_patches_42 = {}
-aroai_add_to_list_of_compatibility_patches_43 = {} aroai_add_to_list_of_compatibility_patches_44 = {}
-aroai_add_to_list_of_compatibility_patches_45 = {} aroai_add_to_list_of_compatibility_patches_46 = {}
-aroai_add_to_list_of_compatibility_patches_47 = {} aroai_add_to_list_of_compatibility_patches_48 = {}
-aroai_add_to_list_of_compatibility_patches_49 = {} aroai_add_to_list_of_compatibility_patches_50 = {}
-aroai_add_to_list_of_compatibility_patches_51 = {} aroai_add_to_list_of_compatibility_patches_52 = {}
-aroai_add_to_list_of_compatibility_patches_53 = {} aroai_add_to_list_of_compatibility_patches_54 = {}
-aroai_add_to_list_of_compatibility_patches_55 = {} aroai_add_to_list_of_compatibility_patches_56 = {}
-aroai_add_to_list_of_compatibility_patches_57 = {} aroai_add_to_list_of_compatibility_patches_58 = {}
-aroai_add_to_list_of_compatibility_patches_59 = {} aroai_add_to_list_of_compatibility_patches_60 = {}
-aroai_add_to_list_of_compatibility_patches_61 = {} aroai_add_to_list_of_compatibility_patches_62 = {}
-aroai_add_to_list_of_compatibility_patches_63 = {} aroai_add_to_list_of_compatibility_patches_64 = {}
-aroai_add_to_list_of_compatibility_patches_65 = {} aroai_add_to_list_of_compatibility_patches_66 = {}
-aroai_add_to_list_of_compatibility_patches_67 = {} aroai_add_to_list_of_compatibility_patches_68 = {}
-aroai_add_to_list_of_compatibility_patches_69 = {} aroai_add_to_list_of_compatibility_patches_70 = {}
-aroai_add_to_list_of_compatibility_patches_71 = {} aroai_add_to_list_of_compatibility_patches_72 = {}
-aroai_add_to_list_of_compatibility_patches_73 = {} aroai_add_to_list_of_compatibility_patches_74 = {}
-aroai_add_to_list_of_compatibility_patches_75 = {} aroai_add_to_list_of_compatibility_patches_76 = {}
-aroai_add_to_list_of_compatibility_patches_77 = {} aroai_add_to_list_of_compatibility_patches_78 = {}
-aroai_add_to_list_of_compatibility_patches_79 = {} aroai_add_to_list_of_compatibility_patches_80 = {}
-aroai_add_to_list_of_compatibility_patches_81 = {} aroai_add_to_list_of_compatibility_patches_82 = {}
-aroai_add_to_list_of_compatibility_patches_83 = {} aroai_add_to_list_of_compatibility_patches_84 = {}
-aroai_add_to_list_of_compatibility_patches_85 = {} aroai_add_to_list_of_compatibility_patches_86 = {}
-aroai_add_to_list_of_compatibility_patches_87 = {} aroai_add_to_list_of_compatibility_patches_88 = {}
-aroai_add_to_list_of_compatibility_patches_89 = {} aroai_add_to_list_of_compatibility_patches_90 = {}
-aroai_add_to_list_of_compatibility_patches_91 = {} aroai_add_to_list_of_compatibility_patches_92 = {}
-aroai_add_to_list_of_compatibility_patches_93 = {} aroai_add_to_list_of_compatibility_patches_94 = {}
-aroai_add_to_list_of_compatibility_patches_95 = {} aroai_add_to_list_of_compatibility_patches_96 = {}
-aroai_add_to_list_of_compatibility_patches_97 = {} aroai_add_to_list_of_compatibility_patches_98 = {}
-aroai_add_to_list_of_compatibility_patches_99 = {} aroai_add_to_list_of_compatibility_patches_100 = {}
-aroai_add_to_list_of_compatibility_patches_101 = {} aroai_add_to_list_of_compatibility_patches_102 = {}
-aroai_add_to_list_of_compatibility_patches_103 = {} aroai_add_to_list_of_compatibility_patches_104 = {}
-aroai_add_to_list_of_compatibility_patches_105 = {} aroai_add_to_list_of_compatibility_patches_106 = {}
-aroai_add_to_list_of_compatibility_patches_107 = {} aroai_add_to_list_of_compatibility_patches_108 = {}
-aroai_add_to_list_of_compatibility_patches_109 = {} aroai_add_to_list_of_compatibility_patches_110 = {}
-aroai_add_to_list_of_compatibility_patches_111 = {} aroai_add_to_list_of_compatibility_patches_112 = {}
-aroai_add_to_list_of_compatibility_patches_113 = {} aroai_add_to_list_of_compatibility_patches_114 = {}
-aroai_add_to_list_of_compatibility_patches_115 = {} aroai_add_to_list_of_compatibility_patches_116 = {}
-aroai_add_to_list_of_compatibility_patches_117 = {} aroai_add_to_list_of_compatibility_patches_118 = {}
-aroai_add_to_list_of_compatibility_patches_119 = {} aroai_add_to_list_of_compatibility_patches_120 = {}
-aroai_add_to_list_of_compatibility_patches_121 = {} aroai_add_to_list_of_compatibility_patches_122 = {}
-aroai_add_to_list_of_compatibility_patches_123 = {} aroai_add_to_list_of_compatibility_patches_124 = {}
-aroai_add_to_list_of_compatibility_patches_125 = {} aroai_add_to_list_of_compatibility_patches_126 = {}
-aroai_add_to_list_of_compatibility_patches_127 = {} aroai_add_to_list_of_compatibility_patches_128 = {}
-aroai_add_to_list_of_compatibility_patches_129 = {} aroai_add_to_list_of_compatibility_patches_130 = {}
-aroai_add_to_list_of_compatibility_patches_131 = {} aroai_add_to_list_of_compatibility_patches_132 = {}
-aroai_add_to_list_of_compatibility_patches_133 = {} aroai_add_to_list_of_compatibility_patches_134 = {}
-aroai_add_to_list_of_compatibility_patches_135 = {} aroai_add_to_list_of_compatibility_patches_136 = {}
-aroai_add_to_list_of_compatibility_patches_137 = {} aroai_add_to_list_of_compatibility_patches_138 = {}
-aroai_add_to_list_of_compatibility_patches_139 = {} aroai_add_to_list_of_compatibility_patches_140 = {}
-aroai_add_to_list_of_compatibility_patches_141 = {} aroai_add_to_list_of_compatibility_patches_142 = {}
-aroai_add_to_list_of_compatibility_patches_143 = {} aroai_add_to_list_of_compatibility_patches_144 = {}
-aroai_add_to_list_of_compatibility_patches_145 = {} aroai_add_to_list_of_compatibility_patches_146 = {}
-aroai_add_to_list_of_compatibility_patches_147 = {} aroai_add_to_list_of_compatibility_patches_148 = {}
-aroai_add_to_list_of_compatibility_patches_149 = {} aroai_add_to_list_of_compatibility_patches_150 = {}
-aroai_add_to_list_of_compatibility_patches_151 = {} aroai_add_to_list_of_compatibility_patches_152 = {}
-aroai_add_to_list_of_compatibility_patches_153 = {} aroai_add_to_list_of_compatibility_patches_154 = {}
-aroai_add_to_list_of_compatibility_patches_155 = {} aroai_add_to_list_of_compatibility_patches_156 = {}
-aroai_add_to_list_of_compatibility_patches_157 = {} aroai_add_to_list_of_compatibility_patches_158 = {}
-aroai_add_to_list_of_compatibility_patches_159 = {} aroai_add_to_list_of_compatibility_patches_160 = {}
-aroai_add_to_list_of_compatibility_patches_161 = {} aroai_add_to_list_of_compatibility_patches_162 = {}
-aroai_add_to_list_of_compatibility_patches_163 = {} aroai_add_to_list_of_compatibility_patches_164 = {}
-aroai_add_to_list_of_compatibility_patches_165 = {} aroai_add_to_list_of_compatibility_patches_166 = {}
-aroai_add_to_list_of_compatibility_patches_167 = {} aroai_add_to_list_of_compatibility_patches_168 = {}
-aroai_add_to_list_of_compatibility_patches_169 = {} aroai_add_to_list_of_compatibility_patches_170 = {}
-aroai_add_to_list_of_compatibility_patches_171 = {} aroai_add_to_list_of_compatibility_patches_172 = {}
-aroai_add_to_list_of_compatibility_patches_173 = {} aroai_add_to_list_of_compatibility_patches_174 = {}
-aroai_add_to_list_of_compatibility_patches_175 = {} aroai_add_to_list_of_compatibility_patches_176 = {}
-aroai_add_to_list_of_compatibility_patches_177 = {} aroai_add_to_list_of_compatibility_patches_178 = {}
-aroai_add_to_list_of_compatibility_patches_179 = {} aroai_add_to_list_of_compatibility_patches_180 = {}
-aroai_add_to_list_of_compatibility_patches_181 = {} aroai_add_to_list_of_compatibility_patches_182 = {}
-aroai_add_to_list_of_compatibility_patches_183 = {} aroai_add_to_list_of_compatibility_patches_184 = {}
-aroai_add_to_list_of_compatibility_patches_185 = {} aroai_add_to_list_of_compatibility_patches_186 = {}
-aroai_add_to_list_of_compatibility_patches_187 = {} aroai_add_to_list_of_compatibility_patches_188 = {}
-aroai_add_to_list_of_compatibility_patches_189 = {} aroai_add_to_list_of_compatibility_patches_190 = {}
-aroai_add_to_list_of_compatibility_patches_191 = {} aroai_add_to_list_of_compatibility_patches_192 = {}
-aroai_add_to_list_of_compatibility_patches_193 = {} aroai_add_to_list_of_compatibility_patches_194 = {}
-aroai_add_to_list_of_compatibility_patches_195 = {} aroai_add_to_list_of_compatibility_patches_196 = {}
-aroai_add_to_list_of_compatibility_patches_197 = {} aroai_add_to_list_of_compatibility_patches_198 = {}
-aroai_add_to_list_of_compatibility_patches_199 = {} aroai_add_to_list_of_compatibility_patches_200 = {}
 
 # This is just a hack to avoid error log complaining about variables never being set, in reality this never executes.
 # Generated with a modding tool, don't edit this manually.
