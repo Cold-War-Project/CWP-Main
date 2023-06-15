@@ -64,7 +64,8 @@ grant_command_to_ruler = {
 		}
 		if = {
 			limit = {
-				is_interest_group_type = ig_armed_forces
+				is_interest_group_type = ig_securocrats
+				is_interest_group_type = ig_patriots
 			}
 			add = 25
 		}
@@ -128,7 +129,8 @@ remove_command_from_ruler = {
 		}
 		if = {
 			limit = {
-				is_interest_group_type = ig_armed_forces
+				is_interest_group_type = ig_securocrats
+				is_interest_group_type = ig_patriots
 			}
 			add = -50
 		}			
@@ -233,7 +235,8 @@ grant_command_to_agitator = {
 		}	
 		if = {
 			limit = {
-				is_interest_group_type = ig_armed_forces
+				is_interest_group_type = ig_securocrats
+				is_interest_group_type = ig_patriots
 			}
 			add = 25
 		}	
@@ -274,8 +277,9 @@ marry_ruler_or_heir = {
 			is_ruler = yes
 			is_heir = yes
 		}
-		scope:actor ?= {
-			has_law = law_type:law_monarchy
+		scope:actor = {
+			exists = yes
+			has_law = law_type:law_hereditary
 			religion = {
 				has_discrimination_trait = christian
 			}
@@ -288,7 +292,7 @@ marry_ruler_or_heir = {
 	possible = {
 		any_country = {
 			NOT = { THIS = scope:actor }
-			has_law = law_type:law_monarchy
+			has_law = law_type:law_hereditary
 			religion = scope:actor.religion
 			ruler = {
 				age > 36
@@ -320,7 +324,7 @@ abdicate_monarch = {
 		owner = scope:actor
 		is_ruler = yes
 		owner = {
-			has_law = law_type:law_monarchy
+			has_law = law_type:law_hereditary
 		}
 		exists = owner.heir
 	}
@@ -575,11 +579,12 @@ exile_character = {
 		}
 		if = {
 			limit = {
-				scope:actor ?= {
+				scope:actor = {
+					exists = yes
 					NOR = {
 						has_law = law_type:law_autocracy
 						has_law = law_type:law_oligarchy
-						has_law = law_type:law_single_party_state
+						has_law = law_type:law_one_party_state
 					}
 				}			
 			}
@@ -587,23 +592,26 @@ exile_character = {
 		}
 		if = {
 			limit = {
-				scope:actor ?= {
-					has_law = law_type:law_undercover_agents
+				scope:actor = {
+					exists = yes
+					has_law = law_type:law_secret_police
 				}			
 			}
 			add = 30
 		}
 		if = {
 			limit = {
-				scope:actor ?= {
-					has_law = law_type:law_limited_operations
+				scope:actor = {
+					exists = yes
+					has_law = law_type:law_professional_police
 				}			
 			}
 			add = 15
 		}
 		if = {
 			limit = {
-				scope:actor ?= {
+				scope:actor = {
+					exists = yes
 					has_law = law_type:law_protected_speech
 				}			
 			}
@@ -611,7 +619,8 @@ exile_character = {
 		}
 		if = {
 			limit = {
-				scope:actor ?= {
+				scope:actor = {
+					exists = yes
 					has_law = law_type:law_outlawed_dissent
 				}			
 			}
@@ -619,7 +628,8 @@ exile_character = {
 		}
 		if = {
 			limit = {
-				scope:actor ?= {
+				scope:actor = {
+					exists = yes
 					has_law = law_type:law_censorship
 				}			
 			}
@@ -627,7 +637,8 @@ exile_character = {
 		}
 		if = {
 			limit = {
-				scope:actor ?= {
+				scope:actor = {
+					exists = yes
 					has_law = law_type:law_right_of_assembly
 				}			
 			}
@@ -635,7 +646,8 @@ exile_character = {
 		}
 		if = {
 			limit = {
-				scope:actor ?= {
+				scope:actor = {
+					exists = yes
 					has_law = law_type:law_protected_speech
 				}			
 			}
@@ -661,7 +673,7 @@ invite_exile = {
 		# Devout exiles must have country religion
 		trigger_if = {
 			limit = {
-				is_interest_group_type = ig_devout
+				is_interest_group_type = ig_moralists
 			}
 		    custom_tooltip = {
 		        text = invite_exile_devout_tt
@@ -671,9 +683,10 @@ invite_exile = {
 		# If you have state religion, exiles must hav eyour religion
 		trigger_if = {
 			limit = {
-				NOT = { is_interest_group_type = ig_devout }
-				scope:actor ?= {
-					has_law = law_type:law_state_religion
+				NOT = { is_interest_group_type = ig_moralists }
+				scope:actor = {
+					exists = yes
+					has_law = law_type:law_religious_institutions
 				}
 			}
 			custom_tooltip = {
@@ -695,31 +708,9 @@ invite_exile = {
 
 	effect = {
 		transfer_character = scope:actor
-		set_variable = exile_to_ruler_var
 		custom_tooltip = invite_exile_start_join_movement_effect
 		hidden_effect = {
 			remove_modifier = in_exile_modifier
-		}
-		hidden_effect = {
-			if = {
-				limit = {
-					has_variable = mazzini_var
-					has_dlc_feature = voice_of_the_people_content
-				}
-				scope:actor = {
-					trigger_event = { id = historical_agitators.7 days = 3 }
-				}
-			}
-			if = {
-				limit = {
-					has_variable = garibaldi_var
-					has_dlc_feature = voice_of_the_people_content
-				}
-				set_variable = {
-					name = garibaldi_cooldown_var
-					months = short_modifier_time
-				}
-			}
 		}
 	}
 
@@ -749,7 +740,8 @@ invite_exile = {
 		}
 		if = {
 			limit = {
-				scope:actor ?= {
+				scope:actor = {
+					exists = yes
 					any_interest_group = {
 						is_in_government = yes
 						save_temporary_scope_as = ex_ig
@@ -761,25 +753,35 @@ invite_exile = {
 		}
 		if = {
 			limit = {
-				scope:actor ?= { has_law = law_type:law_closed_borders }
+				scope:actor = {
+					exists = yes
+					has_law = law_type:law_closed_borders
+				}
 			}
 			add = -200
 		}
 		if = {
 			limit = {
-				scope:actor ?= { has_law = law_type:law_no_migration_controls }
+				scope:actor = {
+					exists = yes
+					has_law = law_type:law_open_borders
+				}
 			}
 			add = 15
 		}
 		if = {
 			limit = {
-				scope:actor ?= { has_law = law_type:law_multicultural }
+				scope:actor = {
+					exists = yes
+					has_law = law_type:law_multiculturalist
+				}
 			}
 			add = 15
 		}
 		if = { 
 			limit = {
-				scope:actor ?= {
+				scope:actor = {
+					exists = yes
 					country_rank < rank_value:major_power
 				}
 			}
