@@ -6,8 +6,15 @@ aroai_choose_building_type_to_construct = {
         effect = 6 # aroai_compare_building_priority_with_current_highest
     }
 
-    # If variable wasn't set, then there is nothing to construct
+    # don't build things if no construction points
     if = {
+        limit = {
+            aroai_has_free_construction_points = no
+        }
+
+    }
+    # If variable wasn't set, then there is nothing to construct
+    else_if = {
         limit = {
             NOT = {
                 has_local_variable = aroai_highest_building_priority
@@ -123,6 +130,14 @@ aroai_compare_building_priority_with_current_highest = {
                 }
                 local_var:aroai_highest_building_priority > aroai_building_type_$id$_collected_data_1
                 local_var:aroai_highest_building_priority <= 0
+            }
+
+            # If there's no construction points available, but critical construction is allowed, only build critical
+            # buildings
+            OR = {
+                aroai_free_construction_points > 0
+                aroai_is_critical_construction_allowed = no
+                aroai_is_id_critical = { id = $id$ }
             }
         }
         set_local_variable = {
@@ -319,6 +334,7 @@ aroai_start_building_construction = {
                 counter = $counter$
                 limit = $limit$
             }
+            aroai_has_free_construction_points = yes
         }
 
 
@@ -337,6 +353,7 @@ aroai_start_building_construction = {
 
                             # Either this is a state with one of the highest levels of this building type in a country
                             any_scope_state = {
+                                has_variable = aroai_building_type_occupied_levels
                                 var:aroai_building_type_occupied_levels > aroai_current_aroai_building_type_occupied_levels
                             }
 
@@ -344,6 +361,7 @@ aroai_start_building_construction = {
                             NOT = {
                                 any_in_list = {
                                     variable = $states$
+                                    has_variable = aroai_building_type_occupied_levels
                                     var:aroai_building_type_occupied_levels > aroai_current_aroai_building_type_occupied_levels
                                 }
                             }
