@@ -196,6 +196,7 @@ on_monthly_pulse_country = {
 			kill_character = yes
 		}
 		# Investment Pool Soft Cap
+		# Pollution Calculations
 		if = {
 			limit = {
 				investment_pool > 0
@@ -211,19 +212,17 @@ on_monthly_pulse_country = {
 					max = 1000
 				}
 			}
-		}
-		remove_modifier = full_investment_pool
-		if = {
-			limit = {
-				has_local_variable = var_investment_pool_divisor
-				local_var:var_investment_pool_divisor >= 10
+			set_global_variable = {
+				name = global_var_pollution
+				value = global_pollution_value
 			}
-			add_modifier = {
-				name = full_investment_pool
-				multiplier = local_var:var_investment_pool_divisor
+			set_global_variable = {
+				name = global_var_temperature_celsius
+				value = global_temperature_value_celsius
 			}
+			# debug_log = debug_loc_string_pollution
 		}
-		# Corruption Calculations
+		#Corruption Calculations
 		if = {
 			limit = {
 				is_player = yes
@@ -684,7 +683,7 @@ on_monthly_pulse_country = {
 			limit = {
 				has_variable = application_progress_warsaw_pact
 				var:application_progress_warsaw_pact >= 20 # was 100
-				warsaw_pact_supporting_countries >= 1
+				warsaw_pact_supporting_countries >= warsaw_pact_membersize
 			}
 			effect_warsaw_pact_application_approved = yes
 
@@ -695,7 +694,7 @@ on_monthly_pulse_country = {
 				has_variable = application_progress_warsaw_pact
 				var:application_progress_warsaw_pact >= 150
 				not = {
-					warsaw_pact_supporting_countries >= 1
+					warsaw_pact_supporting_countries >= warsaw_pact_membersize
 				}
 			}
 			effect_warsaw_pact_application_rejected = yes
@@ -811,7 +810,7 @@ on_monthly_pulse_country = {
 		# Exile Agitators Events
 		yeet_agitator_events.1
 		yeet_agitator_events.2
-		yeet_agitator_events.3
+		#yeet_agitator_events.
 	}
 }
 
@@ -1114,9 +1113,58 @@ on_acquired_technology = {
 		}
 		if = {
 			limit = {
-				has_technology_researched = early_climatology
+				is_player = yes
+				has_technology_researched = oil_refineries
+				NOT = {
+					has_variable = first_oil_discovered
+				}
 			}
-			set_variable = has_climate_research
+			set_variable = first_oil_discovered
+			if = {
+				limit = {
+					any_scope_state = {
+						has_potential_resource = bg_oil_rig
+					}
+				}
+				random_scope_state = {
+					limit = {
+						has_potential_resource = bg_oil_rig
+					}
+					force_resource_discovery = bg_oil_rig
+				}
+			}
+			else_if = {
+				limit = {
+					any_country = {
+						has_overlapping_interests = ROOT
+						any_scope_state = {
+							has_potential_resource = bg_oil_rig
+						}
+					}
+				}
+				random_country = {
+					limit = {
+						has_overlapping_interests = ROOT
+						any_scope_state = {
+							has_potential_resource = bg_oil_rig
+						}
+					}
+					random_scope_state = {
+						limit = {
+							has_potential_resource = bg_oil_rig
+						}
+						force_resource_discovery = bg_oil_rig
+					}
+				}
+			}
+			else = {
+				random_state = {
+					limit = {
+						has_potential_resource = bg_oil_rig
+					}
+					force_resource_discovery = bg_oil_rig
+				}
+			}
 		}
 	}
 }
@@ -3243,8 +3291,5 @@ on_monthly_pulse_state = {
 			}
 			remove_modifier = state_slum_modifier
 		}
-		# Habitability Calculations 
-		calc_monthly_habitability = yes
-		set_habitability_effects = yes
 	}
 }
