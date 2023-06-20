@@ -1,7 +1,7 @@
 Includes = {
 	"pdxmesh_vfx.fxh"
 	"cw/pdxmesh.fxh"
-	"coloroverlay.fxh"
+	"cwp_coloroverlay.fxh"
 	"ssao_struct.fxh"
 	"cw/camera.fxh"
 }

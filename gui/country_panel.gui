@@ -229,8 +229,6 @@ types country_panel_types
 					button_icon_square = {
 						visible = "[Or(Country.MakeScope.Var('western_bloc_member').IsSet, Country.MakeScope.Var('western_bloc_leader').IsSet)]"
 						size = { 70 140 }
-						using = entry_bg_unit_dark
-						gfxtype = buttongfx
 						blockoverride "icon" {
 							texture = "gfx/interface/icons/cwp_blocs_alignment/western_bloc.dds"
 						}
@@ -242,8 +240,6 @@ types country_panel_types
 					button_icon_square = {
 						visible = "[Or(Country.MakeScope.Var('eastern_bloc_member').IsSet, Country.MakeScope.Var('eastern_bloc_leader').IsSet)]"
 						size = { 70 140 }
-						using = entry_bg_unit_dark
-						gfxtype = buttongfx
 						blockoverride "icon" {
 							texture = "gfx/interface/icons/cwp_blocs_alignment/eastern_bloc.dds"
 						}
@@ -299,7 +295,7 @@ types country_panel_types
 					margin_left = 15
 					character_portrait_large_torso = {
 						parentanchor = vcenter
-						datacontext = "[Country.GetRuler]"
+						datacontext = "[Country.AccessRuler]"
 						scale = 1
 						blockoverride "show_hat" {}
 						blockoverride "highlight" {}
@@ -316,15 +312,13 @@ types country_panel_types
 						}
 					textbox = {
 						parentanchor = vcenter
-							autoresize = yes
-							multiline = yes
-							maximumsize = { 200 -1 }
-							minimumsize = { 200 -1 }
-							raw_text = "#BOLD [Country.GetRuler.GetPrimaryRoleTitle]#! [Country.GetRuler.GetFullName]"
-							onclick = "[InformationPanelBar.OpenCommanderPanel(Character.AccessSelf)]"
-							onrightclick = "[RightClickMenuManager.ShowForCharacter(Character.AccessSelf)]"
-							align = left|vcenter
-							elide = right
+						autoresize = yes
+						multiline = yes
+						maximumsize = { 200 -1 }
+						minimumsize = { 200 -1 }
+						raw_text = "#BOLD [Country.GetRuler.GetPrimaryRoleTitle]#! [Country.GetRuler.GetFullName]"
+						align = left|vcenter
+						elide = right
 					}
 				}
 				flowcontainer = {
@@ -1316,7 +1310,7 @@ types war_panel
 							using = tooltip_above	
 							datacontext = "[Truce.GetFirstCountry]"
 							blockoverride "flag_tooltip" {
-								tooltip = "[Truce.GetTruceDate]"
+								tooltip = "[Truce.GetTruceExpirationDesc]"
 							}
 						}			
 					}
@@ -1326,14 +1320,29 @@ types war_panel
 	}
 
 	### FAVOUR ITEM
-	type diplomatic_obligation_item = widget {
+	type diplomatic_obligation_item_from = widget { 
 		size = { 60 42 }
 		
 		small_flag = {
 			parentanchor = vcenter
-			using = tooltip_above						
+			using = tooltip_above	
+			#Here we want to show the country which owes us an obligation
+			datacontext = "[DiplomaticRelations.GetCountryWhichOwesObligation]"						
 			blockoverride "flag_tooltip" {
-				tooltip = "[Country.GetName]"
+				tooltip = "[Country.GetObligationFromExpirationDesc(DiplomaticRelations.GetCountryWhichNotOwesObligation)]"
+			}
+		}		
+	}
+	type diplomatic_obligation_item_to = widget {
+		size = { 60 42 }
+		
+		small_flag = {
+			parentanchor = vcenter
+			using = tooltip_above
+			#Here we want to show the country which we owe an obligation to	
+			datacontext = "[DiplomaticRelations.GetCountryWhichNotOwesObligation]"
+			blockoverride "flag_tooltip" {
+				tooltip = "[Country.GetObligationToExpirationDesc(DiplomaticRelations.GetCountryWhichOwesObligation)]"
 			}
 		}		
 	}
@@ -1380,7 +1389,7 @@ types war_panel
 				datamodel = "[Country.GetObligationsOwedFrom]"
 
 				item = {
-					diplomatic_obligation_item = {}
+					diplomatic_obligation_item_from = {}
 				}
 			}			
 		}
@@ -1428,7 +1437,7 @@ types war_panel
 				datamodel = "[Country.GetObligationsOwedTo]"
 
 				item = {
-					diplomatic_obligation_item = {}
+					diplomatic_obligation_item_to = {}
 				}
 			}			
 		}
@@ -1773,6 +1782,7 @@ types country_info
 		multiline = yes
 		maximumsize = { 420 -1 }
 		text = "COUNTRY_ARABLE_LAND"
+		block "tooltip" {}
 	}
 
 	type country_government_info = textbox {

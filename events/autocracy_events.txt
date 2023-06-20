@@ -1,0 +1,195 @@
+﻿namespace = autocracy
+
+# secret societies
+autocracy.2 = {
+	type = country_event
+	placement = scope:secret_societies_state
+	title = autocracy.2.t
+	desc = autocracy.2.d
+	flavor = autocracy.2.f
+	event_image = {
+		video = "votp_conspiring"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_scales.dds"
+	duration = 3
+	trigger = {
+		NOT = {
+			has_variable = secret_societies_timer
+		}
+		OR = {
+			has_law = law_type:law_hereditary
+			has_law = law_type:law_theocratic
+		}
+		has_law = law_type:law_religious_institutions
+		has_law = law_type:law_autocracy
+		OR = {
+			has_law = law_type:law_censorship
+			has_law = law_type:law_outlawed_dissent
+			ig:ig_elites = {
+				is_being_suppressed = yes
+			}
+		}
+		any_scope_state = {
+			is_incorporated = yes
+			any_scope_pop = {
+				is_pop_type = academics
+			}
+		}
+	}
+	immediate = {
+		set_variable = {
+			name = secret_societies_timer
+			months = normal_modifier_time
+		}
+		ig:ig_elites = {
+			save_scope_as = secret_society_ig
+		}
+		random_scope_state = {
+			limit = {
+				is_incorporated = yes
+				any_scope_pop = {
+					is_pop_type = academics
+				}
+			}
+			save_scope_as = secret_societies_state
+			random_scope_pop = {
+				limit = {
+					is_pop_type = academics
+				}
+				save_scope_as = secret_society_pop
+			}
+		}
+	}
+	cancellation_trigger = {
+		scope:secret_societies_state = {
+			is_incorporated = yes
+			NOT = {
+				any_scope_pop = {
+					is_pop_type = academics
+				}
+			}
+		}
+	}
+	option = {
+		# tolerate them
+		name = autocracy.2.a
+		default_option = yes
+		scope:secret_society_ig = {
+			add_modifier = {
+				name = tolerated_secret_societies
+				months = normal_modifier_time
+			}
+		}
+	}
+	option = {
+		# crack down on secret societies
+		name = autocracy.2.b
+		scope:secret_society_ig = {
+			add_modifier = {
+				name = suppressed_secret_societies
+				months = normal_modifier_time
+			}
+		}
+		scope:secret_societies_state = {
+			add_radicals_in_state = {
+				pop_type = academics
+				value = very_large_radicals
+			}
+		}
+	}
+}
+
+# Devout keep serfs content
+autocracy.3 = {
+	type = country_event
+	placement = scope:religious_serfs_state
+	title = autocracy.3.t
+	desc = autocracy.3.d
+	flavor = autocracy.3.f
+	event_image = {
+		video = "europenorthamerica_russian_serfs"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_default.dds"
+	duration = 3
+	trigger = {
+		NOT = {
+			has_variable = religious_serfs_timer
+		}
+		ig:ig_moralists = {
+			is_powerful = yes
+			is_in_government = yes
+		}
+		haS_law = law_type:law_religious_institutions
+		any_scope_state = {
+			is_incorporated = yes
+			any_scope_pop = {
+				pop_is_discriminated = no
+				is_pop_type = informal_workers
+				religion = root.religion
+			}
+			any_scope_pop = {
+				is_pop_type = clergy
+				religion = root.religion
+			}
+			NOR = {
+				has_modifier = loyal_religious_serfs
+				has_modifier = less_radical_religious_serfs
+			}
+		}
+	}
+	immediate = {
+		set_variable = {
+			name = religious_serfs_timer
+			months = normal_modifier_time
+		}
+		random_scope_state = {
+			limit = {
+				is_incorporated = yes
+				any_scope_pop = {
+					is_pop_type = informal_workers
+					religion = root.religion
+					pop_is_discriminated = no
+				}
+				any_scope_pop = {
+					is_pop_type = clergy
+					religion = root.religion
+				}
+			}
+			save_scope_as = religious_serfs_state
+			random_scope_pop = {
+				limit = {
+					is_pop_type = informal_workers
+					pop_is_discriminated = no
+					religion = root.religion
+				}
+				save_scope_as = religious_serf_pop
+			}
+		}
+		ig:ig_moralists = {
+			save_scope_as = church_scope
+		}
+	}
+	option = {
+		# increase loyalty
+		name = autocracy.3.a
+		default_option = yes
+		scope:religious_serfs_state = {
+			add_modifier = {
+				name = loyal_religious_serfs
+				months = long_modifier_time
+			}
+		}
+	}
+	option = {
+		# reduce radicals
+		name = autocracy.3.b
+		scope:religious_serfs_state = {
+			add_modifier = {
+				name = less_radical_religious_serfs
+				months = long_modifier_time
+			}
+		}
+	}
+}
