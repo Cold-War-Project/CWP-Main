@@ -366,7 +366,7 @@ PixelShader = {
 				GetGradiantBorderBlendValues( ProvinceOverlayColorWithAlpha, PreLightingBlend, PostLightingBlend );
 			}
 
-			// Apply stylised noise
+			// Apply stylized noise
 			#ifndef LOW_QUALITY_SHADERS
 				#if defined( TERRAIN_FLAT_MAP ) || defined( TERRAIN_FLAT_MAP_LERP )
 					float DetailScale1 = 10.0f;
