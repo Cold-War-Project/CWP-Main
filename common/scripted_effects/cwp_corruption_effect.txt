@@ -80,6 +80,10 @@ calc_ig_corruption = {
 			name = ig_time_in_government
 			add = 1
 		}
+		change_variable = {
+			name = ig_corruption_growth
+			add = 0.1 # Baseline growth for IGs in government
+		}
 	}
 	else = {
 		set_variable = {
@@ -93,44 +97,45 @@ calc_ig_corruption = {
 	}
 	if = {
 		limit = {
-			var:ig_time_in_government > 48			# 4 years
+			var:ig_time_in_government >= 48 # 4 years
 		}
 		change_variable = {
 			name = ig_corruption_growth
 			add = {
 				value = var:ig_time_in_government
-				divide = 480
+				subtract = 47
+				divide = 100 # 0.01 starting after 4 years
+				max = 1 # Max of 1
 			}
 		}
 	}
-	#FIXME corrupt does not exist, trait does not exist
-	# if = {
-	# 	limit = {
-	# 		leader = {
-	# 			OR = {
-	# 				has_trait = trait_corrupt # Corrupt leaders increase corruption
-	# 			}
-	# 		}
-	# 	}
-	# 	change_variable = {
-	# 		name = ig_corruption_growth
-	# 		add = 0.1
-	# 	}
-	# }
-	#FIXME honest does not exist, trait does not exist
-	# if = {
-	# 	limit = {
-	# 		leader = {
-	# 			OR = {
-	# 				has_trait = trait_honest					# Honest leaders decrease corruption
-	# 			}
-	# 		}
-	# 	}
-	# 	change_variable = {
-	# 		name = ig_corruption_growth
-	# 		add = -0.1
-	# 	}
-	# }
+	if = {
+		limit = {
+			leader = {
+				OR = {
+					has_trait = trait_corrupt # Corrupt leaders increase corruption
+				}
+			}
+		}
+		change_variable = {
+			name = ig_corruption_growth
+			add = 0.25
+		}
+	}
+	if = {
+		limit = {
+			leader = {
+				OR = {
+					has_trait = trait_honest # Honest leaders decrease corruption
+				}
+			}
+		}
+		change_variable = {
+			name = ig_corruption_growth
+			add = -0.1
+		}
+	}
+
 	if = {
 		limit = {
 			OR = {
@@ -139,7 +144,7 @@ calc_ig_corruption = {
 		}
 		change_variable = {
 			name = ig_corruption_growth
-			add = 0.1
+			add = 0.25
 		}
 	}
 	if = {
@@ -155,9 +160,65 @@ calc_ig_corruption = {
 	}
 	if = {
 		limit = {
-			NOT = {
-				has_variable = ig_corruption
+			owner = {
+				has_modifier = anti_corruption_drive_conducted # Anti-Corruption drive decreases corruption
 			}
+		}
+		change_variable = {
+			name = ig_corruption_growth
+			add = -0.25
+		}
+	}
+	if = {
+		limit = {
+			owner = {
+				has_modifier = anti_corruption_purge_conducted # Purges decrease corruption
+			}
+		}
+		change_variable = {
+			name = ig_corruption_growth
+			add = -1
+		}
+	}
+	if = {
+		limit = {
+			var:ig_corruption_growth > 0
+			owner = {
+				has_law = law_type:law_protected_speech
+			}
+		}
+		change_variable = {
+			name = ig_corruption_growth
+			multiply = 0.75
+		}
+	}
+	if = {
+		limit = {
+			var:ig_corruption_growth > 0
+			owner = {
+				has_law = law_type:law_right_of_assembly
+			}
+		}
+		change_variable = {
+			name = ig_corruption_growth
+			multiply = 0.9
+		}
+	}
+	if = {
+		limit = {
+			var:ig_corruption_growth > 0
+			owner = {
+				has_law = law_type:law_outlawed_dissent
+			}
+		}
+		change_variable = {
+			name = ig_corruption_growth
+			multiply = 1.25
+		}
+	}
+	if = {
+		limit = {
+			NOT = { has_variable = ig_corruption }
 		}
 		set_variable = {
 			name = ig_corruption
@@ -197,14 +258,16 @@ calc_ig_corruption = {
 		}
 	}
 	# Adds a Purely Visual Modifier
-	remove_modifier = ig_corruption_modifier
-	if = {
-		limit = {
-			var:ig_corruption > 0
-		}
-		add_modifier = {
-			name = ig_corruption_modifier
-			multiplier = var:ig_corruption
-		}
-	}
+	########### THIS DOESNT WORK AND I DON"T KNOW WHY ##############
+	#remove_modifier = ig_corruption_modifier
+	#if = {
+	#	limit = {
+	#		has_variable = ig_corruption
+	#		var:ig_corruption > 0
+	#	}
+	#	add_modifier = {
+	#		name = ig_corruption_modifier
+	#		multiplier = var:ig_corruption
+	#	}
+	#}
 }
