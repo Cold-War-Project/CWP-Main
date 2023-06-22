@@ -136,8 +136,10 @@ aroai_compare_building_priority_with_current_highest = {
             # buildings
             OR = {
                 aroai_free_construction_points > 0
-                aroai_is_critical_construction_allowed = no
-                aroai_is_id_critical = { id = $id$ }
+                AND = {
+                    aroai_is_critical_construction_allowed = yes
+                    aroai_is_id_critical = { id = $id$ }
+                }
             }
         }
         set_local_variable = {
@@ -323,6 +325,8 @@ aroai_start_building_construction = {
         days = aroai_days_to_keep_short_variables
     }
 
+    if = { limit = { always = no  $crucial$ = 0  }  } # We do not use crucial
+
     # Cycle through states in the list while we can
     while = {
         limit = {
@@ -393,7 +397,6 @@ aroai_start_building_construction = {
                             any_scope_state = {
                                 var:aroai_building_type_occupied_levels = 0
                                 aroai_available_workforce > scope:aroai_current_state.aroai_available_workforce
-                                count < aroai_states_for_new_buildings
                             }
 
                             # Or there are no states with higher available workforce in this list
@@ -680,11 +683,9 @@ aroai_start_building_construction = {
                                 }
 
                                 # Workforce restrictions
-                                # TODO need to be adaptive
-                                NOR = {
-                                    $workforce$ = 0
-                                    root.aroai_building_type_$id$_collected_data_2 <= $crucial$
-                                    aroai_available_workforce >= aroai_required_workforce
+                                AND = {
+                                    $workforce$ = 1
+                                    aroai_available_workforce <= aroai_required_workforce
                                 }
 
                                 # No arable land for agriculture buildings
