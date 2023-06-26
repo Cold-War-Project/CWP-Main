@@ -536,18 +536,18 @@ exile_character = {
 				add_modifier = {
 					name = in_exile_modifier
 				}
+				every_country = {
+					limit = {
+						has_diplomatic_relevance = scope:exiling_country_scope
+					}
+					post_notification = exile_notification
+				}
 			}
 			else = {
 				add_modifier = {
 					name = in_exile_modifier
 					multiplier = 3
 				}
-			}
-			every_country = {
-				limit = {
-					has_interest_marker_in_region = scope:exiling_country_scope.capital.region
-				}
-				post_notification = exile_notification
 			}
 		}
 		custom_tooltip = {
@@ -579,12 +579,11 @@ exile_character = {
 		}
 		if = {
 			limit = {
-				scope:actor = {
-					exists = yes
+				scope:actor ?= {
 					NOR = {
 						has_law = law_type:law_autocracy
 						has_law = law_type:law_oligarchy
-						has_law = law_type:law_one_party_state
+						has_law = law_type:law_anocracy
 					}
 				}			
 			}
@@ -592,8 +591,7 @@ exile_character = {
 		}
 		if = {
 			limit = {
-				scope:actor = {
-					exists = yes
+				scope:actor ?= {
 					has_law = law_type:law_secret_police
 				}			
 			}
@@ -619,8 +617,7 @@ exile_character = {
 		}
 		if = {
 			limit = {
-				scope:actor = {
-					exists = yes
+				scope:actor ?= {
 					has_law = law_type:law_outlawed_dissent
 				}			
 			}
@@ -628,8 +625,7 @@ exile_character = {
 		}
 		if = {
 			limit = {
-				scope:actor = {
-					exists = yes
+				scope:actor ?= {
 					has_law = law_type:law_censorship
 				}			
 			}
@@ -637,8 +633,7 @@ exile_character = {
 		}
 		if = {
 			limit = {
-				scope:actor = {
-					exists = yes
+				scope:actor ?= {
 					has_law = law_type:law_right_of_assembly
 				}			
 			}
@@ -646,13 +641,54 @@ exile_character = {
 		}
 		if = {
 			limit = {
-				scope:actor = {
-					exists = yes
+				scope:actor ?= {
 					has_law = law_type:law_protected_speech
 				}			
 			}
 			add = -20
 		}
+	}
+}
+
+demobilize_general = {
+	clicksound = "event:/SFX/DLC/1.3_ip1/UI/exile_character"
+
+	potential = {
+		has_role = general
+		is_mobilized = yes
+	}
+
+	show_requirements = yes
+
+	possible = {
+		custom_tooltip = {
+			text = demobilize_general_tt
+			var:num_months_mobilized >= num_months_before_permit_demobilization
+		}
+		commander_is_available = yes
+	}
+
+	effect = {
+		owner = {
+			add_modifier = {
+				name = early_demobilization
+				multiplier = {	# round down to 100s
+					value = root.mobilization_cost
+					divide = 100
+					round = yes
+					multiply = 100
+				}
+				months = num_months_mobilization_cost_after_early_demobilization
+				is_decaying = yes
+			}
+		}
+		demobilize = yes
+	}
+	
+	show_confirmation_box = yes
+	
+	ai_chance = {
+		value = 0
 	}
 }
 
@@ -680,12 +716,11 @@ invite_exile = {
 		        religion = scope:actor.religion
 		    }
 		}
-		# If you have state religion, exiles must hav eyour religion
+		# If you have state religion, exiles must have your religion
 		trigger_if = {
 			limit = {
 				NOT = { is_interest_group_type = ig_moralists }
-				scope:actor = {
-					exists = yes
+				scope:actor ?= {
 					has_law = law_type:law_religious_institutions
 				}
 			}
@@ -740,8 +775,7 @@ invite_exile = {
 		}
 		if = {
 			limit = {
-				scope:actor = {
-					exists = yes
+				scope:actor ?= {
 					any_interest_group = {
 						is_in_government = yes
 						save_temporary_scope_as = ex_ig
@@ -753,35 +787,25 @@ invite_exile = {
 		}
 		if = {
 			limit = {
-				scope:actor = {
-					exists = yes
-					has_law = law_type:law_closed_borders
-				}
+				scope:actor ?= { has_law = law_type:law_closed_borders }
 			}
 			add = -200
 		}
 		if = {
 			limit = {
-				scope:actor = {
-					exists = yes
-					has_law = law_type:law_open_borders
-				}
+				scope:actor ?= { has_law = law_type:law_open_borders }
 			}
 			add = 15
 		}
 		if = {
 			limit = {
-				scope:actor = {
-					exists = yes
-					has_law = law_type:law_multiculturalist
-				}
+				scope:actor ?= { has_law = law_type:law_multiculturalist }
 			}
 			add = 15
 		}
 		if = { 
 			limit = {
-				scope:actor = {
-					exists = yes
+				scope:actor ?= {
 					country_rank < rank_value:major_power
 				}
 			}
@@ -805,7 +829,7 @@ retire_commander = {
 		interest_group = {
 			is_insurrectionary = no
 		}
-		is_busy = no
+		commander_is_available = yes
 	}
 
 	effect = {
