@@ -138,6 +138,16 @@ gbr_set_uk_post_war_rationing_variables = {
 	set_variable = { name = uk_post_war_rationing_tea_progress_from_price value = 0 }
 	set_variable = { name = uk_post_war_rationing_tea_progress_next value = 0 }
 	
+	# Fruit variables
+	set_variable = { name = uk_post_war_rationing_fruit_progress value = 0 }
+	set_variable = { name = uk_post_war_rationing_fruit_progress_from_characters value = 0 }
+	set_variable = { name = uk_post_war_rationing_fruit_progress_from_igs value = 0 }
+	set_variable = { name = uk_post_war_rationing_fruit_progress_from_buildings value = 0 }
+	set_variable = { name = uk_post_war_rationing_fruit_progress_from_legitimacy value = 0 }
+	set_variable = { name = uk_post_war_rationing_fruit_progress_from_effects value = 0 }
+	set_variable = { name = uk_post_war_rationing_fruit_progress_from_price value = 0 }
+	set_variable = { name = uk_post_war_rationing_fruit_progress_next value = 0 }
+	
 	# Used solely for mathematical purposes, and is set as equivalent to the clout
 	# of a given interest group. It exists so that IGs can be weighted higher or lower
 	# depending on whether they're in government or not
@@ -805,6 +815,72 @@ gbr_weekly_pulse_uk_rationing_tea_progress = {
 	change_variable = { name = uk_post_war_rationing_tea_progress_next add = var:uk_post_war_rationing_tea_progress_from_price }
 }
 
+# Fruit rationing progress weekly calculation
+gbr_weekly_pulse_uk_rationing_fruit_progress = {
+	set_variable = { name = uk_post_war_rationing_fruit_progress_from_characters value = 0 }
+	set_variable = { name = uk_post_war_rationing_fruit_progress_from_igs value = 0 }
+	set_variable = { name = uk_post_war_rationing_fruit_progress_from_buildings value = 0 }
+	set_variable = { name = uk_post_war_rationing_fruit_progress_from_legitimacy value = root.government_legitimacy }
+	set_variable = { name = uk_post_war_rationing_fruit_progress_from_effects value = 0 }
+	set_variable = { name = uk_post_war_rationing_fruit_progress_from_price value = 0 }
+	set_variable = { name = uk_post_war_rationing_fruit_progress_next value = 0 }
+	
+	# From Characters - for future reworks if more character interaction is involved in the mod/game
+		
+	# From Interest Groups - for future reworks if more interest group interaction is involved in the mod/game
+	
+	# From Buildings - for future reworks if more building interactions is involved in the mod/game
+	
+	# From Government Legitimacy
+	change_variable = { name = uk_post_war_rationing_fruit_progress_from_legitimacy divide = 100 }
+	change_variable = { name = uk_post_war_rationing_fruit_progress_from_legitimacy subtract = 0.5 }
+	change_variable = { name = uk_post_war_rationing_fruit_progress_from_legitimacy multiply = -1 }
+	
+	# From price - Price of good goes beyond given limits, government losing control over pricing so progress increases
+	#			   Price of good within given limits, government regaining control over pricing so progress decreases
+	#			   Easier to lose control than regain it, so takes longer to regain control over pricing of good
+	if = {
+		limit = {
+			OR = {
+				market_capital.market = {
+					mg:fruit = {
+						market_goods_cheaper > 0.2
+					}
+				}
+				market_capital.market = {
+					mg:fruit = {
+						market_goods_pricier > 0.2
+					}
+				}
+			}
+		}
+		change_variable = { name = uk_post_war_rationing_fruit_progress_from_price add = 10 }
+	}
+	if = {
+		limit = {
+			market_capital.market = {
+				mg:fruit = {
+					market_goods_cheaper < 0.2
+				}
+			}
+			market_capital.market = {
+				mg:fruit = {
+					market_goods_pricier < 0.2
+				}
+			}
+		}
+		change_variable = { name = uk_post_war_rationing_fruit_progress_from_price subtract = 5 }
+	}
+	
+	# Final Compliiation
+	change_variable = { name = uk_post_war_rationing_fruit_progress_next add = var:uk_post_war_rationing_fruit_progress_from_characters }
+	change_variable = { name = uk_post_war_rationing_fruit_progress_next add = var:uk_post_war_rationing_fruit_progress_from_igs }
+	change_variable = { name = uk_post_war_rationing_fruit_progress_next add = var:uk_post_war_rationing_fruit_progress_from_buildings }
+	change_variable = { name = uk_post_war_rationing_fruit_progress_next add = var:uk_post_war_rationing_fruit_progress_from_legitimacy }
+	change_variable = { name = uk_post_war_rationing_fruit_progress_next add = var:uk_post_war_rationing_fruit_progress_from_effects }
+	change_variable = { name = uk_post_war_rationing_fruit_progress_next add = var:uk_post_war_rationing_fruit_progress_from_price }
+}
+
 # Define good that government is closest to losing price/demand control over
 gbr_define_biggest_goods_risk = {
 	if = {
@@ -818,6 +894,7 @@ gbr_define_biggest_goods_risk = {
 			var:uk_post_war_rationing_clothes_progress > var:uk_post_war_rationing_meat_progress
 			var:uk_post_war_rationing_clothes_progress > var:uk_post_war_rationing_sugar_progress
 			var:uk_post_war_rationing_clothes_progress > var:uk_post_war_rationing_tea_progress
+			var:uk_post_war_rationing_clothes_progress > var:uk_post_war_rationing_fruit_progress
 		}
 		set_variable = { name = gbr_biggest_goods_risk_progress value = var:uk_post_war_rationing_clothes_progress }
 	}
@@ -832,6 +909,7 @@ gbr_define_biggest_goods_risk = {
 			var:uk_post_war_rationing_grain_progress > var:uk_post_war_rationing_meat_progress
 			var:uk_post_war_rationing_grain_progress > var:uk_post_war_rationing_sugar_progress
 			var:uk_post_war_rationing_grain_progress > var:uk_post_war_rationing_tea_progress
+			var:uk_post_war_rationing_grain_progress > var:uk_post_war_rationing_fruit_progress
 		}
 		set_variable = { name = gbr_biggest_goods_risk_progress value = var:uk_post_war_rationing_grain_progress }
 	}
@@ -846,6 +924,7 @@ gbr_define_biggest_goods_risk = {
 			var:uk_post_war_rationing_groceries_progress > var:uk_post_war_rationing_meat_progress
 			var:uk_post_war_rationing_groceries_progress > var:uk_post_war_rationing_sugar_progress
 			var:uk_post_war_rationing_groceries_progress > var:uk_post_war_rationing_tea_progress
+			var:uk_post_war_rationing_groceries_progress > var:uk_post_war_rationing_fruit_progress
 		}
 		set_variable = { name = gbr_biggest_goods_risk_progress value = var:uk_post_war_rationing_groceries_progress }
 	}
@@ -860,6 +939,7 @@ gbr_define_biggest_goods_risk = {
 			var:uk_post_war_rationing_paper_progress > var:uk_post_war_rationing_meat_progress
 			var:uk_post_war_rationing_paper_progress > var:uk_post_war_rationing_sugar_progress
 			var:uk_post_war_rationing_paper_progress > var:uk_post_war_rationing_tea_progress
+			var:uk_post_war_rationing_paper_progress > var:uk_post_war_rationing_fruit_progress
 		}
 		set_variable = { name = gbr_biggest_goods_risk_progress value = var:uk_post_war_rationing_paper_progress }
 	}
@@ -874,6 +954,7 @@ gbr_define_biggest_goods_risk = {
 			var:uk_post_war_rationing_fabric_progress > var:uk_post_war_rationing_meat_progress
 			var:uk_post_war_rationing_fabric_progress > var:uk_post_war_rationing_sugar_progress
 			var:uk_post_war_rationing_fabric_progress > var:uk_post_war_rationing_tea_progress
+			var:uk_post_war_rationing_fabric_progress > var:uk_post_war_rationing_fruit_progress
 		}
 		set_variable = { name = gbr_biggest_goods_risk_progress value = var:uk_post_war_rationing_fabric_progress }
 	}
@@ -888,6 +969,7 @@ gbr_define_biggest_goods_risk = {
 			var:uk_post_war_rationing_coal_progress > var:uk_post_war_rationing_meat_progress
 			var:uk_post_war_rationing_coal_progress > var:uk_post_war_rationing_sugar_progress
 			var:uk_post_war_rationing_coal_progress > var:uk_post_war_rationing_tea_progress
+			var:uk_post_war_rationing_coal_progress > var:uk_post_war_rationing_fruit_progress
 		}
 		set_variable = { name = gbr_biggest_goods_risk_progress value = var:uk_post_war_rationing_coal_progress }
 	}
@@ -902,6 +984,7 @@ gbr_define_biggest_goods_risk = {
 			var:uk_post_war_rationing_refined_fuel_progress > var:uk_post_war_rationing_meat_progress
 			var:uk_post_war_rationing_refined_fuel_progress > var:uk_post_war_rationing_sugar_progress
 			var:uk_post_war_rationing_refined_fuel_progress > var:uk_post_war_rationing_tea_progress
+			var:uk_post_war_rationing_refined_fuel_progress > var:uk_post_war_rationing_fruit_progress
 		}
 		set_variable = { name = gbr_biggest_goods_risk_progress value = var:uk_post_war_rationing_refined_fuel_progress }
 	}
@@ -916,6 +999,7 @@ gbr_define_biggest_goods_risk = {
 			var:uk_post_war_rationing_meat_progress > var:uk_post_war_rationing_refined_fuel_progress
 			var:uk_post_war_rationing_meat_progress > var:uk_post_war_rationing_sugar_progress
 			var:uk_post_war_rationing_meat_progress > var:uk_post_war_rationing_tea_progress
+			var:uk_post_war_rationing_meat_progress > var:uk_post_war_rationing_fruit_progress
 		}
 		set_variable = { name = gbr_biggest_goods_risk_progress value = var:uk_post_war_rationing_meat_progress }
 	}
@@ -930,6 +1014,7 @@ gbr_define_biggest_goods_risk = {
 			var:uk_post_war_rationing_sugar_progress > var:uk_post_war_rationing_refined_fuel_progress
 			var:uk_post_war_rationing_sugar_progress > var:uk_post_war_rationing_meat_progress
 			var:uk_post_war_rationing_sugar_progress > var:uk_post_war_rationing_tea_progress
+			var:uk_post_war_rationing_sugar_progress > var:uk_post_war_rationing_fruit_progress
 		}
 		set_variable = { name = gbr_biggest_goods_risk_progress value = var:uk_post_war_rationing_sugar_progress }
 	}
@@ -944,8 +1029,24 @@ gbr_define_biggest_goods_risk = {
 			var:uk_post_war_rationing_tea_progress > var:uk_post_war_rationing_refined_fuel_progress
 			var:uk_post_war_rationing_tea_progress > var:uk_post_war_rationing_meat_progress
 			var:uk_post_war_rationing_tea_progress > var:uk_post_war_rationing_sugar_progress
+			var:uk_post_war_rationing_tea_progress > var:uk_post_war_rationing_fruit_progress
 		}
 		set_variable = { name = gbr_biggest_goods_risk_progress value = var:uk_post_war_rationing_tea_progress }
+	}
+	else_if = {
+		limit = {
+			var:uk_post_war_rationing_fruit_progress > var:uk_post_war_rationing_clothes_progress
+			var:uk_post_war_rationing_fruit_progress > var:uk_post_war_rationing_grain_progress
+			var:uk_post_war_rationing_fruit_progress > var:uk_post_war_rationing_groceries_progress
+			var:uk_post_war_rationing_fruit_progress > var:uk_post_war_rationing_paper_progress
+			var:uk_post_war_rationing_fruit_progress > var:uk_post_war_rationing_fabric_progress
+			var:uk_post_war_rationing_fruit_progress > var:uk_post_war_rationing_coal_progress
+			var:uk_post_war_rationing_fruit_progress > var:uk_post_war_rationing_refined_fuel_progress
+			var:uk_post_war_rationing_fruit_progress > var:uk_post_war_rationing_meat_progress
+			var:uk_post_war_rationing_fruit_progress > var:uk_post_war_rationing_sugar_progress
+			var:uk_post_war_rationing_fruit_progress > var:uk_post_war_rationing_tea_progress
+		}
+		set_variable = { name = gbr_biggest_goods_risk_progress value = var:uk_post_war_rationing_fruit_progress }
 	}
 }
 
@@ -1031,4 +1132,12 @@ gbr_remove_uk_post_war_rationing_variables = {
 	remove_variable = uk_post_war_rationing_tea_progress_from_legitimacy
 	remove_variable = uk_post_war_rationing_tea_progress_from_price
 	remove_variable = uk_post_war_rationing_tea_progress_next
+	remove_variable = uk_post_war_rationing_fruit_progress
+	remove_variable = uk_post_war_rationing_fruit_progress_from_buildings
+	remove_variable = uk_post_war_rationing_fruit_progress_from_characters
+	remove_variable = uk_post_war_rationing_fruit_progress_from_effects
+	remove_variable = uk_post_war_rationing_fruit_progress_from_igs
+	remove_variable = uk_post_war_rationing_fruit_progress_from_legitimacy
+	remove_variable = uk_post_war_rationing_fruit_progress_from_price
+	remove_variable = uk_post_war_rationing_fruit_progress_next
 }
