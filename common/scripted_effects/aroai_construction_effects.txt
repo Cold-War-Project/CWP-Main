@@ -9,20 +9,13 @@ aroai_choose_building_type_to_construct = {
     # don't build things if no construction points
     if = {
         limit = {
-            aroai_has_free_construction_points = no
-        }
-
-    }
-    # If variable wasn't set, then there is nothing to construct
-    else_if = {
-        limit = {
-            NOT = {
-                has_local_variable = aroai_highest_building_priority
+            # If variable wasn't set, or there's no construction point available, then there is nothing to construct
+            OR = {
+                aroai_has_free_construction_points = no
+                NOT = { has_local_variable = aroai_highest_building_priority }
             }
         }
-        aroai_clear_country_iteration_variables = yes
     }
-
     # Otherwise choose a building type with highest priority to construct
     else = {
 
@@ -86,33 +79,13 @@ aroai_choose_building_type_to_construct = {
             # Clear successful construction flag
             remove_local_variable = aroai_started_building_construction
 
-            # If we have some days left in the iteration, book an event tomorrow
+            # In rare cases even after constructing a dozen of building types there are still both free construction
+            # points and some building types that were not yet processed, so we cycle through them all in one day.
             if = {
                 limit = {
-                    aroai_day_of_ongoing_iteration < aroai_half_of_days_in_iteration_rounded_down
+                    aroai_has_free_construction_points = yes
                 }
-                trigger_event = {
-                    id = aroai_construction_events.1
-                    days = 1
-                }
-            }
-            
-            # Otherwise exit this event chain
-            else = {
-
-                # In rare cases even after constructing a dozen of building types there are still both free construction
-                # points and some building types that were not yet processed, so we cycle through them all in one day.
-                if = {
-                    limit = {
-                        aroai_has_free_construction_points = yes
-                    }
-                    aroai_choose_building_type_to_construct = yes
-                }
-
-                # But usually we just clear variables and that's it
-                else = {
-                    aroai_clear_country_iteration_variables = yes
-                }
+                aroai_choose_building_type_to_construct = yes
             }
         }
     }
@@ -353,21 +326,13 @@ aroai_start_building_construction = {
                         limit = {
                             $scaling$ = 1
                         }
-                        OR = {
 
-                            # Either this is a state with one of the highest levels of this building type in a country
-                            any_scope_state = {
+                        # Or there are no states with higher level in this list
+                        NOT = {
+                            any_in_list = {
+                                variable = $states$
                                 has_variable = aroai_building_type_occupied_levels
                                 var:aroai_building_type_occupied_levels > aroai_current_aroai_building_type_occupied_levels
-                            }
-
-                            # Or there are no states with higher level in this list
-                            NOT = {
-                                any_in_list = {
-                                    variable = $states$
-                                    has_variable = aroai_building_type_occupied_levels
-                                    var:aroai_building_type_occupied_levels > aroai_current_aroai_building_type_occupied_levels
-                                }
                             }
                         }
                     }

@@ -1,0 +1,546 @@
+﻿
+onaction_nuclear_calculation = {
+    # Nuclear Calculations
+    if = {
+        limit = {
+            has_modifier = nuclear_capable
+            nuclear_stockpile_sv <= nuclear_stockpile_max
+        }
+        change_variable = {
+            name = nuclear_stockpile
+            add = nuclear_stockpile_growth
+        }
+        change_variable = {
+            name = nuclear_stockpile
+            subtract = nuclear_stockpile_decay
+        }
+    }
+    if = {
+        limit = {
+            has_modifier = nuclear_capable
+            nuclear_stockpile_sv >= nuclear_stockpile_max
+        }
+        change_variable = {
+            name = nuclear_stockpile
+            subtract = nuclear_stockpile_decay
+        }
+    }
+}
+
+
+
+onaction_corruption_calculation = {
+    # Corruption Calculations
+    if = {
+        limit = {
+            is_player = yes
+        }
+        every_interest_group = {
+            calc_ig_corruption = yes
+        }
+        if = {
+            limit = {
+                NOT = {
+                    has_variable = var_corruption
+                }
+            }
+            set_variable = {
+                name = var_corruption
+                value = corruption_baseline
+            }
+        }
+        else_if = {
+            limit = {
+                var:var_corruption < 0
+            }
+            set_variable = {
+                name = var_corruption
+                value = 0
+            }
+        }
+        else_if = {
+            limit = {
+                var:var_corruption >= 100
+            }
+            set_variable = {
+                name = var_corruption
+                value = 100
+            }
+        }
+        if = {
+            limit = {
+                var:var_corruption <= corruption_baseline
+            }
+            change_variable = {
+                name = var_corruption
+                add = {
+                    value = corruption_baseline
+                    subtract = var:var_corruption
+                    max = 0.5
+                }
+            }
+        }
+        else_if = {
+            limit = {
+                var:var_corruption >= corruption_baseline
+            }
+            change_variable = {
+                name = var_corruption
+                add = {
+                    value = corruption_baseline
+                    subtract = var:var_corruption
+                    min = -0.5
+                }
+            }
+        }
+        # Adds appropriate modifier
+        if = {
+            limit = {
+                var:var_corruption = {
+                    exists = yes
+                }
+            }
+            remove_modifier = corruption_modifier_effects
+            add_modifier = {
+                name = corruption_modifier_effects
+                multiplier = corruption_modifier
+            }
+        }
+        else = {
+            set_variable = {
+                name = var_corruption
+                value = corruption_value
+            }
+        }
+    }
+    else_if = {
+        limit = {
+            has_variable = var_corruption
+        }
+        remove_variable = var_corruption
+        if = {
+            limit = {
+                has_modifier = corruption_modifier_effects
+            }
+            remove_modifier = corruption_modifier_effects
+        }
+    }
+}
+
+onaction_corruption_calculation_2 = {
+    # Corruption Calculations
+        if = {
+            limit = {
+                var:var_corruption <= 20
+            }
+            scope:target = {
+                effect_corruption_low = yes
+            }
+        }
+        if = {
+            limit = {
+                var:var_corruption > 20
+                var:var_corruption <= 50
+            }
+            scope:target = {
+                effect_corruption_medium = yes
+            }
+        }
+        if = {
+            limit = {
+                var:var_corruption > 50
+            }
+            scope:target = {
+                effect_corruption_high = yes
+            }
+        }
+}
+
+
+onaction_renewable_modifier = {
+    if = {
+        limit = {
+            is_building_type = building_renewable_energy_facility
+            Root.state = {
+                is_excellent_solar_capacity = yes
+            }
+        }
+        add_modifier = {
+            name = excellent_solar_capacity
+        }
+    }
+    if = {
+        limit = {
+            is_building_type = building_renewable_energy_facility
+            Root.state = {
+                is_excellent_wind_capacity = yes
+            }
+        }
+        add_modifier = {
+            name = excellent_wind_capacity
+        }
+    }
+    if = {
+        limit = {
+            is_building_type = building_renewable_energy_facility
+            Root.state = {
+                is_excellent_hydroelectric_capacity = yes
+            }
+        }
+        add_modifier = {
+            name = excellent_hydroelectric_capacity
+        }
+    }
+    if = {
+        limit = {
+            is_building_type = building_renewable_energy_facility
+            Root.state = {
+                is_moderate_solar_capacity = yes
+            }
+        }
+        add_modifier = {
+            name = moderate_solar_capacity
+        }
+    }
+    if = {
+        limit = {
+            is_building_type = building_renewable_energy_facility
+            Root.state = {
+                is_moderate_wind_capacity = yes
+            }
+        }
+        add_modifier = {
+            name = moderate_wind_capacity
+        }
+    }
+    if = {
+        limit = {
+            is_building_type = building_renewable_energy_facility
+            Root.state = {
+                is_moderate_hydroelectric_capacity = yes
+            }
+        }
+        add_modifier = {
+            name = moderate_hydroelectric_capacity
+        }
+    }
+    if = {
+        limit = {
+            is_building_type = building_renewable_energy_facility
+            Root.state = {
+                is_poor_solar_capacity = yes
+            }
+        }
+        add_modifier = {
+            name = poor_solar_capacity
+        }
+    }
+    if = {
+        limit = {
+            is_building_type = building_renewable_energy_facility
+            Root.state = {
+                is_poor_wind_capacity = yes
+            }
+        }
+        add_modifier = {
+            name = poor_wind_capacity
+        }
+    }
+    if = {
+        limit = {
+            is_building_type = building_renewable_energy_facility
+            Root.state = {
+                is_poor_hydroelectric_capacity = yes
+            }
+        }
+        add_modifier = {
+            name = poor_hydroelectric_capacity
+        }
+    }
+}
+
+onaction_currency_calculation = {
+    # Currency Calculations
+    if = {
+        limit = {
+            var:cwp_currency = flag:currency_usd
+            scope:target = {
+                not = {
+                    has_variable = cwp_currency
+                }
+            }
+        }
+        scope:target = {
+            effect_currency_usd = yes
+        }
+    }
+    if = {
+        limit = {
+            var:cwp_currency = flag:currency_frf
+            scope:target = {
+                not = {
+                    has_variable = cwp_currency
+                }
+            }
+        }
+        scope:target = {
+            effect_currency_frf = yes
+        }
+    }
+    if = {
+        limit = {
+            var:cwp_currency = flag:currency_gbp
+            scope:target = {
+                not = {
+                    has_variable = cwp_currency
+                }
+            }
+        }
+        scope:target = {
+            effect_currency_gbp = yes
+        }
+    }
+    if = {
+        limit = {
+            var:cwp_currency = flag:currency_sur
+            scope:target = {
+                not = {
+                    has_variable = cwp_currency
+                }
+            }
+        }
+        scope:target = {
+            effect_currency_sur = yes
+        }
+    }
+    if = {
+        limit = {
+            var:cwp_currency = flag:currency_brz
+            scope:target = {
+                not = {
+                    has_variable = cwp_currency
+                }
+            }
+        }
+        scope:target = {
+            effect_currency_brz = yes
+        }
+    }
+    if = {
+        limit = {
+            var:cwp_currency = flag:currency_dem
+            scope:target = {
+                not = {
+                    has_variable = cwp_currency
+                }
+            }
+        }
+        scope:target = {
+            effect_currency_dem = yes
+        }
+    }
+    if = {
+        limit = {
+            var:cwp_currency = flag:currency_pen
+            scope:target = {
+                not = {
+                    has_variable = cwp_currency
+                }
+            }
+        }
+        scope:target = {
+            effect_currency_pen = yes
+        }
+    }
+    if = {
+        limit = {
+            var:cwp_currency = flag:currency_pes
+            scope:target = {
+                not = {
+                    has_variable = cwp_currency
+                }
+            }
+        }
+        scope:target = {
+            effect_currency_pes = yes
+        }
+    }
+    if = {
+        limit = {
+            var:cwp_currency = flag:currency_dnr
+            scope:target = {
+                not = {
+                    has_variable = cwp_currency
+                }
+            }
+        }
+        scope:target = {
+            effect_currency_dnr = yes
+        }
+    }
+    if = {
+        limit = {
+            var:cwp_currency = flag:currency_irr
+            scope:target = {
+                not = {
+                    has_variable = cwp_currency
+                }
+            }
+        }
+        scope:target = {
+            effect_currency_irr = yes
+        }
+    }
+    if = {
+        limit = {
+            var:cwp_currency = flag:currency_trl
+            scope:target = {
+                not = {
+                    has_variable = cwp_currency
+                }
+            }
+        }
+        scope:target = {
+            effect_currency_trl = yes
+        }
+    }
+    if = {
+        limit = {
+            var:cwp_currency = flag:currency_yum
+            scope:target = {
+                not = {
+                    has_variable = cwp_currency
+                }
+            }
+        }
+        scope:target = {
+            effect_currency_yum = yes
+        }
+    }
+}
+
+onaction_palestine = {
+    if = {
+        limit = {
+            scope:target = {
+                country_has_primary_culture = cu:ashkenazi
+            }
+            NOT = {
+                s:STATE_PALESTINE = {
+                    is_homeland = cu:ashkenazi
+                }
+            }
+        }
+        s:STATE_PALESTINE = {
+            add_homeland = sephardic
+            add_homeland = ashkenazi
+        }
+    }
+}
+
+onaction_skyscraper_modifier = {
+    remove_modifier = state_skyscraper_modifier
+    add_modifier = {
+        name = state_skyscraper_modifier
+        multiplier = {
+            value = total_urbanization
+            divide = 1000
+            ceiling = yes
+            max = 100
+        }
+    }
+}
+
+onaction_slums_modifier = {
+    if = {
+        limit = {
+            this = {
+                state_max_slums > 0
+            }
+        }
+        remove_modifier = state_slum_modifier
+        add_modifier = {
+            name = state_slum_modifier
+            multiplier = state_max_slums
+        }
+    }
+    if = {
+        limit = {
+            this = {
+                state_max_slums <= 0
+            }
+        }
+        remove_modifier = state_slum_modifier
+    }
+}
+
+onaction_urbanization_modifier = {
+    # Urbanization calcs
+    set_local_variable = {
+        name = var_urban_rate
+        value = {
+            value = total_urbanization
+            divide = {
+                value = arable_land
+                multiply = 100
+                add = 1
+                add = total_urbanization
+            }
+            add = -0.5
+            multiply = 50
+        }
+    }
+    remove_modifier = urbanization_modifier
+    add_modifier = {
+        name = urbanization_modifier
+        multiplier = local_var:var_urban_rate
+    }
+}
+
+onaction_ratial_tension_modifier = {
+    if = {
+        limit = {
+            OR = {
+                is_enacting_law = law_type:law_ethnonationalist
+                is_enacting_law = law_type:law_supremacist
+                is_enacting_law = law_type:law_segregationist
+                is_enacting_law = law_type:law_integrationist
+                is_enacting_law = law_type:law_multiculturalist
+            }
+        }
+        add_modifier = {
+            name = racial_tension
+            is_decaying = yes
+            months = 120
+        }
+    }
+}
+
+onaction_monarchy_abolished_modifier = {
+    if = {
+        limit = {
+            has_law = law_type:law_hereditary
+            OR = {
+                is_enacting_law = law_type:law_executive
+                is_enacting_law = law_type:law_parliamentary
+                is_enacting_law = law_type:law_council_elective
+            }
+        }
+        add_modifier = {
+            name = recently_abolished_monarchy
+            years = 10
+        }
+    }
+}
+
+onaction_hired_pmc = {
+    if = {
+        limit = {
+            has_modifier = hired_pmc
+            is_enacting_law = law_type:law_private_military
+        }
+        remove_modifier = hired_pmc
+    }
+}
+
+
