@@ -1,6 +1,11 @@
-﻿# If army or navy are currently used in diplomatic play, their expenses will be higher than usual. Many actions are
+﻿
+#
+# tag           : tag_aroai_check_if_military_expenses_are_higher_than_usual
+# Called by     : aroai_preparation_events.1
+# If army or navy are currently used in diplomatic play, their expenses will be higher than usual. Many actions are
 # affected by this or by country being at war in general. To improve stability of country management a timed variable
 # is used. When war ends, decision making returns to peaceful mode not in the next iteration, but in the next + 1.
+#
 aroai_check_if_military_expenses_are_higher_than_usual = {
     if = {
         limit = {
@@ -13,8 +18,12 @@ aroai_check_if_military_expenses_are_higher_than_usual = {
     }
 }
 
+#
+# tag           : tag_aroai_manage_tax_and_wage_level
+# Called by     : aroai_preparation_events.1
 # Custom management of budget settings
-aroai_manage_tax_and_wage_level = {
+#
+aroai_manage_tax_and_wage_level_old = {
     if = {
         limit = {
             has_variable = aroai_country_budget_surplus
@@ -23,7 +32,7 @@ aroai_manage_tax_and_wage_level = {
                 has_variable = aroai_budget_settings_cooldown
             }
         }
-        
+
         # Budget is neutral or positive: lower taxes and raise wages.
         # Priorities:
         # 1. Ensure tax level is not very high.
@@ -32,16 +41,8 @@ aroai_manage_tax_and_wage_level = {
         # 4. Gradually raise wages to very high.
         # 5. Lower taxt level to very low.
         if = {
-            limit = {
-                aroai_budget_health_is_equal_or_higher = {
-                    level = 0
-                }
+            limit = { aroai_budget_health_is_equal_or_higher = { level = 0 }  }
 
-                # Don't do it if construction expenses are far smaller than planned
-                # TODO this doesn't work cause sector spending need later data
-                # aroai_building_construction_sector_spending_value >= aroai_building_construction_sector_spending_1
-            }
-            
             # Raise wages.
             # If taxes are on very high level, then lowering taxes is the priority so we skip this.
             if = {
@@ -131,7 +132,7 @@ aroai_manage_tax_and_wage_level = {
                     }
                 }
             }
-            
+
             # Lower taxes.
             # If wages were raised, skip this as we don't wanna change too much.
             if = {
@@ -179,7 +180,7 @@ aroai_manage_tax_and_wage_level = {
                 }
             }
         }
-        
+
         # Budget is below neutral: raise taxes and lower wages.
         # Priorities:
         # 1. Ensure tax level is not very low.
@@ -197,7 +198,7 @@ aroai_manage_tax_and_wage_level = {
                     }
                 }
             }
-            
+
             # Raise taxes
             if = {
                 limit = {
@@ -206,7 +207,7 @@ aroai_manage_tax_and_wage_level = {
                 set_tax_level = low
                 set_local_variable = aroai_budget_settings_cooldown
             }
-            
+
             # Lower wages
             else_if = {
                 limit = {
@@ -231,7 +232,7 @@ aroai_manage_tax_and_wage_level = {
                 set_local_variable = aroai_budget_settings_cooldown
             }
             else = {
-                
+
                 # Raise wages is they are very low but budget health is not that bad
                 if = {
                     limit = {
@@ -291,7 +292,7 @@ aroai_manage_tax_and_wage_level = {
                         set_local_variable = aroai_budget_settings_cooldown
                     }
                 }
-                
+
                 # Force military wages when in conflict
                 if = {
                     limit = {
@@ -299,7 +300,7 @@ aroai_manage_tax_and_wage_level = {
                     }
                     set_military_wage_level = medium
                 }
-                
+
                 # Raise taxes
                 if = {
                     limit = {
@@ -367,6 +368,82 @@ aroai_manage_tax_and_wage_level = {
                 days = aroai_days_in_the_iteration_plus_week
             }
             remove_local_variable = aroai_budget_settings_cooldown
+        }
+    }
+}
+
+
+
+
+
+
+#
+# tag           : tag_aroai_manage_tax_and_wage_level
+# Called by     : aroai_preparation_events.1
+# Custom management of budget settings
+#
+aroai_manage_tax_and_wage_level = {
+    if = {
+        limit = {
+                is_player = yes
+        }
+        #do nothing
+    }
+    else_if = {
+        limit = {  aroai_tax_level_equal_or_lower = { value = 3} }
+        set_tax_level = high
+    }
+    else_if = {
+        limit = { OR =  {  aroai_government_wages_are_high = yes aroai_government_wages_are_very_high = yes} }
+        set_military_wage_level = medium
+        set_government_wage_level = medium
+    }
+    else_if = {
+        limit = {
+            aroai_country_net_balance_percent > 0.3
+        }
+
+        if = {
+            limit = {
+                aroai_government_wages_are_very_low = yes
+            }
+            set_military_wage_level = low
+            set_government_wage_level = low
+        }
+        else_if = {
+            limit = {
+                aroai_government_wages_are_low = yes
+            }
+            set_military_wage_level = medium
+            set_government_wage_level = medium
+        }
+        else_if = {
+            limit = { tax_level = very_high }
+            set_tax_level = high
+        }
+    }
+    else_if = {
+        limit = {
+            aroai_country_net_balance_percent < 0.05
+        }
+
+        if = {
+            limit = { tax_level = high }
+            set_tax_level = very_high
+        }
+        else_if = {
+            limit = {
+                aroai_government_wages_are_medium = yes
+            }
+            set_military_wage_level = low
+            set_government_wage_level = low
+        }
+        else_if = {
+            limit = {
+                aroai_government_wages_are_low = yes
+            }
+            set_military_wage_level = very_low
+            set_government_wage_level = very_low
         }
     }
 }

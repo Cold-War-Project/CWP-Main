@@ -1,4 +1,9 @@
-﻿# Requirements for downsizing government funded buildings which is mostly a budget balancing thing
+﻿
+#
+# tag           : tag_aroai_is_downsizing_allowed
+# Called by     : aroai_preparation_events.1
+# Requirements for downsizing government funded buildings which is mostly a budget balancing thing
+#
 aroai_is_downsizing_allowed = {
     is_player = no
     has_revolution = no
@@ -6,7 +11,11 @@ aroai_is_downsizing_allowed = {
     has_variable = aroai_country_budget_surplus
 }
 
+#
+# tag           : tag_aroai_is_construction_allowed
+# Called by     : aroai_preparation_events.1
 # Requirements for constructing both special and standard buildings
+#
 aroai_is_construction_allowed = {
     has_revolution = no
     is_revolutionary = no
@@ -28,11 +37,32 @@ aroai_is_construction_allowed = {
     }
 }
 
+#
+# tag           : tag_aroai_is_regular_construction_allowed
+# Called by     : aroai_is_construction_allowed aroai_downsize_excessive_buildings aroai_building_is_allowed
+#
 aroai_is_regular_construction_allowed = {
     OR = {
         is_player = yes
         scaled_debt < 0.45
         aroai_has_no_construction_sectors = yes
+    }
+}
+
+#
+# tag           : tag_aroai_is_id_critical
+# Called by     : aroai_compare_building_priority_with_current_highest
+# This return true if $id$ is critical meaning either construction sector or administration with priority 1
+#
+aroai_is_id_critical = {
+    switch = {
+        trigger = $id$
+
+        1 = { aroai_evaluate_building_government_administration = { priority = 1 } }
+
+        3 = { aroai_evaluate_building_construction_sector = { priority = 1 } }
+
+        fallback = {  always = no }
     }
 }
 
@@ -184,6 +214,11 @@ aroai_is_critical_construction_allowed = {
     }
 }
 
+
+#
+# tag           : tag_aroai_has_no_construction_sectors
+# Called by     : aroai_is_regular_construction_allowed
+#
 aroai_has_no_construction_sectors = {
     trigger_if = {
         limit = {
@@ -201,6 +236,11 @@ aroai_has_no_construction_sectors = {
     }
 }
 
+
+#
+# tag           : tag_aroai_has_free_construction_points
+# Called by     : aroai_construction_events.1  aroai_choose_building_type_to_construct
+#
 aroai_has_free_construction_points = {
     OR = {
         aroai_free_construction_points > 0
@@ -208,23 +248,12 @@ aroai_has_free_construction_points = {
     }
 }
 
-aroai_overseas_connections_are_required = {
-    OR = {
-        aroai_has_variable_list = {
-            name = aroai_coastline_of_overseas_lands
-        }
-        any_country = {
-            NOT = {
-                this = root
-            }
-            market.owner = root
-            any_scope_state = {
-                is_coastal = yes
-            }
-        }
-    }
-}
 
+
+#
+# tag           : tag_aroai_has_enough_workforce
+# Called by     : aroai_collect_data_for_construction_and_downsizing aroai_perform_branching_of_allocation_list
+#
 aroai_has_enough_workforce = {
     aroai_available_workforce >= aroai_required_workforce
     OR = {
@@ -237,17 +266,31 @@ aroai_has_enough_workforce = {
     }
 }
 
+
+#
+# tag           : tag_aroai_has_enough_infrastructure
+# Called by     : aroai_collect_data_for_construction_and_downsizing aroai_perform_branching_of_allocation_list
+#
 aroai_has_enough_infrastructure = {
     aroai_infrastructure_balance_percent_with_ongoing_constructions >= 0.90
 }
 
+
+#
+# tag           : tag_aroai_building_is_profitable
+# Called by     : aroai_building_can_be_expanded
 # Is profitable right now and (hopefully) in a near future
+#
 aroai_building_is_profitable = {
     aroai_profit_per_occupied_level >= aroai_20_percent_of_average_profit
     cash_reserves_ratio >= 0.10
 }
 
+#
+# tag           : tag_aroai_building_is_excessive
+# Called by     : aroai_check_if_building_is_excessive_or_abandoned
 # Building is larger than it should be
+#
 aroai_building_is_excessive = {
     OR = {
         aroai_profit_per_occupied_level < aroai_10_percent_of_average_profit
@@ -256,7 +299,11 @@ aroai_building_is_excessive = {
     occupancy >= 0.40
 }
 
+#
+# tag           : tag_aroai_building_is_excessive
+# Called by     : aroai_building_is_abandoned
 # Building is almost empty and thus unneeded
+#
 aroai_building_is_abandoned = {
     level > 0
     occupancy < 0.40
@@ -264,7 +311,7 @@ aroai_building_is_abandoned = {
 
 aroai_is_production_downsizing_allowed = {
     NOT = {
-        has_law = law_type:law_laissez_faire
+        has_law = law_type:law_free_market
     }
     has_local_variable = aroai_downsizing_is_allowed
     OR = {
@@ -277,20 +324,4 @@ aroai_is_production_downsizing_allowed = {
     var:aroai_unutilized_workforce_percent < aroai_unutilized_workforce_percent_total_threshold
 }
 
-aroai_need_additional_ports_critical = {
-    aroai_total_convoy_produced_value < aroai_total_convoy_available_value_ceiling_critical
-}
 
-
-aroai_need_additional_ports_high = {
-    aroai_total_convoy_produced_value < aroai_total_convoy_available_value_ceiling_high
-}
-
-
-aroai_need_additional_ports_medium = {
-    aroai_total_convoy_produced_value < aroai_total_convoy_available_value_ceiling_medium
-}
-
-aroai_need_additional_ports_low = {
-    aroai_total_convoy_produced_value < aroai_total_convoy_available_value_ceiling_low
-}

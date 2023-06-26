@@ -1,4 +1,188 @@
-﻿aroai_downsize_excessive_buildings = {
+﻿
+#
+# tag           : tag_aroai_downsize_excessive_buildings
+# called by     : aroai_preparation_events.1
+# todo tottaly rework downsizing
+# if the economy of the country is bad, check which gov building we can downsize
+#
+aroai_downsize_excessive_buildings = {
+   # Government administration
+    if = {
+        limit = {
+            aroai_tax_level_equal_or_higher = {
+                value = 5
+            }
+            bureaucracy >= aroai_bureaucracy_ceiling_2
+        }
+        random_scope_state = {
+            limit = {
+                aroai_downsize_government_administration = yes
+            }
+            root = {
+                change_variable = {
+                    name = aroai_building_government_administration_total
+                    subtract = prev.var:aroai_building_government_administration_level
+                }
+            }
+            set_variable = {
+                name = aroai_building_government_administration_level
+                value = 0
+            }
+            remove_building = building_government_administration
+        }
+    }
+
+    # Construction sector
+    if = {
+        limit = {
+            aroai_tax_level_equal_or_higher = {
+                value = 2
+            }
+            OR = {
+                AND = {
+                    aroai_construction_points_current >= aroai_max_wanted_constructions_points_doubled
+                }
+            }
+        }
+        #TODO make removal more granular and spread over the country
+        random_scope_state = {
+            limit = {
+                aroai_downsize_construction_sector = yes
+            }
+            root = {
+                change_variable = {
+                    name = aroai_building_construction_sector_total
+                    subtract = prev.var:aroai_building_construction_sector_level
+                }
+            }
+            set_variable = {
+                name = aroai_building_construction_sector_level
+                value = 0
+            }
+            remove_building = building_construction_sector
+            root = {
+                if = {
+                    limit = {
+                        has_local_variable = aroai_construction_is_allowed
+                        NOR = {
+                            AND = {
+                                aroai_is_regular_construction_allowed = yes
+                                aroai_free_construction_points > 0
+                            }
+                            aroai_is_critical_construction_allowed = yes
+                        }
+                    }
+                    remove_local_variable = aroai_construction_is_allowed
+                }
+            }
+        }
+    }
+
+    # Port
+    if = {
+        limit = {
+            aroai_tax_level_equal_or_higher = {
+                value = 4
+            }
+            weekly_net_fixed_income < 50000
+            aroai_total_convoy_available_value > 1500
+        }
+        random_scope_state = {
+            limit = {
+                aroai_downsize_port = yes
+            }
+            root = {
+                change_variable = {
+                    name = aroai_building_port_total
+                    subtract = prev.var:aroai_building_port_level
+                }
+            }
+            set_variable = {
+                name = aroai_building_port_level
+                value = 0
+            }
+            remove_building = building_port
+        }
+    }
+
+
+    # Barracks
+    if = {
+        limit = {
+            aroai_tax_level_equal_or_higher = {
+                value = 3
+            }
+            aroai_is_using_military_forces = no
+            aroai_building_barracks_spending_value >= aroai_building_barracks_spending_excess
+        }
+        random_scope_state = {
+            limit = {
+                aroai_downsize_barracks = yes
+            }
+            root = {
+                change_variable = {
+                    name = aroai_building_barracks_total
+                    subtract = prev.var:aroai_building_barracks_level
+                }
+            }
+            set_variable = {
+                name = aroai_building_barracks_level
+                value = 0
+            }
+            remove_building = building_barracks
+        }
+    }
+
+    if = { limit = { THIS = c:SWE }
+
+       # debug_log = "aroai_building_naval_base_spending_excess [THIS.ScriptValue('aroai_building_naval_base_spending_excess')]"
+       # debug_log = "aroai_building_naval_base_spending_value [THIS.ScriptValue('aroai_building_naval_base_spending_value')]"
+    }
+
+
+    # Naval base
+    if = {
+        limit = {
+            aroai_tax_level_equal_or_higher = {
+                value = 3
+            }
+            aroai_is_using_military_forces = no
+            aroai_building_naval_base_spending_value >= aroai_building_naval_base_spending_excess
+        }
+        random_scope_state = {
+            limit = {
+                aroai_downsize_naval_base = yes
+            }
+            root = {
+                change_variable = {
+                    name = aroai_building_naval_base_total
+                    subtract = prev.var:aroai_building_naval_base_level
+                }
+            }
+            set_variable = {
+                name = aroai_building_naval_base_level
+                value = 0
+            }
+            remove_building = building_naval_base
+        }
+    }
+
+    if = {
+        limit = {
+            aroai_is_production_downsizing_allowed = yes
+        }
+        aroai_perform_for_every_building_type = {
+            effect = 4 # aroai_downsize_production_building
+        }
+    }
+}
+
+#
+# tag           : tag_aroai_downsize_excessive_buildings
+# called by     : aroai_preparation_events.1
+# if the economy of the country is bad, check which gov building we can downsize
+#
+aroai_downsize_excessive_buildings_old = {
     if = {
         limit = {
             aroai_bureaucracy_load >= 0.75
@@ -380,7 +564,12 @@
     }
 }
 
+#
+# tag           : tag_aroai_downsize_production_building
+# called by     : aroai_downsize_excessive_buildings
+# todo tottaly rework downsizing
 # Downsizing of production buildings based on variables set in aroai_check_if_building_is_excessive_or_abandoned
+#
 aroai_downsize_production_building = {
     if = {
         limit = {
@@ -410,7 +599,11 @@ aroai_downsize_production_building = {
     }
 }
 
+#
+# tag           : tag_aroai_clear_downsizing_variables
+# called by     : aroai_preparation_events.1
 # Clear variables used in downsizing but not in construction
+#
 aroai_clear_downsizing_variables = {
     every_scope_state = {
         remove_variable = aroai_building_government_administration_level

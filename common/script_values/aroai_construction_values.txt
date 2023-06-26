@@ -1,4 +1,9 @@
-﻿aroai_total_workforce_next_year = {
+﻿#
+# tag           : tag_aroai_total_workforce_next_year
+# Called by     : aroai_max_wanted_constructions_points_from_pop
+# Current number unemployed people + future one (from pop growth this year)
+#
+aroai_total_workforce_next_year = {
     value = total_population
 
     # TODO change this to actual country pop growth and workforce ratio
@@ -19,74 +24,70 @@
 }
 
 
-
-# How much construction point is needed max if workforce is bottleneck
+#
+# tag           : tag_aroai_max_wanted_constructions_points_from_pop
+# Called by     : aroai_max_wanted_constructions_points aroai_max_wanted_constructions_depense_from_pop
+# How much construction point is needed to reach full employement this year
+#
 aroai_max_wanted_constructions_points_from_pop = {
 
+    # Number of people we want to employ next year
     value = aroai_total_workforce_next_year
 
+    # Number of factories we want to build next year
+    divide = 5000 # Average number of employee per factory
+
+    # Number of construction point needed to those factories
     multiply = construction_cost_high # cost of a factory
 
-    divide = 5000 # Average number of employee per factory
+    # But we want weekly points
     divide = 52   # Weeks
 
-    # if Median state construction efficiency = +130%,
-    # then aroai_median_construction_efficiency = 23
-    divide = {
-        if = {
-            limit = {
-                 has_variable = aroai_median_construction_efficiency
-             }
-             value = var:aroai_median_construction_efficiency
-             divide = 10
-        }
-        else = {
-             value = 2
-        }
-     }
+    # Take account of state efficiency
+    multiply = aroai_construction_points_per_building
+    divide = define:NEconomy|MAX_WEEKLY_CONSTRUCTION_PROGRESS
+
+
+
      # because the AI loves to build where there's no labor
      # TODO remove this when fixed
      multiply = 1.3
 }
 
-# We take the minimum between the 2 value
-aroai_max_wanted_constructions_points = {
-    value = aroai_max_wanted_constructions_points_from_pop
-    max = aroai_max_wanted_constructions_points_from_budget
-    min = 5
-}
-
+#
+# tag           : tag_aroai_max_wanted_constructions_points_doubled
+# Called by     : aroai_downsize_excessive_buildings aroai_downsize_construction_sector
+# Used as a ceiling for construction point. If over, it'll downsize the construction sector.
+# This is a big ceiling, but this is because we use the exact number of construction point we desire, see aroai_free_construction_points.
+# This means that we only "waste" salary. To build and downsize building is unstable.
+# + The ai is controlling pm, so it rarely downsize, the vanilla ai usualy just change the pm.
+#
 aroai_max_wanted_constructions_points_doubled = {
-    value = aroai_max_wanted_constructions_points
+    value = aroai_construction_points_wanted_total
     multiply = 2
     add = 200   # we always could help 200 cp
 }
 
+#
+# tag           : tag_aroai_current_constructions_points_percent_of_max_wanted
+# Called by     : aroai_consider_building_construction_sector aroai_evaluate_building_construction_sector
+#
 aroai_current_constructions_points_percent_of_max_wanted = {
     value =  aroai_construction_points_current
-    divide = aroai_max_wanted_constructions_points
+    divide = aroai_construction_points_wanted_total
 }
 
 
-
+#
+# tag           : tag_aroai_simultaneous_constructions
+# Called by     : aroai_construction_limit_X_X
+# How many building are we currently building
+#
 aroai_simultaneous_constructions = {
     value = aroai_construction_points_current
     divide = aroai_construction_points_per_building
 }
 
-aroai_simultaneously_developed = {
-    value = root.var:aroai_square_root_of_construction_points
-    divide = 20
-    floor = yes
-    add = 1
-}
-
-aroai_states_for_new_buildings = {
-    value = num_unincorporated_states
-    divide = 4
-    floor = yes
-    min = 2
-}
 
 # Cell distribution of aroai_ongoing_construction array variable from aroai_ongoing_constructions list
 # dddcbbbbaa.aa
@@ -95,6 +96,10 @@ aroai_states_for_new_buildings = {
 # c    | divide = 1000000  | 3 | 1 = is under construction, 2 = expected to be finished, 3 = was finished for sure
 # ddd  | divide = 10000000 | 4 | count (max 213)
 
+#
+# tag           : tag_aroai_current_ongoing_constructions_element_without_count
+# Called by     : aroai_start_building_construction
+#
 aroai_current_ongoing_constructions_element_without_count = {
     value = this
     subtract = {
@@ -105,6 +110,11 @@ aroai_current_ongoing_constructions_element_without_count = {
     }
 }
 
+#
+# tag           : tag_aroai_current_ongoing_constructions_element_1
+# Called by     : aroai_infrastructure_with_ongoing_constructions aroai_add_ongoing_constructions_to_counter
+# The building id of the current element in the list
+#
 aroai_current_ongoing_constructions_element_1 = {
     value = this
     subtract = {
@@ -117,6 +127,11 @@ aroai_current_ongoing_constructions_element_1 = {
     floor = yes
 }
 
+#
+# tag           : tag_aroai_current_ongoing_constructions_element_2
+# Called by     : aroai_add_progress_to_ongoing_constructions
+# points left (c = 1) or weeks passed (c > 1)
+#
 aroai_current_ongoing_constructions_element_2 = {
     value = this
     subtract = {
@@ -129,6 +144,11 @@ aroai_current_ongoing_constructions_element_2 = {
     floor = yes
 }
 
+#
+# tag           : tag_aroai_current_ongoing_constructions_element_3
+# Called by     : aroai_add_progress_to_ongoing_constructions aroai_infrastructure_with_ongoing_constructions
+# 1 = is under construction, 2 = expected to be finished, 3 = was finished for sure
+#
 aroai_current_ongoing_constructions_element_3 = {
     value = this
     subtract = {
@@ -141,6 +161,11 @@ aroai_current_ongoing_constructions_element_3 = {
     floor = yes
 }
 
+#
+# tag           : tag_aroai_current_ongoing_constructions_element_4
+# Called by     : aroai_available_workforce aroai_infrastructure_with_ongoing_constructions aroai_add_ongoing_constructions_to_counter
+# number of building under construction
+#
 aroai_current_ongoing_constructions_element_4 = {
     value = this
     divide = 10000000

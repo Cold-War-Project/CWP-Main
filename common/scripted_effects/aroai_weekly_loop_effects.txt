@@ -1,31 +1,50 @@
-﻿# Effects of weekly loop iterarion
+﻿
+
+#
+# tag           : tag_aroai_perform_iteration_of_weekly_loop
+# Called by     : aroai_preparation_events.1 aroai_weekly_loop_events.1
+# This event is called weekly. day_1_of_main_loop is true if the effect has been called by aroai_preparation_events.1.
+#
 aroai_perform_iteration_of_weekly_loop = {
+
+    if = { limit = {$day_1_of_main_loop$ = yes }
+        aroai_clear_country_iteration_variables = yes
+    }
+
 	# Add a week of progress to elements of aroai_ongoing_constructions
 	aroai_add_progress_to_ongoing_constructions = yes
+
 	# Collect expenses data from buildings and perform a bunch of calculations and transformations using it, with
 	# total levels, shortages and ongoing constructions also being collected on day 1 of economy cycle iteration.
 	aroai_weekly_check_of_building_data = {
 		day_1_of_main_loop = $day_1_of_main_loop$
 	}
 	# Calculate current investment pool transfer, contains initial calculation of budget surplus that is required later
-	aroai_calculate_investment_pool_transfer = {
-		day_1_of_main_loop = $day_1_of_main_loop$
-	}
+	aroai_calculate_investment_pool_transfer = yes
+
 	# Calculate percent of construction points used by buildings in the queue
 	aroai_calculate_usage_of_construction_points = yes
+
 	# Track how many iterations of weekly loop were performed in this main iteration and schedule next if needed
 	aroai_count_and_schedule_iterations_of_weekly_loop = {
 		day_1_of_main_loop = $day_1_of_main_loop$
 	}
+
 	# Calculate per point expenses of construction sectors
 	aroai_calculate_building_construction_sector_expenses_per_point = yes
+
 	# Calculate budget surplus with the assumption that construction sectors are fully used
 	aroai_calculate_budget_surplus = yes
+
 	# Garbage collection
 	aroai_clear_weekly_loop_local_variables = yes
 }
 
+#
+# tag           : tag_aroai_add_progress_to_ongoing_constructions
+# Called by     : aroai_perform_iteration_of_weekly_loop
 # Add a week of progress to elements of aroai_ongoing_constructions
+#
 aroai_add_progress_to_ongoing_constructions = {
 	every_scope_state = {
 		limit = {
@@ -149,8 +168,13 @@ aroai_add_progress_to_ongoing_constructions = {
 	}
 }
 
+
+#
+# tag           : tag_aroai_weekly_check_of_building_data
+# Called by     : aroai_perform_iteration_of_weekly_loop
 # Collect expenses data from buildings and perform a bunch of calculations and transformations using it, with
 # total levels, shortages and ongoing constructions also being collected on day 1 of economy cycle iteration.
+#
 aroai_weekly_check_of_building_data = {
     # Set up local variables
     set_local_variable = {
@@ -638,7 +662,11 @@ aroai_weekly_check_of_building_data = {
     }
 }
 
+#
+# tag           : tag_aroai_calculate_investment_pool_transfer
+# Called by     : aroai_perform_iteration_of_weekly_loop
 # Calculate current investment pool transfer, contains initial calculation of budget surplus that is required later
+#
 aroai_calculate_investment_pool_transfer = {
 	# First get raw budget surplus required to calculate investment pool transfer
 	if = {
@@ -722,29 +750,13 @@ aroai_calculate_investment_pool_transfer = {
 		zero = 1
 		cleanup = no
 	}
-	# Expected investment pool is average over $elements$ months widely used to make budget management more stable
-	if = {
-		limit = {
-			$day_1_of_main_loop$ = yes
-		}
-		set_local_variable = {
-			name = aroai_investment_pool_expected
-			value = {
-				value = aroai_investment_pool_potential
-				round = yes
-			}
-		}
-		aroai_add_local_variable_to_array_variable = {
-			input = aroai_investment_pool_expected
-			output = aroai_investment_pool_expected
-			elements = 15
-			zero = 1
-			cleanup = yes
-		}
-	}
 }
 
+#
+# tag           : tag_aroai_calculate_usage_of_construction_points
+# Called by     : aroai_perform_iteration_of_weekly_loop
 # Calculate percent of construction points used by buildings in the queue
+#
 aroai_calculate_usage_of_construction_points = {
 	set_local_variable = {
 		name = aroai_usage_of_construction_points_percent
@@ -831,7 +843,11 @@ aroai_calculate_usage_of_construction_points = {
 	}
 }
 
+#
+# tag           : tag_aroai_count_and_schedule_iterations_of_weekly_loop
+# Called by     : aroai_perform_iteration_of_weekly_loop
 # Track how many iterations of weekly loop were performed in this main iteration and schedule next if needed
+#
 aroai_count_and_schedule_iterations_of_weekly_loop = {
 	# Track average usage of construction points to prohibit queueing more sectors if it's low
 	if = {
@@ -888,7 +904,11 @@ aroai_count_and_schedule_iterations_of_weekly_loop = {
 	}
 }
 
+#
+# tag           : tag_aroai_calculate_building_construction_sector_expenses_per_point
+# Called by     : aroai_perform_iteration_of_weekly_loop
 # Calculate per point expenses of construction sectors
+#
 aroai_calculate_building_construction_sector_expenses_per_point = {
 	# If this week's data is ok, we perform some wonky calculations to roughly account for sector usage and wages level.
 	# Due to no access to real world wage data, these calculations just assume that wages are 1/10 of sector expenses.
@@ -959,8 +979,12 @@ aroai_calculate_building_construction_sector_expenses_per_point = {
 	}
 }
 
+#
+# tag           : tag_aroai_calculate_budget_surplus
+# Called by     : aroai_perform_iteration_of_weekly_loop
 # Budget surplus is calculated as a treasury delta. For any additional values previous week data is used
 # because treasury delta is a byproduct of previous week income and expenses and not this week ones.
+#
 aroai_calculate_budget_surplus = {
     # Overwrite budget surplus with its modified form, where we always assume construction sectors are used in full
     set_local_variable = {
@@ -1041,7 +1065,6 @@ aroai_clear_weekly_loop_variables = {
     remove_variable = aroai_previous_building_construction_sector_expenses_per_point
     remove_variable = aroai_previous_weekly_net_fixed_income
     remove_variable = aroai_previous_building_construction_sector_spending_value
-    remove_variable = aroai_investment_pool_expected
 
     remove_variable = aroai_average_usage_of_construction_points
     remove_variable = aroai_previous_usage_of_construction_points

@@ -1,4 +1,231 @@
-﻿# Find army and navy average and biggest threat numbers
+﻿
+#
+# tag           : tag_aroai_collect_coastlines_of_market_capital_and_overseas_lands
+# called by     : aroai_preparation_events.1
+# Collect coastlines of market capital and outer lands
+#
+aroai_collect_coastlines_of_market_capital_and_overseas_lands = {
+	if = {
+		limit = {
+			any_scope_state = {
+				is_coastal = yes
+			}
+		}
+		# Only market owners can have market capital coastlines, for junior partners everything is overseas lands
+		if = {
+			limit = {
+				market.owner = root
+			}
+			# Set up market capital as input state
+			market_capital = {
+				root = {
+					add_to_variable_list = {
+						name = aroai_current_ring_of_states
+						target = prev
+					}
+				}
+			}
+			# Get list of all states connected to market capital by land
+			aroai_collect_states_of_same_owner_connected_by_land = yes
+			# Out of connected states take all the coastal ones to form market capital coastline list
+			every_in_list = {
+				variable = aroai_states_connected_to_input
+				if = {
+					limit = {
+						is_coastal = yes
+					}
+					root = {
+						add_to_variable_list = {
+							name = aroai_states_of_market_capital_coastline
+							target = prev
+						}
+					}
+				}
+			}
+			# Set up variable with number of states of market capital coastline which is needed for port conditions
+			set_variable = {
+				name = aroai_num_states_of_market_capital_coastline
+				value = 0
+			}
+			every_in_list = {
+				variable = aroai_states_of_market_capital_coastline
+				root = {
+					change_variable = {
+						name = aroai_num_states_of_market_capital_coastline
+						add = 1
+					}
+				}
+			}
+			# Garbage collection
+			clear_variable_list = aroai_states_connected_to_input
+		}
+		# Every coastal state that does not belong to market capital coastline is a part of overseas lands
+		every_scope_state = {
+			limit = {
+				is_coastal = yes
+				root = {
+					NOT = {
+						aroai_is_target_in_variable_list = {
+							name = aroai_states_of_market_capital_coastline
+							target = prev
+						}
+					}
+				}
+			}
+			root = {
+				add_to_variable_list = {
+					name = aroai_coastline_of_overseas_lands
+					target = prev
+				}
+				# Create a list of states in overseas lands where it is safe to delete ports, meaning states that are
+				# connected by land to some other state with port and thus they won't lose market access if their ports
+				# will be deleted, which is absolutely critical to track for decision making regarding port downsizing.
+				if = {
+					limit = {
+						prev.var:aroai_building_port_level > 0
+						NOT = {
+							aroai_is_target_in_variable_list = {
+								name = aroai_safe_to_delete_ports_in_overseas_lands
+								target = prev
+							}
+						}
+					}
+					# Set up a state with port as input
+					add_to_variable_list = {
+						name = aroai_current_ring_of_states
+						target = prev
+					}
+					# Get list of all states connected to this state by land
+					aroai_collect_states_of_same_owner_connected_by_land = yes
+					# If there are some states with ports in output list, all of them are considered safe to delete.
+					# Note that downsizing script only deletes one port at time; if this will be changed, you'll need
+					# to add additional tracking to avoid deleting multiple ports that rely on each other to be safe.
+					if = {
+						limit = {
+							any_in_list = {
+								variable = aroai_states_connected_to_input
+								var:aroai_building_port_level > 0
+								count > 1
+							}
+						}
+						every_in_list = {
+							variable = aroai_states_connected_to_input
+							if = {
+								limit = {
+									var:aroai_building_port_level > 0
+								}
+								root = {
+									add_to_variable_list = {
+										name = aroai_safe_to_delete_ports_in_overseas_lands
+										target = prev
+									}
+								}
+							}
+						}
+					}
+					# Garbage collection
+					clear_variable_list = aroai_states_connected_to_input
+				}
+			}
+		}
+	}
+}
+
+#
+# tag           : tag_aroai_collect_coastlines_of_market_capital_and_overseas_lands
+# called by     : aroai_collect_coastlines_of_market_capital_and_overseas_lands
+# Gets any amount of states as input in form of aroai_current_ring_of_states variable list, creates an output variable
+# list named aroai_states_connected_to_input that contains all the states of the same owner that are connected by land
+# through other states of this same owner to any of states from input. Don't forget about garbage collection of output.
+#
+aroai_collect_states_of_same_owner_connected_by_land = {
+	while = {
+		limit = {
+			aroai_has_variable_list = {
+				name = aroai_current_ring_of_states
+			}
+		}
+		random_in_list = {
+			variable = aroai_current_ring_of_states
+			root = {
+				add_to_variable_list = {
+					name = aroai_states_connected_to_input
+					target = prev
+				}
+			}
+			every_neighbouring_state = {
+				limit = {
+					owner = root
+					root = {
+						NOR = {
+							aroai_is_target_in_variable_list = {
+								name = aroai_states_connected_to_input
+								target = prev
+							}
+							aroai_is_target_in_variable_list = {
+								name = aroai_current_ring_of_states
+								target = prev
+							}
+							aroai_is_target_in_variable_list = {
+								name = aroai_waiting_ring_of_states
+								target = prev
+							}
+						}
+					}
+				}
+				root = {
+					add_to_variable_list = {
+						name = aroai_waiting_ring_of_states
+						target = prev
+					}
+				}
+			}
+			root = {
+				remove_list_variable = {
+					name = aroai_current_ring_of_states
+					target = prev
+				}
+				if = {
+					limit = {
+						NOT = {
+							aroai_has_variable_list = {
+								name = aroai_current_ring_of_states
+							}
+						}
+					}
+					if = {
+						limit = {
+							aroai_has_variable_list = {
+								name = aroai_waiting_ring_of_states
+							}
+						}
+						every_in_list = {
+							variable = aroai_waiting_ring_of_states
+							root = {
+								add_to_variable_list = {
+									name = aroai_current_ring_of_states
+									target = prev
+								}
+							}
+						}
+						clear_variable_list = aroai_waiting_ring_of_states
+					}
+					else = {
+						clear_variable_list = aroai_current_ring_of_states
+					}
+				}
+			}
+		}
+	}
+}
+
+
+
+#
+# tag           : tag_aroai_determine_highest_and_average_military_threat
+# called by     : aroai_preparation_events.1
+# Find army and navy average and biggest threat numbers
+#
 aroai_determine_highest_and_average_military_threat = {
 	# Set up variables
 	set_variable = {
@@ -149,7 +376,11 @@ aroai_determine_highest_and_average_military_threat = {
 	}
 }
 
+#
+# tag           : tag_aroai_determine_roleplay_building_priorities
+# called by     : aroai_preparation_events.1
 # Set up variables for roleplay offset
+#
 aroai_determine_roleplay_building_priorities = {
 	if = {
 		limit = {
@@ -187,7 +418,7 @@ aroai_determine_roleplay_building_priorities = {
 		else_if = {
 			limit = {
 				OR = {
-					has_law = law_type:law_traditionalism
+					has_law = law_type:law_anti_industrialization
 					AND = {
 						country_rank <= 3
 						aroai_gdp_per_capita < 5
@@ -214,7 +445,7 @@ aroai_determine_roleplay_building_priorities = {
 		else_if = {
 			limit = {
 				OR = {
-					has_law = law_type:law_agrarianism
+					has_law = law_type:law_anti_industrialization
 					AND = {
 						country_rank <= 3
 						aroai_gdp_per_capita < 5
@@ -239,8 +470,12 @@ aroai_determine_roleplay_building_priorities = {
 	}
 }
 
+#
+# tag           : tag_aroai_collect_data_for_construction_and_downsizing
+# called by     : aroai_preparation_events.1
 # A huge mess of different stuff combined together for performance reasons mostly in a form of
 # reducing calls of stuff like every_scope_state and every_scope_building to the minimum possible.
+#
 aroai_collect_data_for_construction_and_downsizing = {
 	# Set up variables to calculate incorporated and coastal values
 	set_variable = {
@@ -584,11 +819,11 @@ aroai_collect_data_for_construction_and_downsizing = {
 								}
 							}
 							multiply = 35000							# Rice paddies have ~35k workers per level
-							multiply = 0.98							# But not all of them are peasants
+							multiply = 0.98							# But not all of them are informal_workers
 						}
 						else = {
 							multiply = 15000							# All the other ones have ~15k workers per level
-							multiply = 0.94							# But not all of them are peasants
+							multiply = 0.94							# But not all of them are informal_workers
 						}
 					}
 				}
@@ -740,7 +975,7 @@ aroai_collect_data_for_construction_and_downsizing = {
 					}
 					aroai_renew_variable = {
 						name = aroai_building_naval_base_cooldown
-						days = aroai_days_in_building_cooldown
+						days = 30
 					}
 				}
 				change_variable = {
@@ -770,7 +1005,7 @@ aroai_collect_data_for_construction_and_downsizing = {
 					}
 					aroai_renew_variable = {
 						name = aroai_building_barracks_cooldown
-						days = aroai_days_in_building_cooldown
+						days = 30
 					}
 				}
 				# Counted in weekly loop
@@ -865,11 +1100,11 @@ aroai_collect_data_for_construction_and_downsizing = {
 								}
 							}
 							multiply = 35000							# Rice paddies have ~35k workers per level
-							multiply = 0.98							# But not all of them are peasants
+							multiply = 0.98							# But not all of them are informal_workers
 						}
 						else = {
 							multiply = 15000							# All the other ones have ~15k workers per level
-							multiply = 0.94							# But not all of them are peasants
+							multiply = 0.94							# But not all of them are informal_workers
 						}
 					}
 				}
@@ -890,17 +1125,7 @@ aroai_collect_data_for_construction_and_downsizing = {
 		}
 	}
 	remove_local_variable = aroai_potential_workforce
-	# Some square root calculations that are required
-	aroai_calculate_square_root = {
-		precision = 2
-		input = aroai_minus_half_unincorporated_gdp_per_capita
-		output = aroai_square_root_of_minus_half_unincorporated_gdp_per_capita
-	}
-	aroai_calculate_square_root = {
-		precision = 1
-		input = aroai_construction_points_current
-		output = aroai_square_root_of_construction_points
-	}
+
 	# Recheck if we actually should construct new buildings with all the new data.
 	# There's some good reason for this that I can't recall now.
 	if = {
@@ -1146,11 +1371,16 @@ aroai_collect_data_for_construction_and_downsizing = {
 	}
 }
 
+
+#
+# tag           : tag_aroai_collect_data_for_all_buildings_of_type
+# called by     : aroai_collect_data_for_construction_and_downsizing
 # ---------------------------------------------------------------------------------------------------------------------
 # Array variable aroai_building_type_X_collected_data is widely used below, where X is id of building type in question.
 # Search for "Cell distribution of aroai_building_type_X_collected_data array variable" in aroai_preparation_values.txt
 # ---------------------------------------------------------------------------------------------------------------------
 # If workforce is true, calculate shortages, profitability, productivity and check if building is excessive
+#
 aroai_collect_data_for_all_buildings_of_type = {
 	if = {
 		limit = {
@@ -1247,7 +1477,11 @@ aroai_collect_data_for_all_buildings_of_type = {
 	}
 }
 
+#
+# tag           : tag_aroai_collect_data_for_all_buildings_of_type
+# called by     : aroai_collect_data_for_construction_and_downsizing
 # Сalculate shortages, profitability and productivity
+#
 aroai_collect_data_except_workforce_for_all_buildings_of_type = {
 	# For government building we don't need anything except shortages
 	if = {
@@ -1393,7 +1627,11 @@ aroai_collect_data_except_workforce_for_all_buildings_of_type = {
 	}
 }
 
+#
+# tag           : tag_aroai_collect_only_workforce_data_for_all_buildings_of_type
+# called by     : aroai_collect_data_for_construction_and_downsizing
 # Check if building is excessive or abandoned
+#
 aroai_collect_only_workforce_data_for_all_buildings_of_type = {
 	# But only is workforce is true, of course
 	if = {
@@ -1429,7 +1667,11 @@ aroai_collect_only_workforce_data_for_all_buildings_of_type = {
 	}
 }
 
+#
+# tag           : tag_aroai_add_ongoing_constructions_to_counter
+# called by     : aroai_collect_data_except_workforce_for_all_buildings_of_type aroai_collect_data_for_all_buildings_of_type aroai_weekly_check_of_building_data
 # Add the number of levels currently under construction to counter in array variable of the building type
+#
 aroai_add_ongoing_constructions_to_counter = {
 	# Only if the building is actually under construction
 	if = {
@@ -1472,7 +1714,11 @@ aroai_add_ongoing_constructions_to_counter = {
 	}
 }
 
+#
+# tag           : tag_aroai_collect_total_and_shortage_building_levels
+# called by     : aroai_weekly_check_of_building_data aroai_collect_data_for_all_buildings_of_type
 # Collect total number of building type levels and how much of them have shortages to get % shortage levels later
+#
 aroai_collect_total_and_shortage_building_levels = {
 	root = {
 		# Create array variable if it doesn't exist
@@ -1521,9 +1767,14 @@ aroai_collect_total_and_shortage_building_levels = {
 	}
 }
 
+
+#
+# tag           : tag_aroai_calculate_percent_of_building_type_levels_without_shortage
+# called by     : aroai_weekly_check_of_building_data aroai_collect_data_for_all_buildings_of_type aroai_collect_data_except_workforce_for_all_buildings_of_type
 # Transform total and shortage building type levels data into single cell containing percent of levels without shortage.
 # "Without shortage" is used instead of "shortage" because otherwise we would have a cell with 0 value being desired,
 # which sounds like a bad idea when all the other cells follow the paradigm of "big number good, small number bad."
+#
 aroai_calculate_percent_of_building_type_levels_without_shortage = {
 	set_variable = {
 		name = aroai_building_type_$id$_collected_data
@@ -1567,8 +1818,13 @@ aroai_calculate_percent_of_building_type_levels_without_shortage = {
 	}
 }
 
+
+#
+# tag           : tag_aroai_find_building_type_median_productivity_and_profitability
+# called by     : aroai_collect_data_for_all_buildings_of_type aroai_collect_data_except_workforce_for_all_buildings_of_type
 # While country scope medians used only positive values and added them multiple times based on building levels, these
 # calculations has none of it due to actual real world data being required here and performance reasons respectively.
+#
 aroai_find_building_type_median_productivity_and_profitability = {
 	if = {
 		limit = {
@@ -1632,6 +1888,10 @@ aroai_find_building_type_median_productivity_and_profitability = {
 	}
 }
 
+
+#
+# tag           : tag_aroai_check_if_building_is_excessive_or_abandoned
+# called by     : aroai_collect_data_for_all_buildings_of_type aroai_collect_data_except_workforce_for_all_buildings_of_type
 # Excessive means high occupancy but is not productive, abandoned means low occupancy and can't hire more
 aroai_check_if_building_is_excessive_or_abandoned = {
 	state = {
@@ -1783,214 +2043,4 @@ aroai_check_if_building_is_excessive_or_abandoned = {
 	}
 }
 
-# Collect coastlines of market capital and outer lands
-aroai_collect_coastlines_of_market_capital_and_overseas_lands = {
-	if = {
-		limit = {
-			any_scope_state = {
-				is_coastal = yes
-			}
-		}
-		# Only market owners can have market capital coastlines, for junior partners everything is overseas lands
-		if = {
-			limit = {
-				market.owner = root
-			}
-			# Set up market capital as input state
-			market_capital = {
-				root = {
-					add_to_variable_list = {
-						name = aroai_current_ring_of_states
-						target = prev
-					}
-				}
-			}
-			# Get list of all states connected to market capital by land
-			aroai_collect_states_of_same_owner_connected_by_land = yes
-			# Out of connected states take all the coastal ones to form market capital coastline list
-			every_in_list = {
-				variable = aroai_states_connected_to_input
-				if = {
-					limit = {
-						is_coastal = yes
-					}
-					root = {
-						add_to_variable_list = {
-							name = aroai_states_of_market_capital_coastline
-							target = prev
-						}
-					}
-				}
-			}
-			# Set up variable with number of states of market capital coastline which is needed for port conditions
-			set_variable = {
-				name = aroai_num_states_of_market_capital_coastline
-				value = 0
-			}
-			every_in_list = {
-				variable = aroai_states_of_market_capital_coastline
-				root = {
-					change_variable = {
-						name = aroai_num_states_of_market_capital_coastline
-						add = 1
-					}
-				}
-			}
-			# Garbage collection
-			clear_variable_list = aroai_states_connected_to_input
-		}
-		# Every coastal state that does not belong to market capital coastline is a part of overseas lands
-		every_scope_state = {
-			limit = {
-				is_coastal = yes
-				root = {
-					NOT = {
-						aroai_is_target_in_variable_list = {
-							name = aroai_states_of_market_capital_coastline
-							target = prev
-						}
-					}
-				}
-			}
-			root = {
-				add_to_variable_list = {
-					name = aroai_coastline_of_overseas_lands
-					target = prev
-				}
-				# Create a list of states in overseas lands where it is safe to delete ports, meaning states that are
-				# connected by land to some other state with port and thus they won't lose market access if their ports
-				# will be deleted, which is absolutely critical to track for decision making regarding port downsizing.
-				if = {
-					limit = {
-						prev.var:aroai_building_port_level > 0
-						NOT = {
-							aroai_is_target_in_variable_list = {
-								name = aroai_safe_to_delete_ports_in_overseas_lands
-								target = prev
-							}
-						}
-					}
-					# Set up a state with port as input
-					add_to_variable_list = {
-						name = aroai_current_ring_of_states
-						target = prev
-					}
-					# Get list of all states connected to this state by land
-					aroai_collect_states_of_same_owner_connected_by_land = yes
-					# If there are some states with ports in output list, all of them are considered safe to delete.
-					# Note that downsizing script only deletes one port at time; if this will be changed, you'll need
-					# to add additional tracking to avoid deleting multiple ports that rely on each other to be safe.
-					if = {
-						limit = {
-							any_in_list = {
-								variable = aroai_states_connected_to_input
-								var:aroai_building_port_level > 0
-								count > 1
-							}
-						}
-						every_in_list = {
-							variable = aroai_states_connected_to_input
-							if = {
-								limit = {
-									var:aroai_building_port_level > 0
-								}
-								root = {
-									add_to_variable_list = {
-										name = aroai_safe_to_delete_ports_in_overseas_lands
-										target = prev
-									}
-								}
-							}
-						}
-					}
-					# Garbage collection
-					clear_variable_list = aroai_states_connected_to_input
-				}
-			}
-		}
-	}
-}
 
-# Gets any amount of states as input in form of aroai_current_ring_of_states variable list, creates an output variable
-# list named aroai_states_connected_to_input that contains all the states of the same owner that are connected by land
-# through other states of this same owner to any of states from input. Don't forget about garbage collection of output.
-aroai_collect_states_of_same_owner_connected_by_land = {
-	while = {
-		limit = {
-			aroai_has_variable_list = {
-				name = aroai_current_ring_of_states
-			}
-		}
-		random_in_list = {
-			variable = aroai_current_ring_of_states
-			root = {
-				add_to_variable_list = {
-					name = aroai_states_connected_to_input
-					target = prev
-				}
-			}
-			every_neighbouring_state = {
-				limit = {
-					owner = root
-					root = {
-						NOR = {
-							aroai_is_target_in_variable_list = {
-								name = aroai_states_connected_to_input
-								target = prev
-							}
-							aroai_is_target_in_variable_list = {
-								name = aroai_current_ring_of_states
-								target = prev
-							}
-							aroai_is_target_in_variable_list = {
-								name = aroai_waiting_ring_of_states
-								target = prev
-							}
-						}
-					}
-				}
-				root = {
-					add_to_variable_list = {
-						name = aroai_waiting_ring_of_states
-						target = prev
-					}
-				}
-			}
-			root = {
-				remove_list_variable = {
-					name = aroai_current_ring_of_states
-					target = prev
-				}
-				if = {
-					limit = {
-						NOT = {
-							aroai_has_variable_list = {
-								name = aroai_current_ring_of_states
-							}
-						}
-					}
-					if = {
-						limit = {
-							aroai_has_variable_list = {
-								name = aroai_waiting_ring_of_states
-							}
-						}
-						every_in_list = {
-							variable = aroai_waiting_ring_of_states
-							root = {
-								add_to_variable_list = {
-									name = aroai_current_ring_of_states
-									target = prev
-								}
-							}
-						}
-						clear_variable_list = aroai_waiting_ring_of_states
-					}
-					else = {
-						clear_variable_list = aroai_current_ring_of_states
-					}
-				}
-			}
-		}
-	}
-}

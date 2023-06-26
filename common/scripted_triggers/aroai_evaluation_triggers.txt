@@ -1,20 +1,28 @@
-﻿aroai_building_is_allowed = {
+﻿#
+# tag           : tag_aroai_building_is_allowed
+# called by     : Every consider function
+#
+aroai_building_is_allowed = {
+    OR = {
+        $id$ < 15
+        NOT = { has_law = law_type:law_anti_industrialization }
+    }
     OR = {
         aroai_is_regular_construction_allowed = yes
         AND = {
-            $critical$ = 1
+            $id$ = 1
             aroai_evaluate_building_government_administration = {
                 priority = 1
             }
         }
         AND = {
-            $critical$ = 3
+            $id$ = 3
             aroai_evaluate_building_construction_sector = {
                 priority = 1
             }
         }
         AND = {
-            $critical$ = 5
+            $id$ = 5
             aroai_evaluate_building_port = {
                 priority = 1
             }
@@ -22,13 +30,20 @@
     }
 }
 
+#
+# tag           : tag_aroai_consider_building
+# called by     : Every consider function
+#
 aroai_consider_building = {
     OR = {
         $shortage$ = 0
         NOT = {
             has_variable = aroai_building_type_$id$_collected_data
         }
-        aroai_building_type_$id$_collected_data_1 >= 90
+        OR = {
+            aroai_building_type_$id$_collected_data_1 >= 90
+            aroai_building_type_$id$_collected_data_1 <= 00
+        }
     }
 }
 
@@ -69,38 +84,11 @@ aroai_building_can_be_expanded = {
 
 # Conditions: 0 = new and expanding, 1 = only new, 2 = only expanding
 aroai_sanction_building = {
-    trigger_if = {
-        limit = {
-            $conditions$ = 0
-        }
-        OR = {
-            NOT = {
-                aroai_has_building = {
-                    key = $key$
-                }
-            }
-            any_scope_building = {
-                is_building_type = $key$
-                aroai_building_can_be_expanded = {
-                    shortage = $shortage$
-                    profitable = $profitable$
-                }
-            }
-        }
-    }
-    trigger_else_if = {
-        limit = {
-            $conditions$ = 1
-        }
+    OR = {
         NOT = {
             aroai_has_building = {
                 key = $key$
             }
-        }
-    }
-    trigger_else_if = {
-        limit = {
-            $conditions$ = 2
         }
         any_scope_building = {
             is_building_type = $key$
@@ -110,16 +98,12 @@ aroai_sanction_building = {
             }
         }
     }
-    trigger_else = {
-        always = no
-    }
 }
 
 # Government buildings
 aroai_sanction_government = {
     aroai_sanction_building = {
         key = $key$
-        conditions = $conditions$
         shortage = $shortage$
         profitable = $profitable$
     }
@@ -129,7 +113,6 @@ aroai_sanction_government = {
 aroai_sanction_infrastructure = {
     aroai_sanction_building = {
         key = $key$
-        conditions = $conditions$
         shortage = $shortage$
         profitable = $profitable$
     }
@@ -149,54 +132,18 @@ aroai_sanction_resource = {
             amount > 3
         }
     }
-    trigger_if = {
-        limit = {
-            $conditions$ = 0
-        }
-        OR = {
-            AND = {
-                NOT = {
-                    aroai_has_building = {
-                        key = $key$
-                    }
-                }
-                has_potential_resource = $resource$
-                OR = {
-                    $profitable$ = 0
-                    root.aroai_building_type_$id$_collected_data_4 = 1
+    OR = {
+        AND = {
+            NOT = {
+                aroai_has_building = {
+                    key = $key$
                 }
             }
-            any_scope_building = {
-                is_building_type = $key$
-                aroai_building_can_be_expanded = {
-                    shortage = $shortage$
-                    profitable = $profitable$
-                }
-                OR = {
-                    $profitable$ = 0
-                    aroai_productivity_formatted >= root.aroai_building_type_$id$_collected_data_3
-                }
+            has_potential_resource = $resource$
+            OR = {
+                $profitable$ = 0
+                root.aroai_building_type_$id$_collected_data_4 = 1
             }
-        }
-    }
-    trigger_else_if = {
-        limit = {
-            $conditions$ = 1
-        }
-        NOT = {
-            aroai_has_building = {
-                key = $key$
-            }
-        }
-        has_potential_resource = $resource$
-        OR = {
-            $profitable$ = 0
-            root.aroai_building_type_$id$_collected_data_4 = 1
-        }
-    }
-    trigger_else_if = {
-        limit = {
-            $conditions$ = 2
         }
         any_scope_building = {
             is_building_type = $key$
@@ -209,9 +156,6 @@ aroai_sanction_resource = {
                 aroai_productivity_formatted >= root.aroai_building_type_$id$_collected_data_3
             }
         }
-    }
-    trigger_else = {
-        always = no
     }
 }
 
@@ -246,58 +190,20 @@ aroai_sanction_agriculture = {
         always = yes
         has_potential_resource = $resource$
     }
-    trigger_if = {
-        limit = {
-            $conditions$ = 0
-        }
-        OR = {
-            AND = {
-                NOT = {
-                    aroai_has_building = {
-                        key = $key$
-                    }
-                }
-                aroai_check_agriculture_resource = {
-                    cipher = $cipher$
-                }
-                OR = {
-                    $profitable$ = 0
-                    root.aroai_building_type_$id$_collected_data_4 = 1
+    OR = {
+        AND = {
+            NOT = {
+                aroai_has_building = {
+                    key = $key$
                 }
             }
-            any_scope_building = {
-                is_building_type = $key$
-                aroai_building_can_be_expanded = {
-                    shortage = $shortage$
-                    profitable = $profitable$
-                }
-                OR = {
-                    $profitable$ = 0
-                    aroai_productivity_formatted >= root.aroai_building_type_$id$_collected_data_3
-                }
+            aroai_check_agriculture_resource = {
+                cipher = $cipher$
             }
-        }
-    }
-    trigger_else_if = {
-        limit = {
-            $conditions$ = 1
-        }
-        NOT = {
-            aroai_has_building = {
-                key = $key$
+            OR = {
+                $profitable$ = 0
+                root.aroai_building_type_$id$_collected_data_4 = 1
             }
-        }
-        aroai_check_agriculture_resource = {
-            cipher = $cipher$
-        }
-        OR = {
-            $profitable$ = 0
-            root.aroai_building_type_$id$_collected_data_4 = 1
-        }
-    }
-    trigger_else_if = {
-        limit = {
-            $conditions$ = 2
         }
         any_scope_building = {
             is_building_type = $key$
@@ -310,60 +216,22 @@ aroai_sanction_agriculture = {
                 aroai_productivity_formatted >= root.aroai_building_type_$id$_collected_data_3
             }
         }
-    }
-    trigger_else = {
-        always = no
     }
 }
 
 # Industry buildings
 aroai_sanction_industry = {
-    trigger_if = {
-        limit = {
-            $conditions$ = 0
-        }
-        OR = {
-            AND = {
-                NOT = {
-                    aroai_has_building = {
-                        key = $key$
-                    }
-                }
-                OR = {
-                    $profitable$ = 0
-                    root.aroai_building_type_$id$_collected_data_4 = 1
+    OR = {
+        AND = {
+            NOT = {
+                aroai_has_building = {
+                    key = $key$
                 }
             }
-            any_scope_building = {
-                is_building_type = $key$
-                aroai_building_can_be_expanded = {
-                    shortage = $shortage$
-                    profitable = $profitable$
-                }
-                OR = {
-                    $profitable$ = 0
-                    aroai_productivity_formatted >= root.aroai_building_type_$id$_collected_data_3
-                }
+            OR = {
+                $profitable$ = 0
+                root.aroai_building_type_$id$_collected_data_4 = 1
             }
-        }
-    }
-    trigger_else_if = {
-        limit = {
-            $conditions$ = 1
-        }
-        NOT = {
-            aroai_has_building = {
-                key = $key$
-            }
-        }
-        OR = {
-            $profitable$ = 0
-            root.aroai_building_type_$id$_collected_data_4 = 1
-        }
-    }
-    trigger_else_if = {
-        limit = {
-            $conditions$ = 2
         }
         any_scope_building = {
             is_building_type = $key$
@@ -376,9 +244,6 @@ aroai_sanction_industry = {
                 aroai_productivity_formatted >= root.aroai_building_type_$id$_collected_data_3
             }
         }
-    }
-    trigger_else = {
-        always = no
     }
 }
 

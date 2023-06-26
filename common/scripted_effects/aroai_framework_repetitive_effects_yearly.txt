@@ -1,0 +1,120 @@
+﻿
+#
+# tag           : tag_aroai_check_agriculture_resources_in_state_regions
+# called by     : aroai_framework_yearly_effects
+# There's no trigger to check if an agriculture resource is available in the state as of 1.2.2.
+# As a workaround, a custom solution is used that stores data about resources as a variable in state region scope.
+# Check happens during initialization of a new game and then periodically, but not really often.
+#
+aroai_check_agriculture_resources_in_state_regions = {
+    every_state_region = {
+        limit = {
+            is_state_region_land = yes
+            NOT = {
+                has_variable = aroai_available_agriculture_resources
+            }
+        }
+        set_local_variable = {
+            name = aroai_added_arable_land
+            value = 0
+        }
+
+        # Arable land is added preemptively to check resources through creating building
+        while = {
+            limit = {
+                local_var:aroai_added_arable_land < 100
+                any_scope_state = {
+                    free_arable_land < 2
+                }
+            }
+            add_arable_land = 1
+            change_local_variable = {
+                name = aroai_added_arable_land
+                add = 1
+            }
+        }
+
+        # As this is (hopefully) a temporary solution, code below is not integrated into attribute delivery system
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_rye_farm cipher = 1 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_wheat_farm cipher = 2 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_rice_farm cipher = 3 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_maize_farm cipher = 4 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_millet_farm cipher = 5 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_livestock_ranch cipher = 10 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_cotton_plantation cipher = 20 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_silk_plantation cipher = 200 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_banana_plantation cipher = 1000 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_sugar_plantation cipher = 2000 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_tea_plantation cipher = 10000 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_coffee_plantation cipher = 20000 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_tobacco_plantation cipher = 100000 }
+        aroai_check_if_state_region_has_agriculture_resource = { key = building_opium_plantation cipher = 200000 }
+
+        # Added arable land is removed
+        while = {
+            limit = {
+                local_var:aroai_added_arable_land > 0
+            }
+            add_arable_land = -1
+            change_local_variable = {
+                name = aroai_added_arable_land
+                subtract = 1
+            }
+        }
+    }
+}
+#
+# tag           : tag_aroai_check_if_state_region_has_agriculture_resource
+# called by     : aroai_check_agriculture_resources_in_state_regions
+# First check if such building already exists in the state, otherwise try to create it and check if it may be expanded.
+#
+aroai_check_if_state_region_has_agriculture_resource = {
+    if = {
+        limit = {
+            any_scope_state = {
+                any_scope_building = {
+                    is_building_type = $key$
+                }
+            }
+        }
+        aroai_add_to_variable = {
+            name = aroai_available_agriculture_resources
+            value = $cipher$
+        }
+    }
+    else = {
+        every_scope_state = {
+            limit = {
+                free_arable_land >= 2
+            }
+            if = {
+                limit = {
+                    NOT = {
+                        has_local_variable = aroai_agriculture_resource_was_found
+                    }
+                }
+                create_building = {
+                    building = $key$
+                    level = 1
+                }
+                if = {
+                    limit = {
+                        any_scope_building = {
+                            is_building_type = $key$
+                            can_queue_building_levels = 1
+                        }
+                    }
+                    state_region = {
+                        aroai_add_to_variable = {
+                            name = aroai_available_agriculture_resources
+                            value = $cipher$
+                        }
+                    }
+                    set_local_variable = aroai_agriculture_resource_was_found
+                }
+                remove_building = $key$
+            }
+        }
+        remove_local_variable = aroai_agriculture_resource_was_found
+    }
+}

@@ -1,5 +1,5 @@
 ﻿# scope:state
-set_habitability_effects = {
+onaction_set_habitability_effects = {
 	# Get the habitability of the region
 	if = {
 		limit = {
@@ -47,7 +47,7 @@ set_habitability_effects = {
 
 #scope:state
 #This is process power intensive, only run this at the start of the game
-calc_starting_habitability = {
+onaction_calc_starting_habitability = {
 	set_variable = {
 		name = max_habitability
 		value = 0.5
@@ -92,7 +92,7 @@ calc_starting_habitability = {
 	}
 }
 
-calc_monthly_habitability = {
+onaction_calc_monthly_habitability = {
 	if = {
 		limit = {
 			has_variable = habitability
@@ -258,5 +258,70 @@ calc_pollution_habitability = {
 			name = habitability
 			value = -1
 		}
+	}
+}
+
+#scope:country
+effect_ban_pollution_industries = {
+	every_scope_state = {
+		# If the state has any combustion plants, get their level and the level of any renewable facilities and add them to an accumulator. Then remove all the combustion and renewable facilities and create new renewable facilities with the level of the accumulator.
+
+		# Essentially what this does is "transition" all the combustion plants to renewable facilities, but both have to be removed first due to the way `create_building` works.	
+		limit = {
+			has_building = building_combustion_plant
+		}
+		set_local_variable = {
+			name = combustion_and_renewable_building_accumulator
+			value = 0
+		}
+		every_scope_building = {
+			limit = {
+				is_building_type = building_combustion_plant
+			}
+			change_local_variable = {
+				name = combustion_and_renewable_building_accumulator
+				add = level
+			}
+		}
+		every_scope_building = {
+			limit = {
+				is_building_type = building_renewable_energy_facility
+			}
+			change_local_variable = {
+				name = combustion_and_renewable_building_accumulator
+				add = level
+			}
+		}
+		remove_building = building_combustion_plant
+		remove_building = building_renewable_energy_facility
+		create_building = { 
+			building = building_renewable_energy_facility
+			level = local_var:combustion_and_renewable_building_accumulator
+			reserves = 1
+		}	
+	}
+	
+	# Destroys all fuel refineries
+	every_scope_state = {
+		limit = {
+			has_building = building_fuel_refineries
+		}
+		remove_building = building_fuel_refineries
+	}
+
+	# destroys all natural gas wells
+	every_scope_state = {
+		limit = {
+			has_building = building_natural_gas_well
+		}
+		remove_building = building_natural_gas_well
+	}
+
+	# destroys all oil rigs
+	every_scope_state = {
+		limit = {
+			has_building = building_oil_rig
+		}
+		remove_building = building_oil_rig
 	}
 }
