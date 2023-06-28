@@ -1,72 +1,4 @@
 ﻿# ----------------------------------------------
-# General info about government building targets
-# ----------------------------------------------
-
-# THIS IS NOT ENTIRELY CORRECT ANYMORE I'll remove it when I entirely reworked budgeting
-
-# Government buildings don't produce goods in most cases, so you can't judge them by productivity or whatever, you need
-# to establish some special measure of how important are they and how much of them a country needs. To solve this two
-# values are introduced for each government building, share and target.
-
-# Share is % of budget income of a country that it can spend on this building weekly to pay for wages and input good.
-# Usually it's pretty rigid, roughly set to what works the best, but with some dynamic factors added in more cases.
-# For example, government administration share is higher when tax capacity is low country-wide. Construction sector
-# is special in a sense that it has no base or fixed share, instead it just takes all what's left after other shares.
-# Please note that for AI shares are always calculated for normal tax and wage level, otherwise it would be unstable.
-# Again consruction sector are special here, they always assume high tax level at the beginning for faster development
-# of economy, but when a country won't have much free workforce left, sector will demand less and less money, down to
-# normal tax level and even a bit below it.
-
-# Target is arbitrary value on how much stuff a country wants to have, be it spare bureaucracy, innovation, battalions,
-# convoys, everything. Except construction sectors, of course. They have no target. Anyways, targets are calculated by
-# some random ass formulas, most of the time in some form of population multiplied by some form of GDP per capita, with
-# a bunch of other factors thrown in. If country is below target, but expenses already exceed share, it won't construct
-# more in most cases, so share acts as a limiter. If country reached target but not share, it may build some more of
-# this building cause why not if they are rich enough for that.
-
-# --------------------------------------------------------------
-# Various common factors that affect government building targets
-# --------------------------------------------------------------
-
-# If a country is forced to spend most of its money on government administrations, we need to lower other shares
-# Called : building, port, university share
-# Range : [0.25, 1]
-aroai_target_multiplier_with_high_government_spending = {
-    value = 1
-    subtract = {
-        value = {
-            value = aroai_building_government_administration_spending_value
-            divide = aroai_country_active_income
-        }
-        divide = {
-            value = aroai_building_government_administration_spending_share
-            multiply = 1.20
-        }
-        subtract = 1
-        min = 0
-        max = 0.75
-    }
-}
-
-
-# If construction is largely sponsored by investment pool, we want to raise non-construction shares
-# Range : [1, 2.2]
-aroai_target_multiplier_with_investment_pool = {
-    value = 1.00
-    add = {
-        value = 1.20
-        multiply = {
-            value = aroai_investment_pool_expected
-            divide = aroai_country_active_income
-            divide = 0.30
-            min = 0
-            max = 1
-        }
-    }
-}
-
-
-# ----------------------------------------------
 # General info about budget management
 # ----------------------------------------------
 
@@ -81,30 +13,21 @@ aroai_target_multiplier_with_investment_pool = {
 
 # This leaves us with the military and construction sectors. A country can be in one of two states: industrialized or
 # industrializing. In order to employ its citizens as quickly as possible, a country is considered industrialized if it
-# can provide employment for almost all of its unemployed citizens by the end of the year. We calculate the number of
-# construction points required for this based on aroai_max_wanted_constructions_points_from_pop. If a country cannot
-# afford that many construction points, it is still in the process of industrializing.
+# can provide employment for almost all of its unemployed citizens by the end of the year, including the yearly pop growth.
+# (1) aroai_revenue_left_for_construction_military is the country balance without any military or construction ongoing.
+# (2) aroai_construction_depense_maximum_from_budget is 75% of that balance.
+# (3) aroai_construction_depense_maximum_from_pop is what's required for reaching/keeping full employment by next year.
+# Note that (3) take account of the investment pool, but won't go below a threshold to keep being able to build things.
+# The country allocate (1) - min((2),(3)) for the military. This is the depense the military sector will try to achieve.
+# (4) aroai_construction_points_wanted_for_gov is the actual budget allocated for the construction, which is (1) -
+# military depense, as the country try to achieve a 0 weekly balance at all time. This is because the military depense
+# are very rigid, while construction depense are flexible.
 
-# If the country is still in the industrializing phase, we calculate the amount of money that can be allocated to the
-# military and construction sectors using aroai_revenue_left_for_construction_military. In an ideal scenario, 25% of
-# this amount would be allocated to the military, while 75% would go to the construction sector. However, there are two
-# factors to consider: 1) the budget's instability and 2) the rigid nature of military spending, as aroai does not have
-# control over the production methods. We aim to minimize downsizing as much as possible since we cannot remove individual
-# levels of buildings; we can only delete entire buildings. Furthermore, we can easily regulate the amount of money
-# allocated to construction by reducing the number of construction points available.
-# (Please note that buildings cannot be removed from the construction queue.)
-
-# A separate system will try to align the actual military spending with the target of 25% of
-# aroai_revenue_left_for_construction_military. This system will undergo revisions at some point. The remaining funds,
-# aroai_revenue_left_for_construction, will be available for the construction sector.
-
-# If the country is already industrialized, we know the exact number of construction points needed:
-# aroai_max_wanted_constructions_points_from_pop. We allocate this amount of money to the construction sector and
-# allocate the remaining funds to the military sector.
-
-
-# Effective construction share of income
-# Min : 1 - sum of every other theoretical share
+#
+# tag       : tag_aroai_revenue_left_for_construction_military
+# called by : aroai_revenue_left_for_construction aroai_construction_depense_maximum_from_budget aroai_budget_for_military_sector_expected
+# How much money the country has for the military and construction sectors
+#
 aroai_revenue_left_for_construction_military = {
     value = weekly_net_fixed_income
 
@@ -114,26 +37,12 @@ aroai_revenue_left_for_construction_military = {
     multiply = aroai_revenue_factor_construction_military
 }
 
-aroai_revenue_left_for_construction_military_old = {
-    value = income
-
-    subtract = aroai_investment_pool_net_spending
-
-    multiply = aroai_subject_type_diplo_pact_income_mult
-
-    subtract = {
-        value = aroai_building_government_administration_spending_value
-        add = aroai_building_university_spending_value
-        add = aroai_building_port_spending_value
-        add = aroai_building_research_institute_spending
-        add = var:aroai_total_subsidies
-    }
-
-    multiply = aroai_revenue_factor_construction_military
-}
-
-
-
+#
+# tag       : tag_aroai_revenue_left_for_construction
+# called by : aroai_budget_for_construction_sector_actual
+# How much money the country can use right now for construction. We do this because military spending is far less
+# flexible than construction, and we want to have a 0 net balance at all time
+#
 aroai_revenue_left_for_construction = {
     value = aroai_revenue_left_for_construction_military
 
@@ -148,50 +57,59 @@ aroai_revenue_left_for_construction = {
 # General info about aroai_revenue_factor_construction_military
 # ----------------------------------------------
 
+# Income and depense are very unstable for many reasons. And we can't control that. But we still want :
+# (1) To have enough reserve to be able to go to war without going bankrupt
+# (2) To not go over the gold reserve limit
+# This is why we try to have 50% of the gold reserve limit.
+# If a country is below/above that threshold, it'll spend less/more on military and construction sector.
 
-# gold reserve in weeks of income
-aroai_gold_reserve_scaled = {
-    value = gold_reserves
-    divide = income
-    min = 0
 
-}
-
-# [0.6, INF], = 1 when you have 20 x income in gold reserve
-aroai_gold_reserve_scaled_factor = {
-    value = aroai_gold_reserve_scaled
-    multiply = 0.4 # without this, factor would be 1.6 at x week
-
-    divide = 10
-    add = 0.6
-}
-
-# [0, 0.6], = 0 at half of allowed credit
-aroai_debt_scaled_factor = {
-    value = 0.5
-    subtract = scaled_debt
-    min = 0
-    multiply = 2    # to get a [0, 1] range
-    multiply = 0.6  # to get a [0, 0.6] range
-}
-
-# We take the max value between the two
-# The purpose of this  functions is to keep budget balanced.
-# Sometimes, the ai will spend more than they should on military this leads to less gold reserve, so smaller factor so smaller expense.
-# Sometimes, the ai will spend less than allocated on military. This leads to bigger gold reserve, money that should be spend. The factor will then artificially raise the budget for construction and military.
-# The balance is X weeks of revenue for the gold reserve.
+#
+# tag       : tag_aroai_revenue_factor_construction_military
+# called by : aroai_revenue_left_for_construction_military
+#
 aroai_revenue_factor_construction_military = {
     value = {
         if = {
+            # If we're in debt
             limit = {
-                aroai_debt_scaled_factor < 0.6
+                aroai_debt_scaled_factor < 0.49
             }
+            # Use the debt factor
             value = aroai_debt_scaled_factor
         }
+         # else use the gold reserve factor
         else = {
              value = aroai_gold_reserve_scaled_factor
         }
     }
+}
+
+
+#
+# tag           : tag_aroai_gold_reserves_percent
+# Called by     : aroai_country_budget_surplus_for_health_1 aroai_country_budget_surplus_for_health_2 aroai_country_budget_surplus_for_health_3 aroai_gold_reserve_scaled_factor
+# return the current gold reserves as a % of the limit
+#
+aroai_gold_reserves_percent = {
+    value = gold_reserves
+    divide = {
+        value = gold_reserves_limit
+        min = 1
+    }
+}
+
+# [0.5, INF], = 1 when you have 50% of the gold reserve limit
+aroai_gold_reserve_scaled_factor = {
+    value = aroai_gold_reserves_percent
+    add = 0.5
+}
+
+# [0, 0.5], = 0 at half of allowed credit
+aroai_debt_scaled_factor = {
+    value = 0.5
+    subtract = scaled_debt
+    min = 0
 }
 
 
@@ -201,26 +119,52 @@ aroai_revenue_factor_construction_military = {
 
 
 #
-# tag           : tag_aroai_max_wanted_constructions_depense_from_pop
-# Called by     : aroai_max_wanted_constructions_revenue_share_from_pop
-# Let's imagine we don't have any investment pool, how much money would we need to employ everyone ?
+# tag           : tag_aroai_construction_depense_maximum_from_budget
+# Called by     : aroai_budget_for_construction_sector_expected aroai_construction_points_wanted_total
+# 75%  of the revenue left for construction and military. This is the cap, we don't want to spend more than that.
 #
-aroai_construction_depense_maximum_from_pop = {
-    value = aroai_max_wanted_constructions_points_from_pop
-    multiply = aroai_building_construction_sector_expenses_per_point
-}
-
 aroai_construction_depense_maximum_from_budget = {
     value = aroai_revenue_left_for_construction_military
     multiply = 0.75
 }
 
+#
+# tag           : tag_aroai_max_wanted_constructions_depense_from_pop
+# Called by     : aroai_budget_for_construction_sector_expected aroai_budget_for_construction_sector_actual aroai_construction_points_wanted_total
+# Let's imagine we don't have any investment pool, how much money would we need to employ everyone ?
+#
+aroai_construction_depense_maximum_from_pop = {
+    value = aroai_max_wanted_constructions_points_from_pop
+    min = {
+        value = aroai_construction_points_current
+        multiply = 0.1
+        max = 500
+    }
+    multiply = aroai_building_construction_sector_expenses_per_point
 
+    subtract = {
+        value = aroai_investment_pool_net_spending
+        multiply = 0.8
+    }
+}
+
+
+#
+# tag           : tag_aroai_investment_pool_net_spending
+# Called by     : aroai_construction_depense_maximum_from_pop
+# How much money is the investment pool currently spending in the private sector
+#
 aroai_investment_pool_net_spending = {
     value = investment_pool_gross_income
     subtract = investment_pool_net_income
 }
 
+
+#
+# tag           : tag_aroai_investment_pool_wanted_spending
+# Called by     : aroai_construction_points_wanted_total
+# How much money we wished the investment pool would spend
+#
 aroai_investment_pool_wanted_spending = {
     value = investment_pool_gross_income
     add = {
@@ -229,39 +173,45 @@ aroai_investment_pool_wanted_spending = {
     }
 }
 
-
-
-
+#
+# tag           : tag_aroai_budget_for_construction_sector_expected
+# Called by     : aroai_budget_for_military_sector_expected
+# In an ideal case, how much money do we wish to spend in the construction sector ?
+#
 aroai_budget_for_construction_sector_expected = {
-
     value = aroai_construction_depense_maximum_from_pop
-
-    subtract = {
-        value = aroai_investment_pool_net_spending
-        multiply = 0.8
-    }
-
     max = aroai_construction_depense_maximum_from_budget
 }
 
+#
+# tag           : tag_aroai_budget_for_military_sector_expected
+# Called by     : aroai_military_spending_share
+# In an ideal case, how much money do we wish to spend in the military sector ?
+#
 aroai_budget_for_military_sector_expected = {
     value = aroai_revenue_left_for_construction_military
     subtract = aroai_budget_for_construction_sector_expected
 }
 
+#
+# tag           : tag_aroai_budget_for_construction_sector_actual
+# Called by     : aroai_construction_points_wanted_for_gov
+# How much money can we actually spend on construction ?
+# This is the actual amount of money the construction sector will try to spend
+#
 aroai_budget_for_construction_sector_actual = {
 
     value = aroai_construction_depense_maximum_from_pop
-
-    subtract = {
-        value = aroai_investment_pool_net_spending
-        multiply = 0.8
-    }
-
     max = aroai_revenue_left_for_construction
 }
 
 
+#
+# tag           : tag_aroai_construction_points_wanted_total
+# Called by     : aroai_max_wanted_constructions_points_doubled aroai_current_constructions_points_percent_of_max_wanted
+# If we want to spend money on construction sector, we need to have enough construction points ready.
+# This is how many construction points the country should have to spend the investment pool and the gov spending
+#
 aroai_construction_points_wanted_total = {
     # First we take the smallest value between the two
     value = aroai_construction_depense_maximum_from_pop
@@ -271,23 +221,28 @@ aroai_construction_points_wanted_total = {
     add = aroai_investment_pool_wanted_spending
 
     divide = aroai_building_construction_sector_expenses_per_point
-
     min = 15
 }
 
 
-
+#
+# tag           : tag_aroai_construction_points_wanted_for_gov
+# Called by     : aroai_free_construction_points
+# How many construction point the government can use
+# It will never build if we're currently using more than that amount.
+#
 aroai_construction_points_wanted_for_gov = {
     value = aroai_budget_for_construction_sector_actual
     divide = aroai_building_construction_sector_expenses_per_point
-
-    min = {
-        value = aroai_construction_points_current
-        multiply = 0.1
-    }
 }
 
 
+
+#
+# tag           : tag_aroai_military_spending_share
+# Called by     : aroai_building_barracks_spending_share aroai_building_naval_base_spending_share
+# The share of income the military sector can use
+#
 aroai_military_spending_share = {
     value = aroai_budget_for_military_sector_expected
     divide = income
@@ -297,8 +252,7 @@ aroai_military_spending_share = {
 #
 # tag           : tag_aroai_building_construction_sector_spending_value
 # Called by     : aroai_calculate_budget_surplus aroai_building_construction_sector_spending_expected
-# Effective Construction Spending
-# Does NOT assume that we pay for every construction point
+# How much is the government spending in construction currently
 #
 aroai_building_construction_sector_spending_value = {
     if = {
@@ -315,6 +269,11 @@ aroai_building_construction_sector_spending_value = {
 }
 
 
+#
+# tag           : tag_aroai_building_barracks_vs_naval_base_share
+# Called by     : aroai_building_barracks_spending_share aroai_building_naval_base_spending_share
+# How much of the military budget should go in the barracks ?
+#
 aroai_building_barracks_vs_naval_base_share = {
     if = {
         limit = {
@@ -357,27 +316,4 @@ aroai_building_barracks_vs_naval_base_share = {
         }
     }
     max = 0.80
-}
-
-
-aroai_subject_type_diplo_pact_income_mult = {
-    if = {
-        limit = { is_subject_type = subject_type_puppet}
-        value = 0.7
-    }
-    else_if = {
-        limit = { is_subject_type =  subject_type_dominion }
-        value = 0.75
-    }
-    else_if = {
-        limit = { is_subject_type =  subject_type_vassal }
-        value = 0.75
-    }
-    else_if = {
-        limit = { is_subject_type =  subject_type_tributary }
-        value = 0.8
-    }
-    else = {
-        value = 1
-    }
 }
