@@ -1,6 +1,7 @@
 ﻿increase_autonomy = {
 	requires_approval = yes
 	should_notify_third_parties = no
+	can_use_obligations = yes
 	unlocking_technologies = {
 		international_relations
 	}
@@ -40,30 +41,28 @@
 			country = scope:target_country
 			value = 30
 		}
-		if = {
-			limit = {
-				scope:target_country = {
-					OR = {
-						is_subject_type = subject_type_protectorate
-						is_subject_type = subject_type_puppet
-					}
+		add_modifier = {
+			name = overlord_autonomy_increased
+			days = 3650
+			multiplier = {
+				value = {
+					value = scope:target_country.total_population
+					divide = 100000
+					round = yes
 				}
 			}
+			is_decaying = yes
+		}
+		change_infamy = -10
+		scope:target_country = {
 			add_modifier = {
-				name = overlord_autonomy_increased
+				name = subject_autonomy_increased
 				days = 3650
 				is_decaying = yes
 			}
-			scope:target_country = {
-				add_modifier = {
-					name = subject_autonomy_increased
-					days = 3650
-					is_decaying = yes
-				}
-				create_truce = {
-					country = root
-					months = 12
-				}
+			create_truce = {
+				country = root
+				months = 12
 			}
 		}
 		if = {
@@ -134,7 +133,7 @@
 				}
 			}
 			add = {
-				# Don't want to lose protection if infamous
+				# Want to decrease infamy
 				desc = "DIPLOMATIC_ACCEPTANCE_INFAMY"
 				if = {
 					limit = {
@@ -157,23 +156,40 @@
 					value = 50
 				}
 			}
+			if = {
+				limit = {
+					"scope:actor.ai_ideological_opinion(root)" > 0
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_IDEOLOGICAL_OPINION"
+					value = "scope:actor.ai_ideological_opinion(root)"
+					multiply = 0.25
+					max = 10
+				}
+			}
+			else_if = {
+				limit = {
+					"scope:actor.ai_ideological_opinion(root)" < 0
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_IDEOLOGICAL_OPINION_NEGATIVE"
+					value = "scope:actor.ai_ideological_opinion(root)"
+					multiply = 0.25
+					min = -10
+				}
+			}
 		}
 		will_propose = {
 			is_at_war = no
 			influence <= 0
 			scope:target_country.relations:root <= relations_threshold:cordial
 			OR = {
-				AND = {
-					infamy > infamy_threshold:infamous
-					influence < 200
-				}
-				NOT = {
+				infamy > infamy_threshold:infamous
+				NOR = {
 					has_attitude = {
 						who = scope:target_country
 						attitude = domineering
 					}
-				}
-				NOT = {
 					has_attitude = {
 						who = scope:target_country
 						attitude = protective
@@ -185,7 +201,7 @@
 			value = 0
 			add = {
 				desc = "DIPLOMATIC_ACCEPTANCE_BASE"
-				value = 100
+				value = 50
 			}
 			add = {
 				desc = "DIPLOMATIC_ACCEPTANCE_ATTITUDE"
@@ -299,6 +315,28 @@
 						"relations(scope:actor)" >= relations_threshold:friendly
 					}
 					value = -50
+				}
+			}
+			if = {
+				limit = {
+					"scope:actor.ai_ideological_opinion(root)" > 0
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_IDEOLOGICAL_OPINION"
+					value = "scope:actor.ai_ideological_opinion(root)"
+					multiply = 0.25
+					max = 10
+				}
+			}
+			else_if = {
+				limit = {
+					"scope:actor.ai_ideological_opinion(root)" < 0
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_IDEOLOGICAL_OPINION_NEGATIVE"
+					value = "scope:actor.ai_ideological_opinion(root)"
+					multiply = 0.25
+					min = -10
 				}
 			}
 			add = {
@@ -332,6 +370,7 @@
 decrease_autonomy = {
 	requires_approval = yes
 	should_notify_third_parties = no
+	can_use_obligations = yes
 	unlocking_technologies = {
 		international_relations
 	}
@@ -357,8 +396,12 @@ decrease_autonomy = {
 		has_diplomatic_relevance = scope:target_country
 		is_revolutionary = no
 		scope:target_country = {
-			#	NOT = { has_modifier = subject_autonomy_increased }
-			#	NOT = { has_modifier = subject_autonomy_decreased}
+			NOT = {
+				has_modifier = subject_autonomy_increased
+			}
+			NOT = {
+				has_modifier = subject_autonomy_decreased
+			}
 		}
 	}
 	accept_effect = {
@@ -367,30 +410,27 @@ decrease_autonomy = {
 			value = -30
 		}
 		change_infamy = 10
-		if = {
-			limit = {
-				scope:target_country = {
-					OR = {
-						is_subject_type = subject_type_dominion
-						is_subject_type = subject_type_protectorate
-					}
+		add_modifier = {
+			name = overlord_autonomy_decreased
+			days = 3650
+			multiplier = {
+				value = {
+					value = scope:target_country.total_population
+					divide = 100000
+					round = yes
 				}
 			}
+			is_decaying = yes
+		}
+		scope:target_country = {
 			add_modifier = {
-				name = overlord_autonomy_decreased
+				name = subject_autonomy_decreased
 				days = 3650
 				is_decaying = yes
 			}
-			scope:target_country = {
-				add_modifier = {
-					name = subject_autonomy_decreased
-					days = 3650
-					is_decaying = yes
-				}
-				create_truce = {
-					country = root
-					months = 12
-				}
+			create_truce = {
+				country = root
+				months = 12
 			}
 		}
 		if = {
@@ -423,41 +463,41 @@ decrease_autonomy = {
 					limit = {
 						"relations(scope:actor)" <= relations_threshold:hostile
 					}
-					value = 100
+					value = -100
 				}
 				if = {
 					limit = {
 						"relations(scope:actor)" > relations_threshold:hostile
 						"relations(scope:actor)" <= relations_threshold:cold
 					}
-					value = 50
+					value = -50
 				}
 				if = {
 					limit = {
 						"relations(scope:actor)" > relations_threshold:cold
 						"relations(scope:actor)" <= relations_threshold:poor
 					}
-					value = 25
+					value = -25
 				}
 				if = {
 					limit = {
 						"relations(scope:actor)" >= relations_threshold:cordial
 						"relations(scope:actor)" < relations_threshold:amicable
 					}
-					value = -10
+					value = 10
 				}
 				if = {
 					limit = {
 						"relations(scope:actor)" >= relations_threshold:amicable
 						"relations(scope:actor)" < relations_threshold:friendly
 					}
-					value = -25
+					value = 25
 				}
 				if = {
 					limit = {
 						"relations(scope:actor)" >= relations_threshold:friendly
 					}
-					value = -50
+					value = 50
 				}
 			}
 			add = {
@@ -468,43 +508,36 @@ decrease_autonomy = {
 						"scope:actor.infamy" >= infamy_threshold:infamous
 						"scope:actor.infamy" < infamy_threshold:notorious
 					}
-					value = 10
+					value = -10
 				}
 				if = {
 					limit = {
 						"scope:actor.infamy" >= infamy_threshold:notorious
 						"scope:actor.infamy" < infamy_threshold:pariah
 					}
-					value = 25
+					value = -25
 				}
 				if = {
 					limit = {
 						"scope:actor.infamy" >= infamy_threshold:pariah
 					}
-					value = 50
+					value = -50
 				}
 			}
 		}
 		will_propose = {
 			is_at_war = no
-			influence <= 0
-			scope:target_country.relations:root <= relations_threshold:cordial
+			infamy < infamy_threshold:infamous
+			influence >= 50
+			scope:target_country.relations:root >= relations_threshold:cordial
 			OR = {
-				AND = {
-					infamy > infamy_threshold:infamous
-					influence < 200
+				has_attitude = {
+					who = scope:target_country
+					attitude = domineering
 				}
-				NOT = {
-					has_attitude = {
-						who = scope:target_country
-						attitude = domineering
-					}
-				}
-				NOT = {
-					has_attitude = {
-						who = scope:target_country
-						attitude = protective
-					}
+				has_attitude = {
+					who = scope:target_country
+					attitude = protective
 				}
 			}
 		}
@@ -512,7 +545,7 @@ decrease_autonomy = {
 			value = 0
 			add = {
 				desc = "DIPLOMATIC_ACCEPTANCE_BASE"
-				value = 100
+				value = -100
 			}
 			add = {
 				desc = "DIPLOMATIC_ACCEPTANCE_ATTITUDE"
@@ -529,7 +562,7 @@ decrease_autonomy = {
 							}
 						}
 					}
-					value = -50
+					value = 50
 				}
 				if = {
 					limit = {
@@ -544,7 +577,7 @@ decrease_autonomy = {
 							}
 						}
 					}
-					value = -25
+					value = 25
 				}
 				if = {
 					limit = {
@@ -559,7 +592,7 @@ decrease_autonomy = {
 							}
 						}
 					}
-					value = 50
+					value = -50
 				}
 				if = {
 					limit = {
@@ -582,7 +615,7 @@ decrease_autonomy = {
 							}
 						}
 					}
-					value = 1000
+					value = -1000
 				}
 			}
 			add = {
@@ -591,45 +624,67 @@ decrease_autonomy = {
 					limit = {
 						"relations(scope:actor)" <= relations_threshold:hostile
 					}
-					value = 100
+					value = -100
 				}
 				if = {
 					limit = {
 						"relations(scope:actor)" > relations_threshold:hostile
 						"relations(scope:actor)" <= relations_threshold:cold
 					}
-					value = 50
+					value = -50
 				}
 				if = {
 					limit = {
 						"relations(scope:actor)" > relations_threshold:cold
 						"relations(scope:actor)" <= relations_threshold:poor
 					}
-					value = 25
+					value = -25
 				}
 				if = {
 					limit = {
 						"relations(scope:actor)" >= relations_threshold:cordial
 						"relations(scope:actor)" < relations_threshold:amicable
 					}
-					value = -10
+					value = 10
 				}
 				if = {
 					limit = {
 						"relations(scope:actor)" >= relations_threshold:amicable
 						"relations(scope:actor)" < relations_threshold:friendly
 					}
-					value = -25
+					value = 25
 				}
 				if = {
 					limit = {
 						"relations(scope:actor)" >= relations_threshold:friendly
 					}
-					value = -50
+					value = 50
+				}
+			}
+			if = {
+				limit = {
+					"scope:actor.ai_ideological_opinion(root)" > 0
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_IDEOLOGICAL_OPINION"
+					value = "scope:actor.ai_ideological_opinion(root)"
+					multiply = 0.25
+					max = 10
+				}
+			}
+			else_if = {
+				limit = {
+					"scope:actor.ai_ideological_opinion(root)" < 0
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_IDEOLOGICAL_OPINION_NEGATIVE"
+					value = "scope:actor.ai_ideological_opinion(root)"
+					multiply = 0.25
+					min = -10
 				}
 			}
 			add = {
-				# Don't want to lose protection if infamous
+				# Doesn't want an infamous overlord
 				desc = "DIPLOMATIC_ACCEPTANCE_INFAMY"
 				if = {
 					limit = {
