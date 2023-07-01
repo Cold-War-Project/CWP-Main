@@ -1,0 +1,209 @@
+﻿namespace = warsaw_pact_ai_voting
+
+warsaw_pact_ai_voting.1 = {# AI Application voting mechanism
+	type = country_event	
+	placement = ROOT
+
+	trigger = {
+		is_ai = yes
+		is_in_warsaw_pact = yes
+		not = {
+			has_variable = has_voted_on_application_warsaw_pact
+		}
+		any_country = {
+			has_variable = application_progress_warsaw_pact
+		}
+	}
+
+	immediate = {
+		random_country = {
+			limit = {
+				has_variable = application_progress_warsaw_pact
+			}
+			save_scope_as = warsaw_pact_applicant_country_scope
+		}
+		every_country = {
+			limit = {
+				is_in_warsaw_pact = no
+				scope:warsaw_pact_applicant_country_scope = {
+					or = {
+						is_target_in_variable_list = {
+							name = warsaw_pact_supporting
+							target = ROOT
+						}
+						is_target_in_variable_list = {
+							name = warsaw_pact_rejecting
+							target = ROOT
+						}
+					}	
+				}
+			}
+			scope:warsaw_pact_applicant_country_scope = {
+				clear_variable_list = warsaw_pact_supporting
+				clear_variable_list = warsaw_pact_rejecting
+				set_variable = {
+					name = warsaw_pact_supporting_list_size
+					value = 0
+				}
+			}
+		}
+	}
+
+	# TODO - AI SCRIPTING
+	option = {
+		default_option = yes
+		name = warsaw_pact_ai_voting.2.a
+		set_variable = {
+			name = has_voted_on_application_warsaw_pact
+			days = 50
+		}
+		if = {
+			limit = {
+				or = {
+					warsaw_pact_supporting_countries <= warsaw_pact_membersize
+					not = {
+						exists = var:warsaw_pact_supporting_list_size
+					}
+				}
+			}
+			scope:warsaw_pact_applicant_country_scope = {
+				if = {
+					limit = {
+						not = {
+							is_target_in_variable_list = {
+								name = warsaw_pact_supporting
+								target = ROOT
+							}
+						}
+					}
+					change_variable = {
+						name = warsaw_pact_supporting_list_size
+						add = 1
+					}
+					add_to_variable_list = {
+						name = warsaw_pact_supporting
+						target = ROOT
+					}
+				}
+				if = {
+					limit = {
+						is_target_in_variable_list = {
+							name = warsaw_pact_rejecting
+							target = ROOT
+						}
+					}
+					change_variable = {
+						name = warsaw_pact_supporting_list_size
+						add = 1
+					}
+				}
+				remove_list_variable = {
+					name = warsaw_pact_rejecting
+					target = ROOT
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = { 
+				trigger = {
+					scope:warsaw_pact_applicant_country_scope = {
+						relations:root >= relations_threshold:cordial
+					}
+				}
+				add = 100
+			}
+			modifier = { 
+				trigger = {
+					scope:warsaw_pact_applicant_country_scope = {
+						is_meeting_warsaw_pact_standards = yes
+					}
+				}
+				add = 300
+			}
+
+		}
+	}
+	option = {
+		name = warsaw_pact_ai_voting.2.b
+		set_variable = {
+			name = has_voted_on_application_warsaw_pact
+			days = 50
+		}
+		if = {
+			limit = {
+				or = {
+					warsaw_pact_supporting_countries <= warsaw_pact_membersize
+					not = {
+						exists = var:warsaw_pact_supporting_list_size
+					}
+				}
+			}
+			scope:warsaw_pact_applicant_country_scope = {
+				if = {
+					limit = {
+						not = {
+							is_target_in_variable_list = {
+								name = warsaw_pact_rejecting
+								target = ROOT
+							}
+						}
+					}
+					change_variable = {
+						name = warsaw_pact_supporting_list_size
+						subtract = 1
+					}
+					add_to_variable_list = {
+						name = warsaw_pact_rejecting
+						target = ROOT
+					}
+				}
+				if = {
+					limit = {
+						is_target_in_variable_list = {
+							name = warsaw_pact_supporting	
+							target = ROOT
+						}
+					}
+					change_variable = {
+						name = warsaw_pact_supporting_list_size
+						subtract = 1
+					}
+				}
+				remove_list_variable = {
+					name = warsaw_pact_supporting
+					target = ROOT
+				}
+			}
+		}
+		ai_chance = {
+			base = 5
+			modifier = { 
+				trigger = {
+					scope:warsaw_pact_applicant_country_scope = {
+						relations:root < relations_threshold:neutral
+					}
+				}
+				add = 30
+			}
+			modifier = { 
+				trigger = {
+					scope:warsaw_pact_applicant_country_scope = {
+						relations:root <= relations_threshold:hostile
+					}
+				}
+				add = 30
+			}
+			modifier = { 
+				trigger = {
+					scope:warsaw_pact_applicant_country_scope = {
+						is_meeting_warsaw_pact_standards = no
+					}
+				}
+				add = 30
+			}
+			
+		}
+	}
+
+}
