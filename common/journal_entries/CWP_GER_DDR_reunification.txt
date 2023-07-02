@@ -5,78 +5,324 @@
 	scripted_button = german_reunification_button
 
 	is_shown_when_inactive = {
+		exists = c:GER
+		exists = c:DDR
 		OR = {
+
+			#Is Germany
+			this = c:GER
+			this = c:DDR
+
+			#Is Germanys overlord
+			c:GER = {is_subject_of = PREV}
+			c:DDR = {is_subject_of = PREV}
+
+			#Is a German releasable
 			AND = {
-				exists = c:DDR
-				this = c:DDR
+				exists = c:RHI
+				this = c:RHI
+				is_subject = false
 			}
 			AND = {
-				exists = c:GER
-				this = c:GER
+				exists = c:BAV
+				this = c:BAV
+				is_subject = false
 			}
-			c:GER = {is_subject_of = ROOT}
-			c:DDR = {is_subject_of = ROOT}
+			AND = {
+				exists = c:SAX
+				this = c:SAX
+				is_subject = false
+			}
+			AND = {
+				exists = c:HAN
+				this = c:HAN
+				is_subject = false
+			}
+			AND = {
+				exists = c:WUR
+				this = c:WUR
+				is_subject = false
+			}
+			AND = {
+				exists = c:SAA
+				this = c:SAA
+				is_subject = false
+			}
+			AND = {
+				exists = c:BRL
+				this = c:BRL
+				is_subject = false
+			}
+
+			#Is in the same NATO faction as Germany or its overlord and a great power
+			AND = {
+				OR = {
+					c:GER = { is_target_in_global_variable_list = { name = nato_members target = this} } 
+					c:GER = { overlord = { is_target_in_global_variable_list = { name = nato_members target = this} } }
+					c:DDR = { is_target_in_global_variable_list = { name = nato_members target = this} } 
+					c:DDR = { overlord = { is_target_in_global_variable_list = { name = nato_members target = this} } }
+				}
+				is_target_in_global_variable_list = { name = nato_members target = this}
+				country_rank = rank_value:great_power
+			}
+
+			#Is in the same Warsaw Pact faction as Germany or its overlord and a great power
+			AND = {
+				OR = {
+					c:GER = { is_target_in_global_variable_list = { name = warsaw_pact_member target = this} } 
+					c:GER = { overlord = { is_target_in_global_variable_list = { name = warsaw_pact_member target = this} } }
+					c:DDR = { is_target_in_global_variable_list = { name = warsaw_pact_member target = this} } 
+					c:DDR = { overlord = { is_target_in_global_variable_list = { name = warsaw_pact_member target = this} } }
+				}
+				is_target_in_global_variable_list = { name = warsaw_pact_member target = this}
+				country_rank = rank_value:great_power
+			}
+
+			#If an additional country is to be added per event | unused
+			is_target_in_global_variable_list = { name = je_german_reunification_can_vote target = THIS}
 		}
 	}
 
 	possible = {
+
+		custom_tooltip = JE_GERMAN_REUNIFICATION_REASON
+
 		exists = c:GER
 		exists = c:DDR
+
+		#Does not trigger if East Germany tries to become independent from RUS
+		NOT = { c:DDR = {is_diplomatic_play_target = yes} }
+
 		OR = {
-			OR = { #Both Germanys have the same overlord or one Germany is the overlord of the other one
-				c:GER = { overlord = { c:DDR = {is_subject_of = PREV} } }
-				c:DDR = { overlord = { c:GER = {is_subject_of = PREV} } }
+			#Both Germanys overlords are NATO members
+			custom_tooltip = {
+				text = JE_GERMAN_REUNIFICATION_PREREQUISITE_NATO
+				AND = { 
+					OR = {
+						c:GER = { overlord = { is_target_in_global_variable_list = { name = nato_members target = THIS} } }
+						c:GER = { is_target_in_global_variable_list = { name = nato_members target = THIS} }
+					}	
+					OR = {
+						c:DDR = { overlord = { is_target_in_global_variable_list = { name = nato_members target = THIS} } }
+						c:DDR = { is_target_in_global_variable_list = { name = nato_members target = THIS} }
+					}
+				}
 			}
-			AND = {
-				c:GER = {is_subject = false}
-				c:DDR = {is_subject = false}
+			#Both Germanys overlords are Warsaw Pact members
+			custom_tooltip = {
+				text = JE_GERMAN_REUNIFICATION_PREREQUISITE_WARSAW_PACT
+				AND = { 
+					OR = {
+						c:GER = { overlord = { is_target_in_global_variable_list = { name = warsaw_pact_member target = THIS} } }
+						c:GER = { is_target_in_global_variable_list = { name = warsaw_pact_member target = THIS} }
+					}	
+					OR = {
+						c:DDR = { overlord = { is_target_in_global_variable_list = { name = warsaw_pact_member target = THIS} } }
+						c:DDR = { is_target_in_global_variable_list = { name = warsaw_pact_member target = THIS} }
+					}
+				}
 			}
+			#If the reunification is started by event | unused
+			#has_global_variable = forced_german_reunification
 		}
 	}
 
 	immediate = {
-		c:GER = {save_scope_as = scope_reuinification_GER}
-		c:DDR = {save_scope_as = scope_reuinification_DDR}
-		c:GER = { overlord = {save_scope_as = scope_reuinification_GER_overlord}}
-		set_global_variable = {
-			name = unification_voting_power_GER_je
-			value = c:GER.prestige
+		every_country = {
+			limit = {
+				OR = {
+					#Is Germany
+					this = c:GER
+					this = c:DDR
+
+					#Is Germanys overlord
+					c:GER = {is_subject_of = PREV}
+					c:DDR = {is_subject_of = PREV}
+
+					#Is a German releasable
+					AND = {
+						exists = c:RHI
+						this = c:RHI
+						is_subject = false
+					}
+					AND = {
+						exists = c:BAV
+						this = c:BAV
+						is_subject = false
+					}
+					AND = {
+						exists = c:SAX
+						this = c:SAX
+						is_subject = false
+					}
+					AND = {
+						exists = c:HAN
+						this = c:HAN
+						is_subject = false
+					}
+					AND = {
+						exists = c:WUR
+						this = c:WUR
+						is_subject = false
+					}
+					AND = {
+						exists = c:SAA
+						this = c:SAA
+						is_subject = false
+					}
+					AND = {
+						exists = c:BRL
+						this = c:BRL
+						is_subject = false
+					}
+
+					#Is in the same NATO faction as Germany or its overlord and a great power
+					AND = {
+						OR = {
+							c:GER = { is_target_in_global_variable_list = { name = nato_members target = this} } 
+							c:GER = { overlord = { is_target_in_global_variable_list = { name = nato_members target = this} } }
+							c:DDR = { is_target_in_global_variable_list = { name = nato_members target = this} } 
+							c:DDR = { overlord = { is_target_in_global_variable_list = { name = nato_members target = this} } }
+						}
+						is_target_in_global_variable_list = { name = nato_members target = this}
+						country_rank = rank_value:great_power
+					}
+
+					#Is in the same Warsaw Pact faction as Germany or its overlord and a great power
+					AND = {
+						OR = {
+							c:GER = { is_target_in_global_variable_list = { name = warsaw_pact_member target = this} } 
+							c:GER = { overlord = { is_target_in_global_variable_list = { name = warsaw_pact_member target = this} } }
+							c:DDR = { is_target_in_global_variable_list = { name = warsaw_pact_member target = this} } 
+							c:DDR = { overlord = { is_target_in_global_variable_list = { name = warsaw_pact_member target = this} } }
+						}
+						is_target_in_global_variable_list = { name = warsaw_pact_member target = this}
+						country_rank = rank_value:great_power
+					}
+				}
+			}
+			add_to_global_variable_list = {
+				name = je_german_reunification_can_vote
+				target = this
+			}
 		}
-		set_global_variable = {
-			name = unification_voting_power_DDR_je
-			value = c:DDR.prestige
+
+		#Events simulate the AI voting behavior
+		#For some reason only one event can be triggered per block
+		every_in_global_list = {
+			variable = je_german_reunification_can_vote
+			limit = { is_player = false }
+			trigger_event = german_reunification.101
 		}
-		set_global_variable = {
-			name = unification_voting_power_GER_overlord_je
-			value = c:GER.overlord.prestige
+		every_in_global_list = {
+			variable = je_german_reunification_can_vote
+			limit = { is_player = false }
+			trigger_event = german_reunification.102
 		}
+		every_in_global_list = {
+			variable = je_german_reunification_can_vote
+			limit = { is_player = false }
+			trigger_event = german_reunification.103
+		}
+		every_in_global_list = {
+			variable = je_german_reunification_can_vote
+			limit = { is_player = false }
+			trigger_event = german_reunification.104
+		}
+		every_in_global_list = {
+			variable = je_german_reunification_can_vote
+			limit = { is_player = false }
+			trigger_event = german_reunification.105
+		}
+		every_in_global_list = {
+			variable = je_german_reunification_can_vote
+			limit = { is_player = false }
+			trigger_event = german_reunification.106
+		}
+
+		set_global_variable	= { name = total_vote_reunification_unifier_ger value = 0 }
 	}
 
 	on_monthly_pulse = {
-		c:GER = { overlord = {save_scope_as = scope_reuinification_GER_overlord}} #In case overlord changes
-		set_global_variable = {
-			name = unification_voting_power_GER_je
-			value = c:GER.prestige
+		effect = {
+			every_in_global_list = {
+				variable = je_german_reunification_can_vote
+				limit = { is_player = no }
+				trigger_event = german_reunification.101
+			}
+			every_in_global_list = {
+				variable = je_german_reunification_can_vote
+				limit = { is_player = no }
+				trigger_event = german_reunification.102
+			}
+			every_in_global_list = {
+				variable = je_german_reunification_can_vote
+				limit = { is_player = no }
+				trigger_event = german_reunification.103
+			}
+			every_in_global_list = {
+				variable = je_german_reunification_can_vote
+				limit = { is_player = no }
+				trigger_event = german_reunification.104
+			}
+			every_in_global_list = {
+				variable = je_german_reunification_can_vote
+				limit = { is_player = no }
+				trigger_event = german_reunification.105
+			}
+			every_in_global_list = {
+				variable = je_german_reunification_can_vote
+				limit = { is_player = no }
+				trigger_event = german_reunification.106
+			}
 		}
-		set_global_variable = {
-			name = unification_voting_power_DDR_je
-			value = c:DDR.prestige
-		}
-		set_global_variable = {
-			name = unification_voting_power_GER_overlord_je
-			value = c:GER.overlord.prestige
+	}
+
+	on_weekly_pulse = {
+		effect = {
+			scripted_effect_recalculate_german_reunification_voting = yes
 		}
 	}
 
 	complete = {
-		always = false
+		hidden_trigger = {
+			always = false
+		}
 	}
-	timeout = 365
+
+	fail = {
+		OR = {
+			NOT = {
+				exists = c:DDR
+			}
+			NOT = {
+				exists = c:GER
+			}
+		}
+	}
+
 	on_timeout = {
+
+		if = {
+			limit = { this = c:GER } #Do this only once
+
+			#Unifier
+			if = {
+				limit = {
+					german_reunification_total_vote_unifier_no_reunification > german_reunification_total_vote_unifier_ger
+					german_reunification_total_vote_unifier_no_reunification > german_reunification_total_vote_unifier_ddr
+				}
+				every_in_global_list = {
+					variable = je_german_reunification_can_vote
+					trigger_event = german_reunification.2
+				}
+			}
+			else = {
+				c:GER = { trigger_event = german_reunification.1 }
+			}
+		}
 	}
-	on_complete = {
-	}
-	on_timeout = {
-	}
+
+	timeout = 182
 	weight = 100
 }
