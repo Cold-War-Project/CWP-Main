@@ -1,7 +1,7 @@
 types banks_panel
 {
 	type banks_panel = international_org_window {
-		visible = "[GetVariableSystem.Exists('banks_panel')]"
+		visible = "[And(GetVariableSystem.Exists('banks_panel'), InformationPanelBar.IsPanelOpen('budget'))]"
 
 		name = "banks_panel"
 		size = { 500 0 }
@@ -31,106 +31,121 @@ types banks_panel
 
 		blockoverride "scrollarea_content"
 		{
-						scrollbox = {
-							minimumsize = { 450 750 }
-							layoutpolicy_horizontal = expanding
-							layoutpolicy_vertical = expanding
-							blockoverride "scrollbox_content" {
-								vbox = {
-									datamodel_wrap = 1
+			scrollbox = {
+				minimumsize = { 450 750 }
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+				blockoverride "scrollbox_content" {
+					vbox = {
+						datamodel_wrap = 1
+						spacing = 20
+						datamodel = "[GetGlobalList('central_bank_list')]"
+						item = {
+							flowcontainer = {
+								margin_top = 10
+								margin_bottom = 5
+								layoutpolicy_horizontal = expanding
+								direction = vertical
+								datacontext = "[Scope.AccessCountry]"
+								background = {
+									margin = { 10 10 }
+									using = dropdown_background
+								}
+								flowcontainer = {
+									minimumsize = { 280 0 }
+									margin_bottom = 5
 									spacing = 20
-									datamodel = "[GetGlobalList('central_bank_list')]"
-									item = {
+									direction = horizontal
+									flowcontainer = {
+										margin_top = 5
+										small_flag = {
+											scale = 1.2
+											parentanchor = vcenter
+											using = tooltip_above
+											datacontext = "[Scope.AccessCountry]"						
+											tooltip = "[ContextualDiplomaticPact.GetTooltip]"
+										}
+									}
+
+									flowcontainer = {
+										parentanchor = hcenter
+										direction = horizontal
+										spacing = 15
+										textbox = {
+											parentanchor = hcenter
+											#align = left
+											raw_text = "[Country.GetAdjectiveNoFlag] [concept_central_bank] | [Country.GetCustom('bank_credibility_loc')]"
+										}
+									}
+
+									hbox = {
+										layoutpolicy_horizontal = expanding
+										margin_right = 100
+										margin_left = -30
+										margin_top = 20
 										flowcontainer = {
-											margin_top = 10
-											margin_bottom = 10
-											layoutpolicy_horizontal = expanding
 											direction = vertical
-											datacontext = "[Scope.AccessCountry]"
-											background = {
-												margin = { 10 10 }
-												using = dropdown_background
+											spacing = 25
+											textbox = {
+												parentanchor = hcenter
+												align = center
+												raw_text = "Currency"
 											}
-											flowcontainer = {
-												minimumsize = { 280 0 }
-												margin_bottom = 5
-												spacing = 20
-												direction = horizontal
-												flowcontainer = {
-													margin_top = 5
-													small_flag = {
-														scale = 1.2
-														parentanchor = vcenter
-														using = tooltip_above
-														datacontext = "[Scope.AccessCountry]"						
-														tooltip = "[ContextualDiplomaticPact.GetTooltip]"
-													}
-												}
-												flowcontainer = {
-													parentanchor = hcenter
-													spacing = 15
-													textbox = {
-														margin_left = 85
-														parentanchor = hcenter
-														align = center
-														raw_text = "[Country.GetAdjectiveNoFlag] [concept_central_bank]"
-													}
-												}
-												hbox = {
-													layoutpolicy_horizontal = expanding
-													margin_right = 100
-													margin_left = -30
-													margin_top = 20
-													flowcontainer = {
-														
-														direction = vertical
-														spacing = 25
-														textbox = {
-															parentanchor = hcenter
-															align = center
-															raw_text = "Currency"
-														}
-														textbox = {
-															parentanchor = hcenter
-															align = center
-															raw_text = "#v [Country.MakeScope.Var('cwp_currency').GetFlagName][Country.GetCustom('currency_text_loc')]#!"
-														}
-													}
-													flowcontainer = {
-														direction = vertical
-														spacing = 25
-														textbox = {
-															parentanchor = hcenter
-															align = center
-															raw_text = "Currency Value"
-														}
-														textbox = {
-															parentanchor = hcenter
-															align = center
-															raw_text = "#v 1.00[Country.MakeScope.Var('cwp_currency').GetFlagName]#! is #v [Country.MakeScope.ScriptValue('currency_difference_to_usd')|d]@usd!#!"
-														}
-													}
-													flowcontainer = {
-														direction = vertical
-														spacing = 25
-														textbox = {
-															parentanchor = hcenter
-															align = center
-															raw_text = "Inflation"
-														}
-														textbox = {
-															parentanchor = hcenter
-															align = center
-															raw_text = "#v [Country.MakeScope.ScriptValue('inflation_value')|d%]#!"
-														}
-													}
-												}
+											textbox = {
+												parentanchor = hcenter
+												align = center
+												raw_text = "#v [Country.MakeScope.Var('cwp_currency').GetFlagName][Country.GetCustom('currency_text_loc')]#!"
 											}
 										}
+										flowcontainer = {
+											direction = vertical
+											spacing = 25
+											textbox = {
+												parentanchor = hcenter
+												align = center
+												raw_text = "Currency Value"
+											}
+											textbox = {
+												parentanchor = hcenter
+												align = center
+												raw_text = "#v 1.00@usd!#! is #v [Country.MakeScope.ScriptValue('currency_difference_to_usd')|d][Country.MakeScope.Var('cwp_currency').GetFlagName]#!"
+											}
+										}
+										flowcontainer = {
+											direction = vertical
+											spacing = 25
+											textbox = {
+												parentanchor = hcenter
+												align = center
+												raw_text = "Inflation"
+											}
+											textbox = {
+												parentanchor = hcenter
+												align = center
+												raw_text = "#v [Country.MakeScope.ScriptValue('inflation_value')|d%]#!"
+											}
+											
+										}
+										
+									}
+								}
+								flowcontainer = {
+									margin_top = 10
+									parentanchor = hcenter
+									button = {
+										visible = "[Not(Country.IsPlayer)]"
+										using = default_button # Approve
+										raw_text = "Buy Foreign Currency | #v [Country.MakeScope.ScriptValue('buying_foreign_currency_rate')|d]#!"
+										enabled = "[LessThan_CFixedPoint(GetPlayer.MakeScope.ScriptValue('foreign_reserves_value'), GetPlayer.MakeScope.ScriptValue('foreign_reserves_max'))]"
+										onclick = "[GetScriptedGui('buy_foreign_currency').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('currency_exchange_country',Country.MakeScope).End)]"
+										size = { 350 40 }
 									}
 								}
 							}
 						}
+					}
+				}
+			}
 		}
 	}
 }
