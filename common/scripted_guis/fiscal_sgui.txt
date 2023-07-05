@@ -2,16 +2,34 @@
 buy_foreign_currency = {
 	effect = {
 		# Removes From Treasury
-		add_treasury = -500000
-		# Increases Reserve
-		change_variable = {
-			name = foreign_reserves
-			add = {
+		add_treasury = {
+			value = {
 				value = scope:currency_exchange_country.money_supply_5
-				multiply = {
-					value = ROOT.country_currency_val
-					divide = scope:currency_exchange_country.country_currency_val
-				}
+				max = ROOT.foreign_reserves_capacity_left
+			}
+			multiply = {
+				value = scope:currency_exchange_country.country_currency_val
+				divide = ROOT.country_currency_val
+			}
+			multiply = -1
+		}
+		# Increases Reserve
+		if = {
+			limit = {
+				scope:currency_exchange_country.money_supply_5 <= foreign_reserves_capacity_left
+			}
+			change_variable = {
+				name = foreign_reserves
+				add = scope:currency_exchange_country.money_supply_5
+			}
+		}
+		if = {
+			limit = {
+				scope:currency_exchange_country.money_supply_5 >= foreign_reserves_capacity_left
+			}
+			set_variable = {
+				name = foreign_reserves
+				value = foreign_reserves_max
 			}
 		}
 		# Increases Bought Currency Value
@@ -27,6 +45,11 @@ buy_foreign_currency = {
 					value = scope:currency_exchange_country.money_supply_5
 				}
 			}
+			# Prevents further currency buying for 1 month
+#			set_variable = {
+#				name = currency_bought
+#				months = 1
+#			}
 		}
 	}
 }
@@ -39,12 +62,24 @@ sell_foreign_reserves = {
 			}
 			change_variable = {
 				name = foreign_reserves
-				subtract = foreign_reserves_sell
+				subtract = {
+					value = 500000
+					multiply = {
+						value = country_currency_val
+						divide = foreign_avg
+					}
+				}
 			}
 		}
 		if = {
 			limit = {
-				foreign_reserves_value <= foreign_reserves_sell
+				foreign_reserves_value <= {
+					value = 500000
+					multiply = {
+						value = country_currency_val
+						divide = foreign_avg
+					}
+				}
 			}
 			set_variable = {
 				name = foreign_reserves
@@ -191,6 +226,35 @@ revalue_currency = {
 					value = money_supply_from_gold_reserves
 					multiply = 10
 				}
+			}
+		}
+	}
+}
+
+# Can sell currency check
+can_sell_currency = {
+	is_shown = {
+		THIS = {
+			not = {
+				foreign_reserves_value <= 0
+				gold_reserve_value >= gold_reserve_limit
+			}
+		}
+	}
+}
+# Can buy currency check
+can_buy_currency = {
+	is_shown = {
+		THIS = {
+			not = {
+				foreign_reserves_value >= foreign_reserves_max
+				scaled_debt >= 1
+			}
+		}
+		scope:currency_exchange_country = {
+			not = {
+				has_law = law_type:law_isolationism
+				has_variable = currency_bought
 			}
 		}
 	}
