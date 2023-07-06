@@ -8,6 +8,8 @@ korean_war = {
 	# optional image that shows in the journal entry widget near the description, default = NDefines::GUI::JOURNAL_ENTRY_ICON_DEFAULT (set in /defines/00_interfaces.txt)
 	icon = "gfx/interface/icons/event_icons/event_industry.dds"
 
+	scripted_button = korean_war_tension_ease
+
 	# optional trigger which determines if a journal entry can be shown, default = no
 	# is ignored when JE is added through `add_journal_entry` effect
 	is_shown_when_inactive = {
@@ -69,7 +71,11 @@ korean_war = {
 
 	# optional invalidation trigger, should not notify player when it triggers, just clean up and silently disappear due to journal entry no longer being valid; if left blank, cannot be invalidated
 	invalid = {
-
+		ROOT = {
+			NOT = {
+				has_variable = involved_in_korea
+			}
+		}
 	}
 
 	# effect which is executed when 'invalid' trigger becomes true
@@ -83,7 +89,22 @@ korean_war = {
 	status_desc = {
 		first_valid = {
 			triggered_desc = {
-				desc = indian_partition_progress_desc
+				desc = korean_tensions_high_loc
+				trigger = {
+					global_var:korean_tensions > 75
+				}
+			}
+			triggered_desc = {
+				desc = korean_tensions_medium_loc
+				trigger = {
+					global_var:korean_tensions >= 50
+				}
+			}
+			triggered_desc = {
+				desc = korean_tensions_low_loc
+				trigger = {
+					global_var:korean_tensions < 50
+				}
 			}
 		}
 	}
@@ -97,29 +118,15 @@ korean_war = {
 
 	# on_action which is triggered every first day of the week
 	on_weekly_pulse = {
-		random_events = {
-			delay = {days = { 0 3 } }
-			1000 = 0
-			# HND Events
-			100 = indian_partition.102
-			100 = indian_partition.103
-			100 = indian_partition.104
-			100 = indian_partition.105
-			100 = indian_partition.106
-			100 = indian_partition.107
-			100 = indian_partition.108
-			# GBR Events
-			100 = indian_partition.201
-			100 = indian_partition.202
-			100 = indian_partition.203
-			100 = indian_partition.204
-		}
 	}
 
 	# on_action which is triggered every first day of the month
 	on_monthly_pulse = {
-		events = {
-			indian_partition.101
+		random_events = {
+			delay = {days = { 0 15 } }
+			1000 = 0
+
+			20 = korea_war_random_events.1
 		}
 	}
 
@@ -131,12 +138,7 @@ korean_war = {
 
 	# a script value computing the goal completion metric
 	current_value = {
-		value = global_var:indian_national_unity
-	}
-
-	# when the journal entry is activated current_value and goal_add_value are evaluated and added together to determine the goal value
-	goal_add_value = {
-		value = 100
+		value = global_var:korean_tensions
 	}
 
 	# the highest weighted active journal entry appears in the goal tracker on the main screen
@@ -154,11 +156,11 @@ korean_war = {
 	}
 
 	# yes/no, if yes, a progress bar is shown
-	progressbar = yes
+	progressbar = no
 
 	# yes/no, if yes, the Journal Entry can return to an inactive state if its possible trigger reverts to false
 	# if no or unspecified, an activated Journal Entry cannot return to being inactive even if it is no longer considered possible
-	can_deactivate = no
+	can_deactivate = yes
 
 	# dynamically updated text, which is shown over the progress bar of the Journal Entry
 	# value can be a localization key or first_valid + triggered_desc script
