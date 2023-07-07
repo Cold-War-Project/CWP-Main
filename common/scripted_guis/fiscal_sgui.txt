@@ -94,9 +94,16 @@ sell_foreign_reserves = {
 			}
 		}
 		# Increases Local Currency Value
-		on_action_change_domestic_currency_value = {
-			mathAction = add
-			mathAction2 = currency_value_growth_by_exchange
+		if = {
+			limit = {
+				not = {
+					has_variable = pegged_currency # Pegged Currencies do not get their value increased
+				}
+			}
+			on_action_change_domestic_currency_value = {
+				mathAction = add
+				mathAction2 = currency_value_growth_by_exchange
+			}
 		}
 		add_treasury = 500000
 	}
@@ -198,7 +205,7 @@ set_stable_monetary_policy = {
 		base = 0
 		modifier = {
 			trigger = {
-				money_supply_percentage >= -10
+				money_supply_percentage >= 5
 				money_supply_percentage <= 10
 			}
 			add = 20
@@ -273,6 +280,49 @@ revalue_currency = {
 		}
 	}
 }
+# Peg Currency
+peg_currency = {
+	effect = {
+		set_variable = {
+			name = pegged_currency
+			value = scope:currency_exchange_country
+		}
+	}
+}
+# Can Alter Currency
+can_alter_currency = {
+	is_shown = {
+		THIS = {
+			nor = {
+				has_variable = pegged_currency
+				has_variable = altered_currency
+			}
+			is_target_in_global_variable_list = {
+				name = central_bank_list
+				target = THIS
+			}
+		}
+	}
+}
+alter_currency_blocked_due_pegged = {
+	is_shown = {
+		THIS = {
+			has_variable = pegged_currency
+		}
+	}
+}
+alter_currency_blocked_due_head = {
+	is_shown = {
+		THIS = {
+			not = {
+				is_target_in_global_variable_list = {
+					name = central_bank_list
+					target = THIS
+				}
+			}
+		}
+	}
+}
 # Can set interest rates
 can_set_interest_rates = {
 	is_shown = {
@@ -335,6 +385,33 @@ can_buy_currency = {
 			not = {
 				has_law = law_type:law_isolationism
 				has_variable = currency_bought
+			}
+		}
+	}
+}
+# Can peg currency check
+can_peg_currency_shown = {
+	is_shown = {
+		THIS = {
+			has_law = law_type:law_pegged_currency
+			nor = {
+				scope:currency_exchange_country = ROOT
+				has_variable = peg_target_set
+			}
+		}
+	}
+}
+
+can_peg_currency_enabled = {
+	is_shown = {
+		THIS = {
+			trigger_if = {
+				limit = {
+					has_variable = pegged_currency
+				}
+				not = {
+					var:pegged_currency = scope:currency_exchange_country
+				}
 			}
 		}
 	}
