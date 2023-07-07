@@ -5,14 +5,90 @@
 bank_credibility_10 = {
 	value = 2.4
 } 
+income = {
+	value = weekly_net_fixed_income
+}
+bank_cred_to_investor = {
+	value = 100
+	divide = {
+		value = 24
+		multiply = 1.33
+	}
+	multiply = var:bank_credibility
+}
+investor_confidence = {
+	if = {
+		limit = {
+			var:bank_credibility > 4
+		}
+		value = {
+			value = bank_cred_to_investor
+			divide = 100
+		}
+	}
+	if = {
+		limit = { var:bank_credibility <= 4 }
+		value = {
+			value = bank_cred_to_investor
+			multiply = -1
+			divide = 100
+		}
+	}
+	if = {
+		limit = { var:bank_credibility = 3 }
+		value = {
+			value = bank_cred_to_investor
+			multiply = -2.7
+			divide = 100
+		}
+	}
+	if = {
+		limit = { var:bank_credibility = 2 }
+		value = {
+			value = bank_cred_to_investor
+			multiply = -8
+			divide = 100
+		}
+	}
+	if = {
+		limit = { var:bank_credibility = 1 }
+		value = {
+			value = bank_cred_to_investor
+			multiply = -24
+			divide = 100
+		}
+	}
+
+}
+investor_confidence_mod_mult = {
+	value = investor_confidence
+	multiply = -1
+	multiply = 100
+}
 bank_credibility_val = {
-	value = 1
-	min = 1
+	value = 12
+	# From debt
+	if = {
+		limit = {
+			scaled_debt >= 0.6
+		}
+		subtract = {
+			value = scaled_debt
+			multiply = 5
+		}
+	}
+	# From positive Income
+	if = {
+		limit = {
+			income >= 1
+		}
+		add = bank_credibility_10
+	}
 	# From keeping stable inflation
 	if = {
 		limit = { 
-			inflation_growth <= 5
-			inflation_growth >= -5
+			inflation_growth <= 3
+			inflation_growth >= -3
 		}
 		add = {
 			value = bank_credibility_10
@@ -20,10 +96,24 @@ bank_credibility_val = {
 		}
 	}
 	if = {
-		limit = { inflation_value <= 10 inflation_value >= 0 }
+		limit = { 
+			inflation_value <= 10 
+			inflation_value >= 0 
+		}
 		add = {
 			value = bank_credibility_10
 			multiply = 5
+		}
+	}
+	# From Inflation
+	if = {
+		limit = { 
+			inflation_value > 10
+		}
+		subtract = {
+			value = inflation_value
+			divide = 3
+			round = yes
 		}
 	}
 	# From Deflation
@@ -56,31 +146,37 @@ bank_credibility_val = {
 			multiply = 3
 		}
 	}
-	round = yes
+	min = 5
+	# From Debt	
 	if = {
 		limit = {
 			scaled_debt >= 0.8
+			income <= 1
 		}
 		value = 4
 	}
 	if = {
 		limit = {
 			scaled_debt >= 0.94
+			income <= 1
 		}
 		value = 3
 	}
 	if = {
 		limit = {
 			scaled_debt >= 0.96
+			income <= 1
 		}
 		value = 2
 	}
 	if = {
 		limit = {
 			scaled_debt >= 0.98
+			income <= 1
 		}
 		value = 1
 	}
+	round = yes
 	max = 24
 }
 monetary_policy_mult = {
