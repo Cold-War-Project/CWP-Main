@@ -14,12 +14,15 @@ bank_cred_to_investor = {
 		value = 24
 		multiply = 1.33
 	}
-	multiply = var:bank_credibility
+}
+income_to_investor = {
+	value = income
+	divide = 100000
 }
 investor_confidence = {
 	if = {
 		limit = {
-			var:bank_credibility > 4
+			bank_credibility_current > 4
 		}
 		value = {
 			value = bank_cred_to_investor
@@ -27,7 +30,7 @@ investor_confidence = {
 		}
 	}
 	if = {
-		limit = { var:bank_credibility <= 4 }
+		limit = { bank_credibility_current <= 4 }
 		value = {
 			value = bank_cred_to_investor
 			multiply = -1
@@ -35,7 +38,7 @@ investor_confidence = {
 		}
 	}
 	if = {
-		limit = { var:bank_credibility = 3 }
+		limit = { bank_credibility_current = 3 }
 		value = {
 			value = bank_cred_to_investor
 			multiply = -2.7
@@ -43,7 +46,7 @@ investor_confidence = {
 		}
 	}
 	if = {
-		limit = { var:bank_credibility = 2 }
+		limit = { bank_credibility_current = 2 }
 		value = {
 			value = bank_cred_to_investor
 			multiply = -8
@@ -51,7 +54,7 @@ investor_confidence = {
 		}
 	}
 	if = {
-		limit = { var:bank_credibility = 1 }
+		limit = { bank_credibility_current = 1 }
 		value = {
 			value = bank_cred_to_investor
 			multiply = -24
@@ -65,8 +68,27 @@ investor_confidence_mod_mult = {
 	multiply = -1
 	multiply = 100
 }
+gold_reserve_ratio = {
+	value = gold_reserve_value
+	divide = gold_reserve_limit
+}
+bank_credibility_current = {
+	value = var:bank_credibility
+}
 bank_credibility_val = {
-	value = 12
+	value = 0
+	# From Gold Reserves
+	if = {
+		limit = {
+			gold_reserve_ratio >= 0.6
+		}
+		subtract = {
+			value = gold_reserve_ratio
+			multiply = 3
+			desc = BNK_GOLD_RESERVES
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
 	# From debt
 	if = {
 		limit = {
@@ -75,14 +97,20 @@ bank_credibility_val = {
 		subtract = {
 			value = scaled_debt
 			multiply = 5
+			desc = BNK_DEBT
+			format = "BNK_TOOLTIP_FORMAT"
 		}
 	}
-	# From positive Income
+	# From Income
 	if = {
 		limit = {
 			income >= 1
 		}
-		add = bank_credibility_10
+		add = {
+			value = income_to_investor
+			desc = BNK_INCOME
+			format = "BNK_TOOLTIP_FORMAT"
+		}
 	}
 	# From keeping stable inflation
 	if = {
@@ -93,6 +121,20 @@ bank_credibility_val = {
 		add = {
 			value = bank_credibility_10
 			multiply = 2
+			desc = BNK_INFLATION_GROWTH
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = { 
+			inflation_growth >= 3
+			inflation_growth <= -3
+		}
+		subtract = {
+			value = bank_credibility_10
+			multiply = 2
+			desc = BNK_INFLATION_GROWTH
+			format = "BNK_TOOLTIP_FORMAT"
 		}
 	}
 	if = {
@@ -103,6 +145,8 @@ bank_credibility_val = {
 		add = {
 			value = bank_credibility_10
 			multiply = 5
+			desc = BNK_INFLATION_LEVEL
+			format = "BNK_TOOLTIP_FORMAT"
 		}
 	}
 	# From Inflation
@@ -114,6 +158,8 @@ bank_credibility_val = {
 			value = inflation_value
 			divide = 3
 			round = yes
+			desc = BNK_INFLATION_LEVEL
+			format = "BNK_TOOLTIP_FORMAT"
 		}
 	}
 	# From Deflation
@@ -122,6 +168,8 @@ bank_credibility_val = {
 		subtract = {
 			value = bank_credibility_10
 			multiply = 5
+			desc = BNK_DEFLATION_LEVEL
+			format = "BNK_TOOLTIP_FORMAT"
 		}
 	}
 	# From Bank Independence
@@ -130,6 +178,8 @@ bank_credibility_val = {
 		subtract = {
 			value = bank_credibility_10
 			multiply = 3
+			desc = BNK_GOVERNMENT_CONTROLLED
+			format = "BNK_TOOLTIP_FORMAT"
 		}
 	}
 	if = {
@@ -137,6 +187,8 @@ bank_credibility_val = {
 		subtract = {
 			value = bank_credibility_10
 			multiply = 2
+			desc = BNK_GOVERNMENT_INTERFERENCE
+			format = "BNK_TOOLTIP_FORMAT"
 		}
 	}
 	if = {
@@ -144,6 +196,8 @@ bank_credibility_val = {
 		add = {
 			value = bank_credibility_10
 			multiply = 3
+			desc = BNK_INDEPENDENT_MONETARY_POLICY
+			format = "BNK_TOOLTIP_FORMAT"
 		}
 	}
 	min = 5
@@ -153,21 +207,33 @@ bank_credibility_val = {
 			scaled_debt >= 0.8
 			income <= 1
 		}
-		value = 4
+		value = {
+			value = 4
+			desc = BNK_IMMINENT_DEFAULT
+			format = "BNK_TOOLTIP_FORMAT"
+		}
 	}
 	if = {
 		limit = {
 			scaled_debt >= 0.94
 			income <= 1
 		}
-		value = 3
+		value = {
+			value = 3
+			desc = BNK_IN_DEFAULT
+			format = "BNK_TOOLTIP_FORMAT"
+		}
 	}
 	if = {
 		limit = {
 			scaled_debt >= 0.96
 			income <= 1
 		}
-		value = 2
+		value = {
+			value = 2
+			desc = BNK_IN_DEFAULT
+			format = "BNK_TOOLTIP_FORMAT"
+		}
 	}
 	if = {
 		limit = {
@@ -175,6 +241,8 @@ bank_credibility_val = {
 			income <= 1
 		}
 		value = 1
+			desc = BNK_IN_DEFAULT
+			format = "BNK_TOOLTIP_FORMAT"
 	}
 	round = yes
 	max = 24
