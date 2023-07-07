@@ -1,0 +1,156 @@
+﻿
+scripted_effect_german_reunification = {
+
+	#Unifier
+	if = {
+		limit = {
+			german_reunification_total_vote_unifier_ger >= german_reunification_total_vote_unifier_ddr
+		}
+		
+		c:GER = { save_scope_as = german_unifier }
+		c:DDR = { save_scope_as = not_german_unifier }
+	}
+	else = {
+		c:DDR = { save_scope_as = german_unifier }
+		c:GER = { save_scope_as = not_german_unifier }
+	}
+
+	#Government System | May be redesigned to be more interesting
+	if = {
+		limit = {
+			german_reunification_total_vote_government_system_mix >= german_reunification_total_vote_government_system_like_unifier
+		}
+		SCOPE:german_unifier = {	
+			activate_law = SCOPE:not_german_unifier.active_law:lawgroup_centralization.type
+			activate_law = SCOPE:not_german_unifier.active_law:lawgroup_bureaucratic_systems.type
+		}
+	}
+
+	#Economical System | May be redesigned to be more interesting
+	if = {
+		limit = {
+			german_reunification_total_vote_economical_system_mix >= german_reunification_total_vote_economical_system_like_unifier
+		}
+		SCOPE:german_unifier = {	
+			activate_law = SCOPE:not_german_unifier.active_law:lawgroup_taxation.type
+			activate_law = SCOPE:not_german_unifier.active_law:lawgroup_health_system.type
+		}
+	}
+
+	#Faction | Todo: Add Germany to the list of applicants if not yet a member, instead of directly granting it the full membership status
+	if = {
+		limit = {
+			german_reunification_total_vote_faction_nato >= german_reunification_total_vote_faction_warsaw_pact
+			german_reunification_total_vote_faction_nato >= german_reunification_total_vote_faction_neutral
+		}
+		SCOPE:german_unifier = {	
+			custom_tooltip	= {
+				text = GERMANY_JOINS_NATO
+				effect_warsaw_pact_leave = yes
+				add_to_global_variable_list = {
+					name = nato_members
+					target = THIS
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			german_reunification_total_vote_faction_warsaw_pact >= german_reunification_total_vote_faction_nato
+			german_reunification_total_vote_faction_warsaw_pact >= german_reunification_total_vote_faction_neutral
+		}	
+		SCOPE:german_unifier = {	
+			custom_tooltip	= {
+				text = GERMANY_JOINS_WARSAW_PACT
+				effect_nato_leave = yes
+					add_to_global_variable_list = {
+					name = warsaw_pact_members
+					target = THIS
+				}
+			}
+		}
+	}
+	else = {
+		SCOPE:german_unifier = {
+			custom_tooltip	= {
+				text = GERMANY_BECOMES_NEUTRAL	
+				effect_nato_leave = yes
+				effect_warsaw_pact_leave = yes
+			}
+		}
+	}
+
+	#Solidarpakt
+	if = {
+		limit = {
+			german_reunification_total_vote_solidarpakt_yes >= german_reunification_total_vote_solidarpakt_no
+		}
+		SCOPE:german_unifier = {
+			custom_tooltip	= {
+				text = GERMANY_PROMISES_SOLIDARPAKT
+				set_variable = has_solidarpakt
+			}
+		}
+        hidden_effect = {
+            SCOPE:not_german_unifier = {
+                every_scope_state = { 
+                    set_variable = {
+          				name = new_german_state
+          				value = yes
+      				}
+                }
+            }
+        }
+	}
+
+	#Claims
+	if = {
+		limit = {
+			german_reunification_total_vote_claims_yes >= german_reunification_total_vote_claims_no
+		}
+		s:STATE_WEST_POMERANIA = {
+			add_claim = SCOPE:german_unifier
+		}
+		s:STATE_SILESIA = {
+			add_claim = SCOPE:german_unifier
+		}
+		s:STATE_KRALOVEC = {
+			add_claim = SCOPE:german_unifier
+		}
+		s:STATE_GREATER_POLAND = {
+			add_claim = SCOPE:german_unifier
+		}
+		s:STATE_POMEMASURIA = {
+			add_claim = SCOPE:german_unifier
+		}
+	}
+	else = {
+		s:STATE_WEST_POMERANIA = {
+			remove_claim = SCOPE:german_unifier
+		}
+		s:STATE_SILESIA = {
+			remove_claim = SCOPE:german_unifier
+		}
+		s:STATE_KRALOVEC = {
+			remove_claim = SCOPE:german_unifier
+		}
+		s:STATE_GREATER_POLAND = {
+			remove_claim = SCOPE:german_unifier
+		}
+		s:STATE_POMEMASURIA = {
+			remove_claim = SCOPE:german_unifier
+		}
+	}
+
+	#Complete reunification
+	SCOPE:german_unifier = { annex = SCOPE:not_german_unifier }
+
+	#Berlin becomes capital
+	if = {
+		limit = {
+			SCOPE:german_unifier = { owns_entire_state_region = STATE_BRANDENBURG }
+		}
+		set_capital = STATE_BRANDENBURG
+    }
+
+}
