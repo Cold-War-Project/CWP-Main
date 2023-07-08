@@ -2,7 +2,6 @@
 
 ai_fiscal.1 = { #Sets Monetary policy
 	type = country_event
-	hidden = yes
 	trigger = {
 		is_ai = yes
 		not = {
@@ -11,21 +10,28 @@ ai_fiscal.1 = { #Sets Monetary policy
 	}
 	duration = 3
 	immediate = {
-		set_variable = {
-			name = adjusted_monetary_policy
-			days = 30
-		}
+
 	}
 	option = { # Contractionary
 		name = ai_fiscal.1.a
 		remove_variable = stable_monetary_policy
 		remove_variable = expansionary_monetary_policy
 		set_variable = contractionary_monetary_policy
+		set_variable = {
+			name = adjusted_monetary_policy
+			days = 30
+		}
 		ai_chance = {
 			base = 0
 			modifier = {
 				trigger = {
 					money_supply_percentage >= 30
+				}
+				add = 20
+			}
+			modifier = {
+				trigger = {
+					inflation_value >= 20
 				}
 				add = 50
 			}
@@ -36,6 +42,10 @@ ai_fiscal.1 = { #Sets Monetary policy
 		remove_variable = contractionary_monetary_policy
 		remove_variable = expansionary_monetary_policy
 		set_variable = stable_monetary_policy
+		set_variable = {
+			name = adjusted_monetary_policy
+			days = 30
+		}
 		ai_chance = {
 			base = 0
 			modifier = {
@@ -43,7 +53,7 @@ ai_fiscal.1 = { #Sets Monetary policy
 					money_supply_percentage >= 5
 					money_supply_percentage <= 10
 				}
-				add = 20
+				add = 30
 			}
 		}
 	}
@@ -52,47 +62,220 @@ ai_fiscal.1 = { #Sets Monetary policy
 		remove_variable = stable_monetary_policy
 		remove_variable = contractionary_monetary_policy
 		set_variable = expansionary_monetary_policy
+		set_variable = {
+			name = adjusted_monetary_policy
+			days = 30
+		}
 		ai_chance = {
 			base = 0
 			modifier = {
 				trigger = {
 					money_supply_percentage <= -30
 				}
-				add = 50
+				add = 20
 			}
 			modifier = {
 				trigger = {
 					money_supply_percentage < 5
 				}
-				add = 50
+				add = 20
 			}
 		}
 	}
 
 }
 
-ai_fiscal.2 = { # Credibility Decrease
+ai_fiscal.2 = { # Set Interest Rate
 	type = country_event
-	hidden = yes
 	trigger = {
 		is_ai = yes
 		not = {
-			has_variable = adjusted_monetary_policy
+			var:interest_rate = ai_ideal_interest_rate
+			has_law = law_type:law_gold_standard
 		}
 	}
 	duration = 3
 	immediate = {
-		set_variable = {
-			name = previous_bank_credibility
-			value = var:bank_credibility
-		}
-		set_variable = {
-			name = bank_credibility
-			value = bank_credibility_val
-		}
+
 	}
 	option = {
-		name = cwp_bank_reevaluation.2.a
+		name = ai_fiscal.1.a
+		default_option = yes
+		set_variable = {
+			name = interest_rate
+			value = ai_ideal_interest_rate
+		}
+		set_variable = {
+			name = interest_rate_gui
+			value = var:interest_rate
+		}
+	}
+
+}
+
+ai_fiscal.3 = { # Buy Foreign Currency
+	type = country_event
+	trigger = {
+		is_ai = yes
+		foreign_reserves_ratio < 30
+		not = {
+			foreign_reserves_value >= foreign_reserves_max
+			scaled_debt >= 1
+		}
+	}
+	duration = 3
+	immediate = {
+		random_in_global_list = {
+			variable = central_bank_list
+			limit = {
+				not = {
+					ROOT = THIS
+					has_variable = currency_bought
+					THIS.country_currency_val > root.country_currency_val
+				}
+				ROOT.country_payment_ability >= {
+					value = {
+						value = THIS.money_supply_5
+						max = ROOT.foreign_reserves_capacity_left
+					}
+					multiply = {
+						value = THIS.country_currency_val
+						divide = ROOT.country_currency_val
+					}
+				} 
+			}
+			save_scope_as = currency_exchange_country
+		}
+		add_treasury = {
+			value = {
+				value = scope:currency_exchange_country.money_supply_5
+				max = ROOT.foreign_reserves_capacity_left
+			}
+			multiply = {
+				value = scope:currency_exchange_country.country_currency_val
+				divide = ROOT.country_currency_val
+			}
+			multiply = -1
+		}
+		# Increases Reserve
+		if = {
+			limit = {
+				scope:currency_exchange_country.money_supply_5 <= foreign_reserves_capacity_left
+			}
+			change_variable = {
+				name = foreign_reserves
+				add = scope:currency_exchange_country.money_supply_5
+			}
+		}
+		if = {
+			limit = {
+				scope:currency_exchange_country.money_supply_5 >= foreign_reserves_capacity_left
+			}
+			set_variable = {
+				name = foreign_reserves
+				value = foreign_reserves_max
+			}
+		}
+		# Increases Bought Currency Value
+		scope:currency_exchange_country = {
+			on_action_change_domestic_currency_value = {
+				mathAction = add
+				mathAction2 = currency_value_growth_by_exchange
+			}
+			if = {
+				limit = {
+					not = {
+						has_law = law_type:law_gold_standard # Gold standard has fixed money supply unless altered
+					}
+				}
+				# Reduces Money Supply
+				change_variable = {
+					name = money_supply
+					subtract = {
+						value = scope:currency_exchange_country.money_supply_5
+					}
+				}
+			}
+			# Prevents further currency buying for 1 month
+			set_variable = {
+				name = currency_bought
+				months = 1
+			}
+		}
+
+	}
+	option = {
+		name = ai_fiscal.1.a
+		default_option = yes
+	}
+
+}
+
+ai_fiscal.4 = { # Sell Foreign Currency
+	type = country_event
+	trigger = {
+		is_ai = yes
+		or = {
+			and = {
+				foreign_reserves_ratio > 10
+				scaled_debt >= 0.7
+			}
+			and = {
+				foreign_reserves_ratio > 70
+				scaled_debt >= 0.5
+			}
+		}
+		
+	}
+	duration = 3
+	immediate = {
+		# Reduces Reserves
+		if = {
+			limit = {
+				foreign_reserves_value >= 1
+			}
+			change_variable = {
+				name = foreign_reserves
+				subtract = {
+					value = 500000
+					multiply = {
+						value = country_currency_val
+						divide = foreign_avg
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				foreign_reserves_value <= {
+					value = 500000
+					multiply = {
+						value = country_currency_val
+						divide = foreign_avg
+					}
+				}
+			}
+			set_variable = {
+				name = foreign_reserves
+				value = 0
+			}
+		}
+		# Increases Local Currency Value
+		if = {
+			limit = {
+				not = {
+					has_variable = pegged_currency # Pegged Currencies do not get their value increased
+				}
+			}
+			on_action_change_domestic_currency_value = {
+				mathAction = add
+				mathAction2 = currency_value_growth_by_exchange
+			}
+		}
+		add_treasury = 500000
+	}
+	option = {
+		name = ai_fiscal.1.a
 		default_option = yes
 	}
 
