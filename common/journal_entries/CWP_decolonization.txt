@@ -34,9 +34,24 @@
 	}
 	# failure trigger, should spawn event explaining what happens when triggered, framed as a failure; if left blank, cannot fail
 	fail = {
+		var:imperial_unity <= 0
 	}
 	# effect which is executed when 'fail' trigger becomes true
 	on_fail = {
+		every_subject_or_below = {
+			trigger_event = {
+				id = decolonization.100				# Subject Revolt Event
+				days = 0
+			}
+		}
+		trigger_event = {
+			id = decolonization.101			# We have lost control
+			days = 0
+		}
+		trigger_event = {
+			id = decolonization.102			# Ultimatum
+			days = 91
+		}
 	}
 	# optional invalidation trigger, should not notify player when it triggers, just clean up and silently disappear due to journal entry no longer being valid; if left blank, cannot be invalidated
 	invalid = {
@@ -52,26 +67,29 @@
 			triggered_desc = {
 				desc = je_decolonization_desc
 				trigger = {
-					this ?= c:GBR
+					c:GBR ?= this
 				}
 			}
 			triggered_desc = {
 				desc = je_decolonization_desc
 				trigger = {
-					this ?= c:FRA
+					c:FRA ?= this
 				}
 			}
 			triggered_desc = {
 				desc = je_decolonization_desc
 				trigger = {
-					this ?= c:POR
+					c:POR ?= this
 				}
 			}
 			triggered_desc = {
 				desc = je_decolonization_desc
 				trigger = {
-					this ?= c:BEL
+					c:BEL ?= this
 				}
+			}
+			triggered_desc = {
+				desc = je_decolonization_desc
 			}
 		}
 	}
@@ -79,9 +97,29 @@
 	timeout = 7300
 	# effect which is executed when journal entry is timed out
 	on_timeout = {
-		trigger_event = {
-			id = decolonization.1
-			days = 0
+		if = {
+			limit = {
+				var:imperial_unity = 100
+			}
+			trigger_event = {
+				id = decolonization.1				# Keep the Empire Together
+				days = 0
+			}
+		}
+		else_if = {
+			limit = {
+				var:imperial_unity > 50
+			}
+			trigger_event = {
+				id = decolonization.2				# Amicable Separation
+				days = 0
+			}
+		}
+		else = {
+			trigger_event = {
+				id = decolonization.3				# Clean Break
+				days = 0
+			}
 		}
 	}
 	# on_action which is triggered every first day of the week
@@ -115,7 +153,7 @@
 		value = 0
 	}
 	# the highest weighted active journal entry appears in the goal tracker on the main screen
-	weight = 200
+	weight = 1000
 	# yes/no, determines if this journal entry should be transfered if the player switches country through a revolution or by releasing a subject. Note that external dependencies such as country variables etc are not automatically inherited
 	transferable = no
 	# yes/no, determines if this journal entry is allowed to be inherited by a victorious revolution. Revolutions also get all variables from the defeated parent country, so most JEs *should* be inherited in this way
@@ -133,7 +171,7 @@
 	# value can be a localization key or first_valid + triggered_desc script
 	# To use in loc or UI: [JournalEntry.GetProgressDesc]
 	# If this is not specified, GetProgressDesc will instead return loc from key <journal_entry_key>_progress
-	#progress_desc = DECONOLIZATION_PROGRESS_DESC
+	progress_desc = DECONOLIZATION_PROGRESS_DESC
 	# tutorial lesson explaining HOW to complete the Journal Entry
 	#how_tutorial = how_tutorial_lesson_key
 	# tutorial lesson explaining the WHY around the Journal Entry
