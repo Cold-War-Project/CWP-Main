@@ -23,6 +23,7 @@
 			# saved scopes can be used in any events triggered from the Journal Entry, as well as in the loc for the Journal Entry itself
 			# To use saved scopes in loc: JournalEntry.GetTopScope.sCountry('saved_scope_name') or SCOPE.sCountry('saved_scope_name')
 			save_scope_as = fra_a_new_constitution
+
 			#todo any tracking variables can get saved here
 			if = {
 				limit = {
@@ -39,35 +40,35 @@
 			}
 			set_variable = {
 				name = fra_constitutional_referendum_communist_support
-				value = 0
+				value = 0.5
 			}
 			set_variable = {
 				name = fra_constitutional_referendum_socialist_support
-				value = 0
+				value = 0.5
 			}
 			set_variable = {
 				name = fra_constitutional_referendum_moralist_support
-				value = 0
+				value = 0.5
 			}
 			set_variable = {
 				name = fra_constitutional_referendum_gaullist_support
-				value = 0
+				value = 0.5
 			}
 			set_variable = {
 				name = fra_constitutional_referendum_communist_cumulative_support
-				value = 20
+				value = 0
 			}
 			set_variable = {
 				name = fra_constitutional_referendum_socialist_cumulative_support
-				value = 20
+				value = 0
 			}
 			set_variable = {
 				name = fra_constitutional_referendum_moralist_cumulative_support
-				value = 20
+				value = 0
 			}
 			set_variable = {
 				name = fra_constitutional_referendum_gaullist_cumulative_support
-				value = 20
+				value = 0
 			}
 			set_variable = {
 				name = fra_constitutional_referendum_communist_cumulative_support_weighted
@@ -152,6 +153,7 @@
                     exists = root.var:fra_constitutional_referendum_moralist_cumulative_support
                     exists = root.var:fra_constitutional_referendum_gaullist_support
                     exists = root.var:fra_constitutional_referendum_gaullist_cumulative_support
+                    NOT = { exists = root.var:fra_constitutional_referendum_on_pause }
 				}
 				change_variable = {
 					name = fra_constitutional_referendum_communist_cumulative_support
@@ -237,60 +239,54 @@
                 name = fra_constitutional_referendum_net_change_weighted
                 value = {
                     value = 0
-
-                    add = {
-                        value = root.var:fra_constitutional_referendum_gaullist_support
-                        multiply = {
-                            value = 0
-                            add = ig:ig_moralists.ig_clout
-                            add = ig:ig_elites.ig_clout
-                            add = ig:ig_ruralists.ig_clout
+                    if = { limit = { NOT = { exists = root.var:fra_constitutional_referendum_on_pause } }
+                        if = { limit = {root.var:fra_constitutional_referendum_gaullist_cumulative_support > 0 root.var:fra_constitutional_referendum_gaullist_cumulative_support < 100}
+                            add = {
+                                value = root.var:fra_constitutional_referendum_gaullist_support
+                                multiply = {
+                                    value = 0
+                                    add = ig:ig_moralists.ig_clout
+                                    add = ig:ig_elites.ig_clout
+                                    add = ig:ig_ruralists.ig_clout
+                                }
+                            }
                         }
-                    }
-                    add = {
-                        value = root.var:fra_constitutional_referendum_moralist_support
-                        multiply = {
-                            value = 0
-                            add = ig:ig_moralists.ig_clout
-                            add = ig:ig_elites.ig_clout
-                            add = ig:ig_ruralists.ig_clout
+                        if = { limit = {root.var:fra_constitutional_referendum_moralist_cumulative_support > 0 root.var:fra_constitutional_referendum_moralist_cumulative_support < 100}
+                            add = {
+                                value = root.var:fra_constitutional_referendum_moralist_support
+                                multiply = {
+                                    value = 0
+                                    add = ig:ig_moralists.ig_clout
+                                    add = ig:ig_elites.ig_clout
+                                    add = ig:ig_ruralists.ig_clout
+                                }
+                            }
                         }
-                    }
-                    add = {
-                        value = root.var:fra_constitutional_referendum_socialist_support
-                        multiply = {
-                            value = 0
-                            add = ig:ig_urbanists.ig_clout
-                            add = ig:ig_intelligentsia.ig_clout
+                        if = { limit = {root.var:fra_constitutional_referendum_socialist_cumulative_support > 0 root.var:fra_constitutional_referendum_socialist_cumulative_support < 100}
+                            add = {
+                                value = root.var:fra_constitutional_referendum_socialist_support
+                                multiply = {
+                                    value = 0
+                                    add = ig:ig_urbanists.ig_clout
+                                    add = ig:ig_intelligentsia.ig_clout
+                                }
+                            }
                         }
-                    }
-                    add = {
-                        value = root.var:fra_constitutional_referendum_communist_support
-                        multiply = {
-                            value = 0
-                            add = ig:ig_bureaucrats.ig_clout
-                            add = ig:ig_laborists.ig_clout
+                        if = { limit = {root.var:fra_constitutional_referendum_communist_cumulative_support > 0 root.var:fra_constitutional_referendum_communist_cumulative_support < 100}
+                            add = {
+                                value = root.var:fra_constitutional_referendum_communist_support
+                                multiply = {
+                                    value = 0
+                                    add = ig:ig_bureaucrats.ig_clout
+                                    add = ig:ig_laborists.ig_clout
+                                }
+                            }
                         }
                     }
                 }
             }
-			if = {
-			    limit = { exists = root.var:fra_constitutional_referendum_success }
+            clamp_variable = { name = fra_constitutional_referendum_success max = 100 min = 0 }
 
-				if = {
-					limit = { root.var:fra_constitutional_referendum_success > 100 }
-					set_variable = {
-						name = fra_constitutional_referendum_success
-						value = 100
-					}
-				}
-				else_if = { limit = { root.var:fra_constitutional_referendum_success < 0 }
-					set_variable = {
-						name = fra_constitutional_referendum_success
-						value = 0
-					}
-				}
-			}
 
 			#To stop set but never used error.
 			if = {
