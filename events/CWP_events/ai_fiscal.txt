@@ -135,7 +135,7 @@ ai_fiscal.3 = { # Buy Foreign Currency
 		random_in_global_list = {
 			variable = central_bank_list
 			limit = {
-				not = {
+				nor = {
 					ROOT = THIS
 					has_variable = currency_bought
 					THIS.country_currency_val > root.country_currency_val
@@ -153,25 +153,39 @@ ai_fiscal.3 = { # Buy Foreign Currency
 			}
 			save_scope_as = currency_exchange_country
 		}
+		if = {
+			limit = {
+				is_set = scope:currency_exchange_country
+			}
+			set_variable = {
+				name = ai_currency_buy_country
+				value = scope:currency_exchange_country
+			}
+		}
+		if = {
+			limit = {
+				not = {
+					is_set = scope:currency_exchange_country
+				}
+			}
+			remove_variable = ai_currency_buy_country
+		}
+
 		
 	}
 	option = {
 		name = ai_fiscal.1.a
 		if = {
 			limit = {
-				or = {
-					is_set = scope:currency_exchange_country
-					exists = scope:currency_exchange_country
-				}
-				
+				has_variable = ai_currency_buy_country				
 			}
 			add_treasury = {
 				value = {
-					value = scope:currency_exchange_country.money_supply_5
+					value = var:ai_currency_buy_country.money_supply_5
 					max = ROOT.foreign_reserves_capacity_left
 				}
 				multiply = {
-					value = scope:currency_exchange_country.country_currency_val
+					value = var:ai_currency_buy_country.country_currency_val
 					divide = ROOT.country_currency_val
 				}
 				multiply = -1
@@ -179,16 +193,16 @@ ai_fiscal.3 = { # Buy Foreign Currency
 			# Increases Reserve
 			if = {
 				limit = {
-					scope:currency_exchange_country.money_supply_5 <= foreign_reserves_capacity_left
+					var:ai_currency_buy_country.money_supply_5 <= foreign_reserves_capacity_left
 				}
 				change_variable = {
 					name = foreign_reserves
-					add = scope:currency_exchange_country.money_supply_5
+					add = var:ai_currency_buy_country.money_supply_5
 				}
 			}
 			if = {
 				limit = {
-					scope:currency_exchange_country.money_supply_5 >= foreign_reserves_capacity_left
+					var:ai_currency_buy_country.money_supply_5 >= foreign_reserves_capacity_left
 				}
 				set_variable = {
 					name = foreign_reserves
@@ -196,39 +210,31 @@ ai_fiscal.3 = { # Buy Foreign Currency
 				}
 			}
 			# Increases Bought Currency Value
-			scope:currency_exchange_country = {
+			var:ai_currency_buy_country = {
 				on_action_change_domestic_currency_value = {
 					mathAction = add
 					mathAction2 = currency_value_growth_by_exchange
 				}
-				
-				
-			}
-			if = {
-				limit = {
-					scope:currency_exchange_country = {
+				if = {
+					limit = {
 						not = {
 							has_law = law_type:law_gold_standard # Gold standard has fixed money supply unless altered
 						}
 					}
-				}
-				scope:currency_exchange_country = {
 					# Reduces Money Supply
 					change_variable = {
 						name = money_supply
 						subtract = {
-							value = scope:currency_exchange_country.money_supply_5
+							value = var:ai_currency_buy_country.money_supply_5
 						}
 					}
 				}
-			}
-			scope:currency_exchange_country = {
-				# Prevents further currency buying for 1 month
 				set_variable = {
 					name = currency_bought
 					months = 1
-				}
+				}				
 			}
+			remove_variable = ai_currency_buy_country
 			set_variable = {
 				name = ai_bought_currency
 				months = 3
@@ -250,8 +256,7 @@ ai_fiscal.3 = { # Buy Foreign Currency
 			modifier = {
 				trigger = {
 					nor = {
-						exists = scope:currency_exchange_country
-						is_set = scope:currency_exchange_country
+						has_variable = ai_currency_buy_country
 					}
 				}
 				add = 1000
