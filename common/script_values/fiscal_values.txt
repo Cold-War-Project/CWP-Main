@@ -2,28 +2,263 @@
 	value = credit
 	multiply = scaled_debt
 }
-bank_credibility_val = {
-	value = 1
+bank_credibility_10 = {
+	value = 2.4
+} 
+income_value = {
+	value = weekly_net_fixed_income
+}
+bank_cred_to_investor = {
+	value = bank_credibility_current
+	divide = {
+		value = 24
+		multiply = 1.33
+	}
+}
+income_to_investor = {
+	value = income_value
+	divide = 100000
+}
+investor_confidence = {
 	if = {
 		limit = {
-			has_law = law_type:law_government_controlled
+			bank_credibility_current > 4
 		}
-		subtract = 3
+		value = {
+			value = bank_cred_to_investor
+			
+		}
 	}
 	if = {
-		limit = {
-			has_law = law_type:law_government_interference
+		limit = { bank_credibility_current <= 4 }
+		value = {
+			value = bank_cred_to_investor
+			multiply = -1
+			
 		}
-		subtract = 2
 	}
 	if = {
-		limit = {
-			has_law = law_type:law_independent_monetary_policy
+		limit = { bank_credibility_current = 3 }
+		value = {
+			value = bank_cred_to_investor
+			multiply = -2.7
+			
 		}
-		add = 3
+	}
+	if = {
+		limit = { bank_credibility_current = 2 }
+		value = {
+			value = bank_cred_to_investor
+			multiply = -8
+			
+		}
+	}
+	if = {
+		limit = { bank_credibility_current = 1 }
+		value = {
+			value = bank_cred_to_investor
+			multiply = -24
+			
+		}
 	}
 
-	min = 1
+}
+investor_confidence_mod_mult = {
+	value = investor_confidence
+	multiply = 33
+	max = 25
+	min = -25
+	round = yes
+}
+gold_reserve_ratio = {
+	value = gold_reserve_value
+	divide = gold_reserve_limit
+}
+bank_credibility_current = {
+	value = var:bank_credibility
+}
+bank_credibility_val = {
+	value = 0
+	# From Altering Currency
+	if = {
+		limit = {
+			has_variable = altered_currency
+		}
+		subtract = {
+			value = bank_credibility_10
+			multiply = 3
+			desc = BNK_ALTERED_CURRENCY
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	# From Gold Reserves
+	if = {
+		limit = {
+			gold_reserve_ratio >= 0.6
+		}
+		subtract = {
+			value = gold_reserve_ratio
+			multiply = 3
+			desc = BNK_GOLD_RESERVES
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	# From debt
+	if = {
+		limit = {
+			scaled_debt >= 0.6
+		}
+		subtract = {
+			value = scaled_debt
+			multiply = 5
+			desc = BNK_DEBT
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	# From Income
+	if = {
+		limit = {
+			income >= 1
+		}
+		add = {
+			value = income_to_investor
+			desc = BNK_INCOME
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	# From keeping stable inflation
+	if = {
+		limit = { 
+			inflation_growth <= 3
+			inflation_growth >= -3
+		}
+		add = {
+			value = bank_credibility_10
+			multiply = 2
+			desc = BNK_INFLATION_GROWTH
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = { 
+			inflation_growth >= 3
+			inflation_growth <= -3
+		}
+		subtract = {
+			value = bank_credibility_10
+			multiply = 2
+			desc = BNK_INFLATION_GROWTH
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = { 
+			inflation_value <= 10 
+			inflation_value >= 0 
+		}
+		add = {
+			value = bank_credibility_10
+			multiply = 5
+			desc = BNK_INFLATION_LEVEL
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	# From Inflation
+	if = {
+		limit = { 
+			inflation_value > 10
+		}
+		subtract = {
+			value = inflation_value
+			divide = 5
+			round = yes
+			desc = BNK_INFLATION_LEVEL
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	# From Deflation
+	if = {
+		limit = { inflation_value < 0 }
+		subtract = {
+			value = bank_credibility_10
+			multiply = 5
+			desc = BNK_DEFLATION_LEVEL
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	# From Bank Independence
+	if = {
+		limit = { has_law = law_type:law_government_controlled }
+		subtract = {
+			value = bank_credibility_10
+			multiply = 3
+			desc = BNK_GOVERNMENT_CONTROLLED
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = { has_law = law_type:law_government_interference }
+		subtract = {
+			value = bank_credibility_10
+			multiply = 2
+			desc = BNK_GOVERNMENT_INTERFERENCE
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = { has_law = law_type:law_independent_monetary_policy}
+		add = {
+			value = bank_credibility_10
+			multiply = 3
+			desc = BNK_INDEPENDENT_MONETARY_POLICY
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	min = 5
+	# From Debt	
+	if = {
+		limit = {
+			scaled_debt >= 0.8
+			income <= 1
+		}
+		value = {
+			value = 4
+			desc = BNK_IMMINENT_DEFAULT
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			scaled_debt >= 0.94
+			income <= 1
+		}
+		value = {
+			value = 3
+			desc = BNK_IN_DEFAULT
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			scaled_debt >= 0.96
+			income <= 1
+		}
+		value = {
+			value = 2
+			desc = BNK_IN_DEFAULT
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			scaled_debt >= 0.98
+			income <= 1
+		}
+		value = 1
+			desc = BNK_IN_DEFAULT
+			format = "BNK_TOOLTIP_FORMAT"
+	}
+	round = yes
 	max = 24
 }
 monetary_policy_mult = {
@@ -43,19 +278,19 @@ monetary_policy_mult = {
 		limit = {
 			has_law = law_type:law_government_controlled
 		}
-		multiply = 5
+		multiply = 1.5
 	}
 	if = {
 		limit = {
 			has_law = law_type:law_government_interference
 		}
-		multiply = 2
+		multiply = 1.2
 	}
 	if = {
 		limit = {
 			has_law = law_type:law_independent_monetary_policy
 		}
-		multiply = -5
+		multiply = 0.5
 	}
 }
 
@@ -97,6 +332,13 @@ foreign_reserves_conversion = {
 foreign_reserves_sell = {
 	value = 500000
 	multiply = currency_average_difference_to_global
+	min = 0.1
+}
+foreign_reserves_ratio = {
+	value = foreign_reserves_value
+	divide = foreign_reserves_max
+	multiply = 100
+
 }
 foreign_reserves_capacity_left = {
 	value = foreign_reserves_max
@@ -115,620 +357,49 @@ foreign_reserves_value = {
 }
 
 foreign_avg = {
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_usd
-			}
-			has_global_variable = currency_usd_v
-		}
-		add = global_var:currency_usd_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_frf
-			}
-			has_global_variable = currency_frf_v
-		}
-		add = global_var:currency_frf_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_gbp
-			}
-			has_global_variable = currency_gbp_v
-		}
-		add = global_var:currency_gbp_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_sur
-			}
-			has_global_variable = currency_sur_v
-		}
-		add = global_var:currency_sur_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_brz
-			}
-			has_global_variable = currency_brz_v 
-		}
-		add = global_var:currency_brz_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_dem
-			}
-			has_global_variable = currency_dem_v 
-		}
-		add = global_var:currency_dem_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_pen
-			}
-			has_global_variable = currency_pen_v 
-		}
-		add = global_var:currency_pen_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_mxn
-			}
-			has_global_variable = currency_mxn_v 
-		}
-		add = global_var:currency_mxn_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_dnr
-			}
-			has_global_variable = currency_dnr_v 
-		}
-		add = global_var:currency_dnr_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_irr
-			}
-			has_global_variable = currency_irr_v 
-		}
-		add = global_var:currency_irr_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_trl
-			}
-			has_global_variable = currency_trl_v 
-		}
-		add = global_var:currency_trl_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_yuf
-			}
-			has_global_variable = currency_yuf_v 
-		}
-		add = global_var:currency_yuf_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_pln
-			}
-			has_global_variable = currency_pln_v 
-		}
-		add = global_var:currency_pln_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_cad
-			}
-			has_global_variable = currency_cad_v 
-		}
-		add = global_var:currency_cad_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_aud
-			}
-			has_global_variable = currency_aud_v
-		}
-		add = global_var:currency_aud_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_nzd
-			}
-			has_global_variable = currency_nzd_v
-		}
-		add = global_var:currency_nzd_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_aup
-			}
-			has_global_variable = currency_aup_v
-		}
-		add = global_var:currency_aup_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_nzp
-			}
-			has_global_variable = currency_nzp_v
-		}
-		add = global_var:currency_nzp_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_itl
-			}
-			has_global_variable = currency_itl_v
-		}
-		add = global_var:currency_itl_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_jpy
-			}
-			has_global_variable = currency_jpy_v
-		}
-		add = global_var:currency_jpy_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_chf
-			}
-			has_global_variable = currency_chf_v
-		}
-		add = global_var:currency_chf_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_ars
-			}
-			has_global_variable = currency_ars_v
-		}
-		add = global_var:currency_ars_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_cny
-			}
-			has_global_variable = currency_cny_v
-		}
-		add = global_var:currency_cny_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_inr
-			}
-			has_global_variable = currency_inr_v
-		}
-		add = global_var:currency_inr_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_zar
-			}
-			has_global_variable = currency_zar_v
-		}
-		add = global_var:currency_zar_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_sek
-			}
-			has_global_variable = currency_sek_v
-		}
-		add = global_var:currency_sek_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_egp
-			}
-			has_global_variable = currency_egp_v
-		}
-		add = global_var:currency_egp_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_grd
-			}
-			has_global_variable = currency_grd_v 
-		}
-		add = global_var:currency_grd_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_iep
-			}
-			has_global_variable = currency_iep_v 
-		}
-		add = global_var:currency_iep_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_esp
-			}
-			has_global_variable = currency_esp_v 
-		}
-		add = global_var:currency_esp_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_pte
-			}
-			has_global_variable = currency_pte_v 
-		}
-		add = global_var:currency_pte_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_nok
-			}
-			has_global_variable = currency_nok_v 
-		}
-		add = global_var:currency_nok_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_fim
-			}
-			has_global_variable = currency_fim_v 
-		}
-		add = global_var:currency_fim_v
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_dkk
-			}
-			has_global_variable = currency_dkk_v 
-		}
-		add = global_var:currency_dkk_v
-	}
+	if = { limit = { has_global_variable = currency_usd_v } add = global_var:currency_usd_v }
+	if = { limit = { has_global_variable = currency_frf_v } add = global_var:currency_frf_v }
+	if = { limit = { has_global_variable = currency_gbp_v } add = global_var:currency_gbp_v }
+	if = { limit = { has_global_variable = currency_sur_v } add = global_var:currency_sur_v }
+	if = { limit = { has_global_variable = currency_brz_v } add = global_var:currency_brz_v }
+	if = { limit = { has_global_variable = currency_dem_v } add = global_var:currency_dem_v }
+	if = { limit = { has_global_variable = currency_pen_v } add = global_var:currency_pen_v }
+	if = { limit = { has_global_variable = currency_mxn_v } add = global_var:currency_mxn_v }
+	if = { limit = { has_global_variable = currency_dnr_v } add = global_var:currency_dnr_v }
+	if = { limit = { has_global_variable = currency_irr_v } add = global_var:currency_irr_v }
+	if = { limit = { has_global_variable = currency_trl_v } add = global_var:currency_trl_v }
+	if = { limit = { has_global_variable = currency_yuf_v } add = global_var:currency_yuf_v }
+	if = { limit = { has_global_variable = currency_pln_v } add = global_var:currency_pln_v }
+	if = { limit = { has_global_variable = currency_cad_v } add = global_var:currency_cad_v }
+	if = { limit = { has_global_variable = currency_aud_v } add = global_var:currency_aud_v }
+	if = { limit = { has_global_variable = currency_nzd_v } add = global_var:currency_nzd_v }
+	if = { limit = { has_global_variable = currency_aup_v } add = global_var:currency_aup_v }
+	if = { limit = { has_global_variable = currency_nzp_v } add = global_var:currency_nzp_v }
+	if = { limit = { has_global_variable = currency_itl_v } add = global_var:currency_itl_v }
+	if = { limit = { has_global_variable = currency_jpy_v } add = global_var:currency_jpy_v }
+	if = { limit = { has_global_variable = currency_chf_v } add = global_var:currency_chf_v }
+	if = { limit = { has_global_variable = currency_ars_v } add = global_var:currency_ars_v }
+	if = { limit = { has_global_variable = currency_cny_v } add = global_var:currency_cny_v }
+	if = { limit = { has_global_variable = currency_inr_v } add = global_var:currency_inr_v }
+	if = { limit = { has_global_variable = currency_zar_v } add = global_var:currency_zar_v }
+	if = { limit = { has_global_variable = currency_sek_v } add = global_var:currency_sek_v }
+	if = { limit = { has_global_variable = currency_egp_v } add = global_var:currency_egp_v }
+	if = { limit = { has_global_variable = currency_grd_v } add = global_var:currency_grd_v }
+	if = { limit = { has_global_variable = currency_iep_v } add = global_var:currency_iep_v }
+	if = { limit = { has_global_variable = currency_esp_v } add = global_var:currency_esp_v }
+	if = { limit = { has_global_variable = currency_pte_v } add = global_var:currency_pte_v }
+	if = { limit = { has_global_variable = currency_nok_v } add = global_var:currency_nok_v }
+	if = { limit = { has_global_variable = currency_fim_v } add = global_var:currency_fim_v }
+	if = { limit = { has_global_variable = currency_dkk_v } add = global_var:currency_dkk_v }
+	if = { limit = { has_global_variable = currency_krw_v } add = global_var:currency_krw_v }
+	if = { limit = { has_global_variable = currency_thb_v } add = global_var:currency_thb_v }
+	if = { limit = { has_global_variable = currency_veb_v } add = global_var:currency_veb_v }
 	divide = foreign_avg_count
 }
 
 foreign_avg_count = {
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_usd
-			}
-			has_global_variable = currency_usd_v
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_frf
-			}
-			has_global_variable = currency_frf_v
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_gbp
-			}
-			has_global_variable = currency_gbp_v
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_sur
-			}
-			has_global_variable = currency_sur_v
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_brz
-			}
-			has_global_variable = currency_brz_v 
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_dem
-			}
-			has_global_variable = currency_dem_v 
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_pen
-			}
-			has_global_variable = currency_pen_v 
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_mxn
-			}
-			has_global_variable = currency_mxn_v 
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_dnr
-			}
-			has_global_variable = currency_dnr_v 
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_irr
-			}
-			has_global_variable = currency_irr_v 
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_trl
-			}
-			has_global_variable = currency_trl_v 
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_yuf
-			}
-			has_global_variable = currency_yuf_v 
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_pln
-			}
-			has_global_variable = currency_pln_v 
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_cad
-			}
-			has_global_variable = currency_cad_v 
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_aud
-			}
-			has_global_variable = currency_aud_v
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_nzd
-			}
-			has_global_variable = currency_nzd_v
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_aup
-			}
-			has_global_variable = currency_aup_v
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_nzp
-			}
-			has_global_variable = currency_nzp_v
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_itl
-			}
-			has_global_variable = currency_itl_v
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_jpy
-			}
-			has_global_variable = currency_jpy_v
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_chf
-			}
-			has_global_variable = currency_chf_v
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_ars
-			}
-			has_global_variable = currency_ars_v
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_cny
-			}
-			has_global_variable = currency_cny_v
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_inr
-			}
-			has_global_variable = currency_inr_v
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_zar
-			}
-			has_global_variable = currency_zar_v
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_sek
-			}
-			has_global_variable = currency_sek_v
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_egp
-			}
-			has_global_variable = currency_egp_v
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_grd
-			}
-			has_global_variable = currency_grd_v 
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_iep
-			}
-			has_global_variable = currency_iep_v 
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_esp
-			}
-			has_global_variable = currency_esp_v 
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_pte
-			}
-			has_global_variable = currency_pte_v 
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_nok
-			}
-			has_global_variable = currency_nok_v 
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_fim
-			}
-			has_global_variable = currency_fim_v 
-		}
-		add = 1
-	}
-	if = {
-		limit = {
-			not = {
-				var:cwp_currency = flag:currency_dkk
-			}
-			has_global_variable = currency_dkk_v 
-		}
+	every_in_global_list = {
+		variable = central_bank_list
 		add = 1
 	}
 }
@@ -744,13 +415,54 @@ interest_rate_gui = {
 }
 
 interest_rate_effect = {
-	value = interest_rate
-	divide = 10
+	value = {
+		value = interest_rate
+		add = -2
+		min = -12
+		divide = 10
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_government_controlled
+		}
+		multiply = 0.1
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_government_interference
+		}
+		multiply = 0.6
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_independent_monetary_policy
+		}
+		multiply = 1.5
+	}
+	### This represents the 'zero lower bound', where interest rates lose effectiveness rapidly below zero percent
+	if = {
+		limit = {
+			interst_rate < 0
+		}
+		multiply = {
+			value = 1
+			add = {
+				value = interest_rate
+				multiply = 0.01
+			}
+			min = 0.1
+		}
+	}
 }
 
 # Money Supply
 money_supply = {
 	value = var:money_supply
+	min = {
+		value = money_supply_max
+		multiply = -1
+	}
+	max = money_supply_max
 }
 
 money_supply_5 = {
@@ -796,7 +508,7 @@ money_supply_growth_from_gold = {
 			divide = 10			
 		}
 	}
-	divide = 2
+	divide = 5
 }
 
 money_supply_growth = {
@@ -1027,27 +739,7 @@ inflation_growth = {
 			interest_rate > -100
 		}
 		subtract = {
-			value = {
-				value = interest_rate_effect
-				if = {
-					limit = {
-						has_law = law_type:law_government_controlled
-					}
-					divide = 10
-				}
-				if = {
-					limit = {
-						has_law = law_type:law_government_interference
-					}
-					divide = 5
-				}
-				if = {
-					limit = {
-						has_law = law_type:law_independent_monetary_policy
-					}
-					multiply = 5
-				}
-			}
+			value = interest_rate_effect
 			desc = INF_INTEREST_RATE
 			format = "INFLATION_GROWTH_TOOLTIP_FORMAT"
 		}
@@ -1062,6 +754,7 @@ inflation_growth = {
 			format = "INFLATION_GROWTH_TOOLTIP_FORMAT"
 		}
 	}
+	max = 100
 }
 
 inflation_housing_price = {

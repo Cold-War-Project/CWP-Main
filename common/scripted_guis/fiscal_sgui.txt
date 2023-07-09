@@ -73,24 +73,12 @@ sell_foreign_reserves = {
 					value = 500000
 					multiply = {
 						value = country_currency_val
+						subtract = foreign_avg
 						divide = foreign_avg
+						multiply = 100
 					}
+					min = 0.1
 				}
-			}
-		}
-		if = {
-			limit = {
-				foreign_reserves_value <= {
-					value = 500000
-					multiply = {
-						value = country_currency_val
-						divide = foreign_avg
-					}
-				}
-			}
-			set_variable = {
-				name = foreign_reserves
-				value = 0
 			}
 		}
 		# Increases Local Currency Value
@@ -166,12 +154,23 @@ submit_interest_rate = {
 		}
 		set_variable = {
 			name = changed_interest_rates
-			days = 365
+			months = 6
 		}
 		remove_modifier = interest_rates
-		add_modifier = {
-			name = interest_rates
-			multiplier = interest_rate
+		if = {
+			limit = {
+				interest_rate >= 1
+			}
+			add_modifier = {
+				name = interest_rates
+				multiplier = interest_rate
+			}
+		}
+		else = {
+			add_modifier = {
+				name = interest_rates
+				multiplier = 1
+			}
 		}
 	}
 }
@@ -184,15 +183,6 @@ set_contractionary_monetary_policy = {
 		remove_variable = expansionary_monetary_policy
 		set_variable = contractionary_monetary_policy
 	}
-	ai_chance = {
-		base = 0
-		modifier = {
-			trigger = {
-				money_supply_percentage >= 30
-			}
-			add = 50
-		}
-	}
 }
 
 set_stable_monetary_policy = {
@@ -201,16 +191,6 @@ set_stable_monetary_policy = {
 		remove_variable = expansionary_monetary_policy
 		set_variable = stable_monetary_policy
 	}
-	ai_chance = {
-		base = 0
-		modifier = {
-			trigger = {
-				money_supply_percentage >= 5
-				money_supply_percentage <= 10
-			}
-			add = 20
-		}
-	}
 }
 
 set_expansionary_monetary_policy = {
@@ -218,15 +198,6 @@ set_expansionary_monetary_policy = {
 		remove_variable = stable_monetary_policy
 		remove_variable = contractionary_monetary_policy
 		set_variable = expansionary_monetary_policy
-	}
-	ai_chance = {
-		base = 0
-		modifier = {
-			trigger = {
-				money_supply_percentage <= -30
-			}
-			add = 50
-		}
 	}
 }
 
@@ -355,9 +326,18 @@ can_set_interest_rates_variable = {
 can_sell_currency = {
 	is_shown = {
 		THIS = {
-			not = {
+			nor = {
 				foreign_reserves_value <= 0
 				gold_reserve_value >= gold_reserve_limit
+				foreign_reserves_value <= {
+					value = 500000
+					multiply = {
+						value = country_currency_val
+						subtract = foreign_avg
+						divide = foreign_avg
+						multiply = 100
+					}
+				}
 			}
 		}
 	}
