@@ -133,44 +133,81 @@ ai_fiscal.3 = { # Buy Foreign Currency
 	}
 	duration = 3
 	immediate = {
-		random_in_global_list = {
-			variable = central_bank_list
+		if = {
 			limit = {
-				nor = {
-					ROOT = THIS
-					has_variable = currency_bought
-					THIS.country_currency_val > root.country_currency_val
+				or = {
+					not = {
+						has_journal_entry = je_bretton_woods_agreement
+					}
+					this = c:USA
 				}
-				ROOT.country_payment_ability >= {
-					value = {
-						value = THIS.money_supply_5
-						max = ROOT.foreign_reserves_capacity_left
+			}
+			random_in_global_list = {
+				variable = central_bank_list
+				limit = {
+					nor = {
+						ROOT = THIS
+						has_variable = currency_bought
+						THIS.country_currency_val > root.country_currency_val
 					}
-					multiply = {
-						value = THIS.country_currency_val
-						divide = ROOT.country_currency_val
-					}
-				} 
+					ROOT.country_payment_ability >= {
+						value = {
+							value = THIS.money_supply_5
+							max = ROOT.foreign_reserves_capacity_left
+						}
+						multiply = {
+							value = THIS.country_currency_val
+							divide = ROOT.country_currency_val
+						}
+					} 
+				}
+				save_scope_as = currency_exchange_country
 			}
-			save_scope_as = currency_exchange_country
-		}
-		if = {
-			limit = {
-				is_set = scope:currency_exchange_country
-			}
-			set_variable = {
-				name = ai_currency_buy_country
-				value = scope:currency_exchange_country
-			}
-		}
-		if = {
-			limit = {
-				not = {
+			if = {
+				limit = {
 					is_set = scope:currency_exchange_country
 				}
+				set_variable = {
+					name = ai_currency_buy_country
+					value = scope:currency_exchange_country
+				}
 			}
-			remove_variable = ai_currency_buy_country
+			if = {
+				limit = {
+					not = {
+						is_set = scope:currency_exchange_country
+					}
+				}
+				remove_variable = ai_currency_buy_country
+			}
 		}
+		if = {
+			limit = {
+				has_journal_entry = je_bretton_woods_agreement
+				not = {
+					this = c:USA
+				}
+				c:USA = {
+					ROOT.country_payment_ability >= {
+						value = {
+							value = c:USA.money_supply_5
+							max = ROOT.foreign_reserves_capacity_left
+						}
+						multiply = {
+							value = c:USA.country_currency_val
+							divide = ROOT.country_currency_val
+						}
+					}
+				}
+			}
+			c:USA = {
+				set_variable = {
+					name = ai_currency_buy_country
+					value = c:USA
+				}
+			}
+		}
+		
 
 		
 	}
