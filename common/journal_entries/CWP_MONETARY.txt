@@ -1,5 +1,5 @@
 ﻿je_set_pegged_currency = {
-	icon = "gfx/interface/icons/lens_toolbar_icons/nuclear_weapons.dds"
+	icon = "gfx/interface/icons/cwp_icons/central_bank.dds"
 	should_be_pinned_by_default = yes
 	possible = {
 		this = {
@@ -75,13 +75,16 @@
 }
 
 je_maintain_pegged_currency = {
-	icon = "gfx/interface/icons/lens_toolbar_icons/nuclear_weapons.dds"
+	icon = "gfx/interface/icons/cwp_icons/central_bank.dds"
 	should_be_pinned_by_default = yes
 	possible = {
 		this = {
 			has_law = law_type:law_pegged_currency
 			has_variable = pegged_currency
 			has_variable = peg_target_set
+			not = {
+				has_journal_entry = je_bretton_woods_agreement
+			}
 		}
 	}
 	immediate = {
@@ -146,5 +149,77 @@ je_maintain_pegged_currency = {
 		}		
 	}
 	progressbar = yes
+	weight = 100
+}
+
+je_bretton_woods_agreement = {
+	icon = "gfx/interface/icons/cwp_icons/central_bank.dds"
+	should_be_pinned_by_default = yes
+	possible = {
+		this = {
+			has_law = law_type:law_pegged_currency
+			has_variable = pegged_currency
+			has_variable = peg_target_set
+			has_global_variable = bretton_woods_agreement
+		}
+	}
+	immediate = {
+
+	}
+
+	on_weekly_pulse = {
+		effect = {
+			clear_global_variable_list = bretton_woods_members
+			every_country = {
+				limit = {
+					has_journal_entry = je_bretton_woods_agreement
+					not = {
+						is_target_in_global_variable_list = {
+							name = bretton_woods_members
+							target = THIS
+						}
+					}
+				}
+				add_to_global_variable_list = {
+					name = bretton_woods_members
+					target = THIS
+				}
+			}
+		}
+		
+	}
+	status_desc = {
+		desc = bretton_woods_agreement_status_desc
+	}
+	fail = {
+		c:USA = {
+			or = {
+				custom_tooltip = {
+					text = US_HAS_NO_GOLD_STANDARD
+					has_law = law_type:law_independent_monetary_policy
+					has_law = law_type:law_government_controlled
+					has_law = law_type:law_government_interference
+				}	
+				custom_tooltip = {
+					text = US_MONEY_SUPPLY_ABOVE_20
+					c:USA.money_supply_percentage >= 20
+				}
+				
+			}
+			
+		}
+	}
+	on_complete = {
+
+	}
+	on_fail = {
+		custom_tooltip = {
+			text = WILL_WITHDRAW_BRETTON_WOODS
+			remove_variable = maintain_pegged_currency_je_val
+			remove_variable = pegged_currency
+			remove_variable = peg_target_set
+			activate_law = law_type:law_independent_monetary_policy
+		}		
+	}
 	weight = 100
 }
