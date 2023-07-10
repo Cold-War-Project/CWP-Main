@@ -1,11 +1,36 @@
 ﻿ai_ideal_interest_rate = {
-	value = 2
+	value = interest_rate
 	add = ai_interest_rate_from_growth
 	add = ai_interest_from_inflation
 	max = 100
-	min = 0
+	min = -1.5
 }
-ai_interest_from_inflation = {
+ai_interest_from_inflation = {  # Reduce existing inflation/deflation
+	value = 0
+	if = {
+		limit = {
+			inflation_value < 0
+		}
+		add = -1
+	}
+	if = {
+		limit = {
+			inflation_value < -5
+		}
+		add = -1
+	}
+	if = {
+		limit = {
+			inflation_value >= 5
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			inflation_value >= 10
+		}
+		add = 1
+	}
 	if = {
 		limit = {
 			inflation_value >= 15
@@ -24,33 +49,62 @@ ai_interest_from_inflation = {
 		}
 		add = 2
 	}
+	if = {
+		limit = {
+			inflation_value >= 30
+		}
+		add = 2
+	}
+	if = {
+		limit = {
+			inflation_value >= 35
+		}
+		add = 2
+	}
+	if = {
+		limit = {
+			inflation_value >= 40
+		}
+		add = 2
+	}
 }
 
-ai_interest_rate_from_growth = {
-	value = {
-		value = inflation_growth
-		add = interest_rate_effect
+ai_interest_rate_from_growth = {  # Base interest rate change to stabilize growth
+	value = inflation_growth
+	multiply = 10
+	if = {
+		limit = {
+			has_law = law_type:law_government_controlled
+		}
+		divide = 0.1
 	}
-	divide = {
-		value = 0.1
-		if = {
-			limit = {
-				has_law = law_type:law_government_controlled
-			}
-			divide = 5
+	if = {
+		limit = {
+			has_law = law_type:law_government_interference
 		}
-		if = {
-			limit = {
-				has_law = law_type:law_government_interference
-			}
-			divide = 2.5
+		divide = 0.6
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_independent_monetary_policy
 		}
-		if = {
-			limit = {
-				has_law = law_type:law_independent_monetary_policy
+		divide = 1.5
+	}
+	### This represents the 'zero lower bound', where interest rates rapidly lose effectiveness below zero percent
+	if = {
+		limit = {
+			interest_rate < 0
+		}
+		divide = {
+			value = 1
+			add = {
+				value = interest_rate
+				multiply = 0.2
 			}
-			multiply = 5
+			min = 0.7
 		}
 	}
+	min = -2
+	max = 2
 	floor = yes
 }
