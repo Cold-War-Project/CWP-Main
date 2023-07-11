@@ -91,47 +91,77 @@ bank_credibility_val = {
 			format = "BNK_TOOLTIP_FORMAT"
 		}
 	}
-	# From Gold Reserves
+	# From having the largest economy
 	if = {
 		limit = {
-			gold_reserve_ratio >= 0.6
-		}
-		subtract = {
-			value = gold_reserve_ratio
-			multiply = 3
-			desc = BNK_GOLD_RESERVES
-			format = "BNK_TOOLTIP_FORMAT"
-		}
-	}
-	# From debt
-	if = {
-		limit = {
-			scaled_debt >= 0.6
-		}
-		subtract = {
-			value = scaled_debt
-			multiply = 5
-			desc = BNK_DEBT
-			format = "BNK_TOOLTIP_FORMAT"
-		}
-	}
-	# From Income
-	if = {
-		limit = {
-			income >= 1
+			has_global_highest_gdp = yes
 		}
 		add = {
-			value = income_to_investor
-			desc = BNK_INCOME
+			value = bank_credibility_10
+			multiply = 3
+			desc = BNK_LARGE_ECONOMY
 			format = "BNK_TOOLTIP_FORMAT"
 		}
 	}
+	# From Unhealthy Economy
+	if = {
+		limit = {
+			has_healthy_economy = no
+		}
+		subtract = {
+			value = bank_credibility_10
+			multiply = 3
+			desc = BNK_UNHEALTHY_ECONOMY
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	else = {
+		add = {
+			value = bank_credibility_10
+			multiply = 2
+			desc = BNK_HEALTHY_ECONOMY
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	# From previous bank credibility
+	if = {
+		limit = {
+			has_variable = previous_bank_credibility
+		}
+		add = {
+			value = var:previous_bank_credibility
+			subtract = 1
+			divide = 2
+			floor = yes
+			desc = BNK_PREVIOUS_BANK_CREDIBILITY
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	
 	# From keeping stable inflation
 	if = {
 		limit = { 
-			inflation_growth <= 3
-			inflation_growth >= -3
+			inflation_growth < -0.2
 		}
+		add = {
+			value = inflation_growth
+			multiply = 2
+			desc = BNK_INFLATION_GROWTH
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	else_if = {
+		limit = { 
+			inflation_growth > 0.2
+		}
+		subtract = {
+			value = inflation_growth
+			multiply = 2
+			desc = BNK_INFLATION_GROWTH
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	else = {
 		add = {
 			value = bank_credibility_10
 			multiply = 2
@@ -139,26 +169,15 @@ bank_credibility_val = {
 			format = "BNK_TOOLTIP_FORMAT"
 		}
 	}
+	# From keeping low inflation
 	if = {
 		limit = { 
-			inflation_growth >= 3
-			inflation_growth <= -3
-		}
-		subtract = {
-			value = bank_credibility_10
-			multiply = 2
-			desc = BNK_INFLATION_GROWTH
-			format = "BNK_TOOLTIP_FORMAT"
-		}
-	}
-	if = {
-		limit = { 
-			inflation_value <= 10 
+			inflation_value <= 5 
 			inflation_value >= 0 
 		}
 		add = {
 			value = bank_credibility_10
-			multiply = 5
+			multiply = 1
 			desc = BNK_INFLATION_LEVEL
 			format = "BNK_TOOLTIP_FORMAT"
 		}
@@ -166,12 +185,12 @@ bank_credibility_val = {
 	# From Inflation
 	if = {
 		limit = { 
-			inflation_value > 10
+			inflation_value > 5
 		}
 		subtract = {
 			value = inflation_value
 			divide = 5
-			round = yes
+			floor = yes
 			desc = BNK_INFLATION_LEVEL
 			format = "BNK_TOOLTIP_FORMAT"
 		}
@@ -179,9 +198,9 @@ bank_credibility_val = {
 	# From Deflation
 	if = {
 		limit = { inflation_value < 0 }
-		subtract = {
-			value = bank_credibility_10
-			multiply = 5
+		add = {
+			value = inflation_value
+			multiply = 10
 			desc = BNK_DEFLATION_LEVEL
 			format = "BNK_TOOLTIP_FORMAT"
 		}
@@ -191,7 +210,7 @@ bank_credibility_val = {
 		limit = { has_law = law_type:law_government_controlled }
 		subtract = {
 			value = bank_credibility_10
-			multiply = 3
+			multiply = 2
 			desc = BNK_GOVERNMENT_CONTROLLED
 			format = "BNK_TOOLTIP_FORMAT"
 		}
@@ -200,7 +219,7 @@ bank_credibility_val = {
 		limit = { has_law = law_type:law_government_interference }
 		subtract = {
 			value = bank_credibility_10
-			multiply = 2
+			multiply = 1
 			desc = BNK_GOVERNMENT_INTERFERENCE
 			format = "BNK_TOOLTIP_FORMAT"
 		}
@@ -209,7 +228,7 @@ bank_credibility_val = {
 		limit = { has_law = law_type:law_independent_monetary_policy}
 		add = {
 			value = bank_credibility_10
-			multiply = 3
+			multiply = 1
 			desc = BNK_INDEPENDENT_MONETARY_POLICY
 			format = "BNK_TOOLTIP_FORMAT"
 		}
