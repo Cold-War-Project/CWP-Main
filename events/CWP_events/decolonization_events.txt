@@ -15,7 +15,7 @@ decolonization.1 = {
 	duration = 3
 	immediate = {
 	}
-	option = {
+	option = { # Long live the empire 
 		name = decolonization.1.a
 		default_option = yes
 		add_modifier = {
@@ -40,8 +40,9 @@ decolonization.2 = {
 	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
 	duration = 3
 	immediate = {
+		effect_decolonize_all = yes
 	}
-	option = {
+	option = { # Let them go
 		name = decolonization.2.a
 		default_option = yes
 		add_modifier = {
@@ -67,7 +68,7 @@ decolonization.2 = {
 			base = 0
 		}
 	}
-	option = {
+	option = { # Create a customs union with our former subjects
 		name = decolonization.2.b
 		every_subject_or_below = {
 			limit = {
@@ -90,7 +91,7 @@ decolonization.2 = {
 	}
 }
 
-# Amicable separation, get customs union
+# Clean Break
 decolonization.3 = {
 	type = country_event
 	title = decolonization.3.t
@@ -105,6 +106,7 @@ decolonization.3 = {
 	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
 	duration = 3
 	immediate = {
+		effect_decolonize_all = yes
 		every_subject_or_below = {
 			limit = {
 				is_direct_subject_of = ROOT
@@ -115,15 +117,228 @@ decolonization.3 = {
 			make_independent = yes
 		}
 	}
-	option = {
+	option = { # And so the sun sets on the empire
 		name = decolonization.3.a
 		default_option = yes
 		add_modifier = {
 			name = sun_setting_on_empire
-			months = very_long_modifier_time
+			months = long_modifier_time
 		}
 		ai_chance = {
 			base = 100
+		}
+	}
+}
+
+# Subject Revolt Event
+decolonization.100 = {
+	type = country_event
+	title = decolonization.100.t
+	desc = decolonization.100.desc
+	flavor = decolonization.100.f
+	trigger = {
+	}
+	event_image = {
+		video = "europenorthamerica_london_center"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+	duration = 3
+	trigger = {
+		OR = {
+			is_subject_type = subject_type_puppet
+			is_subject_type = subject_type_protectorate
+			is_subject_type = subject_type_dominion
+		}
+	}
+	option = { # Join the war
+		name = decolonization.100.a
+		default_option = yes
+		hidden_effect = {
+			set_variable = {
+				name = revolting_subject
+				months = 6
+			}
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				trigger = {
+					is_subject_type = subject_type_dominion
+				}
+				add = -100
+			}
+			modifier = {
+				trigger = {
+					is_subject_type = subject_type_protectorate
+				}
+				add = -50
+			}
+		}
+	}
+	option = { # Refuse to join the war
+		name = decolonization.100.b
+		default_option = no
+		ai_chance = {
+			base = 0
+			modifier = {
+				trigger = {
+					is_subject_type = subject_type_dominion
+				}
+				add = 100
+			}
+			modifier = {
+				trigger = {
+					is_subject_type = subject_type_protectorate
+				}
+				add = 50
+			}
+		}
+	}
+}
+
+# We have lost control of our colonies
+decolonization.101 = {
+	type = country_event
+	title = decolonization.101.t
+	desc = decolonization.101.desc
+	flavor = decolonization.101.f
+	trigger = {
+	}
+	event_image = {
+		video = "europenorthamerica_london_center"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+	duration = 3
+	immediate = {
+		effect_decolonize_all = yes
+		every_subject_or_below = {
+			limit = {
+				is_direct_subject_of = ROOT
+				NOT = {
+					is_subject_type = subject_type_military_occupation
+				}
+			}
+			trigger_event = {
+				id = decolonization.100
+				days = 0
+			}
+		}
+	}
+	option = { # This may end poorly
+		name = decolonization.101.a
+		default_option = yes
+		ai_chance = {
+			base = 100
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = decolonization.102
+				days = 90
+			}
+		}
+	}
+}
+
+# Ultimatum 
+decolonization.102 = {
+	type = country_event
+	title = decolonization.102.t
+	desc = decolonization.102.desc
+	flavor = decolonization.102.f
+	trigger = {
+	}
+	event_image = {
+		video = "europenorthamerica_london_center"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+	duration = 3
+	immediate = {
+
+	}
+	option = { # Back Down
+		name = decolonization.102.a
+		default_option = yes
+		ai_chance = {
+			base = 100
+		}
+		hidden_effect = {
+			every_subject_or_below = {
+				limit = {
+					is_direct_subject_of = ROOT
+					NOT = {
+						is_subject_type = subject_type_military_occupation
+					}
+				}
+				make_independent = yes
+			}
+		}
+	}
+	option = { # War
+		name = decolonization.102.b
+		default_option = no
+		ai_chance = {
+			base = 0
+		}
+		trigger = {
+			any_subject_or_below = {
+				is_direct_subject_of = ROOT
+					has_variable = revolting_subject
+					NOT = {
+						is_subject_type = subject_type_military_occupation
+					}
+			}
+		}
+		hidden_effect = {
+			ordered_subject_or_below = {
+				order_by = army_size
+				max = 1
+				limit = {
+					is_direct_subject_of = ROOT
+					has_variable = revolting_subject
+					NOT = {
+						is_subject_type = subject_type_military_occupation
+					}
+				}
+				save_scope_as = revolting_subject_leader
+			}
+			ordered_subject_or_below = {
+				order_by = army_size
+				max = 10000
+				limit = {
+					is_direct_subject_of = ROOT
+					has_variable = revolting_subject
+					NOT = {
+						is_subject_type = subject_type_military_occupation
+					}
+				}
+				activate_law = law_type:law_irregular_military
+				capital = {
+					create_building = {
+						type = building_barracks
+						level = 10
+					}
+				}
+				make_independent = yes
+				add_to_list = revolting_subjects
+			}
+			create_diplomatic_play = {
+				name = great_independence_war
+				type = dp_annex_war
+				escalation = 80
+				target_country = revolting_subject_leader
+				every_in_list = {
+					prev = {
+						add_war_goal = {
+							holder = root
+							target_country = prev
+							type = annex_country
+						}
+					}
+				}
+			}
 		}
 	}
 }
