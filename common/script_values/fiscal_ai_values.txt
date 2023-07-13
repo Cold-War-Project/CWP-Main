@@ -1,0 +1,137 @@
+﻿ai_ideal_interest_rate = {
+	value = interest_rate
+	add = ai_interest_rate_from_growth
+	max = 100
+	min = -1.5
+}
+ai_interest_from_inflation = {  # Reduce existing inflation/deflation
+	value = 0
+	if = {
+		limit = {
+			inflation_value < -5
+		}
+		add = -1
+	}
+	if = {
+		limit = {
+			inflation_value < 0
+		}
+		add = -0.5
+	}
+	if = {
+		limit = {
+			inflation_value < 2
+		}
+		add = -0.1
+	}
+	if = {
+		limit = {
+			inflation_value > 3
+		}
+		add = 0.1
+	}
+	if = {
+		limit = {
+			inflation_value >= 5
+		}
+		add = 0.5
+	}
+	if = {
+		limit = {
+			inflation_value >= 10
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			inflation_value >= 15
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			inflation_value >= 20
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			inflation_value >= 25
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			inflation_value >= 30
+		}
+		add = 2
+	}
+	if = {
+		limit = {
+			inflation_value >= 35
+		}
+		add = 2
+	}
+	if = {
+		limit = {
+			inflation_value >= 40
+		}
+		add = 2
+	}
+}
+
+ai_interest_rate_from_growth = {  # Base interest rate change to stabilize growth
+	value = ai_interest_from_inflation # Prioritize reducing existing inflation/deflation
+	if = {
+		limit = {
+			OR = {
+				AND = {
+					ai_interest_from_inflation <= 0
+					inflation_growth < 0
+				}
+				AND = {
+					ai_interest_from_inflation >= 0
+					inflation_growth > 0
+				}
+			}
+		}
+		add = { 
+			value = inflation_growth
+			multiply = 10
+		}
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_government_controlled
+		}
+		divide = 0.1
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_government_interference
+		}
+		divide = 0.6
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_independent_monetary_policy
+		}
+		divide = 1.5
+	}
+	### This represents the 'zero lower bound', where interest rates rapidly lose effectiveness below zero percent
+	if = {
+		limit = {
+			interest_rate < 0
+		}
+		divide = {
+			value = 1
+			add = {
+				value = interest_rate
+				multiply = 0.2
+			}
+			min = 0.7
+		}
+	}
+	min = -10
+	max = 10
+}
