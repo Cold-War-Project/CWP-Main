@@ -1,0 +1,265 @@
+﻿je_set_pegged_currency = {
+	icon = "gfx/interface/icons/cwp_icons/central_bank.dds"
+	should_be_pinned_by_default = yes
+	possible = {
+		this = {
+			has_law = law_type:law_pegged_currency
+			not = {
+				has_variable = peg_target_set
+			}
+		}
+	}
+	invalid = {
+		has_variable = peg_target_set
+	}
+	immediate = {
+		set_variable = {
+			name = pegged_currency_je_val
+			value = 0
+		}
+	}
+	current_value = {
+		value = var:pegged_currency_je_val
+	}
+	goal_add_value = {
+		add = 50
+	}
+	on_weekly_pulse = {
+		effect = {
+			change_variable = {
+				name = pegged_currency_je_val
+				add = 1
+			}
+		}
+	}
+	status_desc = {
+		desc = set_pegged_currency_status_desc
+	}
+	complete = {
+		scope:journal_entry = {
+			is_goal_complete = yes
+		}
+		custom_tooltip = {
+			text = FOREIGNRESERVESBIGOREQUALTOPEG
+			foreign_reserves_value >= foreign_reserves_needed_for_peg
+		}
+		
+	}
+	fail = {
+		scope:journal_entry = {
+			is_goal_complete = yes
+		}
+		custom_tooltip = {
+			text = FAIL_FOREIGNRESERVESBIGOREQUALTOPEG
+			foreign_reserves_value <= foreign_reserves_needed_for_peg
+		}
+	}
+	on_complete = {
+		add_journal_entry = {
+			type = je_maintain_pegged_currency
+		}
+		set_variable = peg_target_set
+		remove_variable = pegged_currency_je_val
+	}
+	on_fail = {
+		custom_tooltip = {
+			text = WILL_LOSE_PEGGED_CURRENCY
+			remove_variable = pegged_currency_je_val
+			remove_variable = pegged_currency
+			remove_variable = peg_target_set
+			activate_law = law_type:law_independent_monetary_policy
+		}	
+	}
+	progressbar = yes
+	weight = 100
+}
+
+je_maintain_pegged_currency = {
+	icon = "gfx/interface/icons/cwp_icons/central_bank.dds"
+	should_be_pinned_by_default = yes
+	possible = {
+		this = {
+			has_law = law_type:law_pegged_currency
+			has_variable = pegged_currency
+			has_variable = peg_target_set
+			not = {
+				has_journal_entry = je_bretton_woods_agreement
+			}
+		}
+	}
+	immediate = {
+		set_variable = {
+			name = maintain_pegged_currency_je_val
+			value = 0
+		}
+	}
+	current_value = {
+		value = var:maintain_pegged_currency_je_val
+	}
+	goal_add_value = {
+		add = 100
+	}
+	on_weekly_pulse = {
+		effect = {
+			if = {
+				limit = {
+					foreign_reserves_value <= foreign_reserves_needed_for_peg
+					var:maintain_pegged_currency_je_val <= 100
+				}
+				change_variable = {
+					name = maintain_pegged_currency_je_val
+					add = 1
+				}
+			}
+			if = {
+				limit = {
+					foreign_reserves_value >= foreign_reserves_needed_for_peg
+					var:maintain_pegged_currency_je_val > 0
+				}
+				change_variable = {
+					name = maintain_pegged_currency_je_val
+					subtract = 1
+				}
+			}
+			
+		}
+	}
+	status_desc = {
+		desc = pegged_currency_status_desc
+	}
+	fail = {
+		scope:journal_entry = {
+			is_goal_complete = yes
+		}
+		custom_tooltip = {
+			text = FAIL_FOREIGNRESERVESBIGOREQUALTOPEG
+			foreign_reserves_value <= foreign_reserves_needed_for_peg
+		}
+	}
+	on_complete = {
+
+	}
+	on_fail = {
+		custom_tooltip = {
+			text = WILL_LOSE_PEGGED_CURRENCY
+			remove_variable = maintain_pegged_currency_je_val
+			remove_variable = pegged_currency
+			remove_variable = peg_target_set
+			activate_law = law_type:law_independent_monetary_policy
+		}		
+	}
+	progressbar = yes
+	weight = 100
+}
+
+je_bretton_woods_agreement = {
+	icon = "gfx/interface/icons/cwp_icons/central_bank.dds"
+	should_be_pinned_by_default = yes
+	possible = {
+		this = {
+			has_law = law_type:law_pegged_currency
+			has_variable = pegged_currency
+			has_variable = peg_target_set
+			
+		}
+	}
+	invalid = {
+		nor = {
+			has_variable = pegged_currency
+			has_variable = peg_target_set
+		}
+	}
+	immediate = {
+		every_country = {
+			limit = {
+				has_journal_entry = je_bretton_woods_agreement
+				not = {
+					is_target_in_global_variable_list = {
+						name = bretton_woods_members
+						target = THIS
+					}
+				}
+			}
+			add_to_global_variable_list = {
+				name = bretton_woods_members
+				target = THIS
+			}
+		}
+	}
+
+	on_weekly_pulse = {
+		effect = {
+			clear_global_variable_list = bretton_woods_members
+			every_country = {
+				limit = {
+					has_journal_entry = je_bretton_woods_agreement
+					not = {
+						is_target_in_global_variable_list = {
+							name = bretton_woods_members
+							target = THIS
+						}
+					}
+				}
+				add_to_global_variable_list = {
+					name = bretton_woods_members
+					target = THIS
+				}
+			}
+			if = {
+				limit = {
+					not = {
+						has_law = law_type:law_pegged_currency
+					}
+				}
+				remove_variable = maintain_pegged_currency_je_val
+				remove_variable = pegged_currency
+				remove_variable = peg_target_set
+			}
+		}
+		
+	}
+	status_desc = {
+		desc = bretton_woods_agreement_status_desc
+	}
+	fail = {
+		or = {
+			custom_tooltip = {
+				text = BRETTON_WOODS_AGREEMENT_ENDED_BY_US
+				not = {
+					has_global_variable = bretton_woods_agreement
+				}
+			}
+			
+			c:USA = {
+				or = {
+					custom_tooltip = {
+						text = US_HAS_NO_GOLD_STANDARD
+						has_law = law_type:law_independent_monetary_policy
+						has_law = law_type:law_government_controlled
+						has_law = law_type:law_government_interference
+					}	
+					custom_tooltip = {
+						text = US_MONEY_SUPPLY_ABOVE_20
+						or = {
+							c:USA.money_supply_percentage >= 20
+							c:USA.money_supply_percentage <= -20
+						}
+					}
+					
+				}
+				
+			}
+		}
+	}
+	on_fail = {
+		custom_tooltip = {
+			text = WILL_WITHDRAW_BRETTON_WOODS
+			remove_variable = maintain_pegged_currency_je_val
+			remove_variable = pegged_currency
+			remove_variable = peg_target_set
+			remove_global_variable = bretton_woods_agreement
+			activate_law = law_type:law_independent_monetary_policy
+		}		
+	}
+	weight = 100
+}
