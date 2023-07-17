@@ -6,12 +6,25 @@
 	icon = "gfx/interface/icons/event_icons/event_industry.dds"
 	# optional trigger which determines if a journal entry can be shown, default = no
 	# is ignored when JE is added through `add_journal_entry` effect
-	#is_shown_when_inactive = {}
-	# one or more scripted buttons. See common/scripted_buttons/_scripted_buttons.info for more info
-	#scripted_button = scripted_button_key
+	is_shown_when_inactive = {
+		NOR = {
+			country_rank = rank_value:superpower
+			has_modifier = sun_never_sets
+			has_modifier = sun_setting_on_empire
+		}
+		any_country = {
+			is_subject_of = root
+			NOT = { 
+				has_variable = special_decolonization_scenario
+				is_subject_type = subject_type_military_occupation
+			}
+		}
+	}
 	# optional trigger - when both this and is_shown_when_inactive is true, the JE is Activated, default = yes
 	# is ignored when JE is added through `add_journal_entry` effect
-	#possible = {}
+	possible = {
+		country_rank < rank_value:minor_power
+	}
 	# effect which happens when a journal entry is activated by having its `is_shown_when_inactive` and `possible` triggers become true or when JE is added through `add_journal_entry` effect
 	immediate = {
 		if = {
@@ -66,9 +79,37 @@
 	
 	# completion trigger, use is_goal_complete = yes in here if you're testing a tracked goal metric; if left blank, cannot be completed
 	complete = {
+		country_rank = rank_value:superpower
 	}
 	# effect which is executed when 'complete' trigger becomes true
 	on_complete = {
+		custom_tooltip = {
+			text = je_decolonization_complete_tooltip
+			if = {
+				limit = {
+					var:imperial_unity = 100
+				}
+				trigger_event = {
+					id = decolonization.1				# Keep the Empire Together
+					days = 0
+				}
+			}
+			else_if = {
+				limit = {
+					var:imperial_unity > 50
+				}
+				trigger_event = {
+					id = decolonization.2				# Amicable Separation
+					days = 0
+				}
+			}
+			else = {
+				trigger_event = {
+					id = decolonization.3				# Clean Break
+					days = 0
+				}
+			}
+		}
 	}
 	# failure trigger, should spawn event explaining what happens when triggered, framed as a failure; if left blank, cannot fail
 	fail = {
@@ -104,35 +145,42 @@
 	status_desc = {
 		first_valid = {
 			triggered_desc = {
-				desc = je_decolonization_desc
+				desc = je_decolonization_desc_gbr_wwii
 				trigger = {
 					c:GBR ?= this
 					game_date < 1956.1.1
 				}
 			}
 			triggered_desc = {
-				desc = je_decolonization_desc
+				desc = je_decolonization_desc_fra_wwii
 				trigger = {
 					c:FRA ?= this
 					game_date < 1956.1.1
 				}
 			}
 			triggered_desc = {
-				desc = je_decolonization_desc
+				desc = je_decolonization_desc_por_wwii
 				trigger = {
 					c:POR ?= this
 					game_date < 1956.1.1
 				}
 			}
 			triggered_desc = {
-				desc = je_decolonization_desc
+				desc = je_decolonization_desc_bel_wwii
 				trigger = {
 					c:BEL ?= this
 					game_date < 1956.1.1
 				}
 			}
 			triggered_desc = {
-				desc = je_decolonization_desc
+				desc = je_decolonization_desc_net_wwii
+				trigger = {
+					c:NET ?= this
+					game_date < 1956.1.1
+				}
+			}
+			triggered_desc = {
+				desc = je_decolonization_desc_generic
 			}
 		}
 	}
@@ -140,28 +188,31 @@
 	timeout = 7300
 	# effect which is executed when journal entry is timed out
 	on_timeout = {
-		if = {
-			limit = {
-				var:imperial_unity = 100
+		custom_tooltip = {
+			text = je_decolonization_timeout
+			if = {
+				limit = {
+					var:imperial_unity = 100
+				}
+				trigger_event = {
+					id = decolonization.1				# Keep the Empire Together
+					days = 0
+				}
 			}
-			trigger_event = {
-				id = decolonization.1				# Keep the Empire Together
-				days = 0
+			else_if = {
+				limit = {
+					var:imperial_unity > 50
+				}
+				trigger_event = {
+					id = decolonization.2				# Amicable Separation
+					days = 0
+				}
 			}
-		}
-		else_if = {
-			limit = {
-				var:imperial_unity > 50
-			}
-			trigger_event = {
-				id = decolonization.2				# Amicable Separation
-				days = 0
-			}
-		}
-		else = {
-			trigger_event = {
-				id = decolonization.3				# Clean Break
-				days = 0
+			else = {
+				trigger_event = {
+					id = decolonization.3				# Clean Break
+					days = 0
+				}
 			}
 		}
 	}
