@@ -30,6 +30,7 @@ united_kingdom_post_war_rationing = {
 		set_variable = uk_industrial_goods_visible
 		set_variable = uk_luxury_goods_visible
 		set_variable = uk_all_goods_visible
+		set_variable = { name = uk_rationing_number_of_goods value = 0 }
 		gbr_set_uk_post_war_rationing_core_variables = yes
 		trigger_event = { 
 			id = united_kingdom_post_war_events.100
@@ -41,7 +42,7 @@ united_kingdom_post_war_rationing = {
 		}
 		trigger_event = { 
 			id = united_kingdom_post_war_events.901
-			days = 1
+			days = 7
 		}
 	}
 	
@@ -63,6 +64,8 @@ united_kingdom_post_war_rationing = {
 	}
 	
 	# Scripted Buttons to track goods
+	scripted_button = uk_devalue_currency_button
+	# scripted_button = uk_inflation_rate_button
 	scripted_button = uk_visible_staple_goods_button
 	scripted_button = uk_hidden_staple_goods_button
 	scripted_button = uk_visible_industrial_goods_button
@@ -673,10 +676,50 @@ united_kingdom_post_war_rationing = {
 				change_variable = { name = uk_post_war_rationing_wood_progress add = var:uk_post_war_rationing_wood_progress_next }
 				clamp_variable = { name = uk_post_war_rationing_wood_progress max = 360 min = 0 }
 			}
-			trigger_event = { # Determine which goods need to start/continue being rationed while rationing hasn't finished
-				id = united_kingdom_post_war_events.901
-				days = 1
+			# Determine which goods need to start/continue being rationed while rationing hasn't finished
+			trigger_event = united_kingdom_post_war_events.902
+			gbr_number_of_goods_rationed = yes
+			
+			gbr_rationing_inflation_change = yes
+			gbr_rationing_inflation_effect = yes
+			
+			if = {
+				limit = {
+					var:uk_rationing_inflation_rate >= 70
+					var:uk_rationing_inflation_rate < 80
+				}
+				random_list = {
+					99 = {  }
+					1 = { trigger_event = united_kingdom_post_war_events.101 }
+				}
 			}
+			else_if = {
+				limit = {
+					var:uk_rationing_inflation_rate >= 80
+					var:uk_rationing_inflation_rate < 90
+				}
+				random_list = {
+					95 = {  }
+					5 = { trigger_event = united_kingdom_post_war_events.101 }
+				}
+			}
+			else_if = {
+				limit = {
+					var:uk_rationing_inflation_rate >= 90
+					var:uk_rationing_inflation_rate < 100
+				}
+				random_list = {
+					90 = {  }
+					10 = { trigger_event = united_kingdom_post_war_events.101 }
+				}
+			}
+			else_if = {
+				limit = {
+					var:uk_rationing_inflation_rate >= 100
+				}
+				trigger_event = united_kingdom_post_war_events.101
+			}
+			
 			gbr_rationing_over = yes
 		}
 	}
@@ -687,12 +730,12 @@ united_kingdom_post_war_rationing = {
 	
 	# a script value computing the goal completion metric
 	current_value = {
-		value = root.var:gbr_biggest_goods_risk_progress
+		value = var:uk_rationing_number_of_goods
 	}
 	
 	# when the journal entry is activated current_value and goal_add_value are evaluated and added together to determine the goal value
 	goal_add_value = {
-		value = 360
+		value = 35
 	}
 
 	# the highest weighted active journal entry appears in the goal tracker on the main screen
