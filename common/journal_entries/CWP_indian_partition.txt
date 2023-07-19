@@ -34,14 +34,8 @@
 
 	# completion trigger, use is_goal_complete = yes in here if you're testing a tracked goal metric; if left blank, cannot be completed
 	complete = {
-		global_var:indian_national_unity >= 100
 		custom_tooltip = {
-			# Following loc functions can be used:
-			# [JournalEntry.GetTotalGoalValue] - goal absolute value (fixed point)
-			# [JournalEntry.CalcCurrentGoalValue] - current progress absolute value (fixed point)
-			# [JournalEntry.GetGoalAddValue] - goal relative value (fixed point)
-			# [JournalEntry.GetGoalProgressValue] - current progress relative value (fixed point)
-			# [JournalEntry.GetGoalProgressPercent] = GetGoalProgressValue / GetGoalAddValue (fixed point)
+			global_var:indian_national_unity >= 100
 			text = indian_partition_complete_tooltip
 		}
 	}
@@ -51,6 +45,22 @@
 		trigger_event = {
 			id = indian_partition.1
 			days = 0
+		}
+		hidden_effect = {
+			if = {
+				limit = {
+					this ?= c:HND
+				}
+				set_global_variable = {
+					name = indian_resolution_score
+					value = {
+						value = 0
+						add = top_overlord.relations:root
+						max = 50
+						min = -50
+					}
+				}
+			}			
 		}
 	}
 
@@ -63,6 +73,19 @@
 
 	# effect which is executed when 'fail' trigger becomes true
 	on_fail = {
+		hidden_effect = {
+			set_global_variable = {
+				name = indian_national_unity
+				value = {
+					value = global_var:indian_national_unity
+					min = 75
+				}
+			}
+			set_global_variable = {
+				name = indian_resolution_score
+				value = -50
+			}
+		}
 		trigger_event = {
 			id = indian_partition.1
 			days = 0
@@ -84,7 +107,6 @@
 
 	# effect which is executed when 'invalid' trigger becomes true
 	on_invalid = {
-
 	}
 
 	# dynamically updated text, which describes the current status of the Journal Entry
@@ -93,7 +115,16 @@
 	status_desc = {
 		first_valid = {
 			triggered_desc = {
-				desc = indian_partition_progress_desc
+				desc = indian_partition_progress_desc_hnd
+				trigger = {
+					c:HND ?= this
+				}
+			}
+			triggered_desc = {
+				desc = indian_partition_progress_desc_gbr
+				trigger = {
+					c:GBR ?= this
+				}
 			}
 		}
 	}
@@ -103,6 +134,31 @@
 
 	# effect which is executed when journal entry is timed out
 	on_timeout = {
+		hidden_effect = {
+			if = {
+				limit = {
+					this ?= c:HND
+				}
+				set_global_variable = {
+					name = indian_resolution_score
+					value = {
+						value = 0
+						add = top_overlord.relations:root
+						max = 50
+						min = -50
+					}
+				}
+				change_global_variable = {
+					name = indian_national_unity
+					add = {
+						value = top_overlord.relations:root
+						multiply = -0.5
+						max = 25
+						min = 0
+					}
+				}
+			}	
+		}
 		trigger_event = {
 			id = indian_partition.1
 			days = 0
@@ -178,7 +234,7 @@
 	# value can be a localization key or first_valid + triggered_desc script
 	# To use in loc or UI: [JournalEntry.GetProgressDesc]
 	# If this is not specified, GetProgressDesc will instead return loc from key <journal_entry_key>_progress
-	#progress_desc = indian_partition_progress_desc
+	progress_desc = indian_partition_progress_desc
 
 	# tutorial lesson explaining HOW to complete the Journal Entry
 	#how_tutorial = how_tutorial_lesson_key
