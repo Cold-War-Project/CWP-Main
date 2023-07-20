@@ -9,6 +9,55 @@
 	}
 }
 
+imf_pay_debt = {
+	effect = {
+		every_in_global_list = { # Pays debt to creditor treasury
+			variable = imf_members
+			limit = {
+				imf_contribution_value >= 1
+				not = {
+					THIS = ROOT
+				}
+			}
+			add_treasury = {
+				value = { # Gets IMF Contribution Share
+					value = ROOT.imf_debt_value
+					multiply = THIS.imf_contribution_share
+				}
+				multiply = {# Converts to domestic currency
+					value = global_var:global_currency.country_currency_val
+					divide = THIS.country_currency_val
+				}
+			}
+		}
+		if = {
+			limit = { # Subtracts from IMF Contributions first
+				imf_contribution_value >= 1
+			}
+			change_variable = {
+				name = imf_contribution
+				subtract = imf_debt_value
+			}
+			if = {
+				limit = {
+					var:imf_contribution < 0
+				}
+				set_variable = {
+					name = imf_contribution
+					value = 0
+				}
+			}
+		}
+		add_treasury = { # Subtracts leftover from treasury
+			value = imf_domestic_currency_debt_after_removing_contribution
+		}
+		set_variable = { # Removes Debt
+			name = imf_debt
+			value = 0
+		}
+	}
+}
+
 imf_contribution_percent_increase = {
 	effect = {
 		if = { limit = { var:imf_contribution_percent >= 75 } set_variable = { name = imf_contribution_percent value = 75 }}
@@ -20,5 +69,19 @@ imf_contribution_percent_decrease = {
 	effect = {
 		if = { limit = { var:imf_contribution_percent > 0.5 } change_variable = { name = imf_contribution_percent subtract = 5}}
 		else_if = { limit = { var:imf_contribution_percent <= 0.5 } set_variable = { name = imf_contribution_percent value = 0}}
+	}
+}
+
+imf_monthly_debt_payment_percent_increase = {
+	effect = {
+		if = { limit = { var:imf_debt_monthly_percentage >= 75 } set_variable = { name = imf_debt_monthly_percentage value = 75 }}
+		if = { limit = { var:imf_debt_monthly_percentage < 75 } change_variable = { name = imf_debt_monthly_percentage add = 0.5 }}
+	}
+}
+
+imf_monthly_debt_payment_percent_decrease = {
+	effect = {
+		if = { limit = { var:imf_debt_monthly_percentage > 0.5 } change_variable = { name = imf_debt_monthly_percentage subtract = 0.5}}
+		else_if = { limit = { var:imf_debt_monthly_percentage <= 0.5 } set_variable = { name = imf_debt_monthly_percentage value = 0}}
 	}
 }
