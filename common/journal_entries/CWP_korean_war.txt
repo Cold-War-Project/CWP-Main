@@ -1,6 +1,4 @@
-﻿# stolen indian JE that would count down tensions to the actual conflict start, unfinished
-
-korean_war = {
+﻿korean_war = {
 	# root = the owner of the Journal Entry (country scope)
 	# scope:journal_entry = this Journal Entry (journalentry scope)
 	# scope:target = target value, with which this Journal Entry was added using `add_journal_entry` effect
@@ -13,7 +11,11 @@ korean_war = {
 	# optional trigger which determines if a journal entry can be shown, default = no
 	# is ignored when JE is added through `add_journal_entry` effect
 	is_shown_when_inactive = {
-		country_rank >= rank_value:great_power 
+		OR = {
+			this = c:NRK
+			this = c:STK
+			country_rank >= rank_value:great_power
+		}
 		has_variable = involved_in_korea
 	}
 
@@ -22,7 +24,12 @@ korean_war = {
 
 	# optional trigger - when both this and is_shown_when_inactive is true, the JE is Activated, default = yes
 	# is ignored when JE is added through `add_journal_entry` effect
-	#possible = {}
+	possible = {
+		OR = {
+			country_rank >= rank_value:great_power
+			has_variable = involved_in_korea
+		}
+	}
 
 	# effect which happens when a journal entry is activated by having its `is_shown_when_inactive` and `possible` triggers become true or when JE is added through `add_journal_entry` effect
 	immediate = {
@@ -30,27 +37,39 @@ korean_war = {
 
 	# completion trigger, use is_goal_complete = yes in here if you're testing a tracked goal metric; if left blank, cannot be completed
 	complete = {
-		game_date >= 1949.10.1
 		global_var:korean_tensions <=5
 		custom_tooltip = {
-			# Following loc functions can be used:
-			# [JournalEntry.GetTotalGoalValue] - goal absolute value (fixed point)
-			# [JournalEntry.CalcCurrentGoalValue] - current progress absolute value (fixed point)
-			# [JournalEntry.GetGoalAddValue] - goal relative value (fixed point)
-			# [JournalEntry.GetGoalProgressValue] - current progress relative value (fixed point)
-			# [JournalEntry.GetGoalProgressPercent] = GetGoalProgressValue / GetGoalAddValue (fixed point)
 			text = korean_war_timeout_tooltip 
+			game_date >= 1950.1.1
 		}
 	}
 
 	# effect which is executed when 'complete' trigger becomes true
 	on_complete = {
+		any_scope_country = {
+			remove_variable = involved_in_korea
+			if = {
+				limit = {
+					has_variable = non_communist_leading
+				}
+				remove_variable = non_communist_leading
+			}
+			else_if = {
+				limit = {
+					has_variable = communist_leading
+				}
+				remove_variable = communist_leading
+			}
+		}
 	}
 
 	# failure trigger, should spawn event explaining what happens when triggered, framed as a failure; if left blank, cannot fail
 	fail = {
-		game_date >= 1949.10.1
 		global_var:korean_tensions >=5
+		custom_tooltip = {
+			text = korean_war_timeout_tooltip 
+			game_date >= 1950.1.1
+		}
 	}
 
 	# effect which is executed when 'fail' trigger becomes true
@@ -59,9 +78,38 @@ korean_war = {
 
 	# optional invalidation trigger, should not notify player when it triggers, just clean up and silently disappear due to journal entry no longer being valid; if left blank, cannot be invalidated
 	invalid = {
-		ROOT = {
+		OR = {
 			NOT = {
-				has_variable = involved_in_korea
+				exists = c:NRK
+			}
+			c:NRK = {
+				is_country_alive = no
+			}
+			NOT = {
+				exists = c:STK
+			}
+			c:STK = {
+				is_country_alive = no
+			}
+			custom_tooltip = {
+				text = involved_in_korea_text
+				ROOT = {
+					NOT = {
+						has_variable = involved_in_korea
+					}
+				}
+			}
+			custom_tooltip = {
+				text = north_korea_war_with_south
+				c:NRK ?= {
+					has_war_with ?= c:STK
+				}
+			}
+			custom_tooltip = {
+				text = south_korea_war_with_north
+				c:STK ?= {
+					has_war_with ?= c:NRK
+				}
 			}
 		}
 	}
@@ -111,10 +159,10 @@ korean_war = {
 	# on_action which is triggered every first day of the month
 	on_monthly_pulse = {
 		random_events = {
-			delay = {days = { 0 15 } }
+			delay = { days = { 30 60 } }
 			1000 = 0
 
-			20 = korea_war_random_events.1
+			20 = korea_war_random_events.10
 		}
 	}
 
