@@ -211,7 +211,103 @@ imf_interest_rate = {
 	min = 2
 }
 
+imf_interest_rate_domestic = {
+	add = inflation_value
+	divide = 2
+	min = 2.5
+	#max = 15
+}
+
 imf_test_val = {
 	value = ROOT.imf_debt_value
 	multiply = THIS.imf_contribution_share
+}
+
+imf_total_international_debt = {
+	if = {
+		limit = {
+			or = {
+				has_variable = anglo_american_loan_USA
+				has_variable = anglo_american_loan_CAN
+			}
+		}
+		add = anglo_american_loan_total_USD
+	}
+	add = imf_debt_value
+
+}
+
+imf_trust_in_central_bank = {
+	value = investor_confidence
+}
+
+# Loan Applications
+
+imf_application_loan_amount = {
+	value = var:imf_loan_application_amount
+	min = 0
+}
+imf_application_loan_amount_domestic = {
+	value = imf_application_loan_amount
+	multiply = currency_domestic_to_global_currency
+}
+
+imf_application_loan_increase_val = {
+	value = gdp
+	divide = 20
+	#multiply = imf_application_loan_amount
+}
+
+imf_application_loan_10_val = {
+	value = imf_application_loan_amount
+	multiply = 0.1
+}
+
+imf_application_upfront_principle = {
+	value = var:imf_loan_application_upfront_principal
+	max = imf_application_loan_10_val
+}
+
+imf_application_upfront_principle_change_val = {
+	value = imf_application_loan_increase_val
+	divide = 10	
+}
+imf_application_payment_due_years = {
+	value = var:imf_loan_application_payment_due_years
+	min = 1
+}
+imf_application_loan_annual_interest_growth = {
+	value = imf_application_loan_amount
+	subtract = imf_application_upfront_principle
+	multiply = {
+		value = imf_interest_rate_domestic
+		divide = 100
+	}
+}
+imf_application_loan_monthly_interest_growth = {
+	value = imf_application_loan_annual_interest_growth
+	divide = 12
+}
+imf_application_loan_annual_payment = {
+	value = imf_application_loan_amount
+	add = imf_application_loan_annual_interest_growth
+	subtract = imf_application_upfront_principle
+	divide = imf_application_payment_due_years
+}
+
+imf_application_loan_monthly_payment = {
+	value = imf_application_loan_annual_payment
+	divide = 12
+}
+
+imf_application_loan_total_payment_with_interest = {
+	value = {
+		value = imf_application_loan_amount
+		subtract = imf_application_upfront_principle
+	}
+	add = {
+		value = imf_application_loan_annual_interest_growth
+		multiply = imf_application_payment_due_years
+	}
+	subtract = imf_application_loan_annual_payment
 }
