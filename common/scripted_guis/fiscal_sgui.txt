@@ -20,7 +20,13 @@ buy_foreign_currency = {
 			}
 			change_variable = {
 				name = foreign_reserves
-				add = scope:currency_exchange_country.money_supply_5
+				add = {
+					value = {
+						value = scope:currency_exchange_country.gold_reserves_limit
+						add = scope:currency_exchange_country.credit
+					}
+					multiply = 0.05
+				}
 			}
 		}
 		if = {
@@ -56,7 +62,11 @@ buy_foreign_currency = {
 				change_variable = {
 					name = money_supply
 					subtract = {
-						value = scope:currency_exchange_country.money_supply_5
+						value = {
+							value = scope:currency_exchange_country.gold_reserves_limit
+							add = scope:currency_exchange_country.credit
+						}
+						multiply = 0.05
 					}
 				}
 			}
@@ -259,6 +269,35 @@ revalue_currency = {
 		}
 	}
 }
+redenominate_currency = {
+	effect = {
+		if = {
+			limit = {
+				country_currency_denomination > 10
+			}
+			effect_redenominate = {
+				denominationEffect = change_global_variable
+				mathAction = multiply
+				mathValue = 0.10
+			}
+		}
+		else_if = {
+			limit = {
+				country_currency_denomination <= 10
+			}
+			effect_redenominate = {
+				denominationEffect = set_global_variable
+				mathAction = value
+				mathValue = 1
+			}
+		}
+		set_variable = {
+			name = altered_currency
+			months = 12
+		}
+	}
+}
+
 # Peg Currency
 peg_currency = {
 	effect = {
@@ -277,6 +316,22 @@ can_alter_currency = {
 				has_variable = altered_currency
 				has_law = law_type:law_gold_standard
 				has_law = law_type:law_independent_monetary_policy
+			}
+			is_target_in_global_variable_list = {
+				name = central_bank_list
+				target = THIS
+			}
+		}
+	}
+}
+can_redenominate_currency = {
+	is_shown = {
+		THIS = {
+			country_currency_denomination > 1
+			nor = {
+				has_variable = pegged_currency
+				has_variable = altered_currency
+				#has_law = law_type:law_independent_monetary_policy
 			}
 			is_target_in_global_variable_list = {
 				name = central_bank_list
@@ -402,60 +457,103 @@ can_buy_currency_visible = {
 can_buy_currency = {
 	is_shown = {
 		THIS = {
-			trigger_if = {
-				limit = {
-					or = {
-						not = {
-							has_journal_entry = je_bretton_woods_agreement
-						}
-						THIS = c:USA
-					}
-				}
-				not = {
-					foreign_reserves_value >= foreign_reserves_max
-					scaled_debt >= 1
-				}
-				country_payment_ability >= {
-					value = {
-						value = scope:currency_exchange_country.money_supply_5
-						max = ROOT.foreign_reserves_capacity_left
-					}
-					multiply = {
-						value = scope:currency_exchange_country.country_currency_val
-						divide = ROOT.country_currency_val
-					}
-				}
+			nor = {
+				foreign_reserves_value >= foreign_reserves_max
+				scaled_debt >= 1
 			}
-			trigger_if = {
-				limit = {
-					has_journal_entry = je_bretton_woods_agreement	
-					not = {
-						this = c:USA
-					}			
+			or = {
+				and = {
+					has_variable = pegged_currency
+					var:pegged_currency = scope:currency_exchange_country 
 				}
-				scope:currency_exchange_country = c:USA
 				not = {
-					foreign_reserves_value >= foreign_reserves_max
-					scaled_debt >= 1
-				}
-				country_payment_ability >= {
+					has_variable = pegged_currency
+				}						
+			}
+			country_payment_ability >= {
+				value = {
 					value = {
-						value = scope:currency_exchange_country.money_supply_5
-						max = ROOT.foreign_reserves_capacity_left
+						value = scope:currency_exchange_country.gold_reserves_limit
+						add = scope:currency_exchange_country.credit
 					}
-					multiply = {
-						value = scope:currency_exchange_country.country_currency_val
-						divide = ROOT.country_currency_val
-					}
+					multiply = 0.05
+					max = ROOT.foreign_reserves_capacity_left
+				}
+				multiply = {
+					value = scope:currency_exchange_country.country_currency_val
+					divide = ROOT.country_currency_val
 				}
 			}
 		}
 		scope:currency_exchange_country = {
 			not = {
 				has_law = law_type:law_isolationism
+				and = {
+					has_variable = pegged_currency
+					not = {
+						scope:currency_exchange_country.var:pegged_currency = ROOT
+					}
+				}
 				has_variable = currency_bought
 			}
 		}
+	}
+}
+can_buy_currency_target_pegged_currency = {
+	is_shown = {
+		scope:currency_exchange_country = {
+			has_variable = pegged_currency
+			not = {
+				scope:currency_exchange_country.var:pegged_currency = ROOT
+			}
+		}
+	}
+}
+can_buy_currency_target_bought_currency = {
+	is_shown = {
+		scope:currency_exchange_country = {
+			has_variable = currency_bought
+		}
+	}
+}
+can_buy_currency_target_isolationist = {
+	is_shown = {
+		scope:currency_exchange_country = {
+			has_law = law_type:law_isolationism
+		}
+	}
+}
+can_buy_currency_player_pegged_currency = {
+	is_shown = {
+		has_variable = pegged_currency
+		not = {
+			scope:currency_exchange_country = var:pegged_currency
+		}
+	}
+}
+can_buy_currency_afford = {
+	is_shown = {
+		not = {
+			country_payment_ability >= {
+				value = {
+					value = {
+						value = scope:currency_exchange_country.gold_reserves_limit
+						add = scope:currency_exchange_country.credit
+					}
+					multiply = 0.05
+					max = ROOT.foreign_reserves_capacity_left
+				}
+				multiply = {
+					value = scope:currency_exchange_country.country_currency_val
+					divide = ROOT.country_currency_val
+				}
+			}
+		}
+	}
+}
+can_buy_currency_over_reserve_max = {
+	is_shown = {
+		foreign_reserves_value >= foreign_reserves_max
 	}
 }
 # Can peg currency check
