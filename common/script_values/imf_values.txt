@@ -84,6 +84,7 @@ imf_debt_monthly_payment_value = {
 	}
 }
 
+
 imf_debt_weekly_payment_value = {
 	value = imf_debt_monthly_payment_value
 	divide = 4
@@ -236,16 +237,78 @@ imf_total_international_debt = {
 	add = imf_debt_value
 
 }
-
+bank_cred_to_imf_trust = {
+	value = bank_credibility_current
+	divide = 24
+}
 imf_trust_in_central_bank = {
-	value = investor_confidence
+	if = {
+		limit = {
+			bank_credibility_current > 4
+		}
+		value = {
+			value = bank_cred_to_imf_trust
+			
+		}
+	}
+	if = {
+		limit = { bank_credibility_current <= 4 }
+		value = {
+			value = bank_cred_to_imf_trust
+			multiply = -1
+			
+		}
+	}
+	if = {
+		limit = { bank_credibility_current = 3 }
+		value = {
+			value = bank_cred_to_imf_trust
+			multiply = -2.7
+			
+		}
+	}
+	if = {
+		limit = { bank_credibility_current = 2 }
+		value = {
+			value = bank_cred_to_imf_trust
+			multiply = -8
+			
+		}
+	}
+	if = {
+		limit = { bank_credibility_current = 1 }
+		value = {
+			value = bank_cred_to_imf_trust
+			multiply = -24
+			
+		}
+	}
 }
 
 # Loan Applications
 
+imf_application_loan_max_value = {
+	value = gdp
+	multiply = 2
+}
+imf_application_loan_type_value = {
+	if = {
+		limit = {
+			bank_credibility_current <= 17
+		}
+		value = 1
+	}
+	if = {
+		limit = {
+			bank_credibility_current >= 18
+		}
+		value = 2
+	}
+}
 imf_application_loan_amount = {
 	value = var:imf_loan_application_amount
 	min = 0
+	max = imf_application_loan_max_value
 }
 imf_application_loan_amount_domestic = {
 	value = imf_application_loan_amount
@@ -268,6 +331,11 @@ imf_application_upfront_principle = {
 	max = imf_application_loan_10_val
 }
 
+imf_application_upfront_principle_domestic = {
+	value = imf_application_upfront_principle
+	multiply = currency_domestic_to_global_currency
+}
+
 imf_application_upfront_principle_change_val = {
 	value = imf_application_loan_increase_val
 	divide = 10	
@@ -275,10 +343,10 @@ imf_application_upfront_principle_change_val = {
 imf_application_payment_due_years = {
 	value = var:imf_loan_application_payment_due_years
 	min = 1
+	max = 40
 }
 imf_application_loan_annual_interest_growth = {
 	value = imf_application_loan_amount
-	subtract = imf_application_upfront_principle
 	multiply = {
 		value = imf_interest_rate_domestic
 		divide = 100
@@ -291,7 +359,13 @@ imf_application_loan_monthly_interest_growth = {
 imf_application_loan_annual_payment = {
 	value = imf_application_loan_amount
 	add = imf_application_loan_annual_interest_growth
-	subtract = imf_application_upfront_principle
+	add = 1000
+	divide = imf_application_payment_due_years
+}
+
+imf_application_loan_annual_payment_domestic = {
+	value = imf_application_loan_amount_domestic
+	add = imf_application_loan_annual_interest_growth
 	divide = imf_application_payment_due_years
 }
 
@@ -300,14 +374,81 @@ imf_application_loan_monthly_payment = {
 	divide = 12
 }
 
+imf_application_loan_monthly_payment_domestic = {
+	value = imf_application_loan_annual_payment_domestic
+	add = imf_application_loan_annual_interest_growth
+	divide = imf_application_payment_due_years
+}
+
 imf_application_loan_total_payment_with_interest = {
-	value = {
-		value = imf_application_loan_amount
-		subtract = imf_application_upfront_principle
-	}
+	value = imf_application_loan_amount
 	add = {
 		value = imf_application_loan_annual_interest_growth
 		multiply = imf_application_payment_due_years
 	}
-	subtract = imf_application_loan_annual_payment
+	#subtract = imf_application_loan_annual_payment
+}
+
+imf_application_loan_gdp_x2 = {
+	value = gdp
+	multiply = 2
+}
+imf_application_loan_to_gdp = {
+	if = { limit = { imf_application_loan_amount > 1 }
+		add = imf_application_loan_amount
+	}
+	divide = imf_application_loan_gdp_x2
+}
+
+imf_application_loan_weekly_payment_ability = {
+	value = weekly_net_fixed_income
+	if = {
+		limit = {
+			imf_application_loan_amount > 1
+		}
+		divide = {
+			value = imf_application_loan_monthly_payment_domestic
+			divide = 4
+		}
+	}
+}
+
+imf_application_loan_to_gdp_per_year = {
+	value = imf_application_payment_due_years
+	divide = {
+		value = imf_application_loan_to_gdp
+	}
+}
+
+imf_application_loan_approval_chance = {
+	value = 50
+	add = {
+		value = 100
+		subtract = {
+			value = 100
+			subtract = imf_trust_in_central_bank
+		}
+		multiply = 10
+	}
+	subtract = {
+		value = imf_application_loan_to_gdp
+		multiply = 100
+	}
+	add = {
+		value = imf_application_loan_weekly_payment_ability
+		multiply = 10
+	}
+	if = {
+		limit = {
+			imf_application_loan_amount >= imf_reserves
+		}
+		value = -100
+	}
+	max = 100
+	min = -100
+}
+
+imf_application_loan_approval_chance_div = {
+	value = imf_application_loan_approval_chance
+	divide = 100
 }
