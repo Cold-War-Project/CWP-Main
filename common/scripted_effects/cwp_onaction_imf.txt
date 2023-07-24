@@ -87,6 +87,38 @@ onaction_debt_payment_calculation = {
     }
 }
 
+onaction_credit_payment_calculation = {
+    remove_modifier = imf_credit_payment
+    if = {
+        limit = {
+            imf_credit_monthly_payment_percentage >= 0.05
+            var:imf_credit >= 1
+        }
+        add_modifier = {
+            name = imf_credit_payment
+            multiplier = imf_debt_weekly_payment_value_domestic
+        }
+        change_variable = {
+            name = imf_credit
+            subtract = imf_debt_monthly_payment_value
+        }
+    }
+    if = {
+        limit = {
+            var:imf_credit < 0
+        }
+        set_variable = {
+            name = imf_credit
+            value = 0
+        }
+		remove_modifier = imf_credit_payment
+    }
+    remove_modifier = imf_credit_returns
+    add_modifier = {
+        name = imf_credit_returns
+        multiplier = imf_credit_returns_mult
+    }
+}
 order_imf_gdp_list = {
 	clear_global_variable_list = imf_gdp_sorted
 	ordered_in_global_list = {
@@ -146,6 +178,13 @@ set_imf_debt = {
     }
 }
 
+set_imf_credit = {
+    set_variable = {
+        name = imf_credit
+        value = $value$
+    }
+}
+
 set_imf_contribution = {
     set_variable = {
         name = imf_contribution
@@ -172,9 +211,27 @@ set_imf_vars = {
 			value = 0
 		}
 	}
+	if = { limit = { not = { has_variable = imf_interest_rate_domestic } }
+		set_variable = {
+			name = imf_interest_rate_domestic
+			value = 0
+		}
+	}
+	if = { limit = { not = { has_variable = imf_credit } }
+	set_variable = {
+		name = imf_credit
+		value = 0.0
+	}
+}
 	if = { limit = { not = { has_variable = imf_debt_monthly_percentage } }
 		set_variable = {
 			name = imf_debt_monthly_percentage
+			value = 0.5
+		}
+	}
+	if = { limit = { not = { has_variable = imf_credit_monthly_percentage } }
+		set_variable = {
+			name = imf_credit_monthly_percentage
 			value = 0.5
 		}
 	}
@@ -227,13 +284,19 @@ reset_loan_application_values = {
 imf_loan_application_consideration = {
 	random_list = {
 		1 = {
-			trigger_event = imf_events.1 # IMF Application Accepted
+			trigger_event = {
+				id = imf_events.1 # IMF Application Accepted
+				#months = 1
+			}
 			modifier = {
 				add = imf_application_loan_approval_chance
 			}
 		}
 		1 = {
-			trigger_event = imf_events.2 # IMF Application Denied
+			trigger_event = {
+				id = imf_events.2 # IMF Application Denied
+				#months = 1
+			}
 			modifier = {
 				add = imf_application_loan_disapproval_chance
 			}
