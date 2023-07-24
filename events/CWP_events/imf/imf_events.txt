@@ -22,22 +22,6 @@ imf_events.1 = { # Loan Application Accepted
 	# TODO - AI SCRIPTING
 	option = {
 		name = imf_events.1.a
-		if = {
-			limit = {
-				var:imf_loan_application_type = 1
-			}
-			add_journal_entry = {
-				type = je_imf_concessionary_loan
-			}
-		}
-		if = {
-			limit = {
-				var:imf_loan_application_type = 2
-			}
-			add_journal_entry = {
-				type = je_imf_nonconcessionary_loan
-			}
-		}
 		change_variable = {
 			name = imf_debt
 			add = imf_application_loan_amount
@@ -57,12 +41,39 @@ imf_events.1 = { # Loan Application Accepted
 			name = imf_debt_years
 			value = imf_application_payment_due_years
 		}
+		set_variable = {
+			name = imf_loan_application_type
+			value = imf_application_loan_type_value
+		}
+		if = {
+			limit = {
+				var:imf_loan_application_type = 1
+			}
+			add_journal_entry = {
+				type = je_imf_concessionary_loan
+			}
+		}
+		if = {
+			limit = {
+				var:imf_loan_application_type = 2
+			}
+			add_journal_entry = {
+				type = je_imf_nonconcessionary_loan
+			}
+		}
 		if = {
 			limit = {
 				var:imf_loan_application_upfront_principal > 1
 			}
-			add_treasury = imf_application_upfront_principle_domestic
+			add_treasury = {
+				value = imf_application_upfront_principle
+				multiply = {
+					value = global_var:global_currency.country_currency_val
+					divide = country_currency_val
+				}
+			}
 		}
+		reset_loan_application_values = yes
 	}
 	option = {
 		name = imf_events.1.b
@@ -98,4 +109,107 @@ imf_events.2 = { # Loan Application Denied
 		name = imf_events.2.b
 	}
 
+}
+
+imf_events.3 = { # Loan Overdue
+	type = country_event	
+	placement = ROOT
+	title = imf_events.3.t
+	desc = imf_events.3.d
+	flavor = imf_events.3.f
+
+	duration = 3
+	icon = "gfx/interface/icons/cwp_icons/imf.dds"
+
+	event_image = {
+		video = "gfx/event_pictures/europenorthamerica_springtime_of_nations.bk2"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/europenorthamerica/springtime_of_nation"
+
+	immediate = {
+
+	}
+	# TODO - AI SCRIPTING
+	option = {
+		name = imf_events.3.a
+		custom_tooltip = {
+			text = IMF_LOAN_EXTENSION_CONSIDERATION
+			random_list = {
+				60 = {
+					trigger_event = {
+						id = imf_events.4
+					}
+				}
+				40 = {
+					trigger_event = {
+						id = imf_events.5
+					}
+				}
+			}
+		}
+
+	}
+	option = {
+		name = imf_events.3.b
+		add_journal_entry = {
+			type = je_imf_austerity_measures
+		}
+	}
+}
+
+imf_events.4 = { # Loan Extension Accepted
+	type = country_event	
+	placement = ROOT
+	title = imf_events.4.t
+	desc = imf_events.4.d
+	flavor = imf_events.4.f
+
+	duration = 3
+	icon = "gfx/interface/icons/cwp_icons/imf.dds"
+
+	event_image = {
+		video = "gfx/event_pictures/europenorthamerica_springtime_of_nations.bk2"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/europenorthamerica/springtime_of_nation"
+
+	immediate = {
+		change_variable = {
+			name = imf_debt_years
+			add = 10
+		}
+
+	}
+	# TODO - AI SCRIPTING
+	option = {
+		name = imf_events.4.a
+	}
+}
+
+imf_events.5 = { # Loan Extension Denied
+	type = country_event	
+	placement = ROOT
+	title = imf_events.5.t
+	desc = imf_events.5.d
+	flavor = imf_events.5.f
+
+	duration = 3
+	icon = "gfx/interface/icons/cwp_icons/imf.dds"
+
+	event_image = {
+		video = "gfx/event_pictures/europenorthamerica_springtime_of_nations.bk2"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/europenorthamerica/springtime_of_nation"
+
+	immediate = {
+		add_journal_entry = {
+			type = je_imf_austerity_measures
+		}
+	}
+	# TODO - AI SCRIPTING
+	option = {
+		name = imf_events.5.a
+	}
 }
