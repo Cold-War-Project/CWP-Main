@@ -9,6 +9,7 @@
         onaction_imf_contribution_calculation = yes
         onaction_imf_debt_interest_growth = yes
         onaction_debt_payment_calculation = yes
+		onaction_credit_payment_calculation = yes
         order_imf_gdp_list = yes
         order_imf_contributors_list = yes
         order_imf_debtor_list = yes
@@ -88,7 +89,6 @@ onaction_debt_payment_calculation = {
 }
 
 onaction_credit_payment_calculation = {
-    remove_modifier = imf_credit_payment
     if = {
         limit = {
             imf_credit_monthly_payment_percentage >= 0.05
@@ -171,25 +171,53 @@ order_imf_debtor_list = {
 set_imf_member = {
     add_to_global_variable_list = { name = imf_members target = THIS }
 }
-set_imf_debt = {
+set_imf_starting_values = {
     set_variable = {
         name = imf_debt
-        value = $value$
+        value = $debtValue$
     }
-}
-
-set_imf_credit = {
-    set_variable = {
+	set_variable = {
         name = imf_credit
-        value = $value$
+        value = $creditValue$
     }
-}
-
-set_imf_contribution = {
-    set_variable = {
+	set_variable = {
         name = imf_contribution
-        value = $value$
+        value = $contributionValue$
     }
+	set_variable = {
+		name = imf_debt_years
+		value = $debtYearsValue$
+	}
+	set_variable = {
+		name = imf_interest_rate_domestic
+		value = $interestRateValue$
+	}
+	set_variable = {
+		name = imf_loan_application_payment_due_years_current
+		value = $debtYearsValue$
+	}
+	set_variable = {
+		name = imf_loan_application_type
+		value = $loanType$
+	}
+	if = {
+		limit = {
+			$debtValue$ > 1
+			$loanType$ = 1
+		}
+		add_journal_entry = {
+			type = je_imf_concessionary_loan
+		}
+	}
+	if = {
+		limit = {
+			$debtValue$ > 1
+			$loanType$ = 2
+		}
+		add_journal_entry = {
+			type = je_imf_nonconcessionary_loan
+		}
+	}
 }
 
 set_imf_vars = {
