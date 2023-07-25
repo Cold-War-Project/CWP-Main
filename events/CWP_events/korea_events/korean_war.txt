@@ -83,7 +83,7 @@ korea_war_events.10 = {
 	duration = 3
 
 	title = korea_war_events.10.t
-	desc = korea_war_events.10.d
+	desc = korea_war_events.10.desc
 	flavor = korea_war_events.10.f
 
 	event_image = {
@@ -100,13 +100,15 @@ korea_war_events.10 = {
 			this = c:NRK
 			this = c:STK
 		}
-		NOT = {
+		NOR = {
 			has_global_variable = event_on_korean_border
+			has_global_variable = ongoing_skirmish_event
 		}
 	}
 	
 	immediate = {
 		set_global_variable = event_on_korean_border
+		set_global_variable = ongoing_skirmish_event
 		random_scope_state = {
 			limit = {
 				owner = c:STK
@@ -131,24 +133,30 @@ korea_war_events.10 = {
 			}
 			save_scope_as = korean_border_state
 		}
-		random_country = {
-			limit = {
-				has_variable = non_communist_leading
-			}
-			save_scope_as = non_communist_leader
-		}
-		random_country = {
-			limit = {
-				has_variable = communist_leading
-			}
-			save_scope_as = communist_leader
-		}
 	}
 
+	# leader of the conflict wants to be informed about all events
 	option = {
 		name = korea_war_events.10.a
 		default_option = yes
 
+
+		trigger = {
+			OR = {
+				AND = {
+					this = c:STK
+					scope:non_communist_leader = {
+						has_variable = ask_for_consent
+					}
+				}
+				AND = {
+					this = c:NRK
+					scope:communist_leader = {
+						has_variable = ask_for_consent
+					}
+				}
+			}
+		}
 		hidden_effect = {
 			remove_global_variable = event_on_korean_border
 		}
@@ -172,12 +180,155 @@ korea_war_events.10 = {
 				}
 			}
 		}
+
+		#TODO: AI
+		ai_chance = {
+			base = 50
+		}
 	}
+	# leader of the conflict automatically declines all propositions
 	option = {
 		name = korea_war_events.10.b
+
+		hidden_effect = {
+			remove_global_variable = event_on_korean_border
+		}
+
+		trigger = {
+			OR = {
+				AND = {
+					this = c:STK
+					scope:non_communist_leader = {
+						has_variable = auto_decline
+					}
+				}
+				AND = {
+					this = c:NRK
+					scope:communist_leader = {
+						has_variable = auto_decline
+					}
+				}
+			}
+		}
+
+		#TODO: AI
+		ai_chance = {
+			base = 0
+		}
+	}
+	# leader of the conflict automatically accepts all propositions
+	option = {
+		name = korea_war_events.10.c
+
+		hidden_effect = {
+			remove_global_variable = event_on_korean_border
+		}
+
+		trigger = {
+			OR = {
+				AND = {
+					this = c:STK
+					scope:non_communist_leader = {
+						has_variable = auto_accept
+					}
+				}
+				AND = {
+					this = c:NRK
+					scope:communist_leader = {
+						has_variable = auto_accept
+					}
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				this = c:STK
+			}
+			c:NRK = {
+				trigger_event = {
+					id = korea_war_events.11
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				this = c:NRK
+			}
+			c:STK = {
+				trigger_event = {
+					id = korea_war_events.11
+				}
+			}
+		}
+
+		#TODO: AI
+		ai_chance = {
+			base = 0
+		}
+	}
+	option = {
+		name = korea_war_events.10.d
+	}
+}
+
+#Skirmish on the border, target
+korea_war_events.11 = {
+	type = country_event
+	placement = ROOT
+
+	duration = 1
+
+	title = korea_war_events.11.t
+	desc = korea_war_events.11.d
+	flavor = korea_war_events.11.f
+
+	event_image = {
+		video = "unspecific_ruler_speaking_to_people"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"s
+
+	icon = "gfx/interface/icons/event_icons/event_election.dds"
+
+	trigger = {
+		has_journal_entry = korean_war
+		OR = {
+			this = c:NRK
+			this = c:STK
+		}
+		NOT = {
+			has_global_variable = event_on_korean_border
+		}
+	}
+	
+	immediate = {
+	}
+
+	option = {
+		name = korea_war_events.11.a
+		default_option = yes
+
+		hidden_effect = {
+			remove_global_variable = event_on_korean_border
+		}
+		hidden_effect = {
+			remove_global_variable = ongoing_skirmish_event
+		}
+
+		#TODO: AI
+		ai_chance = {
+			base = 50
+		}
+	}
+	option = {
+		name = korea_war_events.11.b
 		
 		hidden_effect = {
 			remove_global_variable = event_on_korean_border
+		}
+		hidden_effect = {
+			remove_global_variable = ongoing_skirmish_event
 		}
 	}
 }
@@ -215,5 +366,35 @@ korea_war_events.100 = {
 	option = {
 		name = korea_war_events.100.a
 		default_option = yes
+
+		trigger = {
+			has_global_variable = ongoing_skirmish_event
+		}
+
+		if = {
+			limit = {
+				this = scope:non_communist_leader
+			}
+			c:NRK = {
+				trigger_event = {
+					id = korea_war_events.11
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				this = scope:communist_leader
+			}
+			c:STK = {
+				trigger_event = {
+					id = korea_war_events.11
+				}
+			}
+		}
+
+		#TODO: AI
+		ai_chance = {
+			base = 50
+		}
 	}
 }
