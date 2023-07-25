@@ -94,6 +94,34 @@ imf_credit_value = {
 imf_debt_monthly_payment_percentage = {
 	value = var:imf_debt_monthly_percentage
 	min = 0
+	if = {
+		limit = {
+			has_journal_entry = je_imf_austerity_measures
+			var:imf_debt >= 10000000
+		}
+		value = 5
+	}
+	if = {
+		limit = {
+			has_journal_entry = je_imf_austerity_measures
+			var:imf_debt < 10000000
+		}
+		value = 10
+	}
+	if = {
+		limit = {
+			has_journal_entry = je_imf_austerity_measures
+			var:imf_debt < 1000000
+		}
+		value = 20
+	}
+	if = {
+		limit = {
+			has_journal_entry = je_imf_austerity_measures
+			var:imf_debt < 100000
+		}
+		value = 100
+	}
 }
 
 imf_credit_monthly_payment_percentage = {
@@ -246,7 +274,6 @@ imf_member_gdp_share = {
 
 imf_interest_rate = {
 	value = var:imf_interest_rate_domestic
-	divide = 100
 	if = {
 		limit = {
 			exists = var:imf_debt_type
@@ -260,9 +287,9 @@ imf_interest_rate = {
 		}
 		add = {
 			value = var:imf_loan_overdue
-			divide = 100
 		}
 	}
+	divide = 100
 }
 
 imf_interest_rate_domestic = {
@@ -350,13 +377,28 @@ imf_application_loan_max_value = {
 	}
 	if = {
 		limit = {
-			imf_trust_in_central_bank < 7
+			is_at_war = yes
 		}
 		subtract = {
 			value = gdp
 			multiply = 2
 			multiply = 0.2
 			desc = IMF_APPLICATION_AT_WAR
+			format = "IMF_APPLICATION_GDP_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			imf_requirements_meeting < 0
+		}
+		add = {
+			value = gdp
+			multiply = 2
+			multiply = {
+				value = imf_requirements_meeting
+				divide = 100
+			}
+			desc = IMF_APPLICATION_REQUIREMENTS
 			format = "IMF_APPLICATION_GDP_TOOLTIP_FORMAT"
 		}
 	}
@@ -376,22 +418,7 @@ imf_application_loan_type_value = {
 	}
 	if = {
 		limit = {
-			or = {
-				has_law = law_type:law_government_controlled
-				has_law = law_type:law_government_interference
-				has_law = law_type:law_protectionism
-				has_law = law_type:law_isolationism
-				has_law = law_type:law_total_nationalization
-				has_law = law_type:law_heavy_industry_nationalization
-				has_law = law_type:law_military_industry_nationalization
-				has_law = law_type:law_resource_extraction_nationalization
-			}
-		}
-		value = 1
-	}
-	if = {
-		limit = {
-			average_sol < 10
+			imf_requirements_meeting < 0
 		}
 		value = 1
 	}
@@ -470,9 +497,17 @@ imf_loan_will_pay_off_in_years = {
 			multiply = 12
 		}
 	}
+}
 
+imf_loan_will_pay_off_in_years_floor = {
+	value = imf_loan_will_pay_off_in_years
+	floor = yes
+}
 
-	#multiply = 12
+imf_loan_will_pay_off_in_months = {
+	value = imf_loan_will_pay_off_in_years
+	subtract = imf_loan_will_pay_off_in_years_floor
+	multiply = 12
 }
 
 imf_application_loan_annual_interest_growth = {
@@ -623,4 +658,98 @@ imf_application_loan_disapproval_chance = {
 imf_application_loan_approval_chance_div = {
 	value = imf_application_loan_approval_chance
 	divide = 100
+}
+
+imf_requirements_meeting = {
+	if = {
+		limit = {
+			average_sol >= 10
+		}
+		add = {
+			value = average_sol
+			divide = 10
+			desc = IMF_CURRENT_ECONOMY_SOL
+			format = "IMF_CURRENT_ECONOMT_LAW_POLICIES_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			average_sol <= 10
+		}
+		subtract = {
+			value = average_sol
+			desc = IMF_CURRENT_ECONOMY_SOL
+			format = "IMF_CURRENT_ECONOMT_LAW_POLICIES_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_government_controlled
+		}
+		subtract = {
+			value = 30
+			desc = law_government_controlled
+			format = "IMF_CURRENT_ECONOMT_LAW_POLICIES_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_government_interference
+		}
+		subtract = {
+			value = 20
+			desc = law_government_interference
+			format = "IMF_CURRENT_ECONOMT_LAW_POLICIES_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_isolationism
+		}
+		subtract = {
+			value = 50
+			desc = law_isolationism
+			format = "IMF_CURRENT_ECONOMT_LAW_POLICIES_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_protectionism
+		}
+		subtract = {
+			value = 20
+			desc = law_protectionism
+			format = "IMF_CURRENT_ECONOMT_LAW_POLICIES_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_total_nationalization
+		}
+		subtract = {
+			value = 30
+			desc = law_total_nationalization
+			format = "IMF_CURRENT_ECONOMT_LAW_POLICIES_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_heavy_industry_nationalization
+		}
+		subtract = {
+			value = 20
+			desc = law_heavy_industry_nationalization
+			format = "IMF_CURRENT_ECONOMT_LAW_POLICIES_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_military_industry_nationalization
+		}
+		subtract = {
+			value = 10
+			desc = law_military_industry_nationalization
+			format = "IMF_CURRENT_ECONOMT_LAW_POLICIES_TOOLTIP_FORMAT"
+		}
+	}
 }
