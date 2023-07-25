@@ -1,0 +1,495 @@
+﻿### Foreign Reserves
+buy_foreign_currency = {
+	effect = {
+		# Removes From Treasury
+		add_treasury = {
+			value = {
+				value = scope:currency_exchange_country.money_supply_5
+				max = ROOT.foreign_reserves_capacity_left
+			}
+			multiply = {
+				value = scope:currency_exchange_country.country_currency_val
+				divide = ROOT.country_currency_val
+			}
+			multiply = -1
+		}
+		# Increases Reserve
+		if = {
+			limit = {
+				scope:currency_exchange_country.money_supply_5 <= foreign_reserves_capacity_left
+			}
+			change_variable = {
+				name = foreign_reserves
+				add = scope:currency_exchange_country.money_supply_5
+			}
+		}
+		if = {
+			limit = {
+				scope:currency_exchange_country.money_supply_5 >= foreign_reserves_capacity_left
+			}
+			set_variable = {
+				name = foreign_reserves
+				value = foreign_reserves_max
+			}
+		}
+		# Increases Bought Currency Value
+		scope:currency_exchange_country = {
+			if = {
+				limit = {
+					not = {
+						has_law = law_type:law_pegged_currency # Pegged Currencies dont increase in value
+					}
+				}
+				on_action_change_domestic_currency_value = {
+					mathAction = add
+					mathAction2 = currency_value_growth_by_exchange
+				}
+			}
+			if = {
+				limit = {
+					nor = {
+						has_law = law_type:law_gold_standard # Gold standard has fixed money supply unless altered
+						has_law = law_type:law_pegged_currency # Pegged Currency uses pegged money supply
+					}
+				}
+				# Reduces Money Supply
+				change_variable = {
+					name = money_supply
+					subtract = {
+						value = scope:currency_exchange_country.money_supply_5
+					}
+				}
+			}
+			# Prevents further currency buying for 1 month
+			set_variable = {
+				name = currency_bought
+				months = 1
+			}
+		}
+	}
+}
+sell_foreign_reserves = {
+	effect = {
+		# Reduces Reserves
+		if = {
+			limit = {
+				foreign_reserves_value >= 1
+			}
+			change_variable = {
+				name = foreign_reserves
+				subtract = {
+					value = 500000
+					multiply = {
+						value = country_currency_val
+						subtract = foreign_avg
+						divide = foreign_avg
+						multiply = 100
+					}
+					min = 0.1
+				}
+			}
+		}
+		# Increases Local Currency Value
+		if = {
+			limit = {
+				not = {
+					has_variable = pegged_currency # Pegged Currencies do not get their value increased
+				}
+			}
+			on_action_change_domestic_currency_value = {
+				mathAction = add
+				mathAction2 = currency_value_growth_by_exchange
+			}
+		}
+		add_treasury = 500000
+	}
+}
+### Interest Rate
+lower_interest_rate = {
+	effect = {
+		if = {
+			limit = {
+				var:interest_rate_gui > 0
+			}
+			change_variable = {
+				name = interest_rate_gui
+				subtract = 0.5
+			}
+		}
+		if = {
+			limit = {
+				var:interest_rate_gui > -1.5  # Zero lower bound, -1.5% is the lowest interest rate
+				var:interest_rate_gui <= 0
+			}
+			change_variable = {
+				name = interest_rate_gui
+				subtract = 0.1
+			}
+		}
+	}
+}
+
+raise_interest_rate = {
+	effect = {
+		if = {
+			limit = {
+				var:interest_rate_gui < 100
+				var:interest_rate_gui >= 0
+			}
+			change_variable = {
+				name = interest_rate_gui
+				add = 0.5
+			}
+		}
+		if = {
+			limit = {
+				var:interest_rate_gui > -100
+				var:interest_rate_gui < 0
+			}
+			change_variable = {
+				name = interest_rate_gui
+				add = 0.1
+			}
+		}
+	}
+}
+
+submit_interest_rate = {
+	effect = {
+		set_variable = {
+			name = interest_rate
+			value = var:interest_rate_gui
+		}
+		set_variable = {
+			name = changed_interest_rates
+			months = 6
+		}
+		remove_modifier = interest_rates
+		if = {
+			limit = {
+				interest_rate >= 1
+			}
+			add_modifier = {
+				name = interest_rates
+				multiplier = interest_rate
+			}
+		}
+		else = {
+			add_modifier = {
+				name = interest_rates
+				multiplier = 1
+			}
+		}
+	}
+}
+
+### Monetary Policy
+
+set_contractionary_monetary_policy = {
+	effect = {
+		remove_variable = stable_monetary_policy
+		remove_variable = expansionary_monetary_policy
+		set_variable = contractionary_monetary_policy
+	}
+}
+
+set_stable_monetary_policy = {
+	effect = {
+		remove_variable = contractionary_monetary_policy
+		remove_variable = expansionary_monetary_policy
+		set_variable = stable_monetary_policy
+	}
+}
+
+set_expansionary_monetary_policy = {
+	effect = {
+		remove_variable = stable_monetary_policy
+		remove_variable = contractionary_monetary_policy
+		set_variable = expansionary_monetary_policy
+	}
+}
+
+### Currency
+devalue_currency = {
+	effect = {
+		on_action_change_domestic_currency_value = {
+			mathAction = subtract
+			mathAction2 = alter_currency_value
+		}
+		if = {
+			limit = {
+				country_currency_val > 0
+			}
+			change_variable = {
+				name = money_supply
+				subtract = {
+					value = money_supply_from_gold_reserves
+					multiply = 10
+				}
+			}
+		}
+		set_variable = {
+			name = altered_currency
+			months = 12
+		}
+	}
+}
+
+revalue_currency = {
+	effect = {
+		on_action_change_domestic_currency_value = {
+			mathAction = add
+			mathAction2 = alter_currency_value
+		}
+		if = {
+			limit = {
+				country_currency_val > 0
+			}
+			change_variable = {
+				name = money_supply
+				add = {
+					value = money_supply_from_gold_reserves
+					multiply = 10
+				}
+			}
+		}
+		set_variable = {
+			name = altered_currency
+			months = 12
+		}
+	}
+}
+# Peg Currency
+peg_currency = {
+	effect = {
+		set_variable = {
+			name = pegged_currency
+			value = scope:currency_exchange_country
+		}
+	}
+}
+# Can Alter Currency
+can_alter_currency = {
+	is_shown = {
+		THIS = {
+			nor = {
+				has_variable = pegged_currency
+				has_variable = altered_currency
+				has_law = law_type:law_gold_standard
+				has_law = law_type:law_independent_monetary_policy
+			}
+			is_target_in_global_variable_list = {
+				name = central_bank_list
+				target = THIS
+			}
+		}
+	}
+}
+alter_currency_blocked_due_pegged = {
+	is_shown = {
+		THIS = {
+			has_variable = pegged_currency
+		}
+	}
+}
+alter_currency_blocked_due_head = {
+	is_shown = {
+		THIS = {
+			not = {
+				is_target_in_global_variable_list = {
+					name = central_bank_list
+					target = THIS
+				}
+			}
+		}
+	}
+}
+# Can set monetary policy
+can_set_contractionary = {
+	is_shown = {
+		THIS = {
+			nor = {
+				has_variable = pegged_currency
+				has_variable = contractionary_monetary_policy
+			}
+		}
+	}
+}
+
+can_set_stable= {
+	is_shown = {
+		THIS = {
+			nor = {
+				has_variable = pegged_currency
+				has_variable = stable_monetary_policy
+			}
+		}
+	}
+}
+
+can_set_expansionary = {
+	is_shown = {
+		THIS = {
+			nor = {
+				has_variable = pegged_currency
+				has_variable = expansionary_monetary_policy
+			}
+		}
+	}
+}
+
+# Can set interest rates
+can_set_interest_rates = {
+	is_shown = {
+		THIS = {
+			nor = {
+				has_law = law_type:law_gold_standard
+				has_law = law_type:law_pegged_currency
+				has_variable = changed_interest_rates
+			}
+		}
+	}
+}
+
+can_set_interest_rates_law = {
+	is_shown = {
+		THIS = {
+			or = {
+				has_law = law_type:law_pegged_currency
+				has_law = law_type:law_gold_standard
+			}
+		}
+	}
+}
+
+can_set_interest_rates_variable = {
+	is_shown = {
+		THIS = {
+			has_variable = changed_interest_rates
+		}
+	}
+}
+
+# Can sell currency check
+can_sell_currency = {
+	is_shown = {
+		THIS = {
+			nor = {
+				foreign_reserves_value <= 0
+				gold_reserve_value >= gold_reserve_limit
+				foreign_reserves_value <= {
+					value = 500000
+					multiply = {
+						value = country_currency_val
+						subtract = foreign_avg
+						divide = foreign_avg
+						multiply = 100
+					}
+				}
+			}
+		}
+	}
+}
+# Can buy currency check
+can_buy_currency_visible = {
+	is_shown = {
+		not = {
+			scope:currency_exchange_country = root
+		}
+		
+	}
+}
+can_buy_currency = {
+	is_shown = {
+		THIS = {
+			trigger_if = {
+				limit = {
+					or = {
+						not = {
+							has_journal_entry = je_bretton_woods_agreement
+						}
+						THIS = c:USA
+					}
+				}
+				not = {
+					foreign_reserves_value >= foreign_reserves_max
+					scaled_debt >= 1
+				}
+				country_payment_ability >= {
+					value = {
+						value = scope:currency_exchange_country.money_supply_5
+						max = ROOT.foreign_reserves_capacity_left
+					}
+					multiply = {
+						value = scope:currency_exchange_country.country_currency_val
+						divide = ROOT.country_currency_val
+					}
+				}
+			}
+			trigger_if = {
+				limit = {
+					has_journal_entry = je_bretton_woods_agreement	
+					not = {
+						this = c:USA
+					}			
+				}
+				scope:currency_exchange_country = c:USA
+				not = {
+					foreign_reserves_value >= foreign_reserves_max
+					scaled_debt >= 1
+				}
+				country_payment_ability >= {
+					value = {
+						value = scope:currency_exchange_country.money_supply_5
+						max = ROOT.foreign_reserves_capacity_left
+					}
+					multiply = {
+						value = scope:currency_exchange_country.country_currency_val
+						divide = ROOT.country_currency_val
+					}
+				}
+			}
+		}
+		scope:currency_exchange_country = {
+			not = {
+				has_law = law_type:law_isolationism
+				has_variable = currency_bought
+			}
+		}
+	}
+}
+# Can peg currency check
+can_peg_currency_shown = {
+	is_shown = {
+		THIS = {
+			has_law = law_type:law_pegged_currency
+			nor = {
+				scope:currency_exchange_country = ROOT
+				has_variable = peg_target_set
+			}
+		}
+	}
+}
+
+can_peg_currency_enabled = {
+	is_shown = {
+		THIS = {
+			trigger_if = {
+				limit = {
+					has_variable = pegged_currency
+				}
+				not = {
+					var:pegged_currency = scope:currency_exchange_country
+				}
+			}
+		}
+	}
+}
+#  Bretton Woods
+bretton_woods_is_usa_enabled = {
+	is_shown = {
+		THIS = {
+			this = c:USA
+		}
+	}
+}
