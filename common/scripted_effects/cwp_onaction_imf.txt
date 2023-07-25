@@ -173,6 +173,50 @@ set_imf_member = {
     add_to_global_variable_list = { name = imf_members target = THIS }
 	set_imf_vars = yes
 }
+remove_imf_member = {
+	remove_list_global_variable = {
+		name = imf_members
+		target = THIS
+	}
+	if = { limit = { has_variable = imf_contribution_percent }
+		remove_variable = imf_contribution_percent
+	}
+	if = { limit = { has_variable = imf_contribution }
+		remove_variable = imf_contribution
+	}
+	if = { limit = { has_variable = imf_debt }
+		remove_variable = imf_debt
+	}
+	if = { limit = { has_variable = imf_debt_type }
+		remove_variable = imf_debt_type
+	}
+	if = { limit = { has_variable = imf_interest_rate_domestic }
+		remove_variable = imf_interest_rate_domestic
+	}
+	if = { limit = { has_variable = imf_credit }
+		remove_variable = imf_credit
+	}
+	if = { limit = { has_variable = imf_debt_monthly_percentage }
+		remove_variable = imf_debt_monthly_percentage
+	}
+	if = { limit = { has_variable = imf_credit_monthly_percentage }
+		remove_variable = imf_credit_monthly_percentage
+	}
+	if = { limit = { has_variable = imf_loan_application_amount }
+		remove_variable = imf_loan_application_amount
+	}
+	if = { limit = { has_variable = imf_loan_application_payment_due_years }
+		remove_variable = imf_loan_application_payment_due_years
+	}
+	if = { limit = { has_variable = imf_loan_application_upfront_principal }
+		remove_variable = imf_loan_application_upfront_principal
+	}
+	if = { limit = { has_variable = imf_loan_application_type }
+		remove_variable = imf_loan_application_type
+	}
+	remove_variable = imf_debt_years
+	remove_variable = imf_loan_application_payment_due_years_current
+}
 set_imf_starting_values = {
     set_variable = {
         name = imf_debt
@@ -250,6 +294,12 @@ set_imf_vars = {
 			value = 0
 		}
 	}
+	if = { limit = { not = { has_variable = imf_debt_type } }
+		set_variable = {
+			name = imf_debt_type
+			value = 1
+		}
+	}
 	if = { limit = { not = { has_variable = imf_interest_rate_domestic } }
 		set_variable = {
 			name = imf_interest_rate_domestic
@@ -325,7 +375,7 @@ imf_loan_application_consideration = {
 		1 = {
 			trigger_event = {
 				id = imf_events.1 # IMF Application Accepted
-				#months = 1
+				days = 15
 			}
 			modifier = {
 				add = imf_application_loan_approval_chance
@@ -334,7 +384,7 @@ imf_loan_application_consideration = {
 		1 = {
 			trigger_event = {
 				id = imf_events.2 # IMF Application Denied
-				#months = 1
+				days = 15
 			}
 			modifier = {
 				add = imf_application_loan_disapproval_chance
@@ -343,10 +393,56 @@ imf_loan_application_consideration = {
 	}
 }
 
+imf_bailout_application_consideration = {
+	change_global_variable = {
+		name = imf_reserves
+		subtract = imf_application_loan_amount
+	}
+	every_in_global_list = {
+		variable = imf_members
+		limit = {
+			imf_contribution_share > 0
+		}
+		change_variable = {
+			name = imf_contribution
+			subtract = {
+				value = ROOT.imf_application_loan_amount
+				multiply = imf_contribution_share
+			}
+		}
+	}
+	set_variable = {
+		name = imf_debt_years
+		value = 30
+	}
+	set_variable = {
+		name = imf_debt_type
+		value = 1
+	}
+	set_variable = {
+		name = imf_interest_rate_domestic
+		value = 0
+	}
+	change_variable = {
+		name = imf_debt
+		add = country_debt_to_global
+	}
+	add_treasury = country_debt
+	add_journal_entry = {
+		type = je_imf_bailout_loan
+	}
+}
+
 imf_loan_conclusion = {
 	remove_variable = imf_debt_years
 	remove_variable = imf_loan_overdue
 	remove_modifier = imf_debt_payment
+	if = {
+		limit = {
+			has_modifier = imf_bailout
+		}
+		remove_modifier = imf_bailout
+	}
 	if = {
 		limit = {
 			has_modifier = imf_austerity_measures
