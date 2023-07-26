@@ -24,6 +24,7 @@ imf_events.1 = { # Loan Application Accepted
 		name = imf_events.1.a
 		default_option = yes
 		THIS = {
+			save_scope_as = originator
 			change_variable = {
 				name = imf_debt
 				add = imf_application_loan_amount
@@ -35,22 +36,26 @@ imf_events.1 = { # Loan Application Accepted
 					subtract = imf_application_upfront_principle
 				}
 			}
-			change_global_variable = {
-				name = imf_reserves
-				subtract = imf_application_loan_amount
-			}
 			every_in_global_list = {
 				variable = imf_members
 				limit = {
-					imf_contribution_share > 0
+					imf_contribution_value > 0
 				}
 				change_variable = {
 					name = imf_contribution
 					subtract = {
-						value = ROOT.imf_application_loan_amount
+						value = scope:originator.imf_application_loan_amount
 						multiply = imf_contribution_share
 					}
-					min = 0
+				}
+				if = {
+					limit = {
+						var:imf_contribution <= 0
+					}
+					set_variable = {
+						name = imf_contribution
+						value = 0
+					}
 				}
 			}
 			set_variable = {
@@ -90,7 +95,7 @@ imf_events.1 = { # Loan Application Accepted
 					}
 				}
 			}
-			save_scope_as = originator
+			
 		}
 		every_in_global_list = {
 			variable = imf_members
