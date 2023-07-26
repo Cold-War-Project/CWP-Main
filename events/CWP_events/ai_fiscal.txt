@@ -162,11 +162,8 @@ ai_fiscal.3 = { # Buy Foreign Currency
 	immediate = {
 		if = {
 			limit = {
-				or = {
-					not = {
-						has_journal_entry = je_bretton_woods_agreement
-					}
-					this = c:USA
+				not = {
+					has_variable = pegged_currency
 				}
 			}
 			random_in_global_list = {
@@ -175,11 +172,22 @@ ai_fiscal.3 = { # Buy Foreign Currency
 					nor = {
 						ROOT = THIS
 						has_variable = currency_bought
-						THIS.country_currency_val > root.country_currency_val
+					}
+					or = {
+						and = {
+							has_variable = pegged_currency
+							THIS = var:pegged_currency
+						}
+						not = {
+							has_variable = pegged_currency
+						}
 					}
 					ROOT.country_payment_ability >= {
 						value = {
-							value = THIS.money_supply_5
+							value = {
+								value = THIS.gold_reserves_limit
+								add = THIS.credit
+							}
 							max = ROOT.foreign_reserves_capacity_left
 						}
 						multiply = {
@@ -206,32 +214,6 @@ ai_fiscal.3 = { # Buy Foreign Currency
 					}
 				}
 				remove_variable = ai_currency_buy_country
-			}
-		}
-		if = {
-			limit = {
-				has_journal_entry = je_bretton_woods_agreement
-				not = {
-					this = c:USA
-				}
-				c:USA = {
-					ROOT.country_payment_ability >= {
-						value = {
-							value = c:USA.money_supply_5
-							max = ROOT.foreign_reserves_capacity_left
-						}
-						multiply = {
-							value = c:USA.country_currency_val
-							divide = ROOT.country_currency_val
-						}
-					}
-				}
-			}
-			c:USA = {
-				set_variable = {
-					name = ai_currency_buy_country
-					value = c:USA
-				}
 			}
 		}
 	}
