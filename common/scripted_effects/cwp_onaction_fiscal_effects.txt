@@ -1,0 +1,217 @@
+﻿onaction_fiscal_calculation = {
+
+    fiscal_error_check = yes
+
+    fiscal_money_supply_calculation = yes
+    fiscal_inflation_deflation_calculation = yes
+    fiscal_monetary_policy_calculation = yes
+
+	fiscal_ai_calculation = yes
+
+	fiscal_investor_confidence_calculation = yes
+}
+
+fiscal_money_supply_calculation = {
+    change_variable = {
+        name = money_supply
+        add = money_supply_growth
+    }
+    if = {
+        limit = {
+            not = {
+                has_variable = pegged_currency
+            }
+          
+        }
+        change_variable = {
+            name = inflation_rate
+            add = inflation_growth
+        }
+    }
+    else_if = {
+        limit = {
+            has_variable = pegged_currency
+        }
+        set_variable = {
+            name = inflation_rate
+            value = var:pegged_currency.inflation_value
+        }
+    }
+
+}
+
+fiscal_inflation_deflation_calculation = {
+    remove_modifier = deflation
+    remove_modifier = inflation
+
+	if = {
+		limit = {
+			inflation_value >= 5
+		}
+		add_modifier = {
+			name = inflation
+			multiplier = inflation_modifier_mult
+		}
+	}
+	else_if = {
+		limit = {
+			inflation_value < 0
+		}
+		add_modifier = {
+			name = deflation
+			multiplier = inflation_modifier_mult
+		}
+	}
+}
+
+fiscal_monetary_policy_calculation = {
+    remove_modifier = expansionary_monetary_policy
+    remove_modifier = contractionary_monetary_policy
+    if = {
+        limit = {
+            has_variable = contractionary_monetary_policy
+        }
+        add_modifier = {
+            name = contractionary_monetary_policy
+            multiplier = monetary_policy_mult
+        }
+    }
+    else_if = {
+        limit = {
+            has_variable = expansionary_monetary_policy
+        }
+        add_modifier = {
+            name = expansionary_monetary_policy
+            multiplier = monetary_policy_mult
+        }
+    }
+}
+
+fiscal_ai_calculation = {
+    if = {
+        limit = {
+            is_ai = yes
+            not = {
+                has_variable = adjusted_monetary_policy
+            }
+        }
+        trigger_event = ai_fiscal.1 # AI Monetary Policy
+    }
+    if = {
+        limit = {
+            is_ai = yes
+            not = {
+                var:interest_rate = ai_ideal_interest_rate
+                has_law = law_type:law_gold_standard
+            }
+        }
+        trigger_event = ai_fiscal.2 # AI Interest Rate
+    }
+    if = {
+        limit = {
+            is_ai = yes
+            foreign_reserves_ratio < 30
+            nor = {
+                foreign_reserves_value >= foreign_reserves_max
+                scaled_debt >= 1
+                has_variable = ai_bought_currency
+            }
+        }
+        trigger_event = ai_fiscal.3 # AI Buy Foreign Reserves
+    }
+    if = {
+        limit = {
+            is_ai = yes
+            or = {
+                and = {
+                    foreign_reserves_ratio > 10
+                    scaled_debt >= 0.7
+                }
+                and = {
+                    foreign_reserves_ratio > 70
+                    scaled_debt >= 0.5
+                }
+            }
+        }
+        trigger_event = ai_fiscal.4 # AI Sell Foreign Reserves
+    }
+    if = {
+        limit = {
+            is_ai = yes
+            and = {
+                THIS.currency_average_difference_to_global_AI > 50
+                is_target_in_global_variable_list = {
+                    name = central_bank_list
+                    target = THIS
+                }
+                not = {
+                    has_variable = altered_currency
+                }
+            }
+        }
+        trigger_event = ai_fiscal.5 # AI Devalue/Revalue
+    }
+}
+
+fiscal_investor_confidence_calculation = {
+    remove_modifier = investor_confidence
+	add_modifier = {
+		name = investor_confidence
+		multiplier = investor_confidence_mod_mult
+	}
+}
+
+fiscal_error_check = {
+    ######## Error Check
+    if = {
+        limit = {
+            not = {
+                has_variable = bank_credibility
+            }
+        }
+        set_variable = {
+            name = bank_credibility
+            value = 19
+        }
+        set_variable = {
+            name = previous_bank_credibility
+            value = var:bank_credibility
+        }
+    }
+    if = {
+        limit = {
+            not = {
+                has_variable = money_supply
+            }
+        }
+        set_variable = {
+            name = money_supply
+            value = {
+                add = gold_reserves_limit
+                divide = 2
+            }
+        }
+    }
+    if = {
+        limit = {
+            not = {
+                has_variable = foreign_reserves
+            }
+        }
+        set_variable = {
+            name = foreign_reserves
+            value = 0
+        }
+    }
+    if = {
+        limit = {
+            not = {
+                has_variable = inflation_rate
+            }
+        }
+        set_variable = {
+            name = inflation_rate
+            value = 0
+        }
+    }
+}

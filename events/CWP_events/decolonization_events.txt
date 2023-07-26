@@ -1,0 +1,1432 @@
+﻿namespace = decolonization
+# Kept the empire together
+decolonization.1 = {
+	type = country_event
+	title = decolonization.1.t
+	desc = decolonization.1.desc
+	flavor = decolonization.1.f
+	trigger = {
+	}
+	event_image = {
+		video = "europenorthamerica_london_center"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+	duration = 3
+	immediate = {
+	}
+	option = {
+		# Long live the empire 
+		name = decolonization.1.a
+		default_option = yes
+		add_modifier = {
+			name = sun_never_sets
+			months = very_long_modifier_time
+		}
+	}
+}
+
+# Amicable separation, get customs union
+decolonization.2 = {
+	type = country_event
+	title = decolonization.2.t
+	desc = decolonization.2.desc
+	flavor = decolonization.2.f
+	trigger = {
+	}
+	event_image = {
+		video = "europenorthamerica_london_center"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+	duration = 3
+	immediate = {
+		effect_decolonize_all = yes
+	}
+	option = {
+		# Let them go
+		name = decolonization.2.a
+		default_option = yes
+		add_modifier = {
+			name = sun_setting_on_empire
+			months = very_long_modifier_time
+		}
+		every_subject_or_below = {
+			limit = {
+				is_direct_subject_of = ROOT
+				NOT = {
+					country_definition = {
+						any_primary_culture = {
+							shares_heritage_trait_with_any_primary_culture = ROOT
+						}
+					}
+					has_variable = special_decolonization_scenario
+					is_subject_type = subject_type_military_occupation
+				}
+			}
+			make_independent = yes
+			if = {
+				limit = {
+					has_diplomatic_pact = {
+						who = root
+						type = customs_union
+					}
+				}
+				remove_diplomatic_pact = {
+					country = root
+					type = customs_union
+				}
+			}
+			ROOT = {
+				change_relations = {
+					country = prev
+					value = 50
+				}
+			}
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+	option = {
+		# Create a customs union with our former subjects
+		name = decolonization.2.b
+		every_subject_or_below = {
+			limit = {
+				is_direct_subject_of = ROOT
+				NOT = {
+					country_definition = {
+						any_primary_culture = {
+							shares_heritage_trait_with_any_primary_culture = ROOT
+						}
+					}
+					has_variable = special_decolonization_scenario
+					is_subject_type = subject_type_military_occupation
+				}
+			}
+			make_independent = yes
+			ROOT = {
+				create_diplomatic_pact = {
+					country = prev
+					type = customs_union
+				}
+			}
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+
+# Clean Break
+decolonization.3 = {
+	type = country_event
+	title = decolonization.3.t
+	desc = decolonization.3.desc
+	flavor = decolonization.3.f
+	trigger = {
+	}
+	event_image = {
+		video = "europenorthamerica_london_center"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+	duration = 3
+	immediate = {
+		effect_decolonize_all = yes
+		every_subject_or_below = {
+			limit = {
+				is_direct_subject_of = ROOT
+				NOT = {
+					has_variable = special_decolonization_scenario
+					is_subject_type = subject_type_military_occupation
+				}
+			}
+			if = {
+				limit = {
+					exists = c:FRA
+					root = c:FRA
+					num_states > 4
+					is_subject_type = subject_type_puppet
+					NOT = {
+						has_journal_entry = indian_partition
+					}
+				}
+				make_independent = yes
+				effect_dissolve_nation = yes
+			}
+			else = {
+				make_independent = yes
+			}
+			if = {
+				limit = {
+					has_diplomatic_pact = {
+						who = root
+						type = customs_union
+					}
+				}
+				remove_diplomatic_pact = {
+					country = root
+					type = customs_union
+				}
+			}
+		}
+		effect_free_all_subjects = yes
+	}
+	option = {
+		# And so the sun sets on the empire
+		name = decolonization.3.a
+		default_option = yes
+		add_modifier = {
+			name = sun_setting_on_empire
+			months = long_modifier_time
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+
+# Subject Revolt Event
+decolonization.100 = {
+	type = country_event
+	title = decolonization.100.t
+	desc = decolonization.100.desc
+	flavor = decolonization.100.f
+	event_image = {
+		video = "europenorthamerica_london_center"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+	duration = 3
+	trigger = {
+		OR = {
+			is_subject_type = subject_type_puppet
+			is_subject_type = subject_type_protectorate
+			is_subject_type = subject_type_dominion
+		}
+	}
+	option = {
+		# Join the war
+		name = decolonization.100.a
+		default_option = yes
+		hidden_effect = {
+			set_variable = {
+				name = revolting_subject
+				months = 6
+			}
+		}
+		ai_chance = {
+			base = 100
+			modifier = {
+				trigger = {
+					is_subject_type = subject_type_dominion
+				}
+				add = -100
+			}
+			modifier = {
+				trigger = {
+					is_subject_type = subject_type_protectorate
+				}
+				add = -50
+			}
+			modifier = {
+				trigger = {
+					root.overlord.infamy > infamy_threshold:infamous
+				}
+				add = 50
+			}
+			modifier = {
+				trigger = {
+					root.overlord.infamy > infamy_threshold:notorious
+				}
+				add = 100
+			}
+			modifier = {
+				trigger = {
+					root.overlord.infamy > infamy_threshold:pariah
+				}
+				add = 1000
+			}
+		}
+	}
+	option = {
+		# Refuse to join the war
+		name = decolonization.100.b
+		default_option = no
+		ai_chance = {
+			base = 0
+			modifier = {
+				trigger = {
+					is_subject_type = subject_type_dominion
+				}
+				add = 100
+			}
+			modifier = {
+				trigger = {
+					is_subject_type = subject_type_protectorate
+				}
+				add = 50
+			}
+		}
+	}
+}
+
+# We have lost control of our colonies
+decolonization.101 = {
+	type = country_event
+	title = decolonization.101.t
+	desc = decolonization.101.desc
+	flavor = decolonization.101.f
+	trigger = {
+	}
+	event_image = {
+		video = "europenorthamerica_london_center"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+	duration = 3
+	immediate = {
+		effect_decolonize_all = yes
+		every_subject_or_below = {
+			limit = {
+				is_direct_subject_of = ROOT
+				NOT = {
+					has_variable = special_decolonization_scenario
+					is_subject_type = subject_type_military_occupation
+				}
+			}
+			trigger_event = {
+				id = decolonization.100
+				days = 0
+			}
+		}
+	}
+	option = {
+		# This may end poorly
+		name = decolonization.101.a
+		default_option = yes
+		ai_chance = {
+			base = 100
+		}
+		hidden_effect = {
+			trigger_event = {
+				id = decolonization.102
+				days = 90
+			}
+		}
+	}
+}
+
+# Ultimatum 
+decolonization.102 = {
+	type = country_event
+	title = decolonization.102.t
+	desc = decolonization.102.desc
+	flavor = decolonization.102.f
+	trigger = {
+	}
+	event_image = {
+		video = "europenorthamerica_london_center"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+	duration = 3
+	immediate = {
+	}
+	option = {
+		# Back Down
+		name = decolonization.102.a
+		default_option = yes
+		ai_chance = {
+			base = 100
+		}
+		custom_tooltip = {
+			text = decolonization.102.a.tt
+		}
+		hidden_effect = {
+			every_subject_or_below = {
+				limit = {
+					is_direct_subject_of = ROOT
+					NOT = {
+						is_subject_type = subject_type_military_occupation
+					}
+				}
+				if = {
+					limit = {
+						exists = c:FRA
+						root = c:FRA
+						num_states > 4
+						is_subject_type = subject_type_puppet
+						NOT = {
+							has_journal_entry = indian_partition
+						}
+					}
+					make_independent = yes
+					effect_dissolve_nation = yes
+				}
+				else = {
+					make_independent = yes
+				}
+				if = {
+					limit = {
+						has_diplomatic_pact = {
+							who = root
+							type = customs_union
+						}
+					}
+					remove_diplomatic_pact = {
+						country = root
+						type = customs_union
+					}
+				}
+			}
+			effect_free_all_subjects = yes
+		}
+	}
+	option = {
+		# War
+		name = decolonization.102.b
+		default_option = no
+		ai_chance = {
+			base = 0
+			modifier = {
+				trigger = {
+					root.infamy > infamy_threshold:pariah
+				}
+				add = 100
+			}
+		}
+		trigger = {
+			any_subject_or_below = {
+				is_direct_subject_of = ROOT
+				has_variable = revolting_subject
+				NOT = {
+					is_subject_type = subject_type_military_occupation
+				}
+			}
+		}
+		custom_tooltip = {
+			text = decolonization.102.b.tt
+		}
+		hidden_effect = {
+			every_subject_or_below = {
+				limit = {
+					is_direct_subject_of = ROOT
+					has_variable = revolting_subject
+					NOT = {
+						is_subject_type = subject_type_military_occupation
+					}
+				}
+				remove_variable = revolting_subject
+				deactivate_law = law_type:law_disarmed_nation
+				capital = {
+					create_building = {
+						building = building_barracks
+						level = 10
+						reserves = 5
+					}
+				}
+				make_independent = yes
+				set_variable = revolt_subject
+			}
+			every_country = {
+				limit = {
+					has_variable = revolt_subject
+				}
+				remove_variable = revolt_subject
+				root = {
+					create_diplomatic_play = {
+						name = independence_war
+						type = dp_reassert_dominion
+						escalation = 80
+						target_country = prev
+					}
+				}
+			}
+		}
+	}
+}
+
+decolonization.501 = {
+	type = country_event
+	title = decolonization.501.t
+	desc = decolonization.501.d
+	flavor = decolonization.501.f
+	placement = s:STATE_LIBYA.region_state:LBY
+	icon = "gfx/interface/icons/cwp_icons/united_nations.dds"
+	event_image = {
+		video = "gfx/event_pictures/middleeast_courtroom_upheaval.bk2"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/middle_east/courtroom_upheaval"
+	duration = 3
+	trigger = {
+		c:LBY ?= this
+		owns_entire_state_region = STATE_LIBYA
+		is_subject_type = subject_type_military_occupation
+		game_date >= 1951.12.1
+		NOT = {
+			has_variable = decolonization_events_1
+		}
+	}
+	cancellation_trigger = {
+		NAND = {
+			exists = c:LBY
+			c:LBY = {
+				is_subject_type = subject_type_military_occupation
+			}
+		}
+	}
+	immediate = {
+		if = {
+			limit = {
+				exists = c:FEZ
+				c:FEZ = {
+					is_subject_type = subject_type_military_occupation
+				}
+			}
+			annex = c:FEZ
+		}
+		set_variable = decolonization_events_1
+	}
+	option = {
+		# We need a king!
+		name = decolonization.501.a
+		default_option = yes
+		trigger = {
+			overlord = {
+				has_law = law_type:law_hereditary
+			}
+		}
+		make_independent = yes
+		activate_law = law_type:law_hereditary
+	}
+	option = {
+		# Form a Republic
+		name = decolonization.501.b
+		trigger = {
+			overlord = {
+				NOR = {
+					has_law = law_type:law_hereditary
+					has_law = law_type:law_council_elective
+				}
+			}
+		}
+		make_independent = yes
+		activate_law = law_type:law_executive
+	}
+	option = {
+		# A Worker's Council
+		name = decolonization.501.c
+		trigger = {
+			overlord = {
+				has_law = law_type:law_council_elective
+			}
+		}
+		make_independent = yes
+		activate_law = law_type:law_council_elective
+	}
+}
+
+# The Eritrea Situation
+decolonization.502 = {
+	type = country_event
+	title = decolonization.502.t
+	desc = decolonization.502.d
+	flavor = decolonization.502.f
+	placement = s:STATE_ERITREA.region_state:ERI
+	icon = "gfx/interface/icons/cwp_icons/united_nations.dds"
+	event_image = {
+		video = "gfx/event_pictures/middleeast_courtroom_upheaval.bk2"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/middle_east/courtroom_upheaval"
+	duration = 3
+	trigger = {
+		exists = c:ERI
+		c:ERI = {
+			is_subject_of = root
+			is_subject_type = subject_type_military_occupation
+			any_scope_state = {
+				state_region = s:STATE_ERITREA
+			}
+		}
+		game_date >= 1950.12.1
+		NOT = {
+			has_variable = decolonization_events_2
+		}
+	}
+	cancellation_trigger = {
+		NAND = {
+			exists = c:ERI
+			c:ERI = {
+				is_subject_of = root
+				is_subject_type = subject_type_military_occupation
+			}
+		}
+	}
+	immediate = {
+		set_variable = decolonization_events_2
+	}
+	option = {
+		# Cede Eritrea
+		name = decolonization.502.a
+		default_option = yes
+		trigger = {
+			exists = c:ETH
+			c:ETH = {
+				NOR = {
+					is_diplomatic_play_committed_participant = yes
+					is_at_war = yes
+				}
+			}
+		}
+		c:ETH = {
+			annex = c:ERI
+		}
+		ai_chance = {
+			base = 80
+		}
+	}
+	option = {
+		# Make Eritrea Independent
+		name = decolonization.502.b
+		c:ERI = {
+			make_independent = yes
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+}
+
+# Release West Sahara
+decolonization.503 = {
+	type = country_event
+	title = decolonization.503.t
+	desc = decolonization.503.d
+	flavor = decolonization.503.f
+	placement = s:STATE_WEST_SAHARA.region_state:SPA
+	icon = "gfx/interface/icons/cwp_icons/united_nations.dds"
+	event_image = {
+		video = "gfx/event_pictures/middleeast_courtroom_upheaval.bk2"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/middle_east/courtroom_upheaval"
+	duration = 3
+	trigger = {
+		c:SPA ?= this
+		owns_entire_state_region = STATE_WEST_SAHARA
+		game_date >= 1975.1.1
+		OR = {
+			has_global_variable = decolonization_resolutioncomplete
+			AND = {
+				exists = c:MOR
+				c:MOR = {
+					is_subject = no
+				}
+			}
+			AND = {
+				exists = c:MAU
+				c:MAU = {
+					is_subject = no
+				}
+			}
+		}
+		NOR = {
+			is_diplomatic_play_committed_participant = yes
+			is_at_war = yes
+		}
+		NOT = {
+			has_variable = decolonization_events_3
+		}
+	}
+	cancellation_trigger = {
+		NOT = {
+			owns_entire_state_region = STATE_WEST_SAHARA
+		}
+	}
+	immediate = {
+		set_variable = decolonization_events_3
+	}
+	option = {
+		# Cede West Sahara to Morocco
+		name = decolonization.503.a
+		default_option = yes
+		trigger = {
+			exists = c:MOR
+			c:MOR = {
+				NOR = {
+					is_diplomatic_play_committed_participant = yes
+					is_at_war = yes
+				}
+			}
+		}
+		S:STATE_WEST_SAHARA.region_state:SPA = {
+			set_state_owner = c:MOR
+		}
+		ai_chance = {
+			base = 50
+		}
+	}
+	option = {
+		# Cede West Sahara to Mauritania
+		name = decolonization.503.b
+		trigger = {
+			exists = c:MAU
+			c:MAU = {
+				NOR = {
+					is_diplomatic_play_committed_participant = yes
+					is_at_war = yes
+				}
+			}
+		}
+		S:STATE_WEST_SAHARA.region_state:SPA = {
+			set_state_owner = c:MAU
+		}
+		ai_chance = {
+			base = 20
+		}
+	}
+	option = {
+		# Make West Sahara Independent
+		name = decolonization.503.c
+		create_country = {
+			tag = WSH
+			origin = root
+			state = S:STATE_WEST_SAHARA.region_state:SPA
+			on_created = {
+				effect_currency_usd = yes
+			}
+		}
+		ai_chance = {
+			base = 10
+		}
+	}
+}
+
+# Release Al Rif
+decolonization.504 = {
+	type = country_event
+	title = decolonization.504.t
+	desc = decolonization.504.d
+	flavor = decolonization.504.f
+	placement = s:STATE_AL_RIF.region_state:SPA
+	icon = "gfx/interface/icons/cwp_icons/united_nations.dds"
+	event_image = {
+		video = "gfx/event_pictures/middleeast_courtroom_upheaval.bk2"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/middle_east/courtroom_upheaval"
+	duration = 3
+	trigger = {
+		c:SPA ?= this
+		owns_entire_state_region = STATE_AL_RIF
+		NOR = {
+			is_diplomatic_play_committed_participant = yes
+			is_at_war = yes
+		}
+		OR = {
+			has_global_variable = decolonization_resolutioncomplete
+			AND = {
+				exists = c:MOR
+				c:MOR = {
+					is_subject = no
+				}
+			}
+		}
+		NOT = {
+			has_variable = decolonization_events_4
+		}
+	}
+	cancellation_trigger = {
+		NOT = {
+			owns_entire_state_region = STATE_AL_RIF
+		}
+	}
+	immediate = {
+		set_variable = decolonization_events_4
+	}
+	option = {
+		# Cede Al Rif
+		name = decolonization.504.a
+		default_option = yes
+		trigger = {
+			exists = c:MOR
+			c:MOR = {
+				NOR = {
+					is_diplomatic_play_committed_participant = yes
+					is_at_war = yes
+				}
+			}
+		}
+		S:STATE_AL_RIF.region_state:SPA = {
+			set_state_owner = c:MOR
+		}
+		ai_chance = {
+			base = 99
+		}
+	}
+	option = {
+		# Make Al Rif Independent
+		name = decolonization.504.b
+		create_country = {
+			tag = ALR
+			origin = root
+			state = S:STATE_AL_RIF.region_state:SPA
+			on_created = {
+				effect_currency_usd = yes
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Release Equitorial Guinea
+decolonization.505 = {
+	type = country_event
+	title = decolonization.505.t
+	desc = decolonization.505.d
+	flavor = decolonization.505.f
+	placement = root
+	icon = "gfx/interface/icons/cwp_icons/united_nations.dds"
+	event_image = {
+		video = "gfx/event_pictures/middleeast_courtroom_upheaval.bk2"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/middle_east/courtroom_upheaval"
+	duration = 3
+	trigger = {
+		c:SPA ?= this
+		any_scope_state = {
+			OR = {
+				state_region = s:STATE_GUINEA_ISLANDS
+				state_region = s:STATE_GABON
+			}
+		}
+		NOT = {
+			exists = c:EQG
+		}
+		NOR = {
+			is_diplomatic_play_committed_participant = yes
+			is_at_war = yes
+		}
+		OR = {
+			has_global_variable = decolonization_resolutioncomplete
+			AND = {
+				exists = c:DLA
+				c:DLA = {
+					is_subject = no
+				}
+			}
+		}
+		game_date >= 1966.1.1
+		NOT = {
+			has_variable = decolonization_events_5
+		}
+	}
+	cancellation_trigger = {
+		NOT = {
+			any_scope_state = {
+				OR = {
+					state_region = s:STATE_GUINEA_ISLANDS
+					state_region = s:STATE_GABON
+				}
+			}
+		}
+	}
+	immediate = {
+		set_variable = decolonization_events_5
+		if = {
+			limit = {
+				any_scope_state = {
+					state_region = s:STATE_GABON
+				}
+			}
+			create_country = {
+				tag = EQG
+				origin = root
+				state = S:STATE_GABON.region_state:SPA
+				on_created = {
+					effect_currency_usd = yes
+				}
+			}
+			if = {
+				limit = {
+					any_scope_state = {
+						state_region = s:STATE_GUINEA_ISLANDS
+					}
+				}
+				S:STATE_GUINEA_ISLANDS.region_state:SPA = {
+					set_state_owner = c:EQG
+				}
+			}
+		}
+		else = {
+			create_country = {
+				tag = EQG
+				origin = root
+				state = S:STATE_GUINEA_ISLANDS.region_state:SPA
+				on_created = {
+					effect_currency_usd = yes
+				}
+			}
+		}
+	}
+	option = {
+		# This was inevitable
+		name = decolonization.505.a
+	}
+}
+
+# Release Phillipines
+decolonization.506 = {
+	type = country_event
+	title = decolonization.506.t
+	desc = decolonization.506.d
+	flavor = decolonization.506.f
+	placement = s:STATE_LUZON.region_state:PHI
+	icon = "gfx/interface/icons/cwp_icons/united_nations.dds"
+	event_image = {
+		video = "gfx/event_pictures/middleeast_courtroom_upheaval.bk2"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/middle_east/courtroom_upheaval"
+	duration = 3
+	trigger = {
+		c:USA ?= this
+		exists = c:PHI
+		c:PHI = {
+			is_subject_of = root
+			owns_entire_state_region = STATE_LUZON
+			NOR = {
+				is_diplomatic_play_committed_participant = yes
+				is_at_war = yes
+			}
+		}
+		NOR = {
+			is_diplomatic_play_committed_participant = yes
+			is_at_war = yes
+		}
+		game_date >= 1946.7.1
+		NOT = {
+			has_variable = decolonization_events_6
+		}
+	}
+	cancellation_trigger = {
+		NOT = {
+			exists = c:PHI
+			c:PHI = {
+				is_subject_of = root
+			}
+		}
+	}
+	immediate = {
+		set_variable = decolonization_events_6
+	}
+	option = {
+		# Make Phillipines Independent
+		name = decolonization.506.a
+		default_option = yes
+		c:PHI = {
+			make_independent = yes
+		}
+		change_relations = {
+			country = c:PHI
+			value = 50
+		}
+		create_diplomatic_pact = {
+			country = c:PHI
+			type = defensive_pact
+		}
+		create_truce = {
+			country = c:PHI
+			months = 12
+		}
+		ai_chance = {
+			base = 99
+		}
+	}
+	option = {
+		# Make Phillipines Dominion
+		name = decolonization.506.b
+		c:PHI = {
+			change_subject_type = subject_type_dominion
+		}
+		change_relations = {
+			country = c:PHI
+			value = -25
+		}
+		change_infamy = {
+			value = 20
+		}
+		create_truce = {
+			country = c:PHI
+			months = 36
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Release Japan
+decolonization.507 = {
+	type = country_event
+	title = decolonization.507.t
+	desc = decolonization.507.d
+	flavor = decolonization.507.f
+	placement = s:STATE_CALIFORNIA.region_state:USA
+	icon = "gfx/interface/icons/cwp_icons/united_nations.dds"
+	event_image = {
+		video = "gfx/event_pictures/middleeast_courtroom_upheaval.bk2"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/middle_east/courtroom_upheaval"
+	duration = 3
+	trigger = {
+		c:USA ?= this
+		owns_entire_state_region = STATE_CALIFORNIA
+		exists = c:JAP
+		c:JAP = {
+			is_subject_of = root
+			is_subject_type = subject_type_military_occupation
+			NOR = {
+				is_diplomatic_play_committed_participant = yes
+				is_at_war = yes
+			}
+		}
+		NOR = {
+			is_diplomatic_play_committed_participant = yes
+			is_at_war = yes
+		}
+		game_date >= 1951.9.1
+		NOT = {
+			has_variable = decolonization_events_7
+		}
+	}
+	cancellation_trigger = {
+		NOT = {
+			exists = c:JAP
+			c:JAP = {
+				is_subject_of = root
+			}
+		}
+	}
+	immediate = {
+		set_variable = decolonization_events_7
+	}
+	option = {
+		# Make Japan Independent
+		name = decolonization.507.a
+		default_option = yes
+		c:JAP = {
+			make_independent = yes
+		}
+		change_relations = {
+			country = c:JAP
+			value = 50
+		}
+		create_diplomatic_pact = {
+			country = c:JAP
+			type = defensive_pact
+		}
+		create_truce = {
+			country = c:JAP
+			months = 12
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		# Make Japan Dominion
+		name = decolonization.507.b
+		c:JAP = {
+			change_subject_type = subject_type_dominion
+		}
+		change_relations = {
+			country = c:JAP
+			value = -25
+		}
+		change_infamy = {
+			value = 100
+		}
+		create_truce = {
+			country = c:JAP
+			months = 60
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+# Release Syria
+decolonization.508 = {
+	type = country_event
+	title = decolonization.508.t
+	desc = decolonization.508.d
+	flavor = decolonization.508.f
+	placement = root
+	icon = "gfx/interface/icons/cwp_icons/united_nations.dds"
+	event_image = {
+		video = "gfx/event_pictures/middleeast_courtroom_upheaval.bk2"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/middle_east/courtroom_upheaval"
+	duration = 3
+	trigger = {
+		c:SYR ?= this
+		is_subject_type = subject_type_military_occupation
+		game_date >= 1946.4.1
+		NOT = {
+			has_variable = decolonization_events_8
+		}
+	}
+	cancellation_trigger = {
+		NAND = {
+			exists = c:SYR
+			c:SYR = {
+				is_subject_type = subject_type_military_occupation
+			}
+		}
+	}
+	immediate = {
+		set_variable = decolonization_events_8
+	}
+	option = {
+		# We need a king!
+		name = decolonization.508.a
+		default_option = yes
+		trigger = {
+			overlord = {
+				has_law = law_type:law_hereditary
+			}
+		}
+		make_independent = yes
+		activate_law = law_type:law_hereditary
+	}
+	option = {
+		# Form a Republic
+		name = decolonization.508.b
+		trigger = {
+			overlord = {
+				NOR = {
+					has_law = law_type:law_hereditary
+					has_law = law_type:law_council_elective
+				}
+			}
+		}
+		make_independent = yes
+		activate_law = law_type:law_executive
+	}
+	option = {
+		# A Worker's Council
+		name = decolonization.508.c
+		trigger = {
+			overlord = {
+				has_law = law_type:law_council_elective
+			}
+		}
+		make_independent = yes
+		activate_law = law_type:law_council_elective
+	}
+}
+
+decolonization.601 = {
+	hidden = yes
+	type = country_event
+	trigger = {
+		c:BKF ?= this
+		is_subject = no
+		coa_communist_trigger = yes
+	}
+	immediate = {
+		set_variable = burkina_faso_name_change
+	}
+}
+
+decolonization.602 = {
+	hidden = yes
+	type = country_event
+	trigger = {
+		c:BNI ?= this
+		is_subject = no
+		coa_communist_trigger = yes
+	}
+	immediate = {
+		set_variable = benin_name_change
+	}
+}
+
+decolonization.603 = {
+	hidden = yes
+	type = country_event
+	trigger = {
+		c:ESW ?= this
+		is_subject = no
+		game_date >= 2018.1.1
+	}
+	immediate = {
+		set_variable = swaziland_name_change
+	}
+}
+
+decolonization.666 = {
+	hidden = yes
+	type = country_event
+	trigger = {
+		is_player = no
+		is_subject = no
+		is_major_unifier = yes
+		NOT = {
+			has_variable = original_government
+		}
+		NOT = {
+			has_journal_entry = je_decolonization
+		}
+		num_states > 2
+	}
+	immediate = {
+		effect_free_all_subjects = yes
+		effect_dissolve_nation = yes
+	}
+}
+
+decolonization.998 = {
+	# Imperial conference
+	type = country_event
+	title = decolonization.998.t
+	desc = decolonization.998.desc
+	flavor = decolonization.998.f
+	trigger = {
+	}
+	event_image = {
+		video = "europenorthamerica_london_center"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+	duration = 3
+	immediate = {
+		add_modifier = {
+			name = decolonization_imperial_conference
+			months = 60
+		}
+	}
+	option = {
+		# Bureaucratic Concessions
+		name = decolonization.998.a
+		default_option = no
+		trigger = {
+			bureaucracy >= imperial_conference_bureaucracy_cost
+		}
+		add_modifier = {
+			name = imperial_conference_bureaucracy
+			months = 60
+			multiplier = imperial_conference_bureaucracy_cost
+		}
+		hidden_effect = {
+			every_subject_or_below = {
+				limit = {
+					is_direct_subject_of = ROOT
+					NOT = {
+						has_variable = special_decolonization_scenario
+						is_subject_type = subject_type_military_occupation
+					}
+				}
+				set_local_variable = {
+					name = imperial_conference_bureaucracy_benefit
+					value = {
+						value = 0
+						add = this.total_population
+						divide = 500000
+						add = 100
+						max = 1000
+					}
+				}
+				add_modifier = {
+					name = imperial_conference_bureaucracy
+					months = 60
+					multiplier = local_var:imperial_conference_bureaucracy_benefit
+				}
+				remove_local_variable = imperial_conference_authority_benefit
+			}
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		# Authority Concessions
+		name = decolonization.998.b
+		default_option = no
+		trigger = {
+			authority >= imperial_conference_authority_cost
+		}
+		add_modifier = {
+			name = imperial_conference_authority
+			months = 60
+			multiplier = imperial_conference_authority_cost
+		}
+		hidden_effect = {
+			every_subject_or_below = {
+				limit = {
+					is_direct_subject_of = ROOT
+					NOT = {
+						has_variable = special_decolonization_scenario
+						is_subject_type = subject_type_military_occupation
+					}
+				}
+				set_local_variable = {
+					name = imperial_conference_authority_benefit
+					value = {
+						value = 0
+						add = this.total_population
+						divide = 1000000
+						add = 10
+						max = 100
+					}
+				}
+				add_modifier = {
+					name = imperial_conference_authority
+					months = 60
+					multiplier = local_var:imperial_conference_authority_benefit
+				}
+				remove_local_variable = imperial_conference_authority_benefit
+			}
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		# Monetary Support
+		name = decolonization.998.c
+		default_option = yes
+		add_modifier = {
+			name = imperial_conference_monetary_support
+			months = 60
+			multiplier = imperial_conference_monetary_cost
+		}
+		hidden_effect = {
+			every_subject_or_below = {
+				limit = {
+					is_direct_subject_of = ROOT
+					NOT = {
+						has_variable = special_decolonization_scenario
+						is_subject_type = subject_type_military_occupation
+					}
+				}
+				set_local_variable = {
+					name = imperial_conference_monetary_benefit
+					value = {
+						value = 0
+						add = this.income
+						multiply = 0.2
+						add = 1000
+					}
+				}
+				add_modifier = {
+					name = imperial_conference_monetary_support
+					months = 60
+					multiplier = local_var:imperial_conference_monetary_benefit
+				}
+				remove_local_variable = imperial_conference_monetary_benefit
+			}
+		}
+		ai_chance = {
+			base = 100
+		}
+	}
+}
+
+decolonization.999 = {
+	# Abandon the colonies
+	type = country_event
+	title = decolonization.999.t
+	desc = decolonization.999.desc
+	flavor = decolonization.999.f
+	event_image = {
+		video = "europenorthamerica_london_center"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+	duration = 3
+	trigger = {
+		has_journal_entry = je_decolonization
+		NOR = {
+			has_modifier = sun_setting_on_empire
+		}
+	}
+	cancellation_trigger = {
+		has_modifier = sun_setting_on_empire
+	}
+	option = {
+		# On second thought...
+		name = decolonization.999.a
+		default_option = yes
+		ai_chance = {
+			base = 100
+		}
+	}
+	option = {
+		# Run away, run away!
+		name = decolonization.999.b
+		default_option = yes
+		ai_chance = {
+			base = 0
+		}
+		add_modifier = {
+			name = sun_setting_on_empire
+			months = very_long_modifier_time
+		}
+		custom_tooltip = {
+			text = decolonization.999.b.tt
+		}
+		hidden_effect = {
+			every_subject_or_below = {
+				limit = {
+					is_direct_subject_of = ROOT
+					NOT = {
+						has_variable = special_decolonization_scenario
+						is_subject_type = subject_type_military_occupation
+					}
+				}
+				if = {
+					limit = {
+						exists = c:FRA
+						root = c:FRA
+						num_states > 4
+						is_subject_type = subject_type_puppet
+						NOT = {
+							has_journal_entry = indian_partition
+						}
+					}
+					make_independent = yes
+					effect_dissolve_nation = yes
+				}
+				else = {
+					make_independent = yes
+				}
+				if = {
+					limit = {
+						has_diplomatic_pact = {
+							who = root
+							type = customs_union
+						}
+					}
+					remove_diplomatic_pact = {
+						country = root
+						type = customs_union
+					}
+				}
+			}
+			effect_decolonize_all = yes
+			effect_free_all_subjects = yes
+		}
+	}
+}

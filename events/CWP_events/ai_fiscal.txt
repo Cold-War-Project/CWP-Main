@@ -1,0 +1,554 @@
+﻿namespace = ai_fiscal
+
+ai_fiscal.1 = { #Sets Monetary policy
+	type = country_event
+	trigger = {
+		is_ai = yes
+		not = {
+			has_variable = adjusted_monetary_policy
+		}
+	}
+	duration = 3
+	immediate = {
+
+	}
+	option = { # Contractionary
+		name = ai_fiscal.1.a
+		if = {
+			limit = {
+				not = {
+					has_variable = pegged_currency
+					has_law = law_type:law_gold_standard
+				}
+			}
+			remove_variable = stable_monetary_policy
+			remove_variable = expansionary_monetary_policy
+			set_variable = contractionary_monetary_policy
+			set_variable = {
+				name = adjusted_monetary_policy
+				days = 30
+			}
+		}
+		
+		ai_chance = {
+			base = 0
+			modifier = {
+				trigger = {
+					money_supply_percentage >= 30
+				}
+				add = 20
+			}
+			modifier = {
+				trigger = {
+					inflation_value >= 20
+				}
+				add = 50
+			}
+		}
+	}
+	option = { # Stable
+		name = ai_fiscal.2.a
+		default_option = yes
+		if = {
+			limit = {
+				not = {
+					has_variable = pegged_currency
+					has_law = law_type:law_gold_standard
+				}
+			}
+			remove_variable = contractionary_monetary_policy
+			remove_variable = expansionary_monetary_policy
+			set_variable = stable_monetary_policy
+			set_variable = {
+				name = adjusted_monetary_policy
+				days = 30
+			}
+		}
+		ai_chance = {
+			base = 0
+			modifier = {
+				trigger = {
+					money_supply_percentage >= 5
+					money_supply_percentage <= 10
+				}
+				add = 30
+			}
+		}
+	}
+	option = { # Expansionary
+		name = ai_fiscal.3.a
+		if = {
+			limit = {
+				nor = {
+					has_variable = pegged_currency
+					has_law = law_type:law_gold_standard
+				}
+			}
+			remove_variable = stable_monetary_policy
+			remove_variable = contractionary_monetary_policy
+			set_variable = expansionary_monetary_policy
+			set_variable = {
+				name = adjusted_monetary_policy
+				days = 30
+			}
+		}
+		ai_chance = {
+			base = 0
+			modifier = {
+				trigger = {
+					money_supply_percentage <= -30
+				}
+				add = 20
+			}
+			modifier = {
+				trigger = {
+					money_supply_percentage < 5
+				}
+				add = 20
+			}
+			modifier = {
+				trigger = {
+					inflation_value <= 0
+				}
+				add = 30
+			}
+		}
+	}
+
+}
+
+ai_fiscal.2 = { # Set Interest Rate
+	type = country_event
+	trigger = {
+		is_ai = yes
+		nor = {
+			var:interest_rate = ai_ideal_interest_rate
+			has_law = law_type:law_gold_standard
+			has_variable = pegged_currency
+			has_law = law_type:law_pegged_currency
+		}
+	}
+	duration = 3
+	immediate = {
+
+	}
+	option = {
+		name = ai_fiscal.1.a
+		default_option = yes
+		set_variable = {
+			name = interest_rate
+			value = ai_ideal_interest_rate
+		}
+		set_variable = {
+			name = interest_rate_gui
+			value = var:interest_rate
+		}
+	}
+
+}
+
+ai_fiscal.3 = { # Buy Foreign Currency
+	type = country_event
+	trigger = {
+		is_ai = yes
+		foreign_reserves_ratio < 30
+		nor = {
+			foreign_reserves_value >= foreign_reserves_max
+			scaled_debt >= 1
+			has_variable = ai_bought_currency
+		}
+	}
+	duration = 3
+	immediate = {
+		if = {
+			limit = {
+				not = {
+					has_variable = pegged_currency
+				}
+			}
+			random_in_global_list = {
+				variable = central_bank_list
+				limit = {
+					nor = {
+						ROOT = THIS
+						has_variable = currency_bought
+					}
+					or = {
+						and = {
+							has_variable = pegged_currency
+							THIS = var:pegged_currency
+						}
+						not = {
+							has_variable = pegged_currency
+						}
+					}
+					ROOT.country_payment_ability >= {
+						value = {
+							value = {
+								value = THIS.gold_reserves_limit
+								add = THIS.credit
+							}
+							max = ROOT.foreign_reserves_capacity_left
+						}
+						multiply = {
+							value = THIS.country_currency_val
+							divide = ROOT.country_currency_val
+						}
+					} 
+				}
+				save_scope_as = currency_exchange_country
+			}
+			if = {
+				limit = {
+					is_set = scope:currency_exchange_country
+				}
+				set_variable = {
+					name = ai_currency_buy_country
+					value = scope:currency_exchange_country
+				}
+			}
+			if = {
+				limit = {
+					not = {
+						is_set = scope:currency_exchange_country
+					}
+				}
+				remove_variable = ai_currency_buy_country
+			}
+		}
+	}
+	option = {
+		name = ai_fiscal.1.a
+		if = {
+			limit = {
+				has_variable = ai_currency_buy_country				
+			}
+			add_treasury = {
+				value = {
+					value = var:ai_currency_buy_country.money_supply_5
+					max = ROOT.foreign_reserves_capacity_left
+				}
+				multiply = {
+					value = var:ai_currency_buy_country.country_currency_val
+					divide = ROOT.country_currency_val
+				}
+				multiply = -1
+			}
+			# Increases Reserve
+			if = {
+				limit = {
+					var:ai_currency_buy_country.money_supply_5 <= foreign_reserves_capacity_left
+				}
+				change_variable = {
+					name = foreign_reserves
+					add = var:ai_currency_buy_country.money_supply_5
+				}
+			}
+			if = {
+				limit = {
+					var:ai_currency_buy_country.money_supply_5 >= foreign_reserves_capacity_left
+				}
+				set_variable = {
+					name = foreign_reserves
+					value = foreign_reserves_max
+				}
+			}
+			# Increases Bought Currency Value
+			var:ai_currency_buy_country = {
+				if = {
+					limit = {
+						not = {
+							has_law = law_type:law_pegged_currency # Pegged Currencies dont increase in value
+						}
+					}
+					on_action_change_domestic_currency_value = {
+						mathAction = add
+						mathAction2 = currency_value_growth_by_exchange
+					}
+				}
+				if = {
+					limit = {
+						nor = {
+							has_law = law_type:law_gold_standard # Gold standard has fixed money supply unless altered
+							has_law = law_type:law_pegged_currency # Pegged Currency uses pegged money supply
+						}
+					}
+					# Reduces Money Supply
+					change_variable = {
+						name = money_supply
+						subtract = {
+							value = money_supply_5
+						}
+					}
+				}
+				set_variable = {
+					name = currency_bought
+					months = 1
+				}				
+			}
+			remove_variable = ai_currency_buy_country
+			set_variable = {
+				name = ai_bought_currency
+				months = 3
+			}
+		}
+		ai_chance = {
+			base = 30
+		}
+	}
+	option = {
+		name = ai_fiscal.1.b
+		default_option = yes
+		set_variable = {
+			name = ai_bought_currency
+			months = 3
+		}
+		ai_chance = {
+			base = 70
+			modifier = {
+				trigger = {
+					nor = {
+						has_variable = ai_currency_buy_country
+					}
+				}
+				add = 1000
+			}
+		}
+	}
+
+}
+
+ai_fiscal.4 = { # Sell Foreign Currency
+	type = country_event
+	trigger = {
+		is_ai = yes
+		or = {
+			and = {
+				foreign_reserves_ratio > 10
+				scaled_debt >= 0.7
+			}
+			and = {
+				foreign_reserves_ratio > 70
+				scaled_debt >= 0.5
+			}
+		}
+		
+	}
+	duration = 3
+	immediate = {
+
+	}
+	option = {
+		name = ai_fiscal.1.a
+		default_option = yes
+		if = {
+			limit = {
+				nor = {
+					foreign_reserves_value <= 0
+					gold_reserve_value >= gold_reserve_limit
+					foreign_reserves_value <= {
+						value = 500000
+						multiply = {
+							value = country_currency_val
+							subtract = foreign_avg
+							divide = foreign_avg
+							multiply = 100
+						}
+					}
+				}
+			}
+			# Reduces Reserves
+			if = {
+				limit = {
+					foreign_reserves_value >= 1
+				}
+				change_variable = {
+					name = foreign_reserves
+					subtract = {
+						value = 500000
+						multiply = {
+							value = country_currency_val
+							subtract = foreign_avg
+							divide = foreign_avg
+							multiply = 100
+						}
+					}
+				}
+			}
+			# Increases Local Currency Value
+			if = {
+				limit = {
+					not = {
+						has_variable = pegged_currency # Pegged Currencies do not get their value increased
+					}
+				}
+				on_action_change_domestic_currency_value = {
+					mathAction = add
+					mathAction2 = currency_value_growth_by_exchange
+				}
+			}
+			add_treasury = 500000
+		}
+	}
+	option = { # Do nothing
+		name = ai_fiscal.2.a
+		ai_chance = {
+			base = 20
+		}
+	}
+
+}
+
+ai_fiscal.5 = { # Consider Devalue/revalue
+	type = country_event
+	trigger = {
+		is_ai = yes
+		THIS.currency_average_difference_to_global_AI > 50 
+		is_target_in_global_variable_list = {
+			name = central_bank_list
+			target = THIS
+		}
+		nor = {
+			has_variable = pegged_currency
+			has_variable = altered_currency
+			has_law = law_type:law_gold_standard
+			has_law = law_type:law_pegged_currency
+			has_law = law_type:law_independent_monetary_policy
+		}
+	}
+	duration = 3
+	immediate = {
+
+	}
+	option = {
+		name = ai_fiscal.1.a # Devalue
+		if = {
+			limit = {
+				nor = {
+					has_variable = pegged_currency
+					has_variable = altered_currency
+					has_law = law_type:law_gold_standard
+					has_law = law_type:law_pegged_currency
+					has_law = law_type:law_independent_monetary_policy
+				}
+			}
+			on_action_change_domestic_currency_value = {
+				mathAction = subtract
+				mathAction2 = alter_currency_value
+			}
+			if = {
+				limit = {
+					country_currency_val > 0
+				}
+				change_variable = {
+					name = money_supply
+					subtract = {
+						value = money_supply_from_gold_reserves
+						multiply = 10
+					}
+				}
+			}
+			set_variable = {
+				name = altered_currency
+				months = 12
+			}
+		}
+		
+		ai_chance = {
+			base = 0
+			modifier = {
+				trigger = {
+					THIS.currency_average_difference_to_global_AI >= 60
+				}
+				add = 20
+			}
+			modifier = {
+				trigger = {
+					THIS.currency_average_difference_to_global_AI >= 50
+				}
+				add = 20
+			}
+			modifier = {
+				trigger = { # TODO, make it so US is more likely to devalue after bretton woods ends
+					country_rank = rank_value:superpower # Superpowers dont want to devalue
+				}
+				add = -50
+			}
+			modifier = {
+				trigger = {
+					country_rank = rank_value:great_power # Great Powers hesitant to devalue
+				}
+				add = -20
+			}
+		}
+	}
+	option = { # Do nothing
+		name = ai_fiscal.2.a
+		default_option = yes
+		ai_chance = {
+			base = 0
+			modifier = {
+				trigger = {
+					THIS.currency_average_difference_to_global_AI >=-30
+				}
+				add = 20
+			}
+			modifier = {
+				trigger = {
+					THIS.currency_average_difference_to_global_AI <= 30
+				}
+				add = 20
+			}
+		}
+	}
+	option = {
+		name = ai_fiscal.3.a # Revalue
+		if = {
+			limit = {
+				nor = {
+					has_variable = pegged_currency
+					has_variable = altered_currency
+					has_law = law_type:law_gold_standard
+					has_law = law_type:law_pegged_currency
+					has_law = law_type:law_independent_monetary_policy
+				}
+			}
+			on_action_change_domestic_currency_value = {
+				mathAction = add
+				mathAction2 = alter_currency_value
+			}
+			if = {
+				limit = {
+					country_currency_val > 0
+				}
+				change_variable = {
+					name = money_supply
+					add = {
+						value = money_supply_from_gold_reserves
+						multiply = 10
+					}
+				}
+			}
+			set_variable = {
+				name = altered_currency
+				months = 12
+			}
+		}
+		ai_chance = {
+			base = 0
+			modifier = {
+				trigger = {
+					THIS.currency_average_difference_to_global_AI <= -30
+				}
+				add = 20
+			}
+			modifier = {
+				trigger = {
+					THIS.currency_average_difference_to_global_AI <= 50
+				}
+				add = 20
+			}
+		}
+	}
+
+}

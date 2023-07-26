@@ -1,0 +1,2123 @@
+﻿country_debt = {
+	value = credit
+	multiply = scaled_debt
+}
+
+tax_level_val = {
+	value = tax_level
+}
+scaled_debt_val = {
+	value = scaled_debt
+}
+bank_credibility_10 = {
+	value = 2.4
+} 
+income_value = {
+	value = weekly_net_fixed_income
+}
+bank_cred_to_investor = {
+	value = bank_credibility_current
+	divide = {
+		value = 24
+		multiply = 1.33
+	}
+}
+income_to_investor = {
+	value = income_value
+	divide = 100000
+}
+investor_confidence = {
+	if = {
+		limit = {
+			bank_credibility_current > 4
+		}
+		value = {
+			value = bank_cred_to_investor
+			
+		}
+	}
+	if = {
+		limit = { bank_credibility_current <= 4 }
+		value = {
+			value = bank_cred_to_investor
+			multiply = -1
+			
+		}
+	}
+	if = {
+		limit = { bank_credibility_current = 3 }
+		value = {
+			value = bank_cred_to_investor
+			multiply = -2.7
+			
+		}
+	}
+	if = {
+		limit = { bank_credibility_current = 2 }
+		value = {
+			value = bank_cred_to_investor
+			multiply = -8
+			
+		}
+	}
+	if = {
+		limit = { bank_credibility_current = 1 }
+		value = {
+			value = bank_cred_to_investor
+			multiply = -24
+			
+		}
+	}
+}
+investor_confidence_mod_mult = {
+	value = investor_confidence
+	multiply = 33
+	max = 25
+	min = -25
+	round = yes
+}
+gold_reserve_ratio = {
+	value = gold_reserve_value
+	divide = gold_reserve_limit
+}
+bank_credibility_current = {
+	value = var:bank_credibility
+}
+bank_credibility_val = {
+	value = 0
+	# From Altering Currency
+	if = {
+		limit = {
+			has_variable = altered_currency
+		}
+		subtract = {
+			value = bank_credibility_10
+			multiply = 3
+			desc = BNK_ALTERED_CURRENCY
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	# From having the largest economy
+	if = {
+		limit = {
+			has_global_highest_gdp = yes
+		}
+		add = {
+			value = bank_credibility_10
+			multiply = 3
+			desc = BNK_LARGE_ECONOMY
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	# From Unhealthy Economy
+	if = {
+		limit = {
+			has_healthy_economy = no
+		}
+		subtract = {
+			value = bank_credibility_10
+			multiply = 3
+			desc = BNK_UNHEALTHY_ECONOMY
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	else = {
+		add = {
+			value = bank_credibility_10
+			multiply = 2
+			desc = BNK_HEALTHY_ECONOMY
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	# From previous bank credibility
+	if = {
+		limit = {
+			has_variable = previous_bank_credibility
+		}
+		add = {
+			value = var:previous_bank_credibility
+			divide = 2
+			ceiling = yes
+			subtract = 1
+			desc = BNK_PREVIOUS_BANK_CREDIBILITY
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	
+	# From keeping stable inflation
+	if = {
+		limit = { 
+			inflation_growth < -0.2
+		}
+		add = {
+			value = inflation_growth
+			multiply = 2
+			desc = BNK_INFLATION_GROWTH
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	else_if = {
+		limit = { 
+			inflation_growth > 0.2
+		}
+		subtract = {
+			value = inflation_growth
+			multiply = 2
+			desc = BNK_INFLATION_GROWTH
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	else = {
+		add = {
+			value = bank_credibility_10
+			multiply = 2
+			desc = BNK_INFLATION_GROWTH
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	# From keeping low inflation
+	if = {
+		limit = { 
+			inflation_value <= 5 
+			inflation_value >= 0 
+		}
+		add = {
+			value = bank_credibility_10
+			multiply = 2
+			desc = BNK_INFLATION_LEVEL
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	# From Inflation
+	if = {
+		limit = { 
+			inflation_value > 5
+		}
+		subtract = {
+			value = inflation_value
+			divide = 5
+			floor = yes
+			desc = BNK_INFLATION_LEVEL
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	# From Deflation
+	if = {
+		limit = { inflation_value < 0 }
+		add = {
+			value = inflation_value
+			multiply = 10
+			floor = yes
+			desc = BNK_DEFLATION_LEVEL
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	# From Bank Independence
+	if = {
+		limit = { has_law = law_type:law_government_controlled }
+		subtract = {
+			value = bank_credibility_10
+			multiply = 2
+			desc = BNK_GOVERNMENT_CONTROLLED
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = { has_law = law_type:law_government_interference }
+		subtract = {
+			value = bank_credibility_10
+			multiply = 1
+			desc = BNK_GOVERNMENT_INTERFERENCE
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = { has_law = law_type:law_independent_monetary_policy}
+		add = {
+			value = bank_credibility_10
+			multiply = 1
+			desc = BNK_INDEPENDENT_MONETARY_POLICY
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			has_journal_entry = je_imf_austerity_measures
+		}
+		subtract = {
+			value = 10
+			desc = BNK_AUSTERITY_MEASURES
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			has_modifier = declared_bankruptcy
+		}
+		subtract = {
+			value = 10
+			desc = BNK_BANKRUPTCY
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	min = 5
+	# From Debt	
+	if = {
+		limit = {
+			scaled_debt >= 0.8
+			income <= 1
+		}
+		value = {
+			value = 4
+			desc = BNK_IMMINENT_DEFAULT
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			scaled_debt >= 0.94
+			income <= 1
+		}
+		value = {
+			value = 3
+			desc = BNK_IN_DEFAULT
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			scaled_debt >= 0.96
+			income <= 1
+		}
+		value = {
+			value = 2
+			desc = BNK_IN_DEFAULT
+			format = "BNK_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			scaled_debt >= 0.98
+			income <= 1
+		}
+		value = 1
+			desc = BNK_IN_DEFAULT
+			format = "BNK_TOOLTIP_FORMAT"
+	}
+	round = yes
+	max = 24
+}
+monetary_policy_mult = {
+	if = {
+		limit = {
+			has_variable = contractionary_monetary_policy
+		}
+		value = {
+			value = gdp
+			divide = 500
+		}
+	}
+	if = {
+		limit = {
+			has_variable = expansionary_monetary_policy
+		}
+		value = {
+			value = gdp
+			divide = 500
+		}
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_government_controlled
+		}
+		multiply = 1.5
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_government_interference
+		}
+		multiply = 1.2
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_independent_monetary_policy
+		}
+		multiply = 0.5
+	}
+}
+
+gold_reserve_value = {
+	value = gold_reserves
+}
+
+country_payment_ability = {
+	value = gold_reserve_value
+	if = {
+		limit = {
+			gold_reserve_value <= 0
+		}
+		add = credit
+		subtract = country_debt
+	}
+	if = {
+		limit = {
+			gold_reserve_value >= 1
+		}
+		add = credit
+	}
+	
+	
+}
+
+gold_reserve_limit = {
+	value = gold_reserves_limit
+}
+foreign_reserves_needed_for_peg = {
+	value = {
+		value = money_supply_max
+		multiply = 0.01
+	}
+	multiply = currency_average_difference_to_global
+	min = 0.1
+}
+foreign_reserves_conversion = {
+	value = foreign_reserves_value
+	multiply = global_average_difference_to_currency
+}
+foreign_reserves_sell = {
+	value = 500000
+	multiply = currency_average_difference_to_global
+	min = 0.1
+}
+foreign_reserves_ratio = {
+	value = foreign_reserves_value
+	divide = foreign_reserves_max
+	multiply = 100
+
+}
+foreign_reserves_capacity_left = {
+	value = foreign_reserves_max
+	subtract = foreign_reserves_value
+}
+foreign_reserves_max = {
+	value = gold_reserves_limit
+	add = credit
+}
+buying_foreign_currency_rate = {
+	value = money_supply_5
+	max = player.foreign_reserves_capacity_left
+}
+
+buying_foreign_currency_rate_denomination = {
+	value = money_supply_5
+	multiply = country_currency_denomination
+}
+
+foreign_reserves_value = {
+	value = var:foreign_reserves
+}
+
+foreign_avg = {
+	if = { limit = { exists = global_var:currency_usd_v } add = global_var:currency_usd_v }
+	if = { limit = { exists = global_var:currency_frf_v } add = global_var:currency_frf_v }
+	if = { limit = { exists = global_var:currency_gbp_v } add = global_var:currency_gbp_v }
+	if = { limit = { exists = global_var:currency_sur_v } add = global_var:currency_sur_v }
+	if = { limit = { exists = global_var:currency_brz_v } add = global_var:currency_brz_v }
+	if = { limit = { exists = global_var:currency_dem_v } add = global_var:currency_dem_v }
+	if = { limit = { exists = global_var:currency_pen_v } add = global_var:currency_pen_v }
+	if = { limit = { exists = global_var:currency_mxn_v } add = global_var:currency_mxn_v }
+	if = { limit = { exists = global_var:currency_irr_v } add = global_var:currency_irr_v }
+	if = { limit = { exists = global_var:currency_trl_v } add = global_var:currency_trl_v }
+	if = { limit = { exists = global_var:currency_yuf_v } add = global_var:currency_yuf_v }
+	if = { limit = { exists = global_var:currency_pln_v } add = global_var:currency_pln_v }
+	if = { limit = { exists = global_var:currency_cad_v } add = global_var:currency_cad_v }
+	if = { limit = { exists = global_var:currency_aud_v } add = global_var:currency_aud_v }
+	if = { limit = { exists = global_var:currency_nzd_v } add = global_var:currency_nzd_v }
+	if = { limit = { exists = global_var:currency_aup_v } add = global_var:currency_aup_v }
+	if = { limit = { exists = global_var:currency_nzp_v } add = global_var:currency_nzp_v }
+	if = { limit = { exists = global_var:currency_itl_v } add = global_var:currency_itl_v }
+	if = { limit = { exists = global_var:currency_jpy_v } add = global_var:currency_jpy_v }
+	if = { limit = { exists = global_var:currency_chf_v } add = global_var:currency_chf_v }
+	if = { limit = { exists = global_var:currency_ars_v } add = global_var:currency_ars_v }
+	if = { limit = { exists = global_var:currency_cny_v } add = global_var:currency_cny_v }
+	if = { limit = { exists = global_var:currency_inr_v } add = global_var:currency_inr_v }
+	if = { limit = { exists = global_var:currency_zar_v } add = global_var:currency_zar_v }
+	if = { limit = { exists = global_var:currency_sek_v } add = global_var:currency_sek_v }
+	if = { limit = { exists = global_var:currency_egp_v } add = global_var:currency_egp_v }
+	if = { limit = { exists = global_var:currency_grd_v } add = global_var:currency_grd_v }
+	if = { limit = { exists = global_var:currency_iep_v } add = global_var:currency_iep_v }
+	if = { limit = { exists = global_var:currency_esp_v } add = global_var:currency_esp_v }
+	if = { limit = { exists = global_var:currency_pte_v } add = global_var:currency_pte_v }
+	if = { limit = { exists = global_var:currency_nok_v } add = global_var:currency_nok_v }
+	if = { limit = { exists = global_var:currency_fim_v } add = global_var:currency_fim_v }
+	if = { limit = { exists = global_var:currency_dkk_v } add = global_var:currency_dkk_v }
+	if = { limit = { exists = global_var:currency_krw_v } add = global_var:currency_krw_v }
+	if = { limit = { exists = global_var:currency_thb_v } add = global_var:currency_thb_v }
+	if = { limit = { exists = global_var:currency_veb_v } add = global_var:currency_veb_v }
+	if = { limit = { exists = global_var:currency_php_v } add = global_var:currency_php_v }
+	divide = foreign_avg_count
+}
+
+foreign_avg_count = {
+	every_in_global_list = {
+		variable = central_bank_list
+		add = 1
+	}
+}
+
+
+# Interest Rates
+interest_rate = {
+	value = 0
+	add = var:interest_rate
+}
+
+interest_rate_gui = {
+	value = var:interest_rate_gui
+}
+
+interest_rate_effect = {
+	value = {
+		value = interest_rate
+		add = -2
+		min = -3.5
+		divide = 10
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_government_controlled
+		}
+		multiply = 0.1
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_government_interference
+		}
+		multiply = 0.6
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_independent_monetary_policy
+		}
+		multiply = 1.5
+	}
+	### This represents the 'zero lower bound', where interest rates rapidly lose effectiveness below zero percent
+	if = {
+		limit = {
+			interest_rate < 0
+		}
+		multiply = {
+			value = 1
+			add = {
+				value = interest_rate
+				multiply = 0.2
+			}
+			min = 0.7
+		}
+	}
+}
+
+# Money Supply
+money_supply = {
+	value = var:money_supply
+	min = {
+		value = money_supply_max
+		multiply = -1
+	}
+	max = money_supply_max
+}
+
+money_supply_max = {
+	value = gold_reserves_limit
+	add = credit
+}
+
+money_supply_5 = {
+	value = money_supply_max
+	multiply = 0.05
+}
+
+money_supply_percentage = {
+	value = money_supply
+	divide = money_supply_max
+	multiply = 100
+}
+
+money_supply_growth_percentage = {
+	value = money_supply_growth
+	divide = money_supply_max
+	multiply = 100
+}
+
+money_supply_from_gold_reserves = {
+	value = gold_reserves_limit
+	divide = 80
+}
+
+money_supply_growth_from_gold = {
+	value = 0 
+	if = {
+		limit = {
+			gold_reserves > 1
+		}
+		subtract = {
+			value = gold_reserves
+			divide = 10
+		}
+	}
+	if = {
+		limit = {
+			gold_reserves <= 0
+		}
+		add = {
+			value = credit
+			multiply = scaled_debt
+			divide = 10			
+		}
+	}
+	divide = 5
+}
+
+money_supply_growth = {
+	value = 0
+	if = {
+		limit = {
+			has_variable = contractionary_monetary_policy
+		}
+		subtract = {
+			value = {
+				value = gold_reserves_limit
+				divide = 30
+			}
+			desc = MNS_CONTRACTIONARY
+			format = "MONEY_SUPPLY_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			has_variable = stable_monetary_policy
+		}
+		value = 0
+	}
+	if = {
+		limit = {
+			has_variable = expansionary_monetary_policy
+		}
+		add = {
+			value = {
+				value = gold_reserves_limit
+				divide = 30
+			}
+			desc = MNS_EXPANSIONARY
+			format = "MONEY_SUPPLY_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			not = {
+				has_law = law_type:law_gold_standard
+				has_variable = pegged_currency
+			}
+		}
+		add = {
+			value = money_supply_growth_from_gold
+			desc = MNS_MONEY_SUPPLY_FROM_RESERVES
+			format = "MONEY_SUPPLY_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			has_variable = pegged_currency
+		}
+		value = var:pegged_currency.money_supply_growth
+	}
+}
+
+base_money_supply = {
+	value = gold_reserves_limit
+	divide = 2
+}
+
+### Inflation
+inflation_value = {
+	value = var:inflation_rate
+	if = {
+		limit = {
+			has_variable = pegged_currency
+		}
+		value = var:pegged_currency.inflation_value
+	}
+}
+
+inflation_modifier_mult = {
+	value = 0
+	if = {
+		limit = {
+			inflation_value >= 5
+			inflation_value < 10
+		}
+		value = 5
+	}
+	else_if = {
+		limit = {
+			inflation_value >= 10
+			inflation_value < 15
+		}
+		value = 15
+	}
+	else_if = {
+		limit = {
+			inflation_value >= 15
+			inflation_value < 20
+		}
+		value = 25
+	}
+	else_if = {
+		limit = {
+			inflation_value >= 20
+			inflation_value < 25
+		}
+		value = 35
+	}
+	else_if = {
+		limit = {
+			inflation_value >= 25
+			inflation_value < 30
+		}
+		value = 50
+	}
+	else_if = {
+		limit = {
+			inflation_value >= 30
+			inflation_value < 50
+		}
+		value = 60
+	}
+	else_if = {
+		limit = {
+			inflation_value >= 50
+			inflation_value < 500
+		}
+		value = 75
+	}
+	else_if = {
+		limit = {
+			inflation_value >= 500
+		}
+		value = 100
+	}
+	else_if = {
+		limit = {
+			inflation_value < 0
+			inflation_value >= -5
+		}
+		value = 5
+	}
+	else_if = {
+		limit = {
+			inflation_value < -5
+			inflation_value >= -10
+		}
+		value = 50
+	}
+	else_if = {
+		limit = {
+			inflation_value < -10
+		}
+		value = 100
+	}
+}
+
+inflation_growth = {
+	value = 0
+	# From Excess Money Supply
+	if = {
+		limit = {
+			money_supply_percentage >= 10
+		}
+		add = {
+			value = {
+				value = money_supply_percentage
+				divide = 30
+			}
+			desc = INF_MONEY_SUPPLY
+			format = "INFLATION_GROWTH_TOOLTIP_FORMAT"
+		}
+	}
+	## From Goods prices
+	# Housing
+	add = {
+		value = inflation_housing_price
+		desc = INF_HOUSING_PRICE
+		format = "INFLATION_GROWTH_TOOLTIP_FORMAT"
+	}
+	# Groceries
+	add = {
+		value = inflation_groceries_price
+		desc = INF_GROCERIES_PRICE
+		format = "INFLATION_GROWTH_TOOLTIP_FORMAT"
+	}
+	# Clothes
+	add = {
+		value = inflation_clothes_price
+		desc = INF_CLOTHES_PRICE
+		format = "INFLATION_GROWTH_TOOLTIP_FORMAT"
+	}
+	# Services
+	add = {
+		value = inflation_services_price
+		desc = INF_SERVICES_PRICE
+		format = "INFLATION_GROWTH_TOOLTIP_FORMAT"
+	}
+	#Furniture
+	add = {
+		value = inflation_furniture_price
+		desc = INF_FURNITURE_PRICE
+		format = "INFLATION_GROWTH_TOOLTIP_FORMAT"
+	}
+	# Electricity
+	add = {
+		value = inflation_electricity_price
+		desc = INF_ELECTRICITY_PRICE
+		format = "INFLATION_GROWTH_TOOLTIP_FORMAT"
+	}
+	# Media
+	add = {
+		value = inflation_media_price
+		desc = INF_MEDIA_PRICE
+		format = "INFLATION_GROWTH_TOOLTIP_FORMAT"
+	}
+	# Healthcare
+	add = {
+		value = inflation_healthcare_price
+		desc = INF_HEALTHCARE_PRICE
+		format = "INFLATION_GROWTH_TOOLTIP_FORMAT"
+	}
+	# From Deficit Money Supply
+	if = {
+		limit = {
+			money_supply_percentage <= -10
+		}
+		add = {
+			value = {
+				value = money_supply_percentage
+				divide = 30
+			}
+			desc = INF_DEF_MONEY_SUPPLY
+			format = "INFLATION_GROWTH_TOOLTIP_FORMAT"
+		}
+	}
+	## From Interest Rate
+	if = {
+		limit = {
+			interest_rate > -100
+			not = {
+				interest_rate = 0
+			}
+		}
+		subtract = {
+			value = interest_rate_effect
+			desc = INF_INTEREST_RATE
+			format = "INFLATION_GROWTH_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_gold_standard
+		}
+		divide = {
+			value = 10
+			desc = INF_GOLD_STANDARD
+			format = "INFLATION_GROWTH_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			has_variable = pegged_currency
+		}
+		value = {
+			value = var:pegged_currency.inflation_growth
+		}
+	}
+	max = 100
+}
+
+inflation_housing_price = {
+	# Housing
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:housing = {
+						market_goods_pricier <= -0.7
+						market_goods_pricier > -0.8
+					}
+				}
+			}
+		}
+		subtract = 0.6
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:housing = {
+						market_goods_pricier <= -0.6
+						market_goods_pricier > -0.7
+					}
+				}
+			}
+		}
+		subtract = 0.5
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:housing = {
+						market_goods_pricier <= -0.5
+						market_goods_pricier > -0.6
+					}
+				}
+			}
+		}
+		subtract = 0.4
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:housing = {
+						market_goods_pricier <= -0.4
+						market_goods_pricier > -0.5
+					}
+				}
+			}
+		}
+		subtract = 0.3
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:housing = {
+						market_goods_pricier <= -0.3
+						market_goods_pricier > -0.4
+					}
+				}
+			}
+		}
+		subtract = 0.1
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:housing = {
+						market_goods_pricier <= -0.2
+						market_goods_pricier > -0.3
+					}
+				}
+			}
+		}
+		subtract = 0.05
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:housing = {
+						market_goods_pricier >= 0.2
+						market_goods_pricier < 0.3
+					}
+				}
+			}
+		}
+		add = 0.2
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:housing = {
+						market_goods_pricier >= 0.3
+						market_goods_pricier < 0.4
+					}
+				}
+			}
+		}
+		add = 0.3
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:housing = {
+						market_goods_pricier >= 0.4
+						market_goods_pricier < 0.5
+					}
+				}
+			}
+		}
+		add = 0.4
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:housing = {
+						market_goods_pricier >= 0.5
+						market_goods_pricier < 0.6
+					}
+				}
+			}
+		}
+		add = 0.5
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:housing = {
+						market_goods_pricier >= 0.6
+						market_goods_pricier < 0.7
+					}
+				}
+			}
+		}
+		add = 0.6
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:housing = {
+						market_goods_pricier >= 0.7
+						market_goods_pricier < 0.8
+					}
+				}
+			}
+		}
+		add = 0.7
+	}
+}
+
+inflation_groceries_price = {
+	# Groceries
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:groceries = {
+						market_goods_pricier <= -0.7
+						market_goods_pricier > -0.8
+					}
+				}
+			}
+		}
+		subtract = 0.6
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:groceries = {
+						market_goods_pricier <= -0.6
+						market_goods_pricier > -0.7
+					}
+				}
+			}
+		}
+		subtract = 0.5
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:groceries = {
+						market_goods_pricier <= -0.5
+						market_goods_pricier > -0.6
+					}
+				}
+			}
+		}
+		subtract = 0.4
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:groceries = {
+						market_goods_pricier <= -0.4
+						market_goods_pricier > -0.5
+					}
+				}
+			}
+		}
+		subtract = 0.3
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:groceries = {
+						market_goods_pricier <= -0.3
+						market_goods_pricier > -0.4
+					}
+				}
+			}
+		}
+		subtract = 0.1
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:groceries = {
+						market_goods_pricier <= -0.2
+						market_goods_pricier > -0.3
+					}
+				}
+			}
+		}
+		subtract = 0.05
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:groceries = {
+						market_goods_pricier >= 0.2
+						market_goods_pricier < 0.3
+					}
+				}
+			}
+		}
+		add = 0.2
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:groceries = {
+						market_goods_pricier >= 0.3
+						market_goods_pricier < 0.4
+					}
+				}
+			}
+		}
+		add = 0.3
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:groceries = {
+						market_goods_pricier >= 0.4
+						market_goods_pricier < 0.5
+					}
+				}
+			}
+		}
+		add = 0.4
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:groceries = {
+						market_goods_pricier >= 0.5
+						market_goods_pricier < 0.6
+					}
+				}
+			}
+		}
+		add = 0.5
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:groceries = {
+						market_goods_pricier >= 0.6
+						market_goods_pricier < 0.7
+					}
+				}
+			}
+		}
+		add = 0.6
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:groceries = {
+						market_goods_pricier >= 0.7
+						market_goods_pricier < 0.8
+					}
+				}
+			}
+		}
+		add = 0.7
+	}
+}
+
+inflation_clothes_price = {
+	# clothes
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:clothes = {
+						market_goods_pricier <= -0.7
+						market_goods_pricier > -0.8
+					}
+				}
+			}
+		}
+		subtract = 0.6
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:clothes = {
+						market_goods_pricier <= -0.6
+						market_goods_pricier > -0.7
+					}
+				}
+			}
+		}
+		subtract = 0.5
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:clothes = {
+						market_goods_pricier <= -0.5
+						market_goods_pricier > -0.6
+					}
+				}
+			}
+		}
+		subtract = 0.4
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:clothes = {
+						market_goods_pricier <= -0.4
+						market_goods_pricier > -0.5
+					}
+				}
+			}
+		}
+		subtract = 0.3
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:clothes = {
+						market_goods_pricier >= -0.3
+						market_goods_pricier < -0.4
+					}
+				}
+			}
+		}
+		subtract = 0.1
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:clothes = {
+						market_goods_pricier <= -0.2
+						market_goods_pricier > -0.3
+					}
+				}
+			}
+		}
+		subtract = 0.05
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:clothes = {
+						market_goods_pricier >= 0.2
+						market_goods_pricier < 0.3
+					}
+				}
+			}
+		}
+		add = 0.2
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:clothes = {
+						market_goods_pricier >= 0.3
+						market_goods_pricier < 0.4
+					}
+				}
+			}
+		}
+		add = 0.3
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:clothes = {
+						market_goods_pricier >= 0.4
+						market_goods_pricier < 0.5
+					}
+				}
+			}
+		}
+		add = 0.4
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:clothes = {
+						market_goods_pricier >= 0.5
+						market_goods_pricier < 0.6
+					}
+				}
+			}
+		}
+		add = 0.5
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:clothes = {
+						market_goods_pricier >= 0.6
+						market_goods_pricier < 0.7
+					}
+				}
+			}
+		}
+		add = 0.6
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:clothes = {
+						market_goods_pricier >= 0.7
+						market_goods_pricier < 0.8
+					}
+				}
+			}
+		}
+		add = 0.7
+	}
+}
+
+inflation_services_price = {
+	# services
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:services = {
+						market_goods_pricier <= -0.7
+						market_goods_pricier > -0.8
+					}
+				}
+			}
+		}
+		subtract = 0.06
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:services = {
+						market_goods_pricier <= -0.6
+						market_goods_pricier > -0.7
+					}
+				}
+			}
+		}
+		subtract = 0.05
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:services = {
+						market_goods_pricier <= -0.5
+						market_goods_pricier > -0.6
+					}
+				}
+			}
+		}
+		subtract = 0.04
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:services = {
+						market_goods_pricier <= -0.4
+						market_goods_pricier > -0.5
+					}
+				}
+			}
+		}
+		subtract = 0.03
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:services = {
+						market_goods_pricier <= -0.3
+						market_goods_pricier > -0.4
+					}
+				}
+			}
+		}
+		subtract = 0.01
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:services = {
+						market_goods_pricier <= -0.2
+						market_goods_pricier > -0.3
+					}
+				}
+			}
+		}
+		subtract = 0.005
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:services = {
+						market_goods_pricier >= 0.2
+						market_goods_pricier < 0.3
+					}
+				}
+			}
+		}
+		add = 0.2
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:services = {
+						market_goods_pricier >= 0.3
+						market_goods_pricier < 0.4
+					}
+				}
+			}
+		}
+		add = 0.3
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:services = {
+						market_goods_pricier >= 0.4
+						market_goods_pricier < 0.5
+					}
+				}
+			}
+		}
+		add = 0.4
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:services = {
+						market_goods_pricier >= 0.5
+						market_goods_pricier < 0.6
+					}
+				}
+			}
+		}
+		add = 0.5
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:services = {
+						market_goods_pricier >= 0.6
+						market_goods_pricier < 0.7
+					}
+				}
+			}
+		}
+		add = 0.6
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:services = {
+						market_goods_pricier >= 0.7
+						market_goods_pricier < 0.8
+					}
+				}
+			}
+		}
+		add = 0.7
+	}
+}
+
+inflation_furniture_price = {
+	# furniture
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:furniture = {
+						market_goods_pricier <= -0.7
+						market_goods_pricier > -0.8
+					}
+				}
+			}
+		}
+		subtract = 0.6
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:furniture = {
+						market_goods_pricier <= -0.6
+						market_goods_pricier > -0.7
+					}
+				}
+			}
+		}
+		subtract = 0.5
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:furniture = {
+						market_goods_pricier <= -0.5
+						market_goods_pricier > -0.6
+					}
+				}
+			}
+		}
+		subtract = 0.4
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:furniture = {
+						market_goods_pricier <= -0.4
+						market_goods_pricier > -0.5
+					}
+				}
+			}
+		}
+		subtract = 0.3
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:furniture = {
+						market_goods_pricier <= -0.3
+						market_goods_pricier > -0.4
+					}
+				}
+			}
+		}
+		subtract = 0.1
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:furniture = {
+						market_goods_pricier <= -0.2
+						market_goods_pricier > -0.3
+					}
+				}
+			}
+		}
+		subtract = 0.05
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:furniture = {
+						market_goods_pricier >= 0.2
+						market_goods_pricier < 0.3
+					}
+				}
+			}
+		}
+		add = 0.2
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:furniture = {
+						market_goods_pricier >= 0.3
+						market_goods_pricier < 0.4
+					}
+				}
+			}
+		}
+		add = 0.3
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:furniture = {
+						market_goods_pricier >= 0.4
+						market_goods_pricier < 0.5
+					}
+				}
+			}
+		}
+		add = 0.4
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:furniture = {
+						market_goods_pricier >= 0.5
+						market_goods_pricier < 0.6
+					}
+				}
+			}
+		}
+		add = 0.5
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:furniture = {
+						market_goods_pricier >= 0.6
+						market_goods_pricier < 0.7
+					}
+				}
+			}
+		}
+		add = 0.6
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:furniture = {
+						market_goods_pricier >= 0.7
+						market_goods_pricier < 0.8
+					}
+				}
+			}
+		}
+		add = 0.7
+	}
+}
+
+inflation_electricity_price = {
+	# electricity
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:electricity = {
+						market_goods_pricier <= -0.7
+						market_goods_pricier > -0.8
+					}
+				}
+			}
+		}
+		subtract = 0.6
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:electricity = {
+						market_goods_pricier <= -0.6
+						market_goods_pricier > -0.7
+					}
+				}
+			}
+		}
+		subtract = 0.5
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:electricity = {
+						market_goods_pricier <= -0.5
+						market_goods_pricier > -0.6
+					}
+				}
+			}
+		}
+		subtract = 0.4
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:electricity = {
+						market_goods_pricier <= -0.4
+						market_goods_pricier > -0.5
+					}
+				}
+			}
+		}
+		subtract = 0.3
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:electricity = {
+						market_goods_pricier <= -0.3
+						market_goods_pricier > -0.4
+					}
+				}
+			}
+		}
+		subtract = 0.1
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:electricity = {
+						market_goods_pricier <= -0.2
+						market_goods_pricier > -0.3
+					}
+				}
+			}
+		}
+		subtract = 0.05
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:electricity = {
+						market_goods_pricier >= 0.2
+						market_goods_pricier < 0.3
+					}
+				}
+			}
+		}
+		add = 0.2
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:electricity = {
+						market_goods_pricier >= 0.3
+						market_goods_pricier < 0.4
+					}
+				}
+			}
+		}
+		add = 0.3
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:electricity = {
+						market_goods_pricier >= 0.4
+						market_goods_pricier < 0.5
+					}
+				}
+			}
+		}
+		add = 0.4
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:electricity = {
+						market_goods_pricier >= 0.5
+						market_goods_pricier < 0.6
+					}
+				}
+			}
+		}
+		add = 0.5
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:electricity = {
+						market_goods_pricier >= 0.6
+						market_goods_pricier < 0.7
+					}
+				}
+			}
+		}
+		add = 0.6
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:electricity = {
+						market_goods_pricier >= 0.7
+						market_goods_pricier < 0.8
+					}
+				}
+			}
+		}
+		add = 0.7
+	}
+}
+
+inflation_media_price = {
+	# media
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:media = {
+						market_goods_pricier <= -0.7
+						market_goods_pricier > -0.8
+					}
+				}
+			}
+		}
+		subtract = 0.6
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:media = {
+						market_goods_pricier <= -0.6
+						market_goods_pricier > -0.7
+					}
+				}
+			}
+		}
+		subtract = 0.5
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:media = {
+						market_goods_pricier <= -0.5
+						market_goods_pricier > -0.6
+					}
+				}
+			}
+		}
+		subtract = 0.4
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:media = {
+						market_goods_pricier <= -0.4
+						market_goods_pricier > -0.5
+					}
+				}
+			}
+		}
+		subtract = 0.3
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:media = {
+						market_goods_pricier <= -0.3
+						market_goods_pricier > -0.4
+					}
+				}
+			}
+		}
+		subtract = 0.1
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:media = {
+						market_goods_pricier <= -0.2
+						market_goods_pricier > -0.3
+					}
+				}
+			}
+		}
+		subtract = 0.05
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:media = {
+						market_goods_pricier >= 0.2
+						market_goods_pricier < 0.3
+					}
+				}
+			}
+		}
+		add = 0.2
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:media = {
+						market_goods_pricier >= 0.3
+						market_goods_pricier < 0.4
+					}
+				}
+			}
+		}
+		add = 0.3
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:media = {
+						market_goods_pricier >= 0.4
+						market_goods_pricier < 0.5
+					}
+				}
+			}
+		}
+		add = 0.4
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:media = {
+						market_goods_pricier >= 0.5
+						market_goods_pricier < 0.6
+					}
+				}
+			}
+		}
+		add = 0.5
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:media = {
+						market_goods_pricier >= 0.6
+						market_goods_pricier < 0.7
+					}
+				}
+			}
+		}
+		add = 0.6
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:media = {
+						market_goods_pricier >= 0.7
+						market_goods_pricier < 0.8
+					}
+				}
+			}
+		}
+		add = 0.7
+	}
+}
+
+inflation_healthcare_price = {
+	# healthcare
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:healthcare = {
+						market_goods_pricier <= -0.7
+						market_goods_pricier > -0.8
+					}
+				}
+			}
+		}
+		subtract = 0.6
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:healthcare = {
+						market_goods_pricier <= -0.6
+						market_goods_pricier > -0.7
+					}
+				}
+			}
+		}
+		subtract = 0.5
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:healthcare = {
+						market_goods_pricier <= -0.5
+						market_goods_pricier > -0.6
+					}
+				}
+			}
+		}
+		subtract = 0.4
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:healthcare = {
+						market_goods_pricier <= -0.4
+						market_goods_pricier > -0.5
+					}
+				}
+			}
+		}
+		subtract = 0.3
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:healthcare = {
+						market_goods_pricier <= -0.3
+						market_goods_pricier > -0.4
+					}
+				}
+			}
+		}
+		subtract = 0.1
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:healthcare = {
+						market_goods_pricier <= -0.2
+						market_goods_pricier > -0.3
+					}
+				}
+			}
+		}
+		subtract = 0.05
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:healthcare = {
+						market_goods_pricier >= 0.2
+						market_goods_pricier < 0.3
+					}
+				}
+			}
+		}
+		add = 0.2
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:healthcare = {
+						market_goods_pricier >= 0.3
+						market_goods_pricier < 0.4
+					}
+				}
+			}
+		}
+		add = 0.3
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:healthcare = {
+						market_goods_pricier >= 0.4
+						market_goods_pricier < 0.5
+					}
+				}
+			}
+		}
+		add = 0.4
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:healthcare = {
+						market_goods_pricier >= 0.5
+						market_goods_pricier < 0.6
+					}
+				}
+			}
+		}
+		add = 0.5
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:healthcare = {
+						market_goods_pricier >= 0.6
+						market_goods_pricier < 0.7
+					}
+				}
+			}
+		}
+		add = 0.6
+	}
+	if = {
+		limit = {
+			owner = {
+				market = {
+					mg:healthcare = {
+						market_goods_pricier >= 0.7
+						market_goods_pricier < 0.8
+					}
+				}
+			}
+		}
+		add = 0.7
+	}
+}

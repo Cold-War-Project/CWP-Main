@@ -1,7 +1,5 @@
 ﻿customs_union = {
-	can_select = no
-	requires_approval = yes
-	can_use_obligations = yes
+	requires_approval = no
 	unlocking_technologies = {
 		international_relations
 	}
@@ -14,15 +12,14 @@
 			NOR = {
 				is_country_type = decentralized
 				has_law = law_type:law_isolationism
+				is_subject_type = subject_type_military_occupation
 			}
+			is_subject_of = root
 		}
 	}
 	possible = {
 		NOT = {
 			has_war_with = scope:target_country
-		}
-		NOT = {
-			is_subject_of = scope:target_country
 		}
 		is_junior_in_customs_union = no
 		has_diplomatic_relevance = scope:target_country
@@ -31,10 +28,6 @@
 				has_law = law_type:law_isolationism
 			}
 			has_law = law_type:law_isolationism
-		}
-		custom_tooltip = {
-			text = DIPLO_ACTION_RELATIONS_CORDIAL_OR_GREATER
-			scope:target_country.relations:root >= relations_threshold:cordial
 		}
 		is_revolutionary = no
 		scope:target_country = {
@@ -79,18 +72,7 @@
 		recipient_pays_maintenance = no
 		is_customs_union = yes
 		relations_progress_per_day = 1		# At 100, +1 relations
-		relations_improvement_max = 80
-		subject_type = subject_type_customs_union		# A customs union is technically a type of subject, though it isn't presented this way in-game
-		is_about_to_auto_break = {
-			scope:target_country.relations:root < 23			# this is: cordial + 3
-		}
-		should_auto_break = {
-			custom_tooltip = {
-				text = DIPLO_ACTION_RELATIONS_CORDIAL_OR_GREATER_NOT
-				# make sure to update is_about_to_auto_break when changing this:
-				scope:target_country.relations:root < relations_threshold:cordial
-			}
-		}
+		relations_improvement_max = 50
 		should_invalidate = {
 			OR = {
 				has_war_with = scope:target_country
@@ -98,11 +80,6 @@
 				scope:target_country = {
 					is_country_type = decentralized
 				}
-				is_subject_of = scope:target_country
-				scope:target_country = {
-					is_subject_of = root
-				}
-				is_junior_in_customs_union = yes
 				scope:target_country = {
 					has_law = law_type:law_isolationism
 				}
@@ -156,8 +133,6 @@
 		}
 	}
 	ai = {
-		check_acceptance_for_will_break = yes
-		check_acceptance_for_will_propose = yes
 		# This is the acceptance score for the senior part of the customs union (used for 'join customs union' action and checking )
 		accept_score = {
 			value = -1000
@@ -548,35 +523,31 @@
 					value = -50
 				}
 			}
-		}
-		will_break = {
-			is_junior_in_customs_union = yes
-			OR = {
-				has_attitude = {
-					who = scope:target_country
-					attitude = antagonistic
-				}
-				has_attitude = {
-					who = scope:target_country
-					attitude = domineering
-				}
-				has_attitude = {
-					who = scope:target_country
-					attitude = belligerent
-				}
-				has_attitude = {
-					who = scope:target_country
-					attitude = rebellious
-				}
-				AND = {
-					NOT = {
-						has_law = law_type:law_council_elective
+			if = {
+				limit = {
+					OR = {
+						is_subject_type = subject_type_puppet
+						is_subject_type = subject_type_vassal
 					}
-					scope:target_country = {
-						has_law = law_type:law_council_elective
-					}
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_PUPPET"
+					value = 1000
 				}
 			}
+			if = {
+				limit = {
+					is_subject_type = subject_type_protectorate
+					is_subject_type = subject_type_tributary
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_PROTECTORATE"
+					value = 100
+				}
+			}
+		}
+		will_break = {
+			always = no
 		}
 		propose_score = {
 			value = 10
@@ -593,21 +564,22 @@
 	}
 }
 
-join_customs_union = {
-	requires_approval = yes
-	can_use_obligations = yes
-	potential = {
-		NOT = {
-			is_country_type = decentralized
-		}
-		scope:target_country = {
-			NOT = {
-				is_country_type = decentralized
-			}
-		}
-	}
-	possible = {
-		always = no
+#join_customs_union = {
+#	requires_approval = yes
+#	can_use_obligations = yes
+#	potential = {
+#		is_direct_subject_of = scope:target_country
+#		NOT = {
+#			is_country_type = decentralized
+#		}
+#		scope:target_country = {
+#			NOT = {
+#				is_country_type = decentralized
+#			}
+#		}
+#	}
+#	possible = {
+#		always = no
 #		NOT = {
 #			has_war_with = scope:target_country
 #		}
@@ -647,56 +619,56 @@ join_customs_union = {
 #				}
 #			}
 #		}
-	}
-	reverse_pact = customs_union
-	accept_effect = {
-		if = {
-			limit = {
-				has_diplomatic_pact = {
-					who = scope:target_country
-					type = trade_agreement
-				}
-			}
-			remove_diplomatic_pact = {
-				country = scope:target_country
-				type = trade_agreement
-			}
-		}
-	}
-	ai = {
-		check_acceptance_for_will_propose = yes
-		propose_score = {
-			value = 10
-		}
-		propose_break_score = {
-			value = 10
-		}
-		use_obligation_chance = {
-			value = 10
-		}
-		owe_obligation_chance = {
-			value = 10
-		}
-	}
-}
+#	}
+#	reverse_pact = customs_union
+#	accept_effect = {
+#		if = {
+#			limit = {
+#				has_diplomatic_pact = {
+#					who = scope:target_country
+#					type = trade_agreement
+#				}
+#			}
+#			remove_diplomatic_pact = {
+#				country = scope:target_country
+#				type = trade_agreement
+#			}
+#		}
+#	}
+#	ai = {
+#		check_acceptance_for_will_propose = yes
+#		propose_score = {
+#			value = 10
+#		}
+#		propose_break_score = {
+#			value = 10
+#		}
+#		use_obligation_chance = {
+#			value = 10
+#		}
+#		owe_obligation_chance = {
+#			value = 10
+#		}
+#	}
+#}
 
-change_customs_union = {
-	requires_approval = yes
-	can_use_obligations = yes
-	potential = {
-		NOT = {
-			is_country_type = decentralized
-		}
-		is_junior_in_customs_union = no
-		scope:target_country = {
-			NOT = {
-				is_country_type = decentralized
-			}
-			is_junior_in_customs_union = yes
-		}
-	}
-	possible = {
-		always = no
+#change_customs_union = {
+#	requires_approval = yes
+#	can_use_obligations = yes
+#	potential = {
+#		NOT = {
+#			is_country_type = decentralized
+#		}
+#		is_junior_in_customs_union = no
+#		scope:target_country = {
+#			NOT = {
+#				is_country_type = decentralized
+#			}
+#			is_junior_in_customs_union = yes
+#		}
+#	}
+#	possible = {
+#		always = no
 #		NOT = {
 #			has_war_with = scope:target_country
 #		}
@@ -733,35 +705,35 @@ change_customs_union = {
 #				}
 #			}
 #		}
-	}
-	transfer_pact = customs_union
-	accept_effect = {
-		if = {
-			limit = {
-				has_diplomatic_pact = {
-					who = scope:target_country
-					type = trade_agreement
-				}
-			}
-			remove_diplomatic_pact = {
-				country = scope:target_country
-				type = trade_agreement
-			}
-		}
-	}
-	ai = {
-		check_acceptance_for_will_propose = yes
-		propose_score = {
-			value = 10
-		}
-		propose_break_score = {
-			value = 10
-		}
-		use_obligation_chance = {
-			value = 50
-		}
-		owe_obligation_chance = {
-			value = 10
-		}
-	}
-}
+#	}
+#	transfer_pact = customs_union
+#	accept_effect = {
+#		if = {
+#			limit = {
+#				has_diplomatic_pact = {
+#					who = scope:target_country
+#					type = trade_agreement
+#				}
+#			}
+#			remove_diplomatic_pact = {
+#				country = scope:target_country
+#				type = trade_agreement
+#			}
+#		}
+#	}
+#	ai = {
+#		check_acceptance_for_will_propose = yes
+#		propose_score = {
+#			value = 10
+#		}
+#		propose_break_score = {
+#			value = 10
+#		}
+#		use_obligation_chance = {
+#			value = 50
+#		}
+#		owe_obligation_chance = {
+#			value = 10
+#		}
+#	}
+#}
