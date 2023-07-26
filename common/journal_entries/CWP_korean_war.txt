@@ -59,7 +59,7 @@
 
 	# completion trigger, use is_goal_complete = yes in here if you're testing a tracked goal metric; if left blank, cannot be completed
 	complete = {
-		global_var:korean_tensions <=5
+		global_var:korean_tensions <=25
 		custom_tooltip = {
 			text = korean_war_timeout_tooltip 
 			game_date >= 1950.1.1
@@ -87,7 +87,7 @@
 
 	# failure trigger, should spawn event explaining what happens when triggered, framed as a failure; if left blank, cannot fail
 	fail = {
-		global_var:korean_tensions >=5
+		global_var:korean_tensions >=25
 		custom_tooltip = {
 			text = korean_war_timeout_tooltip 
 			game_date >= 1950.1.1
@@ -96,6 +96,37 @@
 
 	# effect which is executed when 'fail' trigger becomes true
 	on_fail = {
+		hidden_effect = {
+			s:STATE_SEOUL = {
+				add_claim = c:NRK
+			}
+			s:STATE_BUSAN = {
+				add_claim = c:NRK
+			}
+			s:STATE_YANGHO = {
+				add_claim = c:NRK
+			}
+			s:STATE_SARIWON = {
+				add_claim = c:STK
+			}
+			s:STATE_PYONGYANG = {
+				add_claim = c:STK
+			}
+		}
+		c:NRK = {
+			create_diplomatic_play = {
+				name = korean_war
+				type = dp_revolution
+				escalation = 25
+				target_country = c:STK
+				add_initiator_backers = {
+					country = scope:communist_leader
+				}
+				add_target_backers = {
+					country = scope:non_communist_leader
+				}
+			}
+		}
 	}
 
 	# optional invalidation trigger, should not notify player when it triggers, just clean up and silently disappear due to journal entry no longer being valid; if left blank, cannot be invalidated
@@ -122,15 +153,12 @@
 				}
 			}
 			custom_tooltip = {
-				text = north_korea_war_with_south
-				c:NRK ?= {
-					has_war_with ?= c:STK
-				}
-			}
-			custom_tooltip = {
-				text = south_korea_war_with_north
-				c:STK ?= {
-					has_war_with ?= c:NRK
+				text = koreas_at_war
+				any_diplomatic_play = {
+					AND = {
+						any_scope_play_involved = { this = c:STK }
+						any_scope_play_involved = { this = c:NRK }
+					}
 				}
 			}
 		}
