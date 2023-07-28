@@ -1,1 +1,825 @@
-﻿
+﻿global_gdp_imf = {
+	every_country = {
+		add = cwp_gdp_with_inflation
+	}
+}
+
+global_gdp_imf_div = {
+	value = global_gdp_imf
+	if = {
+		limit = {
+			global_gdp_imf < 6148914645000
+		}
+		divide = 10000000000
+	}
+	if = {
+		limit = {
+			global_gdp_imf >= 6148914645000
+		}
+		divide = 1000000000
+	}
+}
+
+imf_contribution_value = {
+	value = var:imf_contribution
+	min = 0
+}
+
+imf_contribution_natural_growth = {
+	value = imf_contribution_value
+	multiply = 0.01
+}
+
+imf_contribution_percent_value = {
+	value = var:imf_contribution_percent
+}
+
+imf_contribution_money = {
+	value = income
+	multiply = 4
+	multiply = {
+		value = imf_contribution_percent_value
+		divide = 100
+	}
+	if = {
+		limit = {
+			scaled_debt >= 0.95
+		}
+		value = 0
+	}
+}
+
+imf_contribution_money_weekly = {
+	value = imf_contribution_money
+	divide = 4
+	
+}
+
+imf_contribution_money_to_usd = {
+	value = imf_contribution_money
+	multiply = currency_global_to_domestic
+}
+
+imf_domestic_currency_debt = {
+	value = imf_debt_value
+	multiply = {
+		value = {
+			value = global_var:global_currency.country_currency_val
+		}
+		divide = {
+			value = country_currency_val
+		}
+	}
+}
+
+imf_domestic_currency_credit = {
+	value = imf_credit_value
+	multiply = {
+		value = {
+			value = global_var:global_currency.country_currency_val
+		}
+		divide = {
+			value = country_currency_val
+		}
+	}
+}
+
+imf_domestic_currency_debt_after_removing_contribution = {
+	value = imf_contribution_value
+	subtract = imf_domestic_currency_debt
+	max = 0
+}
+
+imf_debt_value = {
+	value = 0
+	if = {
+		limit = {
+			has_variable = imf_debt
+		}
+		add = var:imf_debt
+	}
+}
+imf_credit_value = {
+	value = var:imf_credit
+}
+
+imf_debt_monthly_payment_percentage = {
+	value = var:imf_debt_monthly_percentage
+	min = 0
+	if = {
+		limit = {
+			has_journal_entry = je_imf_austerity_measures
+			var:imf_debt >= 10000000
+		}
+		value = 5
+	}
+	if = {
+		limit = {
+			has_journal_entry = je_imf_austerity_measures
+			var:imf_debt < 10000000
+		}
+		value = 10
+	}
+	if = {
+		limit = {
+			has_journal_entry = je_imf_austerity_measures
+			var:imf_debt < 1000000
+		}
+		value = 20
+	}
+	if = {
+		limit = {
+			has_journal_entry = je_imf_austerity_measures
+			var:imf_debt < 100000
+		}
+		value = 100
+	}
+	if = {
+		limit = {
+			scaled_debt >= 1
+		}
+		value = 0
+	}
+}
+
+imf_credit_monthly_payment_percentage = {
+	value = var:imf_credit_monthly_percentage
+	min = 0
+}
+
+imf_debt_monthly_payment_value = {
+	value = imf_debt_value
+	multiply = {
+		value = imf_debt_monthly_payment_percentage
+		divide = 100
+	}
+}
+
+imf_credit_monthly_payment_value = {
+	value = imf_credit_value
+	multiply = {
+		value = imf_credit_monthly_payment_percentage
+		divide = 100
+	}
+	if = {
+		limit = {
+			imf_credit_value <= 0
+		}
+		value = 0
+	}
+}
+
+
+imf_debt_weekly_payment_value = {
+	value = imf_debt_monthly_payment_value
+	divide = 4
+}
+
+imf_debt_monthly_payment_value_domestic = {
+	value = imf_domestic_currency_debt
+	multiply = {
+		value = imf_debt_monthly_payment_percentage
+		divide = 100
+	}
+}
+
+imf_debt_weekly_payment_value_domestic = {
+	value = imf_debt_monthly_payment_value_domestic
+	divide = 4
+}
+
+imf_credit_monthly_payment_value_domestic = {
+	value = imf_domestic_currency_credit
+	multiply = {
+		value = imf_credit_monthly_payment_percentage
+		divide = 100
+	}
+}
+
+imf_credit_weekly_payment_value_domestic = {
+	value = imf_credit_monthly_payment_value_domestic
+	divide = 4
+}
+
+imf_credit_returns_mult = {
+	value = {
+		every_in_global_list = {
+			limit = {
+				not = {
+					this = root
+				}
+				imf_debt_monthly_payment_value >= 1
+			}
+			variable = imf_members
+			add = imf_debt_monthly_payment_value
+		}
+		multiply = imf_contribution_share
+	}
+	divide = {
+		value = country_currency_val
+		divide = global_var:global_currency.country_currency_val
+	}
+	divide = 4
+}
+
+imf_global_debt = {
+	every_in_global_list = {
+		variable = imf_members
+		add = imf_debt_value
+	}
+}
+
+imf_contribution_share = {
+	value = imf_contribution_value
+	divide = imf_reserves
+}
+
+imf_reserves = {
+	every_in_global_list = {
+		limit = {
+			imf_contribution_value > 0
+		}
+		variable = imf_members
+		add = imf_contribution_value
+	}
+}
+
+imf_reserves_growth = {
+	every_in_global_list = { # From member contribution
+		variable = imf_members
+		add = imf_contribution_money_to_usd
+		add = imf_contribution_natural_growth
+	}
+}
+
+imf_debt_interest_growth_global = {
+	every_in_global_list = {
+		variable = imf_members
+		add = imf_debt_monthly_change
+	}
+}
+
+imf_debt_interest_growth = {
+	value = imf_debt_value
+	multiply = imf_interest_rate
+}
+
+imf_debt_monthly_change = {
+	value = imf_debt_interest_growth
+	subtract = imf_debt_monthly_payment_value
+}
+
+imf_debt_payment_percentage = {
+	value = imf_debt_value
+	multiply = imf_contribution_share # to be used in creditor country scope
+}
+
+imf_debt_taken_from_reserve_country = {
+	value = imf_contribution_share
+	multiply = 2000000 # Test value
+}
+
+imf_member_gdp_share = {
+	value = cwp_gdp
+	divide = {
+		value = {
+			every_in_global_list = {
+				variable = imf_members
+				add = cwp_gdp
+			}
+		}
+	}
+}
+
+imf_interest_rate = {
+	value = var:imf_interest_rate_domestic
+	if = {
+		limit = {
+			exists = var:imf_debt_type
+			var:imf_debt_type = 1
+		}
+		value = 0
+	}
+	if = {
+		limit = {
+			exists = var:imf_loan_overdue
+		}
+		add = {
+			value = var:imf_loan_overdue
+		}
+	}
+	divide = 100
+}
+
+imf_interest_rate_domestic = {
+	add = inflation_value
+	divide = 2
+	min = 2.5
+	#max = 15
+}
+
+imf_total_international_debt = {
+	if = {
+		limit = {
+			or = {
+				has_variable = anglo_american_loan_USA
+				has_variable = anglo_american_loan_CAN
+			}
+		}
+		add = anglo_american_loan_total_USD
+	}
+	add = imf_debt_value
+
+}
+bank_cred_to_imf_trust = {
+	value = bank_credibility_current
+	divide = 24
+}
+imf_trust_in_central_bank = {
+	if = {
+		limit = {
+			bank_credibility_current > 4
+		}
+		value = {
+			value = bank_cred_to_imf_trust
+			
+		}
+	}
+	if = {
+		limit = { bank_credibility_current <= 4 }
+		value = {
+			value = bank_cred_to_imf_trust
+			multiply = -1
+			
+		}
+	}
+	if = {
+		limit = { bank_credibility_current = 3 }
+		value = {
+			value = bank_cred_to_imf_trust
+			multiply = -2.7
+			
+		}
+	}
+	if = {
+		limit = { bank_credibility_current = 2 }
+		value = {
+			value = bank_cred_to_imf_trust
+			multiply = -8
+			
+		}
+	}
+	if = {
+		limit = { bank_credibility_current = 1 }
+		value = {
+			value = bank_cred_to_imf_trust
+			multiply = -24
+			
+		}
+	}
+	if = {
+		limit = {
+			is_at_war = yes
+		}
+		subtract = 0.2
+	}
+}
+
+# Loan Applications
+
+imf_application_loan_max_value = {
+	value = {
+		value = gdp
+		multiply = 2
+		desc = IMF_APPLICATION_GDP
+		format = "IMF_APPLICATION_GDP_TOOLTIP_FORMAT"
+	}
+	if = {
+		limit = {
+			is_at_war = yes
+		}
+		subtract = {
+			value = gdp
+			multiply = 2
+			multiply = 0.2
+			desc = IMF_APPLICATION_AT_WAR
+			format = "IMF_APPLICATION_GDP_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			imf_requirements_meeting < 0
+		}
+		add = {
+			value = gdp
+			multiply = 2
+			multiply = {
+				value = imf_requirements_meeting
+				divide = 100
+			}
+			desc = IMF_APPLICATION_REQUIREMENTS
+			format = "IMF_APPLICATION_GDP_TOOLTIP_FORMAT"
+		}
+	}
+}
+
+imf_application_interest_rate = {
+	value = imf_interest_rate_domestic
+	if = {
+		limit = {
+			imf_application_loan_type_value = 1
+		}
+		value = 0
+	}
+}
+imf_application_loan_type_value = {
+	if = {
+		limit = {
+			bank_credibility_current <= 17
+		}
+		value = 1
+	}
+	if = {
+		limit = {
+			bank_credibility_current >= 18
+		}
+		value = 2
+	}
+	if = {
+		limit = {
+			imf_requirements_meeting < 0
+		}
+		value = 1
+	}
+}
+imf_application_loan_amount = {
+	value = var:imf_loan_application_amount
+	min = 0
+	max = imf_application_loan_max_value
+}
+imf_application_loan_amount_domestic = {
+	value = imf_application_loan_amount
+	multiply = currency_domestic_to_global_currency
+}
+
+imf_application_loan_increase_val = {
+	value = gdp
+	divide = 20
+	#multiply = imf_application_loan_amount
+}
+
+imf_application_loan_10_val = {
+	value = imf_application_loan_amount
+	multiply = 0.1
+}
+
+imf_application_upfront_principle = {
+	value = var:imf_loan_application_upfront_principal
+	max = imf_application_loan_10_val
+}
+
+imf_application_upfront_principle_domestic = {
+	value = imf_application_upfront_principle
+	multiply = currency_domestic_to_global_currency
+}
+
+imf_application_upfront_principle_change_val = {
+	value = imf_application_loan_increase_val
+	divide = 10	
+}
+imf_application_payment_due_years = {
+	value = var:imf_loan_application_payment_due_years
+	min = 1
+	max = 40
+}
+
+imf_application_payment_due_months = {
+	value = var:imf_debt_years
+	multiply = 12
+}
+imf_loan_payment_years_left = {
+	value = 0
+	if = {
+		limit = {
+			has_variable = imf_debt_years
+		}
+		add = var:imf_debt_years
+		subtract = {
+			value = var:imf_loan_payment_months_current
+			divide = 12
+		}
+	}
+
+}
+
+imf_loan_years_left_to_months = {
+	value = imf_loan_payment_years_left
+	multiply = 12
+}
+
+imf_loan_will_pay_off_in_years = {
+	if = {
+		limit = {
+			not = {
+				imf_debt_monthly_change = 0
+			}
+			
+		}
+		value = imf_debt_value
+		divide = {
+			value = imf_debt_monthly_change
+			multiply = -1
+			multiply = 12
+		}
+	}
+}
+
+imf_loan_will_pay_off_in_years_floor = {
+	value = imf_loan_will_pay_off_in_years
+	floor = yes
+}
+
+imf_loan_will_pay_off_in_months = {
+	value = imf_loan_will_pay_off_in_years
+	subtract = imf_loan_will_pay_off_in_years_floor
+	multiply = 12
+}
+
+imf_application_loan_annual_interest_growth = {
+	value = imf_application_loan_amount
+	multiply = {
+		value = imf_application_interest_rate
+		divide = 100
+	}
+}
+imf_application_loan_monthly_interest_growth = {
+	value = imf_application_loan_annual_interest_growth
+	divide = 12
+}
+imf_application_loan_annual_payment = {
+	value = imf_application_loan_amount
+	add = imf_application_loan_annual_interest_growth
+	add = 1000
+	divide = imf_application_payment_due_years
+}
+
+imf_application_loan_annual_payment_domestic = {
+	value = imf_application_loan_amount_domestic
+	add = imf_application_loan_annual_interest_growth
+	divide = imf_application_payment_due_years
+}
+
+imf_application_loan_monthly_payment = {
+	value = imf_application_loan_annual_payment
+	divide = 12
+}
+
+imf_application_loan_weekly_payment = {
+	value = imf_application_loan_monthly_payment
+	divide = 4
+}
+
+imf_application_loan_monthly_payment_domestic = {
+	value = imf_application_loan_annual_payment_domestic
+	divide = imf_application_payment_due_years
+}
+
+imf_application_loan_total_payment_with_interest = {
+	value = imf_application_loan_amount
+	add = {
+		value = imf_application_loan_annual_interest_growth
+		multiply = imf_application_payment_due_years
+	}
+	#subtract = imf_application_loan_annual_payment
+}
+
+imf_application_loan_to_gdp = {
+	value = 0
+	if = { limit = { imf_application_loan_amount > 1 }
+		add = imf_application_loan_amount
+		divide = gdp
+	}
+
+}
+
+imf_application_loan_weekly_payment_ability = {
+	if = {
+		limit = {
+			imf_application_loan_weekly_payment > 0
+			weekly_net_fixed_income > 0
+		}
+		value = weekly_net_fixed_income
+		subtract = imf_application_loan_weekly_payment
+		divide = imf_application_loan_weekly_payment
+	}
+	if = {
+		limit = {
+			imf_application_loan_weekly_payment > 0
+			weekly_net_fixed_income < 0
+		}
+		value = income
+		subtract = imf_application_loan_weekly_payment
+		divide = imf_application_loan_weekly_payment
+	}
+}
+
+imf_application_loan_to_gdp_per_year = {
+	value = imf_application_loan_to_gdp
+}
+
+imf_application_loan_approval_chance = {
+	value = {
+		value = 50
+		desc = IMF_APPROVAL_BASE_VALUE
+		format = "IMF_APPROVAL_TOOLTIP_FORMAT"
+	}
+	add = {
+		value = 100
+		subtract = {
+			value = 100
+			subtract = imf_trust_in_central_bank
+		}
+		multiply = 20
+		desc = IMF_APPROVAL_CENTRAL_BANK_TRUST
+		format = "IMF_APPROVAL_TOOLTIP_FORMAT"
+	}
+	subtract = {
+		value = imf_application_loan_to_gdp
+		multiply = 100
+		subtract = 100
+		if = {
+			limit = {
+				imf_application_loan_to_gdp < 1
+			}
+			divide = 10
+		}
+		desc = IMF_APPROVAL_LOAN_TO_GDP_RATIO
+		format = "IMF_APPROVAL_TOOLTIP_FORMAT"
+	}
+	add = {
+		value = imf_application_loan_weekly_payment_ability
+		multiply = 10
+		max = 20
+		desc = IMF_APPROVAL_LOAN_WEEKLY_PAYMENT_ABILITY
+		format = "IMF_APPROVAL_TOOLTIP_FORMAT"
+	}
+	if = {
+		limit = {
+			imf_application_payment_due_years > 20
+		}
+		subtract = {
+			value = imf_application_payment_due_years
+			multiply = 2
+			desc = IMF_APPROVAL_LONG_TERM_LOAN
+			format = "IMF_APPROVAL_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			imf_application_loan_amount >= imf_reserves
+		}
+		value = -100
+		desc = IMF_APPROVAL_EXCEEDS_RESERVES
+		format = "IMF_APPROVAL_TOOLTIP_FORMAT"
+	}
+	max = 100
+	min = -100
+}
+
+imf_application_loan_disapproval_chance = {
+	value = 100
+	subtract = imf_application_loan_approval_chance
+	max = 100
+}
+
+imf_application_loan_approval_chance_div = {
+	value = imf_application_loan_approval_chance
+	divide = 100
+}
+
+imf_requirements_meeting = {
+	if = {
+		limit = {
+			average_sol >= 10
+		}
+		add = {
+			value = average_sol
+			divide = 10
+			desc = IMF_CURRENT_ECONOMY_SOL
+			format = "IMF_CURRENT_ECONOMT_LAW_POLICIES_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			average_sol <= 10
+		}
+		subtract = {
+			value = average_sol
+			desc = IMF_CURRENT_ECONOMY_SOL
+			format = "IMF_CURRENT_ECONOMT_LAW_POLICIES_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_government_controlled
+		}
+		subtract = {
+			value = 30
+			desc = law_government_controlled
+			format = "IMF_CURRENT_ECONOMT_LAW_POLICIES_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_government_interference
+		}
+		subtract = {
+			value = 20
+			desc = law_government_interference
+			format = "IMF_CURRENT_ECONOMT_LAW_POLICIES_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_isolationism
+		}
+		subtract = {
+			value = 50
+			desc = law_isolationism
+			format = "IMF_CURRENT_ECONOMT_LAW_POLICIES_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_protectionism
+		}
+		subtract = {
+			value = 20
+			desc = law_protectionism
+			format = "IMF_CURRENT_ECONOMT_LAW_POLICIES_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_total_nationalization
+		}
+		subtract = {
+			value = 30
+			desc = law_total_nationalization
+			format = "IMF_CURRENT_ECONOMT_LAW_POLICIES_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_heavy_industry_nationalization
+		}
+		subtract = {
+			value = 20
+			desc = law_heavy_industry_nationalization
+			format = "IMF_CURRENT_ECONOMT_LAW_POLICIES_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_military_industry_nationalization
+		}
+		subtract = {
+			value = 10
+			desc = law_military_industry_nationalization
+			format = "IMF_CURRENT_ECONOMT_LAW_POLICIES_TOOLTIP_FORMAT"
+		}
+	}
+}
+
+imf_loan_to_contribution = {
+	value = imf_application_loan_amount
+	multiply = imf_contribution_share
+}
+
+country_debt_to_global = {
+	value = country_debt
+	multiply = {
+		value = country_currency_val
+		divide = global_currency_value
+	}
+}
+
+imf_debtor_count = {
+	every_in_global_list = {
+		variable = imf_members
+		limit = {
+			imf_debt_value > imf_contribution_value
+		}
+		add = 1
+	}
+}
+
+imf_creditor_count = {
+	every_in_global_list = {
+		variable = imf_members
+		limit = {
+			imf_debt_value < imf_contribution_value
+		}
+		add = 1
+	}
+}
