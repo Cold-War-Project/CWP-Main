@@ -53,46 +53,6 @@
 			}
 			else_if = {
 				limit = {
-					this = s:STATE_MOSCOW
-					NOT = {
-						exists = c:RUS
-					}
-				}
-				create_country = {
-					tag = RUS
-					origin = root
-					state = scope:decolonizing_state
-					on_created = {
-						effect_post_decolonization = yes
-					}
-				}
-				if = {
-					limit = {
-						exists = c:RUS
-					}
-					if = {
-						limit = {
-							exists = root.overlord
-						}
-						root.overlord = {
-							create_diplomatic_pact = {
-								country = c:RUS
-								type = puppet
-							}
-						}
-					}
-					else = {
-						root = {
-							create_diplomatic_pact = {
-								country = c:RUS
-								type = puppet
-							}
-						}
-					}
-				}
-			}
-			else_if = {
-				limit = {
 					this = s:STATE_ILE_DE_FRANCE
 					NOT = {
 						exists = c:FRA
@@ -205,46 +165,6 @@
 						root = {
 							create_diplomatic_pact = {
 								country = c:AUS
-								type = puppet
-							}
-						}
-					}
-				}
-			}
-			else_if = {
-				limit = {
-					this = s:STATE_AUSTRIA
-					NOT = {
-						exists = c:AOA
-					}
-				}
-				create_country = {
-					tag = AOA
-					origin = root
-					state = scope:decolonizing_state
-					on_created = {
-						effect_post_decolonization = yes
-					}
-				}
-				if = {
-					limit = {
-						exists = c:AOA
-					}
-					if = {
-						limit = {
-							exists = root.overlord
-						}
-						root.overlord = {
-							create_diplomatic_pact = {
-								country = c:AOA
-								type = puppet
-							}
-						}
-					}
-					else = {
-						root = {
-							create_diplomatic_pact = {
-								country = c:AOA
 								type = puppet
 							}
 						}
@@ -16593,6 +16513,24 @@
 					set_state_owner = c:CAT
 				}
 			}
+			else_if = {
+				limit = {
+					this = s:STATE_OSTROBOTHNIA
+					exists = c:FIN
+				}
+				scope:decolonizing_state = {
+					set_state_owner = c:FIN
+				}
+			}
+			else_if = {
+				limit = {
+					this = s:STATE_WEST_KARELIA
+					exists = c:FIN
+				}
+				scope:decolonizing_state = {
+					set_state_owner = c:FIN
+				}
+			}
 		}
 	}
 	ordered_scope_state = {
@@ -16796,6 +16734,25 @@ effect_dissolve_nation = {
 			}
 			trigger_else_if = {
 				limit = {
+					exists = c:RUS
+					prev = c:RUS
+					exists = c:RSF
+				}
+				this = c:RSF
+			}
+			trigger_else_if = {
+				limit = {
+					exists = c:MYM
+					prev = c:MYM
+					exists = c:KRN
+					prev = {
+						has_strategic_land_adjacency = c:KRN
+					}
+				}
+				this = c:KRN
+			}
+			trigger_else_if = {
+				limit = {
 					any_country = {
 						is_subject_of = root
 						is_subject_type = subject_type_puppet
@@ -16866,6 +16823,36 @@ effect_dissolve_nation = {
 				has_strategic_adjacency = prev
 			}
 		}
+		if = {
+			limit = {
+				c:RUS ?= prev
+				exists = c:RSF
+				c:RSF = {
+					is_subject_of = root
+				}
+			}
+			every_country = {
+				limit = {
+					AND = {
+						is_subject_of = root
+						is_subject_type = subject_type_puppet
+					}
+					OR = {
+						c:CIR ?= this
+						c:DAG ?= this
+						c:IUS ?= this
+						c:PRM ?= this
+						c:SIB ?= this
+						c:TUV ?= this
+						c:FER ?= this
+						c:AIN ?= this
+					}
+				}
+				c:RSF = {
+					annex = prev
+				}
+			}
+		}
 		prev = {
 			if = {
 				limit = {
@@ -16912,6 +16899,14 @@ effect_free_all_subjects = {
 effect_post_decolonization = {
 	effect_post_colonial_laws = yes
 	effect_currency_usd = yes
+	set_variable = {
+		name = decolonized_nation
+	}
+	add_modifier = {
+		name = recently_decolonized
+		months = 24
+		is_decaying = yes
+	}
 	if = {
 		limit = {
 			not = {
@@ -17001,35 +16996,5 @@ effect_post_decolonization = {
 }
 
 effect_post_colonial_laws = {
-	effect_create_law_package = {
-		headOfGovernment = executive
-		distributionOfPower = anocracy
-		criminalJustice = arbitrary_justice
-		policing = decentralized_police
-		centralization = confederated
-		discrimination = segregationist
-		churchAndState = religious_policies
-		bureaucraticSystems = appointed_bureaucrats
-		policing = militarized_police
-		nationalDefense = irregular_military
-		economicSystem = decentralization
-		tradePolicy = export_orientation
-		taxation = per_capita_based_taxation
-		educationSystem = informal_schooling
-		healthSystem = charity_health_system
-		environmentalRegulations = no_environment_regulations
-		corporateAffairs = no_legal_corporations
-		nationalization = no_nationalization
-		monetaryPolicy = gold_standard
-		wmds = no_wmds
-		freeSpeech = censorship
-		laborRights = no_workers_protections
-		childrensRights = child_labor_allowed
-		rightsOfWomen = legal_guardianship
-		familyPlanning = no_family_planning
-		welfare = no_welfare
-		migration = selective_immigration
-		biotech = unrestricted_human_testing
-		recreationalDrugs = alcohol_allowed
-	}
+	activate_law = law_type:law_confederated
 }
