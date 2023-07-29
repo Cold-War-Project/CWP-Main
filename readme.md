@@ -1,35 +1,32 @@
 # Cold War Project: A Victoria 3 mod
 
-This mod is a work in progress. It aims to recreate the political and economic situation from the Paris Peace Treaties of 1946 through the late 20th century and in into the early 21st century. 
+This mod is a work in progress. Cold War Project Is developed by a hardworking team of volunteers passionate about the challenges of the Cold War era, and the political and economic systems that shape our world both today and into our future. We begin in 1946 following the Paris Peace Treaties with the world in ruins and the future uncertain. Will you lead your nation into prosperity or will you be relegated to obscurity?
 
-Our main Goal is to preserve the design philosophy of vanilla Victoria 3 by creating a sandbox without set historical railroading but with plenty of flavor and mechanics to allow for accurate(or wacky) outcomes should conditions be met. We want to create a mod that is fun to play and that allows for a wide variety of playstyles.
+Our team's main objective is to preserve the design philosophy of vanilla Victoria — an open ended sandbox without set historical railroading — while also adding dynamic flavor and mechanics to allow for a variety of outcomes. It should allow for a wide variety of playstyles and strategies, and should be fun to play for both casual and hardcore players.
 
 # Features
 
-* A new map of the world with the borders of 1946
-* Custom Corruption Mechanic
-* Custom United Nations Mechanic
-* Accurate populations for entire world at 1946
-* Custom diplomatic pacts for Allied Occupation Zones
-* New laws and policies to dictate the trajectory of your nation
-* New production chains and resources
-* New technologies to research
+- A beautiful map of the world with the borders of 1946
+- New Corruption, Political Parties, and Ideologies
+- The United Nations and other international organizations
+- The International Monetary Fund, currency exchange, and central banks
+- Decolonization, new nations to form, and new subject interactions
+- Technology from 1946 to 2046 based on real world projections
+- Accurate populations for entire world at 1946
+- New laws and policies to dictate the trajectory of your nation
+- New production chains and resources
 
 # Roadmap
 
-* Events and decisions for landmark moments in history (e.g. the Cuban Missile Crisis)
-* A world tension system resembling the Doomsday Clock of the Bulletin of the Atomic Scientists
+You can always view our roadmap on our [Github Project Page](https://github.com/orgs/Cold-War-Project/projects/1)
 
-  
 # Installation
-Installation is not recommended at this time. The mod is still in a very early stage of development and is not yet playable.
 
-However please feel free to download the mod and contribute to the development.
+An alpha version of the mod is available to download on the [releases page](https://github.com/Cold-War-Project/CWP-Main/releases)
+Or via the unlisted [steam workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=2941771030) link.
 
 # Contributing
+
 If you want to contribute to the development of this mod, please feel free to do so. We are always looking for new ideas and people to help us implement them. You can use the issue tracker to report bugs or suggest new features. If you want to contribute code, please fork the repository and create a pull request.
 
 If you have any questions, or if you want to discuss the mod, you can join our discord @ https://discord.gg/GWptgGnmgN
-
-# License
-**TBD**
