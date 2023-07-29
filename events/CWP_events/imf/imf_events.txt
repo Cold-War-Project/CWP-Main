@@ -329,3 +329,86 @@ imf_events.5 = { # Loan Extension Denied
 		name = imf_events.5.a
 	}
 }
+
+imf_events.6 = { # IMF Bailout Granted
+	type = country_event	
+	placement = ROOT
+	title = imf_events.6.t
+	desc = imf_events.6.d
+	flavor = imf_events.6.f
+
+	duration = 3
+	icon = "gfx/interface/icons/cwp_icons/imf_seal.dds"
+
+	event_image = {
+		texture = "gfx/interface/event_pictures/imf_eventpic.dds"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/europenorthamerica/springtime_of_nation"
+
+	immediate = {
+		THIS = {
+			save_scope_as = originator
+			add_modifier = {
+				name = imf_bailout
+			}
+			set_variable = {
+				name = imf_debt_years
+				value = 30
+			}
+			set_variable = {
+				name = imf_debt_type
+				value = 1
+			}
+			set_variable = {
+				name = imf_interest_rate_domestic
+				value = 0
+			}
+			every_in_global_list = {
+				variable = imf_members
+				post_notification = IMF_BAILOUT_TAKEN_NOTIFICATION
+			}
+			change_variable = {
+				name = imf_debt
+				add = country_debt_to_global
+			}
+			add_treasury = country_debt
+			add_journal_entry = {
+				type = je_imf_bailout_loan
+			}
+			every_in_global_list = {
+				variable = imf_members
+				limit = {
+					imf_contribution_value > 0
+				}
+				change_variable = {
+					name = imf_contribution
+					subtract = {
+						value = scope:originator.country_debt_to_global
+						multiply = imf_contribution_share
+					}
+				}
+				if = {
+					limit = {
+						var:imf_contribution <= 0
+					}
+					set_variable = {
+						name = imf_contribution
+						value = 0
+					}
+				}
+			}			
+		}
+		reset_loan_application_values = yes
+	}
+	# TODO - AI SCRIPTING
+	option = {
+		name = imf_events.6.a
+		default_option = yes
+		reset_loan_application_values = yes
+		ai_chance = {
+			base = 100
+		}
+	}
+
+}
