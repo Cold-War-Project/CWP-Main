@@ -1,14 +1,25 @@
-﻿violate_sovereignty = {
+﻿intervention = {
 	requires_approval = yes
 	should_notify_third_parties = yes
 	violates_sovereignty = yes
 	can_use_obligations = yes
 	potential = {
 		OR = {
-			always = yes
-			is_at_war = yes
+			always = yes # debugging, delete this
+		OR = {
+			# Must be great power to intervene
+			country_rank >= rank_value:great_power
+			# PRC can always intervene against south korea, regardless of rank
+			AND = {
+				this = c:PRC
+				scope:target_country = {
+					this = c:STK
+				}
+			}
+		}
 		NOT = {
 			is_country_type = decentralized
+			is_at_war = yes
 		}
 		scope:target_country = {
 			NOT = {
@@ -23,18 +34,38 @@
 		
 	}
 	possible = {
-		# this localization only makes sense if you are already at war
 		OR = {
-			always = yes
-			trigger_if = {
+			always = yes # debugging, delete this
+		# this localization only makes sense if you are already at war
+		trigger_if = {
 			limit = {
-				is_at_war = yes
+				scope:target_country = {
+					is_at_war = yes
+				}
 			}
 			custom_tooltip = {
-				text = "violate_sovereignty_trigger_not"
-				any_scope_war = {
-					is_warleader = root
-					violate_sovereignty_war_check = yes
+				text = "intervention_trigger_gp_imbalance"
+				scope:target_country = {
+					any_scope_war = {
+						is_warleader = prev
+						intervention_war_check_gp = yes
+					}
+				}
+			}
+		}
+		trigger_if = {
+			limit = {
+				scope:target_country = {
+					is_at_war = yes
+				}
+			}
+			custom_tooltip = {
+				text = "intervention_trigger_winning"
+				scope:target_country = {
+					any_scope_war = {
+						is_warleader = prev
+						intervention_war_check_winning = yes
+					}
 				}
 			}
 		}
@@ -44,7 +75,6 @@
 			is_revolutionary = no
 		}
 		}
-		
 	}
 	accept_effect = {
 		create_incident = {
@@ -52,10 +82,16 @@
 			country = scope:target_country
 		}
 		scope:target_country = {
-			violate_sovereignty_join = {
-				violator = root
-				target = scope:target_country
-				join_violator = yes
+			every_diplomatic_play = {
+				limit = {
+					is_war = yes
+					war = {
+						is_warleader = prevprev
+						intervention_war_check_gp = yes
+						intervention_war_check_winning = yes
+					}
+				}
+				end_play = yes
 			}
 		}
 	}
@@ -65,12 +101,10 @@
 			value = 10
 			country = scope:target_country
 		}
-		scope:target_country = {
-			violate_sovereignty_join = {
-				violator = root
-				target = scope:target_country
-				join_violator = no
-			}
+		violate_sovereignty_join = {
+			violator = scope:target_country
+			target = root
+			join_violator = no
 		}
 		# could potentially be several wars but only show one in situation for now
 		random_scope_violate_sovereignty_wars = {
