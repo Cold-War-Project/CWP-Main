@@ -4,10 +4,8 @@
 	# scope:target = target value, with which this Journal Entry was added using `add_journal_entry` effect
 	# optional image that shows in the journal entry widget near the description, default = NDefines::GUI::JOURNAL_ENTRY_ICON_DEFAULT (set in /defines/00_interfaces.txt)
 	icon = "gfx/interface/icons/event_icons/event_industry.dds"
-	scripted_button = korean_war_diplo_delegation
-	scripted_button = korean_war_auto_decline
-	scripted_button = korean_war_ask
-	scripted_button = korean_war_auto_accept
+	scripted_button = korean_war_agressive_stance_button
+	scripted_button = korean_war_diplomatic_stance_button
 	# optional trigger which determines if a journal entry can be shown, default = no
 	# is ignored when JE is added through `add_journal_entry` effect
 	is_shown_when_inactive = {
@@ -35,7 +33,6 @@
 		}
 	}
 	possible = {
-		custom_tooltip = JE_KOREAN_REUNIFICATION_REASON_VOTING
 		exists = c:NRK
 		exists = c:STK
 		#Does not trigger if Korea is at war
@@ -61,14 +58,52 @@
 	# is ignored when JE is added through `add_journal_entry` effect
 	# effect which happens when a journal entry is activated by having its `is_shown_when_inactive` and `possible` triggers become true or when JE is added through `add_journal_entry` effect
 	immediate = {
-		set_global_variable = {
-			name = korean_tensions
-			value = 50
+		if = {
+			limit = {
+				NOT = {
+					has_global_variable = korean_tensions
+				}
+			}
+			set_global_variable = {
+				name = korean_tensions
+				value = 50
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					this = c:STK
+					this = c:NRK
+				}
+			}
+			if = {
+				limit = {
+					has_law = law_type:law_administrative
+				}
+				activate_law = law_type:law_executive
+			}
+			if = {
+				limit = {
+					is_subject_type = subject_type_military_occupation
+				}
+				change_relations = {
+					country = this.overlord
+					value = 100
+				}
+				create_diplomatic_pact = {
+					country = this.overlord
+					type = alliance
+				}
+				make_independent = yes
+			}
 		}
 	}
 	# completion trigger, use is_goal_complete = yes in here if you're testing a tracked goal metric; if left blank, cannot be completed
 	complete = {
-		global_var:korean_tensions <= 0
+		custom_tooltip = {
+			text = korean_reunification_complete_tt
+			global_var:korean_tensions <= 0
+		}
 	}
 	# effect which is executed when 'complete' trigger becomes true
 	on_complete = {
@@ -105,36 +140,56 @@
 	}
 	# failure trigger, should spawn event explaining what happens when triggered, framed as a failure; if left blank, cannot fail
 	fail = {
-		global_var:korean_tensions >= 100
+		custom_tooltip = {
+			text = korean_reunification_failed_tt
+			global_var:korean_tensions >= 100
+		}
 	}
 	# effect which is executed when 'fail' trigger becomes true
 	on_fail = {
-		remove_global_variable = korean_tensions
 		if = {
 			limit = {
-				var:tension_generated_stk > var:tension_generated_nrk
+				this = c:STK
 			}
-			c:STK = {
-				save_scope_as = korean_war_initiator
+			remove_global_variable = korean_tensions
+			if = {
+				limit = {
+					trigger_if = {
+						limit = {
+							c:STK = {
+								is_subject = yes
+							}
+						}
+						c:STK.overlord = {
+							has_variable = korea_aggressive_stance
+						}
+					}
+					trigger_else = {
+						c:STK = {
+							has_variable = korea_aggressive_stance
+						}
+					}
+				}
+				c:STK = {
+					save_scope_as = korean_war_initiator
+				}
+				c:NRK = {
+					save_scope_as = korean_war_target
+				}
 			}
-			c:NRK = {
-				save_scope_as = korean_war_target
+			else = {
+				c:NRK = {
+					save_scope_as = korean_war_initiator
+				}
+				c:STK = {
+					save_scope_as = korean_war_target
+				}
 			}
-		}
-		else = {
-			c:NRK = {
-				save_scope_as = korean_war_initiator
-			}
-			c:STK = {
-				save_scope_as = korean_war_target
-			}
-		}
-		scope:korean_war_initiator = {
-			create_diplomatic_play = {
-				name = korean_war
-				type = dp_revolution
-				escalation = 25
-				target_country = scope:korean_war_target
+			scope:korean_war_initiator = {
+				create_diplomatic_play = {
+					type = dp_korean_unification
+					target_country = scope:korean_war_target
+				}
 			}
 		}
 	}
@@ -191,21 +246,26 @@
 	# on_action which is triggered every first day of the week
 	on_weekly_pulse = {
 		effect = {
-			change_global_variable = {
+			if = {
+				limit = {
+					c:STK ?= this
+				}
+				change_global_variable = {
 				name = korean_tensions
 				add = korean_tension_growth
-			}
-			clamp_global_variable = {
-				name = korean_tensions
-				max = 100
-				min = 0
+				}
+				clamp_global_variable = {
+					name = korean_tensions
+					max = 100
+					min = 0
+				}
 			}
 		}
 	}
 	# on_action which is triggered every first day of the month
 	on_monthly_pulse = {
 		random_events = {
-			korea_war_events.10
+			#korea_war_events.10
 		}
 	}
 	# on_action which is triggered every first day of the year
