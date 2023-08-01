@@ -28,11 +28,27 @@ imf_contribution_value = {
 
 imf_contribution_natural_growth = {
 	value = imf_contribution_value
-	multiply = 0.01
+	multiply = 0.001
 }
 
 imf_contribution_percent_value = {
 	value = var:imf_contribution_percent
+}
+
+imf_reserve_asset_value = {
+	every_in_global_list = {
+		variable = imf_members
+		add = country_currency_val
+	}
+	divide = {
+		value = {
+			every_in_global_list = {
+				variable = imf_members
+				add = 1
+			}
+		}
+	}
+	min = min_currency_value
 }
 
 imf_contribution_money = {
@@ -56,17 +72,15 @@ imf_contribution_money_weekly = {
 	
 }
 
-imf_contribution_money_to_usd = {
+imf_contribution_money_to_imr = {
 	value = imf_contribution_money
-	multiply = currency_global_to_domestic
+	multiply = currency_imr_to_domestic
 }
 
 imf_domestic_currency_debt = {
 	value = imf_debt_value
 	multiply = {
-		value = {
-			value = global_var:global_currency.country_currency_val
-		}
+		value = imf_reserve_asset_value
 		divide = {
 			value = country_currency_val
 		}
@@ -77,9 +91,7 @@ imf_domestic_currency_debt = {
 imf_domestic_currency_credit = {
 	value = imf_credit_value
 	multiply = {
-		value = {
-			value = global_var:global_currency.country_currency_val
-		}
+		value = imf_reserve_asset_value
 		divide = {
 			value = country_currency_val
 		}
@@ -283,12 +295,12 @@ imf_reserves_growth = {
 	every_in_global_list = { # From member contribution
 		variable = imf_members
 		add = {
-			value = imf_contribution_money_to_usd
+			value = imf_contribution_money_to_imr
 			desc = IMF_APPLICATION_GDP
 			format = "IMF_APPLICATION_GDP_TOOLTIP_FORMAT"
 		}
 		add = {
-			value = imf_contribution_natural_growth
+			value = imf_contribution_money_to_imr
 			desc = IMF_APPLICATION_GDP
 			format = "IMF_APPLICATION_GDP_TOOLTIP_FORMAT"
 		}
@@ -298,7 +310,7 @@ imf_reserves_growth_gui = {
 	value = {
 		every_in_global_list = { # From member contribution
 			variable = imf_members
-			add = imf_contribution_money_to_usd
+			add = imf_contribution_money_to_imr
 		}
 		desc = IMF_RESERVES_GROWTH_MEMBER_CONTRIBUTION
 		format = "IMF_APPLICATION_GDP_TOOLTIP_FORMAT"
@@ -323,6 +335,7 @@ imf_debt_interest_growth_global = {
 imf_debt_interest_growth = {
 	value = imf_debt_value
 	multiply = imf_interest_rate
+	divide = 12
 }
 
 imf_debt_monthly_change = {
@@ -520,7 +533,7 @@ imf_application_loan_amount = {
 }
 imf_application_loan_amount_domestic = {
 	value = imf_application_loan_amount
-	multiply = currency_domestic_to_global_currency
+	multiply = currency_domestic_to_imf_currency
 }
 
 imf_application_loan_increase_val = {
@@ -541,7 +554,7 @@ imf_application_upfront_principle = {
 
 imf_application_upfront_principle_domestic = {
 	value = imf_application_upfront_principle
-	multiply = currency_domestic_to_global_currency
+	multiply = currency_domestic_to_imf_currency
 }
 
 imf_application_upfront_principle_change_val = {
@@ -772,7 +785,7 @@ imf_requirements_meeting = {
 	}
 	if = {
 		limit = {
-			average_sol <= 10
+			average_sol < 10
 		}
 		subtract = {
 			value = average_sol
@@ -861,7 +874,7 @@ country_debt_to_global = {
 	value = country_debt
 	multiply = {
 		value = country_currency_val
-		divide = global_currency_value
+		divide = imf_reserve_asset_value
 	}
 }
 

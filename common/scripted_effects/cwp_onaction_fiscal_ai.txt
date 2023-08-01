@@ -1,0 +1,321 @@
+﻿onaction_ai_fiscal_calculations = {
+    if = {
+        limit = {
+            is_ai = yes
+        }
+        onaction_ai_monetary_policy_calculation = yes
+        onaction_ai_interest_rate_calculation = yes
+        onaction_ai_buy_foreign_currency_calculation = yes
+        onaction_ai_sell_foreign_reserves_calculation = yes
+        onaction_ai_devalue_revalue_calculation = yes
+    }
+}
+
+onaction_ai_monetary_policy_calculation = {
+    if = {
+        limit = {
+            nor = {
+                has_variable = pegged_currency
+                has_law = law_type:law_gold_standard
+            }
+        }
+        random_list = {
+            1 = { # Contractionary
+                modifier = {
+                    add = ai_wants_contractionary
+                }
+                remove_variable = stable_monetary_policy
+                remove_variable = expansionary_monetary_policy
+                set_variable = contractionary_monetary_policy
+    
+            }
+            1 = { # Stable
+                modifier = {
+                    add = ai_wants_stable
+                }
+                remove_variable = contractionary_monetary_policy
+                remove_variable = expansionary_monetary_policy
+                set_variable = stable_monetary_policy
+            }
+            1 = { # Expansionary
+                modifier = {
+                    add = ai_wants_expansionary
+                }
+                remove_variable = stable_monetary_policy
+                remove_variable = contractionary_monetary_policy
+                set_variable = expansionary_monetary_policy
+            }
+        }
+    }
+
+}
+
+onaction_ai_interest_rate_calculation = {
+    if = {
+        limit = {
+            nor = {
+                var:interest_rate = ai_ideal_interest_rate
+                has_law = law_type:law_gold_standard
+                has_variable = pegged_currency
+            }
+        }
+        set_variable = {
+			name = interest_rate
+			value = ai_ideal_interest_rate
+		}
+		set_variable = {
+			name = interest_rate_gui
+			value = var:interest_rate
+		}
+    }
+}
+
+onaction_ai_buy_foreign_currency_calculation = {
+    if = {
+        limit = {
+            nor = {
+                foreign_reserves_value >= foreign_reserves_max
+                scaled_debt >= 0.5
+            }
+        }
+        random = {
+            chance = 50
+            random_in_global_list = {
+                variable = central_bank_list
+                limit = {
+                    nor = {
+                        ROOT = THIS
+                        has_variable = currency_bought
+                    }
+                    or = {
+                        and = {
+                            ROOT = {
+                                has_variable = pegged_currency
+                            }
+                            ROOT.var:pegged_currency = THIS
+                        }
+                    }
+                    ROOT.country_payment_ability >= {
+                        value = {
+                            value = {
+                                value = THIS.gold_reserves_limit
+                                add = THIS.credit
+                            }
+                            multiply = 0.05
+                            max = ROOT.foreign_reserves_capacity_left
+                        }
+                        multiply = {
+                            value = THIS.country_currency_val
+                            divide = ROOT.country_currency_val
+                        }
+                    }
+                }
+                save_scope_as = currency_exchange_country
+            }
+            if = {
+                limit = {
+                    is_set = scope:currency_exchange_country
+                }
+                set_variable = {
+					name = ai_currency_buy_country
+					value = scope:currency_exchange_country
+				}
+            }
+            if = {
+				limit = {
+					not = {
+						is_set = scope:currency_exchange_country
+					}
+				}
+				remove_variable = ai_currency_buy_country
+			}
+            if = {
+                limit = {
+                    has_variable = ai_currency_buy_country
+                }
+                save_scope_as = originator
+                add_treasury = { # Remove from AI treasury
+                    value = {
+                        value = var:ai_currency_buy_country.money_supply_5
+                        max = ROOT.foreign_reserves_capacity_left
+                    }
+                    multiply = {
+                        value = var:ai_currency_buy_country.country_currency_val
+                        divide = ROOT.country_currency_val
+                    }
+                    multiply = -1
+                }
+                # Increases Reserve
+                if = {
+                    limit = {
+                        var:ai_currency_buy_country.money_supply_5 <= foreign_reserves_capacity_left
+                    }
+                    change_variable = {
+                        name = foreign_reserves
+                        add = {
+                            value = {
+                                value = var:ai_currency_buy_country.gold_reserves_limit
+                                add = var:ai_currency_buy_country.credit
+                            }
+                            multiply = 0.05
+                        }
+                    }
+                }
+                if = {
+                    limit = {
+                        var:ai_currency_buy_country.money_supply_5 >= foreign_reserves_capacity_left
+                    }
+                    set_variable = {
+                        name = foreign_reserves
+                        value = foreign_reserves_max
+                    }
+                }
+                var:ai_currency_buy_country = {
+                    post_notification = CURRENCY_BOUGHT_NOTIFICATION
+                    on_action_change_domestic_currency_value = {
+                        mathAction = add
+                        mathAction2 = currency_value_growth_by_exchange
+                    }
+                    if = {
+                        limit = {
+                            nor = {
+                                has_law = law_type:law_gold_standard # Gold standard has fixed money supply unless altered
+                                has_law = law_type:law_pegged_currency # Pegged Currency uses pegged money supply
+                            }
+                        }
+                        # Reduces Money Supply
+                        change_variable = {
+                            name = money_supply
+                            subtract = {
+                                value = {
+                                    value = var:ai_currency_buy_country.gold_reserves_limit
+                                    add = var:ai_currency_buy_country.credit
+                                }
+                                multiply = 0.05
+                            }
+                        }
+                    }
+                    # Prevents further currency buying for 1 month
+                    set_variable = {
+                        name = currency_bought
+                        months = 1
+                    }
+                }
+                remove_variable = ai_currency_buy_country
+            }
+        }
+    }
+}
+
+onaction_ai_sell_foreign_reserves_calculation = {
+    if = {
+        limit = {
+            foreign_reserves_value >= 1
+            foreign_reserves_ratio > 0.2
+            scaled_debt >= 0.5
+        }
+        random = {
+            chance = 50
+            change_variable = {
+				name = foreign_reserves
+				subtract = {
+					value = 500000
+					divide = {
+						value = foreign_avg
+						divide = country_currency_val
+						min = min_currency_value
+					}
+				}
+			}
+            clamp_variable = {
+				name = foreign_reserves
+				min = 0
+				max = foreign_reserves_max
+			}
+            # Increases Local Currency Value
+            if = {
+                limit = {
+                    not = {
+                        has_variable = pegged_currency # Pegged Currencies do not get their value increased
+                    }
+                }
+                on_action_change_domestic_currency_value = {
+                    mathAction = add
+                    mathAction2 = currency_value_growth_by_exchange
+                }
+            }
+            add_treasury = 500000
+        }
+    }
+}
+
+onaction_ai_devalue_revalue_calculation = {
+    if = {
+        limit = {
+            or = {
+                currency_average_difference_to_global_AI > 90
+                currency_average_difference_to_global_AI < 90
+            }
+            nor = {
+                has_variable = pegged_currency
+                has_variable = altered_currency
+                has_law = law_type:law_gold_standard
+                has_law = law_type:law_independent_monetary_policy
+            }
+            is_leading_central_bank = yes
+        }
+        random_list = {
+            50 = { } # Do Nothing
+            1 = { # Devalue
+                modifier = {
+                    add = ai_wants_devalue
+                }
+                on_action_change_domestic_currency_value = {
+                    mathAction = subtract
+                    mathAction2 = alter_currency_value
+                }
+                if = {
+                    limit = {
+                        country_currency_val > 0
+                    }
+                    change_variable = {
+                        name = money_supply
+                        subtract = {
+                            value = money_supply_from_gold_reserves
+                            multiply = 10
+                        }
+                    }
+                }
+                set_variable = {
+                    name = altered_currency
+                    years = 5
+                }
+            }
+            1 = {
+                modifier = {
+                    add = ai_wants_revalue
+                }
+                on_action_change_domestic_currency_value = {
+                    mathAction = add
+                    mathAction2 = alter_currency_value
+                }
+                if = {
+                    limit = {
+                        country_currency_val > 0
+                    }
+                    change_variable = {
+                        name = money_supply
+                        add = {
+                            value = money_supply_from_gold_reserves
+                            multiply = 10
+                        }
+                    }
+                }
+                set_variable = {
+                    name = altered_currency
+                    years = 5
+                }
+            }
+        }
+    }
+}
