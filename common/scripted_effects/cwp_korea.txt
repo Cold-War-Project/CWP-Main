@@ -1,0 +1,153 @@
+﻿scripted_effect_korean_reunification = {
+	#Unifier
+	if = {
+		limit = {
+			korean_reunification_total_vote_unifier_stk >= korean_reunification_total_vote_unifier_nrk
+		}
+		c:STK = {
+			save_scope_as = korean_unifier
+		}
+		c:NRK = {
+			save_scope_as = not_korean_unifier
+		}
+	}
+	else = {
+		c:NRK = {
+			save_scope_as = korean_unifier
+		}
+		c:STK = {
+			save_scope_as = not_korean_unifier
+		}
+	}
+	#Government System | May be redesigned to be more interesting
+	if = {
+		limit = {
+			korean_reunification_total_vote_government_system_mix >= korean_reunification_total_vote_government_system_like_unifier
+		}
+		SCOPE:korean_unifier = {
+			activate_law = SCOPE:not_korean_unifier.active_law:lawgroup_centralization.type
+			activate_law = SCOPE:not_korean_unifier.active_law:lawgroup_bureaucratic_systems.type
+		}
+	}
+	#Economical System | May be redesigned to be more interesting
+	if = {
+		limit = {
+			korean_reunification_total_vote_economical_system_mix >= korean_reunification_total_vote_economical_system_like_unifier
+		}
+		SCOPE:korean_unifier = {
+			activate_law = SCOPE:not_korean_unifier.active_law:lawgroup_taxation.type
+			activate_law = SCOPE:not_korean_unifier.active_law:lawgroup_health_system.type
+		}
+	}
+	#Faction | Todo: Add korea to the list of applicants if not yet a member, instead of directly granting it the full membership status
+	if = {
+		limit = {
+			korean_reunification_total_vote_faction_west >= korean_reunification_total_vote_faction_east
+			korean_reunification_total_vote_faction_west >= korean_reunification_total_vote_faction_neutral
+			any_country = {
+				has_variable = western_bloc_leader
+			}
+		}
+		custom_tooltip = {
+			text = korea_aligns_west
+			every_country = {
+				limit = {
+					has_variable = western_bloc_leader
+				}
+				SCOPE:korean_unifier = {
+					create_diplomatic_pact = {
+						country = prev
+						type = diplomatic_alignment
+					}
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			korean_reunification_total_vote_faction_east >= korean_reunification_total_vote_faction_west
+			korean_reunification_total_vote_faction_east >= korean_reunification_total_vote_faction_neutral
+			any_country = {
+				has_variable = eastern_bloc_leader
+			}
+		}
+		custom_tooltip = {
+			text = korea_aligns_east
+			every_country = {
+				limit = {
+					has_variable = eastern_bloc_leader
+				}
+				SCOPE:korean_unifier = {
+					create_diplomatic_pact = {
+						country = prev
+						type = diplomatic_alignment
+					}
+				}
+			}
+		}
+	}
+	else = {
+		SCOPE:korean_unifier = {
+			custom_tooltip = {
+				text = korea_becomes_neutral
+				add_modifier = {
+					name = forced_neutrality
+					months = 120
+				}
+			}
+		}
+	}
+	#reconstruction
+	if = {
+		limit = {
+			korean_reunification_total_vote_reconstruction_yes >= korean_reunification_total_vote_reconstruction_no
+		}
+		SCOPE:not_korean_unifier = {
+			every_scope_state = {
+				add_modifier = {
+					name = reconstruction_promised
+					months = 120
+				}
+			}
+		}
+	}
+	#Complete reunification
+	SCOPE:korean_unifier = {
+		annex = SCOPE:not_korean_unifier
+	}
+	# Seoul becomes capital
+	if = {
+		limit = {
+			SCOPE:korean_unifier = {
+				owns_entire_state_region = STATE_SEOUL
+			}
+		}
+		set_capital = STATE_SEOUL
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_administrative
+		}
+		activate_law = law_type:law_executive
+	}
+	if = {
+		limit = {
+			is_subject_type = subject_type_military_occupation
+		}
+		change_relations = {
+			country = this.overlord
+			value = 100
+		}
+		this.overlord = {
+			set_secret_goal = {
+				country = root
+				secret_goal = protect
+			}
+		}
+		create_diplomatic_pact = {
+			country = this.overlord
+			type = alliance
+		}
+		make_independent = yes
+	}
+}
