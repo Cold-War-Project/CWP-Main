@@ -8,6 +8,10 @@ currency_value_growth = {
 				money_supply > 5 
 				money_supply < 5 
 			}
+			nor = {
+				has_variable = expansionary_monetary_policy
+				has_variable = contractionary_monetary_policy
+			}
 		}
 		subtract = {
 			value = money_supply_growth_percentage
@@ -31,7 +35,7 @@ currency_value_growth = {
 		limit = {
 			has_variable = contractionary_monetary_policy
 		}
-		add = {
+		subtract = {
 			value = money_supply_growth_percentage
 			divide = 10
 			desc = MNS_CONTRACTIONARY
@@ -41,6 +45,9 @@ currency_value_growth = {
 	if = {
 		limit = {
 			interest_rate >= 1
+			not = {
+				has_variable = pegged_currency
+			}
 		}
 		add = {
 			value = interest_rate
@@ -53,6 +60,9 @@ currency_value_growth = {
 	if = {
 		limit = {
 			interest_rate < 1
+			not = {
+				has_variable = pegged_currency
+			}
 		}
 		subtract = {
 			value = interest_rate
@@ -64,9 +74,32 @@ currency_value_growth = {
 	}
 	if = {
 		limit = {
-			country_currency_val <= 0.01
+			interest_rate < 1
+			not = {
+				has_variable = pegged_currency
+			}
 		}
-		min = 0.01
+		subtract = {
+			value = interest_rate
+			divide = 4
+			divide = 10
+			desc = CUR_INTEREST_RATE
+			format = "CUR_TOOLTIP_FORMAT"
+		}
+	}
+	if = {
+		limit = {
+			not = {
+				has_variable = pegged_currency
+			}
+			currency_average_difference_to_global_AI > currency_value_max
+		}
+		subtract = {
+			value = currency_value_ratio
+			divide = 2
+			desc = CUR_SIZE_OF_ECONOMY
+			format = "CUR_TOOLTIP_FORMAT"
+		}
 	}
 	if = {
 		limit = {
@@ -80,15 +113,29 @@ currency_value_growth = {
 	}
 	if = {
 		limit = {
-			not = {
-				is_target_in_global_variable_list = {
-					name = central_bank_list
-					target = THIS
-				}
-			}
+			is_leading_central_bank = no
 		}
 		value = 0
 	}
+}
+
+currency_value_max = {
+	value = gdp
+	divide = {
+		value = { every_country = { add = gdp } }
+		divide = { every_country = { add = 1 } }
+	}
+	multiply = 10
+}
+
+currency_value_ratio = {
+	value = currency_average_difference_to_global_AI
+	divide = currency_value_max
+}
+currency_value_change = {
+	value = foreign_avg
+	multiply = currency_value_growth
+	max = 1000
 }
 global_currency_value = {
 	value = global_var:currency_usd_v
@@ -174,6 +221,36 @@ country_currency_denomination = {
 	if = { limit = { var:cwp_currency = flag:currency_veb } value = global_var:currency_veb_d }
 	if = { limit = { var:cwp_currency = flag:currency_php } value = global_var:currency_php_d }
 }
+foreign_avg = {
+	every_country = {
+		limit = {
+			is_leading_central_bank = yes
+			has_variable = cwp_currency
+		}
+		add = country_currency_val
+	}
+	divide = foreign_avg_count
+}
+
+foreign_avg_count = {
+	every_country = {
+		limit = {
+			is_leading_central_bank = yes
+		}
+		add = 1
+	}
+}
+
+leading_central_bank_gdp = {
+	every_in_global_list = {
+		variable = central_bank_list
+		limit = {
+			root.var:cwp_currency = var:cwp_currency
+			is_leading_central_bank = yes
+		}
+		add = cwp_gdp_with_inflation
+	}
+}
 
 country_currency_with_denomination = {
 	value = country_currency_val
@@ -189,6 +266,17 @@ currency_difference_to_usd = {
 		value = c:USA.country_currency_val
 		#multiply = country_currency_denomination
 	}
+	min = min_currency_value
+}
+currency_domestic_to_imf_currency = {
+	value = imf_reserve_asset_value
+	divide = player_currency
+
+	min = min_currency_value
+}
+currency_imr_to_domestic = {
+	value = country_currency_val
+	divide = imf_reserve_asset_value
 	min = min_currency_value
 }
 currency_domestic_to_global_currency = {
@@ -266,19 +354,31 @@ currency_modifier_multiplier = {
 
 
 currency_average_difference_to_global_AI = {
-	value = country_currency_val
-	subtract = foreign_avg
-	divide = foreign_avg
+	value = {
+		value = country_currency_val
+		subtract = foreign_avg
+	}
+	divide = {
+		value = country_currency_val
+		add = foreign_avg
+		divide = 2
+	}
 	multiply = 100
-	#min = min_currency_value
+	min = -99.9
 }
 
 currency_average_difference_to_global = {
-	value = player_currency
-	subtract = foreign_avg
-	divide = foreign_avg
+	value = {
+		value = player_currency
+		subtract = foreign_avg
+	}
+	divide = {
+		value = player_currency
+		add = foreign_avg
+		divide = 2
+	}
 	multiply = 100
-	#min = min_currency_value
+	min = -99.9
 }
 
 global_average_difference_to_currency = {
@@ -324,6 +424,14 @@ currency_difference_to_global_revalue = {
 	
 }
 
+foreign_avg_min99 = {
+	value = {
+		value = foreign_avg
+		multiply = 0.34
+	}
+}
+
 min_currency_value = {
-	value = 0.00001
+
+	min = 0.00001
 }
