@@ -1178,6 +1178,165 @@ dp_leadership_indochina = {
 	}
 }
 
+dp_korean_unification = {
+	requires_interest_marker = no
+	allow_negotiated_peace = yes
+	mirror_war_goal = yes
+	initiator_can_add_war_goals = no
+	target_can_add_war_goals = no
+	add_infamy_for_starting_initiator_wargoals = no
+	war_goal = annex_country
+	texture = "gfx/interface/icons/war_goals/annex_country.dds"
+	selectable_in_lens = {
+		always = no
+	}
+	possible = {
+		always = yes
+	}
+	additional_involvement_trigger = {
+		NOT = {
+			is_country_type = decentralized
+		}
+		aggressive_diplomatic_plays_permitted = yes
+		scope:target_country = {
+			capital = {
+				region = {
+					save_temporary_scope_as = target_capital_region
+				}
+			}
+		}
+		scope:initiator = {
+			capital = {
+				region = {
+					save_temporary_scope_as = initiator_capital_region
+				}
+			}
+		}
+		OR = {
+			has_interest_marker_in_region = scope:target_capital_region
+			has_interest_marker_in_region = scope:initiator_capital_region
+		}
+	}
+	on_weekly_pulse = {
+		if = {
+			limit = {
+				exists = c:STK
+				exists = c:NRK
+				any_diplomatic_play = {
+					is_war = yes
+					NOT = {
+						any_scope_play_involved = {
+							is_player = yes
+						}
+					}
+					war = {
+						is_warleader = c:NRK
+						is_warleader = c:STK
+						has_war_support = {
+							target = attacker_warleader
+							value < 0
+						}
+						has_war_support = {
+							target = defender_warleader
+							value < 0
+						}
+					}
+				}
+			}
+			every_diplomatic_play = {
+				limit = {
+					is_war = yes
+					NOT = {
+						any_scope_play_involved = {
+							is_player = yes
+						}
+					}
+					trigger_if = {
+						limit = {
+							is_war = yes
+						}
+						war = {
+							is_warleader = c:NRK
+							is_warleader = c:STK
+							has_war_support = {
+								target = attacker_warleader
+								value < 0
+							}
+							has_war_support = {
+								target = defender_warleader
+								value < 0
+							}
+						}
+					}
+				}
+				end_play = yes
+			}
+		}
+	}
+	on_war_begins = {
+	}
+	on_war_end = {
+		if = {
+			limit = {
+				exists = c:STK
+				exists = c:NRK
+				c:STK = {
+					any_scope_state = {
+						state_region = s:STATE_PYONGYANG
+					}
+				}
+				c:NRK = {
+					any_scope_state = {
+						state_region = s:STATE_PYONGYANG
+					}
+				}
+			}
+			s:STATE_PYONGYANG.region_state:STK = {
+				set_state_owner = c:NRK
+			}
+		}
+		if = {
+			limit = {
+				exists = c:STK
+				exists = c:NRK
+				c:STK = {
+					any_scope_state = {
+						state_region = s:STATE_SEOUL
+					}
+				}
+				c:NRK = {
+					any_scope_state = {
+						state_region = s:STATE_SEOUL
+					}
+				}
+			}
+			s:STATE_SEOUL.region_state:NRK = {
+				set_state_owner = c:STK
+			}
+		}
+		if = {
+			limit = {
+				exists = c:STK
+				exists = c:NRK
+			}
+			c:NRK = {
+				every_scope_state = {
+					state_region = {
+						add_claim = c:STK
+					}
+				}
+			}
+			c:STK = {
+				every_scope_state = {
+					state_region = {
+						add_claim = c:NRK
+					}
+				}
+			}
+		}
+	}
+}
+
 dp_unify_eurasia = {
 	war_goal = unification
 	requires_interest_marker = no
