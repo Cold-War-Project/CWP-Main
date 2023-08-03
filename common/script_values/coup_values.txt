@@ -1,0 +1,211 @@
+﻿# IG Scope
+coup_propensity_ig = {
+	value = 0.1
+	# Higher values at low approval
+	add = {
+		value = ig_approval
+		multiply = -0.05
+		max = 0.5
+		min = -0.1
+	}
+	# Higher corruption increases propensity
+	add = {
+		value = ig_corruption
+		divide = 2
+		max = 0.5
+	}
+	# More members increases propensity
+	every_scope_character = {
+		limit = {
+			character_eligible_for_coup = yes
+		}
+		multiply = 2
+	}
+	# Authoritarianism increases propensity
+	if = {
+		limit = {
+			law_stance = {
+				law = law_type:law_autocracy
+				value > neutral
+			}
+		}
+		multiply = 2
+	}
+	max = 1
+	min = 0
+}
+
+# Character Scope
+coup_propensity_character = {
+	value = 0
+	# Base value
+	interest_group = {
+		add = coup_propensity_ig
+	}
+	# This character's power plus coup relative to the government
+	add = {
+		value = character_coup_influence
+		add = coup_strength
+		divide = government_strength
+		subtract = 0.5
+		divide = 4
+		max = 0.5
+		min = 0
+	}
+	# Authoritarianism increases propensity
+	if = {
+		limit = {
+			law_stance = {
+				law = law_type:law_autocracy
+				value > neutral
+			}
+		}
+		multiply = 2
+	}
+	max = 1
+	min = 0
+}
+
+# Character Scope
+character_coup_influence = {
+	value = 0
+	add = popularity
+	add = num_units
+	min = 0
+}
+
+# Country Scope
+coup_strength = {
+	value = 1
+	every_scope_character = {
+		limit = {
+			has_variable = coup_member
+		}
+		add = {
+			value = character_coup_influence
+			desc = "COUP_MEMBER_DESC"
+		}
+	}
+	min = 1
+}
+
+# Country Scope
+government_strength = {
+	value = 1
+	every_scope_character = {
+		limit = {
+			is_loyalist = yes
+		}
+		add = {
+			value = character_coup_influence
+			desc = "LOYALIST_DESC"
+		}
+	}
+	min = 1
+}
+
+# Country Scope
+relative_coup_strength = {
+	value = 0
+	add = coup_strength
+	divide = government_strength
+}
+
+# Country Scope
+coup_success_likelihood = {
+	value = 0
+	if = {
+		limit = {
+			relative_coup_strength < 0.1
+		}
+		value = 0
+		desc = "COUP_SUCCESS_NONE_DESC"
+	}
+	else_if = {
+		limit = {
+			relative_coup_strength >= 0.1
+			relative_coup_strength < 0.2
+		}
+		value = 0.05
+		desc = "COUP_SUCCESS_LOW_DESC"
+	}
+	else_if = {
+		limit = {
+			relative_coup_strength >= 0.2
+			relative_coup_strength < 0.3
+		}
+		value = 0.1
+		desc = "COUP_SUCCESS_LOW_DESC"
+	}
+	else_if = {
+		limit = {
+			relative_coup_strength >= 0.3
+			relative_coup_strength < 0.4
+		}
+		value = 0.2
+		desc = "COUP_SUCCESS_LOW_DESC"
+	}
+	else_if = {
+		limit = {
+			relative_coup_strength >= 0.4
+			relative_coup_strength < 0.5
+		}
+		value = 0.3
+		desc = "COUP_SUCCESS_LOW_DESC"
+	}
+	else_if = {
+		limit = {
+			relative_coup_strength >= 0.5
+			relative_coup_strength < 0.6
+		}
+		value = 0.4
+		desc = "COUP_SUCCESS_MEDIUM_DESC"
+	}
+	else_if = {
+		limit = {
+			relative_coup_strength >= 0.75
+			relative_coup_strength < 1
+		}
+		value = 0.5
+		desc = "COUP_SUCCESS_MEDIUM_DESC"
+	}
+	else_if = {
+		limit = {
+			relative_coup_strength >= 1
+			relative_coup_strength < 1.1
+		}
+		value = 0.6
+		desc = "COUP_SUCCESS_HIGH_DESC"
+	}
+	else_if = {
+		limit = {
+			relative_coup_strength >= 1.1
+			relative_coup_strength < 1.25
+		}
+		value = 0.7
+		desc = "COUP_SUCCESS_HIGH_DESC"
+	}
+	else_if = {
+		limit = {
+			relative_coup_strength >= 1.25
+			relative_coup_strength < 1.5
+		}
+		value = 0.8
+		desc = "COUP_SUCCESS_HIGH_DESC"
+	}
+	else_if = {
+		limit = {
+			relative_coup_strength >= 1.5
+			relative_coup_strength < 1.75
+		}
+		value = 0.9
+		desc = "COUP_SUCCESS_HIGH_DESC"
+	}
+	else_if = {
+		limit = {
+			relative_coup_strength >= 2
+		}
+		value = 1
+		desc = "COUP_SUCCESS_ABSOLUTE_DESC"
+	}
+}
