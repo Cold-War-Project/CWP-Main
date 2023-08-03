@@ -1,35 +1,40 @@
 ﻿# triggered by UN Resolution Screen
-je_acquire_nuclear_capability = {
+je_acquire_civilian_nuclear_capability = {
 	icon = "gfx/interface/icons/lens_toolbar_icons/nuclear_weapons.dds"
 	should_be_pinned_by_default = yes
+	scripted_button = pause_nuclear_program_button
+	scripted_button = resume_nuclear_program_button
+	scripted_button = conduct_nuclear_test_button
 	possible = {
 		this = {
 			custom_tooltip = {
 				text = "nuclear_in_progress"
-				has_variable = developing_nuclear_weapons
+				has_modifier = developing_civilian_nuclear_capability
 			}
 		}
 	}
 	immediate = {
 		set_variable = {
-			name = nuclear_capability_valje
+			name = civilian_nuclear_capability_val
 			value = 0
-		}
-		set_variable = {
-			name = developing_nuclear_weapons
 		}
 	}
 	current_value = {
-		value = var:nuclear_capability_valje
+		value = var:civilian_nuclear_capability_val
 	}
 	goal_add_value = {
 		add = 100		# was 100, temp testing value
 	}
-	on_weekly_pulse = {
+	on_monthly_pulse = {
 		effect = {
-			change_variable = {
-				name = nuclear_capability_valje
-				add = 0.1
+			if = {
+				limit = {
+					var:civilian_nuclear_capability_val < 80
+				}
+				change_variable = {
+					name = civilian_nuclear_capability_val
+					add = 0.05
+				}
 			}
 		}
 	}
@@ -40,39 +45,23 @@ je_acquire_nuclear_capability = {
 		}
 	}
 	fail = {
-		custom_tooltip = {
-			text = "ACQUIRE_NUCLEAR_FAIL"
-			NOT = {
-				has_variable = developing_nuclear_weapons
-			}
-		}
 		or = {
-			has_law = law_type:law_civilian_applications
-			has_law = law_type:law_deterrence
-			has_law = law_type:law_first_strike
+			not = {
+				has_law = law_type:law_civilian_applications
+				has_law = law_type:law_deterrence
+				has_law = law_type:law_first_strike
+			}
+			canceled_nuclear_program = yes
 		}
 	}
 	on_complete = {
-		hidden_effect = {
-			every_country = {
-				#trigger_event = {
-					# id = nuclear_war_events.1
-				#}
-			}
-		}
 		add_modifier = {
-			name = nuclear_capable
+			name = civilian_nuclear_capable
 		}
-		set_variable = {
-			name = nuclear_stockpile
-			value = 0
-		}
-		remove_variable = developing_nuclear_weapons
-		remove_variable = nuclear_capability_valje
+		remove_variable = civilian_nuclear_capability_val
 	}
 	on_fail = {
-		remove_variable = developing_nuclear_weapons
-		remove_variable = nuclear_capability_valje
+		remove_variable = civilian_nuclear_capability_val
 	}
 	progressbar = yes
 	weight = 100
