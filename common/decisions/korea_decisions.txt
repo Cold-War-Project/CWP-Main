@@ -1,6 +1,9 @@
-﻿join_korean_conflict_ai = {
+﻿join_korean_conflict_ai_north = {
 	is_shown = {
-		c:PRC ?= this
+		OR = {
+			c:PRC ?= this
+			c:RUS ?= this
+		}
 		is_player = no
 		exists = c:NRK
 		exists = c:STK
@@ -9,7 +12,7 @@
 			is_in_war_together = c:NRK
 		}
 		NOT = {
-			has_variable = joined_korean_conflict_china
+			has_variable = joined_korean_conflict
 		}
 	}
 	possible = {
@@ -19,20 +22,61 @@
 		c:STK.relations:root < relations_threshold:amicable
 	}
 	when_taken = {
-		set_variable = joined_korean_conflict_china
-		every_diplomatic_play = {
+		set_variable = joined_korean_conflict
+		if = {
 			limit = {
-				OR = {
-					AND = {
-						initiator = c:NRK
-						target = c:STK
-					}
-					AND = {
-						initiator = c:STK
+				any_diplomatic_play = {
+					initiator = c:NRK
+					target = c:STK
+					is_war = yes
+				}
+			}
+			every_diplomatic_play = {
+				limit = {
+					initiator = c:NRK
+					target = c:STK
+					is_war = yes
+				}
+				war = {
+					add_war_war_support = {
 						target = c:NRK
+						value = 50
 					}
 				}
+				add_initiator_backers = {
+					root
+				}
+			}
+		}
+		else = {
+			every_diplomatic_play = {
+				limit = {
+					target = c:NRK
+					initiator = c:STK
+					is_war = yes
+				}
+				war = {
+					add_war_war_support = {
+						target = c:NRK
+						value = 50
+					}
+				}
+				add_target_backers = {
+					root
+				}
+			}
+		}
+		every_diplomatic_play = {
+			limit = {
+				initiator = c:NRK
+				target = c:STK
 				is_war = yes
+			}
+			war = {
+				add_war_war_support = {
+					target = c:NRK
+					value = 50
+				}
 			}
 			add_initiator_backers = {
 				root
@@ -41,6 +85,12 @@
 	}
 	ai_chance = {
 		base = 0
+		modifier = {
+			trigger = {
+				is_at_war = no
+			}
+			add = 5
+		}
 		modifier = {
 			trigger = {
 				any_diplomatic_play = {
@@ -58,12 +108,136 @@
 					war = {
 						has_war_support = {
 							target = c:NRK
-							value < 0
+							value < 60
 						}
 					}
 				}
 			}
 			add = 100
+		}
+		modifier = {
+			trigger = {
+				c:RUS ?= this
+			}
+			add = 100
+		}
+	}
+}
+
+join_korean_conflict_ai_south = {
+	is_shown = {
+		country_rank >= rank_value:major_power
+		has_variable = un_member
+		NOT = { has_law = law_type:law_socialization }
+		NOT = { has_law = law_type:law_decentralization }
+		is_player = no
+		exists = c:NRK
+		exists = c:STK
+		NOT = {
+			has_war_with = c:NRK
+			is_in_war_together = c:STK
+		}
+		NOT = {
+			has_variable = joined_korean_conflict
+		}
+	}
+	possible = {
+		c:STK = {
+			has_war_with = c:NRK
+		}
+		c:NRK.relations:root < relations_threshold:amicable
+	}
+	when_taken = {
+		set_variable = joined_korean_conflict
+		if = {
+			limit = {
+				any_diplomatic_play = {
+					initiator = c:NRK
+					target = c:STK
+					is_war = yes
+				}
+			}
+			every_diplomatic_play = {
+				limit = {
+					initiator = c:NRK
+					target = c:STK
+					is_war = yes
+				}
+				war = {
+					add_war_war_support = {
+						target = c:STK
+						value = 10
+					}
+				}
+				add_target_backers = {
+					root
+				}
+			}
+		}
+		else = {
+			every_diplomatic_play = {
+				limit = {
+					target = c:NRK
+					initiator = c:STK
+					is_war = yes
+				}
+				war = {
+					add_war_war_support = {
+						target = c:STK
+						value = 10
+					}
+				}
+				add_initiator_backers = {
+					root
+				}
+			}
+		}
+	}
+	ai_chance = {
+		base = 0
+		modifier = {
+			trigger = {
+				is_at_war = no
+			}
+			add = 2
+		}
+		modifier = {
+			trigger = {
+				any_diplomatic_play = {
+					OR = {
+						AND = {
+							initiator = c:NRK
+							target = c:STK
+						}
+						AND = {
+							initiator = c:STK
+							target = c:NRK
+						}
+					}
+					is_war = yes
+					war = {
+						has_war_support = {
+							target = c:STK
+							value < 60
+						}
+					}
+				}
+			}
+			add = 15
+		}
+		modifier = {
+			trigger = {
+				c:USA ?= this
+			}
+			add = 100
+		}
+		modifier = {
+			trigger = {
+				c:STK = {
+					has_variable = asked_for_un_intervention
+				}
+			}
+			add = 20
 		}
 	}
 }
