@@ -1,0 +1,301 @@
+﻿je_gaddafi_unification = {
+	icon = "gfx/interface/icons/lens_toolbar_icons/unused/diplomatic_actions.dds"
+	should_be_pinned_by_default = yes
+
+	can_deactivate = yes
+
+	scripted_button = gaddafi_puppet_EGY
+	scripted_button = gaddafi_puppet_SDN
+	scripted_button = gaddafi_puppet_PAL
+	scripted_button = gaddafi_puppet_SYR
+	scripted_button = gaddafi_puppet_LEB
+	scripted_button = gaddafi_puppet_EOT
+	scripted_button = gaddafi_puppet_TUN
+	scripted_button = gaddafi_puppet_ALD
+	scripted_button = gaddafi_puppet_MOR
+	scripted_button = gaddafi_puppet_ALR
+	scripted_button = gaddafi_puppet_WSH
+	scripted_button = gaddafi_puppet_MLT
+	scripted_button = gaddafi_puppet_MAU
+	scripted_button = gaddafi_puppet_MAL
+	scripted_button = gaddafi_puppet_BKF
+	scripted_button = gaddafi_puppet_NGR
+	scripted_button = gaddafi_puppet_CHD
+	scripted_button = gaddafi_finish_unification
+
+	is_shown_when_inactive = {
+		exists = c:LBY
+		this = c:LBY
+	}
+
+	possible = {
+		any_scope_character = {
+			is_ruler = yes
+			has_ideology = ideology:ideology_third_international_theory 
+		}
+		is_subject = no
+	}
+
+	immediate = {
+		set_variable = {
+			name = gaddafi_unification_points
+			value = 0
+		}
+		set_variable = {
+			name = gaddafi_unification_weeks
+			value = 0
+		}
+	}
+
+	is_progressing = {
+	}
+	progressbar = yes
+	progress_desc = je_gaddafi_unification_points_desc
+
+	current_value = {
+		value = var:gaddafi_unification_points
+	}
+
+	goal_add_value = {
+		add = 200
+	}
+
+	complete = {
+		hidden_trigger = {
+			OR = {
+				has_variable = je_gaddafi_unification_finished
+				exists = c:JMH
+			}
+		}
+	}
+
+	weight = 100
+}
+
+je_gaddafi_unification_target = {
+	icon = "gfx/interface/icons/lens_toolbar_icons/unused/diplomatic_actions.dds"
+	should_be_pinned_by_default = yes
+
+	is_shown_when_inactive = {
+		has_variable = gaddafi_unification_target
+	}
+
+	possible = {
+		has_variable = gaddafi_unification_target
+	}
+
+	immediate = {
+		c:LBY = {
+			set_variable = {
+				name = gaddafi_unification_weeks
+				value = 22
+			}
+		}
+	}
+
+	on_weekly_pulse = {
+		effect = {
+
+			#Requires >10 per week to be successful
+			#Requires >7 per week to reach >150
+
+			if = { #Libya has a higher rank
+				limit = {
+					global_country_ranking > c:LBY.global_country_ranking
+				}
+				c:LBY = {
+					change_variable = {
+						name = gaddafi_unification_points
+						add = 4
+					}
+				}
+			}
+			if = { #Libya has a stronger millitary
+				limit = {
+					army_reserves < c:LBY.army_reserves
+				}
+				c:LBY = {
+					change_variable = {
+						name = gaddafi_unification_points
+						add = 4
+					}
+				}
+			}
+			if = { #Libya is a major power
+				limit = {
+					c:LBY.country_rank >= rank_value:major_power
+				}
+				c:LBY = {
+					change_variable = {
+						name = gaddafi_unification_points
+						add = 3
+					}
+				}
+			}
+			if = { #We are neighbors; This apparently includes (some) oversea routes? It triggers for Morocco, but not Mauritania
+				limit = {
+					OR = {
+						is_adjacent = c:LBY
+						c:LBY = {
+							any_subject_or_below = { 
+								is_adjacent = ROOT
+								count >= 1
+							}
+						}
+					}
+				}
+				c:LBY = {
+					change_variable = {
+						name = gaddafi_unification_points
+						add = 2
+					}
+				}
+			}
+			if = { #We like Libya
+				limit = {
+					c:LBY = {
+						THIS.relations:root >= relations_threshold:friendly
+					}
+				}
+				c:LBY = {
+					change_variable = {
+						name = gaddafi_unification_points
+						add = 2
+					}
+				}
+			}
+			c:LBY = {
+				change_variable = {
+					name = gaddafi_unification_points
+					add = 1
+				}
+			}
+			c:LBY = {
+				change_variable = {
+					name = gaddafi_unification_weeks
+					subtract = 1
+				}
+			}
+		}
+	}
+
+	on_monthly_pulse = {
+		random_events = {
+			2000 = 0
+			50 = libya.300
+			50 = libya.301
+			50 = libya.302
+			50 = libya.200
+			50 = libya.201
+		}
+	}
+
+	is_progressing = {
+	}
+	progressbar = yes
+	progress_desc = je_gaddafi_unification_points_target_desc
+
+	current_value = {
+		value = c:LBY.var:gaddafi_unification_points
+	}
+
+	goal_add_value = {
+		add = 200
+	}
+
+	timeout = 160
+
+	on_timeout = {
+		hidden_effect = {
+			save_scope_as = gaddafi_unification_target_scope #Used in Events
+			if = {
+				limit = {
+					c:LBY.var:gaddafi_unification_points >= 200
+				}
+				c:LBY = {
+					create_diplomatic_pact = {
+						country = PREV
+						type = jamahiriya
+					}
+					trigger_event = libya.6
+				}
+				trigger_event = libya.4	
+			}
+			else_if = {
+				limit = {
+					c:LBY.var:gaddafi_unification_points >= 150
+				}
+				c:LBY = { trigger_event = libya.8 }
+			}
+			else = { c:LBY = { trigger_event = libya.7 } }
+			remove_global_variable = gaddafi_unification_ongoing
+			c:LBY = {
+				set_variable = {
+					name = gaddafi_unification_points
+					value = 0
+				}
+				set_variable = {
+					name = gaddafi_unification_weeks
+					value = 0
+				}
+			}
+		}
+	}
+
+	complete = {
+		hidden_trigger = {
+			c:LBY.var:gaddafi_unification_points >= 200
+		}
+	}
+
+	on_complete = {
+		hidden_effect = {
+			save_scope_as = gaddafi_unification_target_scope #Used in Events
+			c:LBY = {
+				create_diplomatic_pact = {
+					country = PREV
+					type = jamahiriya
+				}
+				trigger_event = libya.6
+			}
+			trigger_event = libya.4	
+			remove_global_variable = gaddafi_unification_ongoing
+			c:LBY = {
+				set_variable = {
+					name = gaddafi_unification_points
+					value = 0
+				}
+				set_variable = {
+					name = gaddafi_unification_weeks
+					value = 0
+				}
+			}
+		}
+	}
+
+	fail = {
+		OR = {
+			NOT = { c:LBY = { has_journal_entry = je_gaddafi_unification } }
+			is_subject = yes 
+		}
+	}
+
+	on_fail = {
+		hidden_effect = {
+			save_scope_as = gaddafi_unification_target_scope #Used in Events
+			remove_global_variable = gaddafi_unification_ongoing
+			c:LBY = {
+				set_variable = {
+					name = gaddafi_unification_points
+					value = 0
+				}
+				set_variable = {
+					name = gaddafi_unification_weeks
+					value = 0
+				}
+			}
+		}
+	}
+
+	weight = 100
+}
