@@ -1,0 +1,1942 @@
+types right_click_menu_types {
+	type right_click_menu_item = button {
+		block "size" {
+			size = { 460 44 }
+		}
+		block "button" {
+			using = default_button
+		}
+		align = left|nobaseline
+		using = fontsize_large
+		name = "right_click_menu_item"
+		block "properties" {
+			raw_tooltip = "Default Item Tooltip"
+			enabled = yes
+			#onclick = "[SomeCallback]"
+		}
+
+		hbox = {
+			layoutpolicy_horizontal = expanding
+			layoutpolicy_vertical = expanding
+			margin_left  = 10
+
+			block "icon" {
+				icon = {
+					block "texture" {
+						texture = "gfx/interface/population/pop_culture.dds"
+					}
+					size = { 28 28 }
+				}
+			}
+
+			textbox = {
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+				block "text" {
+					raw_text = "#TODO Default Item Text#!"
+				}
+				align = left|nobaseline
+				fontsize_min = 12
+				using = fontsize_large
+				elide = right
+				margin = { 5 0 }
+			}
+
+			block "right_text" {}
+		}
+
+		block "margin" {
+			margin_left = 15
+		}		
+
+		block "onclick" {
+			onclick = "[RightClickMenuManager.Close]"
+		}
+
+		block "sound" {
+			using = select_button_sound
+		}
+	}
+
+	type right_click_menu_expandable_item = flowcontainer {
+		direction = vertical
+
+		right_click_menu_item = {
+			blockoverride "button" {
+				using = expand_button_bg
+			}
+			blockoverride "margin" {
+				margin_left = 30
+			}
+			
+			container = {
+				parentanchor = vcenter
+				
+				button = {
+					using = expand_arrow
+					size = { 25 25 }
+					alwaystransparent = yes
+
+					block "expanded_list_expand_visible" {}
+				}
+
+				button = {
+					using = expand_arrow_expanded
+					size = { 25 25 }
+					alwaystransparent = yes
+
+					block "expanded_list_collapse_visible" {}
+				}
+			}
+
+			block "unread_icon_expandable_item" {}
+
+			textbox = {
+				block "number_of_items_text" {
+					raw_text = "-1"
+				}
+				autoresize = yes
+				parentanchor = right|vcenter
+				block "position_number_of_items" {}
+				align = nobaseline
+				default_format = "#v"
+				margin_right = 10
+			}
+
+			blockoverride "icon" {}
+		
+			blockoverride = "text" {}			
+		}
+
+		flowcontainer = {
+			direction = vertical
+			block "expanded_list_properties" {}
+			margin_bottom = 15
+			margin_left = 20
+			
+			item = {
+				button = {
+					block "button" {
+						using = default_button
+					}
+
+					textbox = {
+						resizeparent = yes
+						minimumsize = { 380 34 }
+						maximumsize = { 380 -1 }
+						margin = { 15 5 }
+						margin_right = 25
+						autoresize = yes
+						fontsize_min = 12
+						elide = right
+						multiline = yes
+						align = nobaseline
+						block "list_item_text_properties" {
+							raw_text = "Default Item Text"
+							raw_tooltip = "Default Item Tooltip"
+						}						
+					}
+
+					block "unread_icon" {}
+
+					block "list_item_properties" {
+					}
+					
+					block "enabled" {
+						enabled = yes
+					}
+
+					block "expandable_onclick" {}
+					onclick = "[RightClickMenuManager.Close]"
+				}
+			}
+		}
+	}
+
+	type right_click_menu = right_click_menu_widget {
+		gfxtype = windowgfx
+		shaderfile = "gfx/FX/pdxgui_default.shader"
+		widgetanchor = top|left
+		movable = no
+		layer = layer_rightclickmenu
+
+		block "right_click_menu_open_sound" {
+			state = {
+				name = sound
+				trigger_on_create = yes
+				start_sound = {
+					using = ui_sfx_global_panel_show
+				}
+			}
+		}
+		
+		background = {
+			using = default_background
+		}
+		background = {
+			using = frame_small
+		}
+		
+		# hidden button to close the menu
+		button = {
+			size = { 0 0 }
+			onclick = "[RightClickMenuManager.Close]"
+			shortcut = "close_window"
+			block "right_click_menu_close_sound" {
+				using = ui_close
+			}
+		}
+
+		flowcontainer = {
+			margin = { 8 15 }
+			resizeparent = yes
+				
+			scrollarea = {
+				scrollbarpolicy_horizontal = always_off
+				scrollbar_vertical = {
+					using = vertical_scrollbar
+				}
+
+				maximumsize = { -1 800 }
+				autoresizescrollarea = yes
+			
+				scrollwidget = {
+					flowcontainer = {
+						margin = { 8 0 }
+						parentanchor = hcenter
+						direction = vertical
+
+						block "header_text" {
+							textbox = {
+								autoresize = yes
+								default_format = "#header"
+								align = left|nobaseline
+								margin_left = 10
+								margin_bottom = 2
+
+								block "title_text" {
+									raw_text = "Default Title"
+								}
+							}
+						}
+
+						block "list" {
+							flowcontainer = {
+								using = default_list_position
+								spacing = 2
+
+								direction = vertical
+
+								block "items" {
+									right_click_menu_item = {}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+right_click_menu = {
+	name = "building_right_click_menu"
+	datacontext = "[GetMetaPlayer.GetPlayedOrObservedCountry]"
+
+	blockoverride "title_text" {
+		text = "BUILDING_RIGHT_CLICK_MENU_TITLE"
+	}
+	blockoverride "items" {
+		right_click_menu_item = {
+
+			blockoverride "texture" {
+				texture = "gfx/interface/buttons/button_icons/plus.dds"
+			}
+			
+			blockoverride = "text" {
+				text = "BUILDING_RIGHT_CLICK_MENU_EXPAND"
+			}
+
+			blockoverride "margin" {
+				margin_left = 45
+			}
+
+			blockoverride "properties" {
+				tooltip = "[Building.GetQueueConstructionTooltip]"
+				enabled = "[IsValid( Building.QueueConstruction )]"
+				visible = "[Building.IsExpandable]"
+				onclick = "[Execute( Building.QueueConstruction )]"
+			}
+		}
+		right_click_menu_item = {
+			
+			blockoverride "margin" {
+				margin_left = 45
+			}
+
+			blockoverride "properties" {
+				visible = "[And(IsPotential( Building.ToggleAutoExpand ),Not(Building.IsAutoExpanding))]"
+				tooltip = [Building.GetAutoExpandTooltip]
+				enabled = "[IsValid( Building.ToggleAutoExpandOn )]"
+				onclick = "[Execute( Building.ToggleAutoExpandOn )]"
+			}
+
+			blockoverride "texture" {
+				texture = "gfx/interface/production_methods/auto_expand.dds"
+			}
+			
+			blockoverride = "text" {
+				text = "BUILDING_RIGHT_CLICK_MENU_AUTOEXPAND_ON"
+			}
+		}
+
+		right_click_menu_item = {
+			
+			blockoverride "margin" {
+				margin_left = 45
+			}
+			blockoverride "properties" {
+				visible = "[And(IsPotential( Building.ToggleAutoExpand ),Building.IsAutoExpanding)]"				
+				tooltip = [Building.GetAutoExpandTooltip]
+				enabled = "[IsValid( Building.ToggleAutoExpandOff )]"
+				onclick = "[Execute( Building.ToggleAutoExpandOff )]"
+			}
+
+			blockoverride "texture" {
+				texture = "gfx/interface/production_methods/auto_expand_not.dds"
+			}
+			
+			blockoverride = "text" {
+				text = "BUILDING_RIGHT_CLICK_MENU_AUTOEXPAND_OFF"
+			}
+		}
+
+		right_click_menu_item = {
+			
+			blockoverride "margin" {
+				margin_left = 45
+			}
+			blockoverride "properties" {
+				visible = "[And(Building.IsExpandable, IsValid( Building.QueueConstruction ))]"
+				onclick = "[Building.GetBuildingType.ActivateExpansionLens]"
+			}
+
+			blockoverride "texture" {
+				texture = "gfx/interface/buttons/button_icons/plus.dds"
+			}
+			
+			blockoverride = "text" {
+				text = "OPEN_EXPANSION_LENS"
+			}
+		}
+
+		right_click_menu_item = {
+			
+			blockoverride "margin" {
+				margin_left = 45
+			}
+			blockoverride "properties" {	
+				tooltip = "[Building.GetCancelConstructionTooltip]"
+				visible = "[IsValid( Building.CancelConstruction )]"
+				onclick = "[Execute( Building.CancelConstruction )]"
+			}
+
+			blockoverride "texture" {
+				texture = "gfx/interface/buttons/button_icons/minus.dds"
+			}
+			
+			blockoverride = "text" {
+				text = "BUILDING_RIGHT_CLICK_MENU_CANCEL_CONSTRUCTION"
+			}
+		}
+
+		### DOWNSIZE
+		right_click_menu_item = {
+			
+			blockoverride "margin" {
+				margin_left = 45
+			}
+			blockoverride "properties" {
+				visible = "[And( And( Building.IsValid, Building.IsDownsizeable ), Not( ShouldAskConfirmation( Building.Downsize ) ) )]"
+				tooltip = "[Building.GetDownsizeTooltip]"
+				enabled = "[IsValid( Building.Downsize )]"
+				onclick = "[Execute( Building.Downsize )]"
+			}
+
+			blockoverride "texture" {
+				texture = "gfx/interface/buttons/button_icons/minus.dds"
+			}
+			
+			blockoverride = "text" {
+				text = "BUILDING_RIGHT_CLICK_MENU_DOWNSIZE"
+			}
+		}
+
+		### DOWNSIZE WITH CONFIRMATION
+		right_click_menu_item = {
+			blockoverride "margin" {
+				margin_left = 45
+			}
+			blockoverride "properties" {
+				visible = "[And( And( Building.IsValid, Building.IsDownsizeable ), ShouldAskConfirmation( Building.Downsize ) )]"
+				tooltip = "[Building.GetDownsizeTooltip]"
+				enabled = "[IsValid( Building.Downsize )]"
+				onclick = "[PopupManager.AskConfirmation( Building.Downsize )]"
+			}
+
+			blockoverride "texture" {
+				texture = "gfx/interface/buttons/button_icons/minus.dds"
+			}
+			
+			blockoverride = "text" {
+				text = "BUILDING_RIGHT_CLICK_MENU_DOWNSIZE"
+			}
+		}
+
+		right_click_menu_item = {
+			
+			blockoverride "margin" {
+				margin_left = 45
+			}
+			blockoverride "properties" {
+				visible = "[And(IsValid( Building.ToggleSubsidies ),Not(Building.IsSubsidized))]"			
+				tooltip = "[Building.GetSubsidizeTooltip]"
+				enabled = "[IsValid( Building.ToggleSubsidiesOn )]"
+				onclick = "[Execute( Building.ToggleSubsidiesOn )]"
+			}
+
+			blockoverride "texture" {
+				texture = "gfx/interface/production_methods/subsidized.dds"
+			}
+			
+			blockoverride = "text" {
+				text = "BUILDING_RIGHT_CLICK_MENU_SUBSIDIZE_ON"
+			}
+		}
+
+		right_click_menu_item = {
+			
+			blockoverride "margin" {
+				margin_left = 45
+			}
+			blockoverride "properties" {
+				visible = "[And(IsValid( Building.ToggleSubsidies ),Building.IsSubsidized)]"			
+				tooltip = "[Building.GetSubsidizeTooltip]"
+				enabled = "[IsValid( Building.ToggleSubsidiesOff )]"
+				onclick = "[Execute( Building.ToggleSubsidiesOff )]"
+			}
+
+			blockoverride "texture" {
+				texture = "gfx/interface/production_methods/subsidized.dds"
+			}
+			
+			blockoverride = "text" {
+				text = "BUILDING_RIGHT_CLICK_MENU_SUBSIDIZE_OFF"
+			}
+		}
+
+		# RESET PRODUCTION METHODS
+		right_click_menu_item = {
+			
+			blockoverride "margin" {
+				margin_left = 45
+			}
+			blockoverride "properties" {
+				onclick = "[Execute( Building.ResetProductionMethodsToStandard )]"
+				visible = "[IsValid( Building.ResetProductionMethodsToStandard )]"
+				tooltip = "[Building.GetResetProductionMethodsToStandardTooltip]"
+			}
+
+			blockoverride "texture" {
+				texture = "gfx/interface/icons/lens_toolbar_icons/reset_production_methods_lens_option.dds"
+			}
+			
+			blockoverride = "text" {
+				text = "RESET_PM_BUILDING"
+			}
+		}
+		right_click_menu_item = {
+			
+			blockoverride "margin" {
+				margin_left = 45
+			}
+			blockoverride "properties" {
+				onclick = "[Execute( Building.GetBuildingType.ResetProductionMethodsToStandard )]"
+				visible = "[IsValid( Building.GetBuildingType.ResetProductionMethodsToStandard )]"
+				tooltip = "[Building.GetBuildingType.GetResetProductionMethodsToStandardTooltip]"
+			}
+
+			blockoverride "texture" {
+				texture = "gfx/interface/icons/lens_toolbar_icons/reset_production_methods_lens_option.dds"
+			}
+			
+			blockoverride = "text" {
+				text = "RESET_PM_BUILDING_TYPE"
+			}
+		}	
+	}
+}
+
+right_click_menu = {
+	name = "building_type_right_click_menu"
+	datacontext = "[GetMetaPlayer.GetPlayedOrObservedCountry]"
+
+	blockoverride "title_text" {
+		text = "[BuildingType.GetName]"
+	}
+	blockoverride "items" {
+		right_click_menu_item = {
+			
+			blockoverride "margin" {
+				margin_left = 45
+			}
+			blockoverride "properties" {
+				visible = "[BuildingType.IsExpandable]"
+				onclick = "[BuildingType.ActivateExpansionLens]"
+			}
+
+			blockoverride "texture" {
+				texture = "gfx/interface/buttons/button_icons/plus.dds"
+			}
+			
+			blockoverride = "text" {
+				text = "OPEN_EXPANSION_LENS"
+			}
+		}
+
+		# RESET PRODUCTION METHODS
+		right_click_menu_item = {
+			
+			blockoverride "margin" {
+				margin_left = 45
+			}
+			blockoverride "properties" {
+				onclick = "[Execute( BuildingType.ResetProductionMethodsToStandard )]"
+				visible = "[IsValid( BuildingType.ResetProductionMethodsToStandard )]"
+				tooltip = "[BuildingType.GetResetProductionMethodsToStandardTooltip]"
+			}
+
+			blockoverride "texture" {
+				texture = "gfx/interface/icons/lens_toolbar_icons/reset_production_methods_lens_option.dds"
+			}
+			
+			blockoverride = "text" {
+				text = "RESET_PM_BUILDING_TYPE"
+			}
+		}	
+	}
+}
+
+right_click_menu = {
+	name = "ig_right_click_menu"
+
+	blockoverride "title_text" {
+		text = "IG_RIGHT_CLICK_MENU_TITLE"
+	}
+
+	blockoverride "items" {
+		right_click_menu_item = {
+			blockoverride "properties" {
+				tooltip = "TOOLTIP_SUPPRESS"
+				visible = "[Not( InterestGroup.IsSuppressed )]"
+				enabled = "[IsValid( InterestGroup.ToggleSuppression )]"
+				onclick = "[Execute( InterestGroup.ToggleSuppression )]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride = "text" {
+				text = "IG_RIGHT_CLICK_MENU_SUPPRESS"
+			}
+		}
+		
+		right_click_menu_item = {
+			blockoverride "properties" {
+				tooltip = "TOOLTIP_SUPPRESS_NOT"
+				visible = "[InterestGroup.IsSuppressed]"
+				enabled = "[IsValid( InterestGroup.ToggleSuppression )]"
+				onclick = "[Execute( InterestGroup.ToggleSuppression )]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride = "text" {
+				text = "IG_RIGHT_CLICK_MENU_SUPPRESS_NOT"
+			}
+		}
+		
+		right_click_menu_item = {
+			blockoverride "properties" {
+				tooltip = "TOOLTIP_PROMOTE"
+				visible = "[Not( InterestGroup.IsBolstered )]"
+				enabled = "[IsValid( InterestGroup.TogglePromotion )]"
+				onclick = "[Execute( InterestGroup.TogglePromotion )]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride = "text" {
+				text = "IG_RIGHT_CLICK_MENU_PROMOTE"
+			}
+		}
+		
+		right_click_menu_item = {
+			blockoverride "properties" {
+				tooltip = "TOOLTIP_PROMOTE_NOT"
+				visible = "[InterestGroup.IsBolstered]"
+				enabled = "[IsValid( InterestGroup.TogglePromotion )]"
+				onclick = "[Execute( InterestGroup.TogglePromotion )]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride = "text" {
+				text = "IG_RIGHT_CLICK_MENU_PROMOTE_NOT"
+			}
+		}
+
+		right_click_menu_item = {
+			visible = "[InterestGroup.GetCountry.IsLocalPlayer]"
+
+			blockoverride "properties" {
+				onclick = "[InterestGroup.TogglePinInOutliner]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride = "text" {
+				text = "IG_RIGHT_CLICK_MENU_PIN_IN_OUTLINER"
+			}
+		}
+	}
+}
+
+right_click_menu = {
+	name = "decree_right_click_menu"
+
+	blockoverride "title_text" {
+		text = "DECREE_RIGHT_CLICK_MENU_TITLE"
+	}
+
+	blockoverride "items" {
+		right_click_menu_item = {
+			blockoverride "properties" {
+				tooltip = "DECREE_REMOVE"
+				enabled = "[IsValid( Decree.GetRemoveCommand )]"
+				onclick = "[Execute( Decree.GetRemoveCommand )]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride = "text" {
+				text = "DECREE_RIGHT_CLICK_MENU_REMOVE"
+			}
+		}
+	}
+}
+
+right_click_menu = {
+	name = "character_right_click_menu"
+
+	blockoverride "title_text" {
+		text = "CHARACTER_RIGHT_CLICK_MENU_TITLE"
+	}
+
+	blockoverride "items" {
+		right_click_menu_item = {		# GO TO PANEL
+			visible = "[Not(InformationPanelBar.IsPanelOpen('commander'))]"
+			
+			blockoverride "properties" {
+				onclick = "[InformationPanelBar.OpenCommanderPanel(Character.AccessSelf)]"
+				tooltip = "GO_TO_BUTTON_CHARACTER"
+			}
+			blockoverride "icon" {}
+
+			blockoverride = "text" {
+				text = "CHARACTER_RIGHT_CLICK_MENU_INFORMATION"
+			}
+
+			blockoverride "size" {
+				size = { 260 44 }
+			}
+		}
+
+		right_click_menu_item = {		# TOGGLE PIN
+			blockoverride "properties" {
+				visible = "[Character.GetCountry.IsLocalPlayer]"
+				onclick = "[Character.TogglePinInOutliner]"
+			}
+			blockoverride "icon" {}
+			
+			blockoverride = "text" {
+				text = "CHARACTER_RIGHT_CLICK_MENU_PIN_IN_OUTLINER"
+			}
+
+			blockoverride "size" {
+				size = { 260 44 }
+			}
+		}
+
+		flowcontainer = {
+			direction = vertical
+
+			textbox = {					# CHARACTER INTERACTIONS HEADER
+				visible = "[Not(IsDataModelEmpty(Character.GetInteractions))]"
+				margin_top = 5
+				margin_left = 5
+				autoresize = yes
+				align = left|nobaseline
+				text = "CHARACTER_INTERACTIONS_HEADER"
+			}
+
+			right_click_menu_item = {	# PROMOTE COMMANDER
+				blockoverride "properties" {
+					visible = "[And( Character.GetCountry.IsLocalPlayer, Character.IsCommander )]"
+					tooltip = "MILITARY_PANEL_PROMOTE_CHARACTER_TOOLTIP"
+					enabled = "[IsValid(Character.GetPromoteCommand)]"
+					onclick = "[PopupManager.AskConfirmationWithSound(Character.GetPromoteCommand, 'event:/SFX/UI/Military/commander_promote')]"			}
+				blockoverride "icon" {}
+
+				blockoverride = "text" {
+					text = "CHARACTER_RIGHT_CLICK_MENU_PROMOTE_COMMANDER"
+				}
+
+				blockoverride "size" {
+					size = { 260 44 }
+				}
+			}
+
+			dynamicgridbox = {			# INTERACTIONS
+				datamodel = "[Character.GetInteractions]"
+				item = {
+					right_click_menu_item = {
+						blockoverride "properties" {
+							tooltip = "CHARACTER_INTERACTION_TOOLTIP"
+							enabled = "[CharacterInteraction.IsCommandValid(Character.Self)]"
+							onclick = "[CharacterInteraction.ExecuteCommand(Character.Self)]"
+						}
+						clicksound = "[CharacterInteraction.GetClickSound]"
+
+						blockoverride "texture" {
+							visible = "[CharacterInteraction.HasIcon]"
+							texture = "[CharacterInteraction.GetIcon]"
+						}
+
+						blockoverride "text" {
+							text = "CHARACTER_INTERACTION_NAME"
+						}
+
+						blockoverride "size" {
+							size = { 260 44 }
+						}
+					}
+				}
+			}
+		}
+
+		flowcontainer = {
+			direction = vertical
+			visible = "[Character.GetCountry.IsLocalPlayer]"
+
+			textbox = {					# CURRENT ORDER (TEXT)
+				visible = "[Character.IsCommander]"
+				margin_top = 5
+				margin_left = 5
+				autoresize = yes
+				align = left|nobaseline
+				text = "COMMANDER_PANEL_CURRENT_ORDER"
+			}
+
+			right_click_menu_item = {	# MOBILIZE
+				blockoverride "properties" {
+					tooltip = "MOBILIZE_GENERAL_TOOLTIP"
+					visible = "[IsValid( Character.Mobilize )]"
+					enabled = "[IsValid( Character.Mobilize )]"
+					onclick = "[PopupManager.AskConfirmation( Character.Mobilize )]"
+				}
+
+				blockoverride "icon" {}
+				
+				blockoverride = "text" {
+					text = "MOBILIZE_GENERAL"
+				}
+
+				blockoverride "size" {
+					size = { 260 44 }
+				}
+			}
+
+			right_click_menu_item = {	# TOGGLE DEFEND
+				blockoverride "properties" {
+					tooltip = "COMMANDER_PANEL_ORDER_TOGGLE_DEFEND_TOOLTIP"
+					enabled = "[IsValid( Character.DefendCurrentFront )]"
+					onclick = "[Execute(Character.DefendCurrentFront)]"
+					visible = "[Character.GetCommanderOrder.GetType.IsAdvanceFront]"
+				}
+				clicksound = "[Character.GetCommanderOrder.GetType.GetClickSound]"
+
+				blockoverride "texture" {
+					texture = "gfx/interface/icons/commander_order_icons/defend.dds"
+				}
+				
+				blockoverride = "text" {
+					text = "COMMANDER_PANEL_ORDER_TOGGLE_DEFEND"
+				}
+
+				blockoverride "size" {
+					size = { 260 44 }
+				}
+			}
+
+			right_click_menu_item = {	# TOGGLE ADVANCE
+				blockoverride "properties" {
+					tooltip = "COMMANDER_PANEL_ORDER_TOGGLE_ADVANCE_TOOLTIP"
+					enabled = "[IsValid( Character.AdvanceCurrentFront )]"
+					onclick = "[Execute(Character.AdvanceCurrentFront)]"
+					visible = "[Character.GetCommanderOrder.GetType.IsDefendFront]"
+				}
+				clicksound = "[Character.GetCommanderOrder.GetType.GetClickSound]"
+
+				blockoverride "texture" {
+					texture = "gfx/interface/icons/commander_order_icons/advance.dds"
+				}
+				
+				blockoverride = "text" {
+					text = "COMMANDER_PANEL_ORDER_TOGGLE_ADVANCE"
+				}
+
+				blockoverride "size" {
+					size = { 260 44 }
+				}
+			}
+
+			dynamicgridbox = {			# ORDERS
+				datamodel = "[Character.AccessOrders]"
+				item = {
+					container = {
+						right_click_menu_item = {	# SELECT ORDER (WITHOUT MAP INTERACTION)
+							blockoverride "properties" {
+								tooltip = "COMMANDER_PANEL_ORDER_TOOLTIP"
+								enabled = "[Character.CanSelectOrder( CommanderOrderType.Self )]"
+								onclick = "[Character.SelectOrder( CommanderOrderType.Self )]"
+								visible = "[Not( CommanderOrderType.HasMapInteraction )]"
+							}
+							clicksound = "[CommanderOrderType.GetClickSound]"
+
+							blockoverride "texture" {
+								texture = "[CommanderOrderType.GetTexture]"
+							}
+							
+							blockoverride = "text" {
+								text = "[CommanderOrderType.GetName]"
+							}
+
+							blockoverride "size" {
+								size = { 260 44 }
+							}
+						}
+
+						right_click_menu_item = {	# SELECT ORDER (WITH MAP INTERACTION)
+							blockoverride "properties" {
+								tooltip = "COMMANDER_PANEL_ORDER_TOOLTIP"
+								enabled = "[Character.CanSelectOrder( CommanderOrderType.Self )]"
+								onclick = "[Character.SelectOrder( CommanderOrderType.Self )]"
+								visible = "[CommanderOrderType.HasMapInteraction]"
+							}
+
+							blockoverride "texture" {
+								texture = "[CommanderOrderType.GetTexture]"
+							}
+							
+							blockoverride = "text" {
+								text = "[CommanderOrderType.GetName]"
+							}
+
+							blockoverride "size" {
+								size = { 260 44 }
+							}
+						}
+					}
+				}
+			}
+		}
+
+		flowcontainer = {				# HISTORICAL CHARACTER
+			visible = "[And( Character.IsHistorical, Not( StringIsEmpty( Character.GetHistoricalUrl )))]"
+			direction = vertical
+
+			textbox = {
+				margin_top = 5
+				margin_left = 5
+				autoresize = yes
+				align = left|nobaseline
+				text = "CHARACTER_HISTORICAL_HEADER"
+			}
+
+			right_click_menu_item = {	# OPEN HISTORICAL CHARACTER URL
+				blockoverride "properties" {
+					onclick = "[Character.OpenHistoricalUrl]"
+					tooltip = "CHARACTER_HISTORICAL_OPEN_URL_TOOLTIP"
+				}
+
+				blockoverride "texture" {
+					texture = "gfx/interface/icons/generic_icons/historical_character_icon.dds"
+				}
+
+				blockoverride = "text" {
+					text = "CHARACTER_HISTORICAL_OPEN_URL"
+				}
+
+				blockoverride "size" {
+					size = { 260 44 }
+				}
+			}
+		}
+	}
+}
+
+right_click_menu = {
+	name = "naval_invasion_right_click_menu"
+
+	blockoverride "title_text" {
+		text = "NAVAL_INVASION_RIGHT_CLICK_MENU_TITLE"
+	}
+
+	blockoverride "items" {
+		dynamicgridbox = {
+			datamodel = "[MapInteractions.AccessMapInteractionCharacter.AccessCountry.AccessNavalInvasionGenerals]"
+			item = {
+				flowcontainer = {
+					character_portrait_mini = {
+						widgetanchor = left|vcenter
+						parentanchor = left|vcenter
+					}
+
+					right_click_menu_item = {
+						enabled = "[IsValid( MapInteractions.AccessMapInteractionCharacter.GetNavalInvasionCommand( Character.Self, State.Self ) )]"
+
+						blockoverride "properties" {
+							tooltip = "NAVAL_INVASION_RIGHT_CLICK_MENU_TOOLTIP"
+							onclick = "[Execute( MapInteractions.AccessMapInteractionCharacter.GetNavalInvasionCommand( Character.Self, State.Self ) )]"
+							onclick = "[MapInteractions.ShowMapInteractionNotification]"
+							onclick = "[MapListPanelManager.ResetActiveMapInteraction]"
+						}
+
+						blockoverride "sound" {
+							using = order_admiral_naval_invasion_button_sound
+						}
+
+						blockoverride "icon" {}
+						
+						blockoverride = "text" {
+							raw_text = "[Character.GetFullNameNoFormatting] ([GetUnitStrengthHeader( Character.GetNumCombatUnits, Character.GetMaxNumCombatUnits, Character.GetCombatUnitsTypeIcon )], [Character.GetMobilizationPercentageFormatted])"
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+right_click_menu = {
+	name = "state_right_click_menu"
+
+	blockoverride "title_text" {
+		text = "STATE_RIGHT_CLICK_MENU_TITLE"
+	}
+
+	blockoverride "header_text" {} #no header for state menu, handle in items instead
+
+	blockoverride "items" {
+		flowcontainer = {
+			direction = horizontal
+			spacing = 5
+			margin_left = 10
+
+			tiny_flag = {
+				parentanchor = left|vcenter
+			}
+
+			textbox = {
+				autoresize = yes
+				align = left|nobaseline
+				text = "STATE_RIGHT_CLICK_MENU_COUNTRY_TITLE"
+			}
+		}
+
+		widget = { size = { 4 4 }} #pixelpushing tweak for flag, hack due to parentanchor and margins interacting weird
+
+		right_click_menu_item = {
+			blockoverride "properties" {
+				onclick = "[InformationPanelBar.OpenCountryPanelTab(Country.Self, 'default')]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride = "text" {
+				text = "STATE_RIGHT_CLICK_MENU_COUNTRY_INFORMATION"
+			}	
+		}
+
+		right_click_menu_item = {
+			blockoverride "properties" {
+				onclick = "[Country.AccessCapital.ZoomToCapital]"
+				using = zoom_button_sound
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride = "text" {
+				text = "ZOOM_TO_CAPITAL_STATE"
+			}	
+		}
+
+		right_click_menu_item = {
+			visible = "[Country.IsLocalPlayer]"
+			blockoverride "properties" {
+				onclick = "[State.TogglePinInOutliner]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride = "text" {
+				text = "STATE_RIGHT_CLICK_MENU_PIN_IN_OUTLINER"
+			}		
+		}
+
+		right_click_menu_item = {
+			visible = "[Not(Country.IsLocalPlayer)]"
+			blockoverride "properties" {
+				onclick = "[InformationPanelBar.OpenCountryPanelTab(Country.Self, 'diplomacy')]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride = "text" {
+				text = "STATE_RIGHT_CLICK_MENU_DIPLOMACY"
+			}	
+		}
+
+		dynamicgridbox = {
+			datamodel = "[Country.GetPotentialDiploActions]"
+			item = {
+				right_click_menu_item = {
+					blockoverride "properties" {
+						tooltip = "DIPLOMATIC_ACTION_TOOLTIP"
+						visible = "[Or( IsValid(DiplomaticAction.ExecuteAction), DiplomaticAction.IsActivePact)]"
+						onclick = "[DiplomaticAction.ExecuteWithConfirmation]"
+						enabled = "[IsValid(DiplomaticAction.ExecuteAction)]"
+						clicksound = "[DiplomaticAction.GetSoundWithConfirmation]"
+					}
+					icon = {
+						visible = "[DiplomaticAction.IsActivePact]"
+						using = highlighted_square_selection
+					}
+					
+					blockoverride "margin" {
+						margin_left = 55
+					}				
+
+					diplomatic_action_acceptance_icon = {
+						position = { -10 0 }
+					}
+
+					blockoverride "texture" {
+						texture = "[DiplomaticAction.GetType.GetTexture]"
+					}
+					
+					blockoverride = "text" {
+						text = "[DiplomaticAction.GetFullName]"
+					}
+				}
+			}
+		}
+
+		dynamicgridbox = {
+			datamodel = "[Country.GetPotentialDiploPlays]"
+			item = {
+				right_click_menu_item = {
+					blockoverride "properties" {
+						tooltip = "[DiplomaticPlayType.GetStartTooltipState(GetPlayer,State.Self)]"
+						enabled = "[IsValid(DiplomaticPlayType.GetStartCommandState(GetPlayer,State.Self))]"
+						onclick = "[DiplomaticPlayType.ShowConfirmationState(State.Self)]"
+						using = confirm_button_sound
+					}
+
+					blockoverride "margin" {
+						margin_left = 55
+					}
+					
+					blockoverride "texture" {
+						texture = "[DiplomaticPlayType.GetTexture]"
+					}
+
+					blockoverride "text" {
+						text = "[DiplomaticPlayType.GetName]"
+					}
+				}
+			}
+		}
+		textbox = {
+			text = "STATE_RIGHT_CLICK_MENU_STATE_TITLE"
+			autoresize = yes
+			align = left|nobaseline
+			margin_top = 15
+			margin_bottom = 2
+			margin_left = 10
+		}
+
+		right_click_menu_item = {
+			visible = "[IsPotential( State.IncorporateState )]"
+			blockoverride "properties" {
+				enabled = "[IsValid( State.IncorporateState )]"
+				onclick = "[Execute( State.IncorporateState )]"
+				tooltip = "TOOLTIP_INCORPORATE_STATE"
+			}
+
+			blockoverride "icon" {}
+
+			blockoverride "text" {
+				text = "STATE_RIGHT_CLICK_MENU_INCORPORATE"
+			}
+		}
+		
+		right_click_menu_item = {
+			visible = "[IsValid(State.UnincorporateState)]"
+			blockoverride "properties" {
+				onclick = "[PopupManager.AskConfirmation( State.UnincorporateState )]"
+				tooltip = "TOOLTIP_CANCEL_INCORPORATION"
+			}
+			
+			blockoverride "icon" {}
+
+			blockoverride = "text" {
+				text = "STATE_RIGHT_CLICK_MENU_CANCEL_INCORPORATION"
+			}
+		}
+		
+		dynamicgridbox = {
+			datamodel = "[State.AccessDecrees]"
+			item = {
+				right_click_menu_item = {
+					blockoverride "properties" {
+						onclick = "[Execute(Decree.GetRemoveCommand)]"
+						enabled = "[IsValid(Decree.GetRemoveCommand)]"
+						tooltip = "[Decree.BuildTooltip]"
+						visible = "[ObjectsEqual(State.GetOwner, GetPlayer.Self)]"
+					}
+					
+					blockoverride "text" {
+						text = "DECREE_REMOVE"
+					}
+
+					blockoverride "texture" {
+						texture = "[Decree.GetTexture]"
+					}
+
+					blockoverride "margin" {
+						margin_left = 55
+					}
+				}
+			}
+		}
+		dynamicgridbox = {
+			datamodel = "[State.GetPotentialDecrees]"
+			item = {
+				right_click_menu_item = {
+					blockoverride "properties" {
+						onclick = "[Execute(DecreeType.GetSetCommand(State.Self))]"
+						enabled = "[IsValid(DecreeType.GetSetCommand(State.Self))]"
+						tooltip = "[DecreeType.BuildTooltip( State.Self )]"
+					}
+					
+					blockoverride "margin" {
+						margin_left = 55
+					}
+
+					blockoverride "text" {
+						text = "[DecreeType.GetName]"
+					}
+
+					blockoverride "texture" {
+						texture = "[DecreeType.GetTexture]"
+					}			
+				}
+			}
+		}
+
+		right_click_menu_item = {
+			datacontext = "[State.GetBuilding('building_conscription_center')]"
+			datacontext = "[Building.GetHQ]"
+			blockoverride "properties" {
+
+				tooltip = "ACTIVATE_CONSCRIPTION_CENTER_TOOLTIP"
+				visible = "[IsValid( State.ActivateConscriptionCenter )]"
+				onclick = "[Execute( State.ActivateConscriptionCenter )]"
+			}
+
+			blockoverride "icon" {}
+
+			blockoverride "text" {
+				text = "ACTIVATE_CONSCRIPTION_CENTER"
+			}
+		}
+
+		right_click_menu_item = {
+            blockoverride "properties" {
+                tooltip = "DESIGNATE_STRATEGIC_OBJECTIVE_RIGHT_CLICK_ADD_TOOLTIP"
+                visible = "[And( Not( State.IsStrategicObjective( GetMetaPlayer.GetPlayedOrObservedCountry ) ), IsValid( State.DesignateStrategicObjective ) ) ]"
+                onclick = "[Execute( State.DesignateStrategicObjective )]"
+            }
+
+            blockoverride "margin" {
+				margin_left = 55
+			}
+			
+			blockoverride "texture" {
+				texture = "gfx/interface/icons/lens_toolbar_icons/designate_strategic_objective_lens_option.dds"
+			}
+
+            blockoverride "text" {
+                text = "DESIGNATE_STRATEGIC_OBJECTIVE_RIGHT_CLICK_ADD"
+            }
+        }
+
+		right_click_menu_item = {
+            blockoverride "properties" {
+                tooltip = "DESIGNATE_STRATEGIC_OBJECTIVE_RIGHT_CLICK_ADD_TOOLTIP"
+				visible = "[Not(GetScriptedGui('targetlist_is_in_list').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('target_selected_state',State.MakeScope).End))]"
+                onclick = "[GetScriptedGui('add_state_to_target_list').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('state_to_add',State.MakeScope).End)]"
+            }
+
+            blockoverride "margin" {
+				margin_left = 55
+			}
+			
+			blockoverride "texture" {
+				texture = "gfx/interface/icons/lens_toolbar_icons/designate_strategic_objective_lens_option.dds"
+			}
+
+            blockoverride "text" {
+                raw_text = "Add to WMD Target List"
+            }
+        }
+
+		right_click_menu_item = {
+            blockoverride "properties" {
+                tooltip = "DESIGNATE_STRATEGIC_OBJECTIVE_RIGHT_CLICK_ADD_TOOLTIP"
+				visible = "[GetScriptedGui('targetlist_is_in_list').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('target_selected_state',State.MakeScope).End)]"
+                onclick = "[GetScriptedGui('targetlist_remove_state').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('target_list_selected_state',State.MakeScope).End)]"
+            }
+
+            blockoverride "margin" {
+				margin_left = 55
+			}
+			
+			blockoverride "texture" {
+				texture = "gfx/interface/icons/lens_toolbar_icons/designate_strategic_objective_lens_option.dds"
+			}
+
+            blockoverride "text" {
+                raw_text = "Remove from WMD Target List"
+            }
+        }
+
+        right_click_menu_item = {
+            blockoverride "properties" {
+                tooltip = "DESIGNATE_STRATEGIC_OBJECTIVE_RIGHT_CLICK_REMOVE_TOOLTIP"
+                visible = "[And( State.IsStrategicObjective( GetMetaPlayer.GetPlayedOrObservedCountry ), IsValid( State.DesignateStrategicObjective ) ) ]"
+                onclick = "[Execute( State.DesignateStrategicObjective )]"
+            }
+
+            blockoverride "margin" {
+				margin_left = 55
+			}
+			
+			blockoverride "texture" {
+				texture = "gfx/interface/icons/lens_toolbar_icons/designate_strategic_objective_lens_option.dds"
+			}
+
+            blockoverride "text" {
+                text = "DESIGNATE_STRATEGIC_OBJECTIVE_RIGHT_CLICK_REMOVE"
+            }
+        }
+		
+		right_click_menu_item = {
+			blockoverride "properties" {
+				tooltip = "[State.GetStateRegion.GetColonizeTooltip]"
+				visible = "[IsValid( State.GetStateRegion.Colonize )]"
+				onclick = "[GetLensToolbar.ActivateOption( 'establish_colony' )]"
+				onclick = "[Execute( State.GetStateRegion.Colonize )]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "STATE_RIGHT_CLICK_MENU_COLONIZE"
+			}	
+		}
+
+		dynamicgridbox = {
+			datamodel = "[State.GetPotentialDiploPlays]"
+			item = {
+				right_click_menu_item = {
+					blockoverride "properties" {
+						tooltip = "[DiplomaticPlayType.GetStartTooltipState(GetPlayer,State.Self)]"
+						enabled = "[IsValid(DiplomaticPlayType.GetStartCommandState(GetPlayer,State.Self))]"
+						onclick = "[DiplomaticPlayType.ShowConfirmationState(State.Self)]"
+						using = confirm_button_sound
+					}
+
+					blockoverride "margin" {
+						margin_left = 55
+					}
+					
+					blockoverride "texture" {
+						texture = "[DiplomaticPlayType.GetTexture]"
+					}
+					
+					blockoverride "text" {
+						text = "[DiplomaticPlayType.GetName]"
+					}
+				}
+			}
+		}
+		right_click_menu_item = {
+			blockoverride "properties" {
+				onclick = "[State.ZoomToCapital]"
+				using = zoom_button_sound
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "ZOOM_TO_STATE"
+			}	
+		}
+
+		right_click_menu_item = {
+			visible = "[GetMetaPlayer.IsObserver]"
+			datacontext = "[State.AccessOwner]"
+
+			blockoverride "properties" {
+				tooltip = "COUNTRY_RIGHT_CLICK_MENU_OBSERVE_TOOLTIP"
+				onclick = "[ToggleObserveCountry(Country.Self)]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "COUNTRY_RIGHT_CLICK_MENU_OBSERVE"
+			}
+		}
+		
+		textbox = {
+			text = "STATE_RIGHT_CLICK_MENU_STRATEGIC_REGION_TITLE"
+			autoresize = yes
+			align = left|nobaseline
+			margin_top = 15
+			margin_bottom = 2
+			margin_left = 10
+			visible = "[IsValid( GetPlayer.DeclareInterest( State.GetStateRegion.GetStrategicRegion ) )]"
+		}
+		
+		right_click_menu_item = {
+			blockoverride "properties" {
+				tooltip = "[SelectLocalization( GetPlayer.HasDeclaredInterest( State.GetStateRegion.GetStrategicRegion ), 'STATE_RIGHT_CLICK_MENU_REVOKE_INTEREST_TOOLTIP', 'STATE_RIGHT_CLICK_MENU_DECLARE_INTEREST_TOOLTIP' )]"
+				visible = "[IsValid( GetPlayer.DeclareInterest( State.GetStateRegion.GetStrategicRegion ) )]"
+				onclick = "[Execute( GetPlayer.DeclareInterest( State.GetStateRegion.GetStrategicRegion ) )]"
+			}
+
+			blockoverride "texture" {
+				texture = "gfx/interface/icons/lens_toolbar_icons/declare_interest.dds"
+			}
+			
+			blockoverride "text" {
+				text = "[SelectLocalization( GetPlayer.HasDeclaredInterest( State.GetStateRegion.GetStrategicRegion ), 'STATE_RIGHT_CLICK_MENU_REVOKE_INTEREST', 'STATE_RIGHT_CLICK_MENU_DECLARE_INTEREST' )]" 
+			}	
+		}
+	}
+}
+
+right_click_menu = {
+	name = "country_right_click_menu"
+
+	blockoverride "title_text" {
+		text = "STATE_RIGHT_CLICK_MENU_TITLE"
+	}
+
+	blockoverride "header_text" {} #no header for state menu, handle in items instead
+
+	blockoverride "items" {
+		flowcontainer = {
+			direction = horizontal
+			spacing = 5
+			margin_left = 10
+
+			tiny_flag = {
+				parentanchor = left|vcenter
+			}
+
+			textbox = {
+				autoresize = yes
+				align = left|nobaseline
+				text = "STATE_RIGHT_CLICK_MENU_COUNTRY_TITLE"
+			}
+		}
+
+		widget = { size = { 4 4 }} #pixelpushing tweak for flag, hack due to parentanchor and margins interacting weird
+
+		right_click_menu_item = {
+			blockoverride "properties" {
+				onclick = "[InformationPanelBar.OpenCountryPanel(Country.Self)]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "STATE_RIGHT_CLICK_MENU_COUNTRY_INFORMATION"
+			}
+		}
+
+		right_click_menu_item = {
+			visible = "[Not(Country.IsLocalPlayer)]"
+			blockoverride "properties" {
+				onclick = "[InformationPanelBar.OpenCountryPanelTab(Country.Self, 'diplomacy')]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "STATE_RIGHT_CLICK_MENU_DIPLOMACY"
+			}
+		}
+
+		right_click_menu_item = {
+			blockoverride "properties" {
+				onclick = "[Country.AccessCapital.ZoomToCapital]"
+				using = zoom_button_sound
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "ZOOM_TO_CAPITAL_STATE"
+			}		
+		}
+
+		dynamicgridbox = {
+			datamodel = "[Country.GetPotentialDiploActions]"
+			item = {
+				right_click_menu_item = {
+					blockoverride "properties" {
+						tooltip = "DIPLOMATIC_ACTION_TOOLTIP"
+						visible = "[Or( IsValid(DiplomaticAction.ExecuteAction), DiplomaticAction.IsActivePact)]"
+						onclick = "[DiplomaticAction.ExecuteWithConfirmation]"
+						enabled = "[IsValid(DiplomaticAction.ExecuteAction)]"
+						clicksound = "[DiplomaticAction.GetSoundWithConfirmation]"
+					}
+					icon = {
+						visible = "[DiplomaticAction.IsActivePact]"
+						using = highlighted_square_selection
+					}
+					
+					blockoverride "margin" {
+						margin_left = 55
+					}
+					
+					diplomatic_action_acceptance_icon = {
+						position = { -10 0 }
+					}
+
+					blockoverride "texture" {
+						texture = "[DiplomaticAction.GetType.GetTexture]"						
+					}
+					
+					blockoverride "text" {
+						text = "[DiplomaticAction.GetFullName]"
+					}
+				}
+			}
+		}
+		dynamicgridbox = {
+			datamodel = "[Country.GetPotentialDiploPlays]"
+			item = {
+				right_click_menu_item = {
+					blockoverride "properties" {
+						tooltip = "[DiplomaticPlayType.GetStartTooltipCountry(GetPlayer,Country.Self)]"
+						enabled = "[IsValid(DiplomaticPlayType.GetStartCommandCountry(GetPlayer,Country.Self))]"
+						onclick = "[DiplomaticPlayType.ShowConfirmationCountry(Country.Self)]"
+						using = confirm_button_sound
+					}
+
+					blockoverride "icon" {}
+					
+					blockoverride "text" {
+						text = "[DiplomaticPlayType.GetName]"
+					}
+				}
+			}
+		}
+
+		right_click_menu_item = {
+			visible = "[GetMetaPlayer.IsObserver]"
+			blockoverride "properties" {
+
+				tooltip = "COUNTRY_RIGHT_CLICK_MENU_OBSERVE_TOOLTIP"
+				onclick = "[ToggleObserveCountry(Country.Self)]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "COUNTRY_RIGHT_CLICK_MENU_OBSERVE"
+			}
+		}
+	}
+}
+
+right_click_menu = {
+	name = "market_right_click_menu"
+
+	blockoverride "title_text" {
+		text = "MARKET_RIGHT_CLICK_MENU_TITLE"
+	}
+
+	blockoverride "items" {
+		right_click_menu_item = {
+			blockoverride "properties" {
+				onclick = "[Market.AccessMarketCapital.ZoomToCapital]"
+				using = zoom_button_sound
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "ZOOM_TO_MARKET_CAPITAL"
+			}	
+		}
+
+		right_click_menu_item = {
+			visible = "[Market.GetOwner.IsLocalPlayer]"
+			blockoverride "properties" {
+				onclick = "[Market.TogglePinInOutliner]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "MARKET_RIGHT_CLICK_MENU_PIN_IN_OUTLINER"
+			}		
+		}
+	}
+}
+
+right_click_menu = {
+	name = "goods_right_click_menu"
+	
+	blockoverride "title_text" {
+		text = "GOODS_RIGHT_CLICK_MENU_TITLE"
+	}
+
+	blockoverride "items" {
+		right_click_menu_item = {
+			blockoverride "properties" {
+				enabled = "[IsValid( Goods.ToggleTaxation(GetPlayer) )]"
+				onclick = "[Execute( Goods.ToggleTaxation(GetPlayer) )]"
+				tooltip = "[Goods.GetTaxDesc(GetPlayer)]"
+				visible = "[Not(Goods.IsTaxed(GetPlayer))]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "TAX_GOODS"
+			}	
+		}	
+
+		right_click_menu_item = {
+			blockoverride "properties" {
+				enabled = "[IsValid( Goods.ToggleTaxation(GetPlayer) )]"
+				onclick = "[Execute( Goods.ToggleTaxation(GetPlayer) )]"
+				tooltip = "[Goods.GetTaxDesc(GetPlayer)]"
+				visible = "[Goods.IsTaxed(GetPlayer)]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "UNTAX_GOODS"
+			}		
+		}		
+	
+		right_click_menu_item = {
+			blockoverride "properties" {
+				enabled = "[IsValid( GetPlayer.SetGoodsTariffNoPriority(Goods.Self) )]"
+				onclick = "[Execute( GetPlayer.SetGoodsTariffNoPriority(Goods.Self) )]"
+				tooltip = "[GetPlayer.GetGoodsTariffDescNoPriority(Goods.Self)]"
+				visible = "[Goods.IsTradeable]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "SET_GOODS_TARIFF_NO_PRIORITY"
+			}	
+		}
+		
+		right_click_menu_item = {
+			blockoverride "properties" {
+				enabled = "[IsValid( GetPlayer.SetGoodsTariffImportPriority(Goods.Self) )]"
+				onclick = "[Execute( GetPlayer.SetGoodsTariffImportPriority(Goods.Self) )]"
+				tooltip = "[GetPlayer.GetGoodsTariffDescImportPriority(Goods.Self)]"
+				visible = "[Goods.IsTradeable]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "SET_GOODS_TARIFF_IMPORT_PRIORITY"
+			}	
+		}
+
+		right_click_menu_item = {
+			blockoverride "properties" {
+				enabled = "[IsValid( GetPlayer.SetGoodsTariffExportPriority(Goods.Self) )]"
+				onclick = "[Execute( GetPlayer.SetGoodsTariffExportPriority(Goods.Self) )]"
+				tooltip = "[GetPlayer.GetGoodsTariffDescExportPriority(Goods.Self)]"
+				visible = "[Goods.IsTradeable]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "SET_GOODS_TARIFF_EXPORT_PRIORITY"
+			}	
+		}	
+
+		goods_interactions = {}
+	}
+}
+
+right_click_menu = {
+	name = "goods_in_market_right_click_menu"
+	
+	blockoverride "title_text" {
+		text = "GOODS_IN_MARKET_RIGHT_CLICK_MENU_TITLE"
+	}
+
+	blockoverride "items" {
+		right_click_menu_item = {
+			blockoverride "properties" {
+				enabled = "[Goods.CanEstablishImportTradeRoute]"
+				onclick = "[Goods.EstablishImportTradeRoute]"
+				tooltip = "ESTABLISH_IMPORT_ROUTE_TOOLTIP"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "ESTABLISH_IMPORT_ROUTE"
+			}	
+		}
+		
+		right_click_menu_item = {
+			blockoverride "properties" {
+				enabled = "[Goods.CanEstablishExportTradeRoute]"
+				onclick = "[Goods.EstablishExportTradeRoute]"
+				tooltip = "ESTABLISH_EXPORT_ROUTE_TOOLTIP"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "ESTABLISH_EXPORT_ROUTE"
+			}	
+		}
+
+		right_click_menu_item = {
+			visible = "[And(Goods.HasMarketContext, Goods.GetMarket.GetOwner.IsLocalPlayer)]"
+
+			blockoverride "properties" {
+				onclick = "[Goods.TogglePinInOutliner]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride = "text" {
+				text = "GOODS_RIGHT_CLICK_MENU_PIN_IN_OUTLINER"
+			}		
+		}
+
+		right_click_menu_item = {
+			blockoverride "properties" {
+				enabled = "[IsValid( GetPlayer.SetGoodsTariffNoPriority(Goods.Self) )]"
+				onclick = "[Execute( GetPlayer.SetGoodsTariffNoPriority(Goods.Self) )]"
+				tooltip = "[GetPlayer.GetGoodsTariffDescNoPriority(Goods.Self)]"
+				visible = "[And(Goods.IsTradeable, ObjectsEqual(Goods.GetMarket.GetOwner, GetPlayer.Self))]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "SET_GOODS_TARIFF_NO_PRIORITY"
+			}		
+		}
+		
+		right_click_menu_item = {
+			blockoverride "properties" {
+				enabled = "[IsValid( GetPlayer.SetGoodsTariffImportPriority(Goods.Self) )]"
+				onclick = "[Execute( GetPlayer.SetGoodsTariffImportPriority(Goods.Self) )]"
+				tooltip = "[GetPlayer.GetGoodsTariffDescImportPriority(Goods.Self)]"
+				visible = "[And(Goods.IsTradeable, ObjectsEqual(Goods.GetMarket.GetOwner, GetPlayer.Self))]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "SET_GOODS_TARIFF_IMPORT_PRIORITY"
+			}			
+		}
+
+		right_click_menu_item = {
+			blockoverride "properties" {
+				enabled = "[IsValid( GetPlayer.SetGoodsTariffExportPriority(Goods.Self) )]"
+				onclick = "[Execute( GetPlayer.SetGoodsTariffExportPriority(Goods.Self) )]"
+				tooltip = "[GetPlayer.GetGoodsTariffDescExportPriority(Goods.Self)]"
+				visible = "[And(Goods.IsTradeable, ObjectsEqual(Goods.GetMarket.GetOwner, GetPlayer.Self))]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "SET_GOODS_TARIFF_EXPORT_PRIORITY"
+			}	
+		}	
+
+		textbox = {
+			text = "GOODS_IN_COUNTRY"
+			autoresize = yes
+			align = left|nobaseline
+			margin_top = 15
+			margin_bottom = 2
+			margin_left = 10
+			default_format = "#title"
+			visible = "[IsValid( Goods.ToggleTaxation(GetPlayer) )]"
+		}
+
+		right_click_menu_item = {
+			blockoverride "properties" {
+				enabled = "[IsValid( Goods.ToggleTaxation(GetPlayer) )]"
+				onclick = "[Execute( Goods.ToggleTaxation(GetPlayer) )]"
+				tooltip = "[Goods.GetTaxDesc(GetPlayer)]"
+				visible = "[Not(Goods.IsTaxed(GetPlayer))]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "TAX_GOODS"
+			}				
+		}	
+
+		right_click_menu_item = {
+			blockoverride "properties" {
+				enabled = "[IsValid( Goods.ToggleTaxation(GetPlayer) )]"
+				onclick = "[Execute( Goods.ToggleTaxation(GetPlayer) )]"
+				tooltip = "[Goods.GetTaxDesc(GetPlayer)]"
+				visible = "[Goods.IsTaxed(GetPlayer)]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "UNTAX_GOODS"
+			}	
+		}
+
+		goods_interactions = {}
+	}
+}
+
+right_click_menu = {
+	name = "trade_route_right_click_menu"
+	
+	blockoverride "title_text" {
+		text = "[TradeRoute.GetName]"
+	}
+
+	blockoverride "items" {
+		right_click_menu_item = {
+			blockoverride "properties" {
+				onclick = "[Execute( TradeRoute.Cancel )]"
+				visible = "[IsValid( TradeRoute.Cancel )]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "TRADE_ROUTE_CANCEL"
+			}		
+		}		
+	
+		right_click_menu_item = {
+			blockoverride "properties" {
+				enabled = "[IsValid( GetPlayer.SetGoodsTariffNoPriority(TradeRoute.GetGoods.Self) )]"
+				onclick = "[Execute( GetPlayer.SetGoodsTariffNoPriority(TradeRoute.GetGoods.Self) )]"
+				tooltip = "[GetPlayer.GetGoodsTariffDescNoPriority(TradeRoute.GetGoods.Self)]"
+				visible = "[TradeRoute.IsOwnerOrMarketOwner(GetPlayer)]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "SET_GOODS_TARIFF_NO_PRIORITY"
+			}		
+		}
+		
+		right_click_menu_item = {
+			blockoverride "properties" {
+				enabled = "[IsValid( GetPlayer.SetGoodsTariffImportPriority(TradeRoute.GetGoods.Self) )]"
+				onclick = "[Execute( GetPlayer.SetGoodsTariffImportPriority(TradeRoute.GetGoods.Self) )]"
+				tooltip = "[GetPlayer.GetGoodsTariffDescImportPriority(TradeRoute.GetGoods.Self)]"
+				visible = "[TradeRoute.IsOwnerOrMarketOwner(GetPlayer)]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "SET_GOODS_TARIFF_IMPORT_PRIORITY"
+			}		
+		}
+
+		right_click_menu_item = {
+			blockoverride "properties" {
+				enabled = "[IsValid( GetPlayer.SetGoodsTariffExportPriority(TradeRoute.GetGoods.Self) )]"
+				onclick = "[Execute( GetPlayer.SetGoodsTariffExportPriority(TradeRoute.GetGoods.Self) )]"
+				tooltip = "[GetPlayer.GetGoodsTariffDescExportPriority(TradeRoute.GetGoods.Self)]"
+				visible = "[TradeRoute.IsOwnerOrMarketOwner(GetPlayer)]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "SET_GOODS_TARIFF_EXPORT_PRIORITY"
+			}		
+		}
+
+		right_click_menu_item = {
+			blockoverride "properties" {
+				onclick = "[InformationPanelBar.OpenMarketPanel( TradeRoute.GetExportingMarket )]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "TRADE_ROUTE_OPEN_EXPORTING_MARKET"
+			}
+		}
+
+		right_click_menu_item = {
+			blockoverride "properties" {
+				onclick = "[InformationPanelBar.OpenMarketPanel( TradeRoute.GetImportingMarket )]"
+			}
+
+			blockoverride "icon" {}
+			
+			blockoverride "text" {
+				text = "TRADE_ROUTE_OPEN_IMPORTING_MARKET"
+			}	
+		}					
+	}
+}
+
+types right_click_menu {
+	type goods_interactions = flowcontainer {
+		direction = vertical 
+
+		textbox = {
+			text = "PRODUCED_IN"
+			autoresize = yes
+			align = left|nobaseline
+			margin_top = 15
+			margin_bottom = 2
+			margin_left = 10
+			default_format = "#title"
+			visible = "[Not(IsDataModelEmpty(Goods.AccessBuildingsProducingThis))]"
+		}
+
+		flowcontainer = {
+			datamodel = "[Goods.AccessBuildingsProducingThis]"
+			direction = vertical
+
+			item = {
+				right_click_menu_item = {
+					blockoverride "properties" {
+						tooltipwidget = {
+							FancyTooltip_BuildingType = {}
+						}
+						tooltip = "[SelectLocalization( GreaterThan_int32( BuildingType.GetNumAvailableStatesForBuilding, '(int32)0' ), 'DATA_BUILDING_TYPE_NAME_TOOLTIP', 'DATA_BUILDING_TYPE_NAME_TOOLTIP_NO_STATES' )]"
+						visible = "[BuildingType.IsExpandable]"
+						onclick = "[BuildingType.ActivateExpansionLens]"
+						enabled = "[GreaterThan_int32( BuildingType.GetNumAvailableStatesForBuilding, '(int32)0' )]"
+					}
+
+					blockoverride "margin" {
+						margin_left = 55
+					}
+
+					blockoverride "texture" {
+						texture = "[BuildingType.GetTexture]"
+					}
+					
+					blockoverride "text" {
+						text = "EXPAND_BUILDING_TYPE"
+					}
+				}
+			}
+		}
+
+		textbox = {
+			text = "CONSUMED_IN"
+			autoresize = yes
+			align = left|nobaseline
+			margin_top = 15
+			margin_bottom = 2
+			margin_left = 10
+			default_format = "#title"
+			visible = "[Not(IsDataModelEmpty(Goods.AccessBuildingsUsingThis))]"
+		}
+
+		flowcontainer = {
+			datamodel = "[Goods.AccessBuildingsUsingThis]"
+			direction = vertical
+
+			item = {
+				right_click_menu_item = {
+					blockoverride "properties" {
+						tooltipwidget = {
+							FancyTooltip_BuildingType = {}
+						}
+						tooltip = "[SelectLocalization( GreaterThan_int32( BuildingType.GetNumAvailableStatesForBuilding, '(int32)0' ), 'DATA_BUILDING_TYPE_NAME_TOOLTIP', 'DATA_BUILDING_TYPE_NAME_TOOLTIP_NO_STATES' )]"
+						visible = "[BuildingType.IsExpandable]"
+						enabled = "[GreaterThan_int32( BuildingType.GetNumAvailableStatesForBuilding, '(int32)0' )]"
+						onclick = "[BuildingType.ActivateExpansionLens]"
+					}
+
+					blockoverride "margin" {
+						margin_left = 55
+					}
+
+					blockoverride "texture" {
+						texture = "[BuildingType.GetTexture]"
+					}
+					
+					blockoverride "text" {
+						text = "EXPAND_BUILDING_TYPE"
+					}	
+				}
+			}
+		}
+	}
+}
