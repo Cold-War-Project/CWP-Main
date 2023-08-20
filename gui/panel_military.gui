@@ -206,7 +206,8 @@ types panel_military {
 	}
 
 	type tab_wmd = top_illu {
-		size = { @panel_width_plus_20 1400 }
+		maximumsize = { @panel_width_plus_20 -1 }
+		minimumsize = { @panel_width_plus_20 1900 }
 
 		background = {
 			using = dropdown_background
@@ -244,6 +245,33 @@ types panel_military {
 			}
 			wmd_subentry = {
 				blockoverride "title" {
+					raw_text = "Global Coverage"
+				}
+				blockoverride "entrycontainer" {
+					flowcontainer = {
+						direction = vertical
+						spacing = 25
+						datamodel = "[GetPlayer.MakeScope.GetList('strategic_regions')]"
+						textbox = {
+							raw_text = "Average Coverage: [GetPlayer.MakeScope.ScriptValue('nuclear_strike_global_coverage_avg')|v0%]"
+						}
+						item = {
+							flowcontainer = {
+								parentanchor = hcenter
+								direction = vertical
+								datacontext = "[Scope.AccessStrategicRegion]"
+								textbox = {
+									align = left
+									raw_text = "[StrategicRegion.GetName]: [StrategicRegion.MakeScope.ScriptValue('nuclear_strike_strategic_region_coverage')|v1%]"
+									using = tooltip_above
+								}
+							}
+						}
+					}
+				}
+			}
+			wmd_subentry = {
+				blockoverride "title" {
 					parentanchor = hcenter
 					align = center
 					raw_text = "Nuclear Detonation Focus"
@@ -258,15 +286,66 @@ types panel_military {
 							using = default_button # Approve
 							text = "Air Burst"
 							enabled = "[Not(GetPlayer.MakeScope.Var('air_burst_focus').IsSet)]"
-							onclick = "[GetScriptedGui('wmd_nuclear_detonation_focus_air').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('applicant_country_scope',Country.MakeScope).End)]"
+							onclick = "[GetScriptedGui('wmd_nuclear_detonation_focus_air').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 							size = { 195 40 }
 						}
 						button = {
 							using = default_button
 							text = "Ground Burst" # Reject
 							enabled = "[Not(GetPlayer.MakeScope.Var('ground_burst_focus').IsSet)]"
-							onclick = "[GetScriptedGui('wmd_nuclear_detonation_focus_ground').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('applicant_country_scope',Country.MakeScope).End)]"
+							onclick = "[GetScriptedGui('wmd_nuclear_detonation_focus_ground').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 							size = { 195 40 }
+						}
+					}
+
+				}
+			}
+			wmd_subentry = {
+				blockoverride "title" {
+					parentanchor = hcenter
+					align = center
+					raw_text = "Deployment"
+				}
+				blockoverride "entrycontainer" {
+					parentanchor = hcenter
+					flowcontainer = {
+						parentanchor = hcenter
+						direction = horizontal
+						spacing = 10
+						button = {
+							using = default_button # Approve
+							text = "20%"
+							enabled = "[Not(EqualTo_CFixedPoint(GetPlayer.MakeScope.Var('nuclear_deployment_percentage').GetValue, '(CFixedPoint)20'))]"
+							onclick = "[GetScriptedGui('wmd_deployment_20').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							size = { 60 40 }
+						}
+						button = {
+							using = default_button
+							text = "40%" # Reject
+							enabled = "[Not(EqualTo_CFixedPoint(GetPlayer.MakeScope.Var('nuclear_deployment_percentage').GetValue, '(CFixedPoint)40'))]"
+							onclick = "[GetScriptedGui('wmd_deployment_40').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							size = { 60 40 }
+						}
+						button = {
+							using = default_button
+							text = "60%" # Reject
+							enabled = "[Not(EqualTo_CFixedPoint(GetPlayer.MakeScope.Var('nuclear_deployment_percentage').GetValue, '(CFixedPoint)60'))]"
+							onclick = "[GetScriptedGui('wmd_deployment_60').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							size = { 60 40 }
+						}
+						button = {
+							using = default_button
+							text = "80%" # Reject
+							enabled = "[Not(EqualTo_CFixedPoint(GetPlayer.MakeScope.Var('nuclear_deployment_percentage').GetValue, '(CFixedPoint)80'))]"
+							onclick = "[GetScriptedGui('wmd_deployment_80').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							size = { 60 40 }
+						}
+						button = {
+							using = default_button
+							text = "100%" # Reject
+							enabled = "[Not(EqualTo_CFixedPoint(GetPlayer.MakeScope.Var('nuclear_deployment_percentage').GetValue, '(CFixedPoint)100'))]"
+							onclick = "[GetScriptedGui('wmd_deployment_100').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							size = { 60 40 }
 						}
 					}
 					flowcontainer = {
@@ -476,26 +555,38 @@ types panel_military {
 									flowcontainer = {
 										visible = "[GetScriptedGui('targetlist_expanded_visible_s').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('target_list_selected_state',State.MakeScope).End)]"
 										parentanchor = hcenter
-										direction = vertical
+										direction = horizontal
 										minimumsize = { 420 30 }
 										datacontext = "[Scope.AccessState]"
 										flowcontainer = {
+											minimumsize = { 300 70 }
+											margin = { 15 15 }
 											parentanchor = left
 											direction = vertical
 											spacing = 20
 											textbox = {
 												align = left
-												raw_text = "[State.GetName] - [State.GetPopulationSize|vD] - [GuiScope.SetRoot( GetPlayer.MakeScope ).AddScope('target', State.MakeScope ).ScriptValue('nuclear_strike_nukes_effectiveness')|v1% )] Coverage"
+												raw_text = "[State.GetName] - [State.GetPopulationSize|vD]"
+												using = tooltip_above
+												fontsize = 20
+											}
+											textbox = {
+												align = left
+												raw_text = "[State.GetStateRegion.GetStrategicRegion.GetName] Coverage: [State.GetStateRegion.GetStrategicRegion.MakeScope.ScriptValue('nuclear_strike_strategic_region_coverage')|v1%]"
 												using = tooltip_above
 											}
 											textbox = {
 												align = left
-												raw_text = "[State.GetOwner.GetName]"
+												raw_text = "[GuiScope.SetRoot( State.MakeScope ).AddScope('initiator', GetPlayer.MakeScope ).ScriptValue('nuclear_strike_delivery_effectiveness')|v1d% )] Delivery Effectiveness"
 												using = tooltip_above
+											}
+											background = {
+												using = entry_bg_simple
 											}
 										}
 										flowcontainer = {
-											parentanchor = right
+											margin_left = 30
+											parentanchor = right|vcenter
 											direction = horizontal
 											spacing = 5
 											button_icon_round_map_interaction = {

@@ -16,6 +16,11 @@ nuclear_stockpile_max = {
 	}
 }
 
+nuclear_deployment_percentage_sv = {
+	value = var:nuclear_deployment_percentage
+	divide = 100
+}
+
 nuclear_stockpile_max_left = {
 	value = nuclear_stockpile_max
 	subtract = nuclear_stockpile_sv
@@ -147,7 +152,17 @@ nuclear_strike_population_kill = {
 		limit = {
 			has_variable = ground_burst_focus
 		}
-		multiply = -0.5
+		multiply = 0.5
+	}
+}
+
+nuclear_strike_devastation = {
+	value = nuclear_strike_effectiveness_total
+	if = {
+		limit = {
+			has_variable = ground_burst_focus
+		}
+		divide = 2
 	}
 }
 
@@ -167,7 +182,10 @@ nuclear_strike_radiation_time = {
 }
 
 nuclear_strike_effectiveness_total = {
-	value = nuclear_strike_values
+	value = {
+		value = nuclear_strike_values
+		multiply = nuclear_deployment_percentage_sv
+	}
 	divide = {
 		every_in_list = {
 			variable = wmd_target_list
@@ -176,9 +194,105 @@ nuclear_strike_effectiveness_total = {
 	}
 	min = 0
 }
-nuclear_strike_nukes_effectiveness = {
-	value = nuclear_strike_values
-	divide = scope:target.nuclear_strike_state_size
+
+nuclear_strike_strategic_region_coverage = {
+	if = {
+		limit = {
+			any_scope_state = {
+				owner = PLAYER
+				has_building = building_strategic_airbase
+			}
+		}
+		add = 0.5
+	}
+	PLAYER = {
+		every_scope_state = {
+			limit = {
+				has_building = building_strategic_airbase
+			}
+			add = {
+				value = strategic_airbase_size_state
+				divide = 100
+				max = 30
+			}
+		}
+	}
+	max = 1
+}
+
+nuclear_strike_global_coverage_avg = {
+	every_in_list = {
+		variable = strategic_regions
+		add = nuclear_strike_strategic_region_coverage
+	}
+	divide = {
+		every_in_list = {
+			variable = strategic_regions
+			add = 1
+		}
+	}
+}
+
+nuclear_strike_delivery_effectiveness = {
+	value = THIS.region.nuclear_strike_strategic_region_coverage
+	if = {
+		limit = {
+			THIS = {
+				is_sea_adjacent = yes
+			}
+		}
+		multiply = 5
+	}
+	if = {
+		limit = {
+			scope:initiator = {
+				has_strategic_adjacency = THIS
+			}
+		}
+		multiply = 2.5
+	}
+	multiply = 100
+	max = 100
+}
+
+nuclear_strike_delivery_effectiveness_negate = {
+	value = 100
+	subtract = {
+		value = THIS.region.nuclear_strike_strategic_region_coverage
+		if = {
+			limit = {
+				THIS = {
+					is_sea_adjacent = yes
+				}
+			}
+			multiply = 5
+		}
+		scope:initiator = {
+			if = {
+				limit = {
+					has_strategic_adjacency = THIS
+				}
+				multiply = 2.5
+			}
+		}
+		multiply = 100
+	}
+	min = 0
+}
+
+strategic_airbase_size_state = {
+	if = {
+		limit = {
+			has_building = building_strategic_airbase
+			any_scope_building = {
+				is_building_type = building_strategic_airbase
+				building_has_goods_shortage = no
+			}
+		}
+		add = {
+			value = b:building_strategic_airbase.level
+		}
+	}
 }
 
 nuclear_research_facility_effects = {
