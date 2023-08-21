@@ -97,13 +97,38 @@ wmd_attack_events.2 = { # Successful Nuclear Strike
 		}
 		set_variable = {
 			name = nuclear_strike_entity
-			weeks = 2
+			days = 14
 		}
 		add_modifier = {
 			name = nuclear_strike
 			multiplier = scope:target.nuclear_strike_radiation
 			is_decaying = yes
 			years = 20
+		}
+		if = {
+			limit = {
+				scope:target.owner = {
+					not = {
+						has_war_with = scope:initiator
+					}
+				}
+			}
+			scope:initiator = {
+				change_infamy = scope:target.nuclear_strike_effectiveness_state
+				create_diplomatic_play = {
+					escalation = 100
+					war = yes
+					initiator = scope:initiator
+					target_country = scope:target.owner
+					type = dp_humiliation
+
+					add_war_goal = {
+						holder = scope:target.owner
+						type = humiliation
+						target_country = scope:initiator
+					}
+				}
+			}
 		}
 	}
 	# TODO - AI SCRIPTING
@@ -131,7 +156,12 @@ wmd_attack_events.3 = { # Failed Nuclear Strike
 	on_opened_soundeffect = "event:/SFX/Events/europenorthamerica/springtime_of_nation"
 
 	immediate = {
-
+		scope:initiator = {
+			create_incident = {
+				country = scope:target.owner
+				value = scope:target.nuclear_strike_effectiveness_state
+			}
+		}
 	}
 	# TODO - AI SCRIPTING
 	option = {
