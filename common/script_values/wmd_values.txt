@@ -141,44 +141,53 @@ nuclear_strike_state_size = {
 }
 
 nuclear_strike_population_kill = {
-	value = nuclear_strike_effectiveness_total
-	divide = 10
+	value = nuclear_strike_effectiveness_state
+	divide = 500
 	if = {
 		limit = {
-			has_variable = air_burst_focus
+			scope:initiator = {
+				has_variable = air_burst_focus
+			}
 		}
 		multiply = 1.5
 	}
 	if = {
 		limit = {
-			has_variable = ground_burst_focus
+			scope:initiator = {
+				has_variable = ground_burst_focus
+			}
 		}
 		multiply = 0.5
 	}
+	max = 0.99
 }
 
 nuclear_strike_devastation = {
-	value = nuclear_strike_effectiveness_total
+	value = nuclear_strike_effectiveness_state
 	if = {
 		limit = {
-			has_variable = ground_burst_focus
+			scope:initiator = {
+				has_variable = ground_burst_focus
+			}
 		}
 		divide = 2
 	}
 }
 
 nuclear_strike_radiation = {
-	value = nuclear_strike_effectiveness_total
+	value = nuclear_strike_effectiveness_state
 	if = {
 		limit = {
-			has_variable = air_burst_focus
+			scope:initiator = {
+				has_variable = air_burst_focus
+			}
 		}
 		divide = 2
 	}
 }
 
 nuclear_strike_radiation_time = {
-	value = nuclear_strike_effectiveness_total
+	value = nuclear_strike_effectiveness_state
 	divide = 10
 }
 
@@ -186,18 +195,38 @@ nuclear_strike_effectiveness_total = {
 	value = {
 		value = nuclear_strike_values
 		multiply = nuclear_deployment_percentage_sv
+		desc = NUCLEAR_ATTACK_POWER
+		format = "NUCLEAR_ATTACK_FORMAT"
 	}
 	divide = {
 		every_in_list = {
 			variable = wmd_target_list
-			add = nuclear_strike_state_size
+			add = 1
 		}
+		desc = NUCLEAR_TARGET_LIST
+		format = "NUCLEAR_ATTACK_FORMAT"
 	}
 	min = 0
 }
 
 nuclear_strike_effectiveness_state = {
-	value = scope:initiator.nuclear_strike_effectiveness_total
+	value = {
+		value = scope:initiator.nuclear_strike_effectiveness_total
+		desc = GLOBAL_NUCLEAR_STRIKE_EFFECTIVENESS
+		format = "NUCLEAR_ATTACK_FORMAT"
+	}
+	multiply = {
+		value = nuclear_strike_state_size_urbanization
+		desc = STATE_URBANIZATION_PERCENT
+		format = "NUCLEAR_ATTACK_FORMAT"
+	}
+}
+
+nuclear_strike_state_size_urbanization = {
+	value = total_urbanization
+	divide = nuclear_strike_state_size
+	divide = 100
+	min = 1
 }
 
 nuclear_strike_strategic_region_coverage = {
@@ -213,7 +242,6 @@ nuclear_strike_strategic_region_coverage = {
 			desc = HAS_STRATEGIC_AIRBASE_IN_REGION
 			format = "NUCLEAR_COVERAGE_FORMAT"
 		}
-		
 	}
 	add = {
 		value = scope:initiator.strategic_airbase_size_national
