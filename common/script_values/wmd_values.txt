@@ -191,6 +191,14 @@ nuclear_strike_radiation_time = {
 	divide = 10
 }
 
+nuclear_wmd_target_list_size = {
+	every_in_list = {
+		variable = wmd_target_list
+		add = 1
+	}
+	min = 1
+}
+
 nuclear_strike_effectiveness_total = {
 	value = {
 		value = nuclear_strike_values
@@ -225,12 +233,16 @@ nuclear_strike_effectiveness_state = {
 
 nuclear_strike_state_size_urbanization = {
 	value = total_urbanization
-	divide = nuclear_strike_state_size
+	divide = {
+		value = nuclear_strike_state_size
+		min = 1
+	}
 	divide = 100
 	min = 1
 }
 
 nuclear_strike_strategic_region_coverage = {
+	value = 0
 	if = {
 		limit = {
 			any_scope_state = {
@@ -278,12 +290,20 @@ nuclear_strike_delivery_effectiveness = {
 	if = {
 		limit = {
 			THIS = {
-				is_sea_adjacent = yes
+				or = {
+					is_sea_adjacent = yes
+					any_neighbouring_state = { # Rework to account for aircraft carrier pm
+						is_sea_adjacent = yes
+					}
+				}
+
 			}
 		}
-		multiply = {
-			value = 1.5
-			desc = NUCLEAR_STRIKE_SEA_ADJACENT
+		add = {
+			value = scope:initiator.navy_size_national
+			divide = 300
+			max = 70
+			desc = NUCLEAR_STRIKE_NAVY_REACH
 			format = "NUCLEAR_COVERAGE_FORMAT"
 		}
 	}
@@ -323,6 +343,23 @@ strategic_airbase_size_national = {
 			}
 		}
 	}
+}
+
+navy_size_national = {
+	every_scope_state = {
+		if = {
+			limit = {
+				has_building = building_naval_base
+				any_scope_building = {
+					is_building_type = building_naval_base
+					building_has_goods_shortage = no
+				}
+			}
+			add = {
+				value = b:building_naval_base.level # Rework when 1.5 hits and navy can have aircraft carriers
+			}
+		}
+	}	
 }
 
 nuclear_research_facility_effects = {
