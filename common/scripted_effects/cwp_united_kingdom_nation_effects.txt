@@ -19,12 +19,10 @@ gbr_set_core_variables = {
 	set_variable = { name = gbr_ending_rationing_starting_variable value = 0 }
 	set_variable = { name = gbr_ending_rationing_target_variable value = 6 }
 	set_variable = { name = gbr_rationing_number_of_goods value = 0 }
-	set_variable = { name = gbr_rationing_demand_pressure_rate value = 2.75 } # UK's 1945 inflation rate
 	set_variable = { name = gbr_added_demand_pressure value = 0 }
 	set_variable = { name = gbr_months_of_rationing value = 0 }
 	set_variable = { name = gbr_rationing_start_price value = 0.1 }
 	set_variable = { name = gbr_rationing_start_consumption value = 10 }
-	set_variable = { name = gbr_progress_reduction_amount value = 7 }
 	
 	set_variable = { name = gbr_aluminum_progress value = 0 }
 	set_variable = { name = gbr_bauxite_progress value = 0 }
@@ -6661,8 +6659,8 @@ gbr_forced_devaluation_check = {
 	
 	if = {
 		limit = {
-			var:gbr_rationing_demand_pressure_rate >= 10
-			var:gbr_rationing_demand_pressure_rate < 20
+			inflation_value >= 10
+			inflation_value < 20
 		}
 		random_list = {
 			99 = {  }
@@ -6671,8 +6669,8 @@ gbr_forced_devaluation_check = {
 	}
 	else_if = {
 		limit = {
-			var:gbr_rationing_demand_pressure_rate >= 20
-			var:gbr_rationing_demand_pressure_rate < 30
+			inflation_value >= 20
+			inflation_value < 30
 		}
 		random_list = {
 			98 = {  }
@@ -6681,8 +6679,8 @@ gbr_forced_devaluation_check = {
 	}
 	else_if = {
 		limit = {
-			var:gbr_rationing_demand_pressure_rate >= 30
-			var:gbr_rationing_demand_pressure_rate < 40
+			inflation_value >= 30
+			inflation_value < 40
 		}
 		random_list = {
 			96 = {  }
@@ -6691,8 +6689,8 @@ gbr_forced_devaluation_check = {
 	}
 	else_if = {
 		limit = {
-			var:gbr_rationing_demand_pressure_rate >= 40
-			var:gbr_rationing_demand_pressure_rate < 50
+			inflation_value >= 40
+			inflation_value < 50
 		}
 		random_list = {
 			92 = {  }
@@ -6700,24 +6698,57 @@ gbr_forced_devaluation_check = {
 		}
 	}
 	else_if = {
-		limit = { var:gbr_rationing_demand_pressure_rate = 50 }
-		trigger_event = united_kingdom_post_war_events.101
+		limit = { inflation_value >= 50 }
+		random_list = {
+			90 = {  }
+			10 = { trigger_event = united_kingdom_post_war_events.101 }
+		}
 	}
 }
 
-gbr_rationing_demand_pressure_effect = {
-	# Logic
-		# If the currency hasn't recently been forcibly devalued (which applies its own modifier), then this function is called weekly
-		# The demand pressure is updated weekly, so the demand pressure modifier is also updated weekly
-		# Modifier is removed then reapplied, with the demand pressure acting as the multiplier
+gbr_pound_sterling_calculation = {
+	# logic
+		# Logic to determine what the new value of the pound sterling would be if the pound sterling is devalued
+		# For use in the "Devalue the Pound Sterling" scripted button localization
 	
-	remove_modifier = gbr_goods_demand_pressure
+	set_variable = { name = gbr_pound_sterling_current value = var:currency_gbp_v }
+	set_variable = { name = gbr_pound_sterling_possible value = var:currency_gbp_v }
+	
 	if = {
-		limit = { NOT = { has_modifier = gbr_forced_currency_devaluation } }
-		add_modifier = {
-			name = gbr_goods_demand_pressure
-			multiplier = var:gbr_rationing_demand_pressure_rate
+		limit = { inflation_value < 10 }
+		change_variable = { name = gbr_pound_sterling_possible multiply = 0.95 }
+	}
+	else_if = {
+		limit = {
+			inflation_value >= 10
+			inflation_value < 20
 		}
+		change_variable = { name = gbr_pound_sterling_possible multiply = 0.9 }
+	}
+	else_if = {
+		limit = {
+			inflation_value >= 20
+			inflation_value < 30
+		}
+		change_variable = { name = gbr_pound_sterling_possible multiply = 0.85 }
+	}
+	else_if = {
+		limit = {
+			inflation_value >= 30
+			inflation_value < 40
+		}
+		change_variable = { name = gbr_pound_sterling_possible multiply = 0.8 }
+	}
+	else_if = {
+		limit = {
+			inflation_value >= 40
+			inflation_value < 50
+		}
+		change_variable = { name = gbr_pound_sterling_possible multiply = 0.75 }
+	}
+	else_if = {
+		limit = { inflation_value >= 50 }
+		change_variable = { name = gbr_pound_sterling_possible multiply = 0.7 }
 	}
 }
 
@@ -7156,14 +7187,12 @@ gbr_remove_core_variables = {
 	remove_variable = gbr_ending_rationing_starting_variable
 	remove_variable = gbr_ending_rationing_target_variable
 	remove_variable = gbr_rationing_number_of_goods
-	remove_variable = gbr_rationing_demand_pressure_rate
 	remove_variable = gbr_added_demand_pressure
 	remove_variable = gbr_ended_rationing_early
 	remove_variable = gbr_months_of_rationing
 	remove_variable = gbr_started_rationing
 	remove_variable = gbr_rationing_start_price
 	remove_variable = gbr_rationing_start_consumption
-	remove_variable = gbr_progress_reduction_amount
 	
 	remove_variable = gbr_aluminum_progress
 	remove_variable = gbr_bauxite_progress

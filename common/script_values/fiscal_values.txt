@@ -590,12 +590,12 @@ base_money_supply = {
 ### Inflation
 inflation_value = {
 	value = var:inflation_rate
-	if = {
-		limit = {
-			has_variable = pegged_currency
-		}
-		value = var:pegged_currency.inflation_value
-	}
+	# if = {
+		# limit = {
+			# has_variable = pegged_currency
+		# }
+		# value = var:pegged_currency.inflation_value
+	# }
 }
 
 inflation_modifier_mult = {
@@ -777,15 +777,54 @@ inflation_growth = {
 			format = "INFLATION_GROWTH_TOOLTIP_FORMAT"
 		}
 	}
+	## From Pegged Currency Inflation Rates
 	if = {
-		limit = {
-			has_variable = pegged_currency
-		}
-		value = {
-			value = var:pegged_currency.inflation_growth
+		limit = { has_variable = pegged_currency }
+		add = {
+			value = {
+				value = var:pegged_currency.inflation_value
+				subtract = inflation_value
+				divide = 24
+			}
+			desc = INF_PEGGED_INFLATION
+			format = "INFLATION_GROWTH_TOOLTIP_FORMAT"
 		}
 	}
+	## From Country Events
+	add = {
+		value = inflation_other_sources
+		desc = INF_OTHER_SOURCES
+		format = "INFLATION_GROWTH_TOOLTIP_FORMAT"
+	}
+	# if = {
+		# limit = {
+			# has_variable = pegged_currency
+		# }
+		# value = {
+			# value = var:pegged_currency.inflation_growth
+		# }
+	# }
 	max = 100
+}
+
+inflation_other_sources = {
+	if = {
+		limit = { this = c:GBR }
+		if = {
+			limit = { has_variable = gbr_started_rationing }
+			add = var:gbr_added_demand_pressure
+		}
+		if = {
+			limit = { 
+				has_variable = gbr_started_rationing
+				has_variable = gbr_pound_sterling_devalued
+			}
+			subtract = {
+				value = var:gbr_added_demand_pressure
+				multiply = 2
+			}
+		}
+	}
 }
 
 inflation_housing_price = {
