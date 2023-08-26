@@ -1,7 +1,17 @@
 ﻿onaction_ai_fiscal_calculations = {
     if = {
         limit = {
-            is_ai = yes
+            OR = {
+                is_player = no
+                has_game_rule = cwp_ai_control
+                AND = {
+                    has_game_rule = cwp_dynamic_control
+                    OR = {
+                        has_law = law_type:law_independent_monetary_policy
+                        has_law = law_type:law_government_interference
+                    }
+                }
+            }
         }
         onaction_ai_monetary_policy_calculation = yes
         onaction_ai_interest_rate_calculation = yes
@@ -16,7 +26,10 @@ onaction_ai_monetary_policy_calculation = {
         limit = {
             nor = {
                 has_variable = pegged_currency
-                has_law = law_type:law_gold_standard
+                AND = {
+                    has_game_rule = cwp_dynamic_control
+                    has_law = law_type:law_government_interference
+                }
             }
         }
         random_list = {
@@ -67,6 +80,22 @@ onaction_ai_interest_rate_calculation = {
 			name = interest_rate_gui
 			value = var:interest_rate
 		}
+        remove_modifier = interest_rates
+		if = {
+			limit = {
+				interest_rate >= 1
+			}
+			add_modifier = {
+				name = interest_rates
+				multiplier = interest_rate
+			}
+		}
+		else = {
+			add_modifier = {
+				name = interest_rates
+				multiplier = 1
+			}
+		}
     }
 }
 
@@ -75,7 +104,8 @@ onaction_ai_buy_foreign_currency_calculation = {
         limit = {
             nor = {
                 foreign_reserves_value >= foreign_reserves_max
-                scaled_debt >= 0.5
+                scaled_debt > 0
+                is_player = yes
             }
         }
         random = {
@@ -172,25 +202,6 @@ onaction_ai_buy_foreign_currency_calculation = {
                         mathAction = add
                         mathAction2 = currency_value_growth_by_exchange
                     }
-                    if = {
-                        limit = {
-                            nor = {
-                                has_law = law_type:law_gold_standard # Gold standard has fixed money supply unless altered
-                                has_law = law_type:law_pegged_currency # Pegged Currency uses pegged money supply
-                            }
-                        }
-                        # Reduces Money Supply
-                        change_variable = {
-                            name = money_supply
-                            subtract = {
-                                value = {
-                                    value = var:ai_currency_buy_country.gold_reserves_limit
-                                    add = var:ai_currency_buy_country.credit
-                                }
-                                multiply = 0.05
-                            }
-                        }
-                    }
                     # Prevents further currency buying for 1 month
                     set_variable = {
                         name = currency_bought
@@ -208,7 +219,8 @@ onaction_ai_sell_foreign_reserves_calculation = {
         limit = {
             foreign_reserves_value >= 1
             foreign_reserves_ratio > 0.2
-            scaled_debt >= 0.5
+            scaled_debt > 0
+            is_player = no
         }
         random = {
             chance = 50
