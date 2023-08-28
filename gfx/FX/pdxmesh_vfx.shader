@@ -352,6 +352,15 @@ BlendState alpha_blend
 	BlendEnable = yes
 	SourceBlend = "SRC_ALPHA"
 	DestBlend = "INV_SRC_ALPHA"
+	WriteMask = "RED|GREEN|BLUE"
+}
+
+BlendState AdditiveBlendState
+{
+	BlendEnable = yes
+	SourceBlend = "SRC_ALPHA"
+	DestBlend = "ONE"
+	WriteMask = "RED|GREEN|BLUE|ALPHA"
 }
 
 BlendState additive_blend
@@ -374,12 +383,21 @@ Effect mesh_vfx_standard
 	PixelShader = "PS_mesh_vfx_standard"
 }
 
+# Standard + candle distortion
+Effect mesh_vfx_candle
+{
+	VertexShader = "VS_mesh_vfx_standard"
+	PixelShader = "PS_mesh_vfx_candle"
+	BlendState = "alpha_blend"
+	Defines = { "BILLBOARD_MESH" }
+}
+
 # Standard
 Effect mesh_vfx_standard_billboard
 {
 	VertexShader = "VS_mesh_vfx_standard"
 	PixelShader = "PS_mesh_vfx_standard"
-	Defines = { "BILLBOARD_MESH" "SIMPLE_UNLIT_DIFFUSE" }
+	Defines = { "BILLBOARD_MESH_SKINNED" "SIMPLE_UNLIT_DIFFUSE" }
 }
 
 # Standard + alpha blend
