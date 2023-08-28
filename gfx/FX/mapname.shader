@@ -43,9 +43,8 @@ PixelShader =
 			PDX_MAIN
 			{
 				float Alpha = CalcAlphaDistanceField( FontAtlas, Input.TexCoord );
+				float3 Color = lerp( 1.0f, 1.0f, 1.0f );
 				
-				float DayNightModifier = smoothstep( 0.3, 0.35, _DayNightValue );
-				float3 Color = lerp( vec3( 0.0 ), vec3( 0.75 ), DayNightModifier * ( 1.0 - _FlatmapLerp ) );
 				float3 FlatmapColor = Color; // Pre effects color
 
 				// Fog of war
