@@ -1,4 +1,4 @@
-# Cold War Project: A Victoria 3 mod
+![The Cold War Project Logo.](https://media.discordapp.net/attachments/1058484474557501493/1085388801494495232/cwp_logo_square_copy.png)
 
 This mod is a work in progress. Cold War Project Is developed by a hardworking team of volunteers passionate about the challenges of the Cold War era, and the political and economic systems that shape our world both today and into our future. We begin in 1946 following the Paris Peace Treaties with the world in ruins and the future uncertain. Will you lead your nation into prosperity or will you be relegated to obscurity?
 
