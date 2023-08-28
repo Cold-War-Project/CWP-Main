@@ -32,6 +32,7 @@ PixelShader =
 		SampleModeU = "Wrap"
 		SampleModeV = "Wrap"
 	}
+
 	TextureSampler PropertiesMap
 	{
 		Ref = PdxTexture1
@@ -41,6 +42,7 @@ PixelShader =
 		SampleModeU = "Wrap"
 		SampleModeV = "Wrap"
 	}
+
 	TextureSampler NormalMap
 	{
 		Ref = PdxTexture2
@@ -50,6 +52,7 @@ PixelShader =
 		SampleModeU = "Wrap"
 		SampleModeV = "Wrap"
 	}
+
 	TextureSampler EnvironmentMap
 	{
 		Ref = JominiEnvironmentMap
@@ -60,6 +63,7 @@ PixelShader =
 		SampleModeV = "Clamp"
 		Type = "Cube"
 	}
+
 	TextureSampler TintMap
 	{
 		Index = 5
@@ -69,6 +73,7 @@ PixelShader =
 		SampleModeU = "Wrap"
 		SampleModeV = "Wrap"
 	}
+
 	TextureSampler ShadowMap
 	{
 		Ref = PdxShadowmap
@@ -117,7 +122,6 @@ Code
 		return Data[ InstanceIndex + PDXMESH_USER_DATA_OFFSET + 1 ].z;
 	}
 ]]
-
 
 VertexShader =
 {
@@ -195,7 +199,6 @@ VertexShader =
 			}
 		]]
 	}
-
 
 	MainCode VS_mapobject
 	{

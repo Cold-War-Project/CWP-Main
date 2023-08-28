@@ -36,7 +36,7 @@ PixelShader = {
 	}
 
 	#// Highlight in Red
-	#// Occupation in Green
+	#// Occupatioon in Green
 	TextureSampler HighlightGradient
 	{
 		Ref = HighlightGradient
@@ -143,6 +143,7 @@ PixelShader = {
 			{
 				return;
 			}
+
 			int CountryId = SampleCountryIndex( MapCoords );
 			if( CountryId >= 0 )
 			{
@@ -150,10 +151,7 @@ PixelShader = {
 				#ifdef HIGH_QUALITY_SHADERS
 					float2 Texel = vec2( 1.0f ) / _ProvinceMapSize;
 					float2 Pixel = ( MapCoords * _ProvinceMapSize + 0.5 );
-					float2 Texel = vec2( 1.0f ) / _ProvinceMapSize;
-					float2 Pixel = ( MapCoords * _ProvinceMapSize + 0.5 );
 					float2 FracCoord = frac( Pixel );
-					Pixel = floor( Pixel ) / _ProvinceMapSize - Texel * 0.5f;
 					Pixel = floor( Pixel ) / _ProvinceMapSize - Texel * 0.5f;
 					float C00 = 1.0f - saturate( abs( CountryId - SampleCountryIndex( Pixel ) ) );
 					float C10 = 1.0f - saturate( abs( CountryId - SampleCountryIndex( Pixel + float2( Texel.x, 0.0 ) ) ) );
@@ -167,14 +165,12 @@ PixelShader = {
 				float4 StripeColor = PdxTex2DLoad0( CountryColors, int2( CountryId, 0 ) );
 
 				Opacity *= ( _MapCoaBlendOccupation * ( 1.0f - _FlatmapLerp ) ) + ( _MapCoaBlendOccupationFlatmap * _FlatmapLerp );
-				Opacity *= ( _MapCoaBlendOccupation * ( 1.0f - _FlatmapLerp ) ) + ( _MapCoaBlendOccupationFlatmap * _FlatmapLerp );
 
 				float FadeStart = ( _MapCoaBlendFadeStart - _MapCoaBlendFadeEnd );
 				float CloseZoomBlend = FadeStart - CameraPosition.y + ( _MapCoaBlendFadeEnd );
 				CloseZoomBlend = smoothstep( FadeStart, 0.0f, CloseZoomBlend );
 				Opacity *= CloseZoomBlend;
 
-				float StripeScale = lerp( _MapCoaStripeScale, _MapCoaStripeScaleFlatmap, _FlatmapLerp );
 				float StripeScale = lerp( _MapCoaStripeScale, _MapCoaStripeScaleFlatmap, _FlatmapLerp );
 				Opacity *= CalculateStripeMask( MapCoords, 0.0, StripeScale );
 
@@ -295,13 +291,6 @@ PixelShader = {
 			float LandMask = PdxTex2DLod0( LandMaskMap, float2( ColorMapCoords.x, 1.0f - ColorMapCoords.y ) ).r;
 			float EndLandMask = 0.0f;
 			float ShoreLinesStripes = 0.0f;
-
-			// Neutralize colors to combat overexposed colors for countries on the map
-			// This will reduce the color intensity down to the percentage specified
-			// float4 NeutralizeColor = float4( 0.5f, 0.5f, 0.5f, 1.0f );
-			// PrimaryColor *= NeutralizeColor;
-			// SecondaryColor *= NeutralizeColor;
-			// AlternateColor *= NeutralizeColor;
 
 			// Primary as texture or color
 			if ( !_UseMapmodeTextures )

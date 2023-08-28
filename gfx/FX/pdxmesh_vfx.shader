@@ -71,7 +71,7 @@ VertexShader =
 		}
 
 		void BillboardMVPMatrix ( inout float4x4 MVPMatrix, in int3 BillboardAxis )
-		{	
+		{
 			if(!BillboardAxis.x)
 			{
 				MVPMatrix[0][0] = 1.0f;
@@ -94,7 +94,7 @@ VertexShader =
 			}
 		}
 
-		void ApplyJointAnimation ( 
+		void ApplyJointAnimation (
 			inout VS_OUTPUT Out,
 			in VS_INPUT_PDXMESHSTANDARD Input,
 			in float4x4 WorldMatrix)
@@ -103,7 +103,7 @@ VertexShader =
 				float4 Position = float4( Input.Position.xyz, 1.0 );
 				float3 BaseNormal = Input.Normal;
 				float3 BaseTangent = Input.Tangent.xyz;
-				
+
 				float4 SkinnedPosition = vec4( 0.0 );
 				float3 SkinnedNormal = vec3( 0.0 );
 				float3 SkinnedTangent = vec3( 0.0 );
@@ -155,11 +155,11 @@ VertexShader =
 			{
 				VS_OUTPUT Out = ConvertOutput( PdxMeshVertexShaderStandard( Input ) );
 				Out.InstanceIndex = Input.InstanceIndices.y;
-				
+
 				#ifdef BILLBOARD_MESH_SKINNED
 					float4x4 WorldMatrix = PdxMeshGetWorldMatrix( Input.InstanceIndices.y );
 					float4x4 ProjectionWorldViewMatrix = mul ( ProjectionMatrix, mul ( ViewMatrix, WorldMatrix ) );
-					
+
 					ApplyJointAnimation ( Out, Input, WorldMatrix );
 					BillboardMVPMatrix( ProjectionWorldViewMatrix, int3(0, 0, 1) );
 					Out.Position = mul(ProjectionWorldViewMatrix, Out.Position);
@@ -179,7 +179,7 @@ VertexShader =
 					NewPos = mul( WorldMatrix, NewPos );
 					Out.Position = FixProjectionAndMul( ViewProjectionMatrix, NewPos );
 				#endif
-				
+
 				#ifdef UI_PANNING_TEXTURE
 					Out.UV1 = Input.UV0;
 
@@ -191,7 +191,7 @@ VertexShader =
 				#endif
 
 				#ifdef UI_SCREEN_BURN
-					Out.UV0 *= UI_SCREEN_BURN_UV0_MULT; 
+					Out.UV0 *= UI_SCREEN_BURN_UV0_MULT;
 					Out.UV1 = Out.UV0;
 
 					Out.UV0 += vec2(frac(GlobalTime * UI_SCREEN_BURN_UV0_SPEED));
@@ -257,7 +257,7 @@ PixelShader =
 					float UpperEdge = saturate( ( ( saturate( 1.0f - Input.UV1.y + NoiseTexture.a ) ) + UPPER_EDGE_FALLOFF ) );
 					float LowerEdge = LowerEdgeMask + ( LowerEdgeMask * NoiseTexture.a ) * LOWER_EDGE_MULT;
 					float LowerEdge2 = LowerEdgeMask + ( LowerEdgeMask * NoiseTexture.g ) * LOWER_EDGE_MULT;
-					
+
 					// Final Composite RGB
 					float4 Composite;
 
@@ -266,7 +266,7 @@ PixelShader =
 					Composite.rgb = lerp( NoiseTexture.a, NoiseTexture.r, LowerEdge ) + LowerEdge;
 					Composite.rgb = PdxTex2D( PropertiesMap, saturate(float2( Composite.r + LOWER_EDGE_COL_SLIDE, Composite.g ))).rgb;
 					Composite.rgb = lerp(Composite.rgb, UPPER_EDGE_COL, UpperEdge );
-					
+
 					// Final Composite Alpha
 					Composite.a = saturate( LowerEdgeMask + Input.UV1.g * NoiseTextureDistorted2.a * FINAL_ALPHA_MULT );
 					Composite.a = saturate( Composite.a - LowerCut );
@@ -283,7 +283,7 @@ PixelShader =
 					float UVDistortionStrength = 0.1f;
 
 					Out.Color = PdxTex2D( DiffuseMap, Input.UV0 + UVDistortion.zw * UVDistortionStrength );
-					
+
 					float a = ( sin( GlobalTime * 2.0f ) + 1.0f ) * 0.5f;
 
 					float Alpha = smoothstep(a, saturate( a - 0.025f ), 1.0f - Out.Color.a );
@@ -363,11 +363,13 @@ BlendState AdditiveBlendState
 	WriteMask = "RED|GREEN|BLUE|ALPHA"
 }
 
+
 BlendState additive_blend
 {
 	BlendEnable = yes
 	SourceBlend = "ONE"
 	DestBlend = "ONE"
+
 }
 
 DepthStencilState depth_test_no_write
