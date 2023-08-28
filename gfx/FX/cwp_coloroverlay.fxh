@@ -150,7 +150,10 @@ PixelShader = {
 				#ifdef HIGH_QUALITY_SHADERS
 					float2 Texel = vec2( 1.0f ) / _ProvinceMapSize;
 					float2 Pixel = ( MapCoords * _ProvinceMapSize + 0.5 );
+					float2 Texel = vec2( 1.0f ) / _ProvinceMapSize;
+					float2 Pixel = ( MapCoords * _ProvinceMapSize + 0.5 );
 					float2 FracCoord = frac( Pixel );
+					Pixel = floor( Pixel ) / _ProvinceMapSize - Texel * 0.5f;
 					Pixel = floor( Pixel ) / _ProvinceMapSize - Texel * 0.5f;
 					float C00 = 1.0f - saturate( abs( CountryId - SampleCountryIndex( Pixel ) ) );
 					float C10 = 1.0f - saturate( abs( CountryId - SampleCountryIndex( Pixel + float2( Texel.x, 0.0 ) ) ) );
@@ -164,12 +167,14 @@ PixelShader = {
 				float4 StripeColor = PdxTex2DLoad0( CountryColors, int2( CountryId, 0 ) );
 
 				Opacity *= ( _MapCoaBlendOccupation * ( 1.0f - _FlatmapLerp ) ) + ( _MapCoaBlendOccupationFlatmap * _FlatmapLerp );
+				Opacity *= ( _MapCoaBlendOccupation * ( 1.0f - _FlatmapLerp ) ) + ( _MapCoaBlendOccupationFlatmap * _FlatmapLerp );
 
 				float FadeStart = ( _MapCoaBlendFadeStart - _MapCoaBlendFadeEnd );
 				float CloseZoomBlend = FadeStart - CameraPosition.y + ( _MapCoaBlendFadeEnd );
 				CloseZoomBlend = smoothstep( FadeStart, 0.0f, CloseZoomBlend );
 				Opacity *= CloseZoomBlend;
 
+				float StripeScale = lerp( _MapCoaStripeScale, _MapCoaStripeScaleFlatmap, _FlatmapLerp );
 				float StripeScale = lerp( _MapCoaStripeScale, _MapCoaStripeScaleFlatmap, _FlatmapLerp );
 				Opacity *= CalculateStripeMask( MapCoords, 0.0, StripeScale );
 

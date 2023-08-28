@@ -40,10 +40,10 @@ VertexShader =
 			STerrainVertex Vertex = CalcTerrainVertex( WithinNodePos, NodeOffset, NodeScale, LodDirection, LodLerpFactor );
 
 			#ifdef TERRAIN_FLAT_MAP_LERP
-				Vertex.WorldSpacePos.y = lerp( Vertex.WorldSpacePos.y, FlatmapHeight, FlatmapLerp );
+				Vertex.WorldSpacePos.y = lerp( Vertex.WorldSpacePos.y, _FlatmapHeight, _FlatmapLerp );
 			#endif
 			#ifdef TERRAIN_FLAT_MAP
-				Vertex.WorldSpacePos.y = FlatmapHeight;
+				Vertex.WorldSpacePos.y = _FlatmapHeight;
 			#endif
 
 			VS_OUTPUT_PDX_TERRAIN Out;
@@ -271,7 +271,7 @@ PixelShader =
 
 				// UV Coordinates
 				float2 MapCoords = Input.WorldSpacePos.xz * _WorldSpaceToTerrain0To1;
-				float2 ProvinceCoords = Input.WorldSpacePos.xz / ProvinceMapSize;
+				float2 ProvinceCoords = Input.WorldSpacePos.xz / _ProvinceMapSize;
 
 				// Get terrain material
 				CalculateDetails( Input.WorldSpacePos.xz, DetailDiffuse, DetailNormal, DetailMaterial );
@@ -328,7 +328,7 @@ PixelShader =
 
 						Flatmap = ApplyFlatmapOverlay( Flatmap, MapCoords );
 
-						FinalColor = lerp( FinalColor, Flatmap, FlatmapLerp );
+						FinalColor = lerp( FinalColor, Flatmap, _FlatmapLerp );
 					#endif
 
 					// Highlight color overlay
@@ -349,7 +349,7 @@ PixelShader =
 
 				// Output
 				Out.Color = float4( FinalColor, Alpha );
-				float3 SSAOAlphaFixed = vec3( 1.0f ) - SSAOAlphaTerrain; // Reduces the applied SSAO on terrain
+				float3 SSAOAlphaFixed = vec3( 1.0f ) - _SSAOAlphaTerrain; // Reduces the applied SSAO on terrain
 				#ifndef UNDERWATER
 					SSAOAlphaFixed = SSAOAlphaFixed + PostLightingBlend;
 				#endif
@@ -381,7 +381,7 @@ PixelShader =
 
 				// UV Coordinates
 				float2 MapCoords = Input.WorldSpacePos.xz * _WorldSpaceToTerrain0To1;
-				float2 ProvinceCoords = Input.WorldSpacePos.xz / ProvinceMapSize;
+				float2 ProvinceCoords = Input.WorldSpacePos.xz / _ProvinceMapSize;
 
 				// Colormap overlay
 				float3 Diffuse = SoftLight( DetailDiffuse.rgb, ColorMap, ( 1 - DetailMaterial.r ) );
@@ -406,7 +406,7 @@ PixelShader =
 
 						// Border color overlay on flatmap
 						Flatmap *= lerp( vec3( 1.0 ), ColorOverlay, saturate( PreLightingBlend + PostLightingBlend ) );
-						Diffuse = lerp( Diffuse, Flatmap, FlatmapLerp );
+						Diffuse = lerp( Diffuse, Flatmap, _FlatmapLerp );
 					#endif
 
 					// Highlight color overlay
@@ -434,7 +434,7 @@ PixelShader =
 				CropToWorldSize( Input );
 
 				float2 MapCoords = Input.WorldSpacePos.xz * _WorldSpaceToTerrain0To1;
-				float2 ProvinceCoords = Input.WorldSpacePos.xz / ProvinceMapSize;
+				float2 ProvinceCoords = Input.WorldSpacePos.xz / _ProvinceMapSize;
 
 				// Flatmap texture and style
 				float3 Flatmap = PdxTex2D( FlatmapTexture, float2( MapCoords.x, 1.0 - MapCoords.y ) ).rgb;
