@@ -138,15 +138,21 @@ PixelShader = {
 
 		void ApplyStripeColorBlend( float2 MapCoords, float2 ParalaxCoord, inout float3 Color, inout float PreLightingBlend )
 		{
+			// Coat of arms should only be shown in some map modes
+			if( !_MapCoaEnabled )
+			{
+				return;
+			}
+
 			int CountryId = SampleCountryIndex( MapCoords );
 			if( CountryId >= 0 )
 			{
 				float Opacity = 1.0f;
 				#ifdef HIGH_QUALITY_SHADERS
-					float2 Texel = vec2( 1.0f ) / ProvinceMapSize;
-					float2 Pixel = ( MapCoords * ProvinceMapSize + 0.5 );
+					float2 Texel = vec2( 1.0f ) / _ProvinceMapSize;
+					float2 Pixel = ( MapCoords * _ProvinceMapSize + 0.5 );
 					float2 FracCoord = frac( Pixel );
-					Pixel = floor( Pixel ) / ProvinceMapSize - Texel * 0.5f;
+					Pixel = floor( Pixel ) / _ProvinceMapSize - Texel * 0.5f;
 					float C00 = 1.0f - saturate( abs( CountryId - SampleCountryIndex( Pixel ) ) );
 					float C10 = 1.0f - saturate( abs( CountryId - SampleCountryIndex( Pixel + float2( Texel.x, 0.0 ) ) ) );
 					float C01 = 1.0f - saturate( abs( CountryId - SampleCountryIndex( Pixel + float2( 0.0, Texel.y ) ) ) );
@@ -158,14 +164,14 @@ PixelShader = {
 
 				float4 StripeColor = PdxTex2DLoad0( CountryColors, int2( CountryId, 0 ) );
 
-				Opacity *= ( _MapCoaBlendOccupation * ( 1.0f - FlatmapLerp ) ) + ( _MapCoaBlendOccupationFlatmap * FlatmapLerp );
+				Opacity *= ( _MapCoaBlendOccupation * ( 1.0f - _FlatmapLerp ) ) + ( _MapCoaBlendOccupationFlatmap * _FlatmapLerp );
 
 				float FadeStart = ( _MapCoaBlendFadeStart - _MapCoaBlendFadeEnd );
 				float CloseZoomBlend = FadeStart - CameraPosition.y + ( _MapCoaBlendFadeEnd );
 				CloseZoomBlend = smoothstep( FadeStart, 0.0f, CloseZoomBlend );
 				Opacity *= CloseZoomBlend;
 
-				float StripeScale = lerp( _MapCoaStripeScale, _MapCoaStripeScaleFlatmap, FlatmapLerp );
+				float StripeScale = lerp( _MapCoaStripeScale, _MapCoaStripeScaleFlatmap, _FlatmapLerp );
 				Opacity *= CalculateStripeMask( MapCoords, 0.0, StripeScale );
 
 				float Gradient = 1.0 - PdxTex2D( HighlightGradient, MapCoords ).g;
@@ -194,10 +200,10 @@ PixelShader = {
 			{
 				float Opacity = 1.0f;
 				#ifdef HIGH_QUALITY_SHADERS
-					float2 Texel = vec2( 1.0f ) / ProvinceMapSize;
-					float2 Pixel = ( MapCoords * ProvinceMapSize + 0.5 );
+					float2 Texel = vec2( 1.0f ) / _ProvinceMapSize;
+					float2 Pixel = ( MapCoords * _ProvinceMapSize + 0.5 );
 					float2 FracCoord = frac( Pixel );
-					Pixel = floor( Pixel ) / ProvinceMapSize - Texel * 0.5f;
+					Pixel = floor( Pixel ) / _ProvinceMapSize - Texel * 0.5f;
 					float C00 = 1.0f - saturate( abs( CountryId - SampleCountryIndex( Pixel ) ) );
 					float C10 = 1.0f - saturate( abs( CountryId - SampleCountryIndex( Pixel + float2( Texel.x, 0.0 ) ) ) );
 					float C01 = 1.0f - saturate( abs( CountryId - SampleCountryIndex( Pixel + float2( 0.0, Texel.y ) ) ) );
@@ -207,8 +213,8 @@ PixelShader = {
 					Opacity = RemapClamped( lerp( x0, x1, FracCoord.y ), 0.5f, 0.75f, 0.0f, 1.0f );
 				#endif
 				float4 FlagUvs = PdxReadBuffer4( CountryCoaUvBuffer, CountryId );
-				float2 CoaSize = FlatmapLerp < 0.5f ? float2( _MapCoaSize, _MapCoaSize / _MapCoaAspectRatio ) : float2( _MapCoaSizeFlatmap, _MapCoaSizeFlatmap / _MapCoaAspectRatio );
-				float2 CoaUV = ParalaxCoord * ProvinceMapSize / CoaSize;
+				float2 CoaSize = _FlatmapLerp < 0.5f ? float2( _MapCoaSize, _MapCoaSize / _MapCoaAspectRatio ) : float2( _MapCoaSizeFlatmap, _MapCoaSizeFlatmap / _MapCoaAspectRatio );
+				float2 CoaUV = ParalaxCoord * _ProvinceMapSize / CoaSize;
 
 				// Rotate
 				float2 Rotation = float2( cos( _MapCoaAngle ), sin( _MapCoaAngle ) );
@@ -232,7 +238,7 @@ PixelShader = {
 				float3 CoaColor = PdxTex2DGrad( CoaAtlas, CoaUV, CoaDdx, CoaDdy ).rgb;
 				CoaColor = ToLinear( CoaColor );
 
-				Opacity *= ( _MapCoaBlend * ( 1.0f - FlatmapLerp ) ) + ( _MapCoaBlendFlatmap * FlatmapLerp );
+				Opacity *= ( _MapCoaBlend * ( 1.0f - _FlatmapLerp ) ) + ( _MapCoaBlendFlatmap * _FlatmapLerp );
 
 				float FadeStart = ( _MapCoaBlendFadeStart - _MapCoaBlendFadeEnd );
 				float CloseZoomBlend = FadeStart - CameraPosition.y + ( _MapCoaBlendFadeEnd );
@@ -263,7 +269,7 @@ PixelShader = {
 		{
 			// Paralx Coord
 			float3 ToCam = normalize( CameraPosition - WorldSpacePos );
-			float ParalaxDist = ( ImpassableTerrainHeight - WorldSpacePos.y ) / ToCam.y;
+			float ParalaxDist = ( _ImpassableTerrainHeight - WorldSpacePos.y ) / ToCam.y;
 			float3 ParalaxCoord = WorldSpacePos + ToCam * ParalaxDist;
 			ParalaxCoord.xz = ParalaxCoord.xz * _WorldSpaceToTerrain0To1;
 
@@ -295,22 +301,22 @@ PixelShader = {
 				ProvinceOverlayColorWithAlpha.a = ProvinceOverlayColorWithAlpha.a * max( GradientAlpha, GB_EdgeAlpha * Edge );
 
 				// Apply decentralized country color
-				float4 DecentralizedColor = DecentralizedCountryColor;
+				float4 DecentralizedColor = _DecentralizedCountryColor;
 				float DecentralizedMask = saturate( 1.0f - Edge );
 
-				DecentralizedColor.rgb = DecentralizedCountryColor.rgb;
+				DecentralizedColor.rgb = _DecentralizedCountryColor.rgb;
 				DecentralizedColor.a *= AlternateColor.g;
-				DecentralizedMask = DecentralizedMask * DecentralizedColor.a * FlatmapLerp;
+				DecentralizedMask = DecentralizedMask * DecentralizedColor.a * _FlatmapLerp;
 				ProvinceOverlayColorWithAlpha = lerp( ProvinceOverlayColorWithAlpha, DecentralizedColor, DecentralizedMask );
 
 				// Apply impassable terrain color
-				float4 ImpassableDiffuse = float4( PdxTex2D( ImpassableTerrainTexture, float2( ParalaxCoord.x * 2.0f, 1.0f - ParalaxCoord.z ) * ImpassableTerrainTiling ).rgb,  AlternateColor.r );
-				ImpassableDiffuse.rgb = Lighten( ImpassableDiffuse.rgb, ImpassableTerrainColor.rgb );
-				float ImpassableMask = ImpassableDiffuse.a * ImpassableTerrainColor.a * ( 1.0f - FlatmapLerp );
+				float4 ImpassableDiffuse = float4( PdxTex2D( ImpassableTerrainTexture, float2( ParalaxCoord.x * 2.0f, 1.0f - ParalaxCoord.z ) * _ImpassableTerrainTiling ).rgb,  AlternateColor.r );
+				ImpassableDiffuse.rgb = Lighten( ImpassableDiffuse.rgb, _ImpassableTerrainColor.rgb );
+				float ImpassableMask = ImpassableDiffuse.a * _ImpassableTerrainColor.a * ( 1.0f - _FlatmapLerp );
 
 				// Fade impassable close
-				float FadeStart = ( DistanceFadeStart - DistanceFadeEnd );
-				float CloseZoomBlend = FadeStart - CameraPosition.y + DistanceFadeEnd;
+				float FadeStart = ( _DistanceFadeStart - _DistanceFadeEnd );
+				float CloseZoomBlend = FadeStart - CameraPosition.y + _DistanceFadeEnd;
 				CloseZoomBlend = smoothstep( FadeStart, 0.0f, CloseZoomBlend );
 				ImpassableMask *= CloseZoomBlend;
 				ProvinceOverlayColorWithAlpha = lerp( ProvinceOverlayColorWithAlpha, ImpassableDiffuse, ImpassableMask );
@@ -327,7 +333,7 @@ PixelShader = {
 			}
 			else
 			{
-				float2 MapTextureUvSize = FlatmapLerp < 0.5f ? _MapPaintingTextureTiling : _MapPaintingFlatmapTextureTiling;
+				float2 MapTextureUvSize = _FlatmapLerp < 0.5f ? _MapPaintingTextureTiling : _MapPaintingFlatmapTextureTiling;
 				float2 MapTextureUv = float2( ParalaxCoord.x * 2.0f, 1.0f - ParalaxCoord.z ) * MapTextureUvSize;
 
 				// Offset rows horizontally
@@ -366,7 +372,7 @@ PixelShader = {
 				GetGradiantBorderBlendValues( ProvinceOverlayColorWithAlpha, PreLightingBlend, PostLightingBlend );
 			}
 
-			// Apply stylized noise
+			// Apply stylised noise
 			#ifndef LOW_QUALITY_SHADERS
 				#if defined( TERRAIN_FLAT_MAP ) || defined( TERRAIN_FLAT_MAP_LERP )
 					float DetailScale1 = 10.0f;
@@ -378,7 +384,7 @@ PixelShader = {
 					// Don't blend in mapmodes
 					if ( !_UseMapmodeTextures )
 					{
-						ColorOverlay = saturate( GetOverlay( ColorOverlay, vec3( 1.0f - DetailTexture3 ), FlatmapLerp ) );
+						ColorOverlay = saturate( GetOverlay( ColorOverlay, vec3( 1.0f - DetailTexture3 ), _FlatmapLerp ) );
 					}
 				#endif
 			#endif
@@ -398,12 +404,12 @@ PixelShader = {
 
 		float3 ApplyDynamicFlatmap( float3 FlatmapDiffuse, float2 ColorMapCoords, float2 WorldSpacePosXZ )
 		{
-			float ExtentStr = ShorelineExtentStr;
-			float Alpha = ShorelineAlpha;
-			float UVScale = ShoreLinesUVScale;
+			float ExtentStr = _ShorelineExtentStr;
+			float Alpha = _ShorelineAlpha;
+			float UVScale = _ShoreLinesUVScale;
 
 			#ifndef LOW_QUALITY_SHADERS
-				float MaskBlur = ShorelineMaskBlur;
+				float MaskBlur = _ShorelineMaskBlur;
 				float LandMaskBlur = PdxTex2DLod( LandMaskMap, float2( ColorMapCoords.x, 1.0f - ColorMapCoords.y ), MaskBlur ).r;
 				float ShoreLines = PdxTex2D( FlatmapNoiseMap, ColorMapCoords * UVScale ).r;
 				ShoreLines *= saturate( Alpha );
@@ -429,9 +435,9 @@ PixelShader = {
 			if( dot( LakeDiff, LakeDiff ) > 0.1f )
 			{
 				#ifndef LOW_QUALITY_SHADERS
-					ShoreLinesStripes = saturate( LandMaskBlur * ShoreLines * ShorelineExtentStr );
+					ShoreLinesStripes = saturate( LandMaskBlur * ShoreLines * _ShorelineExtentStr );
 				#endif
-				ShoreLinesStripes = saturate( ShoreLinesStripes * ShorelineAlpha );
+				ShoreLinesStripes = saturate( ShoreLinesStripes * _ShorelineAlpha );
 				ShoreLinesStripes = clamp( ShoreLinesStripes, 0.0, 0.5f );
 				FlatmapDiffuse = lerp( FlatmapDiffuse, vec3( 0.0f ), ShoreLinesStripes );
 
@@ -455,7 +461,7 @@ PixelShader = {
 			HSV_.x += 0.0f;		// Hue
 			HSV_.y *= 0.95f; 	// Saturation
 			HSV_.z *= 0.35f;	// Value
-			ColorOverlay.rgb = lerp( ColorOverlay.rgb, HSVtoRGB( HSV_ ), 1.0f - FlatmapLerp );
+			ColorOverlay.rgb = lerp( ColorOverlay.rgb, HSVtoRGB( HSV_ ), 1.0f - _FlatmapLerp );
 
 			Color = lerp( Color, ColorOverlay, Blend );
 			return Color;

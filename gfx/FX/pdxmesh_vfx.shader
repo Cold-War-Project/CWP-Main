@@ -47,7 +47,7 @@ VertexStruct VS_OUTPUT
 	float2 UV0				: TEXCOORD3;
 	float2 UV1				: TEXCOORD4;
 	float3 WorldSpacePos	: TEXCOORD5;
-	uint InstanceIndex 	: TEXCOORD6;
+	uint InstanceIndex 		: TEXCOORD6;
 	float2 UV2				: TEXCOORD7;
 };
 
@@ -156,38 +156,46 @@ VertexShader =
 				VS_OUTPUT Out = ConvertOutput( PdxMeshVertexShaderStandard( Input ) );
 				Out.InstanceIndex = Input.InstanceIndices.y;
 				
-				#ifdef BILLBOARD_MESH
+				#ifdef BILLBOARD_MESH_SKINNED
 					float4x4 WorldMatrix = PdxMeshGetWorldMatrix( Input.InstanceIndices.y );
 					float4x4 ProjectionWorldViewMatrix = mul ( ProjectionMatrix, mul ( ViewMatrix, WorldMatrix ) );
 					
 					ApplyJointAnimation ( Out, Input, WorldMatrix );
-
 					BillboardMVPMatrix( ProjectionWorldViewMatrix, int3(0, 0, 1) );
-
 					Out.Position = mul(ProjectionWorldViewMatrix, Out.Position);
+				#endif
+
+				#ifdef BILLBOARD_MESH
+					float4x4 WorldMatrix = PdxMeshGetWorldMatrix( Input.InstanceIndices.y );
+					float3 WorldSpacePos = mul( WorldMatrix, float4( float3( 0.0f, 0.0f, 0.0f ), 1.0f ) ).xyz;
+
+					float3 ViewDir = CameraPosition - WorldSpacePos;
+					float Angle = atan2( ViewDir.x, ViewDir.z );
+					float Cosine = cos( Angle );
+					float Sine = sin( Angle );
+					float3x3 RotMarix = Create3x3( float3( Cosine, 0, Sine ), float3( 0, 1.0, 0 ), float3( -Sine, 0.0, Cosine ) );
+
+					float4 NewPos = float4( mul( RotMarix, Input.Position.xyz ), 1.0 );
+					NewPos = mul( WorldMatrix, NewPos );
+					Out.Position = FixProjectionAndMul( ViewProjectionMatrix, NewPos );
 				#endif
 				
 				#ifdef UI_PANNING_TEXTURE
-
 					Out.UV1 = Input.UV0;
 
 					Out.UV0 *= UI_PANNING_TEXTURE_UV0_MULT;
 					Out.UV0  = frac ( GlobalTime * UI_PANNING_TEXTURE_UV2_SPEED );
-				
 
 					Out.UV2 *= UI_PANNING_TEXTURE_UV2_MULT;
 					Out.UV2 += frac( GlobalTime * UI_PANNING_TEXTURE_UV2_SPEED );
-
 				#endif
 
 				#ifdef UI_SCREEN_BURN
-				
 					Out.UV0 *= UI_SCREEN_BURN_UV0_MULT; 
 					Out.UV1 = Out.UV0;
 
 					Out.UV0 += vec2(frac(GlobalTime * UI_SCREEN_BURN_UV0_SPEED));
 					Out.UV1 += vec2(frac(GlobalTime * UI_SCREEN_BURN_UV1_SPEED));
-
 				#endif
 
 				return Out;
@@ -290,8 +298,49 @@ PixelShader =
 			}
 		]]
 	}
+
+	MainCode PS_mesh_vfx_candle
+	{
+		Input = "VS_OUTPUT"
+		Output = "PS_COLOR_SSAO"
+		Code
+		[[
+			PDX_MAIN
+			{
+				PS_COLOR_SSAO Out;
+
+				float2 NoiseUv = Input.UV0;
+				float2 PanSpeed = float2( 0.125, 0.055 );
+				float NoiseStrength = 0.15f;
+				float DistortionStrength = 0.2f;
+
+				NoiseUv *= NoiseStrength;
+				NoiseUv += GlobalTime * PanSpeed;
+
+				float2 NormalNoise = PdxTex2D( NormalMap, NoiseUv ).rg;
+				NormalNoise -= 0.5;
+				NormalNoise *= DistortionStrength;
+
+				float VerticalGradient = smoothstep( 1.0f, 0.0f, Input.UV0.y );
+				float2 UvDistortion = lerp( float2( 0.0f, 0.0f ), NormalNoise, VerticalGradient );
+				float4 Diffuse = PdxTex2D( DiffuseMap, Input.UV0 + UvDistortion );
+				Diffuse.a = ApplyOpacity( Diffuse.a, Input.Position.xy, Input.InstanceIndex );
+
+				clip( Diffuse.a - 0.1f );
+
+				Out.Color = Diffuse;
+				Out.SSAOColor = float4( 1.0f, 1.0f, 1.0f, Diffuse.a );
+				return Out;
+			}
+		]]
+	}
+
 }
 
+RasterizerState RasterizerStateNoCulling
+{
+	CullMode = "none"
+}
 
 BlendState BlendState
 {

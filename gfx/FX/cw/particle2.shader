@@ -18,7 +18,7 @@ PixelShader =
 			{
 				PS_COLOR_SSAO Out;
 				float4 Color = PdxTex2D( DiffuseMap, Input.UV0 ) * Input.Color;
-				float2 ProvinceCoords = Input.WorldSpacePos.xz / ProvinceMapSize;
+				float2 ProvinceCoords = Input.WorldSpacePos.xz / _ProvinceMapSize;
 
 				// Border color overlay
 				float3 ColorOverlay;

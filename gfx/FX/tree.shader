@@ -310,7 +310,7 @@ PixelShader =
 				float4 Properties = PdxTex2D( PropertiesMap, Input.UV0 );
 
 				float2 MapCoords = Input.WorldSpacePos.xz * _WorldSpaceToTerrain0To1;
-				float2 ProvinceCoords = Input.WorldSpacePos.xz / ProvinceMapSize;
+				float2 ProvinceCoords = Input.WorldSpacePos.xz / _ProvinceMapSize;
 
 				// Dynamic mask, pre light
 				// Colormap blend
@@ -355,7 +355,7 @@ PixelShader =
 				Diffuse.rgb = ApplyHighlight( Diffuse.rgb, ProvinceCoords );
 
 				// Alpha
-				Diffuse.a *= ( 1.0f - FlatmapLerp );
+				Diffuse.a *= ( 1.0f - _FlatmapLerp );
 				Diffuse.a = ApplyOpacity( Diffuse.a, Input.Position.xy, Input.InstanceIndex );
 				Diffuse.a = RescaleAlphaByMipLevel( Diffuse.a, Input.UV0, DiffuseMap) ;
 				Diffuse.a = SharpenAlpha( Diffuse.a, 0.7f ) ;
@@ -367,7 +367,7 @@ PixelShader =
 
 				// Output
 				Out.Color = float4( Diffuse.rgb, Diffuse.a );
-				float SSAOAlphaFixed = 1.0f - SSAOAlphaTrees + GameCalculateDistanceFogFactor( Input.WorldSpacePos );	// Reduces the applied SSAO on trees
+				float SSAOAlphaFixed = 1.0f - _SSAOAlphaTrees + GameCalculateDistanceFogFactor( Input.WorldSpacePos );	// Reduces the applied SSAO on trees
 				Out.SSAOColor = float4( saturate( vec3 ( SSAOAlphaFixed ) ), Diffuse.a);
 
 				return Out;
