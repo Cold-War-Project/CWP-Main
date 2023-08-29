@@ -32,6 +32,7 @@ PixelShader =
 		SampleModeU = "Wrap"
 		SampleModeV = "Wrap"
 	}
+
 	TextureSampler PropertiesMap
 	{
 		Ref = PdxTexture1
@@ -41,6 +42,7 @@ PixelShader =
 		SampleModeU = "Wrap"
 		SampleModeV = "Wrap"
 	}
+
 	TextureSampler NormalMap
 	{
 		Ref = PdxTexture2
@@ -50,6 +52,7 @@ PixelShader =
 		SampleModeU = "Wrap"
 		SampleModeV = "Wrap"
 	}
+
 	TextureSampler EnvironmentMap
 	{
 		Ref = JominiEnvironmentMap
@@ -60,7 +63,8 @@ PixelShader =
 		SampleModeV = "Clamp"
 		Type = "Cube"
 	}
-	TextureSampler UniqueMap
+
+	TextureSampler TintMap
 	{
 		Index = 5
 		MagFilter = "Linear"
@@ -69,6 +73,7 @@ PixelShader =
 		SampleModeU = "Wrap"
 		SampleModeV = "Wrap"
 	}
+
 	TextureSampler ShadowMap
 	{
 		Ref = PdxShadowmap
@@ -100,8 +105,23 @@ Code
 	{
 		return uint( Data[ InstanceIndex + PDXMESH_USER_DATA_OFFSET + 0 ].x );
 	}
+	float4 GetUserDataBuildingLightColor( uint InstanceIndex )
+	{
+		return Data[ InstanceIndex + PDXMESH_USER_DATA_OFFSET + 0 ];
+	}
+	float GetUserDataPrettyValue( uint InstanceIndex )
+	{
+		return Data[ InstanceIndex + PDXMESH_USER_DATA_OFFSET + 1 ].x;
+	}
+	float GetUserDataRandomValueCity( uint InstanceIndex )
+	{
+		return Data[ InstanceIndex + PDXMESH_USER_DATA_OFFSET + 1 ].y;
+	}
+	float GetUserDataShouldLightActivate( uint InstanceIndex )
+	{
+		return Data[ InstanceIndex + PDXMESH_USER_DATA_OFFSET + 1 ].z;
+	}
 ]]
-
 
 VertexShader =
 {
@@ -179,7 +199,6 @@ VertexShader =
 			}
 		]]
 	}
-
 
 	MainCode VS_mapobject
 	{
@@ -439,7 +458,7 @@ PixelShader =
 				#endif
 
 				float2 MapCoords = Input.WorldSpacePos.xz * _WorldSpaceToTerrain0To1;
-				float2 ProvinceCoords = Input.WorldSpacePos.xz / ProvinceMapSize;
+				float2 ProvinceCoords = Input.WorldSpacePos.xz / _ProvinceMapSize;
 				float LocalHeight = Input.WorldSpacePos.y - GetHeight( Input.WorldSpacePos.xz );
 
 				float4 Diffuse = PdxTex2D( DiffuseMap, DIFFUSE_UV_SET );
@@ -454,14 +473,13 @@ PixelShader =
 				clip( Diffuse.a - 0.001f );
 
 				// Normal calculation
-				float3 NormalSample = UnpackRRxGNormal( PdxTex2D( NormalMap, NORMAL_UV_SET ) );
+				float4 NormalSample = PdxTex2D( NormalMap, NORMAL_UV_SET );
+				float3 InNormal = normalize( Input.Normal );
+				float3x3 TBN = Create3x3( normalize( Input.Tangent ), normalize( Input.Bitangent ), InNormal );
+				float3 Normal = normalize( mul( UnpackRRxGNormal( NormalSample ), TBN ) );
 
 				// Devastation
 				ApplyDevastationBuilding( Diffuse.rgb, Input.WorldSpacePos.xz, LocalHeight, DIFFUSE_UV_SET );
-
-				float3 InNormal = normalize( Input.Normal );
-				float3x3 TBN = Create3x3( normalize( Input.Tangent ), normalize( Input.Bitangent ), InNormal );
-				float3 Normal = normalize( mul( NormalSample, TBN ) );
 
 				// Revolution flag
 				#ifdef REVOLUTIONFLAG
@@ -476,14 +494,14 @@ PixelShader =
 
 				// Baked AO
 				#if defined( TINT_COLOR )
-					float4 Unique = PdxTex2D( UniqueMap, UNIQUE_UV_SET );
+					float4 Unique = PdxTex2D( TintMap, UNIQUE_UV_SET );
 					Diffuse.rgb = Overlay( Diffuse.rgb, Unique.rgb );
 				#endif
 
 				// Bottom tint effetc
 				float TintAngleModifier = saturate( 1.0 - dot( InNormal, float3( 0.0, 1.0, 0.0 ) ) );	// Removes tint from angles facing upwards
-				float TintBlend = ( 1.0 - smoothstep( MeshTintHeightMin, MeshTintHeightMax, LocalHeight ) ) * MeshTintColor.a * TintAngleModifier;
-				Diffuse.rgb = lerp(  Diffuse.rgb, Overlay( Diffuse.rgb, MeshTintColor.rgb ), TintBlend );
+				float TintBlend = ( 1.0 - smoothstep( _MeshTintHeightMin, _MeshTintHeightMax, LocalHeight ) ) * _MeshTintColor.a * TintAngleModifier;
+				Diffuse.rgb = lerp(  Diffuse.rgb, Overlay( Diffuse.rgb, _MeshTintColor.rgb ), TintBlend );
 
 				// Colormap blend, pre light
 				#if defined( COLORMAP )
@@ -519,6 +537,26 @@ PixelShader =
 						#endif
 					#endif
 				#endif
+				#if defined( EMISSIVE_NIGHT ) || defined( EMISSIVE_NIGHT_RANDOM )
+						float ActivationThreshold = 0.05;
+						float ShouldActivate = 1.0;
+						float4 LightColor = _NightLightColor;
+
+						#if defined( HUB_BUILDING )
+							ActivationThreshold = GetUserDataRandomValueCity( Input.InstanceIndex );
+							#if defined( EMISSIVE_NIGHT_RANDOM )
+								ShouldActivate = clamp( GetUserDataShouldLightActivate( Input.InstanceIndex ), 0.0f, 1.0f );
+							#endif
+							LightColor = GetUserDataBuildingLightColor( Input.InstanceIndex );
+						#endif
+
+						float DayNightModifier = Remap( _DayNightValue, _LightsActivateBegin, _LightsActivateEnd, 0.0, 1.0 );
+						float LightValue = saturate( Remap( DayNightModifier, ActivationThreshold, _LightsFadeTime + ActivationThreshold, 0.0, 1.0 ) );
+						if ( DayNightModifier > ActivationThreshold )
+						{
+							Color += NormalSample.b * LightColor.rgb * LightColor.a * LightValue * ShouldActivate;
+						}
+				#endif
 
 				// Effects, post light
 				#ifndef UNDERWATER
@@ -526,12 +564,12 @@ PixelShader =
 						Color = ApplyColorOverlay( Color, ColorOverlay, PostLightingBlend );
 					#endif
 					#ifndef NO_FOG
-						if( FlatmapLerp < 1.0 )
+						if( _FlatmapLerp < 1.0 )
 						{
 							float3 Unfogged = Color;
 							Color = ApplyFogOfWar( Color, Input.WorldSpacePos );
 							Color = GameApplyDistanceFog( Color, Input.WorldSpacePos );
-							Color = lerp( Color, Unfogged, FlatmapLerp );
+							Color = lerp( Color, Unfogged, _FlatmapLerp );
 						}
 					#endif
 				#endif
@@ -555,7 +593,7 @@ PixelShader =
 
 				// Output
 				Out.Color = float4( Color, Diffuse.a );
-				float3 SSAOColor_ = SSAOColorMesh.rgb + GameCalculateDistanceFogFactor( Input.WorldSpacePos );
+				float3 SSAOColor_ = _SSAOColorMesh.rgb + GameCalculateDistanceFogFactor( Input.WorldSpacePos );
 				#ifndef UNDERWATER
 					#ifndef NO_BORDERS
 						SSAOColor_ = SSAOColor_ + PostLightingBlend;

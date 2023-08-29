@@ -786,4 +786,216 @@ types pinnable_outliner_items {
 			}
 		}
 	}
+
+	type building_in_state_item = pinnable_expandable_outliner_entry {
+		blockoverride "text_size" {
+			minimumsize = { 120 -1 }
+			maximumsize = { 120 -1 }
+		}
+	
+		datacontext = "[OutlinerEntry.AccessScope.AccessBuilding]"
+
+		blockoverride "text" {
+			text = "[Building.GetState.GetNameNoFormatting]"
+		}
+		blockoverride "tooltip" {
+			tooltipwidget = {
+				FancyTooltip_Building = {}
+			}
+		}
+
+		blockoverride "onrightclick" {
+			onrightclick = "[RightClickMenuManager.ShowForBuilding(Building.AccessSelf)]"
+		}
+		
+		blockoverride "onhover" {
+			onmousehierarchyenter = "[AccessHighlightManager.HighlightState(Building.GetState.Self)]"
+			onmousehierarchyleave = "[AccessHighlightManager.RemoveHighlight]"
+		}
+
+		blockoverride "additional_info" {
+			spacing = 4
+			
+			widget = {
+				size = { 25 25 }
+				parentanchor = vcenter
+				
+				icon = {
+					visible = "[Building.HasAnyInputShortage]"
+					size = { 25 25 }
+					parentanchor = vcenter
+					texture = "gfx/interface/icons/generic_icons/goods_shortage.dds"
+					tooltip = "GOODS_OUTPUT_PENALTY_TOOLTIP"
+					position = { -25 0 }
+				}
+				
+				icon = {
+					visible = "[And(Not(Building.IsSubsistenceBuilding), Building.HasFailedHires)]"
+					size = { 25 25 }
+					texture = "gfx/interface/icons/generic_icons/employment_not_full.dds"
+					parentanchor = center
+				}
+
+				icon = {
+					visible = "[Building.ShouldShowAsNotHiring]"
+					size = { 25 25 }
+					texture = "gfx/interface/icons/generic_icons/employment_not_full.dds"
+					parentanchor = center
+				}
+
+				icon = {
+					visible = "[Building.ShouldShowAsHiring]"
+					size = { 25 25 }
+					parentanchor = center
+					texture = "gfx/interface/icons/generic_icons/employment_not_full_hiring.dds"
+				}
+			}
+			widget = {
+				size = { 1 1 }
+			}
+			
+			flowcontainer = {
+				direction = vertical
+				parentanchor = vcenter
+				spacing = 4
+				
+				
+				widget = {
+					size = { 30 7 }
+					
+					default_progressbar_horizontal = {
+						size = { 100% 100% }
+						parentanchor = vcenter
+
+						blockoverride "values" {
+							value = "[FixedPointToFloat(Building.GetEmploymentPercentage)]"
+							min = 0
+							max = 1
+						}
+					}
+				}
+				
+				widget = {	
+					size = { 30 7 }
+					alpha = "[TransparentIfFalse(Building.IsActive)]"
+					visible = "[And(GreaterThan_CFixedPoint(Building.GetMaxCashReserves, '(CFixedPoint)0'), Building.IsActive)]"
+
+					gold_progressbar_horizontal = {
+						size = { 100% 100% }
+						alpha = "[TransparentIfFalse(Building.IsActive)]"
+						visible = "[And(GreaterThan_CFixedPoint(Building.GetMaxCashReserves, '(CFixedPoint)0'), Building.IsActive)]"
+
+						blockoverride "glow_size" {
+							size = { 30 100% }
+						}
+
+						blockoverride "values" {
+							min = 0
+							max = "[FixedPointToFloat(Building.GetMaxCashReserves)]"
+							value = "[FixedPointToFloat(Building.GetCurrentCashReserves)]"
+						}
+					}
+
+					changed_value_decreased_progressbar_horizontal = {
+						size = { 100% 100% }
+						visible = "[GreaterThan_CFixedPoint(GetPrevTrendValue(Building.GetCashReservesTrend), GetTrendValue(Building.GetCashReservesTrend))]"
+
+						blockoverride "second_progressbar" {}
+
+						blockoverride "values" {
+							min = 0
+							max = "[FixedPointToFloat(Building.GetMaxCashReserves)]"
+							value = "[FixedPointToFloat(Building.GetCurrentCashReserves)]"
+						}
+						blockoverride "glow_size" {
+							size = { 30 100% }
+						}
+						blockoverride "arrow_texture_density" {
+							texture_density = 13 #use to match height of progressbar
+						}
+					}
+
+					changed_value_increased_progressbar_horizontal = {
+						size = { 100% 100% }
+						visible = "[GreaterThan_CFixedPoint(GetTrendValue(Building.GetCashReservesTrend), GetPrevTrendValue(Building.GetCashReservesTrend))]"
+
+						blockoverride "second_progressbar" {}
+
+						blockoverride "values" {
+							min = 0
+							max = "[FixedPointToFloat(Building.GetMaxCashReserves)]"
+							value = "[FixedPointToFloat(Building.GetCurrentCashReserves)]"
+						}
+						blockoverride "glow_size" {
+							size = { 30 100% }
+						}
+						blockoverride "arrow_texture_density" {
+							texture_density = 13 #use to match height of progressbar
+						}
+					}
+				}
+			}
+			
+			widget = {
+				size = { 3 3 }
+			}
+			
+			textbox = {
+				size = { 18 25 }
+				raw_text = "#v [Building.GetExpansionLevel]#!"
+				align = left|nobaseline
+				fontsize_min = 14
+			}
+			
+			textbox = {
+				visible = "[And(Not(Building.IsGovernmentFunded), Not(Building.IsSubsistenceBuilding))]"
+				size = { 40 25 }
+				raw_text = "[GetPlayer.MakeScope.Var('cwp_currency').GetFlagName][Building.GetAverageAnnualEarningsPerEmployeeFormatted|+]"
+				align = left|nobaseline
+				fontsize_min = 14
+			}
+		}
+		blockoverride "onclick" {
+			onclick = "[InformationPanelBar.OpenBuildingDetailsPanel( Building.AccessSelf )]"
+		}
+	}
+	
+	type outliner_buildingtypes = pinnable_outliner_group {
+		datacontext = "[Outliner.AccessCategory('buildings')]"
+		
+		blockoverride "entry_size" {
+			size = { @entry_width @entry_height }
+		}
+
+		blockoverride "item" {
+			pinnable_outliner_group = {
+				blockoverride "entry_size" {
+					size = { @entry_d2_width @entry_height }
+				}
+				blockoverride "item" {
+					pinnable_outliner_group = {
+						blockoverride "entry_size" {
+							size = { @entry_d3_width @entry_height }
+						}
+						blockoverride "title" {
+							building_in_state_item = {
+								blockoverride "text_size" {
+									minimumsize = { 135 -1 }
+									maximumsize = { 135 -1 }
+								}
+							}
+						}
+						blockoverride "item" {
+							blockoverride "text_size" {
+								minimumsize = { 135 -1 }
+								maximumsize = { 135 -1 }
+							}
+
+							outliner_entry = { }
+						}
+					}
+				}
+			}
+		}
+	}
 }

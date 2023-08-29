@@ -18,16 +18,12 @@ PixelShader =
 			{
 				PS_COLOR_SSAO Out;
 				float4 Color = PdxTex2D( DiffuseMap, Input.UV0 ) * Input.Color;
-				float2 ProvinceCoords = Input.WorldSpacePos.xz / ProvinceMapSize;
+				float2 ProvinceCoords = Input.WorldSpacePos.xz / _ProvinceMapSize;
 
-				// Border color overlay
-				float3 ColorOverlay;
-				float PreLightingBlend;
-				float PostLightingBlend;
-				GameProvinceOverlayAndBlend( ProvinceCoords, Input.WorldSpacePos, ColorOverlay, PreLightingBlend, PostLightingBlend );
-
-				Color.rgb = ApplyFogOfWar( Color.rgb, Input.WorldSpacePos );
-				Color.rgb = GameApplyDistanceFog( Color.rgb, Input.WorldSpacePos );
+				float3 OverlayColor = Color.rgb;
+				OverlayColor = ApplyFogOfWar( OverlayColor, Input.WorldSpacePos );
+				OverlayColor = GameApplyDistanceFog( OverlayColor, Input.WorldSpacePos );
+				Color.rgb = lerp( Color.rgb, OverlayColor, 1.0 - _FlatmapLerp );
 
 				// Output
 				Out.Color = Color;
