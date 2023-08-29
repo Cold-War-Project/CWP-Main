@@ -222,8 +222,6 @@ PixelShader =
 			float LandMask = PdxTex2DLod0( LandMaskMap, float2( MapCoords.x, 1.0 - MapCoords.y ) ).r;
 			float LandAlpha = ( 1.0 - ( LandMask * ( 1.0 - _FlatmapOverlayLandOpacity ) ) );
 			Flatmap = lerp( Flatmap, _FlatmapFoldsColor.rgb, OverlayTexture.r * _FlatmapFoldsColor.a * LandAlpha );
-			Flatmap = lerp( Flatmap, _FlatmapLinesColor.rgb, OverlayTexture.g * _FlatmapLinesColor.a * LandAlpha );
-			Flatmap = ApplyFlatmapEquator( Flatmap, MapCoords, LandAlpha * OverlayTexture.b );
 
 			Flatmap = SoftLight( Flatmap, _FlatmapDetailsColor.rgb, saturate( OverlayTexture.a ) * _FlatmapDetailsColor.a );
 			return Flatmap;
@@ -367,7 +365,7 @@ PixelShader =
 					#ifdef TERRAIN_FLAT_MAP_LERP
 						// Flatmap texture and style
 						float3 Flatmap = PdxTex2D( FlatmapTexture, float2( MapCoords.x, 1.0 - MapCoords.y ) ).rgb;
-						Flatmap = ApplyDynamicFlatmap( Flatmap, ProvinceCoords, Input.WorldSpacePos.xz );
+						Flatmap = lerp(Flatmap, ApplyDynamicFlatmap( Flatmap, ProvinceCoords, Input.WorldSpacePos.xz ), 0.5);
 
 						// Border color overlay on flatmap
 						Flatmap *= lerp( vec3( 1.0 ), ColorOverlay, saturate( PreLightingBlend + PostLightingBlend ) );
@@ -448,7 +446,7 @@ PixelShader =
 					// Blend from Terrain to Flatmap
 					#ifdef TERRAIN_FLAT_MAP_LERP
 						// Flatmap texture and style
-						Flatmap = ApplyDynamicFlatmap( Flatmap, ProvinceCoords, Input.WorldSpacePos.xz );
+						Flatmap = lerp(Flatmap, ApplyDynamicFlatmap( Flatmap, ProvinceCoords, Input.WorldSpacePos.xz ), 0.5);
 
 						// Border color overlay on flatmap
 						Flatmap *= lerp( vec3( 1.0 ), ColorOverlay, saturate( PreLightingBlend + PostLightingBlend ) );
@@ -484,7 +482,7 @@ PixelShader =
 
 				// Flatmap texture and style
 				float3 Flatmap = PdxTex2D( FlatmapTexture, float2( MapCoords.x, 1.0 - MapCoords.y ) ).rgb;
-				Flatmap = ApplyDynamicFlatmap( Flatmap, ProvinceCoords, Input.WorldSpacePos.xz );
+				Flatmap = lerp(Flatmap, ApplyDynamicFlatmap( Flatmap, ProvinceCoords, Input.WorldSpacePos.xz ), 0.5);
 
 				// Border color overlay
 				float3 ColorOverlay;
