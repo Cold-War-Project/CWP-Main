@@ -40,10 +40,10 @@ VertexShader =
 			STerrainVertex Vertex = CalcTerrainVertex( WithinNodePos, NodeOffset, NodeScale, LodDirection, LodLerpFactor );
 
 			#ifdef TERRAIN_FLAT_MAP_LERP
-				Vertex.WorldSpacePos.y = lerp( Vertex.WorldSpacePos.y, FlatmapHeight, FlatmapLerp );
+				Vertex.WorldSpacePos.y = lerp( Vertex.WorldSpacePos.y, _FlatmapHeight, _FlatmapLerp );
 			#endif
 			#ifdef TERRAIN_FLAT_MAP
-				Vertex.WorldSpacePos.y = FlatmapHeight;
+				Vertex.WorldSpacePos.y = _FlatmapHeight;
 			#endif
 
 			VS_OUTPUT_PDX_TERRAIN Out;
@@ -162,12 +162,57 @@ PixelShader =
 		SampleModeV = "Clamp"
 	}
 
+	TextureSampler Equator
+	{
+		Index = 10
+		MagFilter = "Linear"
+		MinFilter = "Linear"
+		MipFilter = "Linear"
+		SampleModeU = "Wrap"
+		SampleModeV = "Clamp"
+		File = "gfx/map/textures/equator_line.dds"
+		srgb = yes
+	}
+
 	Code
 	[[
 		void CropToWorldSize( in VS_OUTPUT_PDX_TERRAIN Input )
 		{
 			float LerpFactor = saturate( ( Input.Position.z - 0.9 ) * 10.0 );
 			clip( vec2(1.0) - ( Input.WorldSpacePos.xz - float2( lerp( 0.1, 2.0, LerpFactor ), 0.0 ) ) * _WorldSpaceToTerrain0To1 );
+		}
+
+		float3 ApplyFlatmapEquator( float3 Flatmap, float2 MapCoords, float Opacity )
+		{
+			float2 TextureSize;
+			PdxTex2DSize( Equator, TextureSize );
+
+			float2 EquatorUV = MapCoords;
+			float AspectRatioMap = MapSize.y / MapSize.x;
+			float AspectRatioTexture = TextureSize.x / TextureSize.y;
+			float SizeY = MapSize.y / TextureSize.y;
+			EquatorUV.y = 1.0 - EquatorUV.y - _FlatmapEquatorPosition;
+			EquatorUV.y *= AspectRatioMap * AspectRatioTexture;
+
+			if ( _FlatmapEquatorTiling > 0.0 )
+			{
+				EquatorUV *= _FlatmapEquatorTiling;
+			}
+			float4 EquatorTexture = PdxTex2D( Equator, EquatorUV );
+
+			if ( EquatorUV.y > 0.0 && EquatorUV.y < 1.0)
+			{
+				// Edge fade
+				float FadeAlpha = 1.0f;
+				float FadeDistance = 0.05f;
+				float FadeRight = RemapClamped( EquatorUV.y, 0.0, FadeDistance, 0.0, 1.0 );
+				float FadeLeft = RemapClamped( EquatorUV.y, 1.0 - FadeDistance, 1.0, 1.0, 0.0 );
+				FadeAlpha = FadeRight * FadeLeft;
+
+				Flatmap = lerp( Flatmap, EquatorTexture.rgb, EquatorTexture.a * Opacity * FadeAlpha );
+			}
+
+			return Flatmap;
 		}
 
 		float3 ApplyFlatmapOverlay( float3 Flatmap, float2 MapCoords )
@@ -177,7 +222,6 @@ PixelShader =
 			float LandMask = PdxTex2DLod0( LandMaskMap, float2( MapCoords.x, 1.0 - MapCoords.y ) ).r;
 			float LandAlpha = ( 1.0 - ( LandMask * ( 1.0 - _FlatmapOverlayLandOpacity ) ) );
 			Flatmap = lerp( Flatmap, _FlatmapFoldsColor.rgb, OverlayTexture.r * _FlatmapFoldsColor.a * LandAlpha );
-			Flatmap = lerp( Flatmap, _FlatmapLinesColor.rgb, OverlayTexture.g * _FlatmapLinesColor.a * LandAlpha );
 
 			Flatmap = SoftLight( Flatmap, _FlatmapDetailsColor.rgb, saturate( OverlayTexture.a ) * _FlatmapDetailsColor.a );
 			return Flatmap;
@@ -271,7 +315,7 @@ PixelShader =
 
 				// UV Coordinates
 				float2 MapCoords = Input.WorldSpacePos.xz * _WorldSpaceToTerrain0To1;
-				float2 ProvinceCoords = Input.WorldSpacePos.xz / ProvinceMapSize;
+				float2 ProvinceCoords = Input.WorldSpacePos.xz / _ProvinceMapSize;
 
 				// Get terrain material
 				CalculateDetails( Input.WorldSpacePos.xz, DetailDiffuse, DetailNormal, DetailMaterial );
@@ -321,14 +365,14 @@ PixelShader =
 					#ifdef TERRAIN_FLAT_MAP_LERP
 						// Flatmap texture and style
 						float3 Flatmap = PdxTex2D( FlatmapTexture, float2( MapCoords.x, 1.0 - MapCoords.y ) ).rgb;
-						Flatmap = lerp(Flatmap, ApplyDynamicFlatmap(Flatmap, ProvinceCoords, Input.WorldSpacePos.xz), 0.35);
+						Flatmap = lerp(Flatmap, ApplyDynamicFlatmap( Flatmap, ProvinceCoords, Input.WorldSpacePos.xz ), 0.5);
 
 						// Border color overlay on flatmap
 						Flatmap *= lerp( vec3( 1.0 ), ColorOverlay, saturate( PreLightingBlend + PostLightingBlend ) );
 
 						Flatmap = ApplyFlatmapOverlay( Flatmap, MapCoords );
 
-						FinalColor = lerp( FinalColor, Flatmap, FlatmapLerp );
+						FinalColor = lerp( FinalColor, Flatmap, _FlatmapLerp);
 					#endif
 
 					// Highlight color overlay
@@ -349,7 +393,7 @@ PixelShader =
 
 				// Output
 				Out.Color = float4( FinalColor, Alpha );
-				float3 SSAOAlphaFixed = vec3( 1.0f ) - SSAOAlphaTerrain; // Reduces the applied SSAO on terrain
+				float3 SSAOAlphaFixed = vec3( 1.0f ) - _SSAOAlphaTerrain; // Reduces the applied SSAO on terrain
 				#ifndef UNDERWATER
 					SSAOAlphaFixed = SSAOAlphaFixed + PostLightingBlend;
 				#endif
@@ -381,7 +425,7 @@ PixelShader =
 
 				// UV Coordinates
 				float2 MapCoords = Input.WorldSpacePos.xz * _WorldSpaceToTerrain0To1;
-				float2 ProvinceCoords = Input.WorldSpacePos.xz / ProvinceMapSize;
+				float2 ProvinceCoords = Input.WorldSpacePos.xz / _ProvinceMapSize;
 
 				// Colormap overlay
 				float3 Diffuse = SoftLight( DetailDiffuse.rgb, ColorMap, ( 1 - DetailMaterial.r ) );
@@ -402,17 +446,17 @@ PixelShader =
 					// Blend from Terrain to Flatmap
 					#ifdef TERRAIN_FLAT_MAP_LERP
 						// Flatmap texture and style
-						Flatmap = lerp(Flatmap, ApplyDynamicFlatmap(Flatmap, ProvinceCoords, Input.WorldSpacePos.xz), 0.35);
+						Flatmap = lerp(Flatmap, ApplyDynamicFlatmap( Flatmap, ProvinceCoords, Input.WorldSpacePos.xz ), 0.5);
 
 						// Border color overlay on flatmap
 						Flatmap *= lerp( vec3( 1.0 ), ColorOverlay, saturate( PreLightingBlend + PostLightingBlend ) );
-						Diffuse = lerp( Diffuse, Flatmap, FlatmapLerp );
+						Diffuse = lerp( Diffuse, Flatmap, _FlatmapLerp );
 					#endif
 
 					// Highlight color overlay
 					Diffuse = ApplyHighlight( Diffuse, ProvinceCoords );
 
-				#endif //not UNDERWATER
+				#endif//not UNDERWATER
 
 				// Output
 				Out.Color = float4( Diffuse, 1.0f );
@@ -434,11 +478,11 @@ PixelShader =
 				CropToWorldSize( Input );
 
 				float2 MapCoords = Input.WorldSpacePos.xz * _WorldSpaceToTerrain0To1;
-				float2 ProvinceCoords = Input.WorldSpacePos.xz / ProvinceMapSize;
+				float2 ProvinceCoords = Input.WorldSpacePos.xz / _ProvinceMapSize;
 
 				// Flatmap texture and style
 				float3 Flatmap = PdxTex2D( FlatmapTexture, float2( MapCoords.x, 1.0 - MapCoords.y ) ).rgb;
-				Flatmap = lerp(Flatmap, ApplyDynamicFlatmap(Flatmap, ProvinceCoords, Input.WorldSpacePos.xz), 0.35);
+				Flatmap = lerp(Flatmap, ApplyDynamicFlatmap( Flatmap, ProvinceCoords, Input.WorldSpacePos.xz ), 0.5);
 
 				// Border color overlay
 				float3 ColorOverlay;
