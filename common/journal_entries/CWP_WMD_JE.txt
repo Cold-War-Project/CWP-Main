@@ -228,3 +228,79 @@ je_develop_thermonuclear_bomb = {
 	progressbar = yes
 	weight = 100
 }
+
+je_develop_icbms = {
+	icon = "gfx/interface/icons/lens_toolbar_icons/nuclear_weapons.dds"
+	should_be_pinned_by_default = yes
+	scripted_button = pause_nuclear_program_button
+	scripted_button = resume_nuclear_program_button
+	scripted_button = survey_nuclear_test_site_button
+	scripted_button = conduct_nuclear_test_button
+	possible = {
+		this = {
+			custom_tooltip = {
+				text = "nuclear_in_progress"
+				has_modifier = developing_icbm
+			}
+		}
+	}
+	immediate = {
+		set_variable = {
+			name = nuclear_program_progress
+			value = 0
+		}
+	}
+	current_value = {
+		value = var:nuclear_program_progress
+	}
+	goal_add_value = {
+		add = 100		# was 100, temp testing value
+	}
+	on_monthly_pulse = {
+		effect = {
+			if = {
+				limit = {
+					var:nuclear_program_progress < 80
+				}
+				change_variable = {
+					name = nuclear_program_progress
+					add = nuclear_progress_increase_per_month
+				}
+			}
+		}
+	}
+	##### TODO, #32 Journal completion does NOT trigger event
+	complete = {
+		scope:journal_entry = {
+			is_goal_complete = yes
+		}
+	}
+	fail = {
+		or = {
+			not = {
+				has_law = law_type:law_deterrence
+				has_law = law_type:law_first_strike
+			}
+			canceled_nuclear_program = yes
+		}
+	}
+	on_complete = {
+		add_modifier = {
+			name = icbm_capable
+		}
+		change_variable = {
+			name = nuclear_yield
+			add = 25
+		}
+		remove_variable = nuclear_test_site
+		remove_modifier = developing_icbm
+		remove_variable = nuclear_program_progress
+	}
+	on_fail = {
+		remove_variable = nuclear_test_site
+		remove_variable = nuclear_program_progress
+		remove_modifier = developing_icbm
+	}
+	progressbar = yes
+	weight = 100
+}

@@ -208,11 +208,11 @@ types panel_military {
 	type tab_wmd = top_illu {
 		maximumsize = { @panel_width_plus_20 -1 }
 		minimumsize = { @panel_width_plus_20 1900 }
-
 		background = {
 			using = dropdown_background
 		}
 		wmd_entry = {
+			visible = "[GetScriptedGui('can_open_wmd_screen').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 			blockoverride "header" {
 				raw_text = "Nuclear Weapons"
 			}
@@ -221,18 +221,34 @@ types panel_military {
 			}
 			wmd_subentry = {
 				blockoverride "title" {
-					raw_text = "[concept_nuclear_weapons] Production"
+					raw_text = "[GetPlayer.GetName] Status"
 				}
-				blockoverride "info" {
-					raw_text = "[GetPlayer.MakeScope.ScriptValue('nuclear_stockpile_sum')|v0] [concept_nuclear_weapons] per month."
+				blockoverride "entrycontainer" {
+					textbox = {
+						raw_text = "Active #gold Nuclear Weapons Facilities#!: [GetPlayer.MakeScope.ScriptValue('nuclear_weapons_facility_size_national')|v0] "
+					}
+					textbox = {
+						raw_text = "Monthly [concept_nuclear_weapons]: [GetPlayer.MakeScope.ScriptValue('nuclear_stockpile_sum')|v0] "
+					}
+					textbox = {
+						raw_text = "Active #gold Strategic Airbases#!: [GetPlayer.MakeScope.ScriptValue('strategic_airbase_size_national')|v0] "
+					}
+					textbox = {
+						raw_text = "Active #gold Missile Silos#!: [GetPlayer.MakeScope.ScriptValue('missile_silo_size_national')|v0] "
+					}
 				}
 			}
 			wmd_subentry = {
 				blockoverride "title" {
 					raw_text = "Nuclear Attack Strength"
 				}
-				blockoverride "info" {
-					raw_text = "#v [GetPlayer.MakeScope.Var('nuclear_yield').GetValue|0]kt#! Per Warhead | #v [GetPlayer.MakeScope.ScriptValue('nuclear_strike_values')|d]#! Total"
+				blockoverride "entrycontainer" {
+					textbox = {
+						raw_text = "[concept_nuclear_weapons] Arsenal: [GetPlayer.MakeScope.ScriptValue('nuclear_stockpile_sv')|v0] #gold Warheads#!"
+					}
+					textbox = {
+						raw_text = "#v [GetPlayer.MakeScope.Var('nuclear_yield').GetValue|0]kt#! Per Warhead | #v [GetPlayer.MakeScope.ScriptValue('nuclear_strike_values')|0d]#! Total"
+					}
 				}
 			}
 			wmd_subentry = {
@@ -379,6 +395,39 @@ types panel_military {
 			}
 			wmd_targetlist = {}
 		}
+		wmd_entry = {
+			visible = "[Not(GetScriptedGui('can_open_wmd_screen').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			blockoverride "header" {
+				raw_text = "Nuclear Weapons"
+			}
+			blockoverride "header2" {
+				raw_text = ""
+			}
+			wmd_subentry = {
+				blockoverride "title" {
+					raw_text = "[GetPlayer.GetName] Status"
+				}
+				blockoverride "info" {
+					raw_text = "Does not currently possess [concept_nuclear_weapons]"
+				}
+			}
+			wmd_subentry = {
+				blockoverride "title" {
+					raw_text = "Nuclear Capabilities"
+				}
+				blockoverride "entrycontainer" {
+					textbox = {
+						text = "HAS_ATOMIC_CAPABILITY"
+					}
+					textbox = {
+						text = "HAS_THERMONUCLEAR_CAPABILITY"
+					}
+					textbox = {
+						text = "HAS_ICBM_CAPABILITY"
+					}
+				}
+			}
+		}
 	}
 	type wmd_entry = flowcontainer {
 		visible = "[InformationPanel.IsTabSelected('wmd')]"
@@ -469,7 +518,11 @@ types panel_military {
 		}
 		textbox = {
 			visible = "[GetScriptedGui('targetlist_is_set').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
-			raw_text = "Effectiveness: #v [GetPlayer.MakeScope.ScriptValue('nuclear_strike_effectiveness_total')|d]#! per state"
+			raw_text = "Nuclear Strike Effectiveness: #v [GetPlayer.MakeScope.ScriptValue('nuclear_strike_effectiveness_total')|d]#! per state"
+		}
+		textbox = {
+			visible = "[GetScriptedGui('targetlist_is_set').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			raw_text = "Delivery Effectiveness: #v [GuiScope.SetRoot( GetPlayer.MakeScope ).AddScope('initiator', GetPlayer.MakeScope ).ScriptValue('wmd_target_list_states_delivery_effectiveness_total'))|d%]"
 		}
 		textbox = {
 			visible = "[GetScriptedGui('targetlist_is_set').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
@@ -1237,7 +1290,7 @@ types panel_military {
 					raw_text = "WMDs"
 				}
 				blockoverride "second_button_tooltip" {
-					tooltip = "MILITARY_PANEL_TAB_NAVY"
+					tooltip = "WMDs"
 				}
 				blockoverride "second_button_click" {
 					onclick = "[InformationPanel.SelectTab('wmd')]"
