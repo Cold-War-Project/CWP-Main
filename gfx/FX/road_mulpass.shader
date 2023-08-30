@@ -90,7 +90,7 @@ PixelShader =
 			float3 Normal;
 
 			float2 MapCoords = Input.WorldSpacePos.xz * _WorldSpaceToTerrain0To1;
-			float2 ProvinceCoords = Input.WorldSpacePos.xz / ProvinceMapSize;
+			float2 ProvinceCoords = Input.WorldSpacePos.xz / _ProvinceMapSize;
 
 			// Using ddx and ddy because there is a code path that supportes stacking texture on top
 			// Which results in discontinuties in texture lookup if we don't use ddx, ddy
@@ -100,7 +100,7 @@ PixelShader =
 			// Alpha
 			Diffuse.a *= MaskValue;
 			Diffuse.a *= JominiFlatSplineEdgeOpacity( Input.UV.x / UVScale, Input.MaxU / UVScale, EdgeOpacityThresholdInWorldSpace);
-			Diffuse.a *= 1.0f - FlatmapLerp;	// Flat map fade
+			Diffuse.a *= 1.0f - _FlatmapLerp;	// Flat map fade
 			clip( Diffuse.a - 0.0001f );
 
 

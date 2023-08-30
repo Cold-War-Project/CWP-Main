@@ -69,7 +69,7 @@ PixelShader =
 		float4 CalcDecal( float2 UV, float3 Bitangent, float3 WorldSpacePos, float4 Diffuse, float Alpha )
 		{
 			float2 MapCoords = WorldSpacePos.xz * _WorldSpaceToTerrain0To1;
-			float2 ProvinceCoords = WorldSpacePos.xz / ProvinceMapSize;
+			float2 ProvinceCoords = WorldSpacePos.xz / _ProvinceMapSize;
 
 			float4 Properties = PdxTex2D( PropertiesTexture, UV );
 			float4 NormalPacked = PdxTex2D( NormalTexture, UV );

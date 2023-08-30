@@ -15,7 +15,7 @@ VertexShader =
 		[[
 			PDX_MAIN
 			{
-				VS_OUTPUT_MAPNAME Out = MapNameVertexShader( Input, FlatmapHeight, FlatmapLerp );
+				VS_OUTPUT_MAPNAME Out = MapNameVertexShader( Input, _FlatmapHeight, _FlatmapLerp );
 				return Out;
 			}
 		]]
@@ -43,14 +43,15 @@ PixelShader =
 			PDX_MAIN
 			{
 				float Alpha = CalcAlphaDistanceField( FontAtlas, Input.TexCoord );
-				float3 Color = float3( 1.0f, 1.0f, 1.0f );
+				float3 Color = lerp( 1.0f, 1.0f, 1.0f );
+				
 				float3 FlatmapColor = Color; // Pre effects color
 
 				// Fog of war
 				Color = ApplyFogOfWar( Color, Input.WorldSpacePos );
 
 				// Flatmap color
-				Color = lerp( Color, FlatmapColor, FlatmapLerp);
+				Color = lerp( Color, FlatmapColor, _FlatmapLerp);
 
 				return float4( Color, Alpha );
 			}

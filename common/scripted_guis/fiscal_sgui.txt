@@ -45,25 +45,6 @@ buy_foreign_currency = {
 				mathAction = add
 				mathAction2 = currency_value_growth_by_exchange
 			}
-			if = {
-				limit = {
-					nor = {
-						has_law = law_type:law_gold_standard # Gold standard has fixed money supply unless altered
-						has_law = law_type:law_pegged_currency # Pegged Currency uses pegged money supply
-					}
-				}
-				# Reduces Money Supply
-				change_variable = {
-					name = money_supply
-					subtract = {
-						value = {
-							value = scope:currency_exchange_country.gold_reserves_limit
-							add = scope:currency_exchange_country.credit
-						}
-						multiply = 0.05
-					}
-				}
-			}
 			# Prevents further currency buying for 1 month
 			set_variable = {
 				name = currency_bought
@@ -170,7 +151,7 @@ submit_interest_rate = {
 		}
 		set_variable = {
 			name = changed_interest_rates
-			months = 6
+			months = 1
 		}
 		remove_modifier = interest_rates
 		if = {
@@ -198,11 +179,6 @@ set_contractionary_monetary_policy = {
 		remove_variable = stable_monetary_policy
 		remove_variable = expansionary_monetary_policy
 		set_variable = contractionary_monetary_policy
-		remove_modifier = expansionary_monetary_policy
-		add_modifier = {
-			name = expansionary_monetary_policy
-			multiplier = monetary_policy_mult
-		}
 	}
 }
 
@@ -211,8 +187,6 @@ set_stable_monetary_policy = {
 		remove_variable = contractionary_monetary_policy
 		remove_variable = expansionary_monetary_policy
 		set_variable = stable_monetary_policy
-		remove_modifier = contractionary_monetary_policy
-		remove_modifier = expansionary_monetary_policy
 	}
 }
 
@@ -221,11 +195,6 @@ set_expansionary_monetary_policy = {
 		remove_variable = stable_monetary_policy
 		remove_variable = contractionary_monetary_policy
 		set_variable = expansionary_monetary_policy
-		remove_modifier = contractionary_monetary_policy
-		add_modifier = {
-			name = contractionary_monetary_policy
-			multiplier = monetary_policy_mult
-		}
 	}
 }
 
@@ -376,6 +345,11 @@ can_set_contractionary = {
 			nor = {
 				has_variable = pegged_currency
 				has_variable = contractionary_monetary_policy
+				has_game_rule = cwp_ai_control
+				AND = {
+					has_game_rule = cwp_dynamic_control
+                    has_law = law_type:law_independent_monetary_policy
+				}
 			}
 		}
 	}
@@ -387,6 +361,11 @@ can_set_stable= {
 			nor = {
 				has_variable = pegged_currency
 				has_variable = stable_monetary_policy
+				has_game_rule = cwp_ai_control
+				AND = {
+					has_game_rule = cwp_dynamic_control
+                    has_law = law_type:law_independent_monetary_policy
+				}
 			}
 		}
 	}
@@ -398,6 +377,11 @@ can_set_expansionary = {
 			nor = {
 				has_variable = pegged_currency
 				has_variable = expansionary_monetary_policy
+				has_game_rule = cwp_ai_control
+				AND = {
+					has_game_rule = cwp_dynamic_control
+                    has_law = law_type:law_independent_monetary_policy
+				}
 			}
 		}
 	}
@@ -411,6 +395,14 @@ can_set_interest_rates = {
 				has_law = law_type:law_gold_standard
 				has_law = law_type:law_pegged_currency
 				has_variable = changed_interest_rates
+				has_game_rule = cwp_ai_control
+                AND = {
+                    has_game_rule = cwp_dynamic_control
+                    OR = {
+                        has_law = law_type:law_independent_monetary_policy
+                        has_law = law_type:law_government_interference
+                    }
+                }
 			}
 		}
 	}
