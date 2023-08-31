@@ -35,7 +35,7 @@ PixelShader =
 				PS_COLOR_SSAO Out;
 
 				float2 MapCoords = Input.WorldSpacePos.xz * _WorldSpaceToTerrain0To1;
-				float2 ProvinceCoords = Input.WorldSpacePos.xz / ProvinceMapSize;
+				float2 ProvinceCoords = Input.WorldSpacePos.xz / _ProvinceMapSize;
 
 				// Light and shadow
 				#ifdef LOW_QUALITY_SHADERS
@@ -59,7 +59,7 @@ PixelShader =
 				Color.rgb = ApplyHighlight( Color.rgb, ProvinceCoords );
 
 				// Flagmap fade-out
-				Color.a *= 1.0f - FlatmapLerp;
+				Color.a *= 1.0f - _FlatmapLerp;
 
 				// Output
 				Out.Color = Color;

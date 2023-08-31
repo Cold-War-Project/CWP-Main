@@ -80,7 +80,7 @@ PixelShader =
 
 				float2 UV = Input.UV01;
 
-				float Alpha = 1.0f - FlatmapLerp;
+				float Alpha = 1.0f - _FlatmapLerp;
 				PdxMeshApplyDitheredOpacity( Alpha, UV );
 				clip( Alpha - 0.001f );
 
