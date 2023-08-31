@@ -104,14 +104,40 @@ ai_strategy_default = {
 	# Using this value in other strategies will function additively
 	obligation_value = {
 		value = 0
+
+
 		# Compare ranks - higher rank than us has increased value, lower rank decreased value
-		add = {
-			value = scope:target_country.country_rank
-			multiply = 2
+		if = {
+			limit = {
+				scope:target_country.country_rank > country_rank
+			}
+			add = {
+				value = scope:target_country.country_rank
+				multiply = 5
+			}	
+			subtract = {
+				value = country_rank
+				multiply = 5
+			}				
 		}
-		subtract = {
-			value = country_rank
-			multiply = 2
+		else_if = {
+			limit = {
+				scope:target_country.country_rank < country_rank
+			}
+			add = {
+				value = scope:target_country.country_rank
+				multiply = 2
+			}	
+			subtract = {
+				value = country_rank
+				multiply = 2
+			}			
+		}
+		
+		# Bonus for obligations from Great Powers, and higher
+		if = {
+			limit = { scope:target_country.country_rank >= rank_value:great_power }
+			add = 5
 		}
 		# Domineering/Protective AI wants to use the obligation to cajole the country into a subordinate relationship
 		if = {
@@ -214,21 +240,23 @@ ai_strategy_default = {
 			subtract = 100
 		}
 		# TODO remove value if a country with same alignement is an opponent
-		# If AI doesn't care about them, they don't want an obligation
-		if = {
+		if = { # If AI doesn't care about them at all, they don't want an obligation
 			limit = {
-				OR = {
-					has_attitude = {
-						who = scope:target_country
-						attitude = cautious
-					}
-					has_attitude = {
-						who = scope:target_country
-						attitude = disinterested
-					}
-				}
+				has_attitude = {
+					who = scope:target_country
+					attitude = disinterested
+				}						
 			}
-			add = -100
+			multiply = 0.0
+		}				
+		else_if = { # Obligations are less valuable if it's from a country the AI is just cautious towards	
+			limit = {
+				has_attitude = {
+					who = scope:target_country
+					attitude = cautious
+				}						
+			}
+			multiply = 0.25
 		}
 		multiply = {
 			value = "scope:target_country.relations:root"
@@ -254,6 +282,251 @@ ai_strategy_default = {
 		min = 0
 		max = 30
 	}
+
+	# How much does the AI desire another country as their subject
+	# Using this value in other strategies will function additively
+	# root and scope:overlord is the AI doing the evaluation, scope:subject is prospective subject
+	subject_value = {
+		value = 0
+
+		add = {
+			if = {
+				limit = {
+					OR = {						
+						has_attitude = {
+							who = scope:subject
+							attitude = protective
+						}
+						has_attitude = {
+							who = scope:subject
+							attitude = domineering
+						}							
+					}
+				}
+				value = 100
+			}
+		}	
+
+		min = 0
+		max = 100
+	}
+
+	# How much does the AI desire becoming another country's subject
+	# Using this value in other strategies will function additively
+	# root and scope:subject is the AI doing the evaluation, scope:overlord is prospective overlord
+	become_subject_value = {
+		value = -100
+
+		if = {
+			limit = {
+				NOT = { has_strategic_adjacency = scope:overlord }
+			}
+			
+			add = -10
+		}			
+
+		if = {
+			limit = { 
+				has_strategy = ai_strategy_armed_isolationism 
+			}
+			
+			add = -25
+		}				
+		
+		if = {
+			limit = {
+				"scope:overlord.ai_army_comparison(root)" > 0
+			}
+			add = {
+				value = "scope:overlord.ai_army_comparison(root)"
+				max = 25
+			}				
+		}
+		else = {
+			add = -1000		
+		}	
+
+		if = {
+			limit = {
+				"scope:overlord.ai_ideological_opinion(root)" > 0
+			}
+			add = {
+				value = "scope:overlord.ai_ideological_opinion(root)"
+				multiply = 0.5
+				max = 10
+			}					
+		}
+		else_if = {
+			limit = {
+				"scope:overlord.ai_ideological_opinion(root)" < 0
+			}
+			add = {
+				value = "scope:overlord.ai_ideological_opinion(root)"
+				min = -30
+			}					
+		}	
+		
+		# Bonus if they have same alignment
+		if = {
+			limit = {
+				OR = {
+					AND = {
+						is_aligned_USA = yes
+						scope:target_country = {
+							is_aligned_USA = yes
+						}
+					}
+					AND = {
+						is_aligned_RUS = yes
+						scope:target_country = {
+							is_aligned_RUS = yes
+						}
+					}
+				}
+			}
+			add = 10
+		}
+
+		if = {
+			limit = {
+				has_diplomatic_pact = {
+					who = scope:overlord
+					type = customs_union
+				}					
+			}
+			add = 10
+		}					
+		
+		add = {
+			if = {
+				limit = {
+					OR = {
+						has_attitude = {
+							who = scope:overlord
+							attitude = genial
+						}
+						has_attitude = {
+							who = scope:overlord
+							attitude = conciliatory
+						}							
+						has_attitude = {
+							who = scope:overlord
+							attitude = loyal
+						}	
+						has_attitude = {
+							who = scope:overlord
+							attitude = cooperative
+						}							
+					}
+				}
+				value = 10
+			}			
+			if = {
+				limit = {
+					has_attitude = {
+						who = scope:overlord
+						attitude = cautious
+					}
+				}
+				value = -25
+			}					
+			if = {
+				limit = {
+					OR = {
+						has_attitude = {
+							who = scope:overlord
+							attitude = antagonistic
+						}
+						has_attitude = {
+							who = scope:overlord
+							attitude = domineering
+						}	
+						has_attitude = {
+							who = scope:overlord
+							attitude = belligerent
+						}	
+						has_attitude = {
+							who = scope:overlord
+							attitude = rebellious
+						}
+						has_attitude = {
+							who = scope:overlord
+							attitude = protective
+						}							
+					}
+				}
+				value = -100
+			}							
+		}			
+
+		add = {
+			if = {
+				limit = {
+					"relations(scope:overlord)" < relations_threshold:cordial
+				}
+				value = -25
+			}					
+			if = {
+				limit = {
+					"relations(scope:overlord)" >= relations_threshold:cordial
+					"relations(scope:overlord)" < relations_threshold:amicable
+				}
+				value = 5
+			}					
+			if = {
+				limit = {
+					"relations(scope:overlord)" >= relations_threshold:amicable
+					"relations(scope:overlord)" < relations_threshold:friendly
+				}
+				value = 10
+			}	
+			if = {
+				limit = {
+					"relations(scope:overlord)" >= relations_threshold:friendly
+				}
+				value = 25
+			}				
+		}
+		
+		add = {
+			if = {
+				limit = {
+					"scope:overlord.infamy" >= infamy_threshold:infamous
+					"scope:overlord.infamy" < infamy_threshold:notorious
+				}
+				value = -25
+			}	
+			if = {
+				limit = {
+					"scope:overlord.infamy" >= infamy_threshold:notorious
+					"scope:overlord.infamy" < infamy_threshold:pariah
+				}
+				value = -50
+			}
+			if = {
+				limit = {
+					"scope:overlord.infamy" >= infamy_threshold:pariah
+				}
+				value = -100
+			}					
+		}					
+
+		add = {
+			if = {
+				limit = { scope:overlord = { country_rank > root.country_rank } }
+				value = 10
+			}
+			
+			if = {
+				limit = { scope:overlord = { country_rank < root.country_rank } }
+				value = -10
+			}				
+		}	
+
+		max = 0
+		min = -100
+	}
+
 	# Recklessness multiplies the AI's estimation of its own strength, so at recklessness 2 it believes its forces to be twice as strong as they actually are
 	# The AI wants to have at least parity in what it believes its own forces to be and what the enemy forces are, so at recklessness 2 it's OK with only having 50% of the enemy strength
 	# Using this value in other strategies will function additively
@@ -574,7 +847,7 @@ ai_strategy_default = {
 						}
 					}
 					NOT = {
-						is_adjacent = scope:target_country
+						is_adjacent_to_country = scope:target_country
 					}
 				}
 				add = 150
@@ -1711,91 +1984,103 @@ ai_strategy_default = {
 				max = 40
 			}
 			if = {
-				limit = {
-					has_strategic_land_adjacency = scope:target_state
-					scope:target_state = {
-						is_split_state = yes
-						region = {
-							any_scope_state = {
-								owner = ROOT
+				# Used to determine how much the AI values currently states they already own for scoring transfer state/subject sways
+				limit = { 
+					scope:target_state = { 
+						OR = { 
+							owner = root 
+							owner = { is_subject_of = root }
+						}				
+					}
+				}
+				
+				if = {
+					limit = {
+						scope:target_state = { is_incorporated = no }
+					}
+					multiply = 0.5
+				}
+
+				if = {
+					limit = {
+						scope:target_state = { is_isolated_from_market = yes }
+					}
+					multiply = 0.5
+				}				
+			}
+			else = {
+				if = {
+					limit = {
+						has_strategic_land_adjacency = scope:target_state
+						scope:target_state = { 
+							is_split_state = yes 
+							region = { 
+								any_scope_state = { owner = ROOT }
 							}
 						}
 					}
+					add = 60
+					if = {
+						limit = {
+							scope:target_state = { 
+								is_homeland_of_country_cultures = ROOT
+							}
+						}
+						add = 30
+					}
+				}	
+			
+				if = {
+					limit = { 
+						NOT = { has_strategic_land_adjacency = scope:target_state } 
+						scope:target_state = { has_port = no }
+					}
+					multiply = 0.5
 				}
-				add = 60
+
 				if = {
 					limit = {
-						scope:target_state = {
-							is_homeland_of_country_cultures = ROOT
-						}
+						has_strategic_land_adjacency = scope:target_country
+						NOT = { has_strategic_land_adjacency = scope:target_state }
 					}
-					add = 30
+					multiply = 0.1
 				}
-			}
-			if = {
-				limit = {
-					NOT = {
+
+				if = {
+					limit = { 
 						has_strategic_land_adjacency = scope:target_state
+						NOT = { is_adjacent_to_state = scope:target_state }
 					}
-					scope:target_state = {
-						has_port = no
+					multiply = 0.5
+				}
+				else_if = {
+					limit = {
+						is_adjacent_to_country = scope:target_country
+						NOT = { is_adjacent_to_state = scope:target_state }
 					}
+					multiply = 0.5
 				}
-				multiply = 0.5
-			}
-			if = {
-				limit = {
-					has_strategic_land_adjacency = scope:target_country
-					NOT = {
-						has_strategic_land_adjacency = scope:target_state
+																			
+				if = {
+					limit = {
+						scope:target_state = { is_homeland_of_country_cultures = root }
 					}
+					multiply = 1.5
 				}
-				multiply = 0.1
-			}
-			if = {
-				limit = {
-					has_strategic_land_adjacency = scope:target_state
-					NOT = {
-						is_adjacent = scope:target_state
+				
+				if = {
+					limit = {
+						lenient_ai_behavior_trigger = yes			
+						scope:target_state = { is_homeland_of_country_cultures = scope:target_country }
 					}
-				}
-				multiply = 0.5
+					multiply = 0.0
+				}			
 			}
-			else_if = {
-				limit = {
-					is_adjacent = scope:target_country
-					NOT = {
-						is_adjacent = scope:target_state
-					}
-				}
-				multiply = 0.5
-			}
-			if = {
-				limit = {
-					scope:target_state = {
-						is_homeland_of_country_cultures = root
-					}
-				}
-				multiply = 1.5
-			}
-			if = {
-				limit = {
-					lenient_ai_behavior_trigger = yes
-					scope:target_state = {
-						is_homeland_of_country_cultures = scope:target_country
-					}
-				}
-				multiply = 0
-			}
-			if = {
-				limit = {
-					army_size = 0
-				}
-				subtract = 100
-			}
+		
 			min = 0
-			max = 200
+			max = 200			
 		}
+
 		take_treaty_port = {
 			value = 0
 			min = 0
