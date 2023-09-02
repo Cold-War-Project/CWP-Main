@@ -93,13 +93,13 @@ PixelShader =
 					Water.a = 1.0f;
 				#endif
 				clip( Water.a - 0.001f );
-				float2 ProvinceCoords = Input.WorldSpacePos.xz / ProvinceMapSize;
+				float2 ProvinceCoords = Input.WorldSpacePos.xz / _ProvinceMapSize;
 
 				// Simple shadows
 				#ifndef LOW_QUALITY_SHADERS
 					float4 ShadowProj = mul( ShadowMapTextureMatrix, float4( Input.WorldSpacePos, 1.0 ) );
 					float ShadowTerm = CalculateShadow( ShadowProj, ShadowMap );
-					Water.rgb = Water.rgb * saturate( ShadowTerm + ( CubemapIntensity * WaterShadowMultiplier ) );
+					Water.rgb = Water.rgb * saturate( ShadowTerm + _WaterShadowMultiplier );
 				#endif
 
 				// Fog
@@ -107,12 +107,12 @@ PixelShader =
 				Water.rgb = GameApplyDistanceFog( Water.rgb, Input.WorldSpacePos );
 
 				// Flatmap texture and style
-				if( FlatmapLerp > 0.0f )
+				if( _FlatmapLerp > 0.0f )
 				{
 					float3 Flatmap = PdxTex2D( FlatmapTexture, Input.UV01 ).rgb;
 					Flatmap = ApplyDynamicFlatmap( Flatmap, ProvinceCoords, Input.WorldSpacePos.xz );
 
-					Water.rgb = lerp( Water.rgb, Flatmap, FlatmapLerp );
+					Water.rgb = lerp( Water.rgb, Flatmap, _FlatmapLerp );
 				}
 
 				// Output
