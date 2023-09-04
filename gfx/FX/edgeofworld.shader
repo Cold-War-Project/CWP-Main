@@ -110,9 +110,9 @@ PixelShader =
 
 				// Edge fade
 				float FadeDist = FadeDistance;
-				float FadeTop = Input.WorldSpacePos.z - MapSize.y + 10.0f + FadeDist;
+				float FadeTop = Input.WorldSpacePos.z - MapSize.y + FadeDist;
 				FadeTop = smoothstep(0.0f, FadeDist, FadeTop);
-				float FadeBottom = FadeDist - Input.WorldSpacePos.z + 10.0f;
+				float FadeBottom = FadeDist - Input.WorldSpacePos.z;
 				FadeBottom = smoothstep( 0.0f, FadeDist, FadeBottom);
 				Alpha *= FadeTop + FadeBottom;
 
