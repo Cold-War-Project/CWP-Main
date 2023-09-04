@@ -38,7 +38,7 @@ types goods_state_panel_types
 		{
 			tab_buttons = {
 				
-				# OBS! these 3 tabs are copied to goods_panel.gui / goods_usage_panel.gui / goods_state_panel.gui
+				# OBS! these 4 tabs are copied to goods_panel.gui / goods_usage_panel.gui / goods_state_panel.gui / goods_local_prices_panel.gui
 				# consider merging these panels into the same panel
 
 				# market
@@ -52,29 +52,43 @@ types goods_state_panel_types
 					onclick = "[InformationPanelBar.OpenGoodsPanel(GoodsStatePanel.GetGoods.GetMarket, GoodsStatePanel.GetGoods.Self)]"
 				}
 				blockoverride "first_button_visibility_checked" {
+					visible = "[And(GoodsStatePanel.GetGoods.HasMarketContext,Not(GoodsStatePanel.GetGoods.IsLocal))]"
+				}					
+				
+				# selected state
+				blockoverride "second_button_selected" {
+					text = "[GoodsStatePanel.GetGoods.GetState.GetNameNoFormatting]"
+				}
+				blockoverride "second_button_selected_tooltip" {}
+				blockoverride "second_button_visibility" {
 					visible = yes
 				}
 
+				# states in market
+				blockoverride "third_button" {
+					text = "LOCAL_PRICES"
+				}
+				blockoverride "third_button_tooltip" {
+					tooltip = "LOCAL_PRICES"
+				} 					
+				blockoverride "third_button_visibility_checked" {
+					visible = yes
+				}			
+				blockoverride "third_button_click" {
+					onclick = "[InformationPanelBar.OpenGoodsLocalPricesPanel(GoodsStatePanel.GetGoods)]"
+				}					
+				
 				# usage / application
-				blockoverride "second_button" {
+				blockoverride "fourth_button" {
 					text = USAGE
 				}
-				blockoverride "second_button_tooltip" {
+				blockoverride "fourth_button_tooltip" {
 					tooltip = "USAGE"
 				}
-				blockoverride "second_button_click" {
+				blockoverride "fourth_button_click" {
 					onclick = "[InformationPanelBar.OpenGoodsUsagePanel(GoodsStatePanel.GetGoods)]"
 				}
-				blockoverride "second_button_visibility_checked" {
-					visible = yes
-				}
-				
-				# states (SELECTED)
-				blockoverride "third_button_selected" {
-					text = "[GoodsStatePanel.GetGoods.GetState.GetNameNoFormatting]"
-				}
-				blockoverride "third_button_selected_tooltip" {}
-				blockoverride "third_button_visibility" {
+				blockoverride "fourth_button_visibility_checked" {
 					visible = yes
 				}
 			}
@@ -95,6 +109,7 @@ types goods_state_panel_types
 					container = {
 						parentanchor = hcenter
 						minimumsize = { @panel_width -1 }
+						maximumsize = { @panel_width -1 }
 						
 						good_icon_and_prize = {
 							blockoverride "compare" {
@@ -104,6 +119,103 @@ types goods_state_panel_types
 							blockoverride "prize" {
 								text = "GOODS_STATE_PANEL_PRICE_RIGHT_NOW"
 								tooltip = "[Goods.GetStatePriceDesc]"
+							}
+						}
+					map_modes_minimized = {
+							parentanchor = right
+							position = { -5 0 }
+							
+							blockoverride "first_button_click" {
+								onclick = "[GoodsStatePanel.ShowGoodsPotentials]"
+							}
+							blockoverride "first_button_selected" {
+								visible = "[GoodsStatePanel.IsShowingGoodsPotentials]"
+							}
+							blockoverride "first_button_not_selected" {
+								visible = "[Not(GoodsStatePanel.IsShowingGoodsPotentials)]"
+							}
+							blockoverride "first_button_icon" {
+								texture = "gfx/interface/icons/map_mode_icons/potentials.dds"
+							}
+							blockoverride "first_button_text" {
+								text = "MAP_MODE_POTENTIALS"
+							}
+							blockoverride "second_button_click" {
+								onclick = "[GoodsStatePanel.ShowGoodsProduction]"
+							}
+							blockoverride "second_button_selected" {
+								visible = "[GoodsStatePanel.IsShowingGoodsProduction]"
+							}
+							blockoverride "second_button_not_selected" {
+								visible = "[Not(GoodsStatePanel.IsShowingGoodsProduction)]"
+							}
+							blockoverride "second_button_icon" {
+								texture = "gfx/interface/icons/map_mode_icons/production.dds"
+							}
+							blockoverride "second_button_text" {
+								text = "MAP_MODE_PRODUCTION"
+							}
+							blockoverride "third_button_click" {
+								onclick = "[GoodsStatePanel.ShowGoodsConsumption]"
+							}
+							blockoverride "third_button_selected" {
+								visible = "[GoodsStatePanel.IsShowingGoodsConsumption]"
+							}
+							blockoverride "third_button_not_selected" {
+								visible = "[Not(GoodsStatePanel.IsShowingGoodsConsumption)]"
+							}
+							blockoverride "third_button_icon" {
+								texture = "gfx/interface/icons/map_mode_icons/consumption.dds"
+							}
+							blockoverride "third_button_text" {
+								text = "MAP_MODE_CONSUMPTION"
+							}
+						}
+					}
+					
+					widget = { size = { 5 5 }}
+					
+					widget = {
+						size = { @panel_width 60 }
+						parentanchor = hcenter
+						
+						background = {
+							using = entry_bg_simple
+						}
+
+						hbox = {
+							layoutpolicy_horizontal = expanding
+							spacing = 10
+							margin = { 15 0 }
+							
+							textbox = {
+								visible = "[Not(Goods.IsLocal)]"
+								autoresize = yes
+								align = nobaseline
+								text = "BUDGET_TARIFFS"
+							}
+							
+							container = {
+								visible = "[Not(Goods.IsLocal)]"
+								name = "tutorial_highlight_market_goods_policy"
+								set_level_bar_market_tariffs = {}
+							}
+							
+							textbox = {
+								layoutpolicy_horizontal = expanding
+								align = right|nobaseline
+								text = "BUDGET_CONSUMPTION_TAXES"
+							}
+							
+							consumption_tax_button_toggle = {
+								visible = "[Not(ObjectsEqual(GetMetaPlayer.GetPlayedOrObservedCountry.GetCapital.GetMarket, Goods.GetMarket))]"
+								enabled = "[Not(IsValid( Goods.ToggleTaxation(GetMetaPlayer.GetPlayedOrObservedCountry)))]"
+								tooltip = "NOT_PLAYER_MARKET_CONSUMPTION_TAXES"
+							}
+							consumption_tax_button_toggle = {
+								visible = "[ObjectsEqual(GetMetaPlayer.GetPlayedOrObservedCountry.GetCapital.GetMarket, Goods.GetMarket)]"
+								enabled = "[IsValid( Goods.ToggleTaxation(GetMetaPlayer.GetPlayedOrObservedCountry) )]"
+								tooltip = "[Goods.GetTaxDesc(GetMetaPlayer.GetPlayedOrObservedCountry)]"
 							}
 						}
 					}
@@ -286,64 +398,6 @@ types goods_state_panel_types
 											parentanchor = bottom|hcenter
 										}
 									}
-								}
-							}
-						}
-					}
-
-					widget = { size = { 1 20 }}
-
-					### LOCAL PRICES
-				 	section_header_button = {
-				 		datacontext = "[GoodsStatePanel.GetGoods.GetState]"
-						size = { @panel_width_minus_10 38 }
-						
-						blockoverride "left_text" {
-							text = "LOCAL_PRICE_IN_STATE"
-						}
-						
-						blockoverride "onclick" {
-							onclick = "[GetVariableSystem.Toggle('local_prices_state')]"
-						}
-						
-						blockoverride "onclick_showmore" {
-							visible = "[Not(GetVariableSystem.Exists('local_prices_state'))]"
-						}
-
-						blockoverride "onclick_showless" {
-							visible = "[GetVariableSystem.Exists('local_prices_state')]"
-						}
-					}
-
-					flowcontainer = {
-						datamodel = "[GoodsStatePanel.AccessGoods.AccessMarket.AccessMarketStates]"
-						direction = vertical 
-						visible = "[GetVariableSystem.Exists('local_prices_state')]"
-						using = default_list_position
-
-						item = {
-							button = {
-								datacontext = "[GoodsStatePanel.GetGoods.WithStateContext( State.Self )]"
-								visible = "[State.GetMarket.IsSame(GoodsStatePanel.AccessGoods.AccessMarket.Self)]"
-								size = { @panel_width 40 }
-								using = clean_button
-								onclick = "[InformationPanelBar.OpenGoodsStatePanel(State.Self, Goods.Self)]"
-								tooltip = "[Goods.GetStatePriceDesc]"
-								
-								textbox = {
-									text = "[State.GetName]"
-									autoresize = yes
-									align = nobaseline
-									parentanchor = vcenter
-									margin_left = 10
-								}
-
-								textbox = {
-									raw_text = "#variable [GetPlayer.MakeScope.Var('cwp_currency').GetFlagName] [Goods.GetStatePrice|1]#! [Goods.GetCompareIconAgainstBasePrice( Goods.GetStatePrice )]"
-									autoresize = yes
-									align = nobaseline
-									parentanchor = vcenter|right
-									margin_right = 10
 								}
 							}
 						}
