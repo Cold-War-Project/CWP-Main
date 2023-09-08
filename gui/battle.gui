@@ -1,0 +1,1744 @@
+# COPY-PASTED FOR NOW
+@panel_width_minus_10 = 530			# used to be 450
+@panel_width = 540  				# used to be 460
+@panel_width_half = 270				# used to be 230
+@panel_width_plus_10 = 550  		# used to be 470
+@panel_width_plus_14 = 554			# used to be 474
+@panel_width_plus_14_half = 277		# used to be 237
+@panel_width_plus_20 = 560			# used to be 480
+@panel_width_plus_30 = 570			# used to be 490
+@panel_width_plus_70 = 610			# used to be 530
+
+@battle_side_width = 250			# specific for this screen
+
+types battle_panel_types
+{
+	type battle_panel = default_block_window_two_lines {
+		name = "battle_panel"
+		datacontext = "[BattlePanel.AccessBattle]"
+
+		blockoverride "window_header_name"
+		{
+			text = "[Battle.GetName]"
+		}
+		blockoverride "window_header_name_line_two"
+		{
+			text = "BATTLE_SUBTITLE"
+		}
+
+		blockoverride "goto_button" {
+			button_icon_goto = {
+				visible = "[And(Not(Battle.IsNavalBattle), Not(Battle.IsNavalInvasion))]"
+				datacontext = "[Battle.GetFront]"
+				size = { 30 30 }
+				onclick = "[InformationPanelBar.OpenFrontPanel(Front.AccessSelf)]"
+				tooltip = "GO_TO_BUTTON_FRONT"
+			}
+
+			button_icon_goto = {
+				visible = "[And(Not(Battle.IsNavalBattle), Battle.IsNavalInvasion)]"
+				datacontext = "[Battle.GetState]"
+				size = { 30 30 }
+				onclick = "[InformationPanelBar.OpenStatePanel(State.AccessSelf)]"
+				tooltip = "GO_TO_BUTTON_STATE"
+			}
+
+			button_icon_goto = {
+				visible = "[Battle.IsNavalBattle]"
+				datacontext = "[Battle.GetProvince.GetStateRegion]"
+				size = { 30 30 }
+				onclick = "[InformationPanelBar.OpenSeaRegionPanel(Battle.GetProvince)]"
+				tooltip = "GO_TO_BUTTON_SEA_REGION"
+			}
+		}
+		
+		blockoverride "fixed_top"
+		{
+			tab_buttons = {
+				# Overview
+				blockoverride "first_button" {
+					text = "OVERVIEW"
+				}
+				blockoverride "first_button_tooltip" {
+					tooltip = "OVERVIEW"
+				}
+				blockoverride "first_button_click" {
+					onclick = "[InformationPanel.SelectTab('default')]"
+				}
+				blockoverride "first_button_visibility" {
+					visible = "[InformationPanel.IsTabSelected('default')]"
+				}
+				blockoverride "first_button_visibility_checked" {
+					visible = "[Not( InformationPanel.IsTabSelected('default') )]"
+				}
+				blockoverride "first_button_selected" {
+					text = "OVERVIEW"
+				}
+
+				# Details
+				blockoverride "second_button" {
+					text = "DETAILS"
+				}
+				blockoverride "second_button_tooltip" {
+					tooltip = "DETAILS"
+				}
+				blockoverride "second_button_click" {
+					onclick = "[InformationPanel.SelectTab('details')]"
+				}
+				blockoverride "second_button_visibility" {
+					visible = "[InformationPanel.IsTabSelected('details')]"
+				}
+				blockoverride "second_button_visibility_checked" {
+					visible = "[Not( InformationPanel.IsTabSelected('details') )]"
+				}
+				blockoverride "second_button_selected" {
+					text = "DETAILS"
+				}
+			}
+		}
+
+		blockoverride "scrollarea_content"
+		{
+			container = {
+				parentanchor = hcenter
+
+				battle_panel_overview_content = {
+					visible = "[InformationPanel.IsTabSelected('default')]"
+					using = default_content_fade
+				}
+				
+				battle_panel_details_content = {
+					visible = "[InformationPanel.IsTabSelected('details')]"
+					using = default_content_fade
+				}
+			}
+		}
+	}
+
+	### Needs to be removed from both code and script as it is not used anymore. Must be removed in both places at once.
+	### BATTLE PARTICIPANTS PANEL
+	type battle_participants_panel = default_block_window_two_lines {
+		name = "battle_participants_panel"
+
+		blockoverride "window_header_name"
+		{
+			raw_text = "Remove me!"
+		}
+		blockoverride "window_header_name_line_two"
+		{
+			raw_text = "Now!"
+		}
+	}
+
+	### BATTLE OVERVIEW CONTENT
+	type battle_panel_overview_content = container {
+		
+		# ongoing battle terrain image
+		widget = {
+			visible = "[And(Not(Battle.IsNavalBattle),Not(Battle.HasEnded))]"
+			size = { @panel_width_plus_14 400 }
+			scissor = yes
+			parentanchor = hcenter
+			
+			icon = {
+				size = { @panel_width_plus_14 200 }
+				scale = 2
+				texture = "[Battle.GetProvince.GetBestTexture]"
+				alpha = 0.4
+				using = fade_top_illus
+				parentanchor = hcenter
+			}
+		}
+		icon = {
+			visible = "[And(Battle.IsNavalBattle,Not(Battle.HasEnded))]"
+			texture = "gfx/interface/illustrations/war/defeat_navy.dds" #TODO (art) make ocean terrain?
+			size = { 555 275 }
+		}
+		
+		### battle won/lost images
+		container = {
+			parentanchor = hcenter
+			visible = "[Battle.HasEnded]"
+			
+			# land
+			container = {
+				visible = "[Not( Battle.IsNavalBattle )]"
+				
+				icon = {
+					visible = "[Not(Battle.IsOnLoserSide(GetPlayer.Self))]"
+					texture = "gfx/interface/illustrations/war/victory.dds"
+					size = { 555 275 }
+				}
+				icon = {
+					visible = "[Battle.IsOnLoserSide(GetPlayer.Self)]"
+					texture = "gfx/interface/illustrations/war/defeat.dds"
+					size = { 555 275 }
+				}
+			}
+			
+			# navy
+			container = {
+				visible = "[Battle.IsNavalBattle]"
+				
+				icon = {
+					visible = "[Not(Battle.IsOnLoserSide(GetPlayer.Self))]"
+					texture = "gfx/interface/illustrations/war/victory_navy.dds"
+					size = { 555 275 }
+				}
+				icon = {
+					visible = "[Battle.IsOnLoserSide(GetPlayer.Self)]"
+					texture = "gfx/interface/illustrations/war/defeat_navy.dds"
+					size = { 555 275 }
+				}
+			}
+		}
+		
+		### CONTENT
+		flowcontainer = {
+			using = default_list_position
+			minimumsize = { @panel_width_plus_20 -1 }
+			direction = vertical
+			margin_top = 20
+			spacing = 5
+			# portraits / flags / icons / date
+
+			container = {
+				parentanchor = hcenter
+				minimumsize = { @panel_width_minus_10 385 }
+
+				# commander 1
+				character_portrait_front_vs_left = {
+					visible = "[And(Character.IsValid, Not(Battle.HasEnded))]"
+					datacontext = "[Battle.GetAttackerCommander]"
+					blockoverride "portrait_icons" {}
+				}
+				
+				# commander 2
+				character_portrait_front_vs_right = {
+					visible = "[And(Character.IsValid, Not(Battle.HasEnded))]"
+					parentanchor = right
+					datacontext = "[Battle.GetDefenderCommander]"
+					blockoverride "portrait_icons" {}
+				} 
+				
+				# commander 1 not valid
+				character_portrait_front_vs_left = {
+					visible = "[And(Not(Character.IsValid), Not(Battle.HasEnded))]"
+					datacontext = "[Battle.GetAttackerCommander]"
+					blockoverride "portrait_icons" {}
+					blockoverride "tooltip" {}
+				}
+				
+				# commander 2 not valid
+				character_portrait_front_vs_right = {
+					visible = "[And(Not(Character.IsValid), Not(Battle.HasEnded))]"
+					parentanchor = right
+					datacontext = "[Battle.GetDefenderCommander]"
+					blockoverride "portrait_icons" {}
+					blockoverride "tooltip" {}
+				} 				
+					
+				# flags
+				small_flag = {
+					datacontext = "[Battle.AccessAttackerBattleParticipant.GetCountry]"
+				}
+				small_flag = {
+					parentanchor = right
+					datacontext = "[Battle.AccessDefenderBattleParticipant.GetCountry]"
+				}
+				
+				# icons
+				flowcontainer = {
+					parentanchor = bottom
+					position = { 0 -45 }
+					visible = "[And(Battle.GetAttackerCondition.IsValid,Not(Battle.HasEnded))]"
+					datacontext = "[Battle.GetAttackerCondition]"
+					margin_right = 10
+					
+					# Use both tooltip and tooltipwidget here to append the "time until next Battle Condition" in the Fancy Tooltip
+					tooltip = "BATTLE_CONDITION_ATTACKER_TOOLTIP"
+					tooltipwidget = {
+						FancyTooltip_BattleCondition = {}
+					}
+
+					background = {
+						using = fade_right_simple
+						margin_bottom = 50
+						margin_top = 8
+						margin_left = 14
+						margin_right = 40
+					}
+				
+					icon = {
+						size = { 44 44 }
+						texture = "[BattleCondition.GetTexture]"
+					}
+
+					textbox = {
+						text = "[BattleCondition.GetNameNoFormatting]"
+						minimumsize = { 120 -1 }
+						autoresize = yes
+						parentanchor = vcenter
+						align = nobaseline
+						margin_left = 10
+						default_format = "#tooltippable_name"		
+					}
+				}
+				flowcontainer = {
+					visible = "[And(Battle.GetDefenderCondition.IsValid,Not(Battle.HasEnded))]"
+					parentanchor = bottom|right
+					position = { 0 -45 }
+					datacontext = "[Battle.GetDefenderCondition]"
+					margin_left = 10
+
+					# Use both tooltip and tooltipwidget here to append the "time until next Battle Condition" in the Fancy Tooltip
+					tooltip = "BATTLE_CONDITION_DEFENDER_TOOLTIP"
+					tooltipwidget = {
+						FancyTooltip_BattleCondition = {}
+					}
+
+					background = {
+						using = fade_left_simple
+						margin_bottom = 50
+						margin_top = 8
+						margin_left = 40
+						margin_right = 12
+					}
+					
+					textbox = {
+						text = "[BattleCondition.GetNameNoFormatting]"
+						minimumsize = { 120 -1 }
+						autoresize = yes
+						parentanchor = vcenter
+						align = right|nobaseline
+						margin_right = 10
+						default_format = "#tooltippable_name"		
+					}
+
+					icon = {
+						size = { 44 44 }
+						texture = "[BattleCondition.GetTexture]"
+					}
+				}
+				
+				# date + terrain
+				flowcontainer = {
+					direction = vertical
+					parentanchor = hcenter
+					spacing = 5
+					
+					textbox = {
+						autoresize = yes
+						text = "[Battle.GetDateDesc]"
+						parentanchor = hcenter
+					}
+					textbox = {
+						autoresize = yes
+						text = "BATTLE_TERRAIN"
+						parentanchor = hcenter
+					}
+				}
+				
+				# victory/defeat + captured provinces
+				flowcontainer = {
+					direction = vertical
+					parentanchor = bottom|hcenter
+					margin_bottom = 10
+					visible = "[Battle.HasEnded]"
+					
+					# if you are in the battle
+					flowcontainer = {
+						visible = "[Battle.IsLeadCountry(GetPlayer)]"
+						direction = vertical
+						parentanchor = hcenter
+						spacing = 10
+						
+						textbox = {
+							visible = "[Battle.IsWinner(GetPlayer)]"
+							autoresize = yes
+							text = "BATTLE_VICTORY"
+							parentanchor = hcenter
+							using = header_font_fancy
+							using = header_font_fancy_size
+							default_format = "#p"
+							fontsize_min = 14
+							elide = right
+							max_width = @panel_width_minus_10
+						}
+						textbox = {
+							visible = "[Battle.IsLoser(GetPlayer)]"
+							autoresize = yes
+							text = "BATTLE_DEFEAT"
+							parentanchor = hcenter
+							using = header_font_fancy
+							using = header_font_fancy_size
+							default_format = "#n"
+							fontsize_min = 14
+							elide = right
+							max_width = @panel_width_minus_10
+						}
+
+						textbox = {
+							margin = { 10 10 }
+							autoresize = yes
+						    multiline = yes
+						    maximumsize = { 390 -1 }
+						    minimumsize = { 390 -1 }
+							text = "[Battle.GetStatusString]"
+							align = hcenter|nobaseline
+							parentanchor = hcenter
+							using = fontsize_large
+
+							background = {
+								using = entry_bg_simple
+							}
+						}
+					}
+					
+					# if you are observer
+					flowcontainer = {
+						visible = "[Not( Battle.IsLeadCountry(GetPlayer) )]"
+						direction = vertical
+						parentanchor = hcenter
+						
+						textbox = {
+							visible = "[Battle.IsOnWinnerSide( GetPlayer.Self )]"
+							autoresize = yes
+							text = "BATTLE_ALLY_VICTORY"
+							parentanchor = hcenter
+							using = header_font_fancy
+							using = header_font_fancy_size
+							default_format = "#p"
+							fontsize_min = 14
+							elide = right
+							max_width = @panel_width_minus_10
+						}
+						textbox = {
+							visible = "[Battle.IsOnLoserSide( GetPlayer.Self )]"
+							autoresize = yes
+							text = "BATTLE_ALLY_DEFEAT"
+							parentanchor = hcenter
+							using = header_font_fancy
+							using = header_font_fancy_size
+							default_format = "#n"
+							fontsize_min = 14
+							elide = right
+							max_width = @panel_width_minus_10
+						}
+						textbox = {
+							visible = "[Not(Or( Battle.IsOnWinnerSide(GetPlayer.Self), Battle.IsOnLoserSide(GetPlayer.Self) ))]"
+							autoresize = yes
+							text = "BATTLE_NONALLY_VICTORY"
+							parentanchor = hcenter
+							using = header_font_fancy
+							using = header_font_fancy_size
+							default_format = "#p"
+							fontsize_min = 14
+							elide = right
+							max_width = @panel_width_minus_10
+						}
+
+						textbox = {
+							autoresize = yes
+							text = "[Battle.GetStatusString]"
+							parentanchor = hcenter
+							using = fontsize_large
+						}
+					}
+				}
+				### BATTLE PROGRESSBAR
+				battle_progressbar = {
+					position = { 0 -5 }
+					visible = "[Not(Battle.HasEnded)]"
+					parentanchor = bottom|hcenter
+					
+					blockoverride "values" {
+						value = "[Battle.CalcPushOfWar]"
+						min = -1
+						max = 1
+					}
+				}
+			}
+			
+			### THE 2 SIDES
+			container = {
+				minimumsize = { @panel_width_plus_14 -1 }
+				maximumsize = { @panel_width_plus_14 -1 }
+				parentanchor = hcenter
+				
+				divider_clean = {}
+				
+				# left
+				battle_side_content = {
+					parentanchor = left
+				}
+				
+				vertical_divider_stronger_full = {
+					parentanchor = hcenter
+				}
+				
+				# right
+				battle_side_content = {
+					parentanchor = right
+					
+					blockoverride "side_background" {
+						using = dark_area
+						alpha = 0.1
+					}
+					
+					blockoverride "offense_or_defense_hbox" {
+						righttoleft = yes
+					}
+					blockoverride "offense_or_defense_text" {
+						text = "BATTLE_DEFENSE_TITLE"
+					}
+					blockoverride "army_offense_or_defense_tooltip" {
+						tooltip = "BATTLE_DEFENSE_TOOLTIP"
+					}
+					blockoverride "offense_or_defense_value_text" {
+                        text = "[Battle.GetDefenseRaw|0]"
+                    }
+					blockoverride "offense_or_defense_icon" {
+						texture = "gfx/interface/icons/military_icons/defense_strip.dds"
+						frame = "[Battle.GetDefenderIconFrame]"
+					}
+					blockoverride "advancing_or_defending_text" {
+						text = "BATTLE_DEFENDING"
+					}
+					blockoverride "advancing_or_defending_text_end_of_battle" {
+						text = "BATTLE_END_RIGHT_SIDE"
+					}
+					blockoverride "you_or_enemy_text" {
+						text = "ENEMY"
+					}
+					blockoverride "commander_text" {
+						text = "[Battle.GetDefenderCommander.GetFullName]"
+					}
+					blockoverride "commander_visible" {
+						visible = "[Battle.HasDefenderCommander]"
+					}
+					blockoverride "no_commander_visible" {
+						visible = "[Not(Battle.HasDefenderCommander)]"
+					}
+					blockoverride "commander_icon" {
+						texture = "[Battle.GetDefenderCommander.GetCommanderRank.GetTexture]"
+					}
+
+					### Todo PRCAL-29304 - Fix the constness issues with this combination of functions
+					#blockoverride "military_formation_datacontext" {
+					#	datacontext = "[Battle.GetDefenderCommander.GetMilitaryFormation]"
+					#}
+
+					blockoverride "manpower" {
+						text = "[Battle.CalcCurrentDefenderManpower|*1]"
+					}
+					blockoverride "current_tooltip" {
+						tooltip = "[Battle.GetDefenderBattalionBreakdown]"
+					}					
+					blockoverride "battalions_or_warships" {
+						text = "[Battle.GetCurrentDefenderUnits]"
+					}
+					blockoverride "start_of_battle_tooltip" {
+						tooltip = "[Battle.GetNumDefendingUnitsAtStartOfBattleDesc]"
+					}
+					blockoverride "start_of_battle_manpower" {
+						text = "[Battle.GetStartingDefenderManpower|*1]"
+					}					
+					blockoverride "start_of_battle_battalions_or_warships" {
+						text = "[Battle.GetStartingDefenderUnits]"
+					}
+					blockoverride "starting_battalions_tooltip" {
+						tooltip = "[Battle.GetNumDefendingUnitsAtStartOfBattleDesc]"
+					}
+					blockoverride "start_of_battle_morale" {
+						value = "[FixedPointToFloat( Battle.GetInitialDefenderMorale )]"
+					}
+					blockoverride "start_of_battle_morale_color" {
+						color = "[GetMoraleColorVec( Battle.GetInitialDefenderMorale )]"
+					}
+					blockoverride "current_morale" {
+						value = "[FixedPointToFloat( Battle.CalcCurrentDefenderMorale )]"
+					}
+					blockoverride "current_morale_color" { 
+						color = "[GetMoraleColorVec( Battle.CalcCurrentDefenderMorale )]"
+					}
+					blockoverride "ending_morale" {
+						value = "[FixedPointToFloat( Battle.GetEndingDefenderMorale )]"
+					}
+					blockoverride "ending_morale_color" { 
+						color = "[GetMoraleColorVec( Battle.GetEndingDefenderMorale )]"
+					}
+					blockoverride "current_morale_tooltip" {
+						tooltip = "BATTLE_DEFENDER_CURRENT_MORALE_TOOLTIP"
+					}
+					blockoverride "initial_morale_tooltip" {
+						tooltip = "BATTLE_DEFENDER_INITIAL_MORALE_TOOLTIP"
+					}
+					blockoverride "ending_morale_tooltip" {
+						tooltip = "BATTLE_DEFENDER_ENDING_MORALE_TOOLTIP"
+					}
+					blockoverride "dead" {
+						text = "[Battle.GetDefenderTotalDead|D]"
+					}
+					blockoverride "wounded" {
+						text = "[Battle.GetDefenderTotalWounded|D]"
+					}
+					blockoverride "demoralized" {
+						text = "[Battle.GetDefenderTotalDemoralized|D]"
+					}
+					blockoverride "dead_tooltip" {
+						tooltip = "DEAD_TOOLTIP_DEFENDER"
+					}
+					blockoverride "wounded_tooltip" {
+						tooltip = "WOUNDED_TOOLTIP_DEFENDER"
+					}
+					blockoverride "demoralized_tooltip" {
+                        tooltip = "DEMORALIZED_TOOLTIP_DEFENDER"
+                    }
+					blockoverride "mirror_unit_image" {
+						mirror = horizontal
+					}
+					blockoverride "datamodel_combat_units_entries" {
+						datamodel = "[Battle.AccessCommandedDefenderBuildingEntries]"
+					}
+					blockoverride "datamodel_borrowed_combat_units_entries" {
+						datamodel = "[Battle.AccessBorrowedDefenderBuildingEntries]"
+					}
+					blockoverride "under_command_visible" {
+						visible = "[IsDataModelEmpty(Battle.AccessCommandedDefenderBuildingEntries)]"
+					}
+					blockoverride "borrowed_visible" {
+						visible = "[IsDataModelEmpty(Battle.AccessBorrowedDefenderBuildingEntries)]"
+					}
+					blockoverride "under_command_visible_not" {
+						visible = "[Not(IsDataModelEmpty(Battle.AccessCommandedDefenderBuildingEntries))]"
+					}
+					blockoverride "borrowed_visible_not" {
+						visible = "[Not(IsDataModelEmpty(Battle.AccessBorrowedDefenderBuildingEntries))]"
+					}
+					blockoverride "under_command_tooltip" {
+						tooltip = "BATTLE_MODIFIER_TOOLTIP_DEFENDER"
+					}
+				}
+			}
+		}
+	}
+	
+	### BATTLE SIDE CONTENT
+	type battle_side_content = flowcontainer {
+		minimumsize = { @panel_width_plus_14_half -1 }
+		maximumsize = { @panel_width_plus_14_half -1 }
+		direction = vertical
+		spacing = 5
+		margin_top = 5
+		
+		background = {
+			block "side_background" {
+				using = light_bg
+				alpha = 0.2
+			}
+		}
+		
+		# offense / defense
+		widget = {
+			size = { @battle_side_width 40 }
+			parentanchor = hcenter
+
+			hbox = {
+				spacing = 5
+				block "offense_or_defense_hbox" {}
+
+				block "army_offense_or_defense_tooltip" {
+					tooltip = "BATTLE_OFFENSE_TOOLTIP"
+				}
+
+				textbox = {
+					align = left|nobaseline
+					autoresize = yes
+					block "offense_or_defense_text" {
+						text = "BATTLE_OFFENSE_TITLE"
+					}
+				}
+				
+				textbox = {
+					align = nobaseline
+					autoresize = yes
+					block "offense_or_defense_value_text" {
+					    text = "[Battle.GetOffenseRaw|0]"
+					}
+					using = fontsize_large
+					default_format = "#variable"
+				}
+				
+				widget = {
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+				}
+
+				icon = {
+					size = { 100 20 }
+					framesize = { 400 80 }
+					block "offense_or_defense_icon" {
+						texture = "gfx/interface/icons/military_icons/offense_strip.dds"
+						frame = "[Battle.GetAttackerIconFrame]"
+						mirror = horizontal
+					}
+				}
+			}
+		}
+		
+		divider_clean = {
+			size = { @battle_side_width 2 }
+			parentanchor = hcenter
+		}
+		
+		# advancing/defending + commanders
+		flowcontainer = {
+			direction = vertical
+			minimumsize = { @battle_side_width -1 }
+			maximumsize = { @battle_side_width -1 }
+			parentanchor = hcenter
+			spacing = 5
+
+			flowcontainer = {
+				parentanchor = hcenter
+				spacing = 8
+				
+				textbox = {
+					visible = "[Not(Battle.HasEnded)]"
+					align = nobaseline
+					autoresize = yes
+					using = fontsize_large
+					block "advancing_or_defending_text" {
+						text = "BATTLE_ADVANCING"
+					}
+				}
+				textbox = {
+					visible = "[Battle.HasEnded]"
+					align = nobaseline
+					autoresize = yes
+					using = fontsize_large
+					block "advancing_or_defending_text_end_of_battle" {
+						text = "BATTLE_END_LEFT_SIDE"
+					}
+				}
+
+				textbox = {
+					visible = no #todo show you or enemy text
+					align = nobaseline
+					autoresize = yes
+					using = fontsize_large
+					block "you_or_enemy_text" {
+						text = "YOU"
+					}
+				}
+			}
+
+			### EMPTY STATE - NO COMMANDER
+			textbox = {
+				parentanchor = hcenter
+				using = empty_state_text_properties
+				align = nobaseline
+				autoresize = yes
+				minimumsize = { -1 30 }
+
+				block "no_commander_visible" {
+					visible = "[Not(Battle.HasAttackerCommander)]"
+				}
+
+				block "no_commander_text" {
+					text = "NO_COMMANDER"
+				}
+			}
+			
+			widget = {
+				block "commander_visible" {
+					visible = "[Battle.HasAttackerCommander]"
+				}
+				size = { @battle_side_width 30 }
+				
+				flowcontainer = {
+					parentanchor = hcenter
+					spacing = 8
+					
+					textbox = {
+						maximumsize = { 220 -1 }
+						elide = right
+						fontsize_min = 14
+						parentanchor = vcenter
+						autoresize = yes
+						align = nobaseline
+						block "commander_text" {
+							text = "[Battle.GetAttackerCommander.GetFullName]"
+						}
+					}
+					icon = {
+						parentanchor = vcenter
+						size = { 30 30 }
+						block "commander_icon" {
+							texture = "[Battle.GetAttackerCommander.GetCommanderRank.GetTexture]"
+						}
+					}
+				}
+			}
+
+			flowcontainer = {
+				spacing = 5
+				parentanchor = hcenter
+
+				### Todo PRCAL-29304 - Add this when you have fixxed the constness issues in the below datacontext
+				#block "commander_visible" {
+				#	visible = "[Battle.HasAttackerCommander]"
+				#}
+
+				visible = no
+
+				### Todo PRCAL-29304 - Fix the constness issues with this combination of functions
+				#block "military_formation_datacontext" {
+				#	datacontext = "[Battle.GetAttackerCommander.GetMilitaryFormation]"
+				#}
+
+				button_icon_round = {
+					parentanchor = vcenter
+
+					tooltipwidget = {
+						FancyTooltip_MilitaryFormation = {}
+					}
+
+					blockoverride "size" {
+						size = { 30 30 }
+					}
+					blockoverride "icon_size" {
+						size = { 75% 75% }
+					}
+
+					block "onclick" {
+						onclick = "[InformationPanelBar.OpenMilitaryFormationPanelTab( MilitaryFormation.AccessSelf, 'default' )]"
+						onrightclick = "[RightClickMenuManager.ShowForMilitaryFormation(MilitaryFormation.AccessSelf)]"
+					}
+
+					blockoverride "icon" {
+						### TODO - Add a GetTexture function for Military Formations
+						#texture = "[MilitaryFormation.GetTexture]"
+						texture = "gfx/interface/icons/military_icons/military_formation_identity_icons/army_01.dds"
+					}
+				}
+
+				textbox = {
+					parentanchor = vcenter
+					align = nobaseline
+					autoresize = yes
+					minimumsize = { -1 30 }
+					max_width = 200
+					elide = right
+					fontsize_min = 14
+					text = "[MilitaryFormation.GetName]"
+				}
+			}
+
+		}
+		
+		divider_clean = {
+			size = { @battle_side_width 2 }
+			parentanchor = hcenter
+		}
+		
+		# number of battalions or warships
+		widget = {
+			size = { @battle_side_width 65 }
+			parentanchor = hcenter
+
+			vbox = {
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+				
+				# current
+				hbox = {
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+					spacing = 5
+
+					block "current_tooltip" {
+						tooltip = "[Battle.GetAttackerBattalionBreakdown]"
+					}
+
+					textbox = {
+						layoutpolicy_horizontal = expanding
+						size = { 0 20 }
+						align = left|nobaseline
+						text = "CURRENT"
+					}			
+					
+					textbox = {
+						align = nobaseline
+						autoresize = yes
+						block "manpower" {
+							text = "[Battle.CalcCurrentAttackerManpower|*1]"
+						}
+						using = fontsize_large
+						default_format = "#variable"
+					}
+
+					icon = {
+						texture = "gfx/interface/icons/military_icons/manpower.dds"
+						size = { 20 20 }
+					}						
+					
+					textbox = {
+						align = nobaseline
+						autoresize = yes
+						block "battalions_or_warships" {
+							text = "[Battle.GetCurrentAttackerUnits]"
+						}
+						using = fontsize_large
+						default_format = "#variable"
+					}
+
+					icon = {
+						visible = "[Not( Battle.IsNavalBattle )]"
+						texture = "gfx/interface/icons/generic_icons/battalions.dds"
+						size = { 25 25 }
+					}
+
+					icon = {
+						visible = "[Battle.IsNavalBattle]"
+						texture = "gfx/interface/icons/generic_icons/flotillas.dds"
+						size = { 25 25 }
+					}
+					
+					white_progressbar_vertical = {
+						size = { 8 22 }
+						visible = "[Not(Battle.HasEnded)]" 
+						block "current_morale_tooltip" {
+							tooltip = "BATTLE_ATTACKER_CURRENT_MORALE_TOOLTIP"
+						}
+						
+						blockoverride "values" {
+							min = 0
+							max = 1
+							block "current_morale" {
+								value = "[FixedPointToFloat( Battle.CalcCurrentAttackerMorale )]"
+							}
+						}
+						blockoverride "color" {
+							block "current_morale_color" { 
+								color = "[GetMoraleColorVec( Battle.CalcCurrentAttackerMorale )]"
+							}
+						}
+					}
+
+					white_progressbar_vertical = {
+						size = { 8 22 }
+						visible = "[Battle.HasEnded]" 
+						block "ending_morale_tooltip" {
+							tooltip = "BATTLE_ATTACKER_ENDING_MORALE_TOOLTIP"
+						}
+						
+						blockoverride "values" {
+							min = 0
+							max = 1
+							block "ending_morale" {
+								value = "[FixedPointToFloat( Battle.GetEndingAttackerMorale )]"
+							}
+						}
+						blockoverride "color" {
+							block "ending_morale_color" { 
+								color = "[GetMoraleColorVec( Battle.GetEndingAttackerMorale )]"
+							}
+						}
+					}
+				}
+				
+				# start of battle
+				hbox = {
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+					spacing = 5
+
+					block "start_of_battle_tooltip" {
+						tooltip = "[Battle.GetNumAdvancingUnitsAtStartOfBattleDesc]"
+					}
+					using = tooltip_above
+
+					textbox = {
+						layoutpolicy_horizontal = expanding
+						size = { 0 20 }
+						align = left|nobaseline
+						text = "START_OF_BATTLE"
+					}
+					
+					icon = {
+						texture = "gfx/interface/icons/generic_icons/information.dds"
+						size = { 20 20 }
+						alpha = 1	
+					}		
+					
+					textbox = {
+						align = nobaseline
+						autoresize = yes
+
+						block "start_of_battle_manpower" {
+							text = "[Battle.GetStartingAttackerManpower|*1]"
+						}
+					}	
+
+					icon = {
+						texture = "gfx/interface/icons/military_icons/manpower.dds"
+						size = { 20 20 }
+					}					
+					
+					textbox = {
+						align = nobaseline
+						autoresize = yes
+
+						block "start_of_battle_battalions_or_warships" {
+							text = "[Battle.GetStartingAttackerUnits]"
+						}
+						
+						block "starting_battalions_tooltip" {
+							tooltip = "[Battle.GetNumAdvancingUnitsAtStartOfBattleDesc]"
+						}
+					}
+
+					icon = {
+						visible = "[Not( Battle.IsNavalBattle )]"
+						texture = "gfx/interface/icons/generic_icons/battalions.dds"
+						size = { 25 25 }
+					}
+
+					icon = {
+						visible = "[Battle.IsNavalBattle]"
+						texture = "gfx/interface/icons/generic_icons/flotillas.dds"
+						size = { 25 25 }
+					}
+					
+					white_progressbar_vertical = {
+						size = { 8 22 }
+
+						block "initial_morale_tooltip" {
+							tooltip = "BATTLE_ATTACKER_INITIAL_MORALE_TOOLTIP"
+						}
+						
+						blockoverride "values" {
+							min = 0
+							max = 1
+
+							block "start_of_battle_morale" {
+								value = "[FixedPointToFloat( Battle.GetInitialAttackerMorale )]"
+							}
+						}
+						blockoverride "color" {
+							block "start_of_battle_morale_color" { 
+								color = "[GetMoraleColorVec( Battle.GetInitialAttackerMorale )]"
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		divider_clean = {
+			size = { @battle_side_width 2 }
+			parentanchor = hcenter
+		}
+		
+		# dead
+		widget = {
+			size = { @battle_side_width 24 }
+			parentanchor = hcenter
+			block "dead_tooltip" {
+				tooltip = "DEAD_TOOLTIP_ATTACKER"
+			}
+
+			hbox = {
+				spacing = 5
+
+				textbox = {
+					layoutpolicy_horizontal = expanding
+					size = { 0 20 }
+					align = left|nobaseline
+					text = "[concept_dead]"
+				}
+				textbox = {
+					align = nobaseline
+					autoresize = yes
+					block "dead" {
+						text = "[Battle.GetAttackerTotalDead|D]"
+					}
+				}
+				icon = {
+					texture = "gfx/interface/icons/military_icons/manpower.dds"
+					size = { 20 20 }
+				}
+			}
+		}
+		# wounded
+		widget = {
+			size = { @battle_side_width 24 }
+			parentanchor = hcenter
+			block "wounded_tooltip" {
+				tooltip = "WOUNDED_TOOLTIP_ATTACKER"
+			}
+
+			hbox = {
+				spacing = 5
+
+				textbox = {
+					layoutpolicy_horizontal = expanding
+					size = { 0 20 }
+					align = left|nobaseline
+					text = "[concept_wounded]"
+				}
+				textbox = {
+					align = nobaseline
+					autoresize = yes
+					block "wounded" {
+						text = "[Battle.GetAttackerTotalWounded|D]"
+					}
+				}
+				icon = {
+					texture = "gfx/interface/icons/military_icons/manpower.dds"
+					size = { 20 20 }
+				}
+			}
+		}
+
+		# demoralized
+        widget = {
+            size = { @battle_side_width 24 }
+            parentanchor = hcenter
+            block "demoralized_tooltip" {
+                tooltip = "DEMORALIZED_TOOLTIP_ATTACKER"
+            }
+
+            hbox = {
+                spacing = 5
+
+                textbox = {
+                    layoutpolicy_horizontal = expanding
+                    size = { 0 20 }
+                    align = left|nobaseline
+                    text = "[concept_morale_demoralized]"
+                }
+                textbox = {
+                    align = nobaseline
+                    autoresize = yes
+                    block "demoralized" {
+                        text = "[Battle.GetAttackerTotalDemoralized|D]"
+                    }
+                }
+                icon = {
+                    texture = "gfx/interface/icons/military_icons/manpower.dds"
+                    size = { 20 20 }
+                }
+            }
+        }
+		
+		widget = { size = { 5 5 }}
+		
+		# armies / navies
+		flowcontainer = {
+			direction = vertical
+			spacing = 5
+			visible = "[Not(Battle.HasEnded)]"  # the datamodels are no longer valid after battle is over
+			# under command
+			default_header = {
+				blockoverride "text" {
+					text = "UNDER_COMMAND"
+				}
+				blockoverride "size" {
+					size = { @panel_width_plus_14_half 38 }
+				}
+
+				block "under_command_tooltip" {
+					tooltip = "BATTLE_MODIFIER_TOOLTIP_ATTACKER"
+				}
+			}
+			
+			combat_unit_group = {
+				block "under_command_visible_not" {
+					visible = "[Not(IsDataModelEmpty(Battle.AccessCommandedAttackerBuildingEntries))]"
+				}
+			    block "datamodel_combat_units_entries" {
+					datamodel = "[Battle.AccessCommandedAttackerBuildingEntries]"
+                }
+			}
+			
+			# under command empty state
+			widget = {
+				block "under_command_visible" {
+					visible = "[IsDataModelEmpty(Battle.AccessCommandedAttackerBuildingEntries)]"
+				}
+				size = { 260 196 }
+				parentanchor = hcenter
+				
+				textbox = {
+					parentanchor = center
+					align = center|nobaseline
+					size = { 100% 100% }
+					multiline = yes
+					margin = { 10 0 }
+					using = empty_state_text_properties
+					text = "BATTLE_NO_UNITS_UNDER_COMMAND"
+				}
+			}
+			
+			# borrowed
+			default_header = {
+				blockoverride "text" {
+					text = "BORROWED"
+				}
+				blockoverride "size" {
+					size = { @panel_width_plus_14_half 38 }
+				}
+
+				tooltip = "BATTLE_BORROWED_TOOLTIP"
+			}
+			
+			combat_unit_group = {
+				block "borrowed_visible_not" {
+					visible = "[Not(IsDataModelEmpty(Battle.AccessBorrowedAttackerBuildingEntries))]"
+				}
+				block "datamodel_borrowed_combat_units_entries" {
+                    datamodel = "[Battle.AccessBorrowedAttackerBuildingEntries]"
+                }
+			}
+			
+			# borrowed empty state
+			widget = {
+				block "borrowed_visible" {
+					visible = "[IsDataModelEmpty(Battle.AccessBorrowedAttackerBuildingEntries)]"
+				}
+				size = { 260 196 }
+				parentanchor = hcenter
+				
+				textbox = {
+					parentanchor = center
+					align = center|nobaseline
+					size = { 100% 100% }
+					multiline = yes
+					margin = { 10 0 }
+					using = empty_state_text_properties
+					text = "BATTLE_NO_BORROWED_UNITS"
+				}
+			}
+		}
+	}
+	
+	### COMBAT UNIT GROUPS
+	type combat_unit_group = flowcontainer {
+		direction = vertical
+		spacing = 5
+		margin_bottom = 10
+		
+		item = {
+			flowcontainer = {
+				direction = vertical
+				minimumsize = { @panel_width_plus_14_half -1 }
+				maximumsize = { @panel_width_plus_14_half -1 }
+
+				datacontext = "[BattleBuildingEntry]"
+				datacontext = "[BattleBuildingEntry.GetBuilding]"
+				
+				# image
+				widget = {
+					size = { 260 201 }
+					parentanchor = hcenter
+					
+					icon = {
+						parentanchor = center
+						# TODO PRCAL-29465 - Set up properly scripted combat unit illustrations
+						texture = "gfx/unit_illustrations/unit_battalion_line_infantry_european.dds"
+						size = { 255 196 }
+						block "mirror_unit_image" {}
+					}
+					
+					widget = {
+						size = { 100% 100% }
+						visible = "[EqualTo_CFixedPoint(BattleBuildingEntry.GetAverageMorale, '(CFixedPoint)0')]"
+						
+						background = {
+							using = dark_area
+							alpha = 0.6
+						}
+						
+						icon = {
+							parentanchor = center
+							texture = "gfx/interface/icons/military_icons/skull.dds"
+							size = { 80 80 }
+						}
+					}
+					
+					textbox = {
+						maximumsize = { 260 60 }
+						minimumsize = { 260 -1 }
+						margin = { 5 3 }
+						autoresize = yes
+						multiline = yes
+						text = "MILITARY_PANEL_BUILDING_TROOP_NAME"
+						align = center|nobaseline
+						elide = right
+						parentanchor = bottom|hcenter
+						
+						background = {
+							using = dark_area
+							alpha = 0.6
+							
+							modify_texture = {
+								texture = "gfx/interface/masks/fade_horizontal_center.dds"
+								spriteType = Corneredstretched
+								spriteborder = { 0 0 }
+								blend_mode = alphamultiply
+								alpha = 0.3
+							}
+						}
+					}
+					
+					icon = {
+						using = simple_frame
+						size = { 100% 100% }
+					}
+				}
+				
+				# expand button for list of battalions or flotillas #TODO currently this expands ALL combat units in every group,it should only expand the one you click?, not sure how to do that..
+				section_header_button = {
+					size = { @panel_width_plus_14_half 38 }
+					
+					blockoverride "left_textbox" {}
+					blockoverride "right_text" {
+						margin_right = 10
+						margin_left = 40
+						spacing = 5
+						
+						textbox = {
+							layoutpolicy_horizontal = expanding
+							size = { 0 20 }
+							align = right|nobaseline
+							#text = "[CombatUnit.GetOffenseRaw]"
+							using = fontsize_large
+							default_format = "#variable"
+							fontsize_min = 14
+						}
+
+						#icon = {
+						#	size = { 25 25 }
+						#	block "combat_group_offense_or_defense_icon" {
+						#		texture = "gfx/interface/icons/military_icons/offence.dds" #TODO get offense or defense icon
+						#	}
+						#}
+						
+						textbox = {
+							layoutpolicy_horizontal = expanding
+							size = { 0 20 }
+							align = right|nobaseline
+							block "combat_group_battalions_or_warships" {
+								raw_text = "#v [GetDataModelSize(BattleBuildingEntry.GetUnits)]#!"
+							}
+							using = fontsize_large
+							default_format = "#variable"
+							fontsize_min = 14
+						}
+
+						icon = {
+							visible = "[Not( Battle.IsNavalBattle )]"
+							texture = "gfx/interface/icons/generic_icons/battalions.dds"
+							size = { 25 25 }
+						}
+
+						icon = {
+							visible = "[Battle.IsNavalBattle]"
+							texture = "gfx/interface/icons/generic_icons/flotillas.dds"
+							size = { 25 25 }
+						}
+						
+						white_progressbar_vertical = {
+							size = { 8 22 }
+							tooltip = "BATTLE_BATTALION_GROUP_AVERAGE_MORALE"
+							
+							blockoverride "values" {
+								min = 0
+								max = 1
+								block "combat_group_morale" {
+									value = "[FixedPointToFloat( BattleBuildingEntry.GetAverageMorale )]"
+								}
+							}
+							blockoverride "color" {
+								block "combat_group_morale_color" { 
+									color = "[GetMoraleColorVec( BattleBuildingEntry.GetAverageMorale )]"
+								}
+							}
+						}
+					}
+
+					blockoverride "onclick" {
+						onclick = "[BattleBuildingEntry.ToggleExpand]"
+					}
+					
+					blockoverride "onclick_showmore" {
+						visible = "[Not(BattleBuildingEntry.IsExpanded)]"
+					}
+
+					blockoverride "onclick_showless" {
+						visible = "[BattleBuildingEntry.IsExpanded]"
+					}
+				}
+
+				flowcontainer = {
+					minimumsize = { @panel_width_half -1 }
+					maximumsize = { @panel_width_half -1 }
+					direction = vertical
+					parentanchor = hcenter 
+					margin = { 0 5 }
+					visible = "[BattleBuildingEntry.IsExpanded]"
+					datamodel = "[BattleBuildingEntry.GetUnits]"
+					spacing = 4
+					
+					item = {
+						combat_unit_item = {
+							size = { @panel_width_half 110 }
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	### BATTLE DETAILS CONTENT
+	type battle_panel_details_content = flowcontainer {
+		direction = vertical
+		spacing = 20
+		margin_top = 20
+		
+		# GRAPH ONGOING BATTLE
+		v3_plotline = {
+			visible = "[Not(Battle.HasEnded)]"
+			parentanchor = hcenter
+			
+			blockoverride "datamodel" {
+				datamodel = "[Battle.AccessManpowerTrendPairs]"
+			}
+			blockoverride "line_color" {
+				color = "[CountryTrendPair.GetCountry.GetMapColor]"
+			}
+			blockoverride "line_plotpoints" {
+				visible = "[Not(IsEmpty(CountryTrendPair.GetTrend))]"
+				plotpoints = "[GetTrendPlotPointsNormalized( CountryTrendPair.GetTrend, '(CFixedPoint)0', Battle.GetMaxNumberInManpowerTrends )]"
+			}
+			blockoverride "header" {
+				text = "MANPOWER_FIGHTING_HISTORY"
+			}
+			blockoverride "maxvalue" {
+				text = "[Battle.GetMaxNumberInManpowerTrends|D]"
+			}
+			blockoverride "minvalue" {
+				raw_text = "0"
+			}
+			blockoverride "startdate" {
+				text = "[GetOldestDate( Battle.GetAttackerStillFightingTrend )]"
+			}
+			blockoverride "enddate" {
+				text = "[GetLatestDate( Battle.GetAttackerStillFightingTrend )]"
+			}
+			blockoverride "singleitem" {}
+
+			blockoverride "size" {
+				size = { 430 100 }
+			}
+			blockoverride "empty_state_visibility" {
+				visible = "[Battle.IsManpowerTrendsEmpty]"
+			}
+			blockoverride "empty_state_text" {
+				text = "GRAPH_NOT_INITIALIZED"
+			}
+		}
+		
+		### GRAPH END OF BATTLE
+		v3_plotline = {
+			visible = "[Battle.HasEnded]"
+			parentanchor = hcenter
+			blockoverride "size" {
+				size = { 430 100 }
+			}
+			
+			blockoverride "datamodel" {
+				datamodel = "[Battle.AccessManpowerTrendPairs]"
+			}
+			blockoverride "line_color" {
+				color = "[CountryTrendPair.GetCountry.GetMapColor]"
+			}
+			blockoverride "line_plotpoints" {
+				visible = "[Not(IsEmpty(CountryTrendPair.GetTrend))]"
+				plotpoints = "[GetTrendPlotPointsNormalized( CountryTrendPair.GetTrend, '(CFixedPoint)0', Battle.GetMaxNumberInManpowerTrends )]"
+			}
+			blockoverride "header" {
+				text = "MANPOWER_FIGHTING_HISTORY"
+			}
+			blockoverride "maxvalue" {
+				text = "[Battle.GetMaxNumberInManpowerTrends|D]"
+			}
+			blockoverride "minvalue" {
+				raw_text = "0"
+			}
+			blockoverride "startdate" {
+				text = "[GetOldestDate( Battle.GetAttackerStillFightingTrend )]"
+			}
+			blockoverride "enddate" {
+				text = "[GetLatestDate( Battle.GetAttackerStillFightingTrend )]"
+			}
+			blockoverride "singleitem" {}
+
+			blockoverride "empty_state_visibility" {
+				visible = "[Battle.IsManpowerTrendsEmpty]"
+			}
+			blockoverride "empty_state_text" {
+				text = "GRAPH_NOT_INITIALIZED"
+			}
+		}
+		
+		### MODIFIERS
+		flowcontainer = { 
+			parentanchor = hcenter
+			margin_bottom = 20
+			
+			### ATTACKER MODIFIERS #TODO make this left side modifiers ?
+			flowcontainer = {
+				direction = vertical
+				margin_bottom = 10
+				spacing = 5
+
+				### HEADER
+				default_header = {
+					blockoverride "text" {
+						text = "MODIFIERS_ATTACKER_HEADER"
+					}
+					blockoverride "size" {
+						size = { @panel_width_plus_14_half 38 }
+					}
+				}
+				
+				flowcontainer = {
+					direction = vertical
+					datamodel = "[Battle.AccessAttackerModifier.GetEntries]"
+					parentanchor = hcenter
+					spacing = 10
+					
+					item = {
+						flowcontainer = {
+							tooltip = "MODIFIER_ENTRY_TOOLTIP"
+							direction = vertical
+							
+							textbox = {
+								text = "[ModifierEntry.GetName]"
+								autoresize = yes
+								minimumsize = { @battle_side_width -1 }
+								maximumsize = { @battle_side_width -1 }
+								multiline = yes
+								align = left|nobaseline
+								parentanchor = hcenter
+							}
+							textbox = {
+								text = "[ModifierEntry.GetFormattedValue]"
+								autoresize = yes
+								minimumsize = { @battle_side_width -1 }
+								maximumsize = { @battle_side_width -1 }
+								multiline = yes
+								align = right|nobaseline
+								parentanchor = hcenter
+								using = fontsize_large
+							}
+							
+							widget = { size = { 5 5 }}
+							divider_clean = {}
+						}
+					}
+				}
+
+				### ATTACKER MODIFIERS EMPTY STATE
+				textbox = {
+					parentanchor = center
+					align = center|nobaseline
+					autoresize = yes
+					using = empty_state_text_properties
+					visible = "[IsDataModelEmpty(Battle.AccessAttackerModifier.GetEntries)]"
+					text = "BATTLE_NO_ATTACKER_MODIFIERS"
+				}
+			}
+			
+			vertical_divider_stronger_full = {
+				parentanchor = hcenter
+			}
+			
+			### DEFENDER MODIFIERS #TODO make this right side modifiers ?
+			flowcontainer = {
+				parentanchor = right
+				direction = vertical
+				margin_bottom = 10
+				spacing = 5
+				
+				default_header = {
+					blockoverride = "text" {
+						text = "MODIFIERS_DEFENDER_HEADER"
+					}
+					blockoverride = "size" {
+						size = { @panel_width_plus_14_half 38 }
+					}
+				}
+				
+				flowcontainer = {
+					datamodel = "[Battle.AccessDefenderModifier.GetEntries]"
+					parentanchor = hcenter
+					direction = vertical
+					spacing = 10
+					
+					item = {
+						flowcontainer = {
+							tooltip = "MODIFIER_ENTRY_TOOLTIP"
+							direction = vertical
+							
+							textbox = {
+								text = "[ModifierEntry.GetName]"
+								autoresize = yes
+								minimumsize = { @battle_side_width -1 }
+								maximumsize = { @battle_side_width -1 }
+								multiline = yes
+								align = left|nobaseline
+								parentanchor = hcenter
+							}
+							textbox = {
+								text = "[ModifierEntry.GetFormattedValue]"
+								autoresize = yes
+								minimumsize = { @battle_side_width -1 }
+								maximumsize = { @battle_side_width -1 }
+								multiline = yes
+								align = right|nobaseline
+								parentanchor = hcenter
+								using = fontsize_large
+							}
+							
+							widget = { size = { 5 5 }}
+							divider_clean = {}
+						}
+					}
+				}
+
+				### DEFENDER MODIFIERS EMPTY STATE
+				textbox = {
+					parentanchor = center
+					align = center|nobaseline
+					autoresize = yes
+					using = empty_state_text_properties
+					visible = "[IsDataModelEmpty(Battle.AccessDefenderModifier.GetEntries)]"
+					text = "BATTLE_NO_DEFENDER_MODIFIERS"
+				}
+			}
+		}
+		
+		### CASUALTIES
+		flowcontainer = {
+			parentanchor = hcenter
+			margin_bottom = 20
+			
+			### ATTACKER CASUALTIES #TODO make this left side CASUALTIES ?
+			flowcontainer = {
+				direction = vertical
+				margin_bottom = 10
+				spacing = 5
+
+				### HEADER
+				default_header = {
+					blockoverride "text" {
+						text = "CASUALTIES_ATTACKER_HEADER"
+					}
+					blockoverride "size" {
+						size = { @panel_width_plus_14_half 38 }
+					}
+				}
+				
+				flowcontainer = {
+					direction = vertical
+					datamodel = "[Battle.GetAttackerStatistics]"
+					parentanchor = hcenter
+					spacing = 10
+					
+					item = {
+						casualty_item = {}
+					}
+				}
+			}
+			
+			vertical_divider_stronger_full = {
+				parentanchor = hcenter
+			}
+			
+			### DEFENDER CASUALTIES #TODO make this right side CASUALTIES ?
+			flowcontainer = {
+				parentanchor = right
+				direction = vertical
+				margin_bottom = 10
+				spacing = 5
+				
+				default_header = {
+					blockoverride = "text" {
+						text = "CASUALTIES_DEFENDER_HEADER"
+					}
+					blockoverride = "size" {
+						size = { @panel_width_plus_14_half 38 }
+					}
+				}
+				
+				flowcontainer = {
+					direction = vertical
+					datamodel = "[Battle.GetDefenderStatistics]"
+					parentanchor = hcenter
+					spacing = 10
+					
+					item = {
+						casualty_item = {}
+					}
+				}
+			}
+		}
+	}
+
+	### CASUALTY ITEM
+	type casualty_item = flowcontainer {
+		minimumsize = { @battle_side_width -1 }
+		maximumsize = { @battle_side_width -1 }
+		direction = vertical
+		visible = "[Or( GreaterThan_int64( CultureCasualtyStatistics.GetWounded, '(int64)0' ), GreaterThan_int64( CultureCasualtyStatistics.GetDead, '(int64)0') )]"
+		tooltip = "CASUALTY_ENTRY_TOOLTIP"
+
+		textbox = {
+			text = "CASUALTY_ENTRY_HEADER"
+			autoresize = yes
+			minimumsize = { @battle_side_width -1 }
+			maximumsize = { @battle_side_width -1 }
+			multiline = yes
+			align = left|nobaseline
+			parentanchor = hcenter
+		}
+
+		textbox = {
+			text = "CASUALTY_ENTRY_DEAD"
+			autoresize = yes
+			minimumsize = { @battle_side_width -1 }
+			maximumsize = { @battle_side_width -1 }
+			multiline = yes
+			align = left|nobaseline
+			parentanchor = hcenter
+		}
+
+		textbox = {
+			text = "CASUALTY_ENTRY_WOUNDED"
+			autoresize = yes
+			minimumsize = { @battle_side_width -1 }
+			maximumsize = { @battle_side_width -1 }
+			multiline = yes
+			align = left|nobaseline
+			parentanchor = hcenter
+		}
+		
+		widget = { size = { 5 5 }}
+		divider_clean = {}
+	}	
+}
