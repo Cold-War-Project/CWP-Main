@@ -1,0 +1,147 @@
+widget = {
+	name = "error_deer"
+	parentanchor = bottom|hcenter
+	position = { 390 -50 }
+	visible = "[InDebugMode]"
+	layer = layer_error_deer
+	using = clickthrough_blocker
+
+	onmousehierarchyenter = "[SetCanOpenRightClickContextMenu( '(bool)no' )]"
+	onmousehierarchyleave = "[SetCanOpenRightClickContextMenu( '(bool)yes' )]"
+		
+	background = {
+		using = dark_area
+		alpha = 0.4
+		margin = { 8 6 }
+	}
+
+	flowcontainer = {
+		direction = vertical
+		resizeparent = yes
+		spacing = 10
+
+		# Shortcut to toggle GUI debug
+		button = { 
+			onclick = "[ExecuteConsoleCommand('gui.debug')]"
+			using = default_button
+			input_action = "toggle_gui_debug"
+			size = { 0 0 }
+			visible = "[InDebugMode]"
+		}
+
+		# Error count
+		button = {
+			name = "error_counter"
+
+			using = default_button
+
+			visible = "[And(ErrorDeer.HasErrors, IsInGame)]"
+			size = { 250 115 }
+
+			onclick = "[ErrorDeer.OpenErrorLog]"
+			onrightclick = "[ExecuteConsoleCommand('Log.ResetErrorCount')]"
+			tooltip = "ERROR_DEER_TOOLTIP"
+			
+			icon = {
+				using = highlighted_square_selection
+			}
+			
+			button = {
+				texture = "gfx/interface/error_apple.dds"
+				size = { 100 120 }
+				scale = 0.8
+				position = { -10 0 }
+				alwaystransparent = yes
+				parentanchor = vcenter
+				
+				state = {
+					trigger_on_create = yes
+					name = 1
+					next = 2
+					
+					duration = 1
+					using = Animation_Curve_Default
+					position = { 0 0 }
+				}
+				state = {
+					name = 2
+					next = 1
+					
+					duration = 1
+					using = Animation_Curve_Default
+					position = { -10 0 }
+				}
+			}
+			
+			textbox = {
+				position = { 70 0 }
+				name = "error_text"
+				autoresize = yes
+				parentanchor = vcenter
+				align = left|nobaseline
+				multiline = yes
+				maximumsize = { 170 -1 }
+				text = "OH_DEER"
+				using = fontsize_xl
+				margin = { 10 5 }
+				using = look_at_me_text_animation
+			}
+		}
+		
+		flowcontainer = {
+			direction = vertical
+			name = "debug_speed_data"
+
+			## Current FPS
+			textbox = {
+				name = "debug_current_fps"
+				visible = "[And( InDebugMode, GreaterThanOrEqualTo_float( GetCurrentFps, '(float)30' ) )]"
+
+				align = left|nobaseline
+
+				multiline = yes
+
+				autoresize = yes
+				max_width = 300
+				minimumsize = { 150 -1 }
+				margin_left = 5
+
+				raw_text = "FPS: [GetCurrentFps|0]"
+			}
+
+			## Low FPS Warning
+			textbox = {
+				name = "low_fps_warning"
+				visible = "[LessThan_float( GetCurrentFps, '(float)30' )]"
+
+				align = left|nobaseline
+
+				multiline = yes
+
+				autoresize = yes
+				max_width = 300
+				minimumsize = { 150 -1 }
+				margin_left = 5
+
+				raw_text = "Low FPS: [GetCurrentFps|0]"
+				raw_tooltip = "Current FPS is under 30!"
+				default_format = "#N"
+			}
+			
+			# Slow ticks
+			button = {
+				name = "tick_task_speeds"
+
+				using = default_button
+				size = { 100 40 }
+
+				visible = "[And(ErrorDeer.HasSlowTicks, IsInGame)]"
+
+				onclick = "[ExecuteConsoleCommand('TickTask.List')]"
+				tooltip = "[ErrorDeer.GetTooltip]"
+
+				raw_text = "#BOLD #N Slow Ticks#!#!"
+			}
+		}
+	}
+}
