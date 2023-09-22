@@ -489,10 +489,10 @@ types state_panel_types
 			
 			### FLAG 
 			flowcontainer = {
-				direction = vertical
 				spacing = 15
 				margin_left = 10
 				margin_top = 15
+				direction = vertical
 
 				# Give the tooltip some extra space
 				margin_right = 30
@@ -507,8 +507,70 @@ types state_panel_types
 				flag = {
 					datacontext = "[State.GetOccupant]"
 					tooltip = "[State.GetOccupantsTooltip]"
-					visible = "[State.HasOccupant]"
+					visible = "[And(State.HasOccupant, State.IsFullyOccupied)]"
 					blockoverride "flag_tooltip" {}
+				}
+				chart = {
+					blockoverride "datamodel" {
+						datamodel = "[State.GetOccupationPiechartData]"
+					}
+
+					blockoverride "piechartsize" {
+						size = { 66 66 }
+					}
+					blockoverride "chart_button_position" {
+						position = { 20 -3 }
+					}
+					blockoverride "chart_button_button_position" {
+						position = { 0 0 }
+					}
+
+					blockoverride "columnsize" {
+						addcolumn = 83
+					}
+
+					blockoverride "textlabelsize" {
+						size = { 83 23 }
+					}
+					
+					blockoverride = "chart_visible" {
+						visible = "[And(State.HasOccupant, Not(State.IsFullyOccupied))]"
+					}
+
+					blockoverride "title" {}
+					blockoverride "margin" {}
+					blockoverride "background" {}
+					blockoverride "chart_anchor" {}
+					blockoverride "hbox_margin" {}
+					blockoverride "rightside1_info_margin" {
+						margin_left = 2
+					}
+
+					blockoverride "tooltip" {
+						tooltip = "TOOLTIP_STATE_OCCUPATION_PIESLICE"
+						datacontext = "[StatesPanel.AccessState]"
+					}
+
+					blockoverride "pieslice" {
+						value = "[OccupationPiechartData.GetOccupationFraction]"
+					}
+
+					blockoverride "color" {
+						color = "[OccupationPiechartData.GetCountryColor]"
+					}
+
+					blockoverride "leftside_info" {
+						text = "[OccupationPiechartData.GetCountry.GetFlagTextIcon]"
+					}
+
+					blockoverride "rightside1_info" {
+						raw_text = "#bold [OccupationPiechartData.GetOccupationFraction|%0]#!"
+					}
+
+					blockoverride "rightside2_info" {}
+
+					blockoverride "pie_item_goto_button" {
+					}
 				}
 			}
 
@@ -2955,7 +3017,7 @@ types building_item_types
 						tooltip = "[Building.GetDownsizeTooltip]"
 						onclick = "[Execute( Building.Downsize )]"
 						enabled = "[IsValid( Building.Downsize )]"
-						visible = "[And( And( Building.IsValid, Building.IsDownsizeable ), Not( ShouldAskConfirmation( Building.Downsize ) ) )]"
+						visible = "[And(And( And( Building.IsValid, Building.IsDownsizeable ), Not( ShouldAskConfirmation( Building.Downsize ) ) ), Not(Building.IsMilitaryBuilding))]"
 						using = tooltip_below
 					}
 
@@ -2967,7 +3029,7 @@ types building_item_types
 						tooltip = "[Building.GetDownsizeTooltip]"
 						onclick = "[PopupManager.AskConfirmation( Building.Downsize )]"
 						enabled = "[IsValid( Building.Downsize )]"
-						visible = "[And( And( Building.IsValid, Building.IsDownsizeable ), ShouldAskConfirmation( Building.Downsize ) )]"
+						visible = "[And(And( And( Building.IsValid, Building.IsDownsizeable ), ShouldAskConfirmation( Building.Downsize ) ), Not(Building.IsMilitaryBuilding))]"
 						using = tooltip_below
 					}
 
@@ -2977,7 +3039,7 @@ types building_item_types
 						parentanchor = bottom
 						position = { 5 -5 }
 						tooltip = "[Building.GetCancelConstructionTooltip]"
-						visible = "[IsValid( Building.CancelConstruction )]"
+						visible = "[And(IsValid( Building.CancelConstruction ), Not(Building.IsMilitaryBuilding))]"
 						onclick = "[Execute( Building.CancelConstruction )]"
 						using = tooltip_below
 					}
@@ -2989,7 +3051,7 @@ types building_item_types
 						}
 						parentanchor = bottom|right
 						widgetanchor = bottom|right
-						visible = "[Or( And( Not( Building.IsValid ), IsValid( Building.QueueConstruction ) ), Not(Building.HasReachedLevelCap) )]"
+						visible = "[And(Or( And( Not( Building.IsValid ), IsValid( Building.QueueConstruction ) ), Not(Building.HasReachedLevelCap) ), Not(Building.IsMilitaryBuilding))]"
 						tooltip = "[Building.GetQueueConstructionTooltip]"
 						size = { 29 29 }
 						onclick = "[Execute( Building.QueueConstruction )]"
