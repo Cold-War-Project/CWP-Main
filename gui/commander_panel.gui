@@ -486,11 +486,9 @@ types commander_panel_types
 			button_icon_goto = { # character is Admiral with the order of raiding convoys
 				size = { 30 30 }
 				visible = "[And(Character.IsAdmiral, Character.GetOrderType.IsRaidConvoys) ]"
-				# TODO: PRCAL-29523: fix this button
-				#datacontext = "[Character.GetCommanderOrder.GetConvoyRaidingProvince.GetStateRegion]"
+				datacontext = "[Character.GetMilitaryFormation.GetTargetSeaNode]"
 				tooltip = "GO_TO_BUTTON_SEA_REGION"
-				# TODO: PRCAL-29523: fix this button
-				#onclick = "[InformationPanelBar.OpenSeaRegionPanel(Character.GetCommanderOrder.GetConvoyRaidingProvince)]"
+				onclick = "[InformationPanelBar.OpenSeaRegionPanel(Province.Self)]"
 			}
 			button_icon_goto = { #All other cases
 				size = { 30 30 }
@@ -1015,6 +1013,7 @@ types commander_panel_types
 				direction = vertical
 				visible = "[Character.IsCommander]"
 				using = default_fade_in_out
+				margin_top = 10
 
 				empty_state = {
 					blockoverride "visible" {
@@ -1025,10 +1024,15 @@ types commander_panel_types
 					}
 				}
 
+				battle_item = {
+					visible = "[Character.IsInBattle]"
+					datacontext = "[Character.GetBattle]"
+				}
+
 				flowcontainer = {
 					visible = "[Character.HasMilitaryFormation]"
 					parentanchor = hcenter
-					margin = { 10 20 }
+					margin = { 10 10 }
 					spacing = 20
 					datacontext = "[Character.GetMilitaryFormation]"
 
@@ -1043,6 +1047,10 @@ types commander_panel_types
 					        	}
 					        }
 
+					        blockoverride "name_max_width" {
+								max_width = 255
+							}
+
 							blockoverride "onclick" {
 								onclick = "[InformationPanelBar.OpenMilitaryFormationPanelTab( MilitaryFormation.AccessSelf, 'default' )]"
 								onrightclick = "[RightClickMenuManager.ShowForMilitaryFormation(MilitaryFormation.AccessSelf)]"
@@ -1050,94 +1058,10 @@ types commander_panel_types
 						}
 					}
 
-					dropdown_menu_round = {
-						visible = "[Character.GetCountry.IsPlayer]"
-			            parentanchor = vcenter
-
-			            blockoverride "dropdown_properties" {
-			                datamodel = "[Character.AccessOrders]"
-			            }
-
-			            blockoverride "dropdown_active_item_tooltip" {
-			            	datacontext = "[Character.GetOrderType]"
-			            	tooltip = "CHANGE_COMMANDER_ORDER_TOOLTIP"
-			            	using = tooltip_above
-			            }
-
-			            blockoverride "dropdown_size" {
-			                size = { 80 80 }
-			            }
-
-			            blockoverride "dropdown_active_size" {
-			            	size = { 80 80 }
-			            }
-
-			            blockoverride "dropdown_list_size" {
-			                size = { 200 60 }
-			            }
-
-			            blockoverride "dropdown_list_maxsize" {
-			                size = { 200 600 }
-			            }
-
-			            blockoverride "dropdown_list_position" {
-							position = { 80 32 }
-						}
-
-			        	blockoverride "dropdown_active_item_icon" {
-							texture = "[Character.GetOrderType.GetTexture]"
-			            }
-
-			            blockoverride "dropdown_item_properties" {
-			                button = {
-			                    size = { 100% 100% }
-				            	clicksound = "[CommanderOrderType.GetClickSound]"
-				            	enabled = "[Character.CanSelectOrder( CommanderOrderType.Self )]"
-				            	onclick = "[Character.SelectOrder( CommanderOrderType.Self )]"
-				            	using = default_button_action
-				            	tooltip = "COMMANDER_PANEL_ORDER_TOOLTIP"
-			                    
-			                    widget = {
-			                    	visible = "[ObjectsEqual(Character.GetOrderType.Self, CommanderOrderType.Self)]"
-			                    	size = { 100% 100% }
-
-			                    	background = {
-				                    	using = paper_bg
-				                    }
-			                    }
-
-			                    hbox = {
-			                        layoutpolicy_horizontal = expanding
-			                        margin_left = 5
-
-			                        widget = {
-			                        	size = { 5 5 }
-			                        }
-
-			                        icon = {
-			                        	size = { 30 30 }
-										texture = "[CommanderOrderType.GetTexture]"
-			                        }
-
-			                        text_single = {
-			                            layoutpolicy_horizontal = expanding
-			                            align = nobaseline
-			                            margin_left = 10
-			                            default_format = "#clickable"
-			                           	text = "[CommanderOrderType.GetName]"
-			                        }
-
-			                        expand = {}
-			                    }
-
-			                    icon = {
-			                    	visible = "[Character.HasOrder( CommanderOrderType.Self )]"
-			                    	size = { 100% 100% }
-			                    	using = highlighted_square_selection
-			                    }
-			                }
-			            }
-			        }
+					commander_order_button = {
+						parentanchor = vcenter
+						size = { 80 80 }
+					}
 			    }
 			}
 		}

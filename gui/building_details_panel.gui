@@ -126,7 +126,7 @@ types building_panels
 				}
 			}
 		}
-
+		
 		blockoverride "pin_visibility" {
 			visible = "[ObjectsEqual(Building.GetState.GetOwner, GetPlayer.Self)]"
 		}
@@ -177,9 +177,6 @@ types building_panels
 				widget = {
 					size = { 180 205 }
 
-					tooltipwidget = {
-						FancyTooltip_Building = {}
-					}
 
 					button = {
 						onrightclick = "[RightClickMenuManager.ShowForBuilding(Building.AccessSelf)]"
@@ -187,6 +184,10 @@ types building_panels
 						position = { 0 5 }
 						size = { 152 152 }
 
+						tooltipwidget = {
+							FancyTooltip_Building = {}
+						}
+						
 						icon = {
 							alpha = "[TransparentIfFalse(Building.IsActive)]"
 							texture = "[Building.GetTexture]"
@@ -291,7 +292,7 @@ types building_panels
 							}
 
 							textbox = {
-								name = "tutorial_highlight_expansion_level"
+								name = "tutorial_higlight_expansion_level"
 								text = "[Building.GetExpansionLevelDesc]"
 								align = hcenter|nobaseline
 								using = fontsize_large
@@ -380,7 +381,7 @@ types building_panels
 							textbox = {
 								name = "tutorial_highlight_productivity_value"
 								using = productivity_tooltip_with_graph
-								raw_text = "[GetPlayer.MakeScope.Var('cwp_currency').GetFlagName][Building.GetAverageAnnualEarningsPerEmployeeFormatted|+]"
+								raw_text = "@money![Building.GetAverageAnnualEarningsPerEmployeeFormatted|+]"
 								align = hcenter|nobaseline
 								autoresize = yes
 								maximumsize = { 120 -1 }
@@ -424,7 +425,7 @@ types building_panels
 						}
 
 						textbox = {
-							raw_text = "BUILDING_AVERAGE_WAGE"
+							text = "BUILDING_AVERAGE_WAGE"
 							tooltip = TOOLTIP_BUILDING_AVERAGE_WAGE
 							visible = "[Building.IsActive]"
 
@@ -506,20 +507,29 @@ types building_panels
 						}
 
 						icon = {
-							visible = "[And(Not(Building.IsSubsistenceBuilding), Building.HasFailedHires)]"
+							visible = "[And(Building.ShouldShowAsUnableToHire,Building.HasFailedHires)]"
 							size = { 30 30 }
 							texture = "gfx/interface/icons/generic_icons/employment_not_full.dds"
 							parentanchor = right|vcenter
 							tooltip = "NOT_FULLY_EMPLOYED"
 							position = { -7 0 }
 						}
-
+						
 						icon = {
-							visible = "[Building.ShouldShowAsNotHiring]"
+							visible = "[And(Building.ShouldShowAsUnableToHire,Not(Building.HasFailedHires))]"
 							size = { 30 30 }
 							texture = "gfx/interface/icons/generic_icons/employment_not_full.dds"
 							parentanchor = right|vcenter
 							tooltip = "NOT_HIRING"
+							position = { -7 0 }
+						}	
+
+						icon = {
+							visible = "[Building.ShouldShowAsUnwillingToHire]"
+							size = { 30 30 }
+							texture = "gfx/interface/icons/generic_icons/employment_not_hiring.dds"
+							parentanchor = right|vcenter
+							tooltip = "NOT_FULLY_EMPLOYED"
 							position = { -7 0 }
 						}
 
@@ -753,7 +763,6 @@ types building_panels
 
 		### PRODUCTION METHODS
 		flowcontainer = {
-			visible = "[Not(Building.IsMilitaryBuilding)]"
 			using = default_list_position
 			direction = vertical
 			minimumsize = { @panel_width -1 }
@@ -764,20 +773,27 @@ types building_panels
 				blockoverride "text1" {
 					text = "PRODUCTION_METHODS"
 				}
+
+				blockoverride "text2" {
+					visible = "[Building.IsMilitaryBuilding]"
+					text = "COMBAT_UNITS_BUILDING_HEADER"
+				}
 			}
 
 			container = {
 				parentanchor = hcenter
 				minimumsize = { @panel_width -1 }
 				container = {
+
+					# Use this name in the tutorial to highlight all PMs in all building details panels
 					name = "tutorial_highlight_production_methods"
 
-					fixedgridbox = {
+					flowcontainer = {
+						# Use this widgetid in the tutorial to highlight only the PMs in the target building
+						widgetid = "[Concatenate('tutorial_highlight_production_methods_', Building.GetIDString)]"
 						datamodel = "[Building.AccessProductionMethodGroups]"
-						flipdirection = yes
-						datamodel_wrap = 5
-						addcolumn = 80
-						addrow = 80
+						spacing = 5
+
 						item = {
 							widget = {
 								size = { 75 75 }
@@ -843,7 +859,7 @@ types building_panels
 					tooltip = SUBSIDIZED_YES
 					enabled = "[IsValid( Building.ToggleSubsidies )]"
 					onclick = "[Execute( Building.ToggleSubsidies )]"
-					size = { 130 75 }
+					size = { 75 75 }
 					margin_bottom = 15
 
 					button = {
@@ -887,120 +903,8 @@ types building_panels
 						parentanchor = center
 					}
 				}
-			}
-		}
 
-		### PRODUCTION METHODS MILITARY BUILDINGS (BATTALIONS)
-		flowcontainer = {
-			visible = "[Building.IsMilitaryBuilding]"
-			using = default_list_position
-			direction = vertical
-			minimumsize = { @panel_width -1 }
-			margin = { 0 10 }
-			spacing = 10
-
-			default_header_2texts = {
-				blockoverride "text1" {
-					text = "COMBAT_UNITS_BUILDING_HEADER"
-				}
-			}
-
-			flowcontainer = {
-				margin = { 5 0 }
-				spacing = 5
-
-				# Troop image on the left
-				widget = {
-					size = { 175 131 }
-					visible = "[GreaterThan_int32(Building.GetNumberOfCombatUnits, '(int32)0')]"
-
-					background = {
-						texture = "[Building.GetCombatUnitTexture]"
-						modify_texture = {
-							using = simple_frame_mask
-						}
-					}
-					icon = {
-						using = simple_frame
-						size = { 100% 100% }
-					}
-				}
-
-				# Building info on the right
-				widget = {
-					size = { 330 150 }
-
-					textbox = {
-						position = { 2 15 }
-						text = "PRODUCTION_METHODS"
-						autoresize = yes
-						maximumsize = { 200 -1 }
-						align = left|nobaseline
-					}
-
-
-					### Production methods (copy from buildings panel)
-					flowcontainer = {
-						# Use this widgetid in the tutorial to highlight only the PMs in the target building
-						widgetid = "[Concatenate('tutorial_highlight_production_methods_', Building.GetIDString)]"
-						datamodel = "[Building.AccessProductionMethodGroups]"
-						spacing =  5
-						parentanchor = vcenter
-
-						item = {
-							widget = {
-								size = { 62 62 }
-								datacontext = "[Building.AccessProductionMethod(ProductionMethodGroup.Self)]"
-								datacontext = "[ProductionMethod]"
-								datacontext = "[Building]"
-								datacontext = "[ProductionMethodGroup]"
-								using = tooltip_above
-								tooltip = "CHANGE_FROM_CURRENT_PRODUCTION_METHOD_TOOLTIP"
-
-								button = {
-									visible = "[NotEqualTo_int32( GetDataModelSize( ProductionMethodGroup.AccessBuildingProductionMethods( Building.Self ) ), '(int32)1' )]"
-									using = expand_button_bg_dropdown
-									enabled = "[Building.IsOwner( GetPlayer.Self )]"
-									size = { 100% 100% }
-									onclick = "[RightClickMenuManager.ToggleSwitchProductionMethodMenu(Building.AccessSelf, ProductionMethodGroup.AccessSelf, PdxGuiWidget.AccessSelf)]"
-								}
-
-								icon = {
-									size = { 47 47 }
-									parentanchor = center
-									texture = "[ProductionMethod.GetTexture]"
-								}
-
-								### new pm
-								has_new_pm_icon = {
-									position = { -2 2 }
-									parentanchor = bottom|left
-									blockoverride "visible" {
-										visible = "[And(Building.IsOwner( GetPlayer.Self ), GetPlayer.HasNewProductionMethodInSameGroup( Building.GetBuildingType.Self, ProductionMethod.Self ))]"
-									}
-								}
-
-								### nr available
-								textbox = {
-									raw_text = "#P #bold [ProductionMethodGroup.GetNumAvailableOptions(Building.AccessSelf)]#!#!"
-									parentanchor = top|right
-									position = { -5 0 }
-									autoresize = yes
-									align = right|nobaseline
-									visible = "[NotEqualTo_int32( ProductionMethodGroup.GetNumAvailableOptions(Building.AccessSelf), '(int32)1')]"
-									tooltip = "PRODUCTION_METHOD_OPTIONS"
-									using = tooltip_above
-									using = fontsize_small
-
-									background = {
-										using = default_background
-										margin = { 8 4 }
-									}
-								}
-							}
-						}
-					}
-				}
+				military_building_combat_unit_summary = {}
 			}
 		}
 
@@ -1067,7 +971,7 @@ types building_panels
 
 						textbox = {
 							name = "tutorial_highlight_weekly_balance_building"
-							raw_text = "[GetPlayer.MakeScope.Var('cwp_currency').GetFlagName]#v [Building.GetBalance|D+=]#!"
+							raw_text = "@money!#v [Building.GetBalance|D+=]#!"
 							tooltip = "[Building.GetBalanceDesc]"
 							autoresize = yes
 							multiline = yes
@@ -1179,7 +1083,7 @@ types building_panels
 								}
 
 								textbox = {
-									raw_text = "#BOLD [GetPlayer.MakeScope.Var('cwp_currency').GetFlagName][FixedPointToInt(Building.GetConsumptionValue(Goods.Self))|1*]#! ([Goods.GetCompareIconAgainstBasePriceNoFormatting( Goods.GetStatePrice )])"
+									raw_text = "#BOLD @money![FixedPointToInt(Building.GetConsumptionValue(Goods.Self))|1*]#! ([Goods.GetCompareIconAgainstBasePriceNoFormatting( Goods.GetStatePrice )])"
 									position = { -10 0 }
 									autoresize = yes
 									align = right|nobaseline
@@ -1201,8 +1105,23 @@ types building_panels
 							text = "WAGES"
 						}
 						blockoverride "text_right" {
-							raw_text = "#BOLD [GetPlayer.MakeScope.Var('cwp_currency').GetFlagName] [Building.GetLastWagesExpenses|K]#!"
+							raw_text = "#variable @money![Building.GetLastWagesExpenses|K]#!"
 							tooltip = "[Building.GetLastWagesExpensesDesc]"
+						}
+					}
+
+					### slave upkeep
+					building_process_entry = {
+						blockoverride "visible" {
+							visible = "[Or( Building.HasSlaves, GreaterThan_CFixedPoint(Building.GetLastSlaveUpkeep, '(CFixedPoint)0') )]"
+						}
+						blockoverride "text" {
+							text = "SLAVE_UPKEEP"
+							tooltip = "[Building.GetLastSlaveUpkeepDesc]"
+						}
+						blockoverride "text_right" {
+							raw_text = "#variable @money![Building.GetLastSlaveUpkeep|K]#!"
+							tooltip = "[Building.GetLastSlaveUpkeepDesc]"
 						}
 					}
 
@@ -1215,7 +1134,7 @@ types building_panels
 							text = "[concept_tariffs]"
 						}
 						blockoverride "text_right" {
-							raw_text = "#BOLD [GetPlayer.MakeScope.Var('cwp_currency').GetFlagName] [Building.GetTariffsPaid|K]#!"
+							raw_text = "#variable @money![Building.GetTariffsPaid|K]#!"
 						}
 					}
 
@@ -1314,7 +1233,7 @@ types building_panels
 								}
 
 								textbox = {
-									raw_text = "#BOLD [GetPlayer.MakeScope.Var('cwp_currency').GetFlagName][FixedPointToInt(Building.GetProductionValue(Goods.Self))|*1]#! ([Goods.GetCompareIconAgainstBasePriceNoFormatting( Goods.GetStatePrice ) ])"
+									raw_text = "#BOLD @money![FixedPointToInt(Building.GetProductionValue(Goods.Self))|*1]#! ([Goods.GetCompareIconAgainstBasePriceNoFormatting( Goods.GetStatePrice ) ])"
 									position = { -10 0 }
 									autoresize = yes
 									align = right|nobaseline
@@ -1393,7 +1312,7 @@ types building_panels
 							text = "[concept_trade_revenue]"
 						}
 						blockoverride "text_right" {
-							raw_text = "#variable [GetPlayer.MakeScope.Var('cwp_currency').GetFlagName] [Building.GetTradeRouteRevenue|K]#!"
+							raw_text = "#variable @money![Building.GetTradeRouteRevenue|K]#!"
 						}
 					}
 
@@ -1445,6 +1364,155 @@ types building_panels
 				align = right|nobaseline
 			}
 		}
+
+		### FORMATIONS
+		flowcontainer = {
+			direction = vertical
+			visible = "[Building.IsMilitaryBuilding]"
+			margin_top = 5
+			margin_bottom = 10
+			parentanchor = hcenter
+			name = formations_list
+	
+			default_header_2texts = {
+
+				blockoverride "text1" {
+					text = "FORMATIONS_PROVIDED_WITH_UNITS"
+				}
+			}
+
+			flowcontainer = {
+				direction = vertical
+				parentanchor = hcenter
+
+				flowcontainer = {
+					sort_button = {
+						size = { 250 30 }
+						text = "concept_military_formation"
+						align = left|nobaseline
+					}
+					sort_button = {
+						size = { 70 30 }
+						text = "concept_units_short"
+						align = left|nobaseline
+					}
+					sort_button = {
+						size = { 70 30 }
+						text = "concept_supply"
+						align = left|nobaseline
+					}
+					sort_button = {
+						size = { 150 30 }
+						text = "concept_mobilization_options"
+						align = left|nobaseline
+					}
+				}
+				flowcontainer = {
+					direction = vertical
+					datamodel = "[Building.GetMilitaryFormations]"
+
+					item = {
+						flowcontainer = {
+							margin = { 5 5 }
+							spacing = 10
+							background = {
+								using = entry_bg_simple
+							}
+
+							tooltipwidget = {
+								FancyTooltip_MilitaryFormation = {}
+							}
+
+							icon = {
+								size = { 40 40 }
+								texture = "[MilitaryFormation.GetFlag]"
+								color = "[MilitaryFormation.GetFlagColor]"
+							}
+							flowcontainer = {
+								spacing = 10
+								maximumsize = { 190 -1 }
+								minimumsize = { 190 -1 }
+								parentanchor = vcenter
+								textbox = {
+									autoresize = yes
+									text = "[MilitaryFormation.GetNameNoFormatting]"
+									parentanchor = vcenter
+									align = nobaseline
+									maximumsize = { 155 -1 }
+									elide = right
+									fontsize_min = 12
+								}
+								button_icon_goto = {
+									parentanchor = vcenter
+									size = { 25 25 }
+										onclick = "[InformationPanelBar.OpenMilitaryFormationPanelTab( MilitaryFormation.AccessSelf, 'mobilization' )]"
+									tooltip = "GO_TO_BUTTON_MILITARY_FORMATION"
+									block "goto_visibility" {}
+								}
+							}
+							textbox = {
+								autoresize = yes
+								maximumsize = { 60 -1 }
+								minimumsize = { 60 -1 }
+								text = "UNITS_PROVIDED_FROM_BUILDING"
+								tooltip = "UNITS_PROVIDED_FROM_BUILDING_TOOLTIP"
+								parentanchor = vcenter
+								align = right|nobaseline
+							}
+
+							textbox = {
+								autoresize = yes
+								maximumsize = { 60 -1 }
+								minimumsize = { 60 -1 }
+								text = "[MilitaryFormation.GetSupply]"
+								parentanchor = vcenter
+								align = right|nobaseline
+							}
+
+							overlappingitembox = {
+								size = { 140 25 }
+								alpha = "[TransparentIfFalse(MilitaryFormation.IsMobilized)]"
+
+								parentanchor = vcenter 
+
+								datamodel = "[MilitaryFormation.GetMobilizationOptions]"
+
+								item = {
+									icon = {
+										size = { 25 25 }
+										texture = "[MobilizationOption.GetTexture]"
+										visible = "[MobilizationOption.IsActivated(MilitaryFormation.AccessSelf)]"
+
+										tooltipwidget = {
+											FancyTooltip_MobilizationOption = {}
+										}
+
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
+			flowcontainer = {
+				margin_top = 10 
+				direction = vertical
+				parentanchor = hcenter
+
+				combat_units_list = {
+					visible = "[InDebugMode]"
+					datacontext = "[Building.GetOwner]"
+					datamodel = "[Building.GetCombatUnits]"
+
+					blockoverride "combat_unit_goto_button" {}
+					blockoverride "combat_unit_name_maximumsize" {
+						maximumsize = { 205 -1 }
+					}
+				}
+			}
+		}
+
 
 		### VACANCIES
 		default_header_2texts = {
@@ -1542,6 +1610,80 @@ types building_panels
 			minimumsize = { 250 -1 }
 			align = right|nobaseline
 			margin = { 10 8 }
+		}
+	}
+
+	type military_building_combat_unit_summary = flowcontainer {
+		visible = "[Building.IsMilitaryBuilding]"
+		parentanchor = right|vcenter
+		margin_right = 10
+
+		flowcontainer = {
+			visible = "[LessThan_int32(GetDataModelSize(Building.GetCombatUnitTypes), '(int32)5')]"
+			spacing = 2
+			datamodel = "[Building.GetCombatUnitTypes]"
+
+			item = {
+				flowcontainer = {
+					datamodel = "[DataModelFirst(Building.AccessState.AccessPopCultures, '(int32)1')]"
+					
+					item = {
+						military_building_combat_unit_summary_list_item = {}
+					}
+				}
+			}
+		}
+
+		overlappingitembox = {
+			visible = "[GreaterThanOrEqualTo_int32(GetDataModelSize(Building.GetCombatUnitTypes), '(int32)5')]"
+			spacing = 2
+			datamodel = "[Building.GetCombatUnitTypes]"
+			block "overlappingitembox_size" {
+				size = { 440 75 }
+			}
+
+			item = {
+				flowcontainer = {
+					datamodel = "[DataModelFirst(Building.AccessState.AccessPopCultures, '(int32)1')]"
+					
+					item = {
+						military_building_combat_unit_summary_list_item = {}
+					}
+				}
+			}
+		}
+	}
+
+	type military_building_combat_unit_summary_list_item = flowcontainer {
+		direction = vertical
+		icon = {
+			modify_texture = {
+				using = simple_frame_mask
+			}
+			icon = {
+				using = simple_frame
+				size = { 100% 100% }
+			}
+			block "icon_size" {
+				size = { 75 75 }
+			}
+			texture = "[CombatUnitType.GetTextureForCulture(Culture.Self)]"
+
+			tooltipwidget = {
+				FancyTooltip_CombatUnitType = {}
+			}
+
+			textbox = {
+				parentanchor = left|bottom
+				autoresize = yes
+				raw_text = "#v [Building.GetNumUnitsOfCombatUnitType(CombatUnitType.Self)]#!"
+				block "unit_number_margins" {
+					margin = { 8 5 }
+				}
+				background = {
+					using = blurry_dark_background
+				}
+			}
 		}
 	}
 }
