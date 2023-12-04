@@ -15,7 +15,7 @@ widget = {
 			size = { 250% 250%% }
 			alpha = 0.8
 			texture ="gfx/interface/map_markers/round_highlight_orange.dds"
-			visible = "[And(And(MapInteractions.IsActiveMapInteraction( 'commander_order_sea_node' ),SeaNodeMarker.IsValidInteractionNode),SeaNodeMarker.IsActiveInteractionNode)]"
+			visible = "[And(SeaNodeMarker.IsValidInteractionNode ,SeaNodeMarker.IsActiveInteractionNode)]"
 			onclick = "[SeaNodeMarker.SelectInteractionClick]"
 			parentanchor = center
 			position = { 0 0 }
@@ -26,7 +26,7 @@ widget = {
 			size = { 250% 250%% }
 			alpha = 0.8
 			texture ="gfx/interface/map_markers/round_highlight_green.dds"
-			visible = "[And(And(MapInteractions.IsActiveMapInteraction( 'commander_order_sea_node' ),SeaNodeMarker.IsValidInteractionNode),Not(SeaNodeMarker.IsActiveInteractionNode))]"
+			visible = "[And(SeaNodeMarker.IsValidInteractionNode ,Not(SeaNodeMarker.IsActiveInteractionNode))]"
 			onclick = "[SeaNodeMarker.SelectInteractionClick]"
 			parentanchor = center
 			position = { 0 0 }
@@ -1782,62 +1782,6 @@ container = {
 	}
 }
 
-### COMMANDER ORDER
-button = {
-	name = "commander_order_marker"
-	onmousehierarchyenter = "[AccessHighlightManager.HighlightCharacter( CommanderOrderMarker.GetCharacter.Self )]"
-	onmousehierarchyleave = "[AccessHighlightManager.RemoveHighlight]"
-	alwaystransparent = no
-	layer = layer_map_markers
-	onclick = "[InformationPanelBar.OpenCommanderPanel(CommanderOrderMarker.AccessCharacter.AccessSelf)]"
-	using = colored_panel
-	color = "[CommanderOrderMarker.GetCharacter.GetCountry.GetMapColor]"
-	parentanchor = bottom|hcenter
-
-	container = {
-		resizeparent = yes
-		datacontext = "[CommanderOrderMarker.GetCharacter]"
-		tooltip = "[Character.GetSwitchOrderButtonDesc( Character.GetCommanderOrder.GetType.Self )]"
-
-		icon = {
-			size = { 30 30 }
-			visible = "[Or(Character.IsAdmiral, Character.IsGeneral)]"
-			texture = "[Character.GetCommanderOrder.GetType.GetTexture]"
-		}
-
-		character_portrait_mini = {
-			visible = "[Character.IsBeingHighlighted]"
-			position = { 0 0 }
-
-			state = {
-				name = _show
-				duration = 0.2
-				using = Animation_Curve_Default
-				position_x = 30
-				alpha = 1
-			}
-			state = {
-				name = _hide
-				duration = 0.2
-				using = Animation_Curve_Default
-				position_x = 0
-				alpha = 0
-			}
-
-			blockoverride "portrait_button" {
-				alwaystransparent = yes
-			}
-
-			blockoverride "tooltip" {}
-		}
-
-		icon = {
-			visible = "[CommanderOrderMarker.GetCharacter.IsBeingHighlighted]"
-			using = highlighted_square_selection
-		}
-	}
-}
-
 ### MILITARY FORMATION MARKER
 button = {
 	name = "military_formation_marker"
@@ -1860,6 +1804,13 @@ button = {
 
 	tooltip = "[MilitaryFormation.GetFrontDistributionDesc]"
 
+	is_mobilizing_progressbar = {
+		blockoverride "textbox" {}
+		blockoverride "button_size" {
+			size = { 100% 100% }
+		}
+	}
+
 	container = {
 		resizeparent = yes
 
@@ -1868,6 +1819,7 @@ button = {
 		}
 
 		flowcontainer = {
+			visible = "[IsZoomLevelNear]"
 			margin = { 5 5 }
 			minimumsize = { 100 -1 }
 
@@ -1921,6 +1873,7 @@ button = {
 					
 					textbox = {
 						text = "COMBAT_UNITS_TYPE_AND_NUM"
+						using = transparent_if_unmobilized_in_conflict
 						autoresize = yes
 						align = nobaseline
 						parentanchor = vcenter
@@ -1946,6 +1899,49 @@ button = {
 						using = fontsize_small
 						parentanchor = vcenter
 					}
+					
+				}
+			}
+		}
+		
+		flowcontainer = {
+			visible = "[Not( IsZoomLevelNear )]"
+			margin = { 2 2 }
+			minimumsize = { 60 -1 }
+
+			icon = {
+				visible = "[MilitaryFormation.IsArmy]"
+				parentanchor = vcenter
+				size = { 25 25 }
+				### TODO - CHANGE TO THE GET TEXTURE FUNCTION
+				texture = "gfx/interface/icons/military_icons/military_formation_identity_icons/army_01.dds"
+			}
+
+			icon = {
+				visible = "[MilitaryFormation.IsFleet]"
+				parentanchor = vcenter
+				size = { 25 25 }
+				### TODO - CHANGE TO THE GET TEXTURE FUNCTION
+				texture = "gfx/interface/icons/military_icons/military_formation_identity_icons/fleet_01.dds"
+			}
+
+			flowcontainer = {
+				direction = vertical
+				parentanchor = vcenter
+
+				textbox = {
+					text = "COMBAT_UNITS_TYPE_AND_NUM"
+					using = transparent_if_unmobilized_in_conflict
+					autoresize = yes
+					align = nobaseline
+				}
+
+				textbox = {
+					visible = "[MilitaryFormation.IsTraveling]"
+					raw_text = "#v #todo [MilitaryFormation.GetTravelDaysLeft] d#!#!"
+					autoresize = yes
+					align = hcenter|nobaseline
+					using = fontsize_small
 				}
 			}
 		}
@@ -2434,11 +2430,11 @@ container = {
 	using = clickthrough_blocker
 
 	container = {
-		visible = "[Or(And(Or(HQMarker.HasLandHQ, HQMarker.HasNavalHQ), HQMarker.GetCountry.IsPlayer), HQMarker.GetEitherHQ.IsBeingHighlighted)]"
+		visible = "[Or(And(Or(HQMarker.HasLandHQ, HQMarker.HasNavalHQ), GetMetaPlayer.IsPlayedOrObservedCountry(HQMarker.GetCountry.Self)), HQMarker.GetEitherHQ.IsBeingHighlighted)]"
 
 		using = small_nib
 		button = {
-			visible = "[HQMarker.GetCountry.IsPlayer]"
+			visible = "[GetMetaPlayer.IsPlayedOrObservedCountry(HQMarker.GetCountry.Self)]"
 			datacontext = "[HQMarker.GetEitherHQ]"
 			tooltip = "HQ_PANEL_TOTAL_TOTAL_TOOLTIP"
 			size = { 100% 100% }
@@ -2446,7 +2442,7 @@ container = {
 		}
 
 		button = {
-			visible = "[Not(HQMarker.GetCountry.IsPlayer)]"
+			visible = "[Not(GetMetaPlayer.IsPlayedOrObservedCountry(HQMarker.GetCountry.Self))]"
 			datacontext = "[HQMarker.GetEitherHQ]"
 			tooltip = "HQ_PANEL_TOTAL_TOTAL_TOOLTIP"
 			size = { 100% 100% }
@@ -2464,7 +2460,7 @@ container = {
 
 			textbox = {
 				text = "[HQMarker.GetName]"
-				visible = "[HQMarker.GetCountry.IsPlayer]"
+				visible = "[GetMetaPlayer.IsPlayedOrObservedCountry(HQMarker.GetCountry.Self))]"
 				minimumsize = { 120 -1 }
 				autoresize = yes
 				align = hcenter|nobaseline
@@ -2476,7 +2472,7 @@ container = {
 
 			tiny_flag = {
 				datacontext = "[HQMarker.GetCountry]"
-				visible = "[Not(Country.IsPlayer)]"
+				visible = "[Not(GetMetaPlayer.IsPlayedOrObservedCountry(HQMarker.GetCountry.Self)))]"
 
 				blockoverride "tooltip" {
 					tooltip = "[HQMarker.GetName]"
@@ -2487,6 +2483,217 @@ container = {
 		icon = {
 			visible = "[HQMarker.GetEitherHQ.IsBeingHighlighted]"
 			using = highlighted_square_selection
+		}
+	}
+}
+
+### NAVAL INVASION MARKER
+container = {
+	name = "naval_invasion_marker"
+	datacontext = "[NavalInvasionMarker.GetNavalInvasion]"
+	layer = layer_map_markers
+	# todo PRCAL-29842: support for highlighting the naval invasion (State + Sea Node)
+	# onmousehierarchyenter = "[AccessHighlightManager.HighlightNavalInvasion(NavalInvasion.Self)]"
+	# onmousehierarchyleave = "[AccessHighlightManager.RemoveHighlight]"
+	parentanchor = bottom|hcenter
+	using = clickthrough_blocker
+
+	### ONGOING BATTLE
+	container = {
+		#todo PRCAL-29842 highlight: visible = "[Or(And(NavalInvasion.IsValid, NavalInvasion.IsRelevantForCountry( GetMetaPlayer.GetPlayedOrObservedCountry.Self )), NavalInvasionMarker.IsBeingHighlighted)]"
+		visible = "[And(NavalInvasion.IsValid, NavalInvasion.IsRelevantForCountry( GetMetaPlayer.GetPlayedOrObservedCountry.Self ))]"
+
+		#onmousehierarchyenter = "[AccessHighlightManager.HighlightNavalInvasion(NavalInvasion.Self)]" #todo PRCAL-29842 highlight
+		#onmousehierarchyleave = "[AccessHighlightManager.RemoveHighlight]" #todo PRCAL-29842 highlight
+		onmousehierarchyenter = "[GetVariableSystem.Set(Concatenate('placeholder_naval_invasion_highlight_', NavalInvasion.GetName), 'true')]"
+		onmousehierarchyleave = "[GetVariableSystem.Set(Concatenate('placeholder_naval_invasion_highlight_', NavalInvasion.GetName), 'false')]"
+
+		alwaystransparent = no
+		parentanchor = bottom|hcenter
+
+		tooltip = "NAVAL_INVASION_MARKER_TOOLTIP" # todo PRCAL-29752 - Update the tooltip with the correct values
+		using = tooltip_above
+
+		widget = {
+			size = { 40 40 }
+			parentanchor = bottom|hcenter
+
+			icon = {
+				size = { 50 50 }
+				parentanchor = center
+				visible = "[GetVariableSystem.HasValue(Concatenate('placeholder_naval_invasion_highlight_', NavalInvasion.GetName), 'true')]" #todo PRCAL-29842 highlight
+				texture = "gfx/interface/map_markers/round_highlight.dds"
+			}
+		}
+
+		button = {
+			onclick = "[InformationPanelBar.OpenNavalInvasionPanel(NavalInvasion.AccessSelf)]"
+			size = { 100% 100% }
+		}
+
+		### MEDIUM SIZE WITH FLAGS ONLY
+		widget = {
+			visible = "[And(IsZoomLevelNear, Not(GetVariableSystem.HasValue(Concatenate('placeholder_naval_invasion_highlight_', NavalInvasion.GetName), 'true')))]" #todo PRCAL-29842 highlight
+			size = { 0 60 }
+
+			state = {
+				name = _show
+				size = { 110 60 }
+				duration = 0.2
+				alpha = 1
+				using = Animation_Curve_Default
+			}
+			state = {
+				name = _hide
+				size = { 0 60 }
+				duration = 0.2
+				alpha = 0
+				using = Animation_Curve_Default
+			}
+
+			### attackers
+			icon = {
+				using = colored_panel
+				color = "[NavalInvasion.GetInvaderCountry.GetMapColor]"
+				alwaystransparent = yes
+				size = { 50% 25 }
+				parentanchor = bottom
+				position = { 0 -8 }
+
+				tiny_flag_no_interact = {
+					datacontext = "[NavalInvasion.GetInvaderCountry]"
+					parentanchor = right|vcenter
+					position = { -23 0 }
+				}
+
+			}
+
+			### defenders
+			icon = {
+				using = colored_panel
+				color = "[NavalInvasion.GetInvadedCountry.GetMapColor]"
+				alwaystransparent = yes
+				size = { 50% 25 }
+				parentanchor = right|bottom
+				position = { 0 -8 }
+
+				tiny_flag_no_interact = {
+					datacontext = "[NavalInvasion.GetInvadedCountry]"
+					parentanchor = vcenter
+					position = { 23 0 }
+				}
+			}
+		}
+
+		### NAVAL INVASION HIGHLIGHTED - BIG SIZE WITH UNIT NUMBERS + FLAGS
+		widget = {
+			visible = "[GetVariableSystem.HasValue(Concatenate('placeholder_naval_invasion_highlight_', NavalInvasion.GetName), 'true')]" #todo PRCAL-29842 highlight
+			size = { 0 60 }
+
+			state = {
+				name = _show
+				size = { 230 60 }
+				duration = 0.2
+				alpha = 1
+				using = Animation_Curve_Default
+			}
+			state = {
+				name = _hide
+				size = { 0 60 }
+				duration = 0.2
+				alpha = 0
+				using = Animation_Curve_Default
+			}
+
+			### attackers
+			widget = {
+				size = { 50% 100% }
+				parentanchor = left|vcenter
+
+				icon = {
+					parentanchor = left|vcenter
+					using = colored_panel
+					color = "[NavalInvasion.GetInvaderCountry.GetMapColor]"
+					alwaystransparent = yes
+					size = { 110 50 }
+
+					tiny_flag = {
+						datacontext = "[NavalInvasion.GetInvaderCountry]"
+						parentanchor = left|vcenter
+						position = { 5 0 }
+
+						blockoverride "onhover" {}
+						using = tooltip_ws
+					}
+
+					flowcontainer = {
+						parentanchor = right|vcenter
+						position = { -15 0 }
+						direction = vertical
+
+						textbox = {
+							raw_text = "@flotillas! #todo 999#!" # todo PRCAL-29752
+							autoresize = yes
+							align = right|nobaseline
+							parentanchor = right
+						}
+
+						textbox = {
+							raw_text = "@battalions! #todo 999#!" # todo PRCAL-29752
+							autoresize = yes
+							align = right|nobaseline
+							parentanchor = right
+						}
+
+					}
+				}
+			}
+
+			### defenders
+			widget = {
+				size = { 50% 100% }
+				parentanchor = right|vcenter
+
+				icon = {
+					parentanchor = right|vcenter
+					using = colored_panel
+					color = "[NavalInvasion.GetInvadedCountry.GetMapColor]"
+					alwaystransparent = yes
+					size = { 110 50 }
+
+					tiny_flag = {
+						datacontext = "[NavalInvasion.GetInvadedCountry]"
+						parentanchor = right|vcenter
+						position = { -5 0 }
+						blockoverride "onhover" {}
+					}
+
+					flowcontainer = {
+						parentanchor = vcenter
+						position = { 15 0 }
+						direction = vertical
+
+						textbox = {
+							raw_text = "@flotillas! #todo 999#!" # todo PRCAL-29752
+							autoresize = yes
+							align = nobaseline
+						}
+
+						textbox = {
+							raw_text = "@battalions! #todo 999#!" # todo PRCAL-29752
+							autoresize = yes
+							align = nobaseline
+						}
+
+					}
+				}
+			}
+		}
+
+		icon = {
+			size = { 40 40 }
+			texture = "gfx/interface/icons/commander_order_icons/naval_invasion.dds"
+			parentanchor = bottom|hcenter
 		}
 	}
 }
@@ -2754,4 +2961,9 @@ template colored_panel_bright
 {
 	using = colored_panel
 	texture = "gfx/interface/map_markers/colored_panel_bright.dds"
+}
+
+template transparent_if_unmobilized_in_conflict
+{
+	alpha = "[TransparentIfTrue(And(And(Not(MilitaryFormation.IsMobilized), MilitaryFormation.IsArmy), MilitaryFormation.GetCountry.IsInvolvedInActiveConflict))]"
 }

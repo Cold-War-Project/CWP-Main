@@ -625,7 +625,7 @@ types war_panel
 										direction = vertical
 
 										button = {
-											tooltip = "MOBILIZED_REGULARS_WITH_GENERAL_TOOLTIP_LEFT"
+											tooltip = "PANEL_MILITARY_ARMY_OVERVIEW_TOOLTIP"
 											using = default_button
 											parentanchor = left
 											visible = "[WarPanel.GetLeftLeader.IsLocalPlayer]"
@@ -639,11 +639,12 @@ types war_panel
 												align = center|nobaseline
 												autoresize = yes
 												parentanchor = left
+												alpha = "[TransparentIfFalse(WarPanel.GetLeftLeader.IsMobilized)]"
 											}
 										}
 
 										button = {
-											tooltip = "PANEL_MILITARY_NAVY_CURRENT_FLOTILLAS_TOOLTIP_LEFT"
+											tooltip = "PANEL_MILITARY_NAVY_CURRENT_FLOTILLAS_TOOLTIP"
 											using = default_button
 											parentanchor = left
 											visible = "[WarPanel.GetLeftLeader.IsLocalPlayer]"
@@ -662,18 +663,19 @@ types war_panel
 
 										textbox = {
 											visible = "[Not(WarPanel.GetLeftLeader.IsLocalPlayer)]"
-											tooltip = "MOBILIZED_REGULARS_WITH_GENERAL_TOOLTIP_LEFT"
+											tooltip = "PANEL_MILITARY_ARMY_OVERVIEW_TOOLTIP"
 											datacontext = "[WarPanel.GetWar]"
 											margin_left = 10
 											parentanchor = left
 											text = "WAR_LEADER_LEFT_NUM_BATTALIONS"
 											align = center|nobaseline
 											autoresize = yes
+											alpha = "[TransparentIfFalse(WarPanel.GetLeftLeader.IsMobilized)]"
 										}
 
 										textbox = {
 											visible = "[Not(WarPanel.GetLeftLeader.IsLocalPlayer)]"
-											tooltip = "PANEL_MILITARY_NAVY_CURRENT_FLOTILLAS_TOOLTIP_LEFT"
+											tooltip = "PANEL_MILITARY_NAVY_CURRENT_FLOTILLAS_TOOLTIP"
 											datacontext = "[WarPanel.GetWar]"
 											margin_left = 10
 											parentanchor = left
@@ -760,22 +762,21 @@ types war_panel
 									}
 
 									flowcontainer = {
-										parentanchor = right|vcenter
+										parentanchor = vcenter
 										direction = vertical
 
 										textbox = {
-											tooltip = "MOBILIZED_REGULARS_WITH_GENERAL_TOOLTIP_RIGHT"
-											margin_right = 10
-											parentanchor = right
+											tooltip = "PANEL_MILITARY_ARMY_OVERVIEW_TOOLTIP"
+											margin_left = 10
 											text = "WAR_LEADER_RIGHT_NUM_BATTALIONS"
 											align = center|nobaseline
 											autoresize = yes
+											alpha = "[TransparentIfFalse(WarPanel.GetRightLeader.IsMobilized)]"
 										}
 
 										textbox = {
-											tooltip = "PANEL_MILITARY_NAVY_CURRENT_FLOTILLAS_TOOLTIP_RIGHT"
-											margin_right = 10
-											parentanchor = right
+											tooltip = "PANEL_MILITARY_NAVY_CURRENT_FLOTILLAS_TOOLTIP"
+											margin_left = 10
 											text = "WAR_LEADER_RIGHT_NUM_FLOTILLAS"
 											align = center|nobaseline
 											autoresize = yes
@@ -874,20 +875,56 @@ types war_panel
 					}
 				}
 
-				### FRONTS
-				default_header = {
-					parentanchor = hcenter
-					blockoverride "text" {
+				section_header_button = {
+					blockoverride "left_text" {
 						text = "ACTIVE_FRONTS"
+					}
+
+					blockoverride "right_text" {
+						expand = {}
+						textbox = {
+							margin_right = 10
+							align = right|nobaseline
+							autoresize = yes
+							text = "[GetDataModelSize(WarPanel.AccessFronts)]"
+							using = fontsize_large
+						}
+					}
+
+					blockoverride "onclick" {
+						onclick = "[GetVariableSystem.Toggle('war_fronts_list')]"
+					}
+					
+					blockoverride "onclick_showmore" {
+						visible = "[GetVariableSystem.Exists('war_fronts_list')]"
+					}
+
+					blockoverride "onclick_showless" {
+						visible = "[Not(GetVariableSystem.Exists('war_fronts_list'))]"
 					}
 				}
 
-				widget = { size = { 10 10 }}
+				flowcontainer = {
+					visible = "[Not(GetVariableSystem.Exists('war_fronts_list'))]"
+					parentanchor = hcenter
+					sort_button = {
+						size = { @panel_width_half 30 }
+						text = "concept_battalions"
+						onclick = "[WarPanel.SortFronts('total_number_of_units')]"
+					}
+					sort_button = {
+						size = { @panel_width_half 30 }
+						text = "FRONT_MAP_LIST_PANEL_ADVANTAGE"
+						onclick = "[WarPanel.SortFronts('advantage')]"
+					}
+				}
 
 				flowcontainer = {
+					visible = "[Not(GetVariableSystem.Exists('war_fronts_list'))]"
 					spacing = 10
 					direction = vertical
 					parentanchor = hcenter
+					margin_bottom = 10
 
 					datamodel = "[WarPanel.AccessFronts]"
 
@@ -905,21 +942,42 @@ types war_panel
 					}
 				}
 
-				widget = { size = { 10 10 }}
-
-				### ENDED BATTLES
-				default_header = {
-					blockoverride "text" {
+				section_header_button = {
+					visible = "[Not(IsDataModelEmpty(WarPanel.AccessWar.GetEndedBattles))]"
+					blockoverride "left_text" {
 						text = "ENDED_BATTLES"
 					}
-					parentanchor = hcenter
-					visible = "[Not(IsDataModelEmpty(WarPanel.AccessWar.GetEndedBattles))]"
+
+					blockoverride "right_text" {
+						expand = {}
+						textbox = {
+							margin_right = 10
+							align = right|nobaseline
+							autoresize = yes
+							text = "[GetDataModelSize(WarPanel.AccessWar.GetEndedBattles)]"
+							using = fontsize_large
+						}
+					}
+
+					blockoverride "onclick" {
+						onclick = "[GetVariableSystem.Toggle('war_ended_battles_list')]"
+					}
+					
+					blockoverride "onclick_showmore" {
+						visible = "[GetVariableSystem.Exists('war_ended_battles_list')]"
+					}
+
+					blockoverride "onclick_showless" {
+						visible = "[Not(GetVariableSystem.Exists('war_ended_battles_list'))]"
+					}
 				}
 
 				flowcontainer = {
+					visible = "[Not(GetVariableSystem.Exists('war_ended_battles_list'))]"
 					direction = vertical
 					parentanchor = hcenter
-					margin = { 0 10 }
+					margin_bottom = 10
+					spacing = 10
 
 					datamodel = "[WarPanel.AccessWar.GetEndedBattles]"
 
@@ -1995,6 +2053,7 @@ types war_panel
 
 					flowcontainer = {
 						spacing = 8
+						alpha = "[TransparentIfZero_int32(Front.GetNumLeftCombatUnitsRaw)]"
 
 						# Morale
 						morale_bar = {
@@ -2090,6 +2149,8 @@ types war_panel
 					}
 
 					flowcontainer = {
+						alpha = "[TransparentIfZero_int32(Front.GetNumRightCombatUnitsRaw)]"
+
 						parentanchor = right
 						spacing = 8
 

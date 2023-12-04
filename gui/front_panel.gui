@@ -289,7 +289,7 @@ types front_panel_types
 
 										icon = {
 											size = { 20 20 }
-											texture = "gfx/interface/icons/military_icons/offence.dds"
+											texture = "gfx/interface/icons/military_icons/offense.dds"
 										}
 
 										widget = {
@@ -329,7 +329,7 @@ types front_panel_types
 										# TODO: Defence value
 										icon = {
 											size = { 20 20 }
-											texture = "gfx/interface/icons/military_icons/defence.dds"
+											texture = "gfx/interface/icons/military_icons/defense.dds"
 										}
 
 										widget = {
@@ -440,7 +440,7 @@ types front_panel_types
 
 										icon = {
 											size = { 20 20 }
-											texture = "gfx/interface/icons/military_icons/offence.dds"
+											texture = "gfx/interface/icons/military_icons/offense.dds"
 										}
 
 										textbox = {
@@ -479,7 +479,7 @@ types front_panel_types
 
 										icon = {
 											size = { 20 20 }
-											texture = "gfx/interface/icons/military_icons/defence.dds"
+											texture = "gfx/interface/icons/military_icons/defense.dds"
 										}
 
 										textbox = {
@@ -1155,8 +1155,7 @@ types front_panel_types
 		size = { 250 130 }
 
 		datacontext = "[FrontParticipant.AccessArmy]"
-		### TODO PRCAL-28648
-		# onmousehierarchyenter = "[AccessHighlightManager.HighlightMilitaryFormation( MilitaryFormation.Self )]"
+		onmousehierarchyenter = "[AccessHighlightManager.HighlightMilitaryFormation( MilitaryFormation.Self )]"
 		onmousehierarchyleave = "[AccessHighlightManager.RemoveHighlight]"
 		alwaystransparent = no
 
@@ -1344,14 +1343,10 @@ types front_panel_types
 	}
 
 	### FRONT PARTICIPANTS FORMATIONS LIST ITEM
-	type front_participants_formations_list_item = flowcontainer {
-		minimumsize = { 250 140 }
+	type front_participants_formations_list_item = widget {
+		size = { 250 130 }
 		datacontext = "[FrontParticipant.AccessArmy]"
-		direction = vertical
-		alwaystransparent = no
-
-		### TODO PRCAL-28648  We NEED TO BE ABLE TO HIGHLIGHT ALL FORMATIONS ###
-		#onmousehierarchyenter = "[AccessHighlightManager.HighlightFormation(Formation.Self )]"
+		onmousehierarchyenter = "[AccessHighlightManager.HighlightMilitaryFormation(MilitaryFormation.Self)]"
 		onmousehierarchyleave = "[AccessHighlightManager.RemoveHighlight]"
 
 		background = {
@@ -1591,125 +1586,165 @@ types front_panel_types
 	
 	### ENDED BATTLE ITEM
 	type ended_battle_item = button {
-		using = default_button
-		size = { @panel_width 50 }
 		onClick = "[InformationPanelBar.OpenBattlePanelTab(Battle.AccessSelf, 'default')]"
 		onmousehierarchyenter = "[AccessHighlightManager.HighlightBattle(Battle.Self)]"
 		onmousehierarchyleave = "[AccessHighlightManager.RemoveHighlight]"
-		tooltip = "[Battle.GetStatusString]"
-
+		
 		icon = {
 			visible = "[Battle.IsBeingHighlighted]"
 			using = highlighted_square_selection
 		}
+		using = default_button
 
-		### LEFT SIDE
-		flowcontainer = {
-			position = { 10 0 }
-			parentanchor = vcenter
-			
-			tiny_flag = {
-				datacontext = "[Battle.GetAttacker]"
-				parentanchor = vcenter
-			}
-			
-			widget = { size = { 15 5 }}
-			
-			textbox = {
-				text = "[Battle.GetStartingAttackerUnits]"
-				tooltip = "BATTLE_STARTING_ATTACKER_STATS"
-				size = { 40 20 }
-				align = left|nobaseline
-				parentanchor = vcenter
-			}
-			textbox = {
-				alpha = "[TransparentIfZero_int32(Battle.GetAttackerLostUnits)]"
-				text = "[Negate_int32(Battle.GetAttackerLostUnits)|+=]"
-				tooltip = "BATTLE_LOSSES_ATTACKER_STATS"
-				size = { 40 20 }
-				align = left|nobaseline
-				parentanchor = vcenter
-			}
-			textbox = {
-				size = { 40 20 }
-				text = "[Battle.GetFinalAttackerUnits|v]"
-				tooltip = "BATTLE_END_ATTACKER_STATS"
-				align = left|nobaseline
-				parentanchor = vcenter
-			}
-		}
-
-		### Winner / Draw
-		widget = {
-			size = { 105 100% }
-			parentanchor = center
-			
-			background = {
-				using = dark_area
-				margin = { 0 -2 }
-			}
-			
+		container = {
+			resizeparent = yes
 			flowcontainer = {
-				visible = "[Battle.GetWinner.IsValid]"
 				direction = vertical
-				parentanchor = hcenter
+				parentanchor = right
+				visible = "[NotEqualTo_CFixedPoint(Battle.GetOccupationWonRaw, '(CFixedPoint)0')]"
+				margin_top = 5
+				textbox = {
+					text = "[Battle.GetWinner.GetFlagTextIcon] #b +#![Battle.GetOccupationWon]"
+					autoresize = yes
+					align = nobaseline
+					parentanchor = right
+					margin_right = 10
+					using = fontsize_large
+				}		
 
 				textbox = {
+					text = "[Battle.GetState.GetName]"
 					autoresize = yes
-					text = "BATTLE_VICTOR"
-					align = nobaseline|center
-					elide = right
-					parentanchor = hcenter
-				}
-				tiny_flag = {
-					datacontext = "[Battle.GetWinner]"
-					parentanchor = hcenter
+					align = nobaseline
+					parentanchor = right
+					margin_right = 10
 				}
 			}
-			
-			textbox = {
-				visible = "[Not( Battle.GetWinner.IsValid )]"
-				autoresize = yes
-				text = "BATTLE_DRAW"
-				align = nobaseline|center
-				parentanchor = center
-				elide = right
-			}
-		}
+			flowcontainer = {
+				direction = vertical
+				margin_bottom = 5
+				margin_left = 5
+				margin_right = 5
 
-		### RIGHT SIDE
-		flowcontainer = {
-			position = { -10 0 }
-			parentanchor = vcenter|right
+				background = {
+					using = entry_bg_simple
+				}
 
-			textbox = {
-				text = "[Battle.GetStartingDefenderUnits]"
-				tooltip = "BATTLE_STARTING_DEFENDER_STATS"
-				size = { 40 20 }
-				align = right|nobaseline
-				parentanchor = vcenter
-			}
-			textbox = {
-				alpha = "[TransparentIfZero_int32(Battle.GetDefenderLostUnits)]"
-				text = "[Negate_int32(Battle.GetDefenderLostUnits)|+=]"
-				tooltip = "BATTLE_LOSSES_DEFENDER_STATS"
-				size = { 40 20 }
-				align = right|nobaseline
-				parentanchor = vcenter
-			}
-			textbox = {
-				size = { 40 20 }
-				text = "[Battle.GetFinalDefenderUnits|v]"
-				tooltip = "BATTLE_END_DEFENDER_STATS"
-				align = right|nobaseline
-				parentanchor = vcenter
-			}
-			
-			widget = { size = { 15 5 }}
-			
-			tiny_flag = {
-				datacontext = "[Battle.GetDefender]"
-				parentanchor = vcenter
+				# victory/defeat + captured provinces
+				flowcontainer = {
+					margin_left = 5
+					margin_top = 5
+					# if you are in the battle
+					flowcontainer = {
+						visible = "[Battle.IsLeadCountry(GetPlayer)]"
+						direction = vertical
+						spacing = 10
+						
+						textbox = {
+							visible = "[Battle.IsWinner(GetPlayer)]"
+							text = "BATTLE_VICTORY"
+							using = small_battle_outcome_formatting
+							default_format = "#p"
+						}
+						textbox = {
+							visible = "[Battle.IsLoser(GetPlayer)]"
+							text = "BATTLE_DEFEAT"
+							using = small_battle_outcome_formatting
+							default_format = "#n"
+						}
+					}
+					
+					# if you are observer
+					flowcontainer = {
+						visible = "[Not( Battle.IsLeadCountry(GetPlayer) )]"
+						direction = vertical
+						
+						textbox = {
+							visible = "[Battle.IsOnWinnerSide( GetPlayer.Self )]"
+							text = "BATTLE_ALLY_VICTORY"
+							using = small_battle_outcome_formatting
+							default_format = "#p"
+						}
+						textbox = {
+							visible = "[Battle.IsOnLoserSide( GetPlayer.Self )]"
+							text = "BATTLE_ALLY_DEFEAT"
+							using = small_battle_outcome_formatting
+							default_format = "#n"
+						}
+						textbox = {
+							visible = "[Not(Or( Battle.IsOnWinnerSide(GetPlayer.Self), Battle.IsOnLoserSide(GetPlayer.Self) ))]"
+							text = "BATTLE_NONALLY_VICTORY"
+							using = small_battle_outcome_formatting
+						}
+					}
+				}
+
+				textbox = {
+					text = "BATTLE_END_ATTACKER_OUTCOME"
+					autoresize = yes
+					align = nobaseline
+					margin_left = 5
+					margin_bottom = 2
+				}
+
+				widget = {
+					parentanchor = hcenter
+					size = { @panel_width_minus_10 36 }
+
+					background = {
+						using = entry_bg_simple
+					}
+
+					icon = {
+						size = { 30 30 }
+						texture = "[Battle.GetBattleIcon]"
+						alwaystransparent = yes
+						parentanchor = center
+					}
+
+					### LEFT SIDE
+					flowcontainer = {
+						position = { 10 0 }
+						parentanchor = vcenter
+						spacing = 10
+
+						
+						tiny_flag_no_interact = {
+							datacontext = "[Battle.GetAttacker]"
+							parentanchor = vcenter
+						}
+
+						textbox = {
+							raw_text = "@battalions![Battle.GetStartingAttackerUnits|v]   @manpower![Battle.GetStartingAttackerManpower|vD]"
+							tooltip = "[Battle.GetNumAdvancingUnitsAtStartOfBattleDesc]"
+							autoresize = yes
+							align = left|nobaseline
+							parentanchor = vcenter
+							alpha = "[TransparentIfZero_int32(Battle.GetStartingAttackerUnits)]"
+						}
+					}
+
+					### RIGHT SIDE
+					flowcontainer = {
+						position = { -10 0 }
+						parentanchor = vcenter|right
+						spacing = 10
+						alpha = "[TransparentIfZero_int32(Battle.GetStartingDefenderUnits)]"
+
+						textbox = {
+							raw_text = "@battalions![Battle.GetStartingDefenderUnits|v]   @manpower![Battle.GetStartingDefenderManpower|vD]"
+							tooltip = "[Battle.GetNumDefendingUnitsAtStartOfBattleDesc]"
+							autoresize = yes
+							align = right|nobaseline
+							parentanchor = vcenter
+						}
+
+						tiny_flag_no_interact = {
+							datacontext = "[Battle.GetDefender]"
+							parentanchor = vcenter
+						}
+					}
+				}
 			}
 		}
 	}

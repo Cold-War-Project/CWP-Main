@@ -53,27 +53,6 @@ PixelShader =
 		SampleModeV = "Wrap"
 	}
 
-	TextureSampler EnvironmentMap
-	{
-		Ref = JominiEnvironmentMap
-		MagFilter = "Linear"
-		MinFilter = "Linear"
-		MipFilter = "Linear"
-		SampleModeU = "Clamp"
-		SampleModeV = "Clamp"
-		Type = "Cube"
-	}
-
-	TextureSampler TintMap
-	{
-		Index = 5
-		MagFilter = "Linear"
-		MinFilter = "Linear"
-		MipFilter = "Linear"
-		SampleModeU = "Wrap"
-		SampleModeV = "Wrap"
-	}
-
 	TextureSampler ShadowMap
 	{
 		Ref = PdxShadowmap
@@ -85,6 +64,63 @@ PixelShader =
 		CompareFunction = less_equal
 		SamplerType = "Compare"
 	}
+
+	TextureSampler EnvironmentMap
+	{
+		Ref = JominiEnvironmentMap
+		MagFilter = "Linear"
+		MinFilter = "Linear"
+		MipFilter = "Linear"
+		SampleModeU = "Clamp"
+		SampleModeV = "Clamp"
+		Type = "Cube"
+	}
+	TextureSampler TintMap
+	{
+		Index = 5
+		MagFilter = "Linear"
+		MinFilter = "Linear"
+		MipFilter = "Linear"
+		SampleModeU = "Wrap"
+		SampleModeV = "Wrap"
+	}
+
+	TextureSampler ChannelMaskMap
+	{
+		Index = 6
+		MagFilter = "Linear"
+		MinFilter = "Linear"
+		MipFilter = "Linear"
+		SampleModeU = "Wrap"
+		SampleModeV = "Wrap"
+	}
+
+	TextureSampler FlagTexture
+	{
+		Ref = PdxMeshCustomTexture0
+		MagFilter = "Linear"
+		MinFilter = "Linear"
+		MipFilter = "Linear"
+		SampleModeU = "clamp"
+		SampleModeV = "clamp"
+	}
+
+	BufferTexture CountryUnitColorBuffer01
+	{
+		Ref = CountryUnitColors01
+		type = float4
+	}
+	BufferTexture CountryUnitColorBuffer02
+	{
+		Ref = CountryUnitColors02
+		type = float4
+	}
+	BufferTexture CountryUnitColorBuffer03
+	{
+		Ref = CountryUnitColors03
+		type = float4
+	}
+
 }
 
 VertexStruct VS_OUTPUT
@@ -104,6 +140,10 @@ Code
 	uint GetUserDataUint( uint InstanceIndex )
 	{
 		return uint( Data[ InstanceIndex + PDXMESH_USER_DATA_OFFSET + 0 ].x );
+	}
+	float4 GetUserDataOffsetAndScale( uint InstanceIndex )
+	{
+		return Data[ InstanceIndex + PDXMESH_USER_DATA_OFFSET + 0 ];
 	}
 	float4 GetUserDataBuildingLightColor( uint InstanceIndex )
 	{
@@ -274,17 +314,6 @@ VertexShader =
 				float4 Position = float4( Input.Position.xyz, 1.0 );
 				float4x4 WorldMatrix = PdxMeshGetWorldMatrix( Input.InstanceIndices.y );
 
-				// Reset Rotation
-				WorldMatrix[0][0] = 1;
-				WorldMatrix[0][1] = 0;
-				WorldMatrix[0][2] = 0;
-				WorldMatrix[1][0] = 0;
-				WorldMatrix[1][1] = 1;
-				WorldMatrix[1][2] = 0;
-				WorldMatrix[2][0] = 0;
-				WorldMatrix[2][1] = 0;
-				WorldMatrix[2][2] = 1;
-
 				// Wave animation
 				CalculateSineAnimation( Input.UV1, Position.xyz, Input.Normal, Input.Tangent, float3( GetMatrixData( WorldMatrix, 0, 3 ), GetMatrixData( WorldMatrix, 1, 3 ), GetMatrixData( WorldMatrix, 2, 3 ) ) );
 
@@ -293,7 +322,6 @@ VertexShader =
 				Out.Bitangent = normalize( cross( Out.Normal, Out.Tangent ) * Input.Tangent.w );
 				Out.Position = mul( WorldMatrix, Position );
 				Out.WorldSpacePos = Out.Position.xyz;
-				Out.WorldSpacePos /= WorldMatrix[3][3];
 				Out.Position = FixProjectionAndMul( ViewProjectionMatrix, Out.Position );
 
 				Out.UV0 = Input.UV0;
@@ -317,17 +345,6 @@ VertexShader =
 
 				float4 Position = float4( Input.Position.xyz, 1.0 );
 				float4x4 WorldMatrix = PdxMeshGetWorldMatrix( Input.InstanceIndices.y );
-
-				// Reset Rotation
-				WorldMatrix[0][0] = 1;
-				WorldMatrix[0][1] = 0;
-				WorldMatrix[0][2] = 0;
-				WorldMatrix[1][0] = 0;
-				WorldMatrix[1][1] = 1;
-				WorldMatrix[1][2] = 0;
-				WorldMatrix[2][0] = 0;
-				WorldMatrix[2][1] = 0;
-				WorldMatrix[2][2] = 1;
 
 				// Wave Animation
 				CalculateSineAnimation( Input.UV1, Position.xyz, Input.Normal, Input.Tangent, float3( GetMatrixData( WorldMatrix, 3, 0 ), GetMatrixData( WorldMatrix, 3, 1 ), GetMatrixData( WorldMatrix, 3, 2 ) ) );
@@ -355,17 +372,6 @@ VertexShader =
 				float4 Position = float4( Input.Position.xyz, 1.0 );
 				float4x4 WorldMatrix = UnpackAndGetMapObjectWorldMatrix( Input.InstanceIndex24_Opacity8 );
 
-				// Reset Rotation
-				WorldMatrix[0][0] = 1;
-				WorldMatrix[0][1] = 0;
-				WorldMatrix[0][2] = 0;
-				WorldMatrix[1][0] = 0;
-				WorldMatrix[1][1] = 1;
-				WorldMatrix[1][2] = 0;
-				WorldMatrix[2][0] = 0;
-				WorldMatrix[2][1] = 0;
-				WorldMatrix[2][2] = 1;
-
 				// Wave animation
 				CalculateSineAnimation( Input.UV1, Position.xyz, Input.Normal, Input.Tangent, float3( GetMatrixData( WorldMatrix, 0, 3 ), GetMatrixData( WorldMatrix, 1, 3 ), GetMatrixData( WorldMatrix, 2, 3 ) ) );
 
@@ -374,7 +380,6 @@ VertexShader =
 				Out.Bitangent = normalize( cross( Out.Normal, Out.Tangent ) * Input.Tangent.w );
 				Out.Position = mul( WorldMatrix, Position );
 				Out.WorldSpacePos = Out.Position.xyz;
-				Out.WorldSpacePos /= WorldMatrix[3][3];
 				Out.Position = FixProjectionAndMul( ViewProjectionMatrix, Out.Position );
 
 				Out.UV0 = Input.UV0;
@@ -398,17 +403,6 @@ VertexShader =
 
 				float4 Position = float4( Input.Position.xyz, 1.0 );
 				float4x4 WorldMatrix = UnpackAndGetMapObjectWorldMatrix( Input.InstanceIndex24_Opacity8 );
-
-				// Reset Rotation
-				WorldMatrix[0][0] = 1;
-				WorldMatrix[0][1] = 0;
-				WorldMatrix[0][2] = 0;
-				WorldMatrix[1][0] = 0;
-				WorldMatrix[1][1] = 1;
-				WorldMatrix[1][2] = 0;
-				WorldMatrix[2][0] = 0;
-				WorldMatrix[2][1] = 0;
-				WorldMatrix[2][2] = 1;
 
 				// Wave Animation
 				CalculateSineAnimation( Input.UV1, Position.xyz, Input.Normal, Input.Tangent, float3( GetMatrixData( WorldMatrix, 3, 0 ), GetMatrixData( WorldMatrix, 3, 1 ), GetMatrixData( WorldMatrix, 3, 2 ) ) );
@@ -477,6 +471,35 @@ PixelShader =
 				float3 InNormal = normalize( Input.Normal );
 				float3x3 TBN = Create3x3( normalize( Input.Tangent ), normalize( Input.Bitangent ), InNormal );
 				float3 Normal = normalize( mul( UnpackRRxGNormal( NormalSample ), TBN ) );
+
+				#ifdef UNIT_COLOR
+					float4 ChannelMask = PdxTex2D( ChannelMaskMap, DIFFUSE_UV_SET );
+
+					int CountryId = SampleCountryIndex( MapCoords );
+					float3 CountryColor01 = ToLinear( PdxReadBuffer4( CountryUnitColorBuffer01, CountryId ).rgb );
+					float3 CountryColor02 = ToLinear( PdxReadBuffer4( CountryUnitColorBuffer02, CountryId ).rgb );
+					float3 CountryColor03 = ToLinear( PdxReadBuffer4( CountryUnitColorBuffer03, CountryId ).rgb );
+
+					Diffuse.rgb = lerp( Diffuse.rgb, Diffuse.rgb * CountryColor01 * ChannelMask.r, ChannelMask.r );
+					Diffuse.rgb = lerp( Diffuse.rgb, Diffuse.rgb * CountryColor02 * ChannelMask.g, ChannelMask.g );
+					Diffuse.rgb = lerp( Diffuse.rgb, Diffuse.rgb * CountryColor03 * ChannelMask.b, ChannelMask.b );
+				#endif
+
+				// Coa Flag - Second UV Set
+				#ifdef COA_TEXTURE
+					float4 OffsetScale = GetUserDataOffsetAndScale( Input.InstanceIndex );
+					float2 CoaUV = UNIQUE_UV_SET;
+					CoaUV.y = 1.0f - CoaUV.y;
+					CoaUV = OffsetScale.xy + CoaUV * OffsetScale.zw;
+
+					float3 CoaColor = PdxTex2D( FlagTexture, CoaUV ).rgb;
+					CoaColor = ToLinear( CoaColor );
+
+					if ( UNIQUE_UV_SET.x > 0.0 && UNIQUE_UV_SET.x < 1.0 && UNIQUE_UV_SET.y > 0.0 && UNIQUE_UV_SET.y < 1.0 )
+					{
+						Diffuse.rgb *= CoaColor;
+					}
+				#endif
 
 				// Devastation
 				ApplyDevastationBuilding( Diffuse.rgb, Input.WorldSpacePos.xz, LocalHeight, DIFFUSE_UV_SET );
