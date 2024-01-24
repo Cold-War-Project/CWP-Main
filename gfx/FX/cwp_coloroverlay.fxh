@@ -86,6 +86,7 @@ PixelShader = {
 		SampleModeU = "Clamp"
 		SampleModeV = "Clamp"
 	}
+
 	TextureSampler CoaAtlas
 	{
 		Ref = CoaAtlasTexture
@@ -100,28 +101,15 @@ PixelShader = {
 		Ref = ProvinceCountryId
 		type = int
 	}
+	BufferTexture ProvinceControllerIdBuffer
+	{
+		Ref = ProvinceControllerId
+		type = int
+	}
 	BufferTexture CountryCoaUvBuffer
 	{
 		Ref = CountryFlagUvs
 		type = float4
-	}
-	ConstantBuffer( MapCoaConstants0 )
-	{
-		float _MapCoaAngle;
-		float _MapCoaAspectRatio;
-		float _MapCoaSize;
-		float _MapCoaSizeFlatmap;
-		float _MapCoaBlend;
-		float _MapCoaBlendFlatmap;
-		float _MapCoaBlendOccupation;
-		float _MapCoaBlendOccupationFlatmap;
-		float _MapCoaBlendFadeStart;
-		float _MapCoaBlendFadeEnd;
-		float _MapCoaRowOffset;
-		float _MapCoaRowCount;
-		float _MapCoaStripeScale;
-		float _MapCoaStripeScaleFlatmap;
-		bool  _MapCoaEnabled;
 	}
 
 	Code
@@ -135,16 +123,22 @@ PixelShader = {
 			int Index = ColorIndex.x * 255.0 + ColorIndex.y * 255.0 * 256.0;
 			return PdxReadBuffer( ProvinceCountryIdBuffer, Index ).r;
 		}
+		int SampleControllerIndex( float2 MapCoords )
+		{
+			float2 ColorIndex = PdxTex2D( ProvinceColorIndirectionTexture, MapCoords ).rg;
+			int Index = ColorIndex.x * 255.0 + ColorIndex.y * 255.0 * 256.0;
+			return PdxReadBuffer( ProvinceControllerIdBuffer, Index ).r;
+		}
 
 		void ApplyStripeColorBlend( float2 MapCoords, float2 ParalaxCoord, inout float3 Color, inout float PreLightingBlend )
 		{
 			// Coat of arms should only be shown in some map modes
-			if( !_MapCoaEnabled )
+			if( !_CoaConstants._MapCoaEnabled )
 			{
 				return;
 			}
 
-			int CountryId = SampleCountryIndex( MapCoords );
+			int CountryId = SampleControllerIndex( MapCoords );
 			if( CountryId >= 0 )
 			{
 				float Opacity = 1.0f;
@@ -153,10 +147,10 @@ PixelShader = {
 					float2 Pixel = ( MapCoords * _ProvinceMapSize + 0.5 );
 					float2 FracCoord = frac( Pixel );
 					Pixel = floor( Pixel ) / _ProvinceMapSize - Texel * 0.5f;
-					float C00 = 1.0f - saturate( abs( CountryId - SampleCountryIndex( Pixel ) ) );
-					float C10 = 1.0f - saturate( abs( CountryId - SampleCountryIndex( Pixel + float2( Texel.x, 0.0 ) ) ) );
-					float C01 = 1.0f - saturate( abs( CountryId - SampleCountryIndex( Pixel + float2( 0.0, Texel.y ) ) ) );
-					float C11 = 1.0f - saturate( abs( CountryId - SampleCountryIndex( Pixel + Texel ) ) );
+					float C00 = 1.0f - saturate( abs( CountryId - SampleControllerIndex( Pixel ) ) );
+					float C10 = 1.0f - saturate( abs( CountryId - SampleControllerIndex( Pixel + float2( Texel.x, 0.0 ) ) ) );
+					float C01 = 1.0f - saturate( abs( CountryId - SampleControllerIndex( Pixel + float2( 0.0, Texel.y ) ) ) );
+					float C11 = 1.0f - saturate( abs( CountryId - SampleControllerIndex( Pixel + Texel ) ) );
 					float x0 = lerp( C00, C10, FracCoord.x );
 					float x1 = lerp( C01, C11, FracCoord.x );
 					Opacity = RemapClamped( lerp( x0, x1, FracCoord.y ), 0.5f, 0.75f, 0.0f, 1.0f );
@@ -164,14 +158,14 @@ PixelShader = {
 
 				float4 StripeColor = PdxTex2DLoad0( CountryColors, int2( CountryId, 0 ) );
 
-				Opacity *= ( _MapCoaBlendOccupation * ( 1.0f - _FlatmapLerp ) ) + ( _MapCoaBlendOccupationFlatmap * _FlatmapLerp );
+				Opacity *= ( _CoaConstants._MapCoaBlendOccupation * ( 1.0f - _FlatmapLerp ) ) + ( _CoaConstants._MapCoaBlendOccupationFlatmap * _FlatmapLerp );
 
-				float FadeStart = ( _MapCoaBlendFadeStart - _MapCoaBlendFadeEnd );
-				float CloseZoomBlend = FadeStart - CameraPosition.y + ( _MapCoaBlendFadeEnd );
+				float FadeStart = ( _CoaConstants._MapCoaBlendFadeStart - _CoaConstants._MapCoaBlendFadeEnd );
+				float CloseZoomBlend = FadeStart - CameraPosition.y + ( _CoaConstants._MapCoaBlendFadeEnd );
 				CloseZoomBlend = smoothstep( FadeStart, 0.0f, CloseZoomBlend );
 				Opacity *= CloseZoomBlend;
 
-				float StripeScale = lerp( _MapCoaStripeScale, _MapCoaStripeScaleFlatmap, _FlatmapLerp );
+				float StripeScale = lerp( _CoaConstants._MapCoaStripeScale, _CoaConstants._MapCoaStripeScaleFlatmap, _FlatmapLerp );
 				Opacity *= CalculateStripeMask( MapCoords, 0.0, StripeScale );
 
 				float Gradient = 1.0 - PdxTex2D( HighlightGradient, MapCoords ).g;
@@ -189,13 +183,13 @@ PixelShader = {
 		void ApplyCoaColorBlend( float2 MapCoords, float2 ParalaxCoord, inout float3 Color, inout float PreLightingBlend )
 		{
 			// Coat of arms should only be shown in some map modes
-			if( !_MapCoaEnabled )
+			if( !_CoaConstants._MapCoaEnabled )
 			{
 				return;
 			}
 
 			// Provinces where Controller == Owner will have CountryId -1
-			int CountryId = SampleCountryIndex( MapCoords );
+			int CountryId = SampleControllerIndex( MapCoords );
 			if( CountryId >= 0 )
 			{
 				float Opacity = 1.0f;
@@ -204,29 +198,29 @@ PixelShader = {
 					float2 Pixel = ( MapCoords * _ProvinceMapSize + 0.5 );
 					float2 FracCoord = frac( Pixel );
 					Pixel = floor( Pixel ) / _ProvinceMapSize - Texel * 0.5f;
-					float C00 = 1.0f - saturate( abs( CountryId - SampleCountryIndex( Pixel ) ) );
-					float C10 = 1.0f - saturate( abs( CountryId - SampleCountryIndex( Pixel + float2( Texel.x, 0.0 ) ) ) );
-					float C01 = 1.0f - saturate( abs( CountryId - SampleCountryIndex( Pixel + float2( 0.0, Texel.y ) ) ) );
-					float C11 = 1.0f - saturate( abs( CountryId - SampleCountryIndex( Pixel + Texel ) ) );
+					float C00 = 1.0f - saturate( abs( CountryId - SampleControllerIndex( Pixel ) ) );
+					float C10 = 1.0f - saturate( abs( CountryId - SampleControllerIndex( Pixel + float2( Texel.x, 0.0 ) ) ) );
+					float C01 = 1.0f - saturate( abs( CountryId - SampleControllerIndex( Pixel + float2( 0.0, Texel.y ) ) ) );
+					float C11 = 1.0f - saturate( abs( CountryId - SampleControllerIndex( Pixel + Texel ) ) );
 					float x0 = lerp( C00, C10, FracCoord.x );
 					float x1 = lerp( C01, C11, FracCoord.x );
 					Opacity = RemapClamped( lerp( x0, x1, FracCoord.y ), 0.5f, 0.75f, 0.0f, 1.0f );
 				#endif
 				float4 FlagUvs = PdxReadBuffer4( CountryCoaUvBuffer, CountryId );
-				float2 CoaSize = _FlatmapLerp < 0.5f ? float2( _MapCoaSize, _MapCoaSize / _MapCoaAspectRatio ) : float2( _MapCoaSizeFlatmap, _MapCoaSizeFlatmap / _MapCoaAspectRatio );
+				float2 CoaSize = _FlatmapLerp < 0.5f ? float2( _CoaConstants._MapCoaSize, _CoaConstants._MapCoaSize / _CoaConstants._MapCoaAspectRatio ) : float2( _CoaConstants._MapCoaSizeFlatmap, _CoaConstants._MapCoaSizeFlatmap / _CoaConstants._MapCoaAspectRatio );
 				float2 CoaUV = ParalaxCoord * _ProvinceMapSize / CoaSize;
 
 				// Rotate
-				float2 Rotation = float2( cos( _MapCoaAngle ), sin( _MapCoaAngle ) );
-				CoaUV.x *= _MapCoaAspectRatio;
+				float2 Rotation = float2( cos( _CoaConstants._MapCoaAngle ), sin( _CoaConstants._MapCoaAngle ) );
+				CoaUV.x *= _CoaConstants._MapCoaAspectRatio;
 				CoaUV = float2( CoaUV.x * Rotation.x - CoaUV.y * Rotation.y, CoaUV.x * Rotation.y + CoaUV.y * Rotation.x );
-				CoaUV.x /= _MapCoaAspectRatio;
+				CoaUV.x /= _CoaConstants._MapCoaAspectRatio;
 
 				float2 CoaDdx = ddx( CoaUV );
 				float2 CoaDdy = ddy( CoaUV );
 
 				// Offset rows horizontally
-				CoaUV.x += _MapCoaRowOffset * int( mod( CoaUV.y, _MapCoaRowCount ) );
+				CoaUV.x += _CoaConstants._MapCoaRowOffset * int( mod( CoaUV.y, _CoaConstants._MapCoaRowCount ) );
 
 				// Tile, flip, and scale to match the atlas
 				CoaUV = frac( CoaUV );
@@ -238,10 +232,10 @@ PixelShader = {
 				float3 CoaColor = PdxTex2DGrad( CoaAtlas, CoaUV, CoaDdx, CoaDdy ).rgb;
 				CoaColor = ToLinear( CoaColor );
 
-				Opacity *= ( _MapCoaBlend * ( 1.0f - _FlatmapLerp ) ) + ( _MapCoaBlendFlatmap * _FlatmapLerp );
+				Opacity *= ( _CoaConstants._MapCoaBlend * ( 1.0f - _FlatmapLerp ) ) + ( _CoaConstants._MapCoaBlendFlatmap * _FlatmapLerp );
 
-				float FadeStart = ( _MapCoaBlendFadeStart - _MapCoaBlendFadeEnd );
-				float CloseZoomBlend = FadeStart - CameraPosition.y + ( _MapCoaBlendFadeEnd );
+				float FadeStart = ( _CoaConstants._MapCoaBlendFadeStart - _CoaConstants._MapCoaBlendFadeEnd );
+				float CloseZoomBlend = FadeStart - CameraPosition.y + ( _CoaConstants._MapCoaBlendFadeEnd );
 				CloseZoomBlend = smoothstep( FadeStart, 0.0f, CloseZoomBlend );
 				Opacity *= CloseZoomBlend;
 

@@ -187,6 +187,11 @@ Adds a timed modifier effect to object in scope
 Adds momentum to a Party during a campaign perioddd_momentum = value  
 **Supported Scopes**: party  
 
+## add_organization
+Adds the specified amount of Organization to the Military Formation in scope  
+add_organization = -10  
+**Supported Scopes**: military_formation  
+
 ## add_pollution
 Increase/decrease pollution level in a scoped state region  
 add_pollution = 10  
@@ -333,13 +338,13 @@ annex = scope
 
 ## annex_as_civil_war
 Annexes a country with all the inheritance effects of a victorious side in a civil war  
-annex = scope  
+annex_as_civil_war = scope  
 **Supported Scopes**: country  
 **Supported Targets**: country  
 
 ## annex_with_incorporation
 Annexes a country, inheriting incorporation of their states  
-annex = scope  
+annex_with_incorporation = scope  
 **Supported Scopes**: country  
 **Supported Targets**: country  
 
@@ -512,6 +517,13 @@ complete_objective_subgoal = <key>
 Changes X% of the different religion population to the specified religion.  
 convert_population = { target = rel:catholic value = 0.5 }  
 **Supported Scopes**: state  
+
+## copy_laws
+Copies the constitution of the target country scope  
+Warning: This stops any current enactment.  
+copy_laws = scope  
+**Supported Scopes**: country  
+**Supported Targets**: country  
 
 ## create_building
 Creates a building in the scoped state. Supported values are:  
@@ -764,9 +776,10 @@ every_cobelligerent_in_war = { limit = { <triggers> } <effects> }
 
 ## every_combat_units
 Iterate through all combat units of input scope  
+Supported scopes: building, military formation, front, battle  
 every_combat_units = { limit = { <triggers> } <effects> }  
-**Supported Scopes**: building, character  
-**Supported Targets**: combat_unit  
+**Supported Scopes**: battle, building, front, hq, military_formation  
+**Supported Targets**: new_combat_unit  
 
 ## every_country
 Iterate through all countries globally  
@@ -843,6 +856,13 @@ every_member = { limit = { <triggers> } <effects> }
 **Supported Scopes**: party  
 **Supported Targets**: interest_group  
 
+## every_military_formation
+Iterate through all military formations of input scope  
+Supported scopes: country, front, hq  
+every_military_formation = { limit = { <triggers> } <effects> }  
+**Supported Scopes**: country, front, hq  
+**Supported Targets**: military_formation  
+
 ## every_neighbouring_state
 Iterate through all states neighbouring a state region  
 every_neighbouring_state = { limit = { <triggers> } <effects> }  
@@ -898,9 +918,9 @@ every_rival_country = { limit = { <triggers> } <effects> }
 **Supported Targets**: country  
 
 ## every_scope_admiral
-Iterate through all admirals in a: country or interestgroup  
+Iterate through all admirals in a: country, interestgroup, or military formation  
 every_scope_admiral = { limit = { <triggers> } <effects> }  
-**Supported Scopes**: country, front, interest_group  
+**Supported Scopes**: country, front, interest_group, military_formation  
 **Supported Targets**: character  
 
 ## every_scope_ally
@@ -918,7 +938,7 @@ every_scope_building = { limit = { <triggers> } <effects> }
 ## every_scope_character
 Iterate through all characters in a: country, interestgroup, or front  
 every_scope_character = { limit = { <triggers> } <effects> }  
-**Supported Scopes**: country, front, interest_group  
+**Supported Scopes**: country, front, interest_group, military_formation  
 **Supported Targets**: character  
 
 ## every_scope_country
@@ -946,9 +966,9 @@ every_scope_front = { limit = { <triggers> } <effects> }
 **Supported Targets**: front  
 
 ## every_scope_general
-Iterate through all generals in a: country, interestgroup, or front  
+Iterate through all generals in a: country, interestgroup, front, or military formation  
 every_scope_general = { limit = { <triggers> } <effects> }  
-**Supported Scopes**: country, front, interest_group  
+**Supported Scopes**: country, front, interest_group, military_formation  
 **Supported Targets**: character  
 
 ## every_scope_initiator_ally
@@ -972,7 +992,7 @@ every_scope_play_involved = { limit = { <triggers> } <effects> }
 ## every_scope_politician
 Iterate through all politicians in a: country or interestgroup  
 every_scope_politician = { limit = { <triggers> } <effects> }  
-**Supported Scopes**: country, front, interest_group  
+**Supported Scopes**: country, front, interest_group, military_formation  
 **Supported Targets**: character  
 
 ## every_scope_pop
@@ -1270,6 +1290,7 @@ check_range_bounds = no # If you don't want an error logged if the list is small
 
 ## ordered_combat_units
 Iterate through all combat units of input scope  
+Supported scopes: building, military formation, front, battle  
 ordered_combat_units = {  
 limit = { <triggers> }  
 order_by = script_value  
@@ -1278,8 +1299,8 @@ min = int
 max = script_value  
 check_range_bounds = no # If you don't want an error logged if the list is smaller than the min/max  
 <effects> }  
-**Supported Scopes**: building, character  
-**Supported Targets**: combat_unit  
+**Supported Scopes**: battle, building, front, hq, military_formation  
+**Supported Targets**: new_combat_unit  
 
 ## ordered_country
 Iterate through all countries globally  
@@ -1447,6 +1468,20 @@ check_range_bounds = no # If you don't want an error logged if the list is small
 **Supported Scopes**: party  
 **Supported Targets**: interest_group  
 
+## ordered_military_formation
+Iterate through all military formations of input scope  
+Supported scopes: country, front, hq  
+ordered_military_formation = {  
+limit = { <triggers> }  
+order_by = script_value  
+position = int  
+min = int  
+max = script_value  
+check_range_bounds = no # If you don't want an error logged if the list is smaller than the min/max  
+<effects> }  
+**Supported Scopes**: country, front, hq  
+**Supported Targets**: military_formation  
+
 ## ordered_neighbouring_state
 Iterate through all states neighbouring a state region  
 ordered_neighbouring_state = {  
@@ -1565,7 +1600,7 @@ check_range_bounds = no # If you don't want an error logged if the list is small
 **Supported Targets**: country  
 
 ## ordered_scope_admiral
-Iterate through all admirals in a: country or interestgroup  
+Iterate through all admirals in a: country, interestgroup, or military formation  
 ordered_scope_admiral = {  
 limit = { <triggers> }  
 order_by = script_value  
@@ -1574,7 +1609,7 @@ min = int
 max = script_value  
 check_range_bounds = no # If you don't want an error logged if the list is smaller than the min/max  
 <effects> }  
-**Supported Scopes**: country, front, interest_group  
+**Supported Scopes**: country, front, interest_group, military_formation  
 **Supported Targets**: character  
 
 ## ordered_scope_ally
@@ -1613,7 +1648,7 @@ min = int
 max = script_value  
 check_range_bounds = no # If you don't want an error logged if the list is smaller than the min/max  
 <effects> }  
-**Supported Scopes**: country, front, interest_group  
+**Supported Scopes**: country, front, interest_group, military_formation  
 **Supported Targets**: character  
 
 ## ordered_scope_country
@@ -1669,7 +1704,7 @@ check_range_bounds = no # If you don't want an error logged if the list is small
 **Supported Targets**: front  
 
 ## ordered_scope_general
-Iterate through all generals in a: country, interestgroup, or front  
+Iterate through all generals in a: country, interestgroup, front, or military formation  
 ordered_scope_general = {  
 limit = { <triggers> }  
 order_by = script_value  
@@ -1678,7 +1713,7 @@ min = int
 max = script_value  
 check_range_bounds = no # If you don't want an error logged if the list is smaller than the min/max  
 <effects> }  
-**Supported Scopes**: country, front, interest_group  
+**Supported Scopes**: country, front, interest_group, military_formation  
 **Supported Targets**: character  
 
 ## ordered_scope_initiator_ally
@@ -1730,7 +1765,7 @@ min = int
 max = script_value  
 check_range_bounds = no # If you don't want an error logged if the list is smaller than the min/max  
 <effects> }  
-**Supported Scopes**: country, front, interest_group  
+**Supported Scopes**: country, front, interest_group, military_formation  
 **Supported Targets**: character  
 
 ## ordered_scope_pop
@@ -1987,9 +2022,10 @@ random_cobelligerent_in_war = { limit = { <triggers> } (optional) weight = { mtt
 
 ## random_combat_units
 Iterate through all combat units of input scope  
+Supported scopes: building, military formation, front, battle  
 random_combat_units = { limit = { <triggers> } (optional) weight = { mtth } <effects> }  
-**Supported Scopes**: building, character  
-**Supported Targets**: combat_unit  
+**Supported Scopes**: battle, building, front, hq, military_formation  
+**Supported Targets**: new_combat_unit  
 
 ## random_country
 Iterate through all countries globally  
@@ -2080,6 +2116,13 @@ random_member = { limit = { <triggers> } (optional) weight = { mtth } <effects> 
 **Supported Scopes**: party  
 **Supported Targets**: interest_group  
 
+## random_military_formation
+Iterate through all military formations of input scope  
+Supported scopes: country, front, hq  
+random_military_formation = { limit = { <triggers> } (optional) weight = { mtth } <effects> }  
+**Supported Scopes**: country, front, hq  
+**Supported Targets**: military_formation  
+
 ## random_neighbouring_state
 Iterate through all states neighbouring a state region  
 random_neighbouring_state = { limit = { <triggers> } (optional) weight = { mtth } <effects> }  
@@ -2135,9 +2178,9 @@ random_rival_country = { limit = { <triggers> } (optional) weight = { mtth } <ef
 **Supported Targets**: country  
 
 ## random_scope_admiral
-Iterate through all admirals in a: country or interestgroup  
+Iterate through all admirals in a: country, interestgroup, or military formation  
 random_scope_admiral = { limit = { <triggers> } (optional) weight = { mtth } <effects> }  
-**Supported Scopes**: country, front, interest_group  
+**Supported Scopes**: country, front, interest_group, military_formation  
 **Supported Targets**: character  
 
 ## random_scope_ally
@@ -2155,7 +2198,7 @@ random_scope_building = { limit = { <triggers> } (optional) weight = { mtth } <e
 ## random_scope_character
 Iterate through all characters in a: country, interestgroup, or front  
 random_scope_character = { limit = { <triggers> } (optional) weight = { mtth } <effects> }  
-**Supported Scopes**: country, front, interest_group  
+**Supported Scopes**: country, front, interest_group, military_formation  
 **Supported Targets**: character  
 
 ## random_scope_country
@@ -2183,9 +2226,9 @@ random_scope_front = { limit = { <triggers> } (optional) weight = { mtth } <effe
 **Supported Targets**: front  
 
 ## random_scope_general
-Iterate through all generals in a: country, interestgroup, or front  
+Iterate through all generals in a: country, interestgroup, front, or military formation  
 random_scope_general = { limit = { <triggers> } (optional) weight = { mtth } <effects> }  
-**Supported Scopes**: country, front, interest_group  
+**Supported Scopes**: country, front, interest_group, military_formation  
 **Supported Targets**: character  
 
 ## random_scope_initiator_ally
@@ -2209,7 +2252,7 @@ random_scope_play_involved = { limit = { <triggers> } (optional) weight = { mtth
 ## random_scope_politician
 Iterate through all politicians in a: country or interestgroup  
 random_scope_politician = { limit = { <triggers> } (optional) weight = { mtth } <effects> }  
-**Supported Scopes**: country, front, interest_group  
+**Supported Scopes**: country, front, interest_group, military_formation  
 **Supported Targets**: character  
 
 ## random_scope_pop
@@ -2601,6 +2644,11 @@ Adds a trait to the Interest Group, or replaces their current trait with the sam
 set_ig_trait = ig_trait:ig_trait_engines_of_progress  
 **Supported Scopes**: interest_group  
 **Supported Targets**: interest_group_trait  
+
+## set_immune_to_revolutions
+Makes a country immune to revolutions or removes such immunity.  
+set_immune_to_revolutions = yes/no  
+**Supported Scopes**: country  
 
 ## set_institution_investment_level
 Sets the investment level for an institution  

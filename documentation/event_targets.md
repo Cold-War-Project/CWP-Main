@@ -35,38 +35,6 @@ Output Scopes: value
 Scope to the workplace of a pop
 Input Scopes: pop
 Output Scopes: building
-### building
-Scope to the related building
-Input Scopes: new_combat_unit, combat_unit
-Output Scopes: building
-### commander
-Scope to the related commander
-Input Scopes: new_combat_unit, combat_unit
-Output Scopes: character
-### defense
-Returns the unit's defense rating (including impact from their commander)
-Input Scopes: new_combat_unit, combat_unit
-Output Scopes: value
-### demoralized
-Returns the unit's number of demoralized manpower
-Input Scopes: new_combat_unit, combat_unit
-Output Scopes: value
-### manpower
-Returns the unit's manpower
-Input Scopes: new_combat_unit, combat_unit
-Output Scopes: value
-### mobilization
-Returns the unit's mobilization value between 0 and 1
-Input Scopes: new_combat_unit, combat_unit
-Output Scopes: value
-### morale
-Returns the unit's morale
-Input Scopes: new_combat_unit, combat_unit
-Output Scopes: value
-### offense
-Returns the unit's offense rating (including impact from their commander)
-Input Scopes: new_combat_unit, combat_unit
-Output Scopes: value
 ### home_country
 Scopes to the home country of an exile
 Input Scopes: character, pop
@@ -76,10 +44,14 @@ Scope to the value of the modifier type of specified key belonging to the curren
 Requires Data: yes
 Input Scopes: country, building, character, interest_group, market, state
 Output Scopes: value, bool
-### type
-Scope from an object to its type
-Input Scopes: building, commander_order, institution, interest_group, law
-Output Scopes: building_type, commander_order_type, institution_type, interest_group_type, law_type
+### battle
+Scope from a battle side to the battle itself
+Input Scopes: battle_side
+Output Scopes: battle
+### province
+Scope from a battle side to the province in which the battle is being fought
+Input Scopes: battle_side
+Output Scopes: province
 ### diplomatic_pact_other_country
 Scope to the other country of the diplomatic pact in scope
 Requires Data: yes
@@ -93,14 +65,6 @@ Output Scopes: country
 Scope to the second country of the diplomatic pact in scope
 Input Scopes: diplomatic_pact
 Output Scopes: country
-### battle
-Scope from a battle side to the battle itself
-Input Scopes: battle_side
-Output Scopes: battle
-### province
-Scope from a battle side to the province in which the battle is being fought
-Input Scopes: battle_side
-Output Scopes: province
 ### market
 Scope to the market of the object
 Input Scopes: country, building, market, market_goods, province, state, state_region, state_goods
@@ -113,6 +77,10 @@ Output Scopes: diplomatic_play
 Scope to the state of the object
 Input Scopes: building, market, pop, province
 Output Scopes: state
+### culture
+Scope to pop's or character's culture
+Input Scopes: character, new_combat_unit, combat_unit, pop
+Output Scopes: culture
 ### region_state
 Unknown, add something in code registration
 Requires Data: yes
@@ -147,6 +115,10 @@ Output Scopes: country
 Returns local land HQ
 Input Scopes: province, state
 Output Scopes: hq
+### type
+Scope from an object to its type
+Input Scopes: building, institution, interest_group, law
+Output Scopes: building_type, institution_type, interest_group_type, law_type
 ### array_define
 Reference the value of a numeric value in an array define: array_define:Namespace|Name|Index. Index is 0-based.
 Requires Data: yes
@@ -240,6 +212,9 @@ Output Scopes: law_type
 Reference a previous set local variable via its name eg: local_var:person_of_interest
 Requires Data: yes
 Global Link: yes
+### mobilization_option
+Scope to a mobilization option from its name (mobilization_option:key)
+Requires Data: yes
 ### named_script_value
 A script value that will calculate and returns its value in the context it is used
 Wild Card: yes
@@ -299,6 +274,10 @@ Requires Data: yes
 Output Scopes: value
 ### this
 The current scope
+### unit_type
+Scope to a combat unit type from its name (unit_type:key)
+Requires Data: yes
+Output Scopes: combat_unit_type
 ### value
 A numeric literal value eg: 1, 5.2, -6
 Wild Card: yes
@@ -431,6 +410,14 @@ authority > decree_cost:decree_road_maintaintenance
 Requires Data: yes
 Input Scopes: country
 Output Scopes: value
+### expenses
+Get the current weekly expenses of the scoped country
+Input Scopes: country
+Output Scopes: value
+### fixed_expenses
+Get the current weekly fixed expenses of the scoped country
+Input Scopes: country
+Output Scopes: value
 ### get_ruler_for
 Scopes from country to a character that would be ruler, under the given transfer of power type
 get_ruler_for:parliamentary_elective = { effects... }
@@ -463,6 +450,10 @@ Scope to a country's institution from its name (institution:institution_health_s
 Requires Data: yes
 Input Scopes: country
 Output Scopes: institution
+### investment_pool_income
+Get the current weekly investment pool income of the scoped country
+Input Scopes: country
+Output Scopes: value
 ### je
 Scope to the journal entry of specified key belonging to the country
 Requires Data: yes
@@ -669,8 +660,40 @@ Output Scopes: value
 Scope to the top overlord of the country in scope
 Input Scopes: country
 Output Scopes: country
+### building
+Scope to the related building
+Input Scopes: new_combat_unit, combat_unit
+Output Scopes: building
+### commander
+Scope to the related commander
+Input Scopes: new_combat_unit, combat_unit
+Output Scopes: character
+### defense
+Returns the unit's defense rating (including impact from their commander)
+Input Scopes: new_combat_unit, combat_unit
+Output Scopes: value
+### demoralized
+Returns the unit's number of demoralized manpower
+Input Scopes: new_combat_unit, combat_unit
+Output Scopes: value
+### manpower
+Returns the unit's manpower
+Input Scopes: new_combat_unit, combat_unit
+Output Scopes: value
+### mobilization
+Returns the unit's mobilization value between 0 and 1
+Input Scopes: new_combat_unit, combat_unit
+Output Scopes: value
+### morale
+Returns the unit's morale
+Input Scopes: new_combat_unit, combat_unit
+Output Scopes: value
+### offense
+Returns the unit's offense rating (including impact from their commander)
+Input Scopes: new_combat_unit, combat_unit
+Output Scopes: value
 ### command_limit_num_units
-Get the total command limit for a commander
+Get the baseline number of units from their military formation a commander would normally get, depending on their command limit
 Input Scopes: character
 Output Scopes: value
 ### ideology
@@ -733,6 +756,10 @@ Output Scopes: battle_side
 Scope to the front where a battle takes place / where a character is located
 Input Scopes: battle, character
 Output Scopes: front
+### owner
+Scope to the owner country of object
+Input Scopes: country, building, character, new_combat_unit, combat_unit, decree, institution, interest_marker, interest_group, journalentry, law, market, market_goods, pop, province, state, trade_route
+Output Scopes: country
 ### political_movement
 If used in a character scope, scope to the political movement that character supports.
 If used in a revolution civil war scope, scope to the movement that started the revolution.
@@ -776,10 +803,6 @@ Output Scopes: strategic_region
 Scope from a BattleSide or State to its theater
 Input Scopes: battle_side, state
 Output Scopes: theater
-### owner
-Scope to the owner country of object
-Input Scopes: country, building, character, new_combat_unit, combat_unit, decree, institution, interest_marker, interest_group, journalentry, law, market, market_goods, pop, province, state, trade_route
-Output Scopes: country
 ### combat_width
 Scope to combat width multiplier of scope province
 Input Scopes: province
@@ -792,10 +815,6 @@ Output Scopes: hq
 Get the scoped party's raw momentum
 Input Scopes: party
 Output Scopes: value
-### culture
-Scope to pop's or character's culture
-Input Scopes: character, new_combat_unit, combat_unit, pop
-Output Scopes: culture
 ### attacker_warleader
 Scope to the attacker warleader of a war
 Input Scopes: war
@@ -943,6 +962,8 @@ war
 neighbor
 theater
 country
+culture
+combat_unit_type
 notification_target
 notification_ignore
 previous
@@ -978,3 +999,4 @@ distance_to_closest_war_goal
 occupation_fraction
 military_formation
 is_strategic_objective
+company_type
