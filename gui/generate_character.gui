@@ -127,16 +127,17 @@ types generate_character_types
 								widget = {
 									parentanchor = hcenter
 									size = { 320 40 }
+
 									# IG
 									flowcontainer = {
 										name = "tutorial_highlight_recruit_commander_rank"
-										parentanchor = left
-										#margin_left = 10
+										parentanchor = left|vcenter
+										margin_left = 5
 										spacing = 5
 										
 										### RANK
 										icon = {
-											size = { 40 40 }
+											size = { 35 35 }
 											parentanchor = left|vcenter
 											texture = "[Character.GetCommanderRank.GetTexture]"
 											datacontext = "[Character.GetCommanderRank]"
@@ -163,14 +164,14 @@ types generate_character_types
 									# IG
 									flowcontainer = {
 										name = "tutorial_highlight_recruit_commander_interest_group"
-										parentanchor = right
-										#margin_right = 10
+										parentanchor = right|vcenter
+										margin_right = 10
 										#visible = "[Not(Character.IsHeir)]"
 										datacontext = "[Character.AccessInterestGroup]"
 										spacing = 5
 										
 										character_ig_icon = {
-											size = { 40 40 }
+											size = { 30 30 }
 
 											blockoverride "tooltip" {
 												tooltipwidget = {
@@ -192,50 +193,184 @@ types generate_character_types
 										}
 									}
 								}
+
+								divider_clean = {
+									parentanchor = hcenter
+									size = { 310 1 }
+								}
 								
 								# traits + ideology
-								flowcontainer = {
+								container = {
 									parentanchor = hcenter
-									direction = vertical
-									spacing = 10
-									margin_top = 10
-									divider_clean = {
-										size = { 300 1 }
-									}
+									minimumsize = { 320 110 }
 
-									fixedgridbox = {
-										minimumsize = { -1 120 }
+									dynamicgridbox = {
 										datamodel = "[Character.AccessTraits]"
-										addcolumn = 150
-										addrow = 50
-										maxhorizontalslots = 2
+										maxhorizontalslots = 3
 										datamodel_wrap = 2
 										flipdirection = yes
 										parentanchor = hcenter
+										position = { 0 5 }
 
 										item = {
 											flowcontainer = {
-												name = "tutorial_highlight_recruit_commander_trait"
-												using = tooltip_above
-												tooltipwidget = {
-													FancyTooltip_CharacterTrait = {}
-												}
-												icon = {
-													size = { 25 35 }
-													parentanchor = vcenter
-													texture = "[CharacterTrait.GetTexture]"
-												}
-												textbox = {
-													text = "[CharacterTrait.GetNameNoFormatting]"
+												margin_right = 5
+												margin_bottom = 5											
+												container = {
+													name = "tutorial_highlight_recruit_commander_trait"
+													minimumsize = { 150 45 }
+													maximumsize = { 150 45 }
+													using = tooltip_above
+													background = {
+														using = entry_bg_simple
+													}
+													tooltipwidget = {
+														FancyTooltip_CharacterTrait = {}
+													}
+
+													flowcontainer = {
+														parentanchor = vcenter
+														margin_left = 5
+														icon = {
+															size = { 25 35 }
+															parentanchor = vcenter
+															texture = "[CharacterTrait.GetTexture]"
+														}
+														textbox = {
+															text = "[CharacterTrait.GetNameNoFormatting]"
+															margin_left = 5
+															margin_right = 10
+															maximumsize = { 125 35 }
+															elide = right
+															autoresize = yes
+															parentanchor = vcenter
+															align = left|nobaseline
+															multiline = yes
+															using = fontsize_small
+														}
+													}
+												}	
+											}
+										}
+									}
+								}
+
+								# SPECIAL ORDERS
+								flowcontainer = {
+									visible = yes 
+									parentanchor = hcenter
+									direction = vertical
+									spacing = 5
+									margin_bottom = 10
+
+									# HAS SPECIAL ORDERS
+									textbox = {
+										visible = "[Not(IsDataModelEmpty(Character.AccessPossibleSpecialOrders))]"
+										parentanchor = hcenter
+										autoresize = yes
+										multiline = yes
+										align = nobaseline
+										text = "RECRUIT_COMMANDER_SPECIAL_ORDERS_TITLE"
+									}
+
+									# NO SPECIAL ORDERS
+									textbox = {
+										visible = "[IsDataModelEmpty(Character.AccessPossibleSpecialOrders)]"
+										parentanchor = hcenter
+										autoresize = yes
+										multiline = yes
+										align = nobaseline
+										text = "NO_SPECIAL_ORDERS_TITLE"
+										minimumsize = { -1 73 }
+										alpha = "[TransparentIfTrue('(bool)yes')]"
+									}
+
+									# SPECIAL ORDERS LIST
+									dynamicgridbox = {
+										parentanchor = hcenter
+										visible = "[Not(IsDataModelEmpty(Character.AccessPossibleSpecialOrders))]"
+										datamodel = "[Character.AccessPossibleSpecialOrders]"
+										flipdirection = yes
+										datamodel_wrap = 2
+										minimumsize = { 310 -1 }
+
+										item = {
+											flowcontainer = {
+												margin_right = 5
+												flowcontainer = {
+													minimumsize = { 150 45 }
+													maximumsize = { 150 45 }
 													margin_left = 5
-													max_width = 125
-													autoresize = yes
-													parentanchor = vcenter
-													align = left|nobaseline
-													multiline = yes
-													using = fontsize_small
+													spacing = 5
+													tooltipwidget = {
+														FancyTooltip_CommanderOrderType = {
+															blockoverride "text_before" {
+																visible = "[Or(Or(ObjectsEqual(Character.GetOrderType.Self, CommanderOrderType.Self), ObjectsEqual(Character.GetNextOrderType.Self, CommanderOrderType.Self)), Not(StringIsEmpty(GetDesc( Character.SelectOrder( CommanderOrderType.Self )))))]"
+																text =  "NEXT_OR_CURRENT_ORDER"
+																margin_bottom = 15
+															}
+														}
+													}
+
+													background = {
+														using = entry_bg_simple
+													}
+
+													icon = {
+														parentanchor = vcenter
+														size = { 35 35 }
+														texture = "gfx/interface/icons/commander_order_icons/advance.dds"
+													}
+
+													textbox = {
+														parentanchor = vcenter
+														text = "[CommanderOrderType.GetName]"
+														autoresize = yes
+														multiline = yes
+														align = nobaseline
+														using = fontsize_small
+														fontsize_min = 12
+														elide = right
+														maximumsize = { 100 35 }
+													}
 												}
-											}	
+											}
+										}
+									}
+								}
+								
+
+								### ORDERS
+								dynamicgridbox = {
+									visible = no
+									datamodel = "[Character.AccessOrders]"
+									flipdirection = yes
+									datamodel_wrap = 2
+									parentanchor = hcenter
+									item = {
+										flowcontainer = {
+											spacing = 10
+											tooltipwidget = {
+												FancyTooltip_CommanderOrderType = {
+													blockoverride "text_before" {
+														visible = "[Or(Or(ObjectsEqual(Character.GetOrderType.Self, CommanderOrderType.Self), ObjectsEqual(Character.GetNextOrderType.Self, CommanderOrderType.Self)), Not(StringIsEmpty(GetDesc( Character.SelectOrder( CommanderOrderType.Self )))))]"
+														text =  "NEXT_OR_CURRENT_ORDER"
+														margin_bottom = 15
+													}
+												}
+											}
+											icon = {
+												size = { 30 30 }
+												texture = "[CommanderOrderType.GetTexture]"
+											}
+											textbox = {
+												autoresize = yes
+												align = nobaseline
+												text = "[CommanderOrderType.GetName]"
+												parentanchor = vcenter
+												maximumsize = { 120 -1 }
+												elide = right
+											}
 										}
 									}
 								}	
@@ -251,41 +386,6 @@ types generate_character_types
 									onclick = "[Character.RecruitCharacter( PopupManager.GetRecruitFormation )]"
 									block "sound" {
 										using = commander_recruit_button_sound
-									}
-
-									### RANK
-									icon = {
-										size = { 65 65 }
-										parentanchor = left|vcenter
-										texture = "[Character.GetCommanderRank.GetTexture]"
-										datacontext = "[Character.GetCommanderRank]"
-										tooltipwidget = {
-											FancyTooltip_CommanderRank = {}
-										}
-									}
-								}
-								flowcontainer = {
-									visible = "[PopupManager.GetRecruitHQ.IsValid]"
-									spacing = 5
-									parentanchor = hcenter
-									margin_bottom = 15
-									datacontext = "[Character]"
-
-									textbox = {
-										text = "[PopupManager.GetRecruitHQ.GetCommanderTroopAllocationPredictionDesc( Character.Self )]"
-										autoresize = yes
-										parentanchor = vcenter
-										using = fontsize_large
-										align = left|nobaseline
-										maximumsize = { 325 -1 }
-                                        multiline = yes
-									}
-									icon = {
-										visible = "[LessThan_int32(PopupManager.GetRecruitHQ.GetCommanderTroopAllocationPredictionRaw( Character.Self ), '(int32)1')]"
-										parentanchor = vcenter
-										size = { 40 40 }
-										texture = "gfx/interface/icons/generic_icons/warning.dds"
-										tooltip = "[Character.GetNoUnitsDesc]"
 									}
 								}
 							}

@@ -75,6 +75,7 @@ PixelShader =
 		Output = "PDX_COLOR"
 		Code
 		[[
+
 			PDX_MAIN
 			{
 
@@ -85,20 +86,20 @@ PixelShader =
 				clip( Alpha - 0.001f );
 
 				// Base cloud layer
-				float2 BaseCloudUV = float2( UV.x * BaseCloudTileFactor, UV.y * ( BaseCloudTileFactor / 2.0f ) );
-				float2 BaseCloudOffset = GlobalTime * BaseCloudScrolling;
+				float2 BaseCloudUV = float2( UV.x * _EowConstants._BaseCloudTileFactor, UV.y * ( _EowConstants._BaseCloudTileFactor / 2.0f ) );
+				float2 BaseCloudOffset = GlobalTime * _EowConstants._BaseCloudScrolling;
 				float2 AnimatedBaseCloudUV = BaseCloudUV + BaseCloudOffset;
 
 				// Cloud layers
 				float CloudAlpha = PdxTex2D( EdgeOfWorldTexture, AnimatedBaseCloudUV ).r;
-				float CloudAlpha2 = PdxTex2D( EdgeOfWorldTexture, ( AnimatedBaseCloudUV + GlobalTime * Cloud1Scrolling ) * Cloud1TileFactor ).r;
-				float CloudAlpha3 = PdxTex2D( EdgeOfWorldTexture, ( AnimatedBaseCloudUV + GlobalTime * Cloud2Scrolling ) * Cloud2TileFactor ).r;
-				CloudAlpha = LevelsScan( CloudAlpha, BaseCloudPosition, BaseCloudContrast );
-				CloudAlpha2 = LevelsScan( CloudAlpha2, Cloud1Position, Cloud1Contrast );
-				CloudAlpha3 = LevelsScan( CloudAlpha3, Cloud2Position, Cloud2Contrast );
+				float CloudAlpha2 = PdxTex2D( EdgeOfWorldTexture, ( AnimatedBaseCloudUV + GlobalTime * _EowConstants._Cloud1Scrolling ) * _EowConstants._Cloud1TileFactor ).r;
+				float CloudAlpha3 = PdxTex2D( EdgeOfWorldTexture, ( AnimatedBaseCloudUV + GlobalTime * _EowConstants._Cloud2Scrolling ) * _EowConstants._Cloud2TileFactor ).r;
+				CloudAlpha = LevelsScan( CloudAlpha, _EowConstants._BaseCloudPosition, _EowConstants._BaseCloudContrast );
+				CloudAlpha2 = LevelsScan( CloudAlpha2, _EowConstants._Cloud1Position, _EowConstants._Cloud1Contrast );
+				CloudAlpha3 = LevelsScan( CloudAlpha3, _EowConstants._Cloud2Position, _EowConstants._Cloud2Contrast );
 
 				// Color
-				float3 CloudColor = lerp( LowCloudColor.rgb, HighCloudColor.rgb, CloudAlpha * BaseCloudStrength + CloudAlpha2 * Cloud1Strength + CloudAlpha3 * Cloud2Strength );
+				float3 CloudColor = lerp( _EowConstants._LowCloudColor.rgb, _EowConstants._HighCloudColor.rgb, CloudAlpha * _EowConstants._BaseCloudStrength + CloudAlpha2 * _EowConstants._Cloud1Strength + CloudAlpha3 * _EowConstants._Cloud2Strength );
 
 				float3 Normal = normalize( float3( 0.0f, 1.0f, 0.0f ) );
 				SMaterialProperties MaterialProps = GetMaterialProperties( CloudColor, Normal, 0.8, 0.16, 1.0 );
@@ -106,11 +107,11 @@ PixelShader =
 
 				float3 Color = CalculateSunLighting( MaterialProps, LightingProps, EnvironmentMap );
 				Color = ApplyDistanceFog( Color, Input.WorldSpacePos );
-				Color *= ColorMultiply;
+				Color *= _EowConstants._ColorMultiply;
 
 				// Edge fade
-				float FadeDist = FadeDistance;
-				float FadeTop = Input.WorldSpacePos.z - MapSize.y + FadeDist;
+				float FadeDist = _EowConstants._FadeDistance;
+				float FadeTop = Input.WorldSpacePos.z - MapSize.y + 10.0f + FadeDist;
 				FadeTop = smoothstep(0.0f, FadeDist, FadeTop);
 				float FadeBottom = FadeDist - Input.WorldSpacePos.z;
 				FadeBottom = smoothstep( 0.0f, FadeDist, FadeBottom);

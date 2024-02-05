@@ -1,9 +1,10 @@
 Includes = {
-	"pdxmesh_vfx.fxh"
-	"cw/pdxmesh.fxh"
-	"cwp_coloroverlay.fxh"
-	"ssao_struct.fxh"
 	"cw/camera.fxh"
+	"cw/pdxmesh.fxh"
+
+	"pdxmesh_vfx.fxh"
+	"coloroverlay.fxh"
+	"ssao_struct.fxh"
 }
 
 PixelShader =
@@ -40,7 +41,7 @@ PixelShader =
 
 VertexStruct VS_OUTPUT
 {
-    float4 Position			: PDX_POSITION;
+	float4 Position			: PDX_POSITION;
 	float3 Normal			: TEXCOORD0;
 	float3 Tangent			: TEXCOORD1;
 	float3 Bitangent		: TEXCOORD2;
@@ -135,9 +136,9 @@ VertexShader =
 					SkinnedBitangent += Bitangent * Weights[i];
 				}
 
-				Out.Normal = normalize( mul( CastTo3x3(WorldMatrix), normalize( SkinnedNormal ) ) );
-				Out.Tangent = normalize( mul( CastTo3x3(WorldMatrix), normalize( SkinnedTangent ) ) );
-				Out.Bitangent = normalize( mul( CastTo3x3(WorldMatrix), normalize( SkinnedBitangent ) ) );
+				Out.Normal = normalize( mul( CastTo3x3( WorldMatrix ), normalize( SkinnedNormal ) ) );
+				Out.Tangent = normalize( mul( CastTo3x3( WorldMatrix ), normalize( SkinnedTangent ) ) );
+				Out.Bitangent = normalize( mul( CastTo3x3( WorldMatrix ), normalize( SkinnedBitangent ) ) );
 
 				Out.Position = SkinnedPosition;
 			#endif
@@ -162,7 +163,7 @@ VertexShader =
 
 					ApplyJointAnimation ( Out, Input, WorldMatrix );
 					BillboardMVPMatrix( ProjectionWorldViewMatrix, int3(0, 0, 1) );
-					Out.Position = mul(ProjectionWorldViewMatrix, Out.Position);
+					Out.Position = mul( ProjectionWorldViewMatrix, Out.Position );
 				#endif
 
 				#ifdef BILLBOARD_MESH
@@ -235,18 +236,13 @@ PixelShader =
 				#endif
 
 				#ifdef UI_PANNING_TEXTURE
-
-					float FadeDistance = 1.0f;
-					float EdgeFade = 1.0f;
-					float EdgeAlpha = 1.0f;
-
 					// Mask for the lower edge
 					float LowerEdgeMask = saturate( ( Input.UV1.y - LOWER_EDGE_FALLOFF ) );
 					float4 NoiseTextureSample = PdxTex2D( DiffuseMap, Input.UV1.xy );
 
 					// Distorted and Base UV Sets used to sample textures later
 					float2 BaseUV = float2( Input.UV2.x, Input.UV2.y );
-					float2 DistortedUVs = BaseUV + float2(NoiseTextureSample.r, NoiseTextureSample.g) * UV_DIST_STRENGTH;
+					float2 DistortedUVs = BaseUV + float2( NoiseTextureSample.r, NoiseTextureSample.g ) * UV_DIST_STRENGTH;
 
 					float4 NoiseTexture;
 					float4 NoiseTextureDistorted2 = PdxTex2D( DiffuseMap, DistortedUVs );
@@ -264,7 +260,7 @@ PixelShader =
 					float LowerCut = smoothstep( 0.0f, LOWER_EDGE_CUT, LowerEdge * LowerEdge2 );
 
 					Composite.rgb = lerp( NoiseTexture.a, NoiseTexture.r, LowerEdge ) + LowerEdge;
-					Composite.rgb = PdxTex2D( PropertiesMap, saturate(float2( Composite.r + LOWER_EDGE_COL_SLIDE, Composite.g ))).rgb;
+					Composite.rgb = PdxTex2D( PropertiesMap, saturate( float2( Composite.r + LOWER_EDGE_COL_SLIDE, Composite.g ) ) ).rgb;
 					Composite.rgb = lerp(Composite.rgb, UPPER_EDGE_COL, UpperEdge );
 
 					// Final Composite Alpha
@@ -286,12 +282,12 @@ PixelShader =
 
 					float a = ( sin( GlobalTime * 2.0f ) + 1.0f ) * 0.5f;
 
-					float Alpha = smoothstep(a, saturate( a - 0.025f ), 1.0f - Out.Color.a );
-					float Alpha2 = Alpha - smoothstep(a, saturate( a - 0.05f), 1.0f - Out.Color.a );
+					float Alpha = smoothstep( a, saturate( a - 0.025f ), 1.0f - Out.Color.a );
+					float Alpha2 = Alpha - smoothstep( a, saturate( a - 0.05f), 1.0f - Out.Color.a );
 
 					Out.Color.a = Alpha;
 					Out.Color.rgb = lerp( float3( 0.0f, 0.0f, 0.0f ), float3( 0.0f, 0.0f, 0.0f ), a * a * a ) + Alpha2 * float3( 3.0f, 0.0f, 0.0f );
-					Out.Color.a = ApplyOpacity(Out.Color.a, Input.Position.xy, Input.InstanceIndex);
+					Out.Color.a = ApplyOpacity( Out.Color.a, Input.Position.xy, Input.InstanceIndex );
 				#endif
 
 				return Out;
