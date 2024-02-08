@@ -91,9 +91,10 @@ any_cobelligerent_in_war = { <count=num/all> / <percent=fixed_point> <triggers> 
 
 ## any_combat_units
 Iterate through all combat units of input scope  
+Supported scopes: building, military formation, front, battle  
 any_combat_units = { <count=num/all> / <percent=fixed_point> <triggers> }  
-**Supported Scopes**: building, character  
-**Supported Targets**: combat_unit  
+**Supported Scopes**: battle, building, front, hq, military_formation  
+**Supported Targets**: new_combat_unit  
 
 ## any_country
 Iterate through all countries globally  
@@ -174,6 +175,13 @@ any_member = { <count=num/all> / <percent=fixed_point> <triggers> }
 **Supported Scopes**: party  
 **Supported Targets**: interest_group  
 
+## any_military_formation
+Iterate through all military formations of input scope  
+Supported scopes: country, front, hq  
+any_military_formation = { <count=num/all> / <percent=fixed_point> <triggers> }  
+**Supported Scopes**: country, front, hq  
+**Supported Targets**: military_formation  
+
 ## any_neighbouring_state
 Iterate through all states neighbouring a state region  
 any_neighbouring_state = { <count=num/all> / <percent=fixed_point> <triggers> }  
@@ -229,9 +237,9 @@ any_rival_country = { <count=num/all> / <percent=fixed_point> <triggers> }
 **Supported Targets**: country  
 
 ## any_scope_admiral
-Iterate through all admirals in a: country or interestgroup  
+Iterate through all admirals in a: country, interestgroup, or military formation  
 any_scope_admiral = { <count=num/all> / <percent=fixed_point> <triggers> }  
-**Supported Scopes**: country, front, interest_group  
+**Supported Scopes**: country, front, interest_group, military_formation  
 **Supported Targets**: character  
 
 ## any_scope_ally
@@ -249,7 +257,7 @@ any_scope_building = { <count=num/all> / <percent=fixed_point> <triggers> }
 ## any_scope_character
 Iterate through all characters in a: country, interestgroup, or front  
 any_scope_character = { <count=num/all> / <percent=fixed_point> <triggers> }  
-**Supported Scopes**: country, front, interest_group  
+**Supported Scopes**: country, front, interest_group, military_formation  
 **Supported Targets**: character  
 
 ## any_scope_country
@@ -277,9 +285,9 @@ any_scope_front = { <count=num/all> / <percent=fixed_point> <triggers> }
 **Supported Targets**: front  
 
 ## any_scope_general
-Iterate through all generals in a: country, interestgroup, or front  
+Iterate through all generals in a: country, interestgroup, front, or military formation  
 any_scope_general = { <count=num/all> / <percent=fixed_point> <triggers> }  
-**Supported Scopes**: country, front, interest_group  
+**Supported Scopes**: country, front, interest_group, military_formation  
 **Supported Targets**: character  
 
 ## any_scope_initiator_ally
@@ -303,7 +311,7 @@ any_scope_play_involved = { <count=num/all> / <percent=fixed_point> <triggers> }
 ## any_scope_politician
 Iterate through all politicians in a: country or interestgroup  
 any_scope_politician = { <count=num/all> / <percent=fixed_point> <triggers> }  
-**Supported Scopes**: country, front, interest_group  
+**Supported Scopes**: country, front, interest_group, military_formation  
 **Supported Targets**: character  
 
 ## any_scope_pop
@@ -402,6 +410,16 @@ arable_land > 10Traits: <, <=, =, !=, >, >=
 ## arable_land_country
 Compare arable land in *all* states  
 arable_land_country > 10Traits: <, <=, =, !=, >, >=  
+**Supported Scopes**: country  
+
+## army_mobilization_option_fraction
+Checks that a countries army has a certain percentage of units with a specific monbilization option  
+scope:country = {  
+  army_mobilization_option_fraction = {  
+    target = mobilization_option:key  
+    value >= 0.2  
+  }  
+}Traits: <, <=, =, !=, >, >=  
 **Supported Scopes**: country  
 
 ## army_reserves
@@ -620,6 +638,16 @@ Checks if scoped state region contains the capital of target tag
 contains_capital_of = country scope/tag  
 **Supported Scopes**: state_region  
 
+## country_army_unit_type_fraction
+Checks that a country has a certain percentage of a specific army unit type  
+scope:example_formation = {  
+  country_military_unit_type_fraction = {  
+    target = unit_type:key  
+    value >= 0.2  
+  }  
+}Traits: <, <=, =, !=, >, >=  
+**Supported Scopes**: country  
+
 ## country_definition_has_culture
 Checks if a culture is one of the cultures of the country definition  
 country_definition_has_culture = <culture>Traits: culture scope  
@@ -637,6 +665,16 @@ Checks if a religion is the state religion in the country
 country_has_accepted_religion = <religion>Traits: religion scope  
 **Supported Scopes**: country  
 **Supported Targets**: religion  
+
+## country_navy_unit_type_fraction
+Checks that a country has a certain percentage of a specific navy unit type  
+scope:example_formation = {  
+  country_navy_unit_type_fraction = {  
+    target = unit_type:key  
+    value >= 0.2  
+  }  
+}Traits: <, <=, =, !=, >, >=  
+**Supported Scopes**: country  
 
 ## country_or_subject_owns_entire_state_region
 Checks whether the scoped country or any of its subjects owns the entire specified state region  
@@ -827,6 +865,26 @@ Compares the current total manpower of a country's Flotillas
 flotilla_manpower > 1000Traits: <, <=, =, !=, >, >=  
 **Supported Scopes**: country  
 
+## formation_army_unit_type_fraction
+Checks that a formation has a certain percentage of a specific army unit type  
+scope:example_formation = {  
+  country_military_unit_type_fraction = {  
+    target = unit_type:key  
+    value >= 0.2  
+  }  
+}Traits: <, <=, =, !=, >, >=  
+**Supported Scopes**: military_formation  
+
+## formation_navy_unit_type_fraction
+Checks that a formation has a certain percentage of a specific navy unit type  
+scope:example_formation = {  
+  formation_navy_unit_type_fraction = {  
+    target = unit_type:key  
+    value >= 0.2  
+  }  
+}Traits: <, <=, =, !=, >, >=  
+**Supported Scopes**: military_formation  
+
 ## free_arable_land
 Check free arable land in state  
 free_arable_land > 0Traits: <, <=, =, !=, >, >=  
@@ -951,8 +1009,8 @@ any_state = {
 **Supported Targets**: country  
 
 ## has_commander_order
-Checks characters order  
-has_order = order key/order scope  
+Checks whether the scoped character is following the given order  
+has_order = order type key/order type scope  
 **Supported Scopes**: character  
 
 ## has_company
@@ -1804,6 +1862,12 @@ is_homeland_of_country_cultures = <country>Traits: country scope
 **Supported Scopes**: state  
 **Supported Targets**: country  
 
+## is_immune_to_revolutions
+Checks if the country has been set to be immune to revolutions via set_immune_to_revolutions  
+Warning: This does not check if the country is naturally immune to revolutions due to for example being a revolutionary country itself, only for the effects of set_immune_to_revolutions.  
+is_immune_to_revolutions = yes/noTraits: yes/no   
+**Supported Scopes**: country  
+
 ## is_in_battle
 Checks if a Commander is engaged in battle  
 is_in_battle = boolTraits: yes/no   
@@ -2381,6 +2445,11 @@ Compares the maximum number of declared interests of scoped country
 max_num_declared_interests = <value>Traits: <, <=, =, !=, >, >=  
 **Supported Scopes**: country  
 
+## max_organization
+Compares the effective maximum Organization of the Military Formation in scope  
+max_organization < define:NMilitary|MILITARY_FORMATION_ORGANIZATION_MAXTraits: <, <=, =, !=, >, >=  
+**Supported Scopes**: military_formation  
+
 ## military_wage_level
 Compares the military wage level of scoped country  
 military_wage_level = <level>Traits: <, <=, =, !=, >, >=  
@@ -2493,6 +2562,11 @@ occupancy < 0.25Traits: <, <=, =, !=, >, >=
 ## or
 at least one entry inside trigger must be true  
 **Supported Scopes**: none  
+
+## organization
+Compares the Organization of the Military Formation in scope  
+organization <= define:NMilitary|MILITARY_FORMATION_ORGANIZATION_MINTraits: <, <=, =, !=, >, >=  
+**Supported Scopes**: military_formation  
 
 ## owes_obligation_to
 Checks if country in scope owes a obligation to event target  

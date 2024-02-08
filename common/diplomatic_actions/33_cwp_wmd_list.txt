@@ -1,0 +1,123 @@
+﻿add_to_target_list_country = {
+	requires_approval = no
+	potential = {
+		OR = {
+			has_modifier = atomic_capable
+			has_modifier = thermonuclear_capable
+		}
+		scope:target_country = {
+			not = {
+				any_scope_state = {
+					count = all
+					ROOT = {
+						is_target_in_variable_list = {
+							name = wmd_target_list
+							target = PREV
+						}
+					}
+	
+				}
+			}
+		}
+	}
+	possible = {
+		wmd_target_list_slots_left >= scope:target_country.num_states
+	}
+	accept_effect = {
+		add_to_variable_list = {
+			name = wmd_target_list_c
+			target = scope:target_country
+		}
+		scope:target_country = {
+			every_scope_state = {
+				ROOT = {
+					add_to_variable_list = {
+						name = wmd_target_list
+						target = PREV 
+					}
+				}
+			}
+		}
+		effect_order_target_list_by_population = yes
+		effect_reset_relevant_coverage = yes
+	}
+}
+
+request_nuclear_bomb_deployment = {
+	requires_approval = yes
+	should_notify_third_parties = yes
+	potential = {
+		OR = {
+			has_modifier = atomic_capable
+			has_modifier = thermonuclear_capable
+		}
+		scope:target_country = {
+			nor = {
+				has_variable = deployed_nuclear_bombs
+				has_war_with = ROOT
+				country_rank >= rank_value:superpower
+			}
+		}
+	}
+	possible = {
+		scope:target_country = {
+			relations:root > 20
+			nor = {
+				has_variable = deployed_nuclear_bombs
+				has_war_with = ROOT
+				country_rank >= rank_value:superpower
+			}
+		}
+	}
+	accept_effect = {
+		scope:target_country = {
+			set_variable = {
+				name = deployed_nuclear_bombs
+				value = root
+			}
+		}
+		effect_reset_relevant_coverage = yes
+		every_country = {
+			limit = {
+				not = {
+					ROOT = this
+				}
+				is_adjacent = scope:target_country
+				country_rank >= rank_value:great_power
+			}
+			ROOT = {
+				save_scope_as = initiator
+			}
+			scope:target_country = {
+				save_scope_as = target
+			}
+			trigger_event = {
+				id = wmd_deployment_events.1
+			}
+		}
+	}
+	
+	pact = {
+		cost = 50
+		is_two_sided_pact = no
+		show_in_outliner = yes
+		relations_progress_per_day = 2		# At 100, +1 relations
+		relations_improvement_max = 80
+		recipient_gets_income_transfer = yes
+		income_transfer_based_on_recipient = yes
+		
+		weekly_effect = {
+		}
+		is_about_to_auto_break = {
+			scope:target_country.relations:root <= -20			# this: poor + 3
+		}
+		should_invalidate = {
+			has_war_with = scope:target_country
+		}
+		break_effect = {
+			scope:target_country = {
+				remove_variable = deployed_nuclear_bombs
+			}
+		}
+	}
+}
