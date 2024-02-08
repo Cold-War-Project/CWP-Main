@@ -1,0 +1,390 @@
+﻿namespace = wmd_attack_events
+
+wmd_attack_events.1 = { # Confirmation Dialogue for ending the world
+	type = country_event
+	placement = ROOT
+	title = wmd_attack_events.1.t
+	desc = wmd_attack_events.1.d
+	flavor = wmd_attack_events.1.f
+
+	duration = 3
+	icon = "gfx/interface/icons/lens_toolbar_icons/nuclear_weapons.dds"
+
+	event_image = {
+		trigger = {
+			game_date <= 1999.12.31
+		}
+		texture = "gfx/interface/event_pictures/nuclear_strike_cold_war.dds"
+	}
+	event_image = {
+		trigger = {
+			game_date > 1999.12.31
+		}
+		texture = "gfx/interface/event_pictures/nuclear_strike_modern.dds"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/misc/1Character_Banner"
+
+	immediate = {
+		ROOT = {
+			save_scope_as = initiator
+		}
+		every_in_list = {
+			variable = wmd_target_list
+			save_scope_as = target
+		}
+		every_in_list = {
+			variable = wmd_target_list_c
+			save_scope_as = target_owner
+		}
+	}
+	# TODO - AI SCRIPTING
+	option = {
+		name = wmd_attack_events.1.a
+		highlighted_option = yes
+		every_in_list = {
+			variable = wmd_target_list_c
+			this = {
+				save_scope_as = target_owner
+			}
+			#TODO, CHECK THIS
+			if = { # Trigger oh fuck we got struck event for every country that got struck
+				limit = {
+					not = {
+						THIS = scope:initiator
+					}
+				}
+				trigger_event = {
+					id = wmd_attack_events.5
+				}
+			}
+			every_country = {# Trigger news for every country that isnt initiator or target
+				limit = {
+					nor = {
+						THIS = scope:initiator
+						THIS = scope:target_owner
+					}
+				}
+				trigger_event = {
+					id = wmd_attack_events.4
+				}
+			}
+		}
+		# Chance to strike states 
+		every_in_list = {
+			variable = wmd_target_list
+			random_list = {
+				1 = {
+					modifier = {
+						add = nuclear_strike_delivery_effectiveness
+					}
+					this = {
+						save_scope_as = target
+					}
+					trigger_event = {
+						id = wmd_attack_events.2
+					}
+				}
+				1 = {
+					modifier = {
+						add = nuclear_strike_delivery_effectiveness_negate
+					}
+					this = {
+						save_scope_as = target
+					}
+					trigger_event = {
+						id = wmd_attack_events.3
+					}
+				}
+			}
+		}
+		# Subtract deployment percentage from stockpile
+		change_variable = {
+			name = nuclear_stockpile
+			subtract = {
+				value = nuclear_stockpile_sv
+				multiply = nuclear_deployment_percentage_sv
+			}
+		}
+		clear_variable_list = wmd_target_list
+		clear_variable_list = wmd_target_list_c
+	}
+	option = {
+		name = wmd_attack_events.1.b
+	}
+
+}
+
+wmd_attack_events.2 = { # Successful Nuclear Strike
+	type = state_event
+	placement = ROOT
+	title = wmd_attack_events.2.t
+	desc = wmd_attack_events.2.d
+	flavor = wmd_attack_events.2.f
+
+	duration = 3
+	icon = "gfx/interface/icons/lens_toolbar_icons/nuclear_weapons.dds"
+
+	event_image = {
+		video = "nuclear_strike"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/europenorthamerica/springtime_of_nation"
+
+	immediate = {
+		kill_population_percent_in_state = {
+			percent = scope:target.nuclear_strike_population_kill
+		}
+		THIS.state_region = {
+			add_devastation = scope:target.nuclear_strike_devastation
+		}
+		set_variable = {
+			name = nuclear_strike_entity
+			days = 14
+		}
+		add_modifier = {
+			name = nuclear_strike
+			multiplier = scope:target.nuclear_strike_radiation
+			is_decaying = yes
+			years = 20
+		}
+		if = { # 30% Chance to destroy nuclear weapons facility
+			limit = {
+				has_building = building_nuclear_weapons_facility
+			}
+			random_list = {
+				30 = {
+					remove_building = building_nuclear_weapons_facility
+				}
+				70 = {}
+			}
+		}
+		if = { # 35% chance to destroy nuclear weapons silo
+			limit = {
+				has_building = building_nuclear_weapons_silo
+			}
+			random_list = {
+				35 = {
+					remove_building = building_nuclear_weapons_silo
+				}
+				65 = {}
+			}
+		}
+		if = {
+			limit = {
+				scope:target.owner = {
+					not = {
+						has_war_with = scope:initiator
+					}
+				}
+				not = {
+					scope:target.owner = scope:initiator
+				}
+			}
+			scope:initiator = {
+				change_infamy = scope:target.nuclear_strike_effectiveness_state
+				create_diplomatic_play = {
+					escalation = 100
+					war = yes
+					initiator = scope:initiator
+					target_country = scope:target.owner
+					type = dp_humiliation
+
+					add_war_goal = {
+						holder = scope:target.owner
+						type = contain_threat
+						target_country = scope:initiator
+					}
+				}
+			}
+		}
+	}
+	# TODO - AI SCRIPTING
+	option = {
+		name = wmd_attack_events.2.a
+		highlighted_option = yes
+
+	}
+}
+
+wmd_attack_events.3 = { # Failed Nuclear Strike
+	type = state_event
+	placement = ROOT
+	title = wmd_attack_events.3.t
+	desc = wmd_attack_events.3.d
+	flavor = wmd_attack_events.3.f
+
+	duration = 3
+	icon = "gfx/interface/icons/lens_toolbar_icons/nuclear_weapons.dds"
+
+	event_image = {
+		video = "nuclear_strike"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/europenorthamerica/springtime_of_nation"
+
+	immediate = {
+		scope:initiator = {
+			create_incident = {
+				country = scope:target.owner
+				value = scope:target.nuclear_strike_effectiveness_state
+			}
+		}
+	}
+	# TODO - AI SCRIPTING
+	option = {
+		name = wmd_attack_events.3.a
+		highlighted_option = yes
+
+	}
+}
+
+wmd_attack_events.4 = { # Nuclear Launch
+	type = country_event
+	placement = ROOT
+	title = wmd_attack_events.4.t
+	desc = wmd_attack_events.4.d
+	flavor = wmd_attack_events.4.f
+
+	duration = 3
+	icon = "gfx/interface/icons/lens_toolbar_icons/nuclear_weapons.dds"
+
+	event_image = {
+		video = "nuclear_strike"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/europenorthamerica/springtime_of_nation"
+
+	immediate = {
+
+	}
+	# TODO - AI SCRIPTING
+	option = {
+		name = wmd_attack_events.4.a
+		highlighted_option = yes
+		custom_tooltip = {
+			text = WILL_INCREASE_READINESS
+			# Raise readiness to max
+			set_variable = {
+				name = var_readiness
+				value = 5
+			}
+			# Make sure AI maintains readiness
+			if = {
+				limit = {
+					is_ai = yes
+				}
+				set_variable = {
+					name = nuclear_strike_readiness
+					years = 3
+				}
+			}
+		}
+
+	}
+	option = {
+		name = wmd_attack_events.4.b
+		highlighted_option = yes
+		custom_tooltip = {
+			text = WILL_INCREASE_READINESS
+			# Raise readiness to max
+			set_variable = {
+				name = var_readiness
+				value = 5
+			}
+			# Make sure AI maintains readiness
+			if = {
+				limit = {
+					is_ai = yes
+				}
+				set_variable = {
+					name = nuclear_strike_readiness
+					months = 12
+				}
+			}
+		}
+		# Decrease relations with root, give infamy to initiator
+		scope:initiator = {
+			change_infamy = 20
+			change_relations = {
+				country = ROOT
+				value = -40
+			}
+		}
+	}
+}
+
+wmd_attack_events.5 = { # Oh fuck they launched at us
+	type = country_event
+	placement = ROOT
+	title = wmd_attack_events.5.t
+	desc = wmd_attack_events.5.d
+	flavor = wmd_attack_events.5.f
+
+	duration = 3
+	icon = "gfx/interface/icons/lens_toolbar_icons/nuclear_weapons.dds"
+
+	event_image = {
+		video = "nuclear_strike"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/europenorthamerica/springtime_of_nation"
+
+	immediate = {
+
+	}
+	# TODO - AI SCRIPTING
+	option = {
+		name = wmd_attack_events.5.a
+		highlighted_option = yes
+		custom_tooltip = {
+			text = WILL_INCREASE_READINESS
+			# Raise readiness to max
+			set_variable = {
+				name = var_readiness
+				value = 5
+			}
+			# Make sure AI maintains readiness
+			if = {
+				limit = {
+					is_ai = yes
+				}
+				set_variable = {
+					name = nuclear_strike_readiness
+					years = 3
+				}
+			}
+		}
+
+	}
+	option = {
+		name = wmd_attack_events.5.b
+		highlighted_option = yes
+		custom_tooltip = {
+			text = WILL_INCREASE_READINESS
+			# Raise readiness to max
+			set_variable = {
+				name = var_readiness
+				value = 5
+			}
+			# Make sure AI maintains readiness
+			if = {
+				limit = {
+					is_ai = yes
+				}
+				set_variable = {
+					name = nuclear_strike_readiness
+					months = 12
+				}
+			}
+		}
+		# Decrease relations with root, give infamy to initiator
+		scope:initiator = {
+			change_infamy = 20
+			change_relations = {
+				country = ROOT
+				value = -40
+			}
+		}
+	}
+}

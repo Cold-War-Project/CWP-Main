@@ -2861,7 +2861,6 @@ right_click_menu = {
 			blockoverride "properties" {
 				onclick = "[Country.AccessCapital.ZoomToCapital]"
 				using = zoom_button_sound
-				enabled = "[Not( Country.AccessCapital.IsZoomingToCapital )]"
 			}
 
 			blockoverride "icon" {}
@@ -2903,6 +2902,7 @@ right_click_menu = {
 				right_click_menu_item = {
 					blockoverride "properties" {
 						tooltip = "DIPLOMATIC_ACTION_TOOLTIP"
+						visible = "[Or( IsValid(DiplomaticAction.ExecuteAction), DiplomaticAction.IsActivePact)]"
 						onclick = "[DiplomaticAction.ExecuteWithConfirmation]"
 						enabled = "[IsValid(DiplomaticAction.ExecuteAction)]"
 						clicksound = "[DiplomaticAction.GetSoundWithConfirmation]"
@@ -3084,6 +3084,47 @@ right_click_menu = {
             }
         }
 
+		right_click_menu_item = {
+            blockoverride "properties" {
+                tooltip = "DESIGNATE_STRATEGIC_OBJECTIVE_RIGHT_CLICK_ADD_TOOLTIP"
+				visible = "[GetScriptedGui('targetlist_add_visible').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('target_selected_state',State.MakeScope).End)]"
+                onclick = "[GetScriptedGui('add_state_to_target_list').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('state_to_add',State.MakeScope).End)]"
+				enabled = "[GetScriptedGui('can_add_state_to_target_list').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('target_selected_state',State.MakeScope).End)]"
+            }
+
+            blockoverride "margin" {
+				margin_left = 55
+			}
+			
+			blockoverride "texture" {
+				texture = "gfx/interface/icons/lens_toolbar_icons/nuclear_weapons.dds"
+			}
+
+            blockoverride "text" {
+                raw_text = "Add to WMD Target List"
+            }
+        }
+
+		right_click_menu_item = {
+            blockoverride "properties" {
+                tooltip = "DESIGNATE_STRATEGIC_OBJECTIVE_RIGHT_CLICK_ADD_TOOLTIP"
+				visible = "[Not(GetScriptedGui('targetlist_add_visible').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('target_selected_state',State.MakeScope).End))]"
+                onclick = "[GetScriptedGui('targetlist_remove_state').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('target_list_selected_state',State.MakeScope).End)]"
+            }
+
+            blockoverride "margin" {
+				margin_left = 55
+			}
+			
+			blockoverride "texture" {
+				texture = "gfx/interface/icons/lens_toolbar_icons/nuclear_weapons.dds"
+			}
+
+            blockoverride "text" {
+                raw_text = "Remove from WMD Target List"
+            }
+        }
+
         right_click_menu_item = {
             blockoverride "properties" {
                 tooltip = "[State.GetPlanNavalInvasionDesc]"
@@ -3126,6 +3167,7 @@ right_click_menu = {
 				right_click_menu_item = {
 					blockoverride "properties" {
 						tooltip = "[DiplomaticPlayType.GetStartTooltipState(GetPlayer,State.Self)]"
+						enabled = "[IsValid(DiplomaticPlayType.GetStartCommandState(GetPlayer,State.Self))]"
 						onclick = "[DiplomaticPlayType.ShowConfirmationState(State.Self)]"
 						using = confirm_button_sound
 					}
@@ -3148,13 +3190,12 @@ right_click_menu = {
 			blockoverride "properties" {
 				onclick = "[State.ZoomToCapital]"
 				using = zoom_button_sound
-				enabled = "[Not( State.IsZoomingToCapital )]"
 			}
 
 			blockoverride "icon" {}
 			
 			blockoverride "text" {
-				text = "ZOOM_TO_STATE_NO_REASON"
+				text = "ZOOM_TO_STATE"
 			}	
 		}
 
@@ -3309,6 +3350,7 @@ right_click_menu = {
 				right_click_menu_item = {
 					blockoverride "properties" {
 						tooltip = "[DiplomaticPlayType.GetStartTooltipCountry(GetPlayer,Country.Self)]"
+						enabled = "[IsValid(DiplomaticPlayType.GetStartCommandCountry(GetPlayer,Country.Self))]"
 						onclick = "[DiplomaticPlayType.ShowConfirmationCountry(Country.Self)]"
 						using = confirm_button_sound
 					}
@@ -3471,20 +3513,7 @@ right_click_menu = {
 
 	blockoverride "items" {
 		right_click_menu_item = {
-			visible = "[Goods.HasMarketContext]"
 			blockoverride "properties" {
-				onclick = "[InformationPanelBar.OpenGoodsPanel(Goods.GetMarket, Goods.Self)]"
-			}
-
-			blockoverride "icon" {}
-			
-			blockoverride = "text" {
-				text = "INFORMATION"
-			}	
-		}
-		right_click_menu_item = {
-			blockoverride "properties" {
-				visible = "[And(Goods.IsTradeable, And(Goods.HasMarketContext, Goods.GetMarket.GetOwner.IsLocalPlayer))]"
 				enabled = "[Goods.CanEstablishImportTradeRoute]"
 				onclick = "[Goods.EstablishImportTradeRoute]"
 				tooltip = "ESTABLISH_IMPORT_ROUTE_TOOLTIP"
@@ -3499,7 +3528,6 @@ right_click_menu = {
 		
 		right_click_menu_item = {
 			blockoverride "properties" {
-				visible = "[And(Goods.IsTradeable, And(Goods.HasMarketContext, Goods.GetMarket.GetOwner.IsLocalPlayer))]"
 				enabled = "[Goods.CanEstablishExportTradeRoute]"
 				onclick = "[Goods.EstablishExportTradeRoute]"
 				tooltip = "ESTABLISH_EXPORT_ROUTE_TOOLTIP"
@@ -3509,36 +3537,6 @@ right_click_menu = {
 			
 			blockoverride "text" {
 				text = "ESTABLISH_EXPORT_ROUTE"
-			}	
-		}
-
-		right_click_menu_item = {
-			blockoverride "properties" {
-				visible = "[And(Goods.IsTradeable, And(Goods.HasMarketContext, Not(Goods.GetMarket.GetOwner.IsLocalPlayer)))]"
-				enabled = "[IsValid(Goods.EstablishTradeRouteWithPlayerMarket('(bool)yes'))]"
-				onclick = "[Execute(Goods.EstablishTradeRouteWithPlayerMarket('(bool)yes'))]"
-				tooltip = "ESTABLISH_IMPORT_ROUTE_TO_PLAYER_MARKET_TOOLTIP"
-			}
-
-			blockoverride "icon" {}
-			
-			blockoverride "text" {
-				text = "ESTABLISH_IMPORT_ROUTE_TO_PLAYER_MARKET"
-			}	
-		}
-		
-		right_click_menu_item = {
-			blockoverride "properties" {
-				visible = "[And(Goods.IsTradeable, And(Goods.HasMarketContext, Not(Goods.GetMarket.GetOwner.IsLocalPlayer)))]"
-				enabled = "[IsValid(Goods.EstablishTradeRouteWithPlayerMarket('(bool)no'))]"
-				onclick = "[Execute(Goods.EstablishTradeRouteWithPlayerMarket('(bool)no'))]"
-				tooltip = "ESTABLISH_EXPORT_ROUTE_FROM_PLAYER_MARKET_TOOLTIP"
-			}
-
-			blockoverride "icon" {}
-			
-			blockoverride "text" {
-				text = "ESTABLISH_EXPORT_ROUTE_FROM_PLAYER_MARKET"
 			}	
 		}
 
