@@ -109,6 +109,11 @@ types panel_military {
 		}
 	}
 
+	type military_panel_wmd_content = flowcontainer {
+		direction = vertical
+		tab_wmd = {}
+	}
+
 	type military_panel_flotilla_info = flowcontainer {
 		parentanchor = hcenter
 		direction = vertical 
@@ -452,24 +457,44 @@ types panel_military {
 				blockoverride "second_button_selected" {
 					text = "MILITARY_FORMATION_PANEL_MOBILIZATION_TAB_SELECTED"
 				}
-				
-				# Navy
+
+				# WMD
 				blockoverride "third_button" {
-					text = "MILITARY_PANEL_TAB_NAVY"
+					raw_text = "WMDs"
 				}
 				blockoverride "third_button_tooltip" {
-					tooltip = "MILITARY_PANEL_TAB_NAVY"
+					tooltip = "MILITARY_PANEL_TAB_WMD_TOOLTIP"
 				}
 				blockoverride "third_button_click" {
-					onclick = "[InformationPanel.SelectTab('navy')]"
+					onclick = "[InformationPanel.SelectTab('wmd')]"
 				}
 				blockoverride "third_button_visibility" {
-					visible = "[InformationPanel.IsTabSelected('navy')]"
+					visible = "[InformationPanel.IsTabSelected('wmd')]"
 				}
 				blockoverride "third_button_visibility_checked" {
-					visible = "[Not( InformationPanel.IsTabSelected('navy') )]"
+					visible = "[Not( InformationPanel.IsTabSelected('wmd') )]"
 				}
 				blockoverride "third_button_selected" {
+					raw_text = "WMDs"
+				}
+				
+				# Navy
+				blockoverride "fourth_button" {
+					text = "MILITARY_PANEL_TAB_NAVY"
+				}
+				blockoverride "fourth_button_tooltip" {
+					tooltip = "MILITARY_PANEL_TAB_NAVY"
+				}
+				blockoverride "fourth_button_click" {
+					onclick = "[InformationPanel.SelectTab('navy')]"
+				}
+				blockoverride "fourth_button_visibility" {
+					visible = "[InformationPanel.IsTabSelected('navy')]"
+				}
+				blockoverride "fourth_button_visibility_checked" {
+					visible = "[Not( InformationPanel.IsTabSelected('navy') )]"
+				}
+				blockoverride "fourth_button_selected" {
 					text = "MILITARY_PANEL_TAB_NAVY_SELECTED"
 				}
 			}
@@ -484,7 +509,10 @@ types panel_military {
 					visible = "[InformationPanel.IsTabSelected('army')]"
 					using = default_fade_in_out
 				}
-
+				military_panel_wmd_content = {
+					visible = "[InformationPanel.IsTabSelected('wmd')]"
+					using = default_fade_in_out
+				}
 				military_panel_navy_content = {
 					visible = "[InformationPanel.IsTabSelected('navy')]"
 					using = default_fade_in_out
@@ -565,6 +593,7 @@ types panel_military {
 								}
 
 								dynamicgridbox = {
+									maximumsize = { 500 -1 }
 									datamodel = "[GetMobilizationOptionGroups]"
 									datamodel_wrap = 3
 									flipdirection = yes
@@ -780,7 +809,37 @@ types panel_military {
 
 					}
 				}
-				
+				button = {
+					using = default_button_map_interaction
+					parentanchor = hcenter
+					size = { 520 50 }
+					using = fontsize_large
+					enabled = "[GetScriptedGui('wmd_nuclear_can_fire_warheads').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					onclick = "[GetScriptedGui('wmd_fire_nuclear_warheads').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					visible = "[InformationPanel.IsTabSelected('wmd')]"
+					using = default_content_fade
+
+
+					flowcontainer = {
+						parentanchor = center
+
+						icon = {
+							size = { 30 30 }
+							texture = "gfx/interface/icons/goods_icons/nuclear_weapons.dds"
+							parentanchor = vcenter
+						}
+						
+						textbox = {
+							parentanchor = vcenter
+							autoresize = yes
+							align = center|nobaseline
+							raw_text = "Fire Warheads"
+						}
+
+					}
+					tooltip = "FIRE_WARHEADS_TOOLTIP"
+				}
+
 				button = {
 					using = default_button_map_interaction
 					parentanchor = hcenter
@@ -819,16 +878,692 @@ types panel_military {
 			}
 		}
 	}
+
+	type tab_wmd = top_illu {
+		maximumsize = { @panel_width_plus_20 -1 }
+		minimumsize = { @panel_width_plus_20 1900 }
+		background = {
+			using = dropdown_background
+		}
+		wmd_entry = {
+			visible = "[GetScriptedGui('can_open_wmd_screen').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			blockoverride "header" {
+				raw_text = "Nuclear Weapons"
+			}
+			blockoverride "header2" {
+				raw_text = "[GetPlayer.MakeScope.ScriptValue('nuclear_stockpile_sv')] [concept_nuclear_weapons]"
+			}
+			wmd_subentry = {
+				blockoverride "title" {
+					parentanchor = hcenter
+					align = center
+					raw_text = "Readiness"
+					using = header_font_fancy
+					fontsize = 30
+				}
+				blockoverride "entrycontainer" { 
+					parentanchor = hcenter
+					readiness = {}
+				}
+			}
+			wmd_subentry = {
+				blockoverride "title" {
+					raw_text = "[GetPlayer.GetName] Status"
+				}
+				blockoverride "entrycontainer" {
+					textbox = {
+						raw_text = "Active #gold Nuclear Weapons Facilities#!: [GetPlayer.MakeScope.ScriptValue('nuclear_weapons_facility_size_national')|v0] "
+					}
+					textbox = {
+						raw_text = "Monthly [concept_nuclear_weapons]: [GetPlayer.MakeScope.ScriptValue('nuclear_stockpile_sum')|v0] "
+					}
+					textbox = {
+						raw_text = "Active #gold Strategic Airbases#!: [GetPlayer.MakeScope.ScriptValue('strategic_airbase_size_national')|v0] "
+					}
+					textbox = {
+						raw_text = "Active #gold Missile Silos#!: [GetPlayer.MakeScope.ScriptValue('missile_silo_size_national')|v0] "
+					}
+				}
+			}
+			wmd_subentry = {
+				blockoverride "title" {
+					raw_text = "Nuclear Attack Strength"
+				}
+				blockoverride "entrycontainer" {
+					textbox = {
+						raw_text = "[concept_nuclear_weapons] Arsenal: [GetPlayer.MakeScope.ScriptValue('nuclear_stockpile_sv')|v0] #gold Warheads#!"
+					}
+					textbox = {
+						raw_text = "#v [GetPlayer.MakeScope.Var('nuclear_yield').GetValue|0]kt#! Per Warhead | #v [GetPlayer.MakeScope.ScriptValue('nuclear_strike_values')|0d]#! Total"
+					}
+				}
+			}
+			wmd_subentry = {
+				blockoverride "title" {
+					raw_text = "Nuclear Capabilities"
+				}
+				blockoverride "entrycontainer" {
+					textbox = {
+						text = "HAS_ATOMIC_CAPABILITY"
+					}
+					textbox = {
+						text = "HAS_THERMONUCLEAR_CAPABILITY"
+					}
+					textbox = {
+						text = "HAS_ICBM_CAPABILITY"
+					}
+				}
+			}
+			wmd_subentry = {
+				blockoverride "title" {
+					raw_text = "Global Coverage"
+				}
+				blockoverride "entrycontainer" {
+					flowcontainer = {
+						direction = vertical
+						spacing = 0
+						datamodel = "[GetPlayer.MakeScope.GetList('strategic_regions')]"
+						button = {
+							size = { 450 40 }
+							using = default_button_action
+							parentanchor = hcenter
+							raw_text = "Average Coverage: [GuiScope.SetRoot( GetPlayer.MakeScope ).AddScope('initiator', GetPlayer.MakeScope ).ScriptValue('nuclear_strike_global_coverage_avg')|v1% )]"
+							onclick = "[GetVariableSystem.Toggle('showcoverageregions')]"
+							tooltip = "AVERAGE_NUCLEAR_COVERAGE_TOOLTIP"
+						}
+						item = {
+							button = {
+								visible = "[GetVariableSystem.Exists('showcoverageregions')]"
+								size = { 450 40 }
+								using = default_button_map_interaction
+								parentanchor = hcenter
+								direction = vertical
+								datacontext = "[Scope.AccessStrategicRegion]"
+								raw_text = "[StrategicRegion.GetName]: [GuiScope.SetRoot( StrategicRegion.MakeScope ).AddScope('initiator', GetPlayer.MakeScope ).ScriptValue('nuclear_strike_strategic_region_coverage')|v1% )] "
+								tooltip = "NUCLEAR_STRATEGIC_REGION_TOOLTIP"
+							}
+						}
+					}
+				}
+			}
+			wmd_subentry = {
+				blockoverride "title" {
+					parentanchor = hcenter
+					align = center
+					raw_text = "Nuclear Detonation Focus"
+				}
+				blockoverride "entrycontainer" {
+					parentanchor = hcenter
+					flowcontainer = {
+						parentanchor = hcenter
+						direction = horizontal
+						spacing = 10
+						button = {
+							using = default_button # Approve
+							text = "Air Burst"
+							enabled = "[Not(GetPlayer.MakeScope.Var('air_burst_focus').IsSet)]"
+							onclick = "[GetScriptedGui('wmd_nuclear_detonation_focus_air').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							size = { 195 40 }
+							tooltip = "AIR_BURST_TOOLTIP"
+						}
+						button = {
+							using = default_button
+							text = "Ground Burst" # Reject
+							enabled = "[Not(GetPlayer.MakeScope.Var('ground_burst_focus').IsSet)]"
+							onclick = "[GetScriptedGui('wmd_nuclear_detonation_focus_ground').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							size = { 195 40 }
+							tooltip = "GROUND_BURST_TOOLTIP"
+						}
+					}
+	
+				}
+			}
+			wmd_subentry = {
+				blockoverride "title" {
+					parentanchor = hcenter
+					align = center
+					raw_text = "Deployment"
+				}
+				blockoverride "entrycontainer" {
+					parentanchor = hcenter
+					flowcontainer = {
+						parentanchor = hcenter
+						direction = horizontal
+						spacing = 10
+						button = {
+							using = default_button # Approve
+							text = "20%"
+							enabled = "[Not(EqualTo_CFixedPoint(GetPlayer.MakeScope.Var('nuclear_deployment_percentage').GetValue, '(CFixedPoint)20'))]"
+							onclick = "[GetScriptedGui('wmd_deployment_20').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							size = { 60 40 }
+						}
+						button = {
+							using = default_button
+							text = "40%" # Reject
+							enabled = "[Not(EqualTo_CFixedPoint(GetPlayer.MakeScope.Var('nuclear_deployment_percentage').GetValue, '(CFixedPoint)40'))]"
+							onclick = "[GetScriptedGui('wmd_deployment_40').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							size = { 60 40 }
+						}
+						button = {
+							using = default_button
+							text = "60%" # Reject
+							enabled = "[Not(EqualTo_CFixedPoint(GetPlayer.MakeScope.Var('nuclear_deployment_percentage').GetValue, '(CFixedPoint)60'))]"
+							onclick = "[GetScriptedGui('wmd_deployment_60').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							size = { 60 40 }
+						}
+						button = {
+							using = default_button
+							text = "80%" # Reject
+							enabled = "[Not(EqualTo_CFixedPoint(GetPlayer.MakeScope.Var('nuclear_deployment_percentage').GetValue, '(CFixedPoint)80'))]"
+							onclick = "[GetScriptedGui('wmd_deployment_80').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							size = { 60 40 }
+						}
+						button = {
+							using = default_button
+							text = "100%" # Reject
+							enabled = "[Not(EqualTo_CFixedPoint(GetPlayer.MakeScope.Var('nuclear_deployment_percentage').GetValue, '(CFixedPoint)100'))]"
+							onclick = "[GetScriptedGui('wmd_deployment_100').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							size = { 60 40 }
+						}
+					}
+					button = {
+						parentanchor = hcenter
+						using = default_button_map_interaction
+						enabled = "[GreaterThan_CFixedPoint(GetPlayer.MakeScope.ScriptValue('nuclear_stockpile_sv').GetValue, '(CFixedPoint)0')]"
+						onclick = "[GetScriptedGui('wmd_autotarget').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+						text = "#Gold Automatically Select Targets#!"
+						tooltip = "NUCLEAR_AUTOTARGET_TOOLTIP"
+						size = { 350 40 }
+					}
+				}
+			}
+			wmd_targetlist = {}
+		}
+		wmd_entry = {
+			visible = "[Not(GetScriptedGui('can_open_wmd_screen').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			blockoverride "header" {
+				raw_text = "Nuclear Weapons"
+			}
+			blockoverride "header2" {
+				raw_text = ""
+			}
+			wmd_subentry = {
+				blockoverride "title" {
+					raw_text = "[GetPlayer.GetName] Status"
+				}
+				blockoverride "info" {
+					raw_text = "Does not currently possess [concept_nuclear_weapons]"
+				}
+			}
+			wmd_subentry = {
+				blockoverride "title" {
+					raw_text = "Nuclear Capabilities"
+				}
+				blockoverride "entrycontainer" {
+					textbox = {
+						text = "HAS_ATOMIC_CAPABILITY"
+					}
+					textbox = {
+						text = "HAS_THERMONUCLEAR_CAPABILITY"
+					}
+					textbox = {
+						text = "HAS_ICBM_CAPABILITY"
+					}
+				}
+			}
+		}
+	}
+	type wmd_entry = flowcontainer {
+		visible = "[InformationPanel.IsTabSelected('wmd')]"
+		parentanchor = hcenter
+		minimumsize = { 550 200 }
+		margin = { 15 15 }
+		spacing = 20
+		direction = vertical
+		background = {
+			using = dropdown_background
+		}
+		widget = {
+			parentanchor = hcenter
+			minimumsize = { 520 40 }
+			spacing = 30
+			direction = horizontal
+	
+			flowcontainer = {
+				margin = { 15 15 }
+				parentanchor = left
+				textbox = {
+					block "header" {
+						raw_text = "Nuclear Weapons"
+					}
+					using = header_font_fancy
+					fontsize = 30
+				}
+			}
+			flowcontainer = {
+				margin = { 15 15 }
+				parentanchor = right
+				textbox = {
+					align = right
+					block "header2" {
+						raw_text = "[GetPlayer.MakeScope.ScriptValue('nuclear_stockpile_sv')] [concept_nuclear_weapons]"
+					}
+					using = fontsize_large
+				}
+			}
+	
+			background = {
+				using = dropdown_background
+			}
+		}
+	}
+	type wmd_subentry = flowcontainer {
+		parentanchor = hcenter
+		minimumsize = { 500 40 }
+		direction = vertical
+		margin = { 20 20 }
+		flowcontainer = {
+			parentanchor = left
+			direction = vertical
+			spacing = 30
+			textbox = {
+				block "title" {
+					raw_text = ""
+				}
+				using = fontsize_large
+			}
+			block "entrycontainer" {
+				textbox = {
+					block "info" {
+						raw_text = ""
+					}
+				}
+			}
+		}
+		background = {
+			using = entry_bg_simple
+		}
+	}
+	type wmd_targetlist = flowcontainer {
+		parentanchor = hcenter
+		margin = { 15 15 }
+		spacing = 25
+		direction = vertical
+		background = {
+			using = dropdown_background
+		}
+		textbox = {
+			raw_text = "Target List"
+			using = header_font_fancy
+			fontsize = 30
+		}
+		textbox = {
+			visible = "[GetScriptedGui('targetlist_is_set').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			raw_text = "Nuclear Strike Effectiveness: #v [GetPlayer.MakeScope.ScriptValue('nuclear_strike_effectiveness_total')|d]#! per state"
+		}
+		textbox = {
+			visible = "[GetScriptedGui('targetlist_is_set').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			raw_text = "Average Delivery Effectiveness: #v [GuiScope.SetRoot( GetPlayer.MakeScope ).AddScope('initiator', GetPlayer.MakeScope ).ScriptValue('wmd_target_list_states_delivery_effectiveness_total'))|d%]"
+		}
+		textbox = {
+			visible = "[GetScriptedGui('targetlist_is_set').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			raw_text = "Estimated Total Casualties: [GuiScope.SetRoot( GetPlayer.MakeScope ).AddScope('initiator', GetPlayer.MakeScope ).ScriptValue('wmd_target_list_states_estimated_casualties_total'))|-d]"
+		}
+		scrollbox = {
+			visible = "[GetScriptedGui('targetlist_is_set').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			minimumsize = { 450 500 }
+			blockoverride "scrollbox_content" {
+				vbox = {
+					layoutpolicy_vertical = fixed
+					layoutpolicy_horizontal = expanding
+					datamodel_wrap = 1
+					spacing = 25
+					datamodel = "[GetPlayer.MakeScope.GetList('wmd_target_list_c')]"
+					item = {
+						flowcontainer = {
+							parentanchor = hcenter
+							direction = vertical
+							minimumsize = { 420 60 }
+							datacontext = "[Scope.AccessCountry]"
+							flowcontainer = {
+								parentanchor = left
+								direction = vertical
+								spacing = 20
+								section_header_button = {
+									visible = "[Not(GetPlayer.MakeScope.Var('targetlist_expanded_country').IsSet)]"
+									blockoverride "layout" {
+										size = { 350 30 }
+									}
+									blockoverride "left_text" {
+										raw_text = "[Country.GetName]"
+									}
+									blockoverride "onclick" {
+										onclick = "[GetScriptedGui('targetlist_expand_info').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('target_list_selected_country',Country.MakeScope).End)]"
+									}
+									blockoverride "onclick_showless" {
+										visible = "[Not(GetScriptedGui('targetlist_expanded_visible_c').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('target_list_selected_country',Country.MakeScope).End))]"
+									}
+									blockoverride "onclick_showmore" {
+										visible = "[GetScriptedGui('targetlist_expanded_visible_c').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('target_list_selected_country',Country.MakeScope).End)]"
+									}
+								}
+								section_header_button = {
+									visible = "[GetPlayer.MakeScope.Var('targetlist_expanded_country').IsSet]"
+									blockoverride "layout" {
+										size = { 350 30 }
+									}
+									blockoverride "left_text" {
+										raw_text = "[Country.GetName]"
+									}
+									blockoverride "onclick" {
+										onclick = "[GetScriptedGui('targetlist_contract_info').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('target_list_selected_country',Country.MakeScope).End)]"
+									}
+									blockoverride "onclick_showless" {
+										visible = "[GetScriptedGui('targetlist_expanded_visible_c').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('target_list_selected_country',Country.MakeScope).End)]"
+									}
+									blockoverride "onclick_showmore" {
+										visible = "[Not(GetScriptedGui('targetlist_expanded_visible_c').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('target_list_selected_country',Country.MakeScope).End))]"
+									}
+								}
+								textbox = {
+									raw_text = "[GuiScope.SetRoot( GetPlayer.MakeScope ).AddScope('target', Country.MakeScope ).ScriptValue('wmd_target_list_states_count_per_country')|v0 )] States - [GuiScope.SetRoot( GetPlayer.MakeScope ).AddScope('target', Country.MakeScope ).ScriptValue('wmd_target_list_states_population_per_country')|vd )] Population Targeted"
+									using = fontsize_min
+								}
+								textbox = {
+									raw_text = "Estimated Casualties - [GuiScope.SetRoot( Country.MakeScope ).AddScope('initiator', GetPlayer.MakeScope ).ScriptValue('wmd_target_list_states_estimated_casualties_per_country'))|-d]"
+									using = fontsize_min
+								}
+							}
+							flowcontainer = {
+								parentanchor = right
+								direction = horizontal
+								spacing = 5
+								button_icon_round_map_interaction = {
+									size = { 35 35 }
+									onclick = "[GetScriptedGui('targetlist_remove_country').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('target_list_selected_country',Country.MakeScope).End)]"		
+									blockoverride "icon" {
+										texture = "gfx/interface/icons/generic_icons/red_cross.dds"
+									}
+									blockoverride "icon_size" {
+										size = { 50% 50% }
+									}												
+								}
+								button_icon_round_map_interaction = {
+									size = { 35 35 }
+									onclick = "[Country.AccessCapital.ZoomToCapital]"
+									tooltip = "ZOOM_TO_COUNTRY_CAPITAL"
+									blockoverride "icon" {
+										texture = "gfx/interface/buttons/button_icons/location_finder.dds"
+									}
+									blockoverride "icon_size" {
+										size = { 90% 90% }
+									}												
+								}
+							}
+							flowcontainer = {
+								margin_top = 20
+								visible = "[GetScriptedGui('targetlist_expanded_visible_c').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('target_list_selected_country',Country.MakeScope).End)]"
+								direction = vertical
+								spacing = 25
+								datamodel = "[GetPlayer.MakeScope.GetList('wmd_target_list')]"
+								item = {
+									flowcontainer = {
+										visible = "[GetScriptedGui('targetlist_expanded_visible_s').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('target_list_selected_state',State.MakeScope).End)]"
+										parentanchor = hcenter
+										direction = horizontal
+										minimumsize = { 420 30 }
+										spacing = 30
+										datacontext = "[Scope.AccessState]"
+										flowcontainer = {
+											minimumsize = { 300 70 }
+											margin = { 15 15 }
+											parentanchor = left
+											direction = vertical
+											spacing = 20
+											textbox = {
+												align = left
+												raw_text = "[State.GetName] - [State.GetPopulationSize|vD]"
+												using = tooltip_above
+												fontsize = 20
+											}
+											textbox = {
+												align = left
+												text = "nuclear_strategic_region_coverage"
+											}
+											textbox = {
+												align = left
+												text = "nuclear_state_delivery_effectiveness"
+												using = tooltip_above
+											}
+											textbox = {
+												align = left
+												text = "nuclear_state_strike_effectiveness"
+												using = tooltip_above
+											}
+											tooltip = "NUCLEAR_TARGETED_STATE_TOOLTIP"
+											background = {
+												using = entry_bg_simple
+											}
+										}
+										flowcontainer = {
+											parentanchor = right|vcenter
+											direction = horizontal
+											spacing = 5
+											button_icon_round_map_interaction = {
+												size = { 35 35 }
+												onclick = "[GetScriptedGui('targetlist_remove_state').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('target_list_selected_state',State.MakeScope).End)]"
+												onrightclick = "[RightClickMenuManager.ShowForGoods(Goods.AccessSelf)]"				
+												blockoverride "icon" {
+													texture = "gfx/interface/icons/generic_icons/red_cross.dds"
+												}
+												blockoverride "icon_size" {
+													size = { 50% 50% }
+												}												
+											}
+											button_icon_round_map_interaction = {
+												size = { 35 35 }
+												onclick = "[State.ZoomToCapital]"
+												tooltip = "ZOOM_TO_EVENT_WINDOW_STATE"
+												blockoverride "icon" {
+													texture = "gfx/interface/buttons/button_icons/location_finder.dds"
+												}
+												blockoverride "icon_size" {
+													size = { 90% 90% }
+												}											
+											}
+										}
+										background = {
+											using = dropdown_background
+											margin = { 15 15 }
+										}
+									}
+								}
+							}
+	
+	
+							background = {
+								using = dropdown_background
+								margin = { 15 15 }
+							}
+						}
+					}
+				}
+			}
+			flowcontainer = {
+				margin = { 0 10 }
+				parentanchor = bottom|right
+				direction = horizontal
+				spacing = 10
+				textbox = {
+					margin_top = 15
+					align = right
+					raw_text = "Show Targeted States on Map"
+				}
+				checkbutton = {
+					onclick = "[GetScriptedGui('show_targeted_states_on_map').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					checked = "[GetPlayer.MakeScope.Var('show_targeted_states_map').IsSet]"
+					using = check_button
+					size = { 25 25 }
+				}
+			}
+		}
+		flowcontainer = {
+			visible = "[Not(GetScriptedGui('targetlist_is_set').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			minimumsize = { 450 150 }
+			flowcontainer = {
+				margin_left = 150
+				parentanchor = center
+				textbox = {
+					parentanchor = center
+					raw_text = "#n No Targets Set#!"
+					using = header_font_fancy
+					using = fontsize_mega
+				}
+			}
+			background = {
+				using = entry_bg_simple
+			}
+	
+		}
+	
+	}
+	type readiness = flowcontainer {
+		direction = horizontal
+		button = {
+			parentanchor = vcenter
+			size = { 35 35 }
+			enabled = "[GetScriptedGui('can_lower_readiness').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			onclick = "[GetScriptedGui('lower_readiness').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			flowcontainer = {
+				parentanchor = center
+				icon = {
+					size = { 35 35 }
+					texture = "gfx/interface/buttons/button_icons/move_left.dds"
+					parentanchor = vcenter
+				}
+			}
+			tooltip = "LOWER_READINESS"
+		}
+		button = {
+			block "size" {
+				size = { 70 35 }
+			}
+			blockoverride "selectedcolor" {
+				color = { 0 0.57 0.16 }
+			}
+			blockoverride "selectedcolorvisible" {
+				visible = "[GetScriptedGui('is_at_readiness_1').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			}
+			blockoverride "hovercolorvisible" {
+				visible = "[Not(GetScriptedGui('is_at_readiness_1').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			}
+			raw_text = "1"
+			using = header_font_fancy
+			tooltip = "READINESS_TOOLTIP_LEVEL_1"
+			using = colored_button_bg
+		}
+		button = {
+			block "size" {
+				size = { 70 35 }
+			}
+			blockoverride "selectedcolor" {
+				color = { 0.19 0.39 0.65 }
+			}
+			blockoverride "selectedcolorvisible" {
+				visible = "[GetScriptedGui('is_at_readiness_2').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			}
+			blockoverride "hovercolorvisible" {
+				visible = "[Not(GetScriptedGui('is_at_readiness_2').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			}
+			raw_text = "2"
+			using = header_font_fancy
+			tooltip = "READINESS_TOOLTIP_LEVEL_2"
+			using = colored_button_bg
+		}
+		button = {
+			block "size" {
+				size = { 70 35 }
+			}
+			blockoverride "selectedcolor" {
+				color = { 0.55 0.55 0.0 }
+			}
+			blockoverride "selectedcolorvisible" {
+				visible = "[GetScriptedGui('is_at_readiness_3').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			}
+			blockoverride "hovercolorvisible" {
+				visible = "[Not(GetScriptedGui('is_at_readiness_3').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			}
+			raw_text = "3"
+			using = header_font_fancy
+			tooltip = "READINESS_TOOLTIP_LEVEL_3"
+			using = colored_button_bg
+		}
+		button = {
+			block "size" {
+				size = { 70 35 }
+			}
+			blockoverride "selectedcolor" {
+				color = { 0.70 0.45 0.0 }
+			}
+			blockoverride "selectedcolorvisible" {
+				visible = "[GetScriptedGui('is_at_readiness_4').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			}
+			blockoverride "hovercolorvisible" {
+				visible = "[Not(GetScriptedGui('is_at_readiness_4').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			}
+			raw_text = "4"
+			using = header_font_fancy
+			tooltip = "READINESS_TOOLTIP_LEVEL_4"
+			using = colored_button_bg
+		}
+		button = {
+			block "size" {
+				size = { 70 35 }
+			}
+			blockoverride "selectedcolor" {
+				color = { 0.7 0.2 0.2 }
+			}
+			blockoverride "selectedcolorvisible" {
+				visible = "[GetScriptedGui('is_at_readiness_5').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			}
+			blockoverride "hovercolorvisible" {
+				visible = "[Not(GetScriptedGui('is_at_readiness_5').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+			}
+			raw_text = "5"
+			using = header_font_fancy
+			tooltip = "READINESS_TOOLTIP_LEVEL_5"
+			using = colored_button_bg
+		}
+		button = {
+			parentanchor = vcenter
+			size = { 35 35 }
+			enabled = "[GetScriptedGui('can_raise_readiness').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			onclick = "[GetScriptedGui('raise_readiness').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+			flowcontainer = {
+				parentanchor = center
+				icon = {
+					size = { 35 35 }
+					texture = "gfx/interface/buttons/button_icons/move_right.dds"
+					parentanchor = vcenter
+				}
+			}
+			tooltip = "INCREASE_READINESS"
+		}
+		background = {
+			using = entry_bg_simple
+			margin = { 5 5 }
+		}
+	}
 }
 
 types mobilization_options {
 	type mobilization_option_small = widget {
 		alpha = "[TransparentIfFalse(Or(MobilizationOption.IsActivated(MilitaryFormation.AccessSelf),IsValid(MobilizationOption.Toggle(MilitaryFormation.AccessSelf))))]"
 		#visible = "[Or(MobilizationOption.IsActivated(MilitaryFormation.AccessSelf),IsValid(MobilizationOption.Toggle(MilitaryFormation.AccessSelf)))]"
-		size = { 50 50 }
+		size = { 30 30 }
 
 		widget = {
-			size = { 50 50 }
+			size = { 30 30 }
 
 			# Activate
 			widget = {
@@ -888,7 +1623,7 @@ types mobilization_options {
 		}
 
 		icon = {
-			size = { 38 38 }
+			size = { 19 19 }
 			texture = "[MobilizationOption.GetTexture]"
 			parentanchor = center
 		}
@@ -970,3 +1705,4 @@ types mobilization_options {
 		}
 	}
 }
+
