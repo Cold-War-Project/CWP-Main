@@ -1,0 +1,690 @@
+# COPY-PASTED FOR NOW
+@panel_width_minus_10 = 530			# used to be 450
+@panel_width = 540  				# used to be 460
+@panel_width_half = 270				# used to be 230
+@panel_width_plus_10 = 550  		# used to be 470
+@panel_width_plus_14 = 554			# used to be 474
+@panel_width_plus_14_half = 277		# used to be 237
+@panel_width_plus_20 = 560			# used to be 480
+@panel_width_plus_30 = 570			# used to be 490
+@panel_width_plus_70 = 610			# used to be 530
+
+types MilitaryPanelHQs {
+	type hq_list = flowcontainer {
+		direction = vertical
+		parentanchor = hcenter
+
+		flowcontainer = {
+			direction = vertical
+			spacing = 5
+			parentanchor = hcenter
+
+			block "datamodel_hq_entries" {
+				datamodel = "[PanelMilitary.GetLandHQEntries]"
+			}
+
+			item = {
+				empty_hq_list_item = {}
+			}
+		}
+		
+	}
+
+	# Empty HQ item (no commander)
+	type empty_hq_list_item = container {
+		minimumsize = { @panel_width 90 }
+		parentanchor = hcenter
+
+		datacontext = "[MilitaryPanelHQEntry]"
+		datacontext = "[MilitaryPanelHQEntry.GetHQ]"
+
+		visible = "[LessThanOrEqualTo_int32(Hq.AccessNumHomeCommanders, '(int32)0')]"
+
+		# Name and info header
+		widget = {
+			size = { @panel_width 40 }
+			hbox = {
+				margin = { 6 0 }
+
+				background = {
+					using = fade_right_entry_fancy_header_colored
+					color = "[Hq.GetCountry.GetMapColor]"
+				}
+
+				textbox = {
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+					text = "MILITARY_PANEL_HQ_AVAILABLE"
+					align = left|nobaseline
+					elide = right
+					margin_left = 5
+				}
+
+				textbox = {
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+					text = "[Hq.GetName]"
+					align = right|nobaseline
+					elide = left
+					margin_right = 28
+
+					button_icon_zoom = {
+						parentanchor = right|vcenter
+						size = { 28 28 }
+						block "goto_properties" {
+							onclick = "[Hq.ZoomToHQ]"
+							tooltip = "ZOOM_TO_HQ"
+							enabled = "[Not(Hq.IsZoomingToHQ)]"
+						}
+					}
+				}
+			}
+		}
+
+		# Building list
+		flowcontainer = {
+			minimumsize = { @panel_width -1 }
+			maximumsize = { @panel_width -1 }
+
+			direction = vertical
+			margin_top = 46
+			margin_bottom = 14
+			spacing = 10
+			parentanchor = hcenter
+
+			using = entry_bg_fancy
+
+			block "empty_state" {}
+			
+			flowcontainer = {
+				visible = "[Not(IsDataModelEmpty(Hq.GetBuildingsWithUnitsInReserve))]"
+				parentanchor = hcenter
+				direction = vertical
+				ignoreinvisible = yes
+				spacing = 10
+
+				### Units in reserve header
+				section_header_button = {
+					size = { 510 40 }
+							
+					blockoverride "left_text" {
+						text = "GARRISONED_CONCEPT"
+					}
+
+					textbox = {
+						parentanchor = right|vcenter
+						text = "MILITARY_PANEL_HQ_UNITS_IN_RESERVE_FORMAT"
+						autoresize = yes
+						align = nobaseline
+					}
+
+					blockoverride "onclick" {
+						onclick = "[MilitaryPanelHQEntry.ToggleExpandInReserve]"
+					}
+					
+					blockoverride "onclick_showmore" {
+						visible = "[Not(MilitaryPanelHQEntry.IsExpandedInReserve)]"
+					}
+
+					blockoverride "onclick_showless" {
+						visible = "[MilitaryPanelHQEntry.IsExpandedInReserve]"
+					}
+				}
+
+				### Buildings list
+				flowcontainer = {
+					visible = "[MilitaryPanelHQEntry.IsExpandedInReserve]"
+					datamodel = "[MilitaryPanelHQEntry.GetBuildingWithUnitsInReserveEntries]"
+					direction = vertical
+					spacing = 10
+					margin_bottom = 10
+					minimumsize = { 530 -1 }
+					maximumsize = { 530 -1 }
+
+					item = {
+						combat_unit_building = {
+
+							blockoverride "onclick" {
+								onclick = "[MilitaryPanelBuildingEntry.ToggleExpand]"
+							}
+							
+							blockoverride "onclick_showmore" {
+								visible = "[Not(MilitaryPanelBuildingEntry.IsExpanded)]"
+							}
+							
+							blockoverride "onclick_showless" {
+								visible = "[MilitaryPanelBuildingEntry.IsExpanded]"
+							}
+
+							### No attrition is applied to units in reserve
+							blockoverride "units_attrition" {}
+
+							### Num units in reserve / Unit capacity in the building
+							blockoverride "units_amount" {
+								textbox = {
+									parentanchor = vcenter
+									text = "MILITARY_PANEL_BUILDING_UNITS_IN_RESERVE_FORMAT"
+									tooltip = "MILITARY_PANEL_BUILDING_UNITS_IN_RESERVE_TOOLTIP"
+									autoresize = yes
+									align = nobaseline
+								}
+							}
+
+							blockoverride "units_morale" {
+								#TODO: Implement garrison morale for land units
+							}
+	
+							blockoverride "units_datamodel" {
+								datamodel = "[Building.GetCombatUnits]"
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	### COMMANDER LIST BUTTON
+	type commander_button = widget {
+		size = { 85 110 }
+		onmousehierarchyenter = "[AccessHighlightManager.HighlightCharacter( Character.Self )]"
+		onmousehierarchyleave = "[AccessHighlightManager.RemoveHighlight]"
+		
+		button = {
+			size = { 100% 100% }
+			using = colored_panel_ui
+			color = "[Character.GetCountry.GetMapColor]"
+			onclick = "[InformationPanelBar.OpenCommanderPanel(Character.AccessSelf)]"
+			onrightclick = "[RightClickMenuManager.ShowForCharacter(Character.AccessSelf)]"
+		}
+
+		
+		icon = {
+			visible = "[Character.IsBeingHighlighted]"
+			using = highlighted_square_selection
+		}
+		
+		character_portrait_medium = {
+			parentanchor = hcenter
+			position = { 0 2 }
+			using = tooltip_above
+			blockoverride "portrait_button" {
+				alwaystransparent = yes
+			}
+		}
+
+		tiny_flag = {
+			datacontext = "[Character.GetCountry]"
+			position = { 5 5 }
+		}
+
+		textbox = {
+			margin = { 3 3 }
+			margin_left = 0
+			parentanchor = hcenter|bottom
+			align = hcenter|nobaseline
+			size = { 100% 25 }
+			fontsize_min = 12
+			elide = right
+			text = "[GetUnitStrengthHeader( Character.GetNumCombatUnits, Character.GetMaxNumCombatUnits, Character.GetCombatUnitsTypeIcon )]"
+			tooltip = "MILITARY_PANEL_COMMAND_LIMIT_BREAKDOWN_TOOLTIP"
+			
+			background = {
+				using = dark_area
+				margin = { -2 -2 }
+			}
+		}
+		
+		# visiting
+		icon = {
+			#todo military: visible state for "Is visiting" and a good tooltip.
+			visible = no
+			texture = "gfx/interface/icons/generic_icons/home_hq.dds"
+			size = { 25 25 }
+			parentanchor = right
+			raw_tooltip = "#todo Visiting commander. His home HQ is Rhine Basin HQ"
+		}
+	}
+
+	### COMMANDER LIST BUTTON SMALL
+	type commander_button_small = button {
+		onclick = "[InformationPanelBar.OpenCommanderPanel(Character.AccessSelf)]"
+		onrightclick = "[RightClickMenuManager.ShowForCharacter(Character.AccessSelf)]"
+		
+		using = colored_panel_bright
+		color = "[Character.GetCountry.GetMapColor]"
+		
+		distribute_visual_state = no
+		inherit_visual_state = no
+		
+		tooltipwidget = {
+			FancyTooltip_Character = {}
+		}
+
+		size = { 120 33 }
+
+		### REMOVED - should be re-added when we fix PRCAL-17619
+		#icon = {
+		#	visible = "[Character.IsBeingHighlighted]"
+		#	using = highlighted_square_selection
+		#}
+
+		icon = {
+			visible = "[Character.IsTraveling]"
+			size = { 100% 100% }
+			using = dark_area
+			alpha = 0.5
+		}
+
+		hbox = {
+			layoutpolicy_horizontal = expanding
+			layoutpolicy_vertical = expanding
+			alpha = "[TransparentIfTrue(Character.IsTraveling)]"
+			margin = { 3 0 }
+
+			character_portrait_mini = {
+				blockoverride "character_highlight" {}
+			}
+
+
+			vbox = {
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+				margin = { 3 0 }
+
+				# Traveling time
+				hbox = {
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+					visible = "[And(Character.IsTraveling, GreaterThan_int32( Character.GetDaysToCompleteTravelRaw, '(int32)0' ))]"
+					spacing = 2
+					
+					icon = {
+						size = { 15 15 }
+						texture = "gfx/interface/icons/generic_icons/expeditionary_force.dds"
+					}
+					textbox = {
+						layoutpolicy_horizontal = expanding
+						size = { 0 14 }
+						using = fontsize_small
+						text = "[Character.GetDaysToCompleteTravelRaw|v] [SelectLocalization( GreaterThan_int32( Character.GetDaysToCompleteTravelRaw, '(int32)1' ), 'GENERAL_TRAVEL_DAYS', 'GENERAL_TRAVEL_DAY' )]"
+						tooltip = "[Character.GetTravelFormatted]"
+						align = hcenter|nobaseline
+						fontsize_min = 10
+						elide = right
+					}
+				}
+	
+				# Combat Units
+				textbox = {
+					layoutpolicy_horizontal = expanding
+					size = { 0 16 }
+					### TODO PRCAL-28648 this is now non-functional since the function takes an int64 and combat unit numbers return int32, figure out how to cast this
+					# text = "[GetUnitStrengthHeaderNoIcon( Character.GetNumCombatUnits, Character.GetMaxNumCombatUnits )]"
+					align = nobaseline
+					tooltip = "MILITARY_PANEL_COMMAND_LIMIT_BREAKDOWN_TOOLTIP"
+					fontsize_min = 12
+					elide = right
+				}
+			}
+
+			icon = {
+				size = { 24 24 }
+				datacontext = "[Character.GetOrderType]"
+				texture = "[CommanderOrderType.GetTexture]"
+				tooltip = "COMMANDER_PANEL_ORDER_TOOLTIP"
+			}
+		}
+	}
+
+	### Commander and their units grouped by buildings
+	type military_panel_hq_commander_entry = flowcontainer {
+		direction = vertical
+		parentanchor = hcenter
+		spacing = 5
+		
+		datacontext = "[MilitaryPanelCommanderEntry]"
+		datacontext = "[MilitaryPanelCommanderEntry.GetCharacter]"
+
+		using = entry_bg_fancy
+
+		### Commander header
+		container = {
+			minimumsize = { @panel_width -1 }
+
+			background = {
+				using = fade_right_entry_fancy_header_colored
+				color = "[Character.GetCountry.GetMapColor]"
+			}
+
+			icon = {
+				visible = "[Character.IsBeingHighlighted]"
+				using = highlighted_square_selection
+			}
+
+			### Portrait and name
+			flowcontainer = {
+				parentanchor = left|vcenter
+
+				button = {
+					size = { 100% 100% }
+					onclick = "[InformationPanelBar.OpenCommanderPanel(Character.AccessSelf)]"
+					onrightclick = "[RightClickMenuManager.ShowForCharacter(Character.AccessSelf)]"
+					onmousehierarchyenter = "[AccessHighlightManager.HighlightCharacter( Character.Self )]"
+					onmousehierarchyleave = "[AccessHighlightManager.RemoveHighlight]"
+				}
+
+				character_portrait_small = {
+					parentanchor = vcenter
+					using = tooltip_above
+					blockoverride "portrait_button" {
+						alwaystransparent = yes
+					}
+					blockoverride "is_selected" {
+						visible = "[Character.IsBeingHighlighted]"
+					}
+				}
+		
+				textbox = {
+					maximumsize = { 200 -1 }
+					parentanchor = vcenter
+					multiline = yes
+					autoresize = yes
+					text = "[Character.GetFullName]"
+					align = left|nobaseline
+					elide = right
+					margin_left = 5
+				}
+			}
+	
+			### Order and location
+			flowcontainer = {
+				parentanchor = right|vcenter
+				margin_right = 5
+
+				textbox = {
+					parentanchor = vcenter
+					align = right|nobaseline
+					maximumsize = { 260 -1 }
+					multiline = yes
+					autoresize = yes
+					margin = { 0 3 }
+					text = "MILITARY_PANEL_COMMANDER_STATUS_FORMAT"
+					elide = right
+					margin_right = 5
+				}
+
+				widget = {
+					size = { 28 28 }
+					parentanchor = vcenter
+
+					button_icon_zoom = {
+						size = { 100% 100% }
+						block "goto_properties" {
+							onclick = "[Character.ZoomToOrderTarget]"
+							tooltip = "ZOOM_TO_ORDERTARGET"
+							enabled = "[Not(Character.IsZoomingToOrderTarget)]"
+						}
+					}
+				}
+			}
+		}
+
+		flowcontainer = {
+			direction = vertical
+			parentanchor = hcenter
+			margin_bottom = 10
+			spacing = 10
+			datamodel = "[MilitaryPanelCommanderEntry.GetCombatUnitBuildingEntries]"
+	
+			item = {
+				combat_unit_building = {
+
+					blockoverride "onclick" {
+						onclick = "[MilitaryPanelBuildingEntry.ToggleExpand]"
+					}
+					
+					blockoverride "onclick_showmore" {
+						visible = "[Not(MilitaryPanelBuildingEntry.IsExpanded)]"
+					}
+					
+					blockoverride "onclick_showless" {
+						visible = "[MilitaryPanelBuildingEntry.IsExpanded]"
+					}
+					
+					blockoverride "units_morale" {
+						white_progressbar_vertical = {
+							parentanchor = vcenter
+							size = { 6 24 }
+
+							tooltip = "MILITARY_PANEL_TROOP_MORALE_TOOLTIP"
+
+							blockoverride "values" {
+								min = 0
+								max = 1
+								value = "[FixedPointToFloat(Character.GetMoraleForBuildingUnits(Building.Self))]"
+							}
+							blockoverride "color" {
+								color = "[GetMoraleColorVec(Character.GetMoraleForBuildingUnits(Building.Self))]"
+							}
+						}
+					}
+
+					blockoverride "units_datamodel" {
+						datamodel = "[Character.GetCombatUnitsFromBuilding(Building.Self)]"
+					}
+				}
+			}
+		}
+	}
+
+	type combat_unit_building = flowcontainer {
+		direction = vertical
+		parentanchor = hcenter
+		margin = { 0 5 }
+		spacing = 5
+
+		background = {
+			using = entry_bg_simple
+		}
+
+		block "datacontext" {
+			datacontext = "[MilitaryPanelBuildingEntry]"
+			datacontext = "[MilitaryPanelBuildingEntry.GetBuilding]"
+		}
+
+		flowcontainer = {
+			margin = { 6 0 }
+			spacing = 5
+
+			# Troop image on the left
+			widget = {
+				size = { 200 150 }
+
+				background = {
+					texture = "[Building.GetCombatUnitTexture]"
+
+					modify_texture = {
+						using = simple_frame_mask
+					}
+				}
+
+				icon = {
+					using = simple_frame
+					size = { 100% 100% }
+				}
+			}
+
+			# Building info on the right
+			widget = {
+				size = { 300 150 }
+
+				### Title: "Regular/Conscript troops in State"
+				widget = {
+					size = { 100% 40 }
+					
+					background = {
+						using = dark_area
+						modify_texture = {
+							texture = "gfx/interface/masks/fade_horizontal_center.dds"
+							blend_mode = alphamultiply
+						}
+					}
+
+					textbox = {
+						margin_left = 10
+						parentanchor = vcenter
+						align = nobaseline
+	
+						fontsize_min = 12
+						size = { 100% 100% }
+						elide = right
+						text = "MILITARY_PANEL_BUILDING_TROOP_NAME"
+					}
+	
+					button_icon_goto = {
+						datacontext = "[Building]"
+						parentanchor = right|vcenter
+						position = { -5 0 }
+						size = { 25 25 }
+						onclick = "[InformationPanelBar.OpenBuildingDetailsPanel(Building.AccessSelf)]"
+						tooltip = "GO_TO_BUTTON_BUILDING"
+					}
+				}
+		
+				### Production methods (copy from buildings panel)
+				fixedgridbox = {
+					position = { 0 50 }
+					datamodel = "[Building.AccessProductionMethodGroups]"
+					flipdirection = yes
+					addcolumn = 52
+					addrow = 50
+		
+					item = {
+						widget = {
+							size = { 50 50 }
+							datacontext = "[Building.AccessProductionMethod(ProductionMethodGroup.Self)]"
+							datacontext = "[ProductionMethod]"
+							datacontext = "[Building]"
+							datacontext = "[ProductionMethodGroup]"
+							using = tooltip_above
+							tooltip = "CHANGE_FROM_CURRENT_PRODUCTION_METHOD_TOOLTIP"
+							
+							button = {
+								visible = "[NotEqualTo_int32( GetDataModelSize( ProductionMethodGroup.AccessBuildingProductionMethods( Building.Self ) ), '(int32)1' )]"
+								using = expand_button_bg_dropdown
+								size = { 100% 100% }
+								onclick = "[RightClickMenuManager.ToggleSwitchProductionMethodMenu(Building.AccessSelf, ProductionMethodGroup.AccessSelf, PdxGuiWidget.AccessSelf)]"
+							}
+		
+							icon = {
+								size = { 40 40 }
+								parentanchor = center
+								texture = "[ProductionMethod.GetTexture]"
+							}
+							
+							### new pm
+							has_new_pm_icon = {
+								position = { -2 2 }
+								parentanchor = bottom|left
+								blockoverride "visible" {
+									visible = "[And(Building.IsOwner( GetPlayer.Self ), GetPlayer.HasNewProductionMethodInSameGroup( Building.GetBuildingType.Self, ProductionMethod.Self ))]"
+								}
+							}								
+		
+							### nr available
+							textbox = {
+								raw_text = "#P #bold [ProductionMethodGroup.GetNumAvailableOptions(Building.AccessSelf)]#!#!"
+								parentanchor = top|right
+								position = { -5 0 }
+								autoresize = yes
+								align = right|nobaseline
+								visible = "[NotEqualTo_int32( ProductionMethodGroup.GetNumAvailableOptions(Building.AccessSelf), '(int32)1')]"
+								tooltip = "PRODUCTION_METHOD_OPTIONS"
+								using = tooltip_above
+								using = fontsize_small
+		
+								background = {
+									using = default_background
+									margin = { 8 4 }
+								}
+							}
+						}
+					}
+				}
+				
+				### Expand units widget
+				widget = {
+					position = { 0 110 }
+					size = { 100% 40 }
+
+					# Holds "onclick_" blocks
+					section_header_button = {
+						parentanchor = left|vcenter
+						size = { 100% 100% }
+					}
+	
+					flowcontainer = {
+						margin = { 10 0 }
+						parentanchor = right|vcenter
+						spacing = 10
+						
+						### Attrition level
+						block "units_attrition" {
+							textbox = {
+								parentanchor = vcenter
+								visible = "[Or(Character.IsMobilized, NotEqualTo_CFixedPoint(Character.GetAttritionRaw,'(CFixedPoint)0'))]"
+								text = "MILITARY_PANEL_TROOP_ATTRITION_LEVEL"
+								tooltip = "[Character.GetAttritionDesc]"
+								autoresize = yes
+								align = nobaseline
+							}
+						}
+
+						### Num units with the commander / unit capacity in the building
+						block "units_amount" {
+							textbox = {
+								visible = "[Character.IsMobilized]"
+								parentanchor = vcenter
+								text = "MILITARY_PANEL_UNITS_FROM_BUILDING_FORMAT"
+								tooltip = "MILITARY_PANEL_UNITS_FROM_BUILDING_TOOLTIP"
+								autoresize = yes
+								align = nobaseline
+							}
+							textbox = {
+								visible = "[Not(Character.IsMobilized)]"
+								parentanchor = vcenter
+								text = "MILITARY_PANEL_UNITS_FROM_BUILDING_FORMAT_UNMOBILIZED"
+								tooltip = "MILITARY_PANEL_UNITS_FROM_BUILDING_TOOLTIP"
+								autoresize = yes
+								align = nobaseline
+							}
+						}
+	
+						### Morale bar
+						block "units_morale" {
+							# Block for morale bar
+						}
+					}
+				}
+			}
+		}
+
+		flowcontainer = {
+			minimumsize = { 506 -1 }
+			maximumsize = { 506 -1 }
+			direction = vertical
+			parentanchor = hcenter 
+			margin = { 0 2 }
+			
+			combat_unit_grid = {
+
+				block "combat_units_visible" {
+					visible = "[MilitaryPanelBuildingEntry.IsExpanded]"
+				}
+
+				block "units_datamodel" {}
+			}
+		}
+	}
+}

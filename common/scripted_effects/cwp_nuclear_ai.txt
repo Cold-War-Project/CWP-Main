@@ -1,0 +1,102 @@
+﻿effect_select_target_countries_ai = {
+	clear_variable_list = wmd_target_list
+	clear_variable_list = wmd_target_list_c
+	# Add Hostile Countries
+	every_country = {
+		limit = {
+			or = {
+				has_war_with = ROOT
+				relations:root <= relations_threshold:hostile
+			}
+			nor = {
+				has_diplomatic_pact = {
+					who = ROOT
+					type = alliance
+				}
+				has_diplomatic_pact = {
+					who = ROOT
+					type = customs_union
+				}
+			}
+		}
+		ROOT = {
+			add_to_variable_list = {
+				name = wmd_ai_country_list
+				target = PREV
+			}
+		}
+		every_subject_or_below = { # Add target's subjects
+			ROOT = {
+				add_to_variable_list = {
+					name = wmd_ai_country_list
+					target = PREV
+				}
+			}
+		}
+	}
+	# Add Rival countries
+	every_rival_country = { 
+		ROOT = {
+			add_to_variable_list = {
+				name = wmd_ai_country_list
+				target = PREV
+			}
+		}
+		every_subject_or_below = { # Add rival's subjects
+			ROOT = {
+				add_to_variable_list = {
+					name = wmd_ai_country_list
+					target = PREV
+				}
+			}
+		}
+	}
+	# Select States in target countries
+	every_in_list = {
+		variable = wmd_ai_country_list
+		every_scope_state = {
+			ROOT = {
+				add_to_variable_list = {
+					name = wmd_ai_state_list
+					target = PREV
+				}
+			}
+		}
+	}
+	clear_variable_list = wmd_ai_country_list
+	# Order states by population
+	ordered_in_list = {
+		variable = wmd_ai_state_list
+		order_by = state_population
+		max = nuclear_stockpile_sv # Targetlist cannot be larger than stockpile
+		check_range_bounds = no
+		ROOT = {
+			add_to_variable_list = {
+				name = wmd_target_list_ordered
+				target = PREV
+			}
+		}
+	}
+	clear_variable_list = wmd_ai_state_list
+	every_in_list = {
+		variable = wmd_target_list_ordered
+		ROOT = {
+			add_to_variable_list = {
+				name = wmd_target_list
+				target = PREV
+			}
+		}
+	}
+	clear_variable_list = wmd_target_list_ordered
+	# Add state owners
+	every_in_list = {
+		variable = wmd_target_list
+		ROOT = {
+			add_to_variable_list = {
+				name = wmd_target_list_c
+				target = PREV.owner
+			}
+		}
+	}
+	effect_reset_relevant_coverage = yes
+}

@@ -1,0 +1,793 @@
+template lens_war_indicator_duration {
+	duration = 0.4
+}
+template lens_war_indicator_delay {
+	duration = 0.2
+}
+template lens_war_smoke_duration {
+	duration = 2.2
+}
+template lens_war_smoke_alpha {
+	alpha = 0.5
+}
+template lens_war_shimmer_duration {
+	duration = 1
+}
+
+types lens_toolbar_types {
+	### LENS TOOLBAR
+	type lens_toolbar = widget {
+		name = "lens_toolbar"
+		size = { 900 83 }
+		alwaystransparent = yes
+		using = hud_visibility
+		using = default_fade_in_out
+
+		widget = {
+			size = { 100% 100% }
+			using = fullscreen_hide
+
+			lensbar_mobilized_animation = {
+				visible = "[GetPlayer.IsInvolvedInActiveConflict]"
+			}
+
+			icon = {
+				texture = "gfx/interface/main_hud/lens_toolbar_bg.dds"
+				size = { 524 80 }
+				parentanchor = bottom|hcenter
+
+				using = hud_shiny_effect
+			}
+
+			# blocker for the leaf decorations on the side so you cant click on the map
+			widget = {
+				size = { 500 40 }
+				parentanchor = bottom|hcenter
+				using = clickthrough_blocker
+			}
+
+			container = {
+				name = "tutorial_highlight_lenses"
+				parentanchor = bottom|hcenter
+				position = { 0 0 }
+
+				flowcontainer = {
+					spacing = 3
+
+					container = {
+						name = "tutorial_highlight_production_lens"
+
+						lens_buttons = {
+							blockoverride "icon_texture" {
+								texture = "gfx/interface/icons/lens_toolbar_icons/production_lens_button.dds"
+							}
+							blockoverride "button" {
+								onclick = "[LensToolbar.Toggle('production_lens')]"
+								tooltip = "[SelectLocalization(GetMetaPlayer.GetPlayedOrObservedCountry.IsValid, 'PRODUCTION_LENS', '')]"
+								using = maplens_generic_sound
+								input_action = production_lens
+							}
+
+							blockoverride "highlight" {
+								visible = "[LensToolbar.IsLensOpen('production_lens')]"
+							}
+						}
+					}
+
+					container = {
+						name = "tutorial_highlight_political_lens"
+
+						lens_buttons = {
+							blockoverride "icon_texture" {
+								texture = "gfx/interface/icons/lens_toolbar_icons/political_lens_button.dds"
+							}
+							blockoverride "button" {
+								tooltip = "[SelectLocalization(GetMetaPlayer.GetPlayedOrObservedCountry.IsValid, 'POLITICAL_LENS', '')]"
+								onclick = "[LensToolbar.Toggle('political_lens')]"
+								using = maplens_generic_sound
+								input_action = political_lens
+							}
+
+							blockoverride "highlight" {
+								visible = "[LensToolbar.IsLensOpen('political_lens')]"
+							}
+						}
+					}
+
+					container = {
+						name = "tutorial_highlight_diplomatic_lens"
+
+						lens_buttons = {
+							blockoverride "icon_texture" {
+								texture = "gfx/interface/icons/lens_toolbar_icons/diplomatic_lens_button.dds"
+							}
+							blockoverride "button" {
+								tooltip = "[SelectLocalization(GetMetaPlayer.GetPlayedOrObservedCountry.IsValid, 'DIPLOMATIC_LENS', '')]"
+								onclick = "[LensToolbar.Toggle('diplomatic_lens')]"
+								using = maplens_generic_sound
+								input_action = diplomatic_lens
+							}
+
+							blockoverride "highlight" {
+								visible = "[LensToolbar.IsLensOpen('diplomatic_lens')]"
+							}
+						}
+					}
+
+					container = {
+						name = "tutorial_highlight_military_lens"
+
+						lens_buttons = {
+							blockoverride "icon_texture" {
+								texture = "gfx/interface/icons/lens_toolbar_icons/military_lens_button.dds"
+							}
+							blockoverride "button" {
+								tooltip = "[SelectLocalization(GetMetaPlayer.GetPlayedOrObservedCountry.IsValid, 'MILITARY_LENS', '')]"
+								onclick = "[LensToolbar.Toggle('military_lens')]"
+								using = maplens_generic_sound
+								input_action = military_lens
+							}
+
+							blockoverride "highlight" {
+								visible = "[LensToolbar.IsLensOpen('military_lens')]"
+							}
+						}
+					}
+
+					container = {
+						name = "tutorial_highlight_trade_lens"
+
+						lens_buttons = {
+							enabled = "[GetMetaPlayer.GetPlayedOrObservedCountry.IsValid]"
+
+							blockoverride "icon_texture" {
+								texture = "gfx/interface/icons/lens_toolbar_icons/trade_lens_button.dds"
+							}
+							blockoverride "button" {
+								tooltip = "[SelectLocalization(GetMetaPlayer.GetPlayedOrObservedCountry.IsValid, 'TRADE_LENS', '')]"
+								onclick = "[LensToolbar.Toggle('trade_lens')]"
+								using = maplens_generic_sound
+								input_action = trade_lens
+							}
+
+							blockoverride "highlight" {
+								visible = "[LensToolbar.IsLensOpen('trade_lens')]"
+							}
+						}
+					}
+				}
+			}
+
+			### LOCATION FINDER
+			icon = {
+				size = { 46 46 }
+				texture = "gfx/interface/backgrounds/round_button_bg.dds"
+				parentanchor = bottom|hcenter
+				position = { -215 0 }
+
+				button_icon_location_finder = {
+					parentanchor = center
+					size = { 40 40 }
+					onclick = "[InformationPanelBar.ToggleLocationFinder]"
+					tooltip = "LOCATION_FINDER"
+					input_action = location_finder
+					using = tooltip_ws
+				}
+			}
+
+			button = {
+				using = default_button_action
+				onclick = "[UnforceMapMode]"
+				onclick = "[MapListPanelManager.CloseCurrentPanel]"
+				visible = "[IsMapModeForced]"
+				shortcut = "close_window"
+				tooltip = "UNLOCK_MAP_MODE_TOOLTIP"
+				parentanchor = bottom|hcenter
+				widgetanchor = bottom|left
+				position = { 210 -47 }
+				textbox = {
+					text = "UNLOCK_MAP_MODE"
+					autoresize = yes
+					resizeparent = yes
+					margin = { 15 5 }
+					align = nobaseline
+				}
+			}
+
+			### MAP INFO / MAP MODES
+			container = {
+				minimumsize = { 234 -1 }
+				position = { 315 0 }
+				parentanchor = bottom|hcenter
+				onmousehierarchyenter = "[PdxGuiTriggerAllAnimations('map_modes_show')]"
+				onmousehierarchyleave = "[PdxGuiTriggerAllAnimations('map_modes_hide')]"
+				alwaystransparent = no
+
+				### LOCKED MAPMODE
+				widget = {
+					size = { 200 35 }
+					position = { 46 0 }
+					parentanchor = vcenter
+
+					state = {
+						name = map_mode_locked
+						alpha = 1
+						duration = 0.2
+						using = Animation_Curve_Default
+					}
+					state = {
+						name = map_mode_unlocked
+						alpha = 0
+						duration = 0.2
+						using = Animation_Curve_Default
+					}
+
+					background = {
+						using = default_background
+						margin_left = 30
+
+						modify_texture = {
+							texture = "gfx/interface/masks/fade_horizontal_right.dds"
+							spriteType = Corneredstretched
+							spriteborder = { 0 0 }
+							blend_mode = alphamultiply
+							alpha = 1
+						}
+					}
+
+					textbox = {
+						margin_left = 22
+						size = { 200 25 }
+						parentanchor = vcenter
+						fontsize_min = 12
+						elide = right
+						text = "[GetSelectedMapModeName]"
+						align = left|nobaseline
+					}
+				}
+
+				### DROPDOWN
+				dropDown = {
+					parentanchor = vcenter
+					position = { 0 0 }
+					datamodel = "[GetMapModeIndices]"
+					onselectionchanged = "[SelectMapMode]"
+					onselectionchanged = "[MapListPanelManager.OpenCurrentPanel]"
+					selectedindex = "[GetSelectedMapMode]"
+					size = { 246 35 }
+					focuspolicy = all
+					alwaystransparent = no
+					alpha = 0
+
+					state = {
+						name = map_modes_show
+						alpha = 1
+						duration = 0.2
+						using = Animation_Curve_Default
+					}
+					state = {
+						name = map_modes_hide
+						alpha = 0
+						duration = 0.2
+						using = Animation_Curve_Default
+					}
+
+					active_item = {
+						button = {
+							using = expand_button_bg_right_fade
+							size = { 100% 100% }
+							button_trigger = none
+
+							hbox = {
+								margin_left = 48
+
+								button = {
+									size = { 15 15 }
+									using = expand_arrow_expanded
+									mirror = vertical
+									alwaystransparent = yes
+								}
+
+								textbox = {
+									margin_left = 5
+									layoutpolicy_horizontal = expanding
+									size = { 0 25 }
+									fontsize_min = 12
+									elide = right
+									text = "[GetSelectedMapModeName]"
+									align = left|nobaseline
+								}
+							}
+						}
+					}
+
+					item = {
+						widget = {
+							button = {
+								size = { 95% 100% }
+								using = clean_button
+								parentanchor = hcenter
+
+								button_trigger = none
+
+								textbox = {
+									autoresize = yes
+									text = "[GetMapModeName( int32.GetInt )]"
+									align = left|nobaseline
+									parentanchor = left|vcenter
+									margin_left = 10
+								}
+							}
+						}
+					}
+
+					list = {
+						scrollarea = {
+							widgetanchor = bottom|left
+							parentanchor = top|left
+							position = { 0 0 }
+							maximumsize = { -1 800 }
+							autoresizescrollarea = yes
+							alwaystransparent = yes
+							scrollbarpolicy_horizontal = always_off
+
+							background = {
+								using = default_background
+								margin = { 6 8 }
+							}
+
+							scrollwidget = {
+								fixedgridbox = {
+									alwaystransparent = no
+									setitemsizefromcell = yes
+									addcolumn = 350
+									addrow = 30
+								}
+							}
+
+							scrollbar_vertical = {
+								using = vertical_scrollbar
+							}
+
+							scrollbar_horizontal = {
+								using = horizontal_scrollbar
+							}
+						}
+					}
+				}
+
+				### MAP INFO
+				icon = {
+					name = "tutorial_highlight_map_modes_button"
+					size = { 46 46 }
+					texture = "gfx/interface/backgrounds/round_button_bg.dds"
+
+					### no mapmode locked
+					icon = {
+						visible = "[Not(IsMapModeForced)]"
+						size = { 34 34 }
+						texture = "gfx/interface/main_hud/lens_map_info.dds"
+						tooltip = "MAP_INFO"
+						using = tooltip_above
+						parentanchor = center
+					}
+
+					### mapmode locked, click to unlock
+					button = {
+						visible = "[IsMapModeForced]"
+						size = { 34 34 }
+						texture = "gfx/interface/main_hud/lens_map_info.dds"
+						tooltip = "MAP_INFO_MAP_MODE_LOCKED"
+						onclick = "[UnforceMapMode]"
+						using = tooltip_above
+						parentanchor = center
+
+						button = {
+							parentanchor = center
+							alwaystransparent = yes
+							texture = "gfx/interface/main_hud/map_mode_locked.dds"
+							size = { 100% 100% }
+						}
+
+						state = {
+							name = _show
+							on_start = "[PdxGuiTriggerAllAnimations('map_mode_locked')]"
+						}
+						state = {
+							name = _hide
+							on_start = "[PdxGuiTriggerAllAnimations('map_mode_unlocked')]"
+						}
+					}
+				}
+			}
+		}
+	}
+
+	### LENS BUTTONS
+	type lens_buttons = widget {
+		size = { 74 74 }
+		enabled = "[GetMetaPlayer.GetPlayedOrObservedCountry.IsValid]"
+		### HIGHLIGHT
+		widget = {
+			size = { 105 105 }
+			parentanchor = center
+			alpha = 0
+			block "highlight" {
+			}
+			icon = {
+				using = rotate_glow_animation
+			}
+
+			state = {
+				name = _show
+				duration = 0.4
+				using = Animation_Curve_Default
+				alpha = 0.6
+			}
+			state = {
+				name = _hide
+				duration = 0.7
+				using = Animation_Curve_Default
+				alpha = 0
+			}
+		}
+
+		### BUTTON
+		button_icon_round_big = {
+			size = { 100% 100% }
+			blockoverride "icon" {
+				block "icon_texture" {}
+			}
+			blockoverride "button_selected" {
+				block "highlight" {}
+			}
+			block "button" {}
+			parentanchor = center
+			using = tooltip_above
+		}
+	}
+
+	### LENS OPTION MENU
+	type lens_option_menu = vbox {
+		name = "lens_menu"
+		layoutpolicy_horizontal = expanding
+		layoutpolicy_vertical = preferred
+		using = clickthrough_blocker
+		using = hud_visibility
+		using = default_fade_in_out
+
+		vbox = {
+			layoutpolicy_horizontal = expanding
+			layoutpolicy_vertical = preferred
+			using = fullscreen_hide
+
+			widget = {
+				layoutpolicy_horizontal = expanding
+				size = { 0 0 }
+				visible = [LensToolbar.IsAnyLensOpen]
+
+				state = {
+					name = _show
+					duration = 0.2
+					using = Animation_Curve_Default
+					size = { 0 200 }
+				}
+				state = {
+					name = _hide
+					duration = 0.3
+					using = Animation_Curve_Default
+					size = { 0 0 }
+				}
+
+				vbox = {
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = preferred
+					margin_bottom = 5
+
+					background = {
+						using = default_background
+						margin = { 100 0 }
+						margin_top = 4
+						margin_bottom = 10
+
+						modify_texture = {
+							texture = "gfx/interface/backgrounds/dark_sides_shading.dds"
+							spriteType = Corneredstretched
+							spriteborder = { 0 0 }
+							blend_mode = overlay
+						}
+					}
+
+					## Tabs + Close
+					hbox = {
+						layoutpolicy_horizontal = expanding
+						layoutpolicy_vertical = preferred
+						margin_right = 10
+
+						icon = {
+							texture = "gfx/interface/tabs/tab_divider.dds"
+							layoutpolicy_horizontal = expanding
+							layoutpolicy_vertical = expanding
+							size = { 0 30 }
+							spriteType = Corneredstretched
+							spriteborder = { 0 20 }
+
+							modify_texture = {
+								texture = "gfx/interface/masks/fade_horizontal_less_left.dds"
+								spriteType = Corneredstretched
+								spriteborder = { 0 0 }
+								blend_mode = alphamultiply
+							}
+						}
+						hbox = {
+							datamodel = "[LensToolbar.GetTabs]"
+							item = {
+								lens_tab_button = {
+									datacontext = "[LensTab]"
+								}
+							}
+						}
+						icon = {
+							texture = "gfx/interface/tabs/tab_divider.dds"
+							layoutpolicy_horizontal = expanding
+							layoutpolicy_vertical = expanding
+							size = { 0 30 }
+							spriteType = Corneredstretched
+							spriteborder = { 0 20 }
+
+							modify_texture = {
+								texture = "gfx/interface/masks/fade_horizontal_less_right.dds"
+								spriteType = Corneredstretched
+								spriteborder = { 0 0 }
+								blend_mode = alphamultiply
+							}
+						}
+						close_button = {
+							name = "tutorial_highlight_lens_exit_button"
+							size = { 35 35 }
+							onclick = "[LensToolbar.Close]"
+							shortcut = "close_window"
+						}
+					}
+
+					## Options
+					scrollarea = {
+						layoutpolicy_horizontal = expanding
+						size = { 0 165 }
+
+						scrollbar_vertical = {
+							using = vertical_scrollbar
+						}
+
+						scrollbarpolicy_horizontal = always_off
+
+						scrollwidget = {
+							flowcontainer = {
+								parentanchor = hcenter
+								margin_right = "[GetDefine('NGUI', 'LENS_TOOLBAR_MARGIN_RIGHT')]"
+								dynamicgridbox = {
+									datamodel_wrap = "[LensToolbar.GetMaxNumItemsPerRow]"
+									ignoreinvisible = yes
+									flipdirection = yes
+									datamodel = "[LensToolbar.GetOptions]"
+
+									item = {
+										lens_option_button = {
+											datacontext = "[LensToolbar.GetCurrentTab]"
+											datacontext = "[LensOption]"
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	### LENS TAB BUTTON
+	type lens_tab_button = widget {
+		widgetid = "[LensTab.GetKey]"
+		size = { 220 35 }
+		tooltip = "[LensTab.GetTooltip]"
+		tab_button = {
+			size = { 100% 100% }
+			visible = "[Not( LensTab.IsOpen )]"
+			onclick = "[LensTab.Open]"
+
+			flowcontainer = {
+				parentanchor = center
+				spacing = 2
+
+				icon = {
+					size = { 20 20 }
+					parentanchor = vcenter
+					texture = "[LensTab.GetTexture]"
+					alpha = 0.5
+				}
+				textbox = {
+					parentanchor = vcenter
+					text = "[LensTab.GetText]"
+					autoresize = yes
+					align = nobaseline
+					maximumsize = { 190 -1 }
+					alpha = 0.5
+					elide = right
+				}
+			}
+		}
+		icon = {
+			size = { 100% 100% }
+			using = selected_tabs
+			visible = "[LensTab.IsOpen]"
+			flowcontainer = {
+				parentanchor = center
+				spacing = 2
+
+				icon = {
+					size = { 24 24 }
+					parentanchor = vcenter
+					texture = "[LensTab.GetTexture]"
+				}
+				textbox = {
+					text = "[LensTab.GetText|b]"
+					autoresize = yes
+					align = nobaseline
+					parentanchor = vcenter
+					maximumsize = { 190 -1 }
+					elide = right
+				}
+			}
+		}
+	}
+
+	type lens_option_button = widget {
+		widgetid = "[LensOption.GetKey]"
+		enabled = "[LensOption.CanActivate]"
+		size = { -1 120 }
+		min_width = "[GetDefine('NGUI', 'LENS_TOOLBAR_ITEM_WIDTH')]"
+		tooltip = "LENS_OPTION_TOOLTIP"
+		using = tooltip_above
+		alwaystransparent = no
+
+		# hide goods buttons if we cant create routes with them ( we make them transparent rather than invisible because invisible buttons become weird empty holes in the grid box)
+		alpha = "[TransparentIfFalse( Not( And( Or( EqualTo_string( LensTab.GetKey, 'import_routes' ), EqualTo_string( LensTab.GetKey, 'export_routes' ) ), EqualTo_int32( LensOption.GetNumberOfSelections, '(int32)0' ) ) ) )]"
+
+		#mouse enter position animation
+		onmousehierarchyenter = "[PdxGuiWidget.FindChild('option_button').InterruptThenTriggerAnimation('option_button_mouse_leave','option_button_mouse_enter')]"
+		onmousehierarchyleave = "[PdxGuiWidget.FindChild('option_button').InterruptThenTriggerAnimation('option_button_mouse_enter','option_button_mouse_leave')]"
+
+		button = {
+			name = option_button
+			parentanchor = bottom|hcenter
+			using = sub_tab_button_sound
+			onclick = "[LensOption.Toggle]"
+
+			using = default_button_map_interaction
+			size = { -1 115 }
+			min_width = "[GetDefine('NGUI', 'LENS_TOOLBAR_ITEM_WIDTH')]"
+
+			modify_texture = {
+				texture = "gfx/interface/main_hud/lens_action_button_selected.dds"
+				spriteType = Corneredstretched
+				spriteborder = { 0 0 }
+				blend_mode = overlay
+				visible = "[LensOption.IsActive]"
+			}
+
+			icon = {
+				size = { 100% 100% }
+				using = highlighted_square_selection
+				visible = "[LensOption.IsActive]"
+			}
+
+			#mouse enter position
+			state = {
+				name = option_button_mouse_enter
+				duration = 0.15
+				position = { 0 -5 }
+				using = Animation_Curve_Default
+				on_start = "[PdxGuiWidget.FindChild('title').TriggerAnimation('show')]"
+				on_start = "[PdxGuiWidget.FindChild('cost').TriggerAnimation('show')]"
+			}
+			state = {
+				name = option_button_mouse_leave
+				duration = 0.3
+				position = { 0 0 }
+				using = Animation_Curve_Default
+				on_start = "[PdxGuiWidget.FindChild('title').TriggerAnimation('hide')]"
+				on_start = "[PdxGuiWidget.FindChild('cost').TriggerAnimation('hide')]"
+			}
+
+			button = {
+				name = "lens_icon"
+				size = { 60 60 }
+				position = { 0 5 }
+				gfxtype = buttongfx
+				parentanchor = hcenter
+				alwaystransparent = yes
+
+				icon = {
+					size = { 50 50 }
+					parentanchor = hcenter
+					texture = "[LensOption.GetTexture]"
+				}
+			}
+
+			textbox = {
+				name = "title"
+				raw_text = "#BOLD [LensOption.GetText]#!"
+				align = center|nobaseline
+				position = { 0 -13 }
+				size = { 100% 50 }
+				parentanchor = hcenter|bottom
+				using = fontsize_small
+				elide = right
+				multiline = yes
+				margin_left = 5
+				margin_right = 5
+				alpha = 0.75
+
+				state = {
+					name = show
+					alpha = 1
+					duration = 0.15
+					using = Animation_Curve_Default
+				}
+				state = {
+					name = hide
+					alpha = 0.75
+					duration = 0.3
+					using = Animation_Curve_Default
+				}
+			}
+			
+			textbox = {
+				name = "cost"
+				raw_text = "#v [LensOption.GetCostText]#!"
+				align = center|nobaseline
+				position = { 0 -3 }
+				size = { 100% 20 }
+				parentanchor = hcenter|bottom
+				using = fontsize_small
+				elide = right
+				multiline = no
+				margin_left = 5
+				margin_right = 5
+				alpha = 0.75
+
+				state = {
+					name = show
+					alpha = 1
+					duration = 0.15
+					using = Animation_Curve_Default
+				}
+				state = {
+					name = hide
+					alpha = 0.75
+					duration = 0.3
+					using = Animation_Curve_Default
+				}
+			}			
+
+			textbox = {
+				visible = "[LensOption.ShouldShowNumberOfSelections]"
+				raw_text = "#BOLD [LensOption.GetNumberOfSelections|+]#!"
+				tooltip = "LENS_ACTION_NUMBER"
+				using = tooltip_above
+				#size = { 33 23 }
+				align = hcenter|nobaseline
+				parentanchor = right
+				using = fontsize_large
+				autoresize = yes
+				position = { -10 2 }
+
+				background = {
+					using = blurry_dark_background
+					margin = { 5 5 }
+				}
+			}
+		}
+	}
+}
