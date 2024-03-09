@@ -127,12 +127,31 @@ types journal
 					flowcontainer = {
 						margin = { 0 10 }
 						direction = vertical
-						spacing = 2
 						parentanchor = hcenter
-						datamodel = "[AccessPlayer.AccessActiveNonPlayerObjectiveJournalEntries]"
-						
+						datamodel = "[AccessPlayer.GetGroupsForActiveJournalEntries]"
+						spacing = 10
+
 						item = {
-							journal_entry = {}
+							flowcontainer = {
+								direction = vertical
+								textbox = {
+									text = "[JournalEntryGroup.GetName]"
+									autoresize = yes
+									align = nobaseline
+									default_format = "#title"
+									margin_left = 3
+								}							
+								flowcontainer = {
+									direction = vertical
+									datamodel = "[JournalEntryGroup.GetActiveJournalEntryTypes(GetPlayer.Self)]"
+									spacing = 2
+									item = {
+										journal_entry = {
+											datacontext = "[AccessPlayer.GetJournalEntry(JournalEntryType.Self)]"
+										}
+									}
+								}
+							}
 						}
 					}
 
@@ -147,16 +166,34 @@ types journal
 					flowcontainer = {
 						margin = { 0 10 }
 						direction = vertical
-						spacing = 2
+						spacing = 10
 						parentanchor = hcenter
-						datamodel = "[AccessPlayer.AccessInactiveJournalEntries]"
-						
+						datamodel = "[AccessPlayer.GetGroupsForInActiveJournalEntries]"
+
 						item = {
-							journal_entry = {
-								alpha = 0.75
-								blockoverride "fontsize" {}
-								blockoverride "iconsize" {
-									size = { 35 35 }
+							flowcontainer = {
+								direction = vertical
+								textbox = {
+									text = "[JournalEntryGroup.GetName]"
+									autoresize = yes
+									align = nobaseline
+									default_format = "#title"
+									margin_left = 3
+								}							
+								flowcontainer = {
+									direction = vertical
+									datamodel = "[JournalEntryGroup.GetInactiveJournalEntryTypes(GetPlayer.Self)]"
+									spacing = 2
+									item = {
+										journal_entry = {
+											datacontext = "[AccessPlayer.GetJournalEntry(JournalEntryType.Self)]"
+											alpha = 0.75
+											blockoverride "fontsize" {}
+											blockoverride "iconsize" {
+												size = { 35 35 }
+											}
+										}
+									}
 								}
 							}
 						}
@@ -214,13 +251,11 @@ types journal
 			using = default_button
 		}
 		onclick = "[InformationPanelBar.OpenJournalEntryPanel(JournalEntry.AccessSelf)]"
-		onclick = "[GetVariableSystem.Clear('international_open')]" 
-		onclick = "[GetVariableSystem.Clear('un_panel')]" 
-		onclick = "[GetVariableSystem.Clear('banks_panel')]" 
-		onclick = "[GetVariableSystem.Clear('nato_panel')]" 
-		onclick = "[GetVariableSystem.Clear('warsaw_pact_panel')]" 
 		enabled = "[JournalEntry.IsActive]"
-		tooltip = "JOURNAL_ENTRY_TOOLTIP"
+
+		tooltipwidget = {
+			FancyTooltip_JournalEntry = {}
+		}
 
 		onmousehierarchyenter = "[PdxGuiWidget.FindChild('journal_pin_button').InterruptThenTriggerAnimation('hide_journal_pin_button','show_journal_pin_button')]"
 		onmousehierarchyleave = "[PdxGuiWidget.FindChild('journal_pin_button').InterruptThenTriggerAnimation('show_journal_pin_button','hide_journal_pin_button')]"
@@ -302,6 +337,24 @@ types journal
 						minimumsize = { 420 -1 }
 					}
 				}
+
+				# number of possible actions
+				textbox = {
+					text = "JOURNAL_ENTRY_POSSIBLE_ACTIONS"
+					visible = "[GreaterThan_int32(JournalEntry.GetNumPossibleScriptedButtons, '(int32)0')]"
+					autoresize = yes					
+					align = left|nobaseline
+					multiline = yes
+					block "textsize" {
+						maximumsize = { 420 -1 }
+						minimumsize = { 420 -1 }
+					}
+				}
+
+				textbox = {
+					
+					autoresize = yes
+				}
 				
 				# progress description
 				textbox = {
@@ -341,6 +394,7 @@ types journal
 					icon = {
 						size = { 18 18 }
 						texture = "gfx/interface/icons/generic_icons/clock.dds"
+						parentanchor = vcenter
 					}
 					textbox = {
 						text = "[JournalEntry.GetTimeoutTooltip]"

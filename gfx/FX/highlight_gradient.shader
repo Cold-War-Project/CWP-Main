@@ -56,11 +56,11 @@ PixelShader =
 				{
 					float2 ColorIndex = PdxTex2DLod0( ProvinceColorIndirectionTexture, Input.uv + RotateDisc( DiscSamples[i].xy, Rotate ) * KernelSize ).rg;
 					int Index = ColorIndex.x * 255.0 + ColorIndex.y * 255.0 * 256.0;
-					CoaAlpha += step( 1.0f / 255.0f,  PdxReadBuffer( ProvinceCountryIdBuffer, Index ).r );
+					CoaAlpha += step( 1.0f / 255.0f,  PdxReadBuffer( ProvinceControllerIdBuffer, Index ).r );
 
 					ColorIndex = PdxTex2DLod0( ProvinceColorIndirectionTexture, Input.uv + RotateDisc( DiscSamples[i].zw, Rotate ) * KernelSize ).rg;
 					Index = ColorIndex.x * 255.0 + ColorIndex.y * 255.0 * 256.0;
-					CoaAlpha += step( 1.0f / 255.0f,  PdxReadBuffer( ProvinceCountryIdBuffer, Index ).r );
+					CoaAlpha += step( 1.0f / 255.0f,  PdxReadBuffer( ProvinceControllerIdBuffer, Index ).r );
 				}
 				CoaAlpha /= Samples * 2;
 			}

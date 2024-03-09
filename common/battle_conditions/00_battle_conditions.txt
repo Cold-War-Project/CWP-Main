@@ -1,4 +1,120 @@
-﻿battle_condition_dug_in = { #defender only
+﻿battle_condition_pursuit = {
+	icon = "gfx/interface/icons/battle_conditions/battle_condition_pursuit.dds"
+
+	modifier = {
+		unit_morale_loss_mult = -1
+		battle_combat_width_mult = 10
+	}
+	
+	instant_switch = {
+		NOR = { 
+			has_battle_condition = battle_condition_panicked_retreat
+			has_battle_condition = battle_condition_controlled_retreat
+		}	
+		current_manpower > {
+			value = opposite_battle_side.current_manpower
+			multiply = {
+				if = {
+					limit = {
+						opposite_battle_side = {
+							has_battle_condition = battle_condition_panicked_retreat
+						}
+					}
+					add = 2
+				}
+				else_if = {
+					limit = {
+						opposite_battle_side = {
+							has_battle_condition = battle_condition_controlled_retreat
+						}
+					}
+					add = 4
+				}
+				else = {
+					add = 10
+				}
+			}
+		}
+	}
+	
+	weight = 1
+}
+
+battle_condition_panicked_retreat = {
+	icon = "gfx/interface/icons/battle_conditions/battle_condition_panicked_retreat.dds"
+
+	modifier = {
+		unit_morale_loss_mult = 0.5
+		unit_recovery_rate_add = -0.5
+	}
+	
+	instant_switch = {
+		NOR = { 
+			has_battle_condition = battle_condition_controlled_retreat 
+			opposite_battle_side = {
+				has_battle_condition = battle_condition_panicked_retreat
+			}
+		}
+		current_manpower < {
+			value = starting_manpower
+			if = {
+				limit = {
+					scope:character ?= { experience_level > 5 }
+				}
+				multiply = 0.1
+			}
+			else_if = {
+				limit = {
+					scope:character ?= { experience_level > 4 }
+				}
+				multiply = 0.2
+			}
+			else = {
+				multiply = 0.3
+			}
+		}
+	}
+	
+	weight = 1
+}
+
+battle_condition_controlled_retreat = {
+	icon = "gfx/interface/icons/battle_conditions/battle_condition_controlled_retreat.dds"
+
+	modifier = {
+		unit_morale_loss_mult = 2
+		unit_recovery_rate_add = 0.25
+	}
+	
+	instant_switch = {
+		NOR = {
+			has_battle_condition = battle_condition_panicked_retreat 
+			opposite_battle_side = {
+				OR = {
+					has_battle_condition = battle_condition_panicked_retreat
+					has_battle_condition = battle_condition_controlled_retreat
+				}
+			}
+		}
+		scope:character ?= { 
+			experience_level > 5
+		}
+		current_manpower < {
+			value = starting_manpower
+			multiply = 0.2
+		}
+	}
+	
+	weight = {
+		add = 1
+		scope:character ?= {
+			add = experience_level
+			divide = 3
+		}
+	}
+}
+
+battle_condition_dug_in = { #defender only
 	icon = "gfx/interface/icons/battle_conditions/battle_condition_dug_in.dds"
 
 	modifier = {
@@ -233,7 +349,9 @@ battle_condition_mud = {
 	icon = "gfx/interface/icons/battle_conditions/battle_condition_mud.dds"
 
 	modifier = {
-		unit_provinces_captured_mult = -0.5
+		unit_offense_mult = -0.2
+		unit_defense_mult = -0.1
+		unit_morale_loss_mult = 0.1
 	}
 
 	possible = {
@@ -421,7 +539,9 @@ battle_condition_lost = { #attacker only
 	icon = "gfx/interface/icons/battle_conditions/battle_condition_lost.dds"
 
 	modifier = {
-		unit_provinces_captured_mult = -0.5
+		unit_offense_mult = -0.1
+		unit_defense_mult = -0.25
+		unit_morale_loss_mult = 0.2
 	}
 
 	possible = {
@@ -743,27 +863,11 @@ battle_condition_death_from_below = {
 		exists = scope:character
 		scope:character = { 
 			has_role = admiral 
-		}
-		battle = {
-		 	battle_side_pm_usage = {
-		 		target = scope:character.owner
-				production_method = pm_wartime_attack_submarines
-				production_method = pm_diesel_attack_submarines
-				production_method = pm_nuclear_attack_submarines
-				production_method = pm_cruise_missile_submarines
-				production_method = pm_advanced_attack_submarines
-		 		value > 0.5
-		 	}
-		}
-		battle = {
-			battle_side_pm_usage = {
-				target = scope:character.opposing_commander.owner
-				production_method = pm_wartime_attack_submarines
-				production_method = pm_diesel_attack_submarines
-				production_method = pm_nuclear_attack_submarines
-				production_method = pm_cruise_missile_submarines
-				production_method = pm_advanced_attack_submarines
-				value < 0.5
+			commander_military_formation = {
+				formation_navy_unit_type_fraction = {  
+					target = unit_type:combat_unit_type_submarine
+					value >= 0.2  
+				}
 			}
 		}
 		NOT = { has_battle_condition = battle_condition_rough_waters }
