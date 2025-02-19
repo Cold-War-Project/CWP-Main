@@ -319,6 +319,7 @@ types timekeeper
 		### CONSTRUCTION
 		widget = {
 			name = "tutorial_highlight_outliner_construction"
+			max_update_rate = 8
 			size = { 410 75 }
 			position = { 0 76 }
 			parentanchor = right
@@ -389,14 +390,15 @@ types timekeeper
 					parentanchor = vcenter
 					size = { 100 58 }
 					using = default_button
-					onclick = "[InformationPanelBar.OpenPanelTab('production_methods', 'construction_queues')]"
+					onclick = "[InformationPanelBar.OpenConstructionPanel( GetPlayer.Self )]"
 					enabled = "[Country.IsValid]"
 					widget = {
 						visible = "[Country.IsValid]"
 						tooltip = "CONSTRUCTION_QUEUE_TOOLTIP"
 						size = { 100% 100% }
+						input_action = "construction_queue" #must add it in here for the shortcut text to appear in the tooltip
 					}
-					input_action = construction_queue
+					input_action = "construction_queue"
 
 					flowcontainer = {
 						direction = vertical
@@ -471,10 +473,15 @@ types timekeeper
 						blockoverride "buildings_datamodel" {
 							datamodel = "[Country.AccessShownCurrentlyConstructingGovernmentQueue]"
 						}
+
+						blockoverride "ownership_color"
+						{
+							color = "[GetDefine('NGUI','BUILDING_OWNERSHIP_COLOR_PLAYER_GOVERNMENT')]"
+						}
 					}
 
 					mini_construction_queue = {
-						visible = "[And(Country.HasConstructionQueued, Country.ShouldShowPrivateConstructionQueue)]"
+						visible = "[Country.HasConstructionQueued]"
 
 						blockoverride "alpha" {
 							#alpha = "[TransparentIfZero_int32(Country.GetNumInactiveAndNonShownPrivateConstructionQueueElements)]"
@@ -498,6 +505,11 @@ types timekeeper
 
 						blockoverride "buildings_datamodel" {
 							datamodel = "[Country.AccessShownCurrentlyConstructingPrivateQueue]"
+						}
+
+						blockoverride "ownership_color"
+						{
+							color = "[GetDefine('NGUI','BUILDING_OWNERSHIP_COLOR_PLAYER_POPS')]"
 						}
 					}
 				}
@@ -703,12 +715,14 @@ types timekeeper
 					position = { 32 0 }
 					visible = "[TimeKeeper.IsPaused]"
 					parentanchor = bottom
-					text = "CLOCK_PAUSED"
+					text = "[TimeKeeper.GetPausedText]"
 					autoresize = yes
 					using = fontsize_small
 					default_format = "#variable"
 					align = left|nobaseline
 					alpha = 0.5
+					elide = right
+					max_width = 170
 				}
 			}
 
@@ -1238,24 +1252,22 @@ types construction_in_outliner
 
 		overlappingitembox = {
 			parentanchor = vcenter
-			position = { 27 0 }
+			position = { 33 0 }
 			size = { 172 30 }
 
 			block "buildings_datamodel" {}
 
 			item = {
 				widget = {
-					size = { 30 30 }
+					size = { 32 30 }
 					button = {
 						parentanchor = vcenter
 						datacontext = "[ConstructionQueueElement.AccessBuilding]"
-						tooltipwidget = {
-							FancyTooltip_Building = {}
-						}
+						tooltip = "[ConstructionQueueElement.GetTooltip]"
 						onclick = "[InformationPanelBar.OpenBuildingDetailsPanel(Building.AccessSelf)]"
-
+						using = tooltip_below
 						size = { 30 30 }
-						texture = "[Building.GetTexture]"
+						texture = "[Building.GetIcon]"
 
 						default_progressbar_horizontal = {
 							datacontext = "[ConstructionQueueElement.GetBuilding]"
@@ -1280,6 +1292,19 @@ types construction_in_outliner
 			margin_top = -5
 			margin_bottom = -5
 			margin_right = 0
+		}
+
+		background = {
+			using = fade_right_entry_header_colored
+			margin_left = -10
+			margin_top = -5
+			margin_bottom = -5
+			margin_right = 0
+			mirror = horizontal
+			block "ownership_color"
+			{
+				#color = "[GetDefine('NGUI','BUILDING_OWNERSHIP_COLOR_PLAYER_GOVERNMENT')]"
+			}
 		}
 	}
 }

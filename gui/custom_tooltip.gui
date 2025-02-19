@@ -1,5 +1,73 @@
+@tooltip_max_width = 550 #copied from tooltip.gui
+
+@tooltip_fixed_width = 500 #for 2 column layouts etc, since max_width is quite wide
+@tooltip_fixed_column_width = 245 #tooltip_fixed_width/2 - 10/2
+@tooltip_fixed_column_width_minus_40 = 205
+@tooltip_fixed_column_width_minus_16 = 229
+
 types TooltipTypes
 {
+	type custom_tooltip_textbox = DefaultTooltipTextBox {
+		max_width = @tooltip_max_width
+		fonttintcolor = "[TooltipInfo.GetTintColor]"
+		multiline = yes
+	}
+
+	type custom_tooltip_textbox_column_width = custom_tooltip_textbox {
+		maximumsize = { @tooltip_fixed_column_width -1 } 
+	}
+
+	type custom_tooltip_textbox_with_empty_line = custom_tooltip_textbox {
+		margin_bottom = 15
+	}
+
+	type custom_tooltip_newline = widget {
+		size = { 21 21 }
+	}
+
+	type tooltip_divider = widget {
+		parentanchor = hcenter
+		size = { 100% 20 }
+
+		divider_clean = {
+			parentanchor = center
+		}
+	}
+
+	type custom_tooltip_2_columns = flowcontainer {
+		direction = horizontal
+		using = tooltip_segment_margin
+
+		spacing = 10
+
+		block "bg" 
+		{
+			using = tooltip_segment_background
+		}
+
+
+		flowcontainer = {
+			direction = vertical
+			max_width = @tooltip_fixed_column_width
+			min_width = @tooltip_fixed_column_width
+			block "left_column"
+			{
+
+			}
+		}
+
+		flowcontainer = {
+			direction = vertical
+			max_width = @tooltip_fixed_column_width
+			min_width = @tooltip_fixed_column_width
+
+			block "right_column"
+			{
+
+			}
+		}
+	}
+	
 	type FancyTooltip_DecreeType = FancyTooltipWidgetType {
 		blockoverride "text" {
 			text = "[DecreeType.GetTooltip(GetPlayer)]"
@@ -42,6 +110,87 @@ types TooltipTypes
 		blockoverride "go_to_button_properties" {
 			onclick = "[InformationPanelBar.OpenChangeLaw(Law.AccessSelf)]"
 		}
+
+		blockoverride "tooltip_content_before" {
+			custom_tooltip_textbox = {
+				visible = "[Not(Or(Law.IsActive, Law.IsBeingEnacted))]"
+				text = "ENACT_LAW_CHANCES_HEADER"
+			}
+
+			### ENACTMENT CHANCES
+			widget = {
+				visible = "[Not(Or(Law.IsActive, Law.IsBeingEnacted))]"
+				size = { @tooltip_max_width 60 }
+
+				vbox = {
+					layoutpolicy_horizontal = preferred
+					layoutpolicy_vertical = preferred
+					margin = { 15 5 }
+					
+					background = {
+						using = entry_bg_simple
+					}
+					
+					vbox = {
+						layoutpolicy_horizontal = expanding
+						layoutpolicy_vertical = preferred
+						spacing = 5
+						
+						hbox = {
+							layoutpolicy_horizontal = expanding
+							layoutpolicy_vertical = preferred
+							spacing = 5
+							
+							custom_tooltip_textbox = {
+								alpha = "[TransparentIfFalse(GreaterThan_CFixedPoint(Law.GetCheckpointSuccessChance, '(CFixedPoint)0'))]"
+								layoutpolicy_horizontal = expanding
+								size = { 0 14 }
+								align = left|nobaseline
+								elide = right
+								fontsize_min = 14
+								text = "OUTCOME_SUCCESS"
+							}
+
+							custom_tooltip_textbox = {
+								layoutpolicy_horizontal = expanding
+								alpha = "[TransparentIfFalse(GreaterThan_CFixedPoint(Law.GetCheckpointAdvanceChance, '(CFixedPoint)0'))]"
+								size = { 0 14 }
+								align = left|nobaseline
+								elide = right
+								fontsize_min = 14
+								text = "OUTCOME_ADVANCE"
+							}
+						}
+
+						hbox = {
+							layoutpolicy_horizontal = expanding
+							layoutpolicy_vertical = preferred
+							spacing = 5
+							
+							custom_tooltip_textbox = {
+								layoutpolicy_horizontal = expanding
+								alpha = "[TransparentIfFalse(GreaterThan_CFixedPoint(Law.GetCheckpointDebateChance, '(CFixedPoint)0'))]"
+								size = { 0 14 }
+								align = left|nobaseline
+								elide = right
+								fontsize_min = 14
+								text = "OUTCOME_DEBATE"
+							}
+
+							custom_tooltip_textbox = {
+								layoutpolicy_horizontal = expanding
+								alpha = "[TransparentIfFalse(GreaterThan_CFixedPoint(Law.GetCheckpointStallChance, '(CFixedPoint)0'))]"
+								size = { 0 14 }
+								align = left|nobaseline
+								elide = right
+								fontsize_min = 14
+								text = "OUTCOME_STALL"
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 
 	type FancyTooltip_LawType = FancyTooltipWidgetType {
@@ -68,6 +217,406 @@ types TooltipTypes
 		blockoverride "go_to_button_properties" {
 			datacontext = "[LawType.GetGroup.GetCurrentlyActive]"
 			onclick = "[InformationPanelBar.OpenChangeLaw(Law.AccessSelf)]"
+		}
+	}
+
+	type RegularTooltip_LawEnactment = RegularTooltip {
+		blockoverride "tooltip_content_after" {
+
+			custom_tooltip_textbox = {
+				text = "TOOLTIP_ENACT_LAW_NAME"
+			}
+
+			custom_tooltip_textbox = {
+				text = "TOOLTIP_ENACT_LAW_CURRENT_LAW_NAME"
+			}
+
+			custom_tooltip_textbox = {
+				visible = "[Not(StringIsEmpty(Law.CannotEnactDesc))]"
+				text = "[Law.CannotEnactDesc]"
+			}
+
+			tooltip_divider = {}
+
+			custom_tooltip_textbox = {
+				text = "ENACT_LAW_CHANCES_HEADER"
+			}
+
+			### ENACTMENT CHANCES
+			widget = {
+				size = { @tooltip_max_width 60 }
+
+				vbox = {
+					layoutpolicy_horizontal = preferred
+					layoutpolicy_vertical = preferred
+					margin = { 15 5 }
+					
+					background = {
+						using = entry_bg_simple
+					}
+					
+					vbox = {
+						layoutpolicy_horizontal = expanding
+						layoutpolicy_vertical = preferred
+						spacing = 5
+						
+						hbox = {
+							layoutpolicy_horizontal = expanding
+							layoutpolicy_vertical = preferred
+							spacing = 5
+							
+							custom_tooltip_textbox = {
+								alpha = "[TransparentIfFalse(GreaterThan_CFixedPoint(Law.GetCheckpointSuccessChance, '(CFixedPoint)0'))]"
+								layoutpolicy_horizontal = expanding
+								size = { 0 14 }
+								align = left|nobaseline
+								elide = right
+								fontsize_min = 14
+								text = "OUTCOME_SUCCESS"
+							}
+
+							custom_tooltip_textbox = {
+								layoutpolicy_horizontal = expanding
+								alpha = "[TransparentIfFalse(GreaterThan_CFixedPoint(Law.GetCheckpointAdvanceChance, '(CFixedPoint)0'))]"
+								size = { 0 14 }
+								align = left|nobaseline
+								elide = right
+								fontsize_min = 14
+								text = "OUTCOME_ADVANCE"
+							}
+						}
+
+						hbox = {
+							layoutpolicy_horizontal = expanding
+							layoutpolicy_vertical = preferred
+							spacing = 5
+							
+							custom_tooltip_textbox = {
+								layoutpolicy_horizontal = expanding
+								alpha = "[TransparentIfFalse(GreaterThan_CFixedPoint(Law.GetCheckpointDebateChance, '(CFixedPoint)0'))]"
+								size = { 0 14 }
+								align = left|nobaseline
+								elide = right
+								fontsize_min = 14
+								text = "OUTCOME_DEBATE"
+							}
+
+							custom_tooltip_textbox = {
+								layoutpolicy_horizontal = expanding
+								alpha = "[TransparentIfFalse(GreaterThan_CFixedPoint(Law.GetCheckpointStallChance, '(CFixedPoint)0'))]"
+								size = { 0 14 }
+								align = left|nobaseline
+								elide = right
+								fontsize_min = 14
+								text = "OUTCOME_STALL"
+							}
+						}
+					}
+				}
+			}
+
+			custom_tooltip_textbox_with_empty_line = {
+				text = "[Law.GetReplacedLawEffect]"
+			}
+
+			custom_tooltip_textbox = {
+				text = "[Law.PredictLegitimacyChangeToEnactDesc]"
+			}
+
+			custom_tooltip_textbox = {
+				text = "[Law.PredictApprovalChangesDuringEnactmentDesc]"
+			}
+
+			custom_tooltip_textbox = {
+				text = "[Law.PredictMovementLoyalistsFromEnactmentDesc]"
+			}
+
+			flowcontainer = {
+				visible = "[Not(IsDataModelEmpty(Law.GetAffectedMovementsFromStartEnact))]"
+				direction = vertical
+
+				custom_tooltip_newline = {
+					visible = "[Not(StringIsEmpty(Law.PredictMovementLoyalistsFromEnactmentDesc))]"
+				}
+
+				custom_tooltip_textbox = {
+					text = "LAW_ENACTMENT_EFFECT_ON_MOVEMENT_ACTIVISM_HEADER"
+				}
+
+				flowcontainer = {
+					minimumsize = { 520 -1 }
+					direction = vertical
+					margin = { 10 0 }
+					datamodel = "[DataModelFirst(Law.GetAffectedMovementsFromStartEnact, '(int32)5')]"
+
+					background = {
+						using = entry_bg_simple
+					}
+
+					item = {
+						movement_affected_by_law_enactment_tooltip_item = {}
+					}
+				}
+
+				### If more than 5 affected Movements, here are the additional
+				custom_tooltip_textbox = {
+					visible = "[GreaterThan_int32(GetDataModelSize(Law.GetAffectedMovementsFromStartEnact), '(int32)5')]"
+					default_format = "#tooltippable"
+					text = "LAW_ENACTMENT_AFFECTED_MOVEMENTS_ADDITIONAL"
+
+					tooltipwidget = {
+						RegularTooltip = {
+							blockoverride "tooltip_content" {
+								flowcontainer = {
+									parentanchor = hcenter
+									minimumsize = { 520 -1 }
+									direction = vertical
+									datamodel = "[DataModelSkipFirst(Law.GetAffectedMovementsFromStartEnact, '(int32)5')]"
+
+									item = {
+										movement_affected_by_law_enactment_tooltip_item = {
+											blockoverride "bottom_divider_visiblity" {
+												visible = "[NotEqualTo_int32(Subtract_int32(GetDataModelSize(DataModelSkipFirst(Law.GetAffectedMovementsFromStartEnact, '(int32)5')), '(int32)1'), PdxGuiWidget.AccessParent.GetIndexInDataModel)]"
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	type RegularTooltip_CancelLawEnactment = RegularTooltip {
+		blockoverride "tooltip_content_after" {
+
+			custom_tooltip_textbox = {
+				visible = "[IsValid(Law.StopEnacting)]"
+				text = "TOOLTIP_CANCEL_LAW"
+			}
+
+			custom_tooltip_textbox = {
+				visible = "[Not(IsValid(Law.StopEnacting))]"
+				text = "TOOLTIP_CANCEL_LAW_DISALLOWED"
+			}
+
+			tooltip_divider = {}
+
+			custom_tooltip_textbox = {
+				text = "[GetDesc(Law.StopEnacting)]"
+			}
+
+			custom_tooltip_textbox = {
+				text = "TOOLTIP_CANCEL_LAW_COOLDOWN"
+			}
+
+			flowcontainer = {
+				visible = "[Not(IsDataModelEmpty(Law.GetAffectedMovementsFromCancelEnact))]"
+				direction = vertical
+
+				custom_tooltip_newline = {
+					visible = "[Not(StringIsEmpty(Law.PredictMovementLoyalistsFromEnactmentDesc))]"
+				}
+
+				custom_tooltip_textbox = {
+					text = "LAW_CANCEL_ENACTMENT_EFFECT_ON_MOVEMENT_ACTIVISM_HEADER"
+				}
+
+				flowcontainer = {
+					minimumsize = { 520 -1 }
+					direction = vertical
+					margin = { 10 0 }
+					datamodel = "[DataModelFirst(Law.GetAffectedMovementsFromCancelEnact, '(int32)5')]"
+
+					background = {
+						using = entry_bg_simple
+					}
+
+					item = {
+						movement_affected_by_cancel_law_enactment_tooltip_item = {}
+					}
+				}
+
+				### If more than 5 affected Movements, here are the additional
+				custom_tooltip_textbox = {
+					visible = "[GreaterThan_int32(GetDataModelSize(Law.GetAffectedMovementsFromCancelEnact), '(int32)5')]"
+					default_format = "#tooltippable"
+					text = "LAW_ENACTMENT_AFFECTED_MOVEMENTS_ADDITIONAL"
+
+					tooltipwidget = {
+						RegularTooltip = {
+							blockoverride "tooltip_content" {
+								flowcontainer = {
+									parentanchor = hcenter
+									minimumsize = { 520 -1 }
+									direction = vertical
+									datamodel = "[DataModelSkipFirst(Law.GetAffectedMovementsFromCancelEnact, '(int32)5')]"
+
+									item = {
+										movement_affected_by_cancel_law_enactment_tooltip_item = {
+											blockoverride "bottom_divider_visiblity" {
+												visible = "[NotEqualTo_int32(Subtract_int32(GetDataModelSize( DataModelSkipFirst(Law.GetAffectedMovementsFromCancelEnact, '(int32)5') ), '(int32)1'), PdxGuiWidget.AccessParent.GetIndexInDataModel)]"
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	type movement_affected_by_law_enactment_tooltip_item = flowcontainer {
+		direction = vertical
+		tooltip = "LAW_ENACTMENT_AFFECTED_MOVEMENT_TOOLTIP"
+		using = tooltip_ws
+
+		widget = {
+			size = { 530 40 }
+
+			hbox = {
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+				spacing = 5
+
+				icon = {
+					visible = "[LessThan_CFixedPoint(Law.GetRadicalismDriftTargetOnMovementFromStartEnact( PoliticalMovement.Self ), '(CFixedPoint)0.5')]"
+					size = { 25 25 }
+					texture = "gfx/interface/icons/political_movement_icons/political_activism.dds"
+				}
+
+				icon = {
+					visible = "[GreaterThanOrEqualTo_CFixedPoint(Law.GetRadicalismDriftTargetOnMovementFromStartEnact( PoliticalMovement.Self ), '(CFixedPoint)0.5')]"
+					size = { 25 25 }
+					texture = "gfx/interface/icons/political_movement_icons/political_activism_red.dds"
+				}
+
+				textbox = {
+					size = { 50 40 }
+					align = nobaseline
+					elide = right
+					fontsize_min = 12
+					text = "[Law.GetRadicalismEffectOnMovementFromStartEnact( PoliticalMovement.Self )|-=0%]"
+				}
+
+				vertical_divider = {
+					blockoverride "size" {
+						layoutpolicy_vertical = expanding
+						size = { 2 0 }
+					}
+				}
+
+				textbox = {
+					layoutpolicy_horizontal = expanding
+					size = { 0 40 }
+					align = nobaseline
+					elide = right
+					fontsize_min = 12
+					text = "[PoliticalMovement.GetName]"
+				}
+
+				expand = {}
+
+				icon = {
+					size = { 25 25 }
+					texture = "gfx/interface/icons/generic_icons/arrow_right_small.dds"
+				}
+
+				expand = {}
+
+				textbox = {
+					size = { 80 40 }
+					align = right|nobaseline
+					elide = right
+					fontsize_min = 12
+					text = "[LabelingHelper.GetLabelForRadicalism(Law.GetRadicalismDriftTargetOnMovementFromStartEnact( PoliticalMovement.Self ))]"
+				}
+			}
+		}
+
+		divider_clean = {
+			block "bottom_divider_visiblity" {
+				visible = "[NotEqualTo_int32(Subtract_int32(GetDataModelSize(DataModelFirst(Law.GetAffectedMovementsFromStartEnact, '(int32)5')), '(int32)1'), PdxGuiWidget.AccessParent.GetIndexInDataModel)]"
+			}
+		}
+	}
+
+	type movement_affected_by_cancel_law_enactment_tooltip_item = flowcontainer {
+		direction = vertical
+		tooltip = "CANCEL_LAW_ENACTMENT_AFFECTED_MOVEMENT_TOOLTIP"
+		using = tooltip_ws
+
+		widget = {
+			size = { 530 40 }
+
+			hbox = {
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+				spacing = 5
+
+				icon = {
+					visible = "[LessThan_CFixedPoint(Law.GetRadicalismDriftTargetOnMovementFromCancelEnact( PoliticalMovement.Self ), '(CFixedPoint)0.5')]"
+					size = { 25 25 }
+					texture = "gfx/interface/icons/political_movement_icons/political_activism.dds"
+				}
+
+				icon = {
+					visible = "[GreaterThanOrEqualTo_CFixedPoint(Law.GetRadicalismDriftTargetOnMovementFromCancelEnact( PoliticalMovement.Self ), '(CFixedPoint)0.5')]"
+					size = { 25 25 }
+					texture = "gfx/interface/icons/political_movement_icons/political_activism_red.dds"
+				}
+
+				textbox = {
+					size = { 50 40 }
+					align = nobaseline
+					elide = right
+					fontsize_min = 12
+					text = "[Law.GetRadicalismEffectOnMovementFromCancelEnact( PoliticalMovement.Self )|-=0%]"
+				}
+
+				vertical_divider = {
+					blockoverride "size" {
+						layoutpolicy_vertical = expanding
+						size = { 2 0 }
+					}
+				}
+
+				textbox = {
+					layoutpolicy_horizontal = expanding
+					size = { 0 40 }
+					align = nobaseline
+					elide = right
+					fontsize_min = 12
+					text = "[PoliticalMovement.GetName]"
+				}
+
+				expand = {}
+
+				icon = {
+					size = { 25 25 }
+					texture = "gfx/interface/icons/generic_icons/arrow_right_small.dds"
+				}
+
+				expand = {}
+
+				textbox = {
+					size = { 80 40 }
+					align = right|nobaseline
+					elide = right
+					fontsize_min = 12
+					text = "[LabelingHelper.GetLabelForRadicalism(Law.GetRadicalismDriftTargetOnMovementFromCancelEnact( PoliticalMovement.Self ))]"
+				}
+			}
+		}
+
+		divider_clean = {
+			block "bottom_divider_visiblity" {
+				visible = "[NotEqualTo_int32(Subtract_int32(GetDataModelSize(DataModelFirst(Law.GetAffectedMovementsFromCancelEnact, '(int32)5')), '(int32)1'), PdxGuiWidget.AccessParent.GetIndexInDataModel)]"
+			}
 		}
 	}
 
@@ -105,6 +654,49 @@ types TooltipTypes
 
 		blockoverride "go_to_button_properties" {
 			onclick = "[InformationPanelBar.OpenMarketPanel(Market.AccessSelf)]"
+		}
+
+		blockoverride "tooltip_content_after" 
+		{
+			datacontext = "[Market.GetFoodSecurity]"
+
+			custom_tooltip_newline = {}
+
+			custom_tooltip_textbox = {
+				text = "DATA_MARKET_STARVATION_HEADER"
+			}
+
+			flowcontainer = {
+				direction = vertical
+				datamodel = "[GetStarvationTypes]"
+
+				item = {
+					flowcontainer = {
+						spacing = 5
+						margin_left = 10
+
+						icon = {
+							parentanchor = vcenter
+							size = { 25 25 }
+							texture = "[StarvationType.GetIcon]"
+						}
+
+						custom_tooltip_textbox = {
+							parentanchor = vcenter
+							text = "DATA_MARKET_STARVATION_ENTRY"
+						}
+					}
+				}
+			}
+
+			custom_tooltip_newline = {
+				visible = "[FoodSecurity.HasFamine]"
+			}
+
+			custom_tooltip_textbox = {
+				visible = "[FoodSecurity.HasFamine]"
+				text = "HAS_ONGOING_FAMINES"
+			}
 		}
 	}
 	
@@ -180,9 +772,7 @@ types TooltipTypes
 	}
 	
 	type FancyTooltip_IG = FancyTooltipWidgetType {
-		blockoverride "text" {
-			text = "DATA_INTEREST_GROUP_NAME_TOOLTIP"
-		}
+		blockoverride "text" { }
 
 		blockoverride "replace_icon" {
 			ig_icon = {
@@ -211,6 +801,180 @@ types TooltipTypes
 
 		blockoverride "go_to_button_properties" {
 			onclick = "[InformationPanelBar.OpenInterestGroupPanel(InterestGroup.AccessSelf)]"
+		}
+
+		blockoverride "tooltip_content_after" 
+		{
+			custom_tooltip_2_columns = {
+				blockoverride "bg" {}
+
+				blockoverride "left_column" {
+					custom_tooltip_textbox_column_width = {
+						text = "IG_TT_IN_GOVERNMENT"		
+					}
+				}
+			}
+
+			custom_tooltip_2_columns = {
+				blockoverride "left_column" {
+					custom_tooltip_textbox_column_width = {
+						text = "IG_TT_CLOUT"		
+					}
+				}
+
+				blockoverride "right_column" {
+					custom_tooltip_textbox_column_width = {
+						text = "IG_TT_APPROVAL"		
+					}
+				}
+			}
+
+			custom_tooltip_2_columns = {
+				blockoverride "bg" {}
+
+				blockoverride "left_column" {
+					DefaultTooltipTextBox = {
+						autoresize = yes
+						text = "IG_TT_IDEOLOGY_HEADER"
+					}
+					
+					flowcontainer = {
+						name = "ideologies_box"
+						datamodel = "[InterestGroup.AccessAllIdeologies]"
+						direction = vertical
+
+						item = {
+							flowcontainer = {
+								spacing = 5
+								
+								icon = {						
+									texture = "[Ideology.GetTexture]"
+									size = { 20 20 }
+
+									tooltipwidget = {
+										FancyTooltip_Ideology = {}
+									}
+
+									using = tooltip_above
+								}
+
+								DefaultTooltipTextBox = {
+									text = "[Ideology.GetName]"
+									autoresize = yes
+									parentanchor = vcenter
+									align = nobaseline
+								}
+							}
+						}
+					}
+				}
+
+				blockoverride "right_column" {
+					flowcontainer = {
+						direction = vertical
+					
+						DefaultTooltipTextBox = {
+							autoresize = yes
+							text = "IG_TT_TRAITS_HEADER"
+						}
+
+						flowcontainer = {
+							name = "traits_box"
+							datamodel = "[InterestGroup.AccessTraits]"
+							direction = vertical
+							
+							item = {
+								flowcontainer = {
+									alpha = "[TransparentIfFalse(InterestGroupTrait.IsEnabled(InterestGroup.Self))]"
+
+									spacing = 5
+									
+									icon = {						
+										texture = "[InterestGroupTrait.GetTexture]"
+										enabled = "[InterestGroupTrait.IsEnabled(InterestGroup.Self)]"
+										size = { 15 20 }
+										parentanchor = vcenter
+
+										tooltipwidget = {
+											FancyTooltip_InterestGroupTrait = {}
+										}
+
+										using = tooltip_above
+									}
+
+									DefaultTooltipTextBox = {
+										text = "IG_TT_TRAIT_ENTRY"
+										autoresize = yes
+										parentanchor = vcenter
+										align = nobaseline
+
+										fontsize_min = 14
+										elide = right
+										max_width = @tooltip_fixed_column_width_minus_40
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
+			custom_tooltip_2_columns = {
+				blockoverride "left_column" {
+					custom_tooltip_textbox_column_width = {
+						text = "IG_TT_POPULATION_LOYAL_RADICAL"		
+					}
+				}
+
+				blockoverride "right_column" {
+					custom_tooltip_textbox_column_width = {
+						text = "[InterestGroup.GetSupportingPopTypesDesc]"		
+					}
+				}
+			}
+
+			flowcontainer = {
+				using = tooltip_segment_margin
+				direction = vertical
+
+				custom_tooltip_textbox = {
+					text = "IG_TT_LEADER"		
+				}
+
+				custom_tooltip_textbox = {
+					text = "IG_TT_PARTY"
+				}	
+
+				flowcontainer = {
+					direction = vertical
+
+					visible = "[Not(IsDataModelEmpty(InterestGroup.GetPoliticalLobbies))]" 
+
+					#custom_tooltip_newline = {}
+
+					custom_tooltip_textbox = {
+						text = "IG_TT_LOBBY_HEADER" 
+					}
+
+					datamodel = "[InterestGroup.GetPoliticalLobbies]"
+
+					item = {
+						custom_tooltip_textbox = {
+							text = "IG_TT_LOBBY_ENTRY"
+						}
+					}
+				}
+			}
+
+			custom_tooltip_textbox = {
+				using = tooltip_segment_background
+				using = tooltip_segment_margin
+
+				text = "[InterestGroup.GetDesc]"
+				min_width = @tooltip_fixed_width
+				max_width = @tooltip_fixed_width
+				default_format = "#lore"
+			}
 		}
 	}
 
@@ -251,6 +1015,10 @@ types TooltipTypes
 			visible = yes
 		}
 
+		blockoverride "row_background" {
+			using = dark_area
+		}
+
 		blockoverride "table_datamodel" {
 			datamodel = "[Party.GetMembers]"
 		}
@@ -267,6 +1035,10 @@ types TooltipTypes
 			text = "[concept_approval]"
 		}
 
+		blockoverride "table_header_4" {
+			text = "AFFILIATION"
+		}
+
 		blockoverride "table_value_1" {
 			text = "[InterestGroup.GetName]"
 		}
@@ -279,6 +1051,13 @@ types TooltipTypes
 		blockoverride "table_value_3" {
 			raw_text = "[InterestGroup.GetApprovalRating] (#variable [InterestGroup.GetApprovalValue|+=]#!)"
 			tooltip = "IG_APPROVAL_BREAKDOWN"						
+		}
+
+		blockoverride "table_value_4" {
+			minimumsize = { 100 -1 }
+			raw_text = "#tooltippable [InterestGroup.GetAffiliationRaw|+=0]#!"
+			tooltip = "[InterestGroup.GetPartyAffiliationTooltip]"
+			margin_right = 5
 		}
 	}
 
@@ -298,6 +1077,10 @@ types TooltipTypes
 		blockoverride "type" {
 			text = "TOOLTIP_TYPE_IDEOLOGY"
 		}
+
+		blockoverride "icon_background_texture" {}
+
+		blockoverride "icon_frame" {}
 	}
 	
 	type FancyTooltip_GameConceptType = FancyTooltipWidgetType {
@@ -381,7 +1164,7 @@ types TooltipTypes
 
 		blockoverride "go_to_button" {
 			button_icon_goto = {
-				visible = "[Or(Goods.HasStateContext,Goods.IsLocal)]"
+				visible = "[Or(Goods.HasStateContext, Goods.IsLocal)]"
 				size = { 30 30 }
 				input_action = "go_to_details"
 				using = tooltip_above
@@ -390,7 +1173,7 @@ types TooltipTypes
 			}
 
 			button_icon_goto = {
-				visible = "[And(Goods.HasMarketContext, Not(Or(Goods.HasStateContext,Goods.IsLocal)))]"
+				visible = "[And(Goods.HasMarketContext, Not(Or(Goods.HasStateContext, Goods.IsLocal)))]"
 				size = { 30 30 }
 				input_action = "go_to_details"
 				using = tooltip_above
@@ -399,21 +1182,23 @@ types TooltipTypes
 			}
 
 			button_icon_goto = {
-				visible = "[Not(Or(Goods.HasMarketContext,Goods.HasStateContext))]"
+				visible = "[Not(Or(Goods.HasMarketContext, Goods.HasStateContext))]"
 				size = { 30 30 }
 				input_action = "go_to_details"
 				using = tooltip_above
 				tooltip = "GO_TO_DETAILS"
-				onclick = "[InformationPanelBar.OpenGoodsUsagePanel(Goods.Self)]"
+				onclick = "[InformationPanelBar.OpenGoodsPanel(GetPlayer.GetMarket.Self, Goods.Self)]"
 			}
 		}
 
 		blockoverride "tooltip_content_after" {
 			widget = {
+				visible = "[Goods.HasMarketContext]"
 				size = { 15 15 }
 			}
 
 			widget = {
+				visible = "[Goods.HasMarketContext]"
 				size = { 500 60 }
 				parentanchor = hcenter
 				
@@ -479,10 +1264,10 @@ types TooltipTypes
 					plotpoints = "[GetTrendPlotPointsNormalized( Goods.GetPriceTrend, Goods.GetMinPrice, Goods.GetMaxPrice )]"
 				}
 				blockoverride "maxvalue" {
-					raw_text = "[GetPlayer.MakeScope.Var('cwp_currency').GetFlagName] [Goods.GetMaxPrice]"
+					raw_text = "@money![Goods.GetMaxPrice]"
 				}
 				blockoverride "minvalue" {
-					raw_text = "[GetPlayer.MakeScope.Var('cwp_currency').GetFlagName] [Goods.GetMinPrice]"
+					raw_text = "@money![Goods.GetMinPrice]"
 				}
 				blockoverride "startdate" {
 					text = "[GetOldestDate(Goods.GetPriceTrend)]"
@@ -505,6 +1290,12 @@ types TooltipTypes
 				blockoverride "empty_state_visibility" {
 					visible = "[IsEmpty(Goods.GetPriceTrend)]"
 				}
+
+				blockoverride "everything_that_is_not_empty_state_visibility" {
+					visible = "[Not(IsEmpty(Goods.GetPriceTrend))]"
+				}
+
+
 				blockoverride "empty_state_text" {
 					text = "GRAPH_NOT_INITIALIZED"
 				}
@@ -542,6 +1333,399 @@ types TooltipTypes
 		}
 
 		blockoverride "tooltip_content_after" {}
+	}
+
+	type FancyTooltip_HarvestConditionType = FancyTooltipWidgetType {
+		blockoverride "text" {} # Fully replaced by everything in tooltip_content_after
+
+		blockoverride "name" {
+			text = "[HarvestConditionType.GetNameNoIcon]"
+		}
+
+		blockoverride "type" {
+			text = "[concept_harvest_condition]"
+		}
+
+		blockoverride "icon_texture" {
+			texture = "[HarvestConditionType.GetIcon]"
+		}
+
+		blockoverride "icon_background_texture" {}
+
+		blockoverride "icon_frame" {}
+
+		blockoverride "tooltip_content_after" {
+			custom_tooltip_textbox = {
+				visible = "[Not(StringIsEmpty(HarvestConditionType.GetEffectDesc))]"
+				text = "HARVEST_CONDITION_TYPE_EFFECTS_DESC"
+			}
+
+			tooltip_divider = {}
+
+			custom_tooltip_textbox = {
+				default_format = "#lore"
+				text = "HARVEST_CONDITION_TYPE_DESC"
+			}
+		}
+	}
+
+	type FancyTooltip_HarvestConditionArea = FancyTooltipWidgetType {
+		blockoverride "text" {} # Fully replaced by everything in tooltip_content_after
+
+		blockoverride "name" {
+			text = "HARVEST_CONDITION_AREA_NAME_HEADER"
+		}
+
+		blockoverride "type" {
+			text = "[concept_harvest_condition]"
+		}
+
+		blockoverride "icon_texture" {
+			texture = "[HarvestConditionArea.GetType.GetIcon]"
+		}
+
+		blockoverride "icon_background_texture" {}
+
+		blockoverride "icon_frame" {}
+
+		blockoverride "tooltip_content_after" {
+			custom_tooltip_textbox = {
+				text = "HARVEST_CONDITION_AREA_DURATION_LABEL"
+			}
+
+			custom_tooltip_textbox_with_empty_line = {
+				text = "HARVEST_CONDITION_AREA_INTENSITY"
+			}
+
+			custom_tooltip_textbox_with_empty_line = {
+				text = "[HarvestConditionArea.GetEffectDesc]"
+			}
+
+			### The 5 first affected player States
+			custom_tooltip_textbox = {
+				visible = "[Not(IsDataModelEmpty(HarvestConditionArea.GetHarvestConditionsAffecting(GetPlayer.Self)))]"
+				text = "HARVEST_CONDITION_AREA_PLAYER_STATES_LIST_HEADER_FORMAT"
+			}
+
+			dynamicgridbox = {
+				visible = "[Not(IsDataModelEmpty(HarvestConditionArea.GetHarvestConditionsAffecting(GetPlayer.Self)))]"
+				datamodel = "[DataModelFirst(HarvestConditionArea.GetHarvestConditionsAffecting(GetPlayer.Self),'(int32)5')]"
+
+				item = {
+					harvest_condition_tooltip_item = {}
+				}
+			}
+
+			### If more than 5 affected player States, here are the additional
+			custom_tooltip_textbox = {
+				visible = "[GreaterThan_int32(GetDataModelSize(HarvestConditionArea.GetHarvestConditionsAffecting(GetPlayer.Self)), '(int32)5')]"
+				default_format = "#tooltippable"
+				text = "HARVEST_CONDITION_AREA_PLAYER_STATES_ADDITIONAL"
+
+				tooltipwidget = {
+					RegularTooltip = {
+						blockoverride "tooltip_content" {
+							flowcontainer = {
+								parentanchor = hcenter
+								spacing = 2
+								direction = vertical
+
+								flowcontainer = {
+									parentanchor = hcenter
+									direction = vertical
+									datamodel = "[DataModelSubSpan(HarvestConditionArea.GetHarvestConditionsAffecting(GetPlayer.Self), '(int32)5', '(int32)20')]"
+
+									item = {
+										harvest_condition_tooltip_item = {}
+									}
+								}
+
+								### If more than 15 affected player States, here are the additional
+								custom_tooltip_textbox = {
+									visible = "[GreaterThan_int32(GetDataModelSize(HarvestConditionArea.GetHarvestConditionsAffecting(GetPlayer.Self)), '(int32)20')]"
+									text = "HARVEST_CONDITION_AREA_PLAYER_STATES_ADDITIONAL_END"
+								}
+							}
+						}
+					}
+				}
+			}
+
+			custom_tooltip_newline = {
+				visible = "[And(Not(IsDataModelEmpty(HarvestConditionArea.GetHarvestConditionsNotAffecting(GetPlayer.Self))),Not(IsDataModelEmpty(HarvestConditionArea.GetHarvestConditionsAffecting(GetPlayer.Self))))]"
+			}
+
+			### The 5 first affected non-player States
+			custom_tooltip_textbox = {
+				visible = "[Not(IsDataModelEmpty(HarvestConditionArea.GetHarvestConditionsNotAffecting(GetPlayer.Self)))]"
+				text = "HARVEST_CONDITION_AREA_OTHER_STATES_LIST_HEADER_FORMAT"
+			}
+
+			dynamicgridbox = {
+				visible = "[Not(IsDataModelEmpty(HarvestConditionArea.GetHarvestConditionsNotAffecting(GetPlayer.Self)))]"
+				datamodel = "[DataModelFirst(HarvestConditionArea.GetHarvestConditionsNotAffecting(GetPlayer.Self),'(int32)5')]"
+
+				item = {
+					harvest_condition_tooltip_item = {}
+				}
+			}
+
+			### If more than 5 affected non-player States, here are the additional
+			custom_tooltip_textbox = {
+				visible = "[GreaterThan_int32(GetDataModelSize(HarvestConditionArea.GetHarvestConditionsNotAffecting(GetPlayer.Self)), '(int32)5')]"
+				default_format = "#tooltippable"
+				text = "HARVEST_CONDITION_AREA_OTHER_STATES_ADDITIONAL"
+
+				tooltipwidget = {
+					RegularTooltip = {
+						blockoverride "tooltip_content" {
+							flowcontainer = {
+								parentanchor = hcenter
+								spacing = 2
+								direction = vertical
+
+								flowcontainer = {
+									parentanchor = hcenter
+									direction = vertical
+									datamodel = "[DataModelSubSpan(HarvestConditionArea.GetHarvestConditionsNotAffecting(GetPlayer.Self), '(int32)5', '(int32)20')]"
+
+									item = {
+										harvest_condition_tooltip_item = {}
+									}
+								}
+
+								### If more than 15 affected player States, here are the additional
+								custom_tooltip_textbox = {
+									visible = "[GreaterThan_int32(GetDataModelSize(HarvestConditionArea.GetHarvestConditionsNotAffecting(GetPlayer.Self)), '(int32)20')]"
+									text = "HARVEST_CONDITION_AREA_OTHER_STATES_ADDITIONAL_END"
+								}
+							}
+						}
+					}
+				}
+			}
+
+			tooltip_divider = {}
+
+			custom_tooltip_textbox = {
+				default_format = "#lore"
+				text = "HARVEST_CONDITION_AREA_DESC"
+			}
+		}
+	}
+
+	type FancyTooltip_HarvestCondition = FancyTooltipWidgetType {
+		blockoverride "text" {} # Fully replaced by everything in tooltip_content_after
+
+		blockoverride "name" {
+			text = "HARVEST_CONDITION_NAME_HEADER"
+		}
+
+		blockoverride "type" {
+			text = "[concept_harvest_condition]"
+		}
+
+		blockoverride "icon_texture" {
+			texture = "[HarvestCondition.GetType.GetIcon]"
+		}
+
+		blockoverride "icon_background_texture" {}
+
+		blockoverride "icon_frame" {}
+
+		blockoverride "tooltip_content_after" {
+			custom_tooltip_textbox = {
+				text = "HARVEST_CONDITION_DURATION_LABEL"
+			}
+
+			custom_tooltip_textbox_with_empty_line = {
+				text = "HARVEST_CONDITION_INTENSITY"
+			}
+
+			custom_tooltip_textbox = {
+				text = "[HarvestCondition.GetEffectDesc]"
+			}
+
+			tooltip_divider = {}
+
+			custom_tooltip_textbox = {
+				default_format = "#lore"
+				text = "HARVEST_CONDITION_DESC"
+			}
+		}
+	}
+
+	type harvest_condition_tooltip_item = widget {
+		size = { 540 40 }
+
+		tooltipwidget = {
+			FancyTooltip_HarvestCondition = {}
+		}
+
+		background = {
+			using = entry_bg_simple
+		}
+
+		textbox = {
+			parentanchor = vcenter
+			size = { 40 30 }
+			position = { 10 0 }
+			align = nobaseline
+			elide = right
+			fontsize_min = 12
+			text = "HARVEST_CONDITION_AREA_STATE_ENTRY_INTENSITY"
+		}
+
+		flowcontainer = {
+			parentanchor = vcenter
+			position = { 60 0 }
+			spacing = 5
+
+			tiny_flag_no_interact = {
+				parentanchor = vcenter
+				datacontext = "[HarvestCondition.GetState.GetCountry]"
+			}
+
+			textbox = {
+				parentanchor = vcenter
+				max_width = 170
+				align = nobaseline
+				autoresize = yes
+				elide = right
+				fontsize_min = 12
+				text = "HARVEST_CONDITION_AREA_STATE_ENTRY_NAME"
+			}
+		}
+
+		flowcontainer = {
+			datacontext = "[HarvestCondition.GetState.GetFoodSecurity]"
+
+			parentanchor = right|vcenter
+			position = { -10 0 }
+			spacing = 5
+
+			flowcontainer = {
+				visible = "[FoodSecurity.HasFamine]"
+				parentanchor = vcenter
+				spacing = 5
+
+				icon = {
+					size = { 30 30 }
+					texture = "gfx/interface/icons/famine_icons/famine_icon.dds"
+				}
+
+				textbox = {
+					parentanchor = vcenter
+					size = { 60 30 }
+					align = nobaseline
+					elide = right
+					fontsize_min = 12
+
+					block "starvation_famine_text" {
+						raw_text = "[concept_famine]"
+					}
+				}
+			}
+
+			vertical_divider = {
+				visible = "[FoodSecurity.HasFamine]"
+			}
+
+			flowcontainer = {
+				parentanchor = vcenter
+				spacing = 5
+
+				icon = {
+					size = { 30 30 }
+					texture = "gfx/interface/icons/famine_icons/mild_starvation.dds"
+				}
+
+				textbox = {
+					parentanchor = vcenter
+					size = { 40 30 }
+					align = nobaseline
+					elide = right
+					fontsize_min = 12
+
+					block "starvation_mild_text" {
+						raw_text = "#r [FoodSecurity.GetPercentageStarvingPopsMild|0%]#!"
+					}
+				}
+			}
+
+			vertical_divider = {}
+
+			flowcontainer = {
+				parentanchor = vcenter
+				spacing = 5
+
+				icon = {
+					size = { 30 30 }
+					texture = "gfx/interface/icons/famine_icons/severe_starvation.dds"
+				}
+
+				textbox = {
+					parentanchor = vcenter
+					size = { 40 30 }
+					align = nobaseline
+					elide = right
+					fontsize_min = 12
+
+					block "starvation_severe_text" {
+						raw_text = "#r [FoodSecurity.GetPercentageStarvingPopsSevere|0%]#!"
+					}
+				}
+			}
+		}
+	}
+
+	type FancyTooltip_PopNeed =  FancyTooltipWidgetType {
+		blockoverride "text" {} # Fully replaced by everything in tooltip_content_after
+
+		blockoverride "name" {
+			text = "POP_NEEDS_NAME_HEADER"
+		}
+
+		blockoverride "type" {
+			text = "[concept_pop_needs]"
+		}
+
+		blockoverride "icon_texture" {
+			texture = "gfx/interface/icons/generic_icons/generic_concept_icon.dds"
+		}
+
+		blockoverride "tooltip_content_after" {
+			custom_tooltip_textbox_with_empty_line = {
+				text = "[PopNeed.GetConsumptionDesc]"
+			}
+
+			custom_tooltip_textbox = {
+				text = "POP_NEEDS_HEADER"
+			}
+			
+			flowcontainer = {
+				direction = vertical
+				datamodel = "[PopNeed.GetGoods]"
+			
+				item = {
+					flowcontainer = {
+						spacing = 5
+			
+						icon = {
+							parentanchor = vcenter
+							size = { 25 25 }
+							texture = "[Goods.GetTexture]"
+						}
+			
+						custom_tooltip_textbox = {
+							parentanchor = vcenter
+							max_width = 500
+							text = "[PopNeed.GetGoodsEquivalenceDesc(Goods.Self)]"
+						}
+					}
+				}
+			}
+		}
 	}
 
 	type FancyTooltip_PopType = FancyTooltipWidgetType {
@@ -683,6 +1867,10 @@ types TooltipTypes
 	}
 
 	type FancyTooltip_Pop = FancyTooltipWidgetType {
+		blockoverride "text_debug" {
+			text = "[Pop.GetDebugInfo]"
+		}
+
 		blockoverride "text" {
 			text = "DATA_POP_NAME_TOOLTIP"
 		}
@@ -713,9 +1901,99 @@ types TooltipTypes
 
 		blockoverride "tooltip_content_after" {
 			flowcontainer = {
+				direction = vertical
+
+				flowcontainer = {
+					datacontext = "[Pop.AccessBuilding]"
+					visible = "[And(Not(IsDataModelEmpty(Building.GetBuildingAssets)), Pop.IsEmployed)]"
+
+					margin_top = 5
+					margin_bottom = 15
+					margin_left = -2 # Alignment because the texture of the bar has built in margins
+
+					property_portfolio_stacked_bar_chart_short = {
+						blockoverride "barchart_size" {
+							size = { 380 40 }
+						}
+					}
+				}
+
+				flowcontainer = {
+					datacontext = "[Pop.AccessBuilding]"
+					direction = vertical
+					margin_bottom = 10
+					spacing = 5
+
+					textbox = {
+						raw_text = "[concept_pop_needs]:"
+						autoresize = yes
+						align = nobaseline
+					}
+
+					v3_stacked_barchart = {
+						parentanchor = hcenter
+						size = { 380 40 }
+
+						blockoverride "barchart_datamodel" {
+							datamodel = "[Pop.GetTopGoodsConsumption]"
+						}
+
+						blockoverride "barchart_item_stretchfactor" {
+							# This is what is actually setting the size of the item
+							layoutstretchfactor_horizontal = "[FixedPointToInt(Multiply_CFixedPoint(PopConsumptionGoods.GetConsumptionRatio, '(CFixedPoint)100'))]"
+						}
+
+						blockoverride "barchart_item_datacontext" {
+							datacontext = "[PopConsumptionGoods.GetGoods]"
+						}
+
+						blockoverride "barchart_item_tooltip" {
+							tooltipwidget = {
+								FancyTooltip_Goods_Pop_Consumption = {}
+							}
+						}
+
+						blockoverride "barchart_item_color" {
+							color = "[Goods.GetCategoryColor]"
+						}
+
+						blockoverride "barchart_item_margins" {}
+
+						blockoverride "barchart_item_icon" {
+							widget = {
+								size = { 34 40 }
+								icon = {
+									texture = "[Goods.GetTexture]"
+									tooltip = "[Goods.GetStatePriceDesc]"
+									size = { 30 30 }
+									parentanchor = center
+									position = { -2 0 }
+
+									textbox = {
+										using = fontsize_small
+										text = "[Goods.GetCompareIconAgainstBasePriceNoTooltip( Goods.GetStatePrice )]"
+										parentanchor = bottom|right
+										autoresize = yes
+										align = nobaseline
+										position = { 5 0 }
+									}
+								}
+							}
+						}
+
+						blockoverride "barchart_plus_others_info" {
+							text = "AND_X_MORE_NEEDS"
+							tooltip = "NEEDS_BREAKDOWN"
+							size = { 32 -1 }
+						}
+					}
+				}
+			}
+
+			flowcontainer = {
 				scale = 0.8
 				parentanchor = hcenter
-				margin_top = 10
+				margin_top = 20
 				spacing = -20
 				margin_bottom = -50
 				pop_portrait_medium_male = {}
@@ -850,12 +2128,10 @@ types TooltipTypes
 	}
 
 	type FancyTooltip_Culture = FancyTooltipWidgetType {
-		blockoverride "text" {
-			text = "DATA_CULTURE_NAME_TOOLTIP"
-		}
+		blockoverride "text" { }
 
 		blockoverride "name" {
-			text = "[Culture.GetNameNoFormatting]"
+			text = "CULTURE_TT_HEADING"
 		}
 
 		blockoverride "type" {
@@ -869,15 +2145,163 @@ types TooltipTypes
 		blockoverride "go_to_button_properties" {
 			onclick = "[InformationPanelBar.OpenCultureInfoPanel(Culture.AccessSelf)]"
 		}
+
+		blockoverride "tooltip_content_after" 
+		{	
+			custom_tooltip_2_columns = {
+				blockoverride "bg" {}
+				
+				blockoverride "left_column"
+				{
+					custom_tooltip_textbox = {
+						text = "CULTURE_TT_TURMOIL_WORLDWIDE"
+					}
+				}
+
+				blockoverride "right_column"
+				{
+					custom_tooltip_textbox = {
+						text = "CULTURE_TT_MIGRATION_TARGETS"		
+					}
+				}
+			}
+
+			custom_tooltip_2_columns = {
+				blockoverride "left_column"
+				{
+					custom_tooltip_textbox = {
+						text = "CULTURE_TT_OBSESSIONS"		
+					}
+				}
+
+				blockoverride "right_column"
+				{
+					custom_tooltip_textbox = {
+						text = "CULTURE_TT_TABOOS"		
+					}
+				}
+			}
+
+			custom_tooltip_2_columns = {
+
+				blockoverride "bg" {}
+
+				blockoverride "left_column"
+				{
+					custom_tooltip_textbox = {
+						text = "CULTURE_TT_TRAITS"		
+					}
+				}
+
+				blockoverride "right_column"
+				{
+					custom_tooltip_textbox = {
+						text = "CULTURE_TT_RELIGION"		
+					}
+				}
+			}
+			
+
+			flowcontainer = {
+				visible = "[GetPlayer.IsValid]"
+				direction = vertical
+
+				using = tooltip_segment_background
+				using = tooltip_segment_margin
+
+				min_width = @tooltip_fixed_width
+				max_width = @tooltip_fixed_width
+
+				custom_tooltip_textbox = {
+					text = "CULTURE_RELIGION_TT_IN_PLAYER_COUNTRY"
+				}
+				
+				flowcontainer = {
+					visible = "[NotEqualTo_int64(Culture.GetPopulation(GetPlayer.Self),'(int64)0')]"
+					direction = vertical
+
+					custom_tooltip_textbox = {
+						text = "CULTURE_TT_POPULATION"
+					}
+
+					custom_tooltip_textbox = {
+						text = "CULTURE_TT_POLITICAL_STRENGTH"
+					}
+
+					custom_tooltip_textbox = {
+						text = "CULTURE_TT_TURMOIL"
+					}
+
+				}
+
+				custom_tooltip_textbox = {
+					visible = "[EqualTo_int64(Culture.GetPopulation(GetPlayer.Self),'(int64)0')]"
+					raw_text = "CULTURE_TT_NO_POPULATION_IN_PLAYER_COUNTRY"
+				}
+
+				custom_tooltip_newline = {}
+
+				custom_tooltip_textbox = {
+					text = "CULTURE_TT_ACCEPTANCE_MOD"
+
+					max_width = @tooltip_fixed_width
+				}				
+
+				flowcontainer = {
+					direction = vertical
+					visible = "[NotEqualTo_int64(Culture.GetPopulation(GetPlayer.Self),'(int64)0')]"
+
+					custom_tooltip_newline = {}
+
+					custom_tooltip_textbox = {
+						text = "CULTURE_ACCEPTANCE_STATUS_DISTRIBUTION_LABEL_TT"
+						max_width = @tooltip_fixed_width
+					}
+
+					population_acceptance_status_chart = {
+						blockoverride "barchart_size" {
+							size = { @tooltip_fixed_width 40 }
+						}
+
+						blockoverride "barchart_datamodel" {
+							datamodel = "[Culture.GetAllAcceptanceStatusSegments(GetPlayer)]"
+						}
+					}
+				}
+			}
+		}
 	}
 
-	type FancyTooltip_Religion = FancyTooltipWidgetType {
+	type FancyTooltip_CulturalCommunity = FancyTooltipWidgetType {
 		blockoverride "text" {
-			text = "DATA_RELIGION_NAME_TOOLTIP"
+			text = "DATA_CULTURAL_COMMUNITY_NAME_TOOLTIP"
 		}
 
 		blockoverride "name" {
-			text = "[Religion.GetNameNoFormatting]"
+			text = "CULTURAL_COMMUNITY_NAME"
+		}
+
+		blockoverride "type" {
+			text = "TOOLTIP_TYPE_CULTURAL_COMMUNITY"
+		}
+
+		blockoverride "go_to_button_visibility" {
+			visible = yes
+		}
+
+		blockoverride "go_to_button_properties" {
+			onclick = "[InformationPanelBar.OpenCultureInfoPanel(CulturalCommunity.GetCulture.AccessSelf)]"
+		}
+	}
+
+	
+	type FancyTooltip_Religion = FancyTooltipWidgetType {
+		blockoverride "text" {
+			
+		}
+
+		blockoverride "name" {
+			text = "RELIGION_TT_HEADING"
 		}
 
 		blockoverride "icon_texture" {
@@ -895,6 +2319,95 @@ types TooltipTypes
 		blockoverride "go_to_button_properties" {
 			onclick = "[InformationPanelBar.OpenReligionInfoPanel(Religion.AccessSelf)]"
 		}
+
+		blockoverride "tooltip_content_after" 
+		{
+			custom_tooltip_2_columns = {
+				blockoverride "bg" {}
+				
+				blockoverride "left_column"
+				{
+					custom_tooltip_textbox = {
+						max_width = 275
+						text = "RELIGION_TT_TRAITS"
+					}
+				}
+
+				blockoverride "right_column"
+				{
+					custom_tooltip_textbox = {
+						max_width = 275
+						text = "RELIGION_TT_TABOOS"
+					}
+				}
+			}
+
+
+			flowcontainer = {
+				visible = "[GetPlayer.IsValid]"
+				direction = vertical
+
+				using = tooltip_segment_background
+				using = tooltip_segment_margin
+
+				min_width = @tooltip_fixed_width
+				max_width = @tooltip_fixed_width
+
+				custom_tooltip_textbox = {
+					text = "CULTURE_RELIGION_TT_IN_PLAYER_COUNTRY"
+				}
+				
+				flowcontainer = {
+					visible = "[NotEqualTo_int64(Religion.GetPopulation(GetPlayer.Self),'(int64)0')]"
+					direction = vertical
+
+					custom_tooltip_textbox = {
+						text = "RELIGION_TT_POPULATION"
+					}
+
+					custom_tooltip_textbox = {
+						text = "RELIGION_TT_POLITICAL_STRENGTH"
+					}
+				}
+
+				custom_tooltip_textbox = {
+					visible = "[EqualTo_int64(Religion.GetPopulation(GetPlayer.Self),'(int64)0')]"
+					raw_text = "RELIGION_TT_NO_POPULATION_IN_PLAYER_COUNTRY"
+				}
+
+				custom_tooltip_newline = {}
+
+				custom_tooltip_textbox = {
+					text = "RELIGION_TT_ACCEPTANCE_MOD"
+
+					max_width = @tooltip_fixed_width
+				}
+
+				flowcontainer = {
+					direction = vertical
+					visible = "[NotEqualTo_int64(Religion.GetPopulation(GetPlayer.Self),'(int64)0')]"
+
+					custom_tooltip_newline = {}
+
+					custom_tooltip_textbox = {
+						text = "RELIGION_ACCEPTANCE_STATUS_DISTRIBUTION_LABEL_TT"
+						max_width = @tooltip_fixed_width
+					}
+
+					population_acceptance_status_chart = {
+						blockoverride "barchart_size" {
+							size = { @tooltip_fixed_width 40 }
+						}
+
+						blockoverride "barchart_datamodel" {
+							datamodel = "[Religion.GetAcceptanceStatusSegmentsIn(GetPlayer)]"
+						}
+					}
+				}
+
+			}
+		}
+
 	}
 
 	type FancyTooltip_DiscriminationTrait = FancyTooltipWidgetType {
@@ -938,9 +2451,8 @@ types TooltipTypes
 	}
 
 	type FancyTooltip_State = FancyTooltipWidgetType {
-		blockoverride "text" {
-			text = "DATA_STATE_NAME_TOOLTIP"
-		}
+
+		blockoverride "text" {} # all contents are defined in tooltip_content_after
 
 		blockoverride "name" {
 			text = "[State.GetNameNoFormatting]"
@@ -958,6 +2470,7 @@ types TooltipTypes
 			small_flag = {
 				parentanchor = center
 				datacontext = "[State.GetOwner]"
+				position = { 2 0 } #offset slightly to not overlap tooltip edge
 			}
 		}
 
@@ -972,6 +2485,121 @@ types TooltipTypes
 		blockoverride "go_to_button_properties" {
 			onclick = "[InformationPanelBar.OpenStatePanel(State.AccessSelf)]"
 		}
+
+
+		blockoverride "tooltip_content_after" 
+		{
+			background = {
+				texture = "[State.GetBestTexture]"
+				fittype = centercrop
+				alpha = 0.15
+			}
+
+			custom_tooltip_textbox = {
+				using = tooltip_segment_margin
+				visible = "[State.HasOccupant]"
+				text = "STATE_HAS_OCCUPANT"		
+			}
+
+			custom_tooltip_2_columns = {
+				blockoverride "bg" {}
+				blockoverride "left_column" {
+					custom_tooltip_textbox_column_width = {
+						text = "STATE_TT_STATE_TYPE"		
+					}
+				}
+
+				blockoverride "right_column" {
+					custom_tooltip_textbox_column_width = {
+						text = "STATE_URBANIZATION"		
+					}
+				}
+			}
+
+			custom_tooltip_2_columns = {
+				blockoverride "left_column" {
+					custom_tooltip_textbox_column_width = {
+						text = "[State.GetMarketAccessStatus]"		
+					}
+				}
+
+				blockoverride "right_column" {
+					custom_tooltip_textbox_column_width = {
+						text = "STATE_TT_GDP_TAX"			
+					}
+				}
+			}
+
+			custom_tooltip_2_columns = {
+				blockoverride "bg" {}
+				blockoverride "left_column" {
+					custom_tooltip_textbox_column_width = {
+						text = "STATE_TT_POP_SOL"		
+					}
+				}
+
+				blockoverride "right_column" {
+					custom_tooltip_textbox_column_width = {
+						text = "STATE_AVAILABLE_LABOR"			
+					}
+				}
+			}
+
+
+			flowcontainer = {
+				visible = "[Not(IsDataModelEmpty(State.AccessStateRegion.AccessTraits))]"
+				name = "state_traits"
+				direction = vertical
+				using = tooltip_segment_background	
+				using = tooltip_segment_margin
+				min_width = @tooltip_fixed_width
+
+				custom_tooltip_textbox = {
+					raw_text = "STATE_TRAITS_HEADING"
+					default_format = "#title"
+				}
+
+				fixedgridbox = {
+					addrow = 40
+					addcolumn = 166
+					flipdirection = yes
+					datamodel_wrap = 3
+
+					datamodel = "[State.AccessStateRegion.AccessTraits]"
+
+					item = {
+						widget = {
+							size = { 166 40 }
+							tooltip = TOOLTIP_STATE_TRAIT
+							using = tooltip_se
+
+							flowcontainer = {
+								parentanchor = vcenter
+								margin_left = 5
+								spacing = 5
+
+								icon = {
+									parentanchor = vcenter
+									size = { 30 30 }
+									onmousehierarchyenter = "[AccessHighlightManager.HighlightStateTrait(StateTrait.Self)]"
+									onmousehierarchyleave = "[AccessHighlightManager.RemoveHighlight]"
+									texture = "[StateTrait.GetTexture]"
+								}
+								
+								custom_tooltip_textbox = {
+									parentanchor = vcenter
+									autoresize = yes
+									max_width = 120
+									multiline = yes
+									raw_text = "[StateTrait.GetName]"
+									align = nobaseline
+								}
+							}
+						}
+					}
+				}
+			}
+		}	
 	}
 
 	type FancyTooltip_StateRegion = FancyTooltipWidgetType {
@@ -989,12 +2617,10 @@ types TooltipTypes
 	}
 
 	type FancyTooltip_Building = FancyTooltipWidgetType {
-		blockoverride "text" {
-			text = "DATA_BUILDING_NAME_TOOLTIP"
-		}
+		blockoverride "text" {} # Fully replaced by everything in tooltip_content_after
 
 		blockoverride "icon_texture" {
-			texture = "[Building.GetTexture]"
+			texture = "[Building.GetIcon]"
 		}
 
 		blockoverride "name" {
@@ -1005,18 +2631,177 @@ types TooltipTypes
 			text = "TOOLTIP_TYPE_BUILDING"
 		}
 
-		blockoverride "go_to_button_visibility" {
-			visible = "[Building.IsValid]"
-		}
+		blockoverride "tooltip_content_after" {
+			# Custom tooltip layout for constructed buildings
+			flowcontainer = {
+				visible = "[Building.IsValid]"
+				direction = vertical
 
-		blockoverride "go_to_button_properties" {
-			onclick = "[InformationPanelBar.OpenBuildingDetailsPanel(Building.AccessSelf)]"
+				flowcontainer = {
+					direction = vertical
+					using = tooltip_segment_margin
+
+					custom_tooltip_2_columns = {
+						blockoverride "bg" { } #no bg
+
+						blockoverride "left_column" {
+							spacing = 8
+
+							flowcontainer = {
+								spacing = 10
+
+								building_level_controls = {
+									blockoverride "controller_size" {
+										size = { @tooltip_fixed_column_width_minus_40 35 } 
+									}
+								}
+
+								icon = {
+									visible = "[Building.IsAutoDownsizing]"
+									tooltip = "[Building.GetAutoDownsizeTooltip]"
+									parentanchor = vcenter
+									size = { 30 30 }
+									texture = "gfx/interface/production_methods/auto_downsize.dds"
+								}
+							}
+							
+							building_progressbars = {
+								blockoverride "progressbar_size" {
+									size = {  @tooltip_fixed_column_width 26 }
+								}
+								
+							}
+						}
+
+						blockoverride "right_column" {
+							building_productivity_mini_chart = {
+								blockoverride "graph_size" {
+									size = { @tooltip_fixed_column_width_minus_16 60 }
+								}
+							}
+						}
+					}
+
+					custom_tooltip_2_columns = {
+						blockoverride "bg" { } #no bg
+
+						blockoverride "left_column" {
+							building_average_wage_label = {
+								using = tooltip_font
+							}
+						}
+
+						blockoverride "right_column" {
+							building_rank_label = {
+								using = tooltip_font
+							}
+						}
+					}
+				}
+
+				### PROCESS
+				flowcontainer = {
+					direction = vertical
+					using = tooltip_segment_background
+					using = tooltip_segment_margin
+					
+					custom_tooltip_textbox = {
+						
+						text = "PROCESS_TOOLTIP_HEADER"
+					}
+
+					building_process_breakdown = {
+						min_width =  @tooltip_fixed_width
+					}
+				}
+
+				flowcontainer = {
+					direction = vertical
+
+					using = tooltip_segment_margin
+
+					custom_tooltip_textbox = {
+						raw_text = "[concept_workforce]:"
+					}
+
+					flowcontainer = {
+						datacontext = "[Building.AccessPopsList]"
+						datamodel = "[PopList.GetItems]"
+						visible = "[And(Building.IsActive, Not(IsDataModelEmpty(PopList.GetItems)))]"
+
+						spacing = 20
+
+						item = {
+							flowcontainer = {
+								tooltip = "[PopListItem.GetEmploymentDesc]"
+								icon = {
+									size = { 20 20 }
+									texture = "[PopListItem.GetPopType.GetTexture]"
+									parentanchor = vcenter
+									tooltipwidget = {
+										FancyTooltip_PopType = {
+											datacontext = "[PopListItem.GetPopType]"
+										}
+									}
+								}
+								custom_tooltip_textbox = {
+									raw_text = "[PopListItem.GetWorkingAdultsPopSize|Dv]"
+									parentanchor = vcenter
+									max_width = 70
+								}
+							}
+						}
+					}
+				}
+				flowcontainer = {
+					direction = vertical
+					visible = "[Not(IsDataModelEmpty(Building.GetBuildingAssets))]"
+
+					using = tooltip_segment_background
+					using = tooltip_segment_margin
+					min_width = @tooltip_fixed_width
+
+					custom_tooltip_textbox = {
+						text = "PORTFOLIO_TOOLTIP_HEADER"
+					}
+
+					property_portfolio_stacked_bar_chart = {
+						blockoverride "barchart_size" {
+							size = { @tooltip_fixed_width 40 }
+						}
+					}
+				}
+
+
+				
+			}
+
+			# Basic text contents when building is not constructed
+			custom_tooltip_textbox = {
+				visible = "[Not(Building.IsValid)]"
+				text = "DATA_BUILDING_NAME_TOOLTIP"
+			}
+
+			custom_tooltip_textbox = {
+				visible = "[InDebugMode]"
+				raw_text = "[Building.GetDebugTooltip]"
+			}
 		}
 
 		blockoverride "icon_background_texture" {}
 
 		blockoverride "icon_frame" {}
+
+		blockoverride "go_to_button_visibility" {
+			visible = "[Building.IsValid]"
+		}
+		
+		blockoverride "go_to_button_properties" {
+			onclick = "[InformationPanelBar.OpenBuildingDetailsPanel(Building.AccessSelf)]"
+		}
 	}
+
+
 
 	type FancyTooltip_BuildingType = FancyTooltipWidgetType {
 		blockoverride "text" {
@@ -1024,7 +2809,7 @@ types TooltipTypes
 		}
 
 		blockoverride "icon_texture" {
-			texture = "[BuildingType.GetTexture]"
+			texture = "[BuildingType.GetIcon]"
 		}
 
 		blockoverride "name" {
@@ -1038,6 +2823,14 @@ types TooltipTypes
 		blockoverride "icon_background_texture" {}
 
 		blockoverride "icon_frame" {}
+
+		blockoverride "go_to_button_visibility" {
+			visible = yes
+		}
+
+		blockoverride "go_to_button_properties" {
+			onclick = "[InformationPanelBar.OpenBuildingBrowserPanelForType(GetPlayer.Self, BuildingType.Self)]"
+		}
 	}
 
 	type FancyTooltip_Character = FancyTooltipWidgetType {
@@ -1111,6 +2904,10 @@ types TooltipTypes
 		blockoverride "icon_size" {
 			size = { 30 42 }
 		}
+
+		blockoverride "icon_background_texture" {}
+
+		blockoverride "icon_frame" {}
 		
 		blockoverride "name" {
 			text = "[CharacterTrait.GetNameNoFormatting]"
@@ -1147,7 +2944,7 @@ types TooltipTypes
 						tooltipwidget = {
 							FancyTooltip_CommanderOrderType = {
 								blockoverride "text_before" {
-									visible = "[Or(Or(ObjectsEqual(Character.GetOrderType.Self, CommanderOrderType.Self), ObjectsEqual(Character.GetNextOrderType.Self, CommanderOrderType.Self)), Not(StringIsEmpty(GetDesc( Character.SelectOrder( CommanderOrderType.Self )))))]"
+									using = visible_if_either_current_or_next_order
 									text =  "NEXT_OR_CURRENT_ORDER"
 									margin_bottom = 15
 								}
@@ -1329,6 +3126,10 @@ types TooltipTypes
 		blockoverride "icon_size" {
 			size = { 33 45 }
 		}
+
+		blockoverride "icon_background_texture" {}
+
+		blockoverride "icon_frame" {}
 		
 		blockoverride "name" {
 			text = "[InterestGroupTrait.GetNameNoFormatting] [InterestGroupTrait.GetInactiveString(InterestGroup.Self)]"
@@ -1339,10 +3140,416 @@ types TooltipTypes
 		}
 	}
 
-	type FancyTooltip_PoliticalMovement = FancyTooltipWidgetType {
-		blockoverride "text" {
-			text = "DATA_POLITICAL_MOVEMENT_NAME_TOOLTIP"
+	# An Acceptance Status without any context
+	type FancyTooltip_AcceptanceStatus = FancyTooltipWidgetType {
+		blockoverride "text" { } #all content is in 'blockoverride "tooltip_content_after"'
+
+		blockoverride "replace_icon" {
+			acceptance_status_fancy_tooltip_large_icon = {}
 		}
+
+		blockoverride "name" {
+			text = "[AcceptanceStatus.GetNameNoFormatting]"
+		}
+
+		blockoverride "type" {
+			text = "[concept_acceptance_status]"
+		}
+
+		blockoverride "tooltip_content_after" {
+			datacontext = "[GetPlayer]"
+
+			custom_tooltip_textbox = {
+				text = "ACCEPTANCE_STATUS_THRESHOLDS_DESC"
+			}
+
+			custom_tooltip_textbox = {
+				visible = "[AcceptanceStatus.HasHigherStatus]"
+				text = "ACCEPTANCE_STATUS_NEXT"
+				max_width = @tooltip_fixed_width
+			}
+			
+			custom_tooltip_textbox = {
+				visible = "[AcceptanceStatus.HasLowerStatus]"
+				text = "ACCEPTANCE_STATUS_PREV"
+				max_width = @tooltip_fixed_width
+			}
+
+			custom_tooltip_newline = {}
+
+			acceptance_tooltip_bottom_section_flowcontainer = {}
+		}
+	}
+
+	# A Group of Pops with the same Acceptance Status
+	type FancyTooltip_AcceptanceStatusSegment = FancyTooltipWidgetType {
+		blockoverride "text" {	} #all content is in 'blockoverride "tooltip_content_after"'
+
+		blockoverride "replace_icon" {
+			acceptance_status_fancy_tooltip_large_icon = {
+				datacontext = "[AcceptanceStatusSegment.GetStatus]"
+			}
+		}
+		
+		blockoverride "name" {
+			text = "[AcceptanceStatusSegment.GetStatus.GetNameNoFormatting]"
+		}
+
+		blockoverride "type" {
+			text = "[concept_acceptance_status]"
+		}
+
+		blockoverride "tooltip_content_after" {
+			datacontext = "[AcceptanceStatusSegment.GetStatus]"
+
+			custom_tooltip_textbox = {
+				text = "ACCEPTANCE_STATUS_THRESHOLDS_DESC"
+				using = tooltip_segment_margin
+			}
+
+			acceptance_tooltip_bottom_section_flowcontainer = {
+				blockoverride "bottom_section_population" {
+					custom_tooltip_textbox = {
+						text = "[AcceptanceStatusSegment.GetPopulationDesc]"
+						min_width = @tooltip_fixed_width
+					}
+
+					custom_tooltip_textbox = {
+						visible = "[GreaterThan_int64( AcceptanceStatusSegment.GetTotalPopulationIncreasingInAcceptance, '(int64)0')]"
+						text = "ACCEPTANCE_STATUS_SEGMENT_POPULATION_DECREASING"
+						min_width = @tooltip_fixed_width
+					}
+
+					custom_tooltip_newline = {}
+
+					custom_tooltip_textbox = {
+						text = "ACCEPTANCE_STATUS_TT_EFFECTS_HEADER"
+						default_format = "#title"
+						min_width = @tooltip_fixed_width
+					}
+				}
+			}
+		}
+	}
+
+	# One Pop, its Acceptance Value and how it ties to Acceptance Status
+	type FancyTooltip_PopAcceptance = FancyTooltipWidgetType {
+		blockoverride "text" {	} #all content is in 'blockoverride "tooltip_content_after"'
+
+		blockoverride "replace_icon" {
+			acceptance_status_fancy_tooltip_large_icon = {
+				datacontext = "[Pop.GetAcceptanceStatus]"
+			}
+		}
+		
+		blockoverride "name" {
+			text = "[Pop.GetAcceptanceStatus.GetNameNoFormatting]"
+		}
+
+		blockoverride "type" {
+			text = "[concept_acceptance_status]"
+		}
+
+		blockoverride "tooltip_content_after" 
+		{
+			datacontext = "[Pop.GetAcceptanceStatus]"
+			datacontext = "[Pop.GetCountry]"
+
+			flowcontainer = {
+				direction = vertical
+				using = tooltip_segment_margin
+
+				custom_tooltip_textbox = {
+					visible = "[Pop.IsAcceptanceStatusIncreasing]"
+
+					text = "ACCEPTANCE_STATUS_WILL_INCREASE"
+					max_width = @tooltip_fixed_width
+				}
+
+				custom_tooltip_textbox = {
+					visible = "[Not(Pop.GetSocialClass.GetSocialHierarchy.IsDefault)]"
+
+					text = "ACCEPTANCE_STATUS_STRATA_RESTRICTION"
+					max_width = @tooltip_fixed_width
+				}
+
+				custom_tooltip_newline = {
+					visible = "[Or(Pop.IsAcceptanceStatusIncreasing, Not(Pop.GetSocialClass.GetSocialHierarchy.IsDefault))]"
+				}
+
+				custom_tooltip_textbox = {
+					text = "POP_ACCEPTANCE_VALUE_WITH_BREAKDOWN"
+					max_width = @tooltip_fixed_width					
+				}
+
+				custom_tooltip_newline = {}
+
+				custom_tooltip_textbox = {
+					visible = "[AcceptanceStatus.HasHigherStatus]"
+
+					text = "ACCEPTANCE_STATUS_NEXT"
+					max_width = @tooltip_fixed_width
+				}
+				custom_tooltip_textbox = {
+					visible = "[AcceptanceStatus.HasLowerStatus]"
+
+					text = "ACCEPTANCE_STATUS_PREV"
+					max_width = @tooltip_fixed_width
+				}
+			}
+			
+			
+			acceptance_tooltip_bottom_section_flowcontainer = {}
+		}
+
+	}
+
+
+	type acceptance_tooltip_bottom_section_flowcontainer = flowcontainer {
+		# uses datacontexts:
+		# Country
+		# AcceptanceStatus
+
+		direction = vertical
+
+		flowcontainer = {
+			direction = vertical
+			using = tooltip_segment_margin
+			using = tooltip_segment_background
+
+			custom_tooltip_textbox = {
+				text = "ACCEPTANCE_STATUS_TT_COUNTRY_HEADER"
+				default_format = "#title"
+				min_width = @tooltip_fixed_width
+			}
+
+			block "bottom_section_population"
+			{
+
+			}
+
+			custom_tooltip_textbox = {
+				text = "[AcceptanceStatus.GetEffectsDescIn(Country.Self)]"
+				min_width = @tooltip_fixed_width
+			}
+		}
+
+		custom_tooltip_textbox = {
+			text = "[AcceptanceStatus.GetDesc]"
+			using = tooltip_segment_margin
+			default_format = "#lore"
+			max_width = @tooltip_fixed_width
+		}
+	}
+
+	type FancyTooltip_SocialClass = FancyTooltipWidgetType {
+		blockoverride "text" {	} #all content is in 'blockoverride "tooltip_content_after"
+		
+		blockoverride "name" {
+			raw_text = "[SocialClass.GetNameNoFormatting]"
+		}
+
+		blockoverride "type" {
+			text = "SOCIAL_CLASS_TT_TYPE" 
+		} 
+
+		blockoverride "go_to_button_visibility" {
+			visible = no
+		}
+
+		blockoverride "tooltip_content_after" 
+		{
+			custom_tooltip_textbox = {
+				text = "SOCIAL_CLASS_TT_SOCIAL_HIERARCHY"
+			}
+
+			custom_tooltip_textbox = {
+				text = "SOCIAL_CLASS_TT_STRATA"
+			}
+
+			custom_tooltip_textbox = {
+				text = "SOCIAL_CLASS_TT_POPULATION"
+			}
+
+			custom_tooltip_newline = {}
+
+			custom_tooltip_textbox = {
+				text = "SOCIAL_CLASS_TT_PROFESSIONS_HEADING"
+			}
+
+			flowcontainer = {
+				direction = vertical
+				datamodel = "[SocialClass.GetAllowedProfessions]"
+
+				item = {
+					custom_tooltip_textbox = {
+						text = "[PopType.GetName]"
+					}
+				}
+			}
+
+			custom_tooltip_newline = {}
+
+			flowcontainer = {
+				direction = vertical
+				visible = "[Not(StringIsEmpty(SocialClass.GetPopTriggerDesc))]"
+
+				custom_tooltip_textbox = {
+					text = "SOCIAL_CLASS_TT_SPECIAL_TRIGGER"
+				}
+
+				custom_tooltip_newline = {}
+			}
+
+			custom_tooltip_textbox = {
+				default_format = "#lore"
+				text = "[SocialClass.GetDesc]"
+			}
+		}
+	}
+
+
+	type FancyTooltip_SocialHierarchy = FancyTooltipWidgetType {
+		blockoverride "text" {	} #all content is in 'blockoverride "tooltip_content_after"
+		
+		blockoverride "name" {
+			raw_text = "[SocialHierarchy.GetNameNoFormatting]"
+		}
+
+		blockoverride "type" {
+			text = "[concept_social_hierarchy]"
+		}
+
+		blockoverride "go_to_button_visibility" {
+			visible = no
+		}
+
+		blockoverride "tooltip_content_after" 
+		{
+
+			custom_tooltip_textbox_with_empty_line = {
+				visible = "[SocialHierarchy.IsDefault]"
+				text = "DEFAULT_SOCIAL_HIERARCHY_EXTRA_DESC"
+			}
+
+			custom_tooltip_textbox_with_empty_line = {
+				visible = "[Not( SocialHierarchy.IsDefault )]"
+				text = "SOCIAL_HIERARCHY_TT_AFFECTED_POPS"
+			}
+
+			custom_tooltip_textbox_with_empty_line = {
+				text = "SOCIAL_HIERARCHY_TT_CLASSES"
+			}
+
+			custom_tooltip_textbox = {
+				default_format = "#lore"
+				text = "[SocialHierarchy.GetDesc]"
+			}
+		}
+	}
+
+
+	type FancyTooltip_PoliticalLobby = FancyTooltipWidgetType {
+		blockoverride "text" {	} #all content is in 'blockoverride "tooltip_content_after"'
+
+		blockoverride "icon_texture" {
+			texture = "[PoliticalLobby.GetType.GetTexture]"
+		}
+
+		blockoverride "icon_background_texture" {}
+
+		blockoverride "icon_frame" {}
+		
+		blockoverride "name" {
+			text = "[PoliticalLobby.GetNameNoFormatting]"
+		}
+
+		blockoverride "type" {
+			text = "[concept_political_lobby]"
+		}
+
+		blockoverride "go_to_button_visibility" {
+			visible = yes
+		}
+
+		blockoverride "go_to_button_properties" {
+			onclick = "[InformationPanelBar.OpenPoliticalLobbyPanel(PoliticalLobby.AccessSelf)]"
+		}
+
+		blockoverride "tooltip_content_after" 
+		{
+			custom_tooltip_textbox = {
+				text = "POLITICAL_LOBBY_APPEASEMENT_VALUE"
+				using = tooltip_segment_margin
+			}
+
+			flowcontainer = {
+				name = "lobby_igs"
+				direction = vertical 
+
+				using = tooltip_segment_margin
+				using = tooltip_segment_background
+
+				spacing = 5
+
+				widget = {
+					name = "igs_heading"
+					size = { 350 21 }
+
+					hbox = {
+						layoutpolicy_horizontal = expanding
+						layoutpolicy_vertical = expanding
+
+						custom_tooltip_textbox = {
+							text = "POLITICAL_LOBBY_SUPPORTERS"
+							default_format = "#title"
+							layoutpolicy_horizontal = expanding
+
+						}
+						
+						custom_tooltip_textbox = {
+							text = "POLITICAL_LOBBY_TOTAL_CLOUT"
+							default_format = "#title"
+						}
+					}
+				}
+
+				flowcontainer = {
+					datamodel = "[PoliticalLobby.GetMembers]"
+					spacing = 5
+
+					item = {
+						ig_button = {
+							size = {40 40}
+
+							blockoverride "in_government_icon" { }
+						}
+					}
+				}
+
+				custom_tooltip_textbox = {
+					visible = "[Not(EqualTo_int32(PoliticalLobby.GetAppeasement,'(int32)0'))]"
+					text = "POLITICAL_LOBBY_APPEASEMENT_IMPACT"
+				}
+			}
+
+			flowcontainer = {
+				direction = vertical
+				using = tooltip_segment_margin
+
+				custom_tooltip_textbox = {
+					text = "POLITICAL_LOBBY_TARGET_COUNTRY_RELATION" 
+				}
+
+				custom_tooltip_textbox = {
+					text = "POLITICAL_LOBBY_HOME_COUNTRY" 
+				}	
+			}		
+		}
+	}
+
+	type FancyTooltip_PoliticalMovement = FancyTooltipWidgetType {
+		blockoverride "text" {} #all content is in 'blockoverride "tooltip_content_after"'
 
 		blockoverride "icon_texture" {
 			texture = "[PoliticalMovement.GetTexture]"
@@ -1366,24 +3573,152 @@ types TooltipTypes
 
 		blockoverride "tooltip_content_after" {
 
-			DefaultTooltipTextBox = {
-				text = "POLITICAL_MOVEMENT_SUPPORTING_INTEREST_GROUPS_HEADER"
-				margin_bottom = 0
-				autoresize = yes
-				multiline = yes
-				maximumsize = { 550 -1 }
-				fonttintcolor = "[TooltipInfo.GetTintColor]"
+			block "top_content" {}
+
+			flowcontainer = {
+				visible = "[PoliticalMovement.IsBolstered]"
+				spacing = 5
+
+				bolster_icon = {
+					parentanchor = vcenter
+					size = { 22 22 }
+				}
+
+				DefaultTooltipTextBox = {
+					parentanchor = vcenter	
+					autoresize = yes
+					text = "BOLSTERED"
+				}
+			}
+
+			flowcontainer = {
+				visible = "[PoliticalMovement.IsSuppressed]"
+				spacing = 5
+
+				suppress_icon = {
+					parentanchor = vcenter
+					size = { 22 22 }
+				}
+
+				DefaultTooltipTextBox = {
+					parentanchor = vcenter	
+					autoresize = yes
+					text = "SUPPRESSED"
+				}
+			}
+
+			flowcontainer = {
+				visible = "[PoliticalMovement.IsInsurrectionary]"
+				direction = vertical
+
+				custom_tooltip_textbox = {
+					visible = "[PoliticalMovement.IsSecessionist]"
+					text = "POLITICAL_MOVEMENT_IS_SECESSIONIST"
+				}
+
+				custom_tooltip_textbox = {
+					visible = "[PoliticalMovement.IsRevolutionary]"
+					text = "POLITICAL_MOVEMENT_IS_REVOLUTIONARY"
+				}
+
+				custom_tooltip_textbox = {
+					text = "POLITICAL_MOVEMENT_REVOLUTION_PROGRESS"
+				}
+
+				custom_tooltip_textbox = {
+					text = "POLITICAL_MOVEMENT_REVOLUTION_CLOCK_CHECKPOINT"
+				}
+
+				custom_tooltip_textbox_with_empty_line = {
+					text = "POLITICAL_MOVEMENT_REVOLUTION_PROGRESS_AT_CHECKPOINT"
+				}
+			}
+
+			custom_tooltip_textbox = {
+				min_width = 300
+				text = "POLITICAL_MOVEMENT_SUPPORT_WITH_LABEL"
+			}
+
+			custom_tooltip_textbox = {
+				min_width = 300
+				text = "POLITICAL_MOVEMENT_RADICALISM_WITH_LABEL"
+			}
+
+			custom_tooltip_textbox_with_empty_line = {
+				visible = "[And(GreaterThanOrEqualTo_CFixedPoint(PoliticalMovement.GetTargetRadicalism, '(CFixedPoint)0.5'), LessThan_CFixedPoint(PoliticalMovement.GetTargetRadicalism, '(CFixedPoint)1'))]"
+				text = "POLITICAL_MOVEMENT_ACTIVISM_CAUTION"
+			}
+
+			custom_tooltip_textbox_with_empty_line = {
+				visible = "[GreaterThanOrEqualTo_CFixedPoint(PoliticalMovement.GetTargetRadicalism, '(CFixedPoint)1')]"
+				using = look_at_me_text_animation
+				text = "POLITICAL_MOVEMENT_ACTIVISM_WARNING"
+			}
+
+			custom_tooltip_textbox = {
+				visible = "[GreaterThan_int64(PoliticalMovement.PredictNumberOfRadicalsEveryMonth, '(int64)0')]"
+				text = "POLITICAL_MOVEMENT_LOYALTY_PREDICTIONS"
+			}
+
+			custom_tooltip_newline = {}
+
+			custom_tooltip_textbox = {
+				raw_text = "[concept_core_movement_ideology]:"
+			}
+
+			flowcontainer = {
+				datacontext = "[PoliticalMovement.GetCoreIdeology]"
+				spacing = 5
+				margin = { 5 5 }
+
+				background = {
+					using = fade_center_colored
+					color = { 0.5 0.5 0.5 1 }
+				}
+
+				tooltipwidget = {
+					FancyTooltip_Ideology = {}
+				}
+
+				icon = {
+					size = { 40 40 }
+					texture = "[Ideology.GetTexture]"
+				}
+
+				textbox = {
+					parentanchor = vcenter
+					align = nobaseline
+					autoresize = yes
+					max_width = 500
+					fonttintcolor = "[TooltipInfo.GetTintColor]"
+					multiline = yes
+					text = "[Ideology.GetNameNoFormatting]"
+				}
+			}
+
+			custom_tooltip_newline = {}
+
+			custom_tooltip_textbox = {
+				visible = "[And(Not(PoliticalMovement.IsInsurrectionary), IsDataModelEmpty(PoliticalMovement.GetInfluencedInterestGroups))]"
+				text = "POLITICAL_MOVEMENT_NO_INFLUENCED_INTEREST_GROUPS"
+			}
+
+			custom_tooltip_textbox = {
+				visible = "[And(Not(PoliticalMovement.IsInsurrectionary), Not(IsDataModelEmpty(PoliticalMovement.GetInfluencedInterestGroups)))]"
+				text = "POLITICAL_MOVEMENT_INFLUENCED_INTEREST_GROUPS"
 			}
 
 			dynamicgridbox = {
-				visible = "[Not(IsDataModelEmpty(PoliticalMovement.GetSupportingInterestGroups))]"
-				datamodel = "[PoliticalMovement.GetSupportingInterestGroups]"
+				visible = "[And(Not(PoliticalMovement.IsInsurrectionary), Not(IsDataModelEmpty(PoliticalMovement.GetInfluencedInterestGroups)))]"
+				datamodel = "[PoliticalMovement.GetInfluencedInterestGroups]"
+				flipdirection = yes
 
 				item = {
-					flowcontainer = {
-						spacing = 5
+					widget = {
+						size = { 48 48  }
 
 						ig_button = {
+							parentanchor = center
 
 							blockoverride = "button_size" {
 								size = { 40 40 }
@@ -1393,43 +3728,17 @@ types TooltipTypes
 								onclick = "[InformationPanelBar.OpenInterestGroupPanel(InterestGroup.AccessSelf)]"
 							}
 						}
-
-						DefaultTooltipTextBox = {
-							parentanchor = vcenter
-							text = "INTEREST_GROUP_NAME_WITH_CLOUT_VALUE"
-							align = nobaseline
-							autoresize = yes
-							multiline = yes
-							maximumsize = { 500 -1 }
-							fonttintcolor = "[TooltipInfo.GetTintColor]"
-						}
-
-						button_icon_goto = {
-							parentanchor = vcenter
-							size = { 30 30 }
-
-							blockoverride "icon_size" {
-								size = { 100% 100% }
-							}
-
- 							onclick = "[InformationPanelBar.OpenInterestGroupPanel(InterestGroup.AccessSelf)]"
-							tooltip = "GO_TO_BUTTON_INTEREST_GROUP"
- 						}
 					}
 				}
 			}
 
-			DefaultTooltipTextBox = {
+			custom_tooltip_textbox = {
+				visible = "[Not(PoliticalMovement.IsInsurrectionary)]"
 				text = "POLITICAL_MOVEMENT_SUPPORTING_AGITATORS_HEADER"
-				margin_bottom = 0
-				autoresize = yes
-				multiline = yes
-				maximumsize = { 550 -1 }
-				fonttintcolor = "[TooltipInfo.GetTintColor]"
 			}
 
 			dynamicgridbox = {
-				visible = "[Not(IsDataModelEmpty(PoliticalMovement.GetSupportingCharacters))]"
+				visible = "[And(Not(PoliticalMovement.IsInsurrectionary), Not(IsDataModelEmpty(PoliticalMovement.GetSupportingCharacters)))]"
 				datamodel = "[PoliticalMovement.GetSupportingCharacters]"
 
 				item = {
@@ -1453,14 +3762,9 @@ types TooltipTypes
 							}
 						}
 
-						DefaultTooltipTextBox = {
+						custom_tooltip_textbox = {
 							parentanchor = vcenter
 							text = "CHARACTER_NAME_WITH_POPULARITY"
-							align = nobaseline
-							autoresize = yes
-							multiline = yes
-							maximumsize = { 500 -1 }
-							fonttintcolor = "[TooltipInfo.GetTintColor]"
 						}
 
 						button_icon_goto = {
@@ -1478,25 +3782,179 @@ types TooltipTypes
 				}
 			}
 
-			DefaultTooltipTextBox = {
-				visible = "[PoliticalMovement.IsRevolutionary]"
-				text = "DATA_POLITICAL_MOVEMENT_STATES_SECEDED"
-				margin_bottom = 0
-				autoresize = yes
-				multiline = yes
-				maximumsize = { 550 -1 }
-				fonttintcolor = "[TooltipInfo.GetTintColor]"
+			custom_tooltip_newline = {
+				visible = "[Not(PoliticalMovement.IsInsurrectionary)]"
 			}
+			
+			custom_tooltip_textbox = {
+				visible = "[PoliticalMovement.IsInsurrectionary]"
+				text = "[PoliticalMovement.GetCivilWar.GetUprisingNumUnitsDesc]"
+			}
+			
+			custom_tooltip_newline = {
+				visible = "[PoliticalMovement.IsInsurrectionary]"
+			}				
+			
+			custom_tooltip_textbox = {
+				visible = "[PoliticalMovement.IsInsurrectionary]"
+				text = "[PoliticalMovement.GetCivilWar.GetUprisingConscriptionRateDesc]"
+			}
+			
+			custom_tooltip_newline = {
+				visible = "[PoliticalMovement.IsInsurrectionary]"
+			}			
+
+			custom_tooltip_textbox = {
+				visible = "[PoliticalMovement.IsRevolutionary]"
+				text = "DATA_POLITICAL_MOVEMENT_STATES_JOIN_REVOLUTION_HEADER"
+			}
+
+			custom_tooltip_textbox = {
+				visible = "[PoliticalMovement.IsSecessionist]"
+				text = "DATA_POLITICAL_MOVEMENT_STATES_SECEDED_HEADER"
+			}
+
+			custom_tooltip_newline = {
+				visible = "[PoliticalMovement.IsInsurrectionary]"
+			}
+
+			block "bottom_content" {}
+
+			flowcontainer = {
+				margin_top = 10
+				parentanchor = hcenter
+				spacing = 10
+
+				button = {
+					visible = "[Not( PoliticalMovement.IsSuppressed )]"
+					using = default_button_action
+					size = { 240 40 }
+					tooltip = "TOOLTIP_SUPPRESS"
+					using = tooltip_above
+					enabled = "[IsValid( PoliticalMovement.ToggleSuppression )]"
+					onclick = "[Execute( PoliticalMovement.ToggleSuppression )]"
+					using = suppress_button_sound
+
+					flowcontainer = {
+						parentanchor = center
+
+						icon = {
+							parentanchor = vcenter
+							size = { 25 25 }
+							texture = "gfx/interface/icons/generic_icons/ig_suppress.dds"
+						}
+
+						textbox = {
+							maximumsize = { 160 35 }
+							autoresize = yes
+							fontsize_min = 12
+							elide = right
+							text = "SUPPRESS_SHORT"
+							align = nobaseline
+							parentanchor = vcenter	
+						}
+					}
+				}
+				
+				button = {
+					visible = "[PoliticalMovement.IsSuppressed]"
+					using = default_button_action
+					size = { 240 40 }
+					tooltip = "TOOLTIP_SUPPRESS_NOT"
+					using = tooltip_above
+					enabled = "[IsValid( PoliticalMovement.ToggleSuppression )]"
+					onclick = "[Execute( PoliticalMovement.ToggleSuppression )]"
+					using = close_button_sound
+					using = shimmer
+
+					textbox = {
+						maximumsize = { 170 35 }
+						autoresize = yes
+						fontsize_min = 12
+						elide = right
+						text = "SUPPRESS_NOT_SHORT"
+						align = nobaseline
+						parentanchor = hcenter|vcenter	
+					}
+
+					icon = {
+						visible = "[PoliticalMovement.IsSuppressed]"
+						using = highlighted_square_selection
+					}
+				}
+				
+				button = {
+					visible = "[Not( PoliticalMovement.IsBolstered )]"
+					name = "tutorial_highlight_promote_button"
+					using = default_button_action
+					size = { 240 40 }
+					tooltip = "TOOLTIP_BOLSTER"
+					using = tooltip_above
+					enabled = "[IsValid( PoliticalMovement.ToggleBolstering )]"
+					onclick = "[Execute( PoliticalMovement.ToggleBolstering )]"
+					using = bolster_button_sound
+
+					flowcontainer = {
+						parentanchor = center
+
+						icon = {
+							parentanchor = vcenter
+							size = { 25 25 }
+							texture = "gfx/interface/icons/generic_icons/ig_bolster.dds"
+						}
+
+						textbox = {
+							maximumsize = { 160 35 }
+							autoresize = yes
+							fontsize_min = 12
+							elide = right
+							text = "BOLSTER_SHORT"
+							align = nobaseline
+							parentanchor = vcenter	
+						}
+					}
+				}
+							
+				button = {
+					visible = "[PoliticalMovement.IsBolstered]"
+					tooltip = "TOOLTIP_BOLSTER_NOT"
+					using = tooltip_above
+					enabled = "[IsValid( PoliticalMovement.ToggleBolstering )]"
+					onclick = "[Execute( PoliticalMovement.ToggleBolstering )]"
+					using = close_button_sound
+					using = shimmer
+					using = default_button_action
+					size = { 240 40 }
+
+					textbox = {
+						maximumsize = { 170 35 }
+						autoresize = yes
+						fontsize_min = 12
+						elide = right
+						text = "BOLSTER_NOT_SHORT"
+						align = nobaseline
+						parentanchor = hcenter|vcenter	
+					}
+
+					icon = {
+						using = highlighted_square_selection
+					}
+				}									
+			}			
 		}
 	}
 
+
+
+
 	type FancyTooltip_StrategicRegion = FancyTooltipWidgetType {
 		blockoverride "text" {
+			visible = "[IsInGame]"
 			text = "DATA_STRATEGIC_REGION_NAME_TOOLTIP"
 		}
 		
 		blockoverride "name" {
-			text = "[StrategicRegion.GetName]"
+			text = "[StrategicRegion.GetNameNoFormatting]"
 		}
 
 		blockoverride "type" {
@@ -1504,7 +3962,13 @@ types TooltipTypes
 		}
 
 		blockoverride "tooltip_content_after" {
+			custom_tooltip_textbox = {
+				visible = "[Not(IsInGame)]"
+				text = "[StrategicRegion.GetStateRegionsDesc]"
+			}
+
 			overlappingitembox = {
+					visible = "[IsInGame]"
 					size = { 540 25 }
 					datamodel = "[StrategicRegion.GetInterests]"
 
@@ -1575,7 +4039,7 @@ types TooltipTypes
 		}
 		
 		blockoverride "name" {
-			text = "[CanalType.GetName]"
+			text = "[CanalType.GetNameNoFormatting]"
 		}
 
 		blockoverride "type" {
@@ -1591,6 +4055,10 @@ types TooltipTypes
 		blockoverride "icon_texture" {
 			texture = "[Company.GetCompanyType.GetIcon]"
 		}
+
+		blockoverride "icon_background_texture" {}
+
+		blockoverride "icon_frame" {}
 		
 		blockoverride "name" {
 			text = "[Company.GetName]"
@@ -1598,6 +4066,22 @@ types TooltipTypes
 
 		blockoverride "type" {
 			text = "[concept_company]"
+		}
+
+		blockoverride "tooltip_content_after" {
+			flowcontainer = {
+				direction = horizontal
+				spacing = 5							
+				datamodel = "[Company.AccessCompanyType.AccessBuildingTypes]"
+				
+				item = {
+					company_building_item = {}
+				}
+			}
+
+			custom_tooltip_textbox = {
+				text = "DATA_COMPANY_NAME_FORMAT_TOOLTIP_PT2"
+			}	
 		}
 	}
 
@@ -1609,13 +4093,33 @@ types TooltipTypes
 		blockoverride "icon_texture" {
 			texture = "[CompanyType.GetIcon]"
 		}
+
+		blockoverride "icon_background_texture" {}
+
+		blockoverride "icon_frame" {}
 		
 		blockoverride "name" {
-			text = "[CompanyType.GetName]"
+			text = "[CompanyType.GetNameNoFormatting]"
 		}
 
 		blockoverride "type" {
 			text = "[concept_company]"
+		}
+
+		blockoverride "tooltip_content_after" {
+			flowcontainer = {
+				direction = horizontal
+				spacing = 5						
+				datamodel = "[CompanyType.AccessBuildingTypes]"
+				
+				item = {
+					company_type_building_item = {}
+				}
+			}
+			
+			custom_tooltip_textbox = {
+				text = "DATA_COMPANY_TYPE_NAME_FORMAT_TOOLTIP_PT2"
+			}
 		}
 	}
 
@@ -1699,6 +4203,52 @@ types TooltipTypes
 		}
 	}
 
+    type FancyTooltip_LibertyDesireLevel = FancyTooltipWidgetType {
+		blockoverride "text" {
+			text = "DATA_LIBERTY_DESIRE_LEVEL_TOOLTIP"
+		}
+
+		blockoverride "name" {
+			text = "[LibertyDesireLevel.GetNameNoFormatting]"
+		}
+
+		blockoverride "type" {
+			text = "TOOLTIP_TYPE_LIBERTY_DESIRE_LEVEL"
+		}
+	}
+
+    type FancyTooltip_CohesionLevel = FancyTooltipWidgetType {
+		blockoverride "text" {
+			text = "DATA_COHESION_LEVEL_TOOLTIP"
+		}
+
+		blockoverride "name" {
+			text = "[CohesionLevel.GetNameNoFormatting]"
+		}
+
+		blockoverride "type" {
+			text = "TOOLTIP_TYPE_COHESION_LEVEL"
+		}
+	}
+
+	type FancyTooltip_SubjectType = FancyTooltipWidgetType {
+        blockoverride "text" {
+            text = "DATA_SUBJECT_TYPE_TOOLTIP"
+        }
+
+        blockoverride "name" {
+            text = "[SubjectType.GetNameNoIconNoFormatting]"
+        }
+
+        blockoverride "icon_texture" {
+            texture = "[SubjectType.GetTexture]"
+        }
+
+        blockoverride "type" {
+            text = "TOOLTIP_TYPE_SUBJECT_TYPE"
+        }
+    }
+
 	type FancyTooltip_BattleCondition = FancyTooltipWidgetType {
 		blockoverride "text" {
 			text = "BATTLE_CONDITION_TOOLTIP"
@@ -1771,6 +4321,722 @@ types TooltipTypes
         }
     }
 
+	type FancyTooltip_PowerBloc = FancyTooltipWidgetType {
+		blockoverride "text" {} # Fully replaced by everything in tooltip_content_after
+
+		blockoverride "icon_texture" {
+			texture = "[PowerBloc.GetFlag.GetMediumPowerBlocCoaTexture]"
+			frame = "[PowerBloc.GetFlag.GetMediumPowerBlocCoaFrame]"
+			framesize = "[GetMediumPowerBlocCoaFrameSize]"
+		}
+
+		blockoverride "name" {
+			text = "[PowerBloc.GetNameNoFormatting]"
+		}
+
+		blockoverride "type" {
+			text = "[concept_power_bloc]"
+		}
+
+		blockoverride "tooltip_content_after" {
+			flowcontainer = {
+				visible = "[PowerBloc.IsValid]"
+				direction = vertical
+
+				custom_tooltip_textbox = {
+					text = "DATA_POWER_BLOC_RANK"
+				}
+
+				custom_tooltip_textbox = {
+					text = "DATA_POWER_BLOC_LEADER"
+				}
+
+				custom_tooltip_textbox = {
+					visible = "[Not(StringIsEmpty(PowerBloc.GetPowerStruggleDesc))]"
+					text = "DATA_POWER_BLOC_POWER_STRUGGLE"
+				}
+
+				custom_tooltip_textbox = {
+					text = "DATA_POWER_BLOC_COHESION"
+				}
+
+				custom_tooltip_textbox = {
+					text = "DATA_POWER_BLOC_IDENTITY"
+				}
+
+				custom_tooltip_textbox = {
+					visible = "[GetPlayer.GetPowerBloc.IsLeader(GetPlayer.Self)]"
+					datacontext = "[GetPlayer]"
+					text = "DATA_POWER_BLOC_LEVERAGE_OVER_PLAYER_LEADER"
+				}
+
+				flowcontainer = {
+					visible = "[Not(GetPlayer.GetPowerBloc.IsLeader(GetPlayer.Self))]"
+					datacontext = "[GetPlayer]"
+					spacing = 5
+
+					custom_tooltip_textbox = {
+						text = "DATA_POWER_BLOC_LEVERAGE_OVER_PLAYER_TITLE"
+					}
+
+					custom_tooltip_textbox = {
+						tooltip = "POWER_BLOC_CURRENT_LEVERAGE_BAR_TOOLTIP"
+						text = "DATA_POWER_BLOC_LEVERAGE_OVER_PLAYER_VALUE"
+					}
+
+					custom_tooltip_textbox = {
+						text = "DATA_POWER_BLOC_LEVERAGE_OVER_PLAYER_LABEL"
+					}
+				}
+
+				flowcontainer = {
+					margin_top = 15
+					direction = vertical
+					spacing = 5
+
+					custom_tooltip_textbox = {
+						text = "PRINCIPLES_TOOLTIP_TITLE"
+					}
+
+					dynamicgridbox = {
+						parentanchor = hcenter
+						flipdirection = yes
+						datamodel_wrap = 2
+						datamodel = "[PowerBloc.GetPrinciples]"
+
+						item = {
+							widget = {
+								size = { 260 60 }
+
+								locked_active_principle_slot = {
+									parentanchor = center
+									alpha = 1
+
+									blockoverride "slot_size" {
+										size = { 250 50 }
+									}
+
+									blockoverride "name_default_format" {}
+
+									blockoverride "name_max_width" {
+										max_width = 180
+									}
+								}
+							}
+						}
+					}
+				}
+
+				flowcontainer = {
+					margin_top = 15
+					direction = vertical
+					spacing = 5
+
+					custom_tooltip_textbox = {
+						text = "BLOC_MEMBERS_TOOLTIP_TITLE"
+					}
+
+					dynamicgridbox = {
+						parentanchor = hcenter
+						flipdirection = yes
+						datamodel_wrap = 2
+						datamodel = "[DataModelFirst(PowerBloc.GetMembers, '(int32)6')]"
+
+						item = {
+							widget = {
+								size = { 260 25 }
+
+								textbox = {
+									visible = "[LessThan_int32(PdxGuiWidget.GetIndexInDataModel, '(int32)5')]"
+									parentanchor = vcenter
+									autoresize = yes
+									align = nobaseline
+									max_width = 250
+									elide = right
+									fontsize_min = 12
+									text = "POWER_BLOC_MEMBER_COUNTRY_NAME_AND_PRESTIGE"
+								}
+
+								textbox = {
+									visible = "[GreaterThan_int32(PdxGuiWidget.GetIndexInDataModel, '(int32)4')]"
+									parentanchor = vcenter
+									autoresize = yes
+									align = nobaseline
+									max_width = 250
+									elide = right
+									fontsize_min = 12
+									default_format = "#tooltippable"
+									text = "DATA_POWER_BLOC_ADDITIONAL_MEMBERS"
+									
+									tooltipwidget = {
+										RegularTooltip = {
+											blockoverride "tooltip_content" {
+												dynamicgridbox = {
+													parentanchor = hcenter
+													flipdirection = yes
+													datamodel_wrap = 2
+													datamodel = "[DataModelSkipFirst(PowerBloc.GetMembers, '(int32)5')]"
+
+													item = {
+														widget = {
+															size = { 260 25 }
+
+															textbox = {
+																parentanchor = vcenter
+																autoresize = yes
+																align = nobaseline
+																max_width = 250
+																elide = right
+																fontsize_min = 12
+																text = "POWER_BLOC_MEMBER_COUNTRY_NAME_AND_PRESTIGE"
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		blockoverride "go_to_button_visibility" {
+			visible = "[PowerBloc.IsValid]"
+		}
+		
+		blockoverride "go_to_button_properties" {
+			onclick = "[InformationPanelBar.OpenPowerBlocPanelTab( PowerBloc.Self, 'default' )]"
+		}
+	}
+
+	type FancyTooltip_PowerBlocIdentity = FancyTooltipWidgetType {
+		blockoverride "text" {
+			text = "DATA_POWER_BLOC_IDENTITY_NAME_TOOLTIP"
+		}
+
+		blockoverride "icon_texture" {
+			texture = "[PowerBlocIdentity.GetIcon]"
+		}
+
+		blockoverride "name" {
+			text = "[PowerBlocIdentity.GetNameNoFormatting]"
+		}
+
+		blockoverride "type" {
+			text = "[concept_power_bloc_identity]"
+		}
+
+		blockoverride "tooltip_content_after" {
+
+			flowcontainer = {
+				visible = "[Not(IsDataModelEmpty(PowerBlocIdentity.GetPrimaryPrincipleGroups))]"
+				direction = vertical
+				margin_top = 15
+				spacing = 5
+
+				custom_tooltip_textbox = {
+					text = "DATA_PRIMARY_PRINCIPLE_GROUPS_TITLE"
+				}
+
+				dynamicgridbox = {
+					parentanchor = hcenter
+					flipdirection = yes
+					datamodel_wrap = 2
+					datamodel = "[PowerBlocIdentity.GetPrimaryPrincipleGroups]"
+
+					item = {
+						container = {
+							minimumsize = { 200 -1 }
+
+							principle_group_no_interact = {
+								blockoverride "has_principle_visibility" {
+									block "has_principle_visibility_formation" {
+										visible = "[GetPlayer.GetPowerBloc.HasPrinciple(PowerBlocPrinciple.Self)]"
+									}
+								}
+
+								blockoverride "principle_group_tooltip" {
+									tooltipwidget = {
+										FancyTooltip_PowerBlocPrincipleGroup = {
+											blockoverride "text_before" {
+												visible = "[PowerBlocPrincipleGroup.IsPrimaryFor(PowerBlocIdentity.Self)]"
+												text = "DATA_PRIMARY_PRINCIPLE_GROUP"
+												margin_bottom = 15
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
+			tooltip_divider = {}
+
+			custom_tooltip_textbox = {
+				text = "DATA_POWER_BLOC_IDENTITY_DESC"
+			}
+		}
+	}
+
+	type principle_main_tooltip = flowcontainer {
+		direction = vertical
+
+		### HAS THIS PRINCIPLE - ACTIVE POWER BLOC
+		block "has_this_principle" {
+			custom_tooltip_textbox_with_empty_line = {
+				visible = "[GetPlayer.GetPowerBloc.HasPrinciple(PowerBlocPrinciple.Self)]"
+				text = "POWER_BLOC_PLAYER_PRINCIPLE_INFO"
+			}	
+		}
+
+		custom_tooltip_textbox_with_empty_line = {
+			visible = "[Not(StringIsEmpty(PowerBlocPrinciple.GetIsPossibleTriggerDesc))]"
+			text = "[PowerBlocPrinciple.GetIsPossibleTriggerDesc]"
+		}
+
+		### PRINCIPLE GROUP INFO
+		block "principle_group_info" {
+			custom_tooltip_textbox_with_empty_line = {
+				datacontext = "[PowerBlocPrinciple.GetGroup]"
+				text = "DATA_PRINCIPLE_GROUP_ENTRY"
+			}
+		}
+
+		### EFFECTS
+		custom_tooltip_textbox_with_empty_line = {
+			visible = "[Not(StringIsEmpty(PowerBlocPrinciple.GetPowerBlocEffectDesc))]"
+			text = "[PowerBlocPrinciple.GetPowerBlocEffectDesc]"
+		}
+
+		custom_tooltip_textbox_with_empty_line = {
+			visible = "[Not(StringIsEmpty(PowerBlocPrinciple.GetMemberEffectDesc))]"
+			text = "[PowerBlocPrinciple.GetMemberEffectDesc]"
+		}
+
+		custom_tooltip_textbox_with_empty_line = {
+			visible = "[Not(StringIsEmpty(PowerBlocPrinciple.GetLeaderEffectDesc))]"
+			text = "[PowerBlocPrinciple.GetLeaderEffectDesc]"
+		}
+
+		custom_tooltip_textbox_with_empty_line = {
+			visible = "[Not(StringIsEmpty(PowerBlocPrinciple.GetNonLeaderEffectDesc))]"
+			text = "[PowerBlocPrinciple.GetNonLeaderEffectDesc]"
+		}
+
+		custom_tooltip_textbox_with_empty_line = {
+			visible = "[Not(StringIsEmpty(PowerBlocPrinciple.GetInstitutionEffectDesc))]"
+			text = "[PowerBlocPrinciple.GetInstitutionEffectDesc]"
+		}
+
+		custom_tooltip_textbox_with_empty_line = {
+			visible = "[Not(StringIsEmpty(PowerBlocPrinciple.GetBuildingTypesDesc))]"
+			text = "[PowerBlocPrinciple.GetBuildingTypesDesc]"
+		}
+
+		custom_tooltip_textbox_with_empty_line = {
+			visible = "[Not(StringIsEmpty(PowerBlocPrinciple.GetCompanyTypesDesc))]"
+			text = "[PowerBlocPrinciple.GetCompanyTypesDesc]"
+		}
+
+		custom_tooltip_textbox_with_empty_line = {
+			visible = "[Not(StringIsEmpty(PowerBlocPrinciple.GetProductionMethodsDesc))]"
+			text = "[PowerBlocPrinciple.GetProductionMethodsDesc]"
+		}
+
+		custom_tooltip_textbox_with_empty_line = {
+			visible = "[Not(StringIsEmpty(PowerBlocPrinciple.GetMobilizationOptionsDesc))]"
+			text = "[PowerBlocPrinciple.GetMobilizationOptionsDesc]"
+		}
+
+		custom_tooltip_textbox = {
+			visible = "[Not(StringIsEmpty(PowerBlocPrinciple.GetIncompatibilitiesDesc))]"
+			text = "[PowerBlocPrinciple.GetIncompatibilitiesDesc]"
+		}
+
+		tooltip_divider = {}
+
+		### DESCRIPTION
+		custom_tooltip_textbox = {
+			visible = "[Not(StringIsEmpty(PowerBlocPrinciple.GetDesc))]"
+			text = "[PowerBlocPrinciple.GetDesc]"
+		}
+	}
+
+	type FancyTooltip_PowerBlocPrinciple = FancyTooltipWidgetType {
+		blockoverride "text" {} # Fully replaced by everything in tooltip_content_after
+
+		blockoverride "replace_icon" {
+			principle_icon_with_bg = {
+				parentanchor = center
+				size = { 50 50 }
+			}
+		}
+
+		blockoverride "icon_frame" {}
+
+		blockoverride "name" {
+			text = "[PowerBlocPrinciple.GetNameNoFormatting]"
+		}
+
+		blockoverride "type" {
+			text = "[concept_power_bloc_principle]"
+		}
+
+		blockoverride "tooltip_content_after" {
+			principle_main_tooltip = {}
+		}
+	}
+
+	type FancyTooltip_PowerBlocPrincipleSlot = FancyTooltipWidgetType {
+		blockoverride "text" {} # Fully replaced by everything in tooltip_content_after
+
+		blockoverride "replace_icon" {
+			principle_icon_with_bg = {
+				parentanchor = center
+				size = { 50 50 }
+			}
+		}
+
+		blockoverride "icon_frame" {}
+
+		blockoverride "name" {
+			text = "[PowerBlocPrinciple.GetNameNoFormatting]"
+		}
+
+		blockoverride "type" {
+			text = "[concept_power_bloc_principle]"
+		}
+
+		blockoverride "tooltip_content_after" {
+			
+			### CAN UPGRADE THIS PRINCIPLE
+			block "upgrade_text" {
+				custom_tooltip_textbox_with_empty_line = {
+					visible = "[IsValid(PowerBlocPrinciple.UpgradeToNextLevel)]"
+					text = "POWER_BLOC_PLAYER_CAN_UPGRADE_THIS_PRINCIPLE"
+				}
+			}
+
+			principle_main_tooltip = {}
+
+			### CLICK PROMPT
+			block "click_text" {
+				custom_tooltip_textbox = {
+					text = "CLICK_TO_SEE_ALL_PRINCIPLES"
+					margin_top = 15
+				}
+			}
+		}
+	}
+
+	type FancyTooltip_PowerBlocPrincipleSelection = FancyTooltipWidgetType {
+		blockoverride "text" {} # Fully replaced by everything in tooltip_content_after
+
+		blockoverride "replace_icon" {
+			principle_icon_with_bg = {
+				parentanchor = center
+				size = { 50 50 }
+			}
+		}
+
+		blockoverride "icon_frame" {}
+
+		blockoverride "name" {
+			text = "[PowerBlocPrinciple.GetNameNoFormatting]"
+		}
+
+		blockoverride "type" {
+			text = "[concept_power_bloc_principle]"
+		}
+
+		blockoverride "tooltip_content_after" {
+
+			custom_tooltip_textbox_with_empty_line = {
+				visible = "[Not(StringIsEmpty(PowerBlocPrincipleSelectionWindow.GetDescForPrincipleSelection(PowerBlocPrinciple.Self)))]"
+				text = "[PowerBlocPrincipleSelectionWindow.GetDescForPrincipleSelection(PowerBlocPrinciple.Self)]"
+			}
+
+			principle_main_tooltip = {
+				blockoverride "principle_group_info" {
+					blockoverride "has_this_principle" {
+						### HAS THIS PRINCIPLE - DURING FORMATION
+						custom_tooltip_textbox_with_empty_line = {
+							visible = "[PowerBlocPrincipleSelectionWindow.GetPowerBlocFormation.HasSelectedPrinciple(PowerBlocPrinciple.Self)]"
+							datacontext = "[PowerBlocPrincipleSelectionWindow.GetPowerBlocFormation]"
+							text = "POWER_BLOC_FORMATION_HAS_THIS_PRINCIPLE"
+						}
+
+						### HAS THIS PRINCIPLE GROUP - DURING FORMATION
+						custom_tooltip_textbox_with_empty_line = {
+							visible = "[And(Not(PowerBlocPrincipleSelectionWindow.GetPowerBlocFormation.HasSelectedPrinciple(PowerBlocPrinciple.Self)), PowerBlocPrincipleSelectionWindow.GetPowerBlocFormation.HasSelectedPrincipleGroup(PowerBlocPrinciple.GetGroup.Self))]"
+							datacontext = "[PowerBlocPrincipleSelectionWindow.GetPowerBlocFormation]"
+							text = "POWER_BLOC_FORMATION_HAS_THIS_PRINCIPLE_GROUP"
+						}
+
+						### HAS THIS PRINCIPLE - ACTIVE POWER BLOC
+						custom_tooltip_textbox_with_empty_line = {
+							visible = "[PowerBlocPrincipleSelectionWindow.GetPowerBloc.HasPrinciple(PowerBlocPrinciple.Self)]"
+							datacontext = "[PowerBlocPrincipleSelectionWindow.GetPowerBloc]"
+							text = "POWER_BLOC_HAS_THIS_PRINCIPLE"
+						}
+
+						### HAS THIS PRINCIPLE GROUP - ACTIVE POWER BLOC
+						custom_tooltip_textbox_with_empty_line = {
+							visible = "[And(Not(PowerBlocPrincipleSelectionWindow.GetPowerBloc.HasPrinciple(PowerBlocPrinciple.Self)), PowerBlocPrincipleSelectionWindow.GetPowerBloc.HasPrincipleFromGroup(PowerBlocPrinciple.GetGroup.Self))]"
+							datacontext = "[PowerBlocPrincipleSelectionWindow.GetPowerBloc]"
+							text = "POWER_BLOC_HAS_THIS_PRINCIPLE_GROUP"
+						}
+					}
+
+					### IS NOT PRIMARY PRINCIPLE GROUP
+					custom_tooltip_textbox_with_empty_line = {
+						visible = "[And(Not(PowerBlocPrincipleGroup.IsPrimaryFor(PowerBlocPrincipleSelectionWindow.GetPowerBlocFormation.GetSelectedIdentity.Self)), Not(PowerBlocPrincipleGroup.IsPrimaryFor(PowerBlocPrincipleSelectionWindow.GetPowerBloc.GetIdentity.Self)))]"
+						text = "DATA_PRINCIPLE_GROUP_ENTRY"
+					}
+
+					### IS PRIMARY PRINCIPLE GROUP - DURING FORMATION
+					custom_tooltip_textbox_with_empty_line = {
+						visible = "[And(PowerBlocPrincipleSelectionWindow.IsPowerBlocFormation, PowerBlocPrincipleGroup.IsPrimaryFor(PowerBlocPrincipleSelectionWindow.GetPowerBlocFormation.GetSelectedIdentity.Self))]"
+						datacontext = "[PowerBlocPrincipleSelectionWindow.GetPowerBlocFormation.GetSelectedIdentity]"
+						text = "DATA_PRIMARY_PRINCIPLE_GROUP_ENTRY_FORMATION"
+					}
+
+					### IS PRIMARY PRINCIPLE GROUP - ACTIVE POWER BLOC
+					custom_tooltip_textbox_with_empty_line = {
+						visible = "[And(Not(PowerBlocPrincipleSelectionWindow.IsPowerBlocFormation), PowerBlocPrincipleGroup.IsPrimaryFor(PowerBlocPrincipleSelectionWindow.GetPowerBloc.GetIdentity.Self))]"
+						datacontext = "[PowerBlocPrincipleSelectionWindow.GetPowerBloc.GetIdentity]"
+						text = "DATA_PRIMARY_PRINCIPLE_GROUP_ENTRY_ACTIVE"
+					}
+				}
+			}
+
+			custom_tooltip_textbox = {
+				text = "CLICK_TO_SELECT"
+				margin_top = 15
+			}
+		}
+	}
+
+	type FancyTooltip_PowerBlocPrincipleGroup = FancyTooltipWidgetType {
+		blockoverride "text" {} # Fully replaced by everything in tooltip_content_after
+
+		blockoverride "name" {
+			text = "[PowerBlocPrincipleGroup.GetNameNoFormatting]"
+		}
+
+		blockoverride "type" {
+			text = "[concept_power_bloc_principle_group]"
+		}
+
+		blockoverride "replace_icon" {
+
+			### This can be replaced by a new function: PowerBlocPrincipleGroup.GetTexture in PRCAL-34058
+			flowcontainer = {
+				parentanchor = center
+				datamodel = "[PowerBlocPrincipleGroup.GetLevels]"
+
+				item = {
+					principle_icon = {
+						visible = "[EqualTo_int32(PdxGuiWidget.GetIndexInDataModel, '(int32)0')]"
+						parentanchor = vcenter
+						size = { 50 50 }
+					}
+				}
+			}
+		}
+
+		blockoverride "tooltip_content_after" {
+			custom_tooltip_textbox_with_empty_line = {
+				visible = "[GetPlayer.GetPowerBloc.HasPrincipleFromGroup(PowerBlocPrincipleGroup.Self)]"
+				text = "POWER_BLOC_PLAYER_HAS_THIS_PRINCIPLE_GROUP"
+			}
+
+			flowcontainer = {
+				direction = vertical
+				spacing = 5
+
+				custom_tooltip_textbox = {
+					text = "PRINCIPLES_TOOLTIP_TITLE"
+				}
+
+				dynamicgridbox = {
+					parentanchor = hcenter
+					flipdirection = yes
+					datamodel_wrap = 2
+					datamodel = "[PowerBlocPrincipleGroup.GetLevels]"
+
+					item = {
+						widget = {
+							size = { 260 60 }
+
+							locked_active_principle_slot = {
+								parentanchor = center
+								alpha = 1
+
+								blockoverride "slot_size" {
+									size = { 250 50 }
+								}
+
+								blockoverride "name_default_format" {}
+
+								blockoverride "name_max_width" {
+									max_width = 180
+								}
+							}
+						}
+					}
+				}
+			}
+
+			tooltip_divider = {}
+
+			custom_tooltip_textbox = {
+				text = "DATA_POWER_BLOC_PRINCIPLE_GROUP_DESC"
+			}
+		}
+	}
+
+	type RegularTooltip_TimedModifierList = RegularTooltip {
+		blockoverride "tooltip_content" {
+			flowcontainer = {
+				parentanchor = hcenter
+				spacing = 2
+				direction = vertical
+
+				flowcontainer = {
+					parentanchor = hcenter
+					direction = vertical
+
+					block "first_datamodel" {
+						datamodel = "[DataModelSkipFirst(PoliticalMovement.GetTimedModifiers, '(int32)3')]"
+					}
+
+					item = {
+						widget = {
+							size = { 500 40 }
+
+							vbox = {
+								layoutpolicy_horizontal = expanding
+								layoutpolicy_vertical = expanding
+								margin = { 10 0 }
+
+								hbox = {
+									layoutpolicy_horizontal = expanding
+									layoutpolicy_vertical = expanding
+									tooltip = "[TimedModifier.GetTooltip]"
+									margin = { 10 0 }
+
+									background = {
+										using = entry_bg_simple
+									}
+
+									flowcontainer = {
+										spacing = 10
+										minimumsize = { -1 40 }
+
+										icon = {
+											parentanchor = vcenter
+											size = { 25 25 }
+											texture = "[TimedModifier.GetIcon]"
+										}
+
+										textbox = {
+											parentanchor = vcenter
+											autoresize = yes
+											align = nobaseline
+											max_width = 440
+											elide = right
+											fontsize_min = 12
+											text = "[TimedModifier.GetName]"
+										}
+									}
+
+									expand = {}
+
+									textbox = {
+										autoresize = yes
+										align = nobaseline
+										text = "[TimedModifier.GetRemainingDuration]"
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	type RegularTooltip_Leverage = RegularTooltip {
+		blockoverride "tooltip_content_after" {
+			custom_tooltip_textbox = {
+				text = "DATA_LEVERAGE_ADVANTAGE_HEADER"
+			}
+
+			flowcontainer = {
+				spacing = 5
+
+				block "has_power_bloc_context_visibility" {
+					visible = no
+				}
+
+				custom_tooltip_textbox = {
+					tooltip = "POWER_BLOC_CURRENT_LEVERAGE_BAR_TOOLTIP"
+					raw_text = "#tooltippable #v [PowerBloc.GetLeverageAdvantage(Country.Self)|+=0]#!#!"
+				}
+
+				custom_tooltip_textbox = {
+
+					text = "DATA_LEVERAGE_ADVANTAGE_FOR_POWER_BLOC"
+				}
+			}
+
+			block "have_no_power_bloc" {}
+
+			custom_tooltip_textbox = {
+				text = "TOOLTIP_DELIMITER"
+			}
+
+			custom_tooltip_textbox_with_empty_line = {
+				block "has_power_bloc_context_visibility" {
+					visible = no
+				}
+
+				text = "DATA_LEVERAGE_ADVANTAGE_WHO_LEADS_LABEL"
+			}
+
+			flowcontainer = {
+				direction = vertical
+
+				custom_tooltip_textbox = {
+					text = "CURRENT_LEVERAGE_BAR_TITLE"
+				}
+
+				leverage_stacked_barchart = {}
+			}
+
+			widget = {
+				size = { 5 5 }
+			}
+
+			flowcontainer = {
+				direction = vertical
+
+				custom_tooltip_textbox = {
+					text = "TARGET_LEVERAGE_BAR_TITLE"
+				}
+
+				leverage_target_stacked_barchart = {}
+			}
+		}
+	}
+
 	type FancyTooltip_MilitaryFormation = FancyTooltipWidgetType {
 		blockoverride "text" {
 			text = "DATA_MILITARY_FORMATION"
@@ -1780,6 +5046,10 @@ types TooltipTypes
 			texture = "[MilitaryFormation.GetFlag]"
 			color = "[MilitaryFormation.GetFlagColor]"
 		}
+
+		blockoverride "icon_background_texture" {}
+
+		blockoverride "icon_frame" {}
 
 		blockoverride "name" {
 			text = "[MilitaryFormation.GetNameNoFormatting]"
@@ -1923,11 +5193,19 @@ types TooltipTypes
 							tooltipwidget = {
 								FancyTooltip_CommanderOrderType = {
 									blockoverride "text_before" {
-										visible = "[Or(Or(ObjectsEqual(Character.GetOrderType.Self, CommanderOrderType.Self), ObjectsEqual(Character.GetNextOrderType.Self, CommanderOrderType.Self)), Not(StringIsEmpty(GetDesc( Character.SelectOrder( CommanderOrderType.Self )))))]"
+										using = visible_if_either_current_or_next_order
 										text =  "NEXT_OR_CURRENT_ORDER"
 										margin_bottom = 15
 									}
 								}
+							}
+
+							icon = {
+								visible = "[Not(CommanderOrderType.IsBasicOrderType)]"
+								parentanchor = bottom
+								position = { -4 4 }
+								size = { 20 20 }
+								texture = "gfx/interface/icons/generic_icons/most_senior_front_commander.dds"
 							}
 						}
 
@@ -1947,11 +5225,19 @@ types TooltipTypes
 							tooltipwidget = {
 								FancyTooltip_CommanderOrderType = {
 									blockoverride "text_before" {
-										visible = "[Or(Or(ObjectsEqual(Character.GetOrderType.Self, CommanderOrderType.Self), ObjectsEqual(Character.GetNextOrderType.Self, CommanderOrderType.Self)), Not(StringIsEmpty(GetDesc( Character.SelectOrder( CommanderOrderType.Self )))))]"
+										using = visible_if_either_current_or_next_order
 										text =  "NEXT_OR_CURRENT_ORDER"
 										margin_bottom = 15
 									}
 								}
+							}
+
+							icon = {
+								visible = "[Not(CommanderOrderType.IsBasicOrderType)]"
+								parentanchor = bottom
+								position = { -4 4 }
+								size = { 20 20 }
+								texture = "gfx/interface/icons/generic_icons/most_senior_front_commander.dds"
 							}
 						}
 
@@ -2099,98 +5385,85 @@ types TooltipTypes
         }
 	}
 
-	type corruption_tooltip = TooltipWidgetType {
-		dynamicgridbox = {
-			minimumsize = { 450 450 }
-			flowcontainer = {
-				direction = vertical
-				spacing = 20
-				margin = { 20 20 }
-				parentanchor = top|left
-				flowcontainer = {
-					direction = vertical
-					parentanchor = top
-					spacing = 30
-					textbox = {
-						text = "CORRUPTION_TOOLTIP_TITLE"
-						fontsize = 15
-					}
-					textbox = {
-						text = "CORRUPTION_BALANCE"
-						using = fontsize_medium
-					}
-				}
-				flowcontainer = {
-					margin_top = 80
-					direction = vertical
-					spacing = 0
-					flowcontainer = {
-						margin_bottom = 100
-						parentanchor = top
-						direction = vertical
-						textbox = {
-							text = "CORRUPTION_EFFECTS_TOOL"
-							using = fontsize_medium
-						}
-					}
-					flowcontainer = {
-						parentanchor = top
-						direction = vertical
-						spacing = 80
-						flowcontainer = {
-							textbox = {
-								text = "CORRUPTION_TOOLTIP_SUM2"
-								using = fontsize_medium
-							}
-						}
-						flowcontainer = {
-							textbox = {
-								text = "[GetPlayer.MakeScope.GetScriptValueDesc('corruption_baseline')]"
-								#multiline = yes
-								using = fontsize_medium
-							}
-						}
-					}
-				}
-			}
-	  	}
+	type FancyTooltip_DiplomaticAction = FancyTooltipWidgetType {
+		blockoverride "text" {
+			text = "DATA_DIPLOMATIC_ACTION_NAME_TOOLTIP"
+		}
+		
+		blockoverride "icon_texture" {
+            texture = "[DiplomaticAction.GetType.GetTexture]"
+        }
+
+        blockoverride "text_before" {
+        	visible = "[GreaterThan_CFixedPoint(DiplomaticAction.GetMaintenanceCost, '(CFixedPoint)0')]"
+			text = "DATA_DIPLOMATIC_ACTION_INFLUENCE_COST"
+			margin_bottom = 15
+		}
+
+        blockoverride "name" {
+            text = "DATA_DIPLOMATIC_ACTION_NAME"
+        }
+
+        blockoverride "type" {
+            text = "DATA_DIPLOMATIC_ACTION_PACT_OR_ONGOING_ACTION"
+        }
 	}
 
-	type pollution_tooltip = TooltipWidgetType {
-		dynamicgridbox = {
-			minimumsize = { 450 450}
-			flowcontainer = {
-				direction = vertical
-				spacing = 20
-				margin = { 20 20 }
-				parentanchor = top|left
-				flowcontainer = {
-					direction = vertical
-					parentanchor = top
-					spacing = 40
-					textbox = {
-						text = "POLLUTION_TOOLTIP_TITLE"
-						fontsize = 15
-					}
-					textbox = {
-						text = "GLOBAL_POLLUTION"
-					}
-					textbox = {
-						raw_text = "#D #l DEBUG #!#!"
-					}
-					textbox = {
-						raw_text = "#D Raw Pollution Value: #! [GetPlayer.MakeScope.ScriptValue('global_pollution_generation')]"
-					}
-					textbox = {
-						raw_text = "#D Pollution Max: #! [FixedPointToFloat(GetPlayer.MakeScope.ScriptValue('global_pollution_max'))]"
-					}
-					textbox = {
-						raw_text = "#D Global Temp. Target: #! [GetPlayer.MakeScope.ScriptValue('global_temp_target_celsius')]"
-					}
-				}
-			}
+	type FancyTooltip_DiplomaticActionWithTargetCountry = FancyTooltipWidgetType {
+		blockoverride "text" {
+			text = "DATA_COUNTRY_DIPLOMATIC_ACTION_NAME_TOOLTIP"
+		}
+		
+		blockoverride "icon_texture" {
+            texture = "[DiplomaticAction.GetType.GetTexture]"
+        }
+
+        blockoverride "name" {
+            text = "DATA_COUNTRY_DIPLOMATIC_ACTION_NAME"
+        }
+
+        blockoverride "type" {
+            text = "DATA_DIPLOMATIC_ACTION_PACT_OR_ONGOING_ACTION"
+        }
+	}
+
+	### THIS SHOULD ONLY BE USED IN GENERIC PLACES AND NEVER ON BUTTONS FOR THE DIPLOMATIC ACTION
+	type FancyTooltip_DiplomaticActionType = FancyTooltipWidgetType {
+		blockoverride "text" {
+			text = "DATA_DIPLOMATIC_ACTION_TYPE_NAME_TOOLTIP"
+		}
+		
+		blockoverride "icon_texture" {
+            texture = "[DiplomaticActionType.GetTexture]"
+        }
+
+        blockoverride "name" {
+            text = "DATA_DIPLOMATIC_ACTION_TYPE_NAME"
+        }
+
+        blockoverride "type" {
+            text = "DIPLOMATIC_ACTION_TYPE_TYPE"
+        }
+	}
+
+	type FancyTooltip_ModifierBreakdown = FancyTooltipWidgetType {
+		blockoverride "text_before" {
+			text = "DATA_MODIFIER_BREAKDOWN_TOOLTIP"
+		}
+
+		blockoverride "name" {
+			text = "[ModifierBreakdown.GetName]"
+		}
+
+		blockoverride "type" {
+			text = "[ModifierBreakdown.GetTypeName]"
+		}
+
+		blockoverride "instruction_text" {
+			text = "[ModifierBreakdown.GetTypeDescription]"
 		}
 	}
+
 	type inflation_tooltip = FancyTooltipWidgetType {
 		blockoverride "name" {
 			raw_text = "#b [concept_inflation_rate]#!"
@@ -2209,6 +5482,7 @@ types TooltipTypes
 			}
 		}
 	}
+
 	type money_supply_tooltip = FancyTooltipWidgetType {
 		blockoverride "name" {
 			raw_text = "#b [concept_money_supply]#!"
@@ -2227,6 +5501,7 @@ types TooltipTypes
 			}
 		}
 	}
+
 	type bank_credibility_tooltip = FancyTooltipWidgetType {
 		blockoverride "name" {
 			raw_text = "#b [GetPlayer.GetAdjective] [concept_central_bank]#!"
@@ -2245,6 +5520,7 @@ types TooltipTypes
 			}
 		}
 	}
+
 	type foreign_reserves_tooltip = FancyTooltipWidgetType {
 		blockoverride "name" {
 			raw_text = "#b [GetPlayer.GetAdjective] [concept_foreign_reserves]#!"
@@ -2263,6 +5539,7 @@ types TooltipTypes
 			}
 		}
 	}
+	
 	type currency_tooltip = FancyTooltipWidgetType {
 		blockoverride "name" {
 			raw_text = "#b[concept_currency]#!"
@@ -2281,4 +5558,112 @@ types TooltipTypes
 			}
 		}
 	}
+}
+
+template building_size_tooltip_with_ownership 
+{
+	tooltip = "BUILDING_SIZE_TT"
+	using = tooltip_se
+	tooltipwidget = {
+		TooltipWidgetType = {
+			blockoverride "tooltip_content_after" {
+
+				flowcontainer = {
+					using = visible_if_ownership_can_be_split
+					direction = vertical
+
+					custom_tooltip_textbox = {
+						text = "BUILDING_SIZE_TT_OWNERS_HEADER"		
+					}
+
+					building_ownership_stacked_barchart_short = {
+						blockoverride "barchart_size" {
+							size = { 360 40 }
+						}
+					}
+				}
+				
+			}
+		}
+	}
+}
+
+template building_ownership_share_tooltip 
+{
+	tooltip = "OWNERSHIP_SHARE_CHART_TOOLTIP"
+	tooltipwidget = {
+		TooltipWidgetType = {
+			blockoverride "tooltip_content_after" {
+
+				#private ownership
+				flowcontainer = {
+					visible = "[Not(BuildingOwnership.IsCountryOwned)]"
+
+					direction = vertical
+
+					custom_tooltip_textbox = {
+						text = "TOOLTIP_DELIMITER"		
+					}
+
+					# Local workforce list
+					flowcontainer = {
+						visible = "[ObjectsEqual(BuildingOwnership.GetOwnedBuilding.Self, BuildingOwnership.GetOwnerBuilding.Self)]"
+						direction = vertical
+						custom_tooltip_textbox = {
+							text = "OWNERSHIP_SHARE_CHART_TOOLTIP_LOCAL_WORKFORCE_HEADER"		
+						}
+
+						flowcontainer = {
+							direction = vertical
+
+							datamodel = "[BuildingOwnership.GetOwnedBuilding.AccessPopsList.GetItems]"
+							
+							item = {
+								custom_tooltip_textbox = {
+									text = "OWNERSHIP_SHARE_CHART_TOOLTIP_WORKFORCE_POP_LINE"		
+								}
+							}
+						}
+					}
+
+					# Ownership building workforce list
+					flowcontainer = {
+						visible = "[Not(ObjectsEqual(BuildingOwnership.GetOwnedBuilding.Self, BuildingOwnership.GetOwnerBuilding.Self))]"
+						direction = vertical
+						custom_tooltip_textbox = {
+							text = "OWNERSHIP_SHARE_CHART_TOOLTIP_OWNER_BUILDING_WORKFORCE_HEADER"		
+						}
+
+						flowcontainer = {
+							direction = vertical
+
+							datamodel = "[BuildingOwnership.GetOwnerBuilding.AccessPopsList.GetItems]"
+							
+							item = {
+								custom_tooltip_textbox = {
+									text = "OWNERSHIP_SHARE_CHART_TOOLTIP_WORKFORCE_POP_LINE"		
+								}
+							}
+						}
+					}
+
+					
+				}
+				
+			}
+		}
+	}
+}
+
+
+template tooltip_segment_background {
+	background = {
+		using = dark_area
+		alpha = 0.2
+		margin = {13 0}
+	}
+}
+
+template tooltip_segment_margin {
+	margin = {0 5}
 }

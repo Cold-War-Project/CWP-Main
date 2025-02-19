@@ -4,85 +4,80 @@
 		213
 		0
 	}
-	texture = "gfx/interface/icons/ig_icons/intelligentsia.dds"	# Texture for IG icon
+	texture = "gfx/interface/icons/ig_icons/intelligentsia.dds"
+	layer = "revolution_dynamic_intelligentsia"
+	index = 3
+
 	ideologies = {
-		# Ideologies for this IG
 		ideology_confident_monetarist
 		ideology_academic
 		ideology_conscientious
-		ideology_humanitarian
 	}
+	
+	character_ideologies = {
+		ideology_moderate
+		ideology_pacifist
+		ideology_humanitarian
+		ideology_abolitionist
+		ideology_environmentalist
+	}
+
 	enable = {
-		# enable allows for setting a condition to enable
-		# an IG for specific countries and under certain condition
-		# 
-		# by default it is set to always = yes 
-		# for all IGs in basegame.
-		#
-		# A note about triggers is that any trigger
-		# which is a dynamic condition (such as army_size = 10)
-		# will not be checked until the first month 
-		# of the game ends.
-		#
-		# Some of your IGs may thus be missing at game-start.
-		# 
 		always = yes
 	}
+
+	# Deprecated; use on_enable effect to assign traits instead
 	traits = {
 		# IG traits provide a bonus or malus depending on the IG approval. Definitions go in common/interest_group_traits
 	}
+
 	on_enable = {
 		# Triggered when an IG is enabled, ticks monthly.
 	}
 	on_disable = {
 		# Triggered when an IG is no longer enabled, because the enable trigger evaluated to false, ticks monthly.
 	}
-	on_character_ig_membership = {
-		# Triggered when a major character becomes an IG member.
+	priority_cultures = { #Country scope
+		#rule = {
+		#	trigger = {
+		#		c:BIC ?= this
+		#		any_primary_culture = { 
+		#			cu:british = this
+		#		}
+		#	}
+		#	cultures = {
+		#		assamese avadhi baluchi bengali bihari gujarati kannada malayalam marathi oriya panjabi pathan rajput sindi tamil telegu hindustani bundeli pahari gondi bageli chhattisgarhi deccani
+		#	}
+		#}
 	}
+	on_character_ig_membership = {}
+
 	pop_potential = {
-		# Defines which pops are ALLOWED TO join the IG
+		literacy_rate > 0.25
 		OR = {
 			is_pop_type = landlords
-			is_pop_type = professionals
-			is_pop_type = academics
+			is_pop_type = clericals
+			is_pop_type = engineers
 			is_pop_type = administrators
 			is_pop_type = clergy
-			is_pop_type = service_workers
-			is_pop_type = creatives
+			is_pop_type = clericals
 			is_pop_type = engineers
 		}
 	}
+
 	pop_weight = {
-		# Describes the likelihood (weight) certain pops are to join the IG
 		value = 0
+
 		add = {
-			desc = "POP_ACADEMICS"
+			desc = "POP_CLERICALS"
 			if = {
 				limit = {
-					is_pop_type = academics
+					is_pop_type = clericals
 				}
-				value = 200
+				value = 150
 			}
 		}
-		add = {
-			desc = "POP_CREATIVES"
-			if = {
-				limit = {
-					is_pop_type = creatives
-				}
-				value = 100
-			}
-		}
-		add = {
-			desc = "POP_PROFESSIONALS"
-			if = {
-				limit = {
-					is_pop_type = professionals
-				}
-				value = 100
-			}
-		}
+		
 		add = {
 			desc = "POP_ENGINEERS"
 			if = {
@@ -119,34 +114,52 @@
 				value = 50
 			}
 		}
+		
 		add = {
-			desc = "POP_SERVICE_WORKERS"
+			desc = "POP_CLERICALS"
 			if = {
 				limit = {
-					is_pop_type = service_workers
+					is_pop_type = clericals
 				}
-				value = 50
+				multiply = 0.25
 			}
 		}
-		add = {
-			desc = "POP_ENGINEERS"
-			if = {
-				limit = {
-					is_pop_type = engineers
-				}
-				value = 50
+		
+		if = {
+			limit = {
+				literacy_rate >= 0.50
+			}
+			add = {
+				desc = "POP_LITERACY"
+				value = literacy_rate
+				multiply = 20
 			}
 		}
+
 		multiply = {
 			desc = "LEADER_POPULARITY"
 			scope:interest_group = {
-				leader = {
+				leader ?= {
 					value = popularity
 					multiply = 0.0025
 					add = 1
 					max = 1.25
 					min = 0.75
 				}
+			}
+		}
+
+		multiply = {
+			desc = "decentralized_power"
+			value = 1.0
+
+			if = {
+				limit = {
+					owner = {
+						is_country_type = decentralized
+					}
+				}
+				value = 0.0
 			}
 		}
 		if = {
@@ -162,16 +175,18 @@
 				min = 0
 			}
 		}
+		
 		if = {
 			limit = {
 				scope:interest_group = {
 					is_in_government = yes
 				}
 			}
-			add = {
+			multiply = { # Multiplied by 1.25x max
 				desc = "POP_LOYALISTS"
 				value = pop_loyalist_fraction
-				multiply = 100
+				divide = 4
+				add = 1
 			}
 		}
 		if = {
@@ -180,89 +195,159 @@
 					is_in_government = no
 				}
 			}
-			add = {
+			multiply = { # Multiplied by 1.25x max
 				desc = "POP_RADICALS"
 				value = pop_radical_fraction
-				multiply = 100
+				divide = 4
+				add = 1
 			}
 		}
 	}
+
 	monarch_weight = {
-		value = 0.25
+		value = 1
+		# Monarch is not likely to adopt a marginal IG
+		if = {
+			limit = {
+				is_marginal = yes
+			}
+			multiply = {
+				value = 0.1
+			}
+		}
+		# Monarch is more likely to adopt a Powerful IG
+		if = {
+			limit = {
+				is_powerful = yes
+			}
+			multiply = {
+				value = 2
+			}
+		}
+		if = {
+			limit = {
+				owner = {
+					has_law = law_type:law_women_in_the_workplace
+				}
+			}
+			multiply = {
+				value = 3
+			}
+		}
+		# More likely with Appointed Bureaucrats
+		if = {
+			limit = {
+				owner = {
+					has_law = law_type:law_political_participation
+				}
+			}
+			multiply = {
+				value = 1.5
+			}
+		}
+		# Impossible without Empiricism
+		if = {
+			limit = {
+				owner = {
+					NOT = {
+						has_law = law_type:law_gender_equality
+					}
+				}
+			}
+			multiply = {
+				value = 0
+			}
+		}
 	}
+
+	agitator_weight = {
+		# Agitators more likely to come from populist IG's rather than elitist
+		value = 0.75
+		# Agitators will never be part of a marginalized IG
+		if = {
+			limit = {
+				owner.ig:ig_intelligentsia = {
+					is_marginal = yes
+				}
+			}
+			multiply = {
+				value = 0
+			}
+		}
+	}
+
 	commander_weight = {
-		value = 5
+		value = 1.0
 	}
+
 	noble_chance = {
 		value = 0.5
 	}
+
 	female_commander_chance = {
-		value = 0
-		if = {
-			limit = {
-				owner = {
-					has_law = law_type:law_women_in_the_workplace
-				}
-			}
-			add = 0.25
-		}
-		else_if = {
-			limit = {
-				owner = {
-					has_law = law_type:law_political_participation
-				}
-			}
-			add = 0.33
-		}
-		else_if = {
-			limit = {
-				owner = {
-					has_law = law_type:law_gender_equality
-				}
-			}
-			add = 0.5
-		}
+		value = 0.0
 	}
+
 	female_politician_chance = {
-		value = 0
+		value = 0.0
+
 		if = {
 			limit = {
 				owner = {
 					has_law = law_type:law_women_in_the_workplace
 				}
+
 			}
-			add = 0.25
+			add = {
+				value = 0.035
+			}
 		}
-		else_if = {
+	}
+
+	female_agitator_chance = {
+		value = 0.035
+		
+		if = {
 			limit = {
 				owner = {
 					has_law = law_type:law_political_participation
 				}
+
 			}
-			add = 0.33
-		}
-		else_if = {
+			add = {
+				value = 0.035
+			}
+		}	
+		
+		if = {
 			limit = {
 				owner = {
 					has_law = law_type:law_gender_equality
 				}
+
 			}
-			add = 0.5
+			add = {
+				value = 0.035
+			}
 		}
+
+		if = {
+			limit = {
+				owner = {
+					has_law = law_type:law_womens_suffrage
+				}
+
+			}
+			add = {
+				value = 0.035
+			}
+		}		
 	}
+
 	# The chance that a commander belonging to this IG takes over leadership when it changes
 	# scope:character is the most popular commander in the IG
 	commander_leader_chance = {
-		value = 0.75
-		if = {
-			limit = {
-				exists = scope:character
-			}
-			multiply = {
-				value = 1
-				add = scope:character.popularity
-				min = 0
-			}
-		}
+		value = 0.25
+		multiply = ig_commander_leader_chance_mult
 	}
 }

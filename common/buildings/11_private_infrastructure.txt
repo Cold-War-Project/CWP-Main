@@ -1,72 +1,96 @@
 ﻿############ PRIVATE INFRASTRUCTURE
 building_railway = {
-	building_group = bg_basic_infrastructure
-	texture = "gfx/interface/icons/building_icons/building_railway.dds"
+	building_group = bg_private_infrastructure	
+	icon = "gfx/interface/icons/building_icons/building_railway.dds"
+	
+	ai_nationalization_desire = 0.5 # AI is reluctant to privatize railways since they are likely to need subsidies anyway
+	
 	unlocking_technologies = {
 		railways
 	}
+
 	production_method_groups = {
-		pmg_base_building_railway
-		pmg_highways
-		pmg_infrastructure_prioritization
-		pmg_ownership_capital_building_railway
+	    pmg_railway_power
+	    pmg_rolling_stock
+	    pmg_railway_track
 	}
+
 	required_construction = construction_cost_very_high
-	ai_value = 2000	# Railways are important
-	should_auto_expand = {
+	
+	ai_value = {
+		value = 2000 # Railways are important
+	}
+	
+	should_auto_expand = { 
 		occupancy >= 0.8
 		OR = {
 			cash_reserves_ratio > 0.5
 			is_subsidized = yes
 		}
 		OR = {
-			owner = {
-				market = {
-					mg:transportation = { 
-						market_goods_pricier > 0.5 
-					}
+			state = {
+				mg:transportation = { 
+					state_goods_pricier > 0.5 
 				}
 			}
 			state.market_access < 1
 		}
 		NOT = { is_under_construction = yes }
+
 	}
+	ownership_type = self
+
+	background = "gfx/interface/icons/building_icons/backgrounds/building_panel_bg_railways.dds"
 }
 
 building_trade_center = {
 	building_group = bg_trade
 	city_type = city
 	levels_per_mesh = 10
+
 	lens = infrastructure
-	texture = "gfx/interface/icons/building_icons/building_trade_center.dds"
+
+	icon = "gfx/interface/icons/building_icons/building_trade_center.dds"
+
 	production_method_groups = {
 		pmg_base_building_trade_center
-		pmg_ownership_building_trade_center
 	}
+
 	buildable = no
 	expandable = no
 	downsizeable = no
+	ownership_type = self
+	can_switch_owner = no
+
+	background = "gfx/interface/icons/building_icons/backgrounds/building_panel_bg_monuments.dds"
 }
 
 building_spaceport = {
 	building_group = bg_space
 	city_type = city
-	texture = "gfx/interface/icons/building_icons/placeholder.dds"
+
+	icon ="gfx/interface/icons/building_icons/placeholder.dds"
+
 	unlocking_technologies = {
 		unmanned_space_flight
 	}
 	required_construction = construction_cost_very_high
 	production_method_groups = {
 		pmg_base_spaceport
-		pmg_spaceport_ownership
 	}
 	ai_value = 100	# ¯\_(ツ)_/¯
+
+	ownership_type = no_ownership
+
+	background = "gfx/interface/icons/building_icons/backgrounds/building_panel_bg_light_industry.dds"
 }
 
 building_mission_control = {
+	ownership_type = no_ownership
+	background = "gfx/interface/icons/building_icons/backgrounds/building_panel_bg_light_industry.dds"
 	building_group = bg_space
 	city_type = city
-	texture = "gfx/interface/icons/building_icons/placeholder.dds"
+	icon ="gfx/interface/icons/building_icons/placeholder.dds"
 	unlocking_technologies = {
 		unmanned_space_flight
 	}
@@ -77,15 +101,16 @@ building_mission_control = {
 		pmg_space_tourism
 		pmg_telecommunication_satellites
 		pmg_asteroid_mining
-		pmg_spaceport_ownership
 	}
 	ai_value = 100	# ¯\_(ツ)_/¯
 }
 
 building_airport = {
+	ownership_type = no_ownership
+	background = "gfx/interface/icons/building_icons/backgrounds/building_panel_bg_light_industry.dds"
 	building_group = bg_private_infrastructure
 	city_type = city
-	texture = "gfx/interface/icons/building_icons/airport.dds"
+	icon ="gfx/interface/icons/building_icons/airport.dds"
 	has_max_level = yes
 	ignore_stateregion_max_level = yes
 	enable_air_connection = yes
@@ -96,7 +121,6 @@ building_airport = {
 	required_construction = construction_cost_very_high
 	production_method_groups = {
 		pmg_base_airport
-		pmg_ownership_airport
 	}
 	ai_value = 2000	# Airports are important
 	can_build_government = {
@@ -105,4 +129,244 @@ building_airport = {
 	can_build_private = {
 		always = no
 	}
+}
+
+building_financial_district = {
+	building_group = bg_financial_districts
+	city_type = city
+	levels_per_mesh = 10
+
+	lens = infrastructure
+
+	icon = "gfx/interface/icons/building_icons/building_financial_district.dds"
+
+	production_method_groups = {
+		pmg_ownership_building_financial_district
+	}
+	
+	investment_scores = {
+		bg_manufacturing_score = {
+			group = "bg_manufacturing"
+			score = {
+				value = 1
+				
+				if = {
+					limit = {
+						has_law = law_type:law_decentralization
+					}
+					multiply = 0.1
+				}
+				else_if = {
+					limit = {
+						has_law = law_type:law_anti_industrialization
+					}
+					multiply = 0.75
+				}				
+			}
+		}
+		bg_agriculture_score = {
+			group = "bg_agriculture"
+			score = {
+				value = 0.5
+			}
+		}
+		bg_ranching_score = {
+			group = "bg_ranching"
+			score = {
+				value = 0.5
+				
+				if = {
+					limit = {
+						has_law = law_type:law_decentralization
+					}
+					multiply = 0.5
+				}
+			}
+		}
+		bg_plantations_score = {
+			group = "bg_plantations"
+			score = {
+				value = 0.75
+				
+				if = {
+					limit = {
+						has_law = law_type:law_decentralization
+					}
+					multiply = 0.5
+				}
+			}
+		}
+		bg_arts_score = {
+			group = "bg_arts"
+			score = {
+				value = 0.5
+				
+				if = {
+					limit = {
+						has_law = law_type:law_decentralization
+					}
+					multiply = 0.5
+				}	
+			}
+		}
+		bg_mining_score = {
+			group = "bg_mining"
+			score = {
+				value = 1
+				
+				if = {
+					limit = {
+						has_law = law_type:law_decentralization
+					}
+					multiply = 0.25
+				}
+				else_if = {
+					limit = {
+						has_law = law_type:law_anti_industrialization
+					}
+					multiply = 0.75
+				}					
+			}
+		}
+		bg_logging_score = {
+			group = "bg_logging"
+			score = {
+				value = 1
+				
+				if = {
+					limit = {
+						has_law = law_type:law_decentralization
+					}
+					multiply = 0.5
+				}			
+			}
+		}
+		bg_rubber_score = {
+			group = "bg_rubber"
+			score = {
+				value = 1
+				
+				if = {
+					limit = {
+						has_law = law_type:law_decentralization
+					}
+					multiply = 0.5
+				}				
+			}
+		}
+		bg_whaling_score = {
+			group = "bg_whaling"
+			score = {
+				value = 1
+				
+				if = {
+					limit = {
+						has_law = law_type:law_decentralization
+					}
+					multiply = 0.5
+				}					
+			}
+		}
+		bg_fishing_score = {
+			group = "bg_fishing"
+			score = {
+				value = 1
+				
+				if = {
+					limit = {
+						has_law = law_type:law_decentralization
+					}
+					multiply = 0.5
+				}				
+			}
+		}
+		bg_oil_extraction_score = {
+			group = "bg_oil_rig"
+			score = {
+				value = 1
+				
+				if = {
+					limit = {
+						has_law = law_type:law_decentralization
+					}
+					multiply = 0.1
+				}
+				else_if = {
+					limit = {
+						has_law = law_type:law_anti_industrialization
+					}
+					multiply = 0.75
+				}				
+			}
+		}
+		bg_power_score = {
+			group = "bg_power"
+			score = {
+				value = 1
+				
+				if = {
+					limit = {
+						has_law = law_type:law_decentralization
+					}
+					multiply = 0.1
+				}
+				else_if = {
+					limit = {
+						has_law = law_type:law_anti_industrialization
+					}
+					multiply = 0.75
+				}
+			}
+		}
+		bg_infrastructure_score = {
+			group = "bg_infrastructure"
+			score = {
+				value = 1
+				
+				if = {
+					limit = {
+						has_law = law_type:law_decentralization
+					}
+					multiply = 0.1
+				}
+				else_if = {
+					limit = {
+						has_law = law_type:law_anti_industrialization
+					}
+					multiply = 0.75
+				}				
+			}
+		}
+	}
+
+	buildable = no
+	expandable = no
+	downsizeable = no
+	ownership_type = other
+
+	background = "gfx/interface/icons/building_icons/backgrounds/building_panel_bg_monuments.dds"
+}
+
+building_company_headquarter = {
+	building_group = bg_company_headquarter
+	city_type = city
+	levels_per_mesh = 10
+
+	lens = infrastructure
+
+	icon = "gfx/interface/icons/building_icons/building_company_hq.dds"
+
+	production_method_groups = {
+		pmg_ownership_building_company_headquarter
+	}
+	
+	investment_scores = {}
+
+	buildable = no
+	expandable = no
+	downsizeable = no
+	ownership_type = other
+	company_headquarter = yes
+
+	background = "gfx/interface/icons/building_icons/backgrounds/building_panel_bg_monuments.dds"
 }

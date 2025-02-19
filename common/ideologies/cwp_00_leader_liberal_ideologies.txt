@@ -53,13 +53,12 @@
 ideology_multiculturalist = {
 	icon = "gfx/interface/icons/ideology_icons/ideology_leader/ideology_leader_humanitarism.dds"
 	character_ideology = yes
-	lawgroup_discrimination = {
-		law_ethnonationalist = strongly_disapprove
-		law_supremacist = disapprove
-		law_segregationist = disapprove
-		law_integrationist = neutral
-		law_multiculturalist = approve
-		law_syncretist = strongly_approve
+	lawgroup_citizenship = {
+		law_ethnostate = strongly_disapprove
+		law_national_supremacy = disapprove
+		law_racial_segregation = disapprove
+		law_cultural_exclusion = neutral
+		law_multicultural = approve
 	}
 	lawgroup_migration = {
 		law_open_borders = approve
@@ -333,58 +332,106 @@ ideology_christian_democrat = {
 		law_mixed_funded_schools = strongly_approve
 		law_state_funded_schools = disapprove
 	}
-	possible = {
-		and = {
+	interest_group_leader_trigger = {
+		ideology_christian_democrat_valid_trigger = yes
+	}
+
+	non_interest_group_leader_trigger = {
+		# Agitators should have an ideology at odds with current laws
+		NAND = {
+			has_role = agitator
 			owner = {
-				or = {
-					country_has_state_religion = rel:catholic
-					country_has_state_religion = rel:protestant
-					country_has_state_religion = rel:orthodox
-					country_has_state_religion = rel:oriental_orthodox
+				OR = {
+					has_law = law_type:law_church_run_schools
+					has_law = law_type:law_income_supplementation
+					has_law = law_type:law_income_security
+					has_law = law_type:law_poor_laws
+					has_law = law_type:law_religious_institutions
+					has_law = law_type:law_religious_policies
+					has_law = law_type:law_church_run_hospitals
+					has_law = law_type:law_subsidized_health_insurance
 				}
 			}
-			scope:interest_group = {
-				or = {
-					is_interest_group_type = ig_moralists
-					is_interest_group_type = ig_ruralists
-					is_interest_group_type = ig_entrepreneurs
-					is_interest_group_type = ig_elites
-					is_interest_group_type = ig_capitalists
+		}
+		interest_group = {
+			ideology_christian_democrat_valid_trigger = yes
+		}
+	}
+	
+	interest_group_leader_weight = {
+		value = {
+			value = 100
+				# less likely if issues are not relevant
+			if = {
+				limit = {
+					owner = {
+						OR = {
+							has_law = law_type:law_church_run_schools
+							has_law = law_type:law_income_supplementation
+							has_law = law_type:law_income_security
+							has_law = law_type:law_poor_laws
+							has_law = law_type:law_religious_institutions
+							has_law = law_type:law_religious_policies
+							has_law = law_type:law_church_run_hospitals
+							has_law = law_type:law_subsidized_health_insurance
+						}
+					}
 				}
+				add = -100
+			}
+			# more likely if doesn't like current laws
+			if = {
+				limit = {
+					owner = { 
+						OR = {
+							has_law = law_type:law_state_funded_schools
+							has_law = law_type:law_private_schools
+							has_law = law_type:law_universal_basic_income
+							has_law = law_type:law_no_welfare
+							has_law = law_type:law_state_atheism
+							has_law = law_type:law_universal_healthcare
+							has_law = law_type:law_private_health_insurance
+						}
+					}
+				}
+				multiply = {
+					value = 2
+				}
+			}
+			if = {
+				limit = {
+					OR = {
+						has_variable = communist_ig_var
+						has_variable = chose_vanguardism
+						has_variable = chose_anarchism
+						has_variable = chose_communism
+						has_variable = chose_ethno_nationalism
+						has_variable = chose_conservatism
+						has_variable = chose_fascism
+					}
+				}
+				multiply = 0.1
 			}
 		}
 	}
-	leader_weight = {
-		value = 10
+	
+	non_interest_group_leader_weight = {
+		value = 100
 		if = {
 			limit = {
-				scope:interest_group = {
-					is_interest_group_type = ig_moralists
-				}
-			}
-			add = 20
-		}
-		else_if = {
-			limit = {
-				scope:interest_group = {
-					or = {
-						is_interest_group_type = ig_ruralists
-						is_interest_group_type = ig_entrepreneurs
+				interest_group = {
+					OR = {
+						has_variable = communist_ig_var
+						has_variable = chose_vanguardism
+						has_variable = chose_anarchism
+						has_variable = chose_communism
+						has_variable = chose_ethno_nationalism
+						has_variable = chose_conservatism
+						has_variable = chose_fascism
 					}
 				}
 			}
-			add = 10
-		}
-		else_if = {
-			limit = {
-				scope:interest_group = {
-					or = {
-						is_interest_group_type = ig_elites
-						is_interest_group_type = ig_capitalists
-					}
-				}
-			}
-			add = 50
+			multiply = 0.1
 		}
 	}
 }

@@ -1,12 +1,21 @@
 ﻿expel_diplomats = {
+	groups= {
+		general
+	}
+	
 	requires_approval = no
 	should_notify_third_parties = no
 	show_effect_in_tooltip = yes
-
-	potential = {
+	
+	selectable = {
 		NOT = { is_country_type = decentralized }
+		is_revolutionary = no
+	}
+	
+	potential = {
 		scope:target_country = {
 			NOT = { is_country_type = decentralized }
+			is_revolutionary = no
 		}
 	}
 	
@@ -16,18 +25,37 @@
 		has_diplomatic_relevance = scope:target_country
 		NOT = { has_diplomatic_pact = { who = scope:target_country type = increase_relations } }
 		NOT = { has_diplomats_expelled = scope:target_country }
+		OR = {
+			NOT = {
+				is_subject_of = scope:target_country
+			}
+			liberty_desire >= 75
+		}
 	}
 	
 	accept_effect = {
 		change_relations = { country = scope:target_country value = -30 }
 		set_diplomats_expelled = scope:target_country
-		create_incident = {
-			value = 10
-			country = scope:target_country
+		change_infamy = 10
+		if = {
+			limit = {
+				scope:target_country = {
+					is_in_power_bloc = yes
+					is_power_bloc_leader = yes
+				}
+			}
+			custom_tooltip = {
+				text = expel_diplomats_leverage_generation_tt
+			}
 		}
+
 	}
 	
 	ai = {
+		evaluation_chance = {
+			value = 0.25
+		}	
+	
 		propose_score = {
 			value = 100
 		}
@@ -53,7 +81,12 @@
 					}	
 					scope:target_country.relations:root >= relations_threshold:cordial
 					infamy < infamy_threshold:infamous
-					influence < 200 # Not enough to damage relations normally				
+					OR = {
+						influence < 200 # Not enough to damage relations normally	
+						scope:target_country = { # They are countering damage relations with improve relations
+							has_diplomatic_pact = { who = root type = increase_relations }
+						}
+					}							
 				}
 			}
 		}

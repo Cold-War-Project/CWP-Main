@@ -1,0 +1,123 @@
+﻿invoke_doctrine_of_lapse = {
+	groups = {
+		overlord
+	}
+
+	texture = "gfx/interface/icons/diplomatic_action_icons/doctrine_of_lapse.dds"
+
+	requires_approval = no
+	should_notify_third_parties = yes
+	show_effect_in_tooltip = yes
+	can_use_obligations = no
+
+	selectable = {
+		NOT = { has_variable = doctrine_of_lapse_ended }
+		c:BIC ?= this
+	}
+
+	possible = {
+		is_at_war = no
+		custom_tooltip = {
+			text = doctrine_of_lapse_cooldown_tt
+			NOT = { has_variable = doctrine_of_lapse_cooldown }
+		}
+		scope:target_country = {
+			is_subject_of = ROOT
+			custom_tooltip = {
+				text = is_princely_state_tt
+				has_variable = princely_state
+			}
+			NOT = {
+				country_tier = empire
+			}
+			is_player = no
+		}
+	}
+
+	accept_effect = {
+		set_variable = { name = doctrine_of_lapse_cooldown years = 2 }
+		create_incident = {
+			country = scope:target_country
+			value = 20
+		}
+		custom_tooltip = {
+			text = upset_every_princely_state_relations_tt
+			every_princely_state = {
+				change_relations = {
+					country = ROOT
+					value = -10
+				}
+			}
+		}
+		custom_tooltip = {
+			text = upset_every_princely_state_variable_liberty_desire_tt
+			every_princely_state = {
+				add_liberty_desire = {
+					value = variable_princely_state_liberty_desire_change
+				}
+			}
+		}
+		custom_tooltip = {
+			text = princely_state_lapsed_tt
+			scope:target_country = {
+				trigger_event = { id = raj.2 popup = yes }
+			}
+		}
+		show_as_tooltip = {
+			custom_tooltip = if_accepted_by_target_country_tt
+			custom_tooltip = {
+				text = transfers_treasury_to_eic_diplo_tt
+			}
+			annex = scope:target_country
+		}
+	}
+
+	ai = {
+		evaluation_chance = {
+			value = 0.0
+			
+			if = {
+				limit = { NOT = { has_variable = doctrine_of_lapse_cooldown } }
+				add = 0.25				
+			}
+		}
+		
+		propose_score = {
+			value = 5
+
+			if = {
+				limit = {
+					NOT = {
+						exists = scope:target_country.heir
+					}			
+				}
+				add = 15
+			}
+			
+			if = {
+				limit = {
+					scope:target_country.capital = {
+						turmoil > 25
+					}
+				}
+				add = 10
+			}
+			
+			if = {
+				limit = {
+					scope:target_country = {
+						has_attitude = {
+							who = ROOT
+							attitude = loyal
+						}
+					}
+				}
+				multiply = 0
+			}
+		}
+	
+		will_propose = {
+			always = yes
+		}
+	}
+}

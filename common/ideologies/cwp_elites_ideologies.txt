@@ -101,7 +101,7 @@ ideology_republican = {
 }
 
 ideology_royalist = {
-	icon = "gfx/interface/icons/ideology_icons/unused/royalist.dds"
+	icon = "gfx/interface/icons/ideology_icons/royalist.dds"
 	lawgroup_head_of_government = {
 		law_executive = neutral
 		law_parliamentary = disapprove
@@ -151,6 +151,123 @@ ideology_traditionalist = {
 		law_net_zero = disapprove
 		law_pollution_ban = strongly_disapprove
 	}
+}
+
+ideology_theocrat = {
+	icon = "gfx/interface/icons/ideology_icons/ideology_leader/ideology_leader_theocrat.dds"
+	
+	character_ideology = yes
+
+	lawgroup_church_and_state = {
+		law_religious_institutions = approve
+		law_religious_policies = disapprove
+		law_church_disestablishment = strongly_disapprove
+		law_state_atheism = strongly_disapprove
+	}
+
+	lawgroup_head_of_government = {
+		law_theocratic = strongly_approve	
+		law_hereditary = neutral
+		law_executive = disapprove
+		law_parliamentary = disapprove
+		law_council_elective = disapprove
+	}
+
+	interest_group_leader_trigger = {
+		ideology_theocrat_valid_trigger = yes
+	}
+	
+	non_interest_group_leader_trigger = {
+		# Agitator ideologies should disapprove of a current law
+		NAND = {
+			has_role = agitator
+			owner = {
+				has_law = law_type:law_theocratic
+				has_law = law_type:law_religious_institutions
+			}
+		}
+		interest_group = {
+			ideology_theocrat_valid_trigger = yes
+		}
+	}
+	
+	interest_group_leader_weight = {
+		value = 100
+		# more likely if devout and angry and issues are relevant
+		if = {
+			limit = {
+				ig_approval <= -5
+				is_interest_group_type = ig_moralists
+				owner = {
+					NOR = {
+						has_law = law_type:law_theocratic
+						has_law = law_type:law_hereditary
+					}
+					NOT = {
+						has_law = law_type:law_religious_institutions
+					}
+				}
+			}
+			add = 75
+		}
+		# More likely for devout
+		if = {
+			limit = {
+				is_interest_group_type = ig_moralists
+			}
+			add = 50
+		}
+		# Unlikely for content IG's when issues aren't relevant
+		if = {
+			limit = {
+				ig_approval >= 5
+				owner = {
+					NOR = {
+						has_law = law_type:law_theocratic
+						has_law = law_type:law_hereditary
+					}
+					NOT = {
+						has_law = law_type:law_religious_institutions
+					}
+				}
+			}
+			add = -150
+		}
+		if = {
+			limit = {
+				OR = {
+					has_variable = communist_ig_var
+					has_variable = chose_vanguardism
+					has_variable = chose_anarchism
+					has_variable = chose_communism
+					has_variable = chose_ethno_nationalism
+					has_variable = chose_conservatism
+					has_variable = chose_fascism
+				}
+			}
+			multiply = 0.1
+		}
+	}
+	
+	non_interest_group_leader_weight = {
+		value = 100
+		if = {
+			limit = {
+				interest_group = {
+					OR = {
+						has_variable = communist_ig_var
+						has_variable = chose_vanguardism
+						has_variable = chose_anarchism
+						has_variable = chose_communism
+						has_variable = chose_ethno_nationalism
+						has_variable = chose_conservatism
+						has_variable = chose_fascism
+					}
+				}
+			}
+			multiply = 0.1
+		}
+	}	
 }
 
 ideology_materialistic = {

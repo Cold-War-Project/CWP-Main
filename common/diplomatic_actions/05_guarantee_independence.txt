@@ -1,0 +1,317 @@
+﻿guarantee_independence = {
+	groups= {
+		general
+	}
+	requires_approval = no
+	should_notify_third_parties = no
+
+	unlocking_technologies = {
+		international_relations
+	}
+	
+	selectable = {
+		NOT = { is_country_type = decentralized }
+		is_revolutionary = no
+	}
+	
+	potential = {
+		is_subject = no
+		scope:target_country = {
+			NOT = { is_country_type = decentralized }
+			is_subject = no
+		}
+	}
+
+	possible = {}
+	
+	pact = {	
+		cost = 100
+	
+		is_two_sided_pact = no
+		forced_duration = 12
+		show_in_outliner = yes
+		can_be_used_in_sway_offers = yes
+		is_guarantee_independence = yes
+		sway_maneuvers_cost = 10
+		
+		second_modifier = {
+			country_pact_leverage_generation_add = 200
+		}
+
+		relations_progress_per_day = 1 # At 100, +1 relations
+		relations_improvement_max = 80
+		
+		requirement_to_maintain = {
+			trigger = {
+				has_diplomatic_relevance = scope:target_country
+			}
+		}
+		
+		requirement_to_maintain = {
+			trigger = {
+				is_subject = no
+				scope:target_country = { is_subject = no }
+			}
+		}
+		
+	 	requirement_to_maintain = {
+			trigger = {
+				custom_tooltip = {
+					text = DIPLO_ACTION_RELATIONS_POOR_OR_LESS_NOT
+					scope:target_country.relations:root > relations_threshold:poor
+				}		
+			}
+			
+			show_about_to_break_warning = {
+				scope:target_country.relations:root <= -17 # this is: poor + 3
+				scope:target_country.relations_change_rate:root < 0
+			}					
+		}	
+
+		requirement_to_maintain = {
+			trigger = {
+				custom_tooltip = {
+					text = "DIPLOMATIC_PACT_REQUIREMENT_NOT_DECENTRALIZED"
+					NOT = { is_country_type = decentralized }
+					scope:target_country = {
+						NOT = { is_country_type = decentralized }
+					}				
+				}
+			}
+		}				
+	
+		requirement_to_maintain = {
+			trigger = {
+				custom_tooltip = {
+					text = "DIPLOMATIC_PACT_REQUIREMENT_AT_PEACE"
+					NOT = { has_war_with = scope:target_country }
+				}			
+			}
+		}		
+
+		requirement_to_maintain = {
+			trigger = {
+				country_rank > scope:target_country.country_rank
+			}
+		}
+
+		requirement_to_maintain = {
+			trigger = {
+				in_default = no
+			}
+		}	
+
+		manual_break_effect = {
+			create_unidirectional_truce = { country = scope:target_country months = 12 }
+		}
+	}
+	
+	ai = {
+		max_influence_spending_fraction = 0.20
+		
+		evaluation_chance = {
+			value = 0.0
+			
+			if = {
+				limit = { country_rank >= rank_value:major_power }
+				add = {
+					value = country_rank
+					multiply = 0.025
+				}				
+			}			
+		}		
+		
+		# This is only used for determining the value of a guarantee in sways, so it follows different logic from normal action acceptance
+		# The format here is as if scope:actor was asking if root wants a guarantee
+		accept_score = {
+			value = 0
+			
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_BASE"
+				value = 5
+			}				
+			
+			if = {
+				limit = {
+					"ai_ideological_opinion(scope:actor)" > 0
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_IDEOLOGICAL_OPINION"
+					value = "ai_ideological_opinion(scope:actor)"
+					multiply = 0.33
+					max = 10
+				}					
+			}
+			else_if = {
+				limit = {
+					"ai_ideological_opinion(scope:actor)" < 0
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_IDEOLOGICAL_OPINION_NEGATIVE"
+					value = "ai_ideological_opinion(scope:actor)"
+					multiply = 0.33
+					min = -10
+				}					
+			}			
+			
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_ARMY_STRENGTH"
+				value = "ai_army_comparison(scope:actor)"
+				divide = 2
+				min = -25
+				max = 25
+			}
+		}		
+	
+		# This is only used for determining the value of a guarantee in sways, so it follows different logic from normal action acceptance
+		# The format here is as if scope:actor was asking for a guarantee from root
+		junior_accept_score = {
+			value = 0
+
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_BASE"
+				value = -10
+			}			
+			
+			if = {
+				limit = {
+					"ai_ideological_opinion(scope:actor)" > 0
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_IDEOLOGICAL_OPINION"
+					value = "ai_ideological_opinion(scope:actor)"
+					multiply = 0.5
+					max = 20
+				}					
+			}
+			else_if = {
+				limit = {
+					"ai_ideological_opinion(scope:actor)" < 0
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_IDEOLOGICAL_OPINION_NEGATIVE"
+					value = "ai_ideological_opinion(scope:actor)"
+					multiply = 0.5
+					min = -20
+				}					
+			}					
+
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_ARMY_STRENGTH"
+				value = "ai_army_comparison(scope:actor)"
+				divide = 2
+				min = -25
+				max = 25
+			}							
+		}	
+	
+		propose_score = {
+			value = 0
+			
+			if = {
+				limit = {
+					scope:target_country.relations:root >= relations_threshold:friendly					
+				}
+				add = 10
+			}
+			else_if = {
+				limit = {
+					scope:target_country.relations:root >= relations_threshold:amicable					
+				}
+				add = 7.5
+			}	
+			else_if = {
+				limit = {
+					scope:target_country.relations:root >= relations_threshold:cordial				
+				}
+				add = 5
+			}
+
+			if = {
+				limit = {
+					any_rival_country = {
+						has_strategic_land_adjacency = scope:target_country
+					}
+				}
+				add = 10
+			}
+
+			if = {
+				limit = {
+					scope:target_country = {
+						is_country_type = recognized
+					}
+					any_country = {
+						NOT = { this = root }
+						relations:root <= relations_threshold:neutral
+						infamy >= 50
+						has_strategic_land_adjacency = scope:target_country
+						OR = {
+							is_ai = no
+							has_attitude = {
+								who = scope:target_country
+								attitude = belligerent
+							}
+							has_attitude = {
+								who = scope:target_country
+								attitude = domineering
+							}
+						}
+					}
+				}
+				add = 10
+			}
+			
+			if = {
+				limit = { country_rank < rank_value:great_power }
+				add = -10
+			}
+
+			if = {
+				limit = {
+					scope:target_country = { is_country_type = unrecognized }				
+				}
+				add = -20
+
+				if = {
+					limit = {
+						is_country_type = recognized
+						has_technology_researched = civilizing_mission
+					}
+					add = -30
+				}
+			}
+			
+			if = {
+				limit = {
+					NOT = { has_strategic_adjacency = scope:target_country }			
+				}
+				add = -5
+			}			
+		}
+	
+		will_propose = { 
+			is_at_war = no
+			country_rank >= rank_value:major_power		
+			has_attitude = {
+				who = scope:target_country
+				attitude = protective
+			}
+			can_reach_target_country = yes
+		}
+		
+		will_break = { 
+			OR = {
+				NOT = {
+					has_attitude = {
+						who = scope:target_country
+						attitude = protective
+					}
+					country_rank < rank_value:major_power		
+					can_reach_target_country = no
+				}			
+			}
+		}			
+	}
+}
+

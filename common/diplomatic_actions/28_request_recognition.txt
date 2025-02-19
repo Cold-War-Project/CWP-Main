@@ -1,0 +1,320 @@
+﻿request_recognition = {
+	groups= {
+		general
+	}
+	requires_approval = yes
+	should_notify_third_parties = yes
+	show_effect_in_tooltip = yes
+	uses_random_approval = yes
+	can_use_obligations = yes
+
+	selectable = {
+		has_journal_entry = je_earn_recognition
+	}
+
+	possible = {
+		scope:target_country = {
+			country_rank >= rank_value:great_power
+		}
+		custom_tooltip = {
+			text = DIPLO_ACTION_RELATIONS_POOR_OR_LESS_NOT
+			scope:target_country.relations:root > relations_threshold:poor
+		}		
+		custom_tooltip = {
+			text = "REQUEST_RECOGNITION_ON_COOLDOWN"
+			NOT = {
+				scope:target_country = {
+					any_diplomatic_catalyst = {
+						is_diplomatic_catalyst_type = catalyst_recognition_requested
+						target = root
+					}					
+				}
+			}
+		}	
+	}
+
+	accept_effect = {
+		change_relations = { country = scope:target_country value = 30 }
+		custom_tooltip = {
+			text = request_recognition_tt
+			if = {
+				limit = {
+					has_journal_entry = je_earn_recognition
+				}
+				je:je_earn_recognition ?= {
+					add_progress = { value = 20 name = earn_recognition_progress_bar }
+				}
+			}
+		}
+
+		hidden_effect = {
+			scope:target_country = {
+				create_diplomatic_catalyst = {
+					type = catalyst_recognition_requested
+					target = root
+				}		
+			}
+		}			
+	}
+	
+	decline_effect = {
+		change_relations = { country = scope:target_country value = -30 }
+		hidden_effect = {
+			scope:target_country = {
+				create_diplomatic_catalyst = {
+					type = catalyst_recognition_requested
+					target = root
+				}		
+			}
+		}	
+	}
+
+	ai = {
+		evaluation_chance = {
+			value = 0.25		
+		}	
+	
+		accept_score = {
+			value = 0
+
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_BASE"
+				value = -100
+			}
+
+			if = {
+				limit = {
+					"scope:actor.ai_ideological_opinion(root)" > 0
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_IDEOLOGICAL_OPINION"
+					value = "scope:actor.ai_ideological_opinion(root)"
+					multiply = 1
+					max = 50
+				}
+			}
+			else_if = {
+				limit = {
+					"scope:actor.ai_ideological_opinion(root)" < 0
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_IDEOLOGICAL_OPINION_NEGATIVE"
+					value = "scope:actor.ai_ideological_opinion(root)"
+					multiply = 1
+					min = -50
+				}
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_ATTITUDE"
+				if = {
+					limit = {
+						has_attitude = {
+							who = scope:actor
+							attitude = genial
+						}
+					}
+					value = 50
+				}
+				else_if = {
+					limit = {
+						OR = {
+							has_attitude = {
+								who = scope:actor
+								attitude = conciliatory
+							}	
+							has_attitude = {
+								who = scope:actor
+								attitude = cooperative
+							}
+							has_attitude = {
+								who = scope:actor
+								attitude = protective
+							}							
+						}
+					}
+					value = 25
+				}
+				else_if = {
+					limit = {
+						OR = {
+							has_attitude = {
+								who = scope:actor
+								attitude = antagonistic
+							}
+							has_attitude = {
+								who = scope:actor
+								attitude = domineering
+							}
+							has_attitude = {
+								who = scope:actor
+								attitude = belligerent
+							}
+						}
+					}
+					value = -1000
+				}
+				else = {
+					value = -50
+				}				
+			}
+
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_RELATIONS"
+				if = {
+					limit = {
+						"relations(scope:actor)" >= relations_threshold:cordial
+						"relations(scope:actor)" < relations_threshold:amicable
+					}
+					value = 10
+				}				
+				else_if = {
+					limit = {
+						"relations(scope:actor)" >= relations_threshold:amicable
+						"relations(scope:actor)" < relations_threshold:friendly
+					}
+					value = 25
+				}
+				else_if = {
+					limit = {
+						"relations(scope:actor)" >= relations_threshold:friendly
+					}
+					value = 50
+				}
+			}
+
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_INFAMY"
+				if = {
+					limit = {
+						"scope:actor.infamy" >= infamy_threshold:infamous
+						"scope:actor.infamy" < infamy_threshold:notorious
+					}
+					value = -25
+				}
+				if = {
+					limit = {
+						"scope:actor.infamy" >= infamy_threshold:notorious
+						"scope:actor.infamy" < infamy_threshold:pariah
+					}
+					value = -50
+				}
+				if = {
+					limit = {
+						"scope:actor.infamy" >= infamy_threshold:pariah
+					}
+					value = -1000
+				}
+			}
+			
+			if = {
+				limit = {
+					has_diplomatic_pact = {
+						who = scope:actor
+						type = trade_agreement
+					}
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_TRADE_AGREEMENT"
+					value = 15
+				}
+			}	
+
+			if = {
+				limit = {
+					has_diplomatic_pact = {
+						who = scope:actor
+						type = foreign_investment_rights
+					}
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_FOREIGN_INVESTMENT_RIGHTS"
+					value = 25
+				}
+			}			
+			
+			if = {
+				limit = {
+					has_diplomatic_pact = {
+						who = scope:actor
+						type = alliance
+					}
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_ALLIANCE"
+					value = 50
+				}
+			}
+			else_if = {
+				limit = {
+					has_diplomatic_pact = {
+						who = scope:actor
+						type = defensive_pact
+					}
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_DEFENSIVE_PACT"
+					value = 35
+				}
+			}			
+
+			if = {
+				limit = {
+					"num_alliances_and_defensive_pacts_with_rivals(scope:actor)" > 0
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_ALLIED_TO_RIVALS"
+					value = -1000
+				}
+			}	
+			
+			if = {
+				limit = {
+					exists = power_bloc
+					exists = scope:actor.power_bloc			
+				}
+				if = {
+					limit = {
+						power_bloc = scope:actor.power_bloc
+					}
+					add = {
+						desc = "DIPLOMATIC_ACCEPTANCE_SAME_POWER_BLOC"
+						value = 25
+					}					
+				}
+				else = {
+					add = {
+						desc = "DIPLOMATIC_ACCEPTANCE_DIFFERENT_POWER_BLOC"
+						value = -25
+					}					
+				}				
+			}			
+
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_PRINCIPLE_SACRED_CIVICS"
+
+				if = {
+					limit = {
+						AND = {
+							scope:actor.power_bloc ?= {
+								OR = {
+									has_principle = principle:principle_sacred_civics_1
+									has_principle = principle:principle_sacred_civics_2
+									has_principle = principle:principle_sacred_civics_3
+								}
+							}
+							scope:actor.religion = root.religion
+						}
+					}
+					add = 20
+				}
+			}			
+		}
+		propose_score = {
+			value = 10
+		}
+
+		will_propose = {
+			always = yes
+		}
+	}
+}

@@ -1,0 +1,883 @@
+﻿# script_context = <script context>	# see later for list of valid script contexts
+# texture = <path>					# the path is relative to the "game" folder
+# valid = <trigger>					# an invalid alert will not be shown
+# open_panel = <panel_name>[|<tab>]	# if specified, this panel will open when the alert is clicked. Cannot specify both open_panel and open_popup
+									# an optional tab name can be specified after a | character
+# open_popup = <popup_name>			# if specified, this popup will open when the alert is clicked. Cannot specify both open_panel and open_popup
+# type = alert | important_action | angry_important_action	# if unspecified or "alert", this will be a standard alert. Otherwise, it will be shown inside the important actions alert (angry_important_action alerts are sorted first)
+# alert_group = <alert_group_name>	# if specified, multiple alerts in the same group will be grouped in the important actions alert (if they are "important_action"). "important_actions with unspecified alert_group will never be grouped together
+#
+# ------------------------------------------------------------------------------
+# Valid script contexts
+# ------------------------------------------------------------------------------
+# player_country
+# player_diplomatic_play
+# player_diplomatic_pact
+# player_diplomatic_action
+# player_diplomatic_relations
+# player_interest_group
+# player_invaded_state
+# player_market
+# player_naval_invasion
+# player_involved_market
+# player_state
+# player_building
+# player_market_goods
+# player_commander
+# player_military_formation
+# player_subject
+# player_trade_route
+
+### ALERTS
+### these need icons, if you create a new alert or move an important action here use texture = "gfx/interface/icons/alert_icons/placeholder.dds"
+### and then ask art to make an icon, you can also check the unused folder if anything fits, you can also use ANY icon in the game if it would fit
+### but always check with art to verify it is looking good
+
+country_default = {
+ 	script_context = player_country
+	texture = "gfx/interface/icons/alert_icons/bankruptcy.dds"
+
+	valid = {
+		in_default = yes
+	}
+
+	open_panel = budget|assets
+	type = alert
+	color = red
+}
+
+has_no_research_alert = {
+	script_context = player_country
+	texture = "gfx/interface/icons/alert_icons/has_no_research.dds"
+
+	valid = {
+		NOT = { is_researching_technology = any }
+		has_researchable_technology = yes
+	}
+
+	open_panel = tech_tree
+	type = alert
+	color = green
+}
+
+can_establish_company = {
+	script_context = player_country
+	texture = "gfx/interface/icons/alert_icons/can_establish_company.dds"
+
+	valid = {
+		can_establish_company = yes
+	}
+
+	open_panel = companies|potential_companies
+	type = alert
+	color = green
+}
+
+above_company_limit = {
+	script_context = player_country
+	texture = "gfx/interface/icons/alert_icons/can_establish_company.dds"
+
+	valid = {
+		num_companies > max_num_companies
+	}
+
+	open_panel = companies|potential_companies
+	type = alert
+	color = red
+}
+
+free_government_reform = {
+	script_context = player_country
+	texture = "gfx/interface/icons/alert_icons/reform_government.dds"
+
+	valid = {
+		has_free_government_reform = yes
+	}
+
+	open_panel = politics|interest_groups
+	type = alert
+	color = green
+}
+
+revolution_alert = {
+	script_context = player_diplomatic_play
+	texture = "gfx/interface/icons/alert_icons/revolution.dds"
+
+	valid = {
+		is_diplomatic_play_type = dp_revolution
+		OR = {
+			initiator = {
+				is_local_player = yes
+			}
+			target = {
+				is_local_player = yes
+			}
+		}
+	}
+
+	open_panel = diplomatic_play
+	type = alert
+	color = red
+}
+
+secession_alert = {
+	script_context = player_diplomatic_play
+	texture = "gfx/interface/icons/alert_icons/secession.dds"
+
+	valid = {
+		is_diplomatic_play_type = dp_secession
+		OR = {
+			initiator = {
+				is_local_player = yes
+			}
+			target = {
+				is_local_player = yes
+			}
+		}
+	}
+
+	open_panel = diplomatic_play
+	type = alert
+	color = red
+}
+
+is_losing_rank_alert = {
+	script_context = player_country
+	texture = "gfx/interface/icons/alert_icons/is_losing_rank.dds"
+
+	valid = {
+		is_losing_power_rank = yes
+	}
+
+	open_panel = diplomatic_overview
+	type = alert
+	color = red
+}
+
+has_no_war_goal_alert = {
+	script_context = player_diplomatic_play
+	texture = "gfx/interface/icons/alert_icons/has_no_war_goal.dds"
+
+	valid = {
+		scope:actor = { should_set_wargoal = yes }
+	}
+
+	open_panel = diplomatic_play
+	type = alert
+	color = red
+}
+
+vulnerable_front = {
+	script_context = player_front
+	texture = "gfx/interface/icons/alert_icons/vulnerable_front.dds"
+
+    valid = {
+        is_vulnerable_front = scope:actor
+    }
+
+	open_panel = front
+	type = alert
+	color = red
+}
+
+naval_invasion = {
+	script_context = player_naval_invasion
+	texture = "gfx/interface/icons/alert_icons/naval_invasion_alert.dds"
+
+    valid = {
+		is_active = yes
+		naval_invasion_defender ?= scope:actor
+    }
+
+	open_panel = naval_invasion
+	type = alert
+	color = red
+}
+
+stalled_naval_invasion = {
+	script_context = player_naval_invasion
+	texture = "gfx/interface/icons/alert_icons/naval_invasion_alert.dds"
+
+    valid = {
+		is_active = yes
+		is_naval_invasion_stalled_due_to_orders = yes
+		naval_invasion_attacker ?= scope:actor
+    }
+
+	open_panel = naval_invasion
+	type = alert
+	color = red
+}
+
+high_attrition_alert = {
+	script_context = player_military_formation
+	texture = "gfx/interface/icons/alert_icons/high_attrition.dds"
+
+	valid = { has_high_attrition = yes }
+
+	open_panel = military_formation
+	type = alert
+	color = red
+}
+
+active_peace_deal_alert = {
+	script_context = player_war
+	texture = "gfx/interface/icons/alert_icons/active_peace_deal.dds"
+
+	valid = {
+		war_has_active_peace_deal = yes
+	}
+
+	open_panel = war_panel|peace
+	type = alert
+	color = red
+}
+
+legitimacy_level_illegitimate_alert = {
+	script_context = player_country
+	texture = "gfx/interface/icons/alert_icons/low_legitimacy.dds"
+	
+	valid = {
+		government_legitimacy < 25
+	}
+	
+	open_panel = politics|interest_groups
+	type = alert
+	color = red
+}
+
+market_goods_shortage_alert = { 
+	script_context = player_market_goods
+	texture = "gfx/interface/icons/alert_icons/goods_shortage.dds"
+
+	valid = {
+		market_goods_shortage_ratio > 0.33
+		country_has_local_shortage = scope:actor	 
+	}
+
+	open_panel = goods_panel
+	type = alert
+	color = red
+}
+
+famine_alert = {
+	script_context = player_market
+	texture = "gfx/interface/icons/alert_icons/famine.dds"
+
+	valid = {
+		any_scope_country = {
+			AND = {
+				is_player = yes
+				has_famine = yes
+			}
+		}
+	}
+
+	open_panel = market|food_security
+	type = alert
+	color = red
+}
+
+isolated_state_alert = {
+	texture = "gfx/interface/icons/generic_icons/market_isolated.dds"
+	script_context = player_state
+
+	valid = {
+		is_isolated_from_market = yes
+		NOT = { is_under_colonization = yes }
+	}
+
+	open_panel = states_panel
+	type = alert
+	color = red
+	alert_group = isolated_states
+}
+
+inactive_trade_route_alert = {
+	texture = "gfx/interface/icons/alert_icons/supply_low.dds"
+	script_context = player_trade_route
+
+	valid = {
+		is_trade_route_active = no
+	}
+
+	open_panel = market|trade_routes
+	type = alert
+	color = red
+	alert_group = inactive_trade_routes
+}
+
+secession_growing_alert = {
+	script_context = player_country
+	texture = "gfx/interface/icons/alert_icons/secession_growing.dds"
+
+	valid = {
+		has_any_secessionists_growing = yes
+		has_any_secessionists_broken_out = no
+	}
+
+	open_panel = politics|default
+	type = alert
+	color = red
+	alert_group = secession_growing
+}
+
+obligation_expiring = {
+	texture = "gfx/interface/icons/generic_icons/obligation.dds"
+	script_context = player_diplomatic_relations
+
+	valid = {
+		player_owed_obligation_days_left > 0
+		player_owed_obligation_days_left <= 365
+	}
+
+	open_panel = country_panel|diplomacy
+	type = alert
+	color = yellow
+	alert_group = expiring_obligations
+}
+
+overlord_can_decrease_subject_autonomy = {
+	texture = "gfx/interface/icons/diplomatic_action_icons/da_decrease_autonomy.dds"
+	script_context = player_subject
+
+	valid = {
+        overlord_can_decrease_subject_autonomy = yes
+	}
+
+	open_panel = diplomatic_overview|subjects
+    type = important_action
+	color = green
+	alert_group = can_decrease_subject_autonomy
+}
+
+subject_likely_to_increase_autonomy = {
+	texture = "gfx/interface/icons/diplomatic_action_icons/da_increase_autonomy.dds"
+    script_context = player_subject
+
+    valid = {
+        subject_can_increase_autonomy = yes
+    }
+
+    open_panel = diplomatic_overview|subjects
+    color = yellow
+}
+
+subject_can_increase_autonomy = {
+	texture = "gfx/interface/icons/diplomatic_action_icons/da_increase_autonomy.dds"
+    script_context = player_country
+
+    valid = {
+        subject_can_increase_autonomy = yes
+    }
+
+    open_panel = diplomatic_overview
+    type = important_action
+    color = green
+}
+
+has_low_liberty_desire = {
+	script_context = player_country
+    texture = "gfx/interface/icons/diplomatic_action_icons/da_decrease_autonomy.dds"
+
+	valid = {
+        can_own_autonomy_be_decreased = yes
+	}
+
+	open_panel = diplomatic_overview
+	type = alert
+	color = red
+}
+
+low_organization_active = { # Formation is at front
+	texture = "gfx/interface/icons/alert_icons/organization_alert.dds"
+	script_context = player_military_formation
+
+	valid = {
+		organization <= define:NMilitary|MILITARY_FORMATION_ORGANIZATION_MIN
+		is_on_front = yes
+	}
+
+	type = alert
+	color = red
+	open_panel = military_formation
+	alert_group = formation_low_organization
+}
+
+isolated_colony_alert = {
+	texture = "gfx/interface/icons/generic_icons/market_isolated.dds"
+	script_context = player_state
+
+	valid = {
+		is_isolated_from_market = yes
+		is_under_colonization = yes
+	}
+
+	open_panel = states_panel
+	type = alert
+	color = red
+	alert_group = isolated_colony
+}
+
+### ANGRY IMPORTANT ACTIONS
+
+has_decreasing_interests_alert = {
+	script_context = player_country
+	texture = "gfx/interface/icons/alert_icons/has_decreasing_interests.dds"
+
+	valid = { has_decreasing_interests = yes }
+
+	open_panel = diplomatic_overview
+	type = angry_important_action
+	color = yellow
+}
+
+low_organization_idle = { # Formation is idle
+	texture = "gfx/interface/icons/alert_icons/organization_alert.dds"
+	script_context = player_military_formation
+
+	valid = {
+		organization <= define:NMilitary|MILITARY_FORMATION_ORGANIZATION_MIN
+		is_on_front = no
+	}
+
+	type = angry_important_action
+	color = yellow
+	open_panel = military_formation
+	alert_group = formation_low_organization
+}
+
+insufficient_construction_for_investment = {
+	texture = "gfx/interface/icons/alert_icons/wasted_construction.dds"
+	script_context = player_country
+
+	valid = {
+		has_sufficient_construction_capacity_for_investment = no
+		investment_pool_net_income >= 40000
+	}
+
+	type = angry_important_action
+	color = yellow
+	open_panel = construction|default
+}
+
+# Hidden by default
+#state_in_turmoil_alert = {
+#	script_context = player_state
+#
+#	valid = {
+#		turmoil >= define:NPolitics|TURMOIL_STATE_EFFECTS_THRESHOLD
+#	}
+#
+#	open_panel = states_panel
+#	type = angry_important_action
+#	color = yellow
+#	alert_group = states_in_turmoil
+#}
+
+# Hidden by default
+#high_tension_alert = {
+#	script_context = player_diplomatic_relations
+#
+#	valid = {
+#		scope_tension >= 50
+#	}
+#
+#	open_panel = country_panel|diplomacy
+#	type = angry_important_action
+#	color = yellow
+#	alert_group = high_tensions
+#}
+
+
+diplomatic_pact_in_danger = {
+	texture = "gfx/interface/icons/lens_toolbar_icons/diplomatic_actions_break.dds"
+	script_context = player_diplomatic_pact
+
+	valid = {
+		is_diplomatic_pact_in_danger = yes
+	}
+
+	open_panel = diplomatic_overview
+	type = angry_important_action
+	color = yellow
+	alert_group = diplomatic_pact_in_danger
+}
+
+# Hidden by default
+#has_convoys_being_sunk = {
+#	script_context = player_country
+#
+#	valid = {
+#		is_at_war = yes
+#		has_convoys_being_sunk = yes
+#	}
+#
+#	open_panel = military|navy
+#	type = angry_important_action
+#	color = yellow
+#}
+
+legitimacy_level_unacceptable_alert = {
+	texture = "gfx/interface/icons/alert_icons/low_legitimacy.dds"
+	script_context = player_country
+
+	valid = {
+		government_legitimacy < 50
+		government_legitimacy >= 25
+	}
+
+	open_panel = politics|interest_groups
+	type = angry_important_action
+	color = yellow
+}
+
+training_rate_low = {
+	texture = "gfx/interface/icons/alert_icons/suboptimal_army.dds"
+	script_context = player_country
+
+	valid = {
+		budget_low_training_rate = yes
+	}
+
+	open_panel = budget
+	type = angry_important_action
+	color = yellow
+}
+
+company_losing_prosperity = {
+	texture = "gfx/interface/icons/alert_icons/company_losing_prosperity.dds"
+	script_context = player_company
+
+	valid = {
+		prosperity >= 100
+		weekly_prosperity_change < 0
+	}
+
+	open_panel = companies
+	type = angry_important_action
+	color = yellow
+	alert_group = companies_losing_prosperity
+}
+
+market_goods_shortage = {
+	texture = "gfx/interface/icons/alert_icons/goods_shortage.dds"
+	script_context = player_market_goods
+
+	valid = {
+		market_goods_has_goods_shortage = yes
+	}
+
+	open_panel = goods_panel
+	type = angry_important_action
+	color = yellow
+	alert_group = market_goods_shortages
+}
+
+# Only affect local goods (electricity, services, etc) for other goods see market_goods_shortage
+state_goods_shortage = {
+	texture = "gfx/interface/icons/alert_icons/goods_shortage.dds"
+	script_context = player_state_local_goods
+
+	valid = {
+		state_goods_has_local_goods_shortage = yes
+	}
+
+	open_panel = states_panel
+	type = angry_important_action
+	color = yellow
+	alert_group = state_goods_shortages
+}
+
+### IMPORTANT ACTIONS
+
+can_take_decisions = {
+	texture = "gfx/interface/icons/event_icons/event_scales.dds"
+	script_context = player_country
+
+	valid = {
+		has_possible_decisions = yes
+	}
+
+	open_panel = journal
+	type = important_action
+	color = green
+}
+
+low_max_organization = {
+	texture = "gfx/interface/icons/alert_icons/organization_alert.dds"
+	script_context = player_military_formation
+
+	valid = {
+		organization > define:NMilitary|MILITARY_FORMATION_ORGANIZATION_MIN
+		max_organization < define:NMilitary|MILITARY_FORMATION_ORGANIZATION_MAX
+	}
+
+	type = important_action
+	color = yellow
+	open_panel = military_formation
+	alert_group = formation_low_max_organization
+}
+
+# Hidden by default
+#unhealthy_economy_alert = {
+#	script_context = player_country
+#
+#	valid = {
+#		has_healthy_economy = no
+#	}
+#
+#	open_panel = budget|default
+#	type = important_action
+#	color = green
+#}
+
+stockpiling_gold_alert = {
+	texture = "gfx/interface/icons/goods_icons/gold.dds"
+	script_context = player_country
+
+	valid = {
+		gold_reserves > gold_reserves_limit
+		weekly_net_fixed_income > 0
+	}
+
+	open_panel = budget|default
+	type = important_action
+	color = yellow
+}
+
+can_abdicate_alert = {
+	script_context = player_country
+	texture = "gfx/interface/icons/alert_icons/radicalized.dds"
+
+	valid = {
+		has_dlc_feature = voice_of_the_people_content
+		has_law = law_type:law_hereditary
+		exists = heir
+		ruler = {
+			is_immortal = no
+		}
+		owner = {
+			any_political_movement = {
+				movement_supports_enaction = yes
+				is_insurrectionary = yes
+				civil_war ?= {
+					civil_war_progress >= 0.5
+					civil_war_progress < 1.0
+				}
+			}
+		}
+	}
+
+	open_panel = politics|default
+	type = important_action
+	color = yellow
+}
+
+can_resign_alert = {
+	script_context = player_country
+	texture = "gfx/interface/icons/alert_icons/radicalized.dds"
+
+	valid = {
+		has_dlc_feature = voice_of_the_people_content
+		NOR = {
+			has_law = law_type:law_hereditary
+			has_law = law_type:law_theocracy
+		}
+		ruler = {
+			is_immortal = no
+		}
+		owner = {
+			any_political_movement = {
+				movement_supports_enaction = yes
+				is_insurrectionary = yes
+				civil_war ?= {
+					civil_war_progress >= 0.5
+					civil_war_progress < 1.0
+				}
+			}
+		}
+	}
+
+	open_panel = politics|default
+	type = important_action
+	color = yellow
+}
+
+# Hidden by default
+#legitimacy_level_contested_alert = {
+#	script_context = player_country
+#
+#	valid = {
+#		government_legitimacy < 75
+#		government_legitimacy >= 50
+#	}
+#
+#	open_panel = politics|interest_groups
+#	type = important_action
+#	color = green
+#}
+
+# Hidden by default
+#unused_interests_alert = {
+#	script_context = player_country
+#
+#	valid = {
+#		num_declared_interests < max_num_declared_interests
+#	}
+#
+#	open_panel = diplomatic_overview
+#	type = important_action
+#	color = green
+#}
+
+# Hidden by default
+#unproductive_trade_route_alert = {
+#	script_context = player_trade_route
+#
+#	valid = {
+#		is_trade_route_productive = no
+#		is_trade_route_active = yes
+#	}
+#
+#	open_panel = market|trade_routes
+#	type = important_action
+#	color = green
+#	alert_group = unproductive_trade_routes
+#}
+
+low_market_access_alert = {
+	texture = "gfx/interface/icons/alert_icons/market_over_capacity.dds"
+	script_context = player_state
+
+	valid = {
+		market_access < 1
+		NOT = { is_isolated_from_market = yes}
+	}
+
+	open_panel = states_panel
+	type = important_action
+	color = yellow
+	alert_group = low_market_access_states
+}
+
+# Hidden by default
+#insufficient_tax_capacity_alert = {
+#	script_context = player_state
+#
+#	valid = {
+#		tax_capacity < tax_capacity_usage
+#		is_incorporated = yes
+#	}
+#
+#	open_panel = states_panel
+#	type = important_action
+#	color = green
+#	alert_group = insufficient_tax_capacity_states
+#}
+
+expensive_government_goods_alert = {
+	texture = "gfx/interface/icons/alert_icons/expensive_goods.dds"
+	script_context = player_market_goods
+
+	valid = {
+		market_goods_pricier > 0.25
+		is_consumed_by_government_buildings = yes
+		market_goods_buy_orders > 0
+	}
+
+	open_panel = goods_panel
+	type = important_action
+	color = yellow
+	alert_group = expensive_government_goods
+}
+
+expensive_military_goods_alert = {
+	texture = "gfx/interface/icons/alert_icons/expensive_goods.dds"
+	script_context = player_market_goods
+
+	valid = {
+		market_goods_pricier > 0.25
+		is_consumed_by_military_buildings = yes
+		market_goods_buy_orders > 0
+	}
+
+	open_panel = goods_panel
+	type = important_action
+	color = yellow
+	alert_group = expensive_military_goods
+}
+
+low_expected_sol_in_state = {
+	texture = "gfx/interface/icons/alert_icons/starving.dds"
+	script_context = player_state
+
+	valid = {
+		population_below_expected_sol >= 0.25
+	}
+
+	open_panel = states_panel
+	type = important_action
+	color = yellow
+	alert_group = low_sol_in_state
+}
+
+power_struggle_leader = {
+	texture = "gfx/interface/main_hud/powerblocs.dds"
+	script_context = player_country
+
+	valid = {
+		is_power_bloc_leader = yes
+		has_power_struggle = yes
+	}
+
+	open_panel = power_bloc_panel
+	type = alert
+	color = red
+}
+
+power_struggle_contender = {
+	texture = "gfx/interface/main_hud/powerblocs.dds"
+	script_context = player_country
+
+	valid = {
+		is_power_bloc_leader = no
+		has_power_struggle = yes
+	}
+
+	open_panel = power_bloc_panel
+	type = alert
+	color = green
+}
+
+power_bloc_invite_available = {
+	texture = "gfx/interface/main_hud/powerblocs.dds"
+	script_context = player_country
+
+	valid = {
+		is_power_bloc_leader = yes      # if you change this line, remember to change invite_to_power_bloc
+		power_bloc ?= {
+			can_invite_any_country = yes
+		}
+	}
+
+	open_panel = power_bloc_panel
+	type = important_action
+	color = green
+}
+
+power_bloc_mandates_available = {
+	texture = "gfx/interface/icons/generic_icons/mandate.dds"
+	script_context = player_country
+
+	valid = {
+		is_power_bloc_leader = yes
+		power_bloc ?= {
+			num_mandates > 0
+		}
+	}
+
+	open_panel = power_bloc_panel
+	type = important_action
+	color = green
+}

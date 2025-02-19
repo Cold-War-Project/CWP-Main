@@ -12,7 +12,7 @@ Includes = {
 	"sharedconstants.fxh"
 	"standardfuncsgfx.fxh"
 	"distance_fog.fxh"
-	"cwp_coloroverlay.fxh"
+	"coloroverlay.fxh"
 	"dynamic_masks.fxh"
 	"fog_of_war.fxh"
 	"ssao_struct.fxh"
@@ -222,6 +222,7 @@ PixelShader =
 			float LandMask = PdxTex2DLod0( LandMaskMap, float2( MapCoords.x, 1.0 - MapCoords.y ) ).r;
 			float LandAlpha = ( 1.0 - ( LandMask * ( 1.0 - _FlatmapOverlayLandOpacity ) ) );
 			Flatmap = lerp( Flatmap, _FlatmapFoldsColor.rgb, OverlayTexture.r * _FlatmapFoldsColor.a * LandAlpha );
+			Flatmap = lerp( Flatmap, _FlatmapLinesColor.rgb, OverlayTexture.g * _FlatmapLinesColor.a * LandAlpha );
 
 			Flatmap = SoftLight( Flatmap, _FlatmapDetailsColor.rgb, saturate( OverlayTexture.a ) * _FlatmapDetailsColor.a );
 			return Flatmap;
@@ -365,7 +366,7 @@ PixelShader =
 					#ifdef TERRAIN_FLAT_MAP_LERP
 						// Flatmap texture and style
 						float3 Flatmap = PdxTex2D( FlatmapTexture, float2( MapCoords.x, 1.0 - MapCoords.y ) ).rgb;
-						Flatmap = lerp(Flatmap, ApplyDynamicFlatmap( Flatmap, ProvinceCoords, Input.WorldSpacePos.xz ), 0.5);
+						Flatmap = lerp(Flatmap, ApplyDynamicFlatmap(Flatmap, ProvinceCoords, Input.WorldSpacePos.xz), 0.35);
 
 						// Border color overlay on flatmap
 						Flatmap *= lerp( vec3( 1.0 ), ColorOverlay, saturate( PreLightingBlend + PostLightingBlend ) );
@@ -417,11 +418,11 @@ PixelShader =
 				float LerpFactor = saturate( ( Input.Position.z - 0.9 ) * 10.0 );
 				clip( vec2(1.0) - ( Input.WorldSpacePos.xz - float2( lerp( 0.1, 2.0, LerpFactor ), 0.0 ) ) * _WorldSpaceToTerrain0To1 );
 
-				float3 DetailDiffuse = Input.DetailDiffuse;
-				float4 DetailMaterial = Input.DetailMaterial;
-				float3 ColorMap = Input.ColorMap;
-				float3 Flatmap = Input.Flatmap;
-				float3 Normal = Input.Normal;
+				float3 DetailDiffuse = saturate( Input.DetailDiffuse );
+				float4 DetailMaterial = saturate( Input.DetailMaterial );
+				float3 ColorMap = saturate( Input.ColorMap );
+				float3 Flatmap = saturate( Input.Flatmap );
+				float3 Normal = saturate( Input.Normal );
 
 				// UV Coordinates
 				float2 MapCoords = Input.WorldSpacePos.xz * _WorldSpaceToTerrain0To1;
@@ -446,7 +447,7 @@ PixelShader =
 					// Blend from Terrain to Flatmap
 					#ifdef TERRAIN_FLAT_MAP_LERP
 						// Flatmap texture and style
-						Flatmap = lerp(Flatmap, ApplyDynamicFlatmap( Flatmap, ProvinceCoords, Input.WorldSpacePos.xz ), 0.5);
+						Flatmap = lerp(Flatmap, ApplyDynamicFlatmap(Flatmap, ProvinceCoords, Input.WorldSpacePos.xz), 0.35);
 
 						// Border color overlay on flatmap
 						Flatmap *= lerp( vec3( 1.0 ), ColorOverlay, saturate( PreLightingBlend + PostLightingBlend ) );
@@ -460,7 +461,7 @@ PixelShader =
 
 				// Output
 				Out.Color = float4( Diffuse, 1.0f );
-				Out.SSAOColor = float4( vec4(1.0f) );
+				Out.SSAOColor = float4( vec4( 1.0f ) );
 
 				return Out;
 			}
@@ -482,7 +483,7 @@ PixelShader =
 
 				// Flatmap texture and style
 				float3 Flatmap = PdxTex2D( FlatmapTexture, float2( MapCoords.x, 1.0 - MapCoords.y ) ).rgb;
-				Flatmap = lerp(Flatmap, ApplyDynamicFlatmap( Flatmap, ProvinceCoords, Input.WorldSpacePos.xz ), 0.5);
+				Flatmap = lerp(Flatmap, ApplyDynamicFlatmap(Flatmap, ProvinceCoords, Input.WorldSpacePos.xz), 0.35);
 
 				// Border color overlay
 				float3 ColorOverlay;
@@ -491,7 +492,11 @@ PixelShader =
 				GameProvinceOverlayAndBlend( ProvinceCoords, Input.WorldSpacePos, ColorOverlay, PreLightingBlend, PostLightingBlend );
 				Flatmap *= lerp( vec3( 1.0 ), ColorOverlay, saturate( PreLightingBlend + PostLightingBlend ) );
 
-				Flatmap = ApplyFlatmapOverlay( Flatmap, MapCoords );
+				float CountryId = SampleControllerIndex( MapCoords ).r;
+				if( CountryId < 0  && !_EnableMapPowerBloc )	 // Remove fluff overlay from war areas and powerblocs
+				{
+					Flatmap = ApplyFlatmapOverlay( Flatmap, MapCoords );
+				}
 
 				// Flatmap color
 				float3 FinalColor = Flatmap;

@@ -1,0 +1,3443 @@
+# COPY-PASTED FOR NOW
+@panel_width_minus_20 = 520
+@panel_width_minus_10 = 530			# used to be 450
+@panel_width = 540  				# used to be 460
+@panel_width_half = 270				# used to be 230
+@panel_width_plus_10 = 550  		# used to be 470
+@panel_width_plus_14 = 554			# used to be 474
+@panel_width_plus_14_half = 277		# used to be 237
+@panel_width_plus_20 = 560			# used to be 480
+@panel_width_plus_30 = 570			# used to be 490
+@panel_width_plus_70 = 610			# used to be 530
+
+@grid_spacing = 15
+
+types power_bloc_panel_types
+{
+	type power_bloc_panel = default_block_window_two_lines {
+		name = "power_bloc_panel"
+		datacontext = "[PowerBlocPanel.GetSelectedPowerBloc]"
+
+		blockoverride "animation_state_block" {
+			state = {
+				name = _show
+				start_sound = {
+					soundeffect = "event:/SFX/UI/SideBar/powerbloc"
+				}
+			}
+
+			state = {
+				name = _hide
+				start_sound = {
+					soundeffect = "event:/SFX/UI/SideBar/powerbloc_stop"
+				}
+			}
+		}
+
+		blockoverride "window_header_name"
+		{
+			text = "POWER_BLOC_PANEL_HEADER"
+		}
+
+		blockoverride "window_header_name_line_two" 
+		{
+			text = "POWER_BLOC_SUBHEADER"
+		}
+
+		blockoverride "edit_visibility" {
+			visible = "[And(HasDlcFeature('power_bloc_features'), PowerBloc.IsLeader( GetPlayer.Self ))]"
+			tooltip = "EDIT"
+		}
+
+		blockoverride "edit_properties" {
+			onclick = "[PopupManager.ShowPowerBlocCustomizationPopup(PowerBloc.Self)]"
+			onclick = "[GetVariableSystem.Set('emblem_and_colors_tab', 'true')]"
+			onclick = "[GetVariableSystem.Set('statue_tab', 'false')]"
+		}
+
+		blockoverride "fixed_top"
+		{
+			tab_buttons =
+			{
+				visible = "[PowerBlocPanel.IsPowerBlocSelected]"
+				datacontext = "[PowerBlocPanel.GetSelectedPowerBloc]"
+
+				blockoverride "first_button"
+				{
+					text = "POWER_BLOC_TAB_OVERVIEW"
+				}
+				blockoverride "first_button_tooltip"
+				{
+					tooltip = "POWER_BLOC_TAB_OVERVIEW"
+				}
+				blockoverride "first_button_click"
+				{
+					onclick = "[InformationPanel.SelectTab('default')]"
+					onclick = "[PowerBlocPanel.ShowLeverage]"
+				}
+				blockoverride "first_button_visibility"
+				{
+					visible = "[InformationPanel.IsTabSelected('default')]"
+				}
+				blockoverride "first_button_visibility_checked"
+				{
+					visible = "[Not( InformationPanel.IsTabSelected('default') )]"
+				}
+				blockoverride "first_button_selected"
+				{
+					text = "POWER_BLOC_TAB_OVERVIEW"
+				}
+
+				blockoverride "second_button"
+				{
+					text = "POWER_BLOC_TAB_MEMBERS"
+				}
+				blockoverride "second_button_tooltip"
+				{
+					tooltip = "POWER_BLOC_TAB_MEMBERS"
+				}
+				blockoverride "second_button_click"
+				{
+					onclick = "[InformationPanel.SelectTab('members')]"
+					onclick = "[PowerBlocPanel.ShowLeverage]"
+				}
+				blockoverride "second_button_visibility"
+				{
+					visible = "[And(InformationPanel.IsTabSelected('members'), PowerBlocPanel.IsPowerBlocSelected)]"
+				}
+				blockoverride "second_button_visibility_checked"
+				{
+					visible = "[And(Not( InformationPanel.IsTabSelected('members') ), PowerBlocPanel.IsPowerBlocSelected)]"
+				}
+				blockoverride "second_button_selected"
+				{
+					text = "POWER_BLOC_TAB_MEMBERS"
+				}
+
+				blockoverride "third_button"
+				{
+					text = "POWER_BLOC_TAB_ALL_POWER_BLOCS"
+				}
+				blockoverride "third_button_click"
+				{
+					onclick = "[InformationPanel.SelectTab('all_power_blocs')]"
+					onclick = "[PowerBlocPanel.ShowLeverage]"
+				}
+				blockoverride "third_button_visibility"
+				{
+					visible = "[And(InformationPanel.IsTabSelected('all_power_blocs'), PowerBlocPanel.IsPowerBlocSelected)]"
+				}
+				blockoverride "third_button_visibility_checked"
+				{
+					visible = "[And(Not( InformationPanel.IsTabSelected('all_power_blocs') ), PowerBlocPanel.IsPowerBlocSelected)]"
+				}
+				blockoverride "third_button_selected"
+				{
+					raw_text = "POWER_BLOC_TAB_ALL_POWER_BLOCS"
+				}
+
+				blockoverride "fourth_button"
+				{
+					text = "POWER_BLOC_TAB_MODIFIERS"
+				}
+				blockoverride "fourth_button_click"
+				{
+					onclick = "[InformationPanel.SelectTab('modifiers')]"
+					onclick = "[PowerBlocPanel.ShowLeverage]"
+				}
+				blockoverride "fourth_button_visibility"
+				{
+					visible = "[And(InformationPanel.IsTabSelected('modifiers'), PowerBlocPanel.IsPowerBlocSelected)]"
+				}
+				blockoverride "fourth_button_visibility_checked"
+				{
+					visible = "[And(Not( InformationPanel.IsTabSelected('modifiers') ), PowerBlocPanel.IsPowerBlocSelected)]"
+				}
+				blockoverride "fourth_button_selected"
+				{
+					raw_text = "POWER_BLOC_TAB_MODIFIERS"
+				}
+
+				blockoverride "fifth_button"
+				{
+					raw_text = "DEBUG"
+				}
+				blockoverride "fifth_button_click"
+				{
+					onclick = "[InformationPanel.SelectTab('debug')]"
+				}
+				blockoverride "fifth_button_visibility"
+				{
+					visible = "[And(InDebugMode, InformationPanel.IsTabSelected('debug'))]"
+				}
+				blockoverride "fifth_button_visibility_checked"
+				{
+					visible = "[And(InDebugMode, Not(InformationPanel.IsTabSelected('debug')))]"
+				}
+				blockoverride "fifth_button_selected"
+				{
+					raw_text = "DEBUG"
+				}
+			}
+		}
+
+		blockoverride "scrollarea_content"
+		{
+			container = {
+				visible = "[PowerBlocPanel.IsPowerBlocSelected]"
+				parentanchor = hcenter
+
+				power_bloc_panel_overview_tab = {
+					visible = "[InformationPanel.IsTabSelected('default')]"
+					using = default_content_fade
+				}
+
+				power_bloc_panel_members_tab = {
+					visible = "[InformationPanel.IsTabSelected('members')]"
+				}
+
+				power_bloc_panel_all_power_blocs = {
+					visible = "[InformationPanel.IsTabSelected('all_power_blocs')]"
+				}
+
+				modifier_list = {
+					visible = "[InformationPanel.IsTabSelected('modifiers')]"
+					using = default_content_fade
+
+					modifier_list_content = {
+						datacontext = "[PowerBloc.GetLeaderModifier]"
+						blockoverride "header" {
+							text = "POWER_BLOC_PANEL_LEADER_MODIFIER_ENTRIES"
+						}
+					}
+
+					modifier_list_content = {
+						datacontext = "[PowerBloc.GetNonLeaderModifier]"
+						blockoverride "header" {
+							text = "POWER_BLOC_PANEL_NON_LEADER_MODIFIER_ENTRIES"
+						}
+					}
+				}
+
+				power_bloc_debug_info = {
+					visible = "[InformationPanel.IsTabSelected('debug')]"
+					using = default_content_fade
+				}
+			}
+
+			container = {
+				visible = "[Not(PowerBlocPanel.IsPowerBlocSelected)]"
+				parentanchor = hcenter
+
+				power_bloc_panel_all_power_blocs = {}
+			}
+		}
+
+		blockoverride "fixed_bottom" {
+			flowcontainer = {
+				visible = "[Or(PowerBloc.IsMember(GetPlayer.Self), Not(GetPlayer.GetPowerBloc.IsMember(GetPlayer.Self)))]"
+				direction = vertical
+				spacing = 5
+
+				divider_clean = {
+					size = { @panel_width_plus_14 4 }
+				}
+
+				background = {
+					using = dark_area
+				}
+
+				widget = {
+					size = { 5 5 }
+				}
+
+				flowcontainer = {
+					visible = "[And(And(Not(GetPlayer.IsInPowerBloc), Not(InformationPanel.IsTabSelected('all_power_blocs'))), PowerBlocPanel.IsPowerBlocSelected)]"
+					parentanchor = hcenter
+					direction = vertical
+
+					# Button to request to join the power bloc
+					button = {
+						visible = "[And(Not(PowerBloc.HasPendingRequestToJoinFromCountry(GetPlayer.Self)), Not(PowerBloc.HasPendingInvitationForCountry(GetPlayer.Self)))]"
+						datacontext = "[PowerBloc.GetRequestToJoin(GetPlayer.Self)]"
+						using = default_button_action
+						size = { @panel_width 50 }
+
+						onclick = "[DiplomaticAction.ExecuteWithConfirmation]"
+						enabled = "[IsValid(DiplomaticAction.ExecuteAction)]"
+
+						tooltipwidget = {
+							FancyTooltip_DiplomaticActionWithTargetCountry = {
+								datacontext = "[PowerBloc.GetLeader]"
+							}
+						}
+
+						flowcontainer = {
+							parentanchor = center
+							spacing = 5
+
+							icon = {
+								parentanchor = vcenter
+								size = { 35 35 }
+								texture = "gfx/interface/icons/lens_toolbar_icons/invite_to_power_bloc.dds"
+							}
+
+							textbox = {
+								parentanchor = vcenter
+								autoresize = yes
+								align = nobaseline
+								max_width = 450
+								elide = right
+								fontsize_min = 12
+								text = "REQUEST_TO_JOIN"
+							}
+						}
+
+						diplomatic_action_acceptance_icon = {
+							parentanchor = vcenter|right
+							position = { -10 0 }
+						}
+					}
+
+					# Button to open the confirmation popup for an invitation from the power bloc if any
+					button = {
+						visible = "[PowerBloc.HasPendingInvitationForCountry(GetPlayer.Self)]"
+						using = default_button_action
+						size = { @panel_width 50 }
+
+						onclick = "[PowerBloc.OpenPendingInvitationForCountry(GetPlayer.Self)]"
+						tooltip = "ANSWER_INVITATION_TOOLTIP"
+
+						flowcontainer = {
+							parentanchor = center
+							spacing = 5
+
+							icon = {
+								parentanchor = vcenter
+								size = { 35 35 }
+								texture = "gfx/interface/icons/lens_toolbar_icons/invite_to_power_bloc.dds"
+							}
+
+							textbox = {
+								parentanchor = vcenter
+								autoresize = yes
+								align = nobaseline
+								max_width = 450
+								elide = right
+								fontsize_min = 12
+								text = "ANSWER_INVITATION"
+							}
+						}
+
+						icon = {
+							size = { 100% 100% }
+							using = ui_event_glow_animation_looping
+						}
+					}
+
+					# "Request to join is sent" widget
+					widget = {
+						visible = "[PowerBloc.HasPendingRequestToJoinFromCountry(GetPlayer.Self)]"
+						size = { @panel_width 50 }
+
+						background = {
+							using = paper_bg
+						}
+
+						flowcontainer = {
+							parentanchor = center
+							spacing = 5
+
+							icon = {
+								parentanchor = vcenter
+								size = { 35 35 }
+								texture = "gfx/interface/icons/lens_toolbar_icons/invite_to_power_bloc.dds"
+							}
+
+							textbox = {
+								parentanchor = vcenter
+								autoresize = yes
+								align = nobaseline
+								max_width = 450
+								elide = right
+								fontsize_min = 12
+								text = "REQUEST_SENT"
+							}
+						}
+
+						icon = {
+							using = highlighted_square_selection
+						}
+					}
+				}
+
+				widget = {
+					parentanchor = hcenter
+					size = { @panel_width 50 }
+
+					# Formation button
+					button = {
+						name = "tutorial_highlight_form_a_power_bloc_button"
+						using = default_button_primary_big
+						parentanchor = center
+						size = { 540 50 }
+						using = fontsize_large
+						visible = "[Not( GetPlayer.IsInPowerBloc )]"
+						onclick = "[InformationPanelBar.OpenPowerBlocFormationPanel]"
+						enabled = yes
+						using = default_content_fade
+
+						flowcontainer = {
+							parentanchor = center
+
+							textbox = {
+								parentanchor = vcenter
+								autoresize = yes
+								align = center|nobaseline
+								text = "FORM_POWER_BLOC"
+							}
+						}
+					}
+
+					flowcontainer = {
+						spacing = 10
+						visible = "[PowerBloc.IsLeader( GetPlayer.Self )]"
+						
+						# Leave button for Leader
+						button = {
+							using = default_button_action
+							size = { 150 50 }
+							using = fontsize_large
+							onclick = "[PopupManager.AskConfirmationWithSound(GetPlayer.LeavePowerBloc, 'event:/SFX/UI/SubjectInteractions/power_bloc_leave')]"
+							enabled = "[IsValid(GetPlayer.LeavePowerBloc)]"
+							tooltip = "TOOLTIP_LEAVE_POWER_BLOC"
+							using = tooltip_above
+							using = default_content_fade
+
+							flowcontainer = {
+								parentanchor = center
+
+								textbox = {
+									parentanchor = vcenter
+									autoresize = yes
+									align = center|nobaseline
+									text = "LEAVE_POWER_BLOC"
+								}
+							}
+						}
+
+						# Invite Countries button
+						button = {
+							using = default_button_map_interaction
+							size = { 380 50 }
+							using = fontsize_large
+							onclick = "[PowerBlocPanel.OnClickInviteCountries]"
+							enabled = yes
+
+							flowcontainer = {
+								parentanchor = center
+
+								textbox = {
+									parentanchor = vcenter
+									autoresize = yes
+									align = center|nobaseline
+									text = "INVITE_TO_BLOC"
+								}
+							}
+
+							action_selection_number = {
+								tooltip = "POWER_BLOC_INVITABLE_COUNTRIES_TOOLTIP"
+								using = tooltip_above
+
+								blockoverride "fontsize" {
+									using = fontsize_large
+								}
+
+								blockoverride "text" {
+									raw_text = "[PowerBlocPanel.GetNumInvitableCountries|+]"
+								}
+
+								blockoverride "position" {
+									position = { -7 3 }
+								}
+
+								blockoverride "background" {
+									background = {
+										using = blurry_dark_background
+										margin = { 5 5 }
+									}
+								}
+							}
+						}
+					}
+
+					# Leave button
+					button = {
+						visible = "[And(Not(PowerBloc.IsLeader(GetPlayer.Self)), GetPlayer.IsInPowerBloc)]"
+						using = default_button_action
+						parentanchor = center
+						size = { 520 50 }
+						using = fontsize_large
+						onclick = "[PopupManager.AskConfirmationWithSound(GetPlayer.LeavePowerBloc, 'event:/SFX/UI/SubjectInteractions/power_bloc_leave')]"
+						enabled = "[IsValid(GetPlayer.LeavePowerBloc)]"
+						tooltip = "TOOLTIP_LEAVE_POWER_BLOC"
+						using = default_content_fade
+
+						flowcontainer = {
+							parentanchor = center
+
+							textbox = {
+								parentanchor = vcenter
+								autoresize = yes
+								align = center|nobaseline
+								text = "LEAVE_POWER_BLOC"
+							}
+						}
+					}
+				}
+
+				widget = {
+					size = { 5 5 }
+				}
+			}
+		}
+
+		blockoverride "bottom_spacing" {}
+	}
+
+	type power_bloc_panel_all_power_blocs = flowcontainer {
+		direction = vertical
+		using = default_list_position
+		spacing = 5
+		margin_top = 10
+
+		flowcontainer = {
+			parentanchor = hcenter
+			direction = vertical
+			spacing = 5
+
+			datamodel = "[GetAllPowerBlocs]"
+
+			item = {
+				power_bloc_list_item = {}
+			}
+		}
+	}
+
+	type power_bloc_list_item = flowcontainer {
+		direction = vertical
+
+		using = entry_bg_fancy
+
+		# Name and info header
+		container = {
+			minimumsize = { @panel_width 35 }
+
+			background = {
+				using = fade_top_entry_header_colored
+				color = "[PowerBloc.GetPrimaryColor]"
+			}
+
+			power_bloc_rank_badge = {
+				size = { 50 50 }
+				position = { -10 -10 }
+			}
+
+			flowcontainer = {
+				position = { 50 0 }
+				parentanchor = vcenter
+				spacing = 5
+
+				textbox = {
+					parentanchor = vcenter
+					autoresize = yes
+					align = nobaseline
+					elide = right
+					fontsize_min = 14
+					max_width = 300
+					text = "[PowerBloc.GetNameNoIcon]"
+				}
+
+				button_icon_goto = {
+					size = { 26 26 }
+					tooltip = "GO_TO_BUTTON_POWER_BLOC"
+					onclick = "[InformationPanelBar.OpenPowerBlocPanelTab( PowerBloc.Self, 'default' )]"
+				}
+			}
+
+			# Formation status
+			flowcontainer = {
+				position = { -34 0 }
+				parentanchor = right|vcenter
+
+				textbox = {
+					maximumsize = { 260 -1 }
+					multiline = yes
+					autoresize = yes
+					margin = { 0 3 }
+					text = "POWER_BLOC_LEADER_LABEL"
+					align = nobaseline
+					elide = right
+					margin_right = 5
+				}
+			}
+
+			# Zoom-to button
+			widget = {
+				position = { -6 0 }
+				parentanchor = right|vcenter
+				size = { 28 28 }
+
+				button_icon_zoom = {
+					size = { 100% 100% }
+					block "goto_properties" {
+						onclick = "[PowerBloc.ZoomToMapMarkerPosition]"
+						tooltip = "ZOOM_TO_POWER_BLOC"
+						enabled = "[Not( PowerBloc.IsZoomingToMapMarkerPosition )]"
+					}
+				}
+			}
+		}
+
+		### POWER BLOC LIST ITEM WITH BUTTONS
+		widget = {
+			visible = "[And(Not(GetPlayer.GetPowerBloc.IsLeader(GetPlayer.Self)), Not(PowerBloc.IsMember(GetPlayer.Self)))]"
+			parentanchor = hcenter
+			size = { 534 150 }
+			using = power_bloc_list_item_bg
+
+			flowcontainer = {
+				position = { 10 10 }
+				spacing = 10
+
+				power_bloc_list_item_emblem_button = {}
+
+				power_bloc_list_item_grid_values = {}
+
+				power_bloc_identity_icon = {
+					datacontext = "[PowerBloc.GetIdentity]"
+
+					size = { 80 80 }
+					parentanchor = vcenter
+				}
+			}
+
+			power_bloc_list_item_bottom_buttons = {}
+		}
+
+		### POWER BLOC LIST ITEM WITHOUT BUTTONS
+		widget = {
+			visible = "[Or(GetPlayer.GetPowerBloc.IsLeader(GetPlayer.Self), PowerBloc.IsMember(GetPlayer.Self))]"
+			parentanchor = hcenter
+			size = { 534 100 }
+			using = power_bloc_list_item_bg
+
+			flowcontainer = {
+				position = { 10 10 }
+				spacing = 10
+
+				power_bloc_list_item_emblem_button = {}
+
+				power_bloc_list_item_grid_values = {}
+
+				power_bloc_identity_icon = {
+					datacontext = "[PowerBloc.GetIdentity]"
+
+					size = { 80 80 }
+					parentanchor = vcenter
+				}
+			}
+		}
+	}
+
+	type power_bloc_list_item_emblem_button = button_icon_round {
+		parentanchor = vcenter
+		tooltip = "GO_TO_BUTTON_POWER_BLOC"
+		onclick = "[InformationPanelBar.OpenPowerBlocPanelTab( PowerBloc.Self, 'default' )]"
+		onrightclick = "[RightClickMenuManager.ShowForPowerBloc( PowerBloc.AccessSelf )]"
+		onclick = "[PowerBlocPanel.ShowLeverage]"
+
+		blockoverride "size" {
+			size = { 80 80 }
+		}
+
+		blockoverride "icon_size" {
+			size = { 80% 80% }
+		}
+
+		blockoverride "icon" {
+			texture = "[PowerBloc.GetFlag.GetMediumPowerBlocCoaTexture]"
+			frame = "[PowerBloc.GetFlag.GetMediumPowerBlocCoaFrame]"
+			framesize = "[GetMediumPowerBlocCoaFrameSize]"
+		}
+
+		icon = {
+			using = highlighted_circle_selection_big
+
+			block "selected_visibility" {
+				visible = "[ObjectsEqual(PowerBloc.Self, PowerBlocPanel.GetSelectedPowerBloc.Self)]"
+			}
+		}
+	}
+
+	type power_bloc_list_item_grid_values = flowcontainer {
+		direction = vertical
+		margin_top = 5
+		parentanchor = vcenter
+		spacing = 7
+
+		flowcontainer = {
+			parentanchor = hcenter
+			spacing = @grid_spacing
+
+			### TOTAL GDP
+			header_grid_item = {
+				using = tooltip_se
+				tooltip = "POWER_BLOC_GDP_TOOLTIP"
+
+				background = {
+					using = dark_area
+					alpha = 0.3
+				}
+
+				blockoverride "text" {
+					raw_text = "#v [PowerBloc.GetGdp|D]#!" 
+				}
+
+				blockoverride "icon" {
+					raw_text = "#v [GetPlayer.MakeScope.Var('cwp_currency').GetFlagName]"
+				}
+			}
+
+			### TOTAL NUMBER OF COUNTRIES
+			header_grid_item = {
+				using = tooltip_se
+				tooltip = "POWER_BLOC_NUMBER_OF_COUNTRIES_TOOLTIP"
+
+				background = {
+					using = dark_area
+					alpha = 0.3
+				}
+
+				blockoverride "text" {
+					raw_text = "[PowerBloc.GetNumMembers]"
+				}
+
+				blockoverride "icon" {
+					raw_text = "@generic_countries!"
+				}
+			}
+
+			### TOTAL NUMBER OF BATTALIONS
+			header_grid_item = {
+				using = tooltip_se
+				tooltip = "POWER_BLOC_ARMY_NUMBERS_TOOLTIP"
+
+				background = {
+					using = dark_area
+					alpha = 0.3
+				}
+
+				blockoverride "text" {
+					raw_text = "[PowerBloc.GetRegularBattalions|v] + [PowerBloc.GetConscriptableBattalions|v]"
+				}
+
+				blockoverride "icon" {
+					raw_text = "@battalions!"
+				}
+			}
+		}
+
+		flowcontainer = {
+			spacing = @grid_spacing
+			parentanchor = hcenter
+
+			### LEVERAGE ON THE PLAYER
+			header_grid_item = {
+				visible = "[Not(GetPlayer.GetPowerBloc.IsLeader(GetPlayer.Self))]"
+				using = tooltip_se
+
+				tooltipwidget = {
+					RegularTooltip_Leverage = {
+						datacontext = "[AccessPlayer]"
+
+						blockoverride "has_power_bloc_context_visibility" {
+							visible = yes
+						}
+					}
+				}
+
+				blockoverride "text" {
+					raw_text = "#v [PowerBloc.GetLeverageAdvantage(GetPlayer.Self)|0=+]#!"
+				}
+
+				background = {
+					using = dark_area
+					alpha = 0.3
+				}
+
+				blockoverride "icon" {
+					raw_text = "@leverage!"
+				}
+			}
+
+			### LEVERAGE ON THE LEADER
+			header_grid_item = {
+				visible = "[GetPlayer.GetPowerBloc.IsLeader(GetPlayer.Self)]"
+				using = tooltip_se
+				tooltip = "LEVERAGE_ON_PLAYER_LEADER_NOT_APPLICABLE"
+
+				blockoverride "text" {
+					raw_text = "#title None#!"
+				}
+
+				blockoverride "icon" {
+					raw_text = "@leverage!"
+				}
+			}
+
+			### COHESION
+			header_grid_item = {
+				using = tooltip_se
+				tooltip = "COHESION_LEVEL_ACTIVE_TOOLTIP"
+
+				background = {
+					using = dark_area
+					alpha = 0.3
+				}
+
+				blockoverride "text" {
+					text = "[PowerBloc.GetCohesionLevel.GetNameNoFormatting]"
+				}
+
+				blockoverride "icon" {
+					raw_text = "@cohesion!"
+				}
+
+				blockoverride "text_parentanchor" {
+					parentanchor = center
+					position = { 5 0 }
+				}
+			}
+
+			### TOTAL NUMBER OF FLOTILLAS
+			header_grid_item = {
+				using = tooltip_se
+				tooltip = "POWER_BLOC_NAVY_NUMBERS_TOOLTIP"
+
+				background = {
+					using = dark_area
+					alpha = 0.3
+				}
+
+				blockoverride "text" {
+					raw_text = "[PowerBloc.GetFlotillas|v]"
+				}
+
+				blockoverride "icon" {
+					raw_text = "@flotillas!"
+				}
+			}
+		}
+	}
+
+	type power_bloc_list_item_bottom_buttons = flowcontainer {
+		parentanchor = hcenter|bottom
+		direction = vertical
+		margin_bottom = 10
+
+		# Button to request to join the power bloc
+		button = {
+			visible = "[And(Not(PowerBloc.HasPendingRequestToJoinFromCountry(GetPlayer.Self)), Not(PowerBloc.HasPendingInvitationForCountry(GetPlayer.Self)))]"
+			datacontext = "[PowerBloc.GetRequestToJoin(GetPlayer.Self)]"
+			using = default_button_action
+			size = { @panel_width_minus_20 40 }
+
+			onclick = "[DiplomaticAction.ExecuteWithConfirmation]"
+			enabled = "[IsValid(DiplomaticAction.ExecuteAction)]"
+			clicksound = "[DiplomaticAction.GetSoundWithConfirmation]"
+			
+			tooltipwidget = {
+				FancyTooltip_DiplomaticActionWithTargetCountry = {
+					datacontext = "[PowerBloc.GetLeader]"
+				}
+			}
+
+			flowcontainer = {
+				parentanchor = center
+				spacing = 5
+
+				icon = {
+					parentanchor = vcenter
+					size = { 30 30 }
+					texture = "gfx/interface/icons/lens_toolbar_icons/invite_to_power_bloc.dds"
+				}
+
+				textbox = {
+					parentanchor = vcenter
+					autoresize = yes
+					align = nobaseline
+					max_width = 450
+					elide = right
+					fontsize_min = 12
+					text = "REQUEST_TO_JOIN"
+				}
+			}
+
+			diplomatic_action_acceptance_icon = {
+				parentanchor = vcenter|right
+				position = { -10 0 }
+
+				blockoverride "icon_size" {
+					size = { 28 28 }
+				}
+			}
+		}
+
+		# Button to open the confirmation popup for an invitation from the power bloc if any
+		button = {
+			visible = "[PowerBloc.HasPendingInvitationForCountry(GetPlayer.Self)]"
+			using = default_button_action
+			size = { @panel_width_minus_20 40 }
+
+			onclick = "[PowerBloc.OpenPendingInvitationForCountry(GetPlayer.Self)]"
+			tooltip = "ANSWER_INVITATION_TOOLTIP"
+
+			flowcontainer = {
+				parentanchor = center
+				spacing = 5
+
+				icon = {
+					parentanchor = vcenter
+					size = { 30 30 }
+					texture = "gfx/interface/icons/lens_toolbar_icons/invite_to_power_bloc.dds"
+				}
+
+				textbox = {
+					parentanchor = vcenter
+					autoresize = yes
+					align = nobaseline
+					max_width = 450
+					elide = right
+					fontsize_min = 12
+					text = "ANSWER_INVITATION"
+				}
+			}
+
+			icon = {
+				size = { 100% 100% }
+				using = ui_event_glow_animation_looping
+			}
+		}
+
+		# "Request to join is sent" widget
+		widget = {
+			visible = "[PowerBloc.HasPendingRequestToJoinFromCountry(GetPlayer.Self)]"
+			size = { @panel_width_minus_20 40 }
+
+			background = {
+				using = paper_bg
+			}
+
+			flowcontainer = {
+				parentanchor = center
+				spacing = 5
+
+				icon = {
+					parentanchor = vcenter
+					size = { 30 30 }
+					texture = "gfx/interface/icons/lens_toolbar_icons/invite_to_power_bloc.dds"
+				}
+
+				textbox = {
+					parentanchor = vcenter
+					autoresize = yes
+					align = nobaseline
+					max_width = 450
+					elide = right
+					fontsize_min = 12
+					text = "REQUEST_SENT"
+				}
+			}
+
+			icon = {
+				using = highlighted_square_selection
+			}
+		}
+	}
+
+	type power_bloc_panel_overview_tab = flowcontainer  {
+		direction = vertical
+		using = default_list_position
+
+		### BACKGROUND WITH LEADERS SECTION
+		widget = {
+			size = { 560 274 }
+
+			widget = {
+				size = { 556 274 }
+				parentanchor = hcenter
+
+				### OVERVIEW BACKGROUND
+				background = {
+					texture = "[PowerBloc.GetIdentity.GetBackground]"
+					using = fade_top_illus
+				}
+
+				background = {
+					using = simple_frame
+				}
+
+				### CHARACTERS
+				# BLOC MEMBER 4
+				# MEMBER AVAILABLE
+				container = {
+					visible = "[GreaterThan_int32( GetDataModelSize(PowerBloc.GetMembersWithUniqueHeadsOfState), '(int32)3' )]"
+					parentanchor = hcenter
+					position = { -210 15 }
+					maximumsize = { 100 265 } # This maximumsize is to make the button for this portrait not overlap the other character's buttons
+
+					character_portrait_base = {
+						parentanchor = hcenter
+						datacontext = "[PowerBloc.GetMemberWithUniqueHeadOfState('(int32)3')]"
+						datacontext = "[Country.GetRuler]"
+
+						size = { 250 270 }
+
+						blockoverride "portrait_size" {
+							block "character_portrait_size" {
+								size = { 265 265 }
+							}
+						}
+
+						blockoverride "portrait_texture" {
+							portrait_texture = "[Character.GetAnimatedPortrait('characters_portrait_environment', 'camera_event_right', 'idle', PdxGetWidgetScreenSize(PdxGuiWidget.Self))]"
+						}
+
+						blockoverride "portrait_icons" {}
+						blockoverride "tooltip" {}
+						blockoverride "show_hat" {}
+						blockoverride "highlight" {}
+
+						blockoverride "portrait_button" {
+							button = {
+								parentanchor = hcenter
+								size = { 100% 100% }
+
+								block "portrait_button_onclick" {
+									onclick = "[InformationPanelBar.OpenCommanderPanel(Character.AccessSelf)]"
+								}
+
+								block "portrait_button_onrightclick" {
+									onrightclick = "[RightClickMenuManager.ShowForCharacter(Character.AccessSelf)]"
+								}
+
+								onmousehierarchyenter = "[AccessHighlightManager.HighlightCharacter( PowerBloc.GetMemberWithUniqueHeadOfState('(int32)3').GetRuler )]"
+								onmousehierarchyleave = "[AccessHighlightManager.RemoveHighlight]"
+							}
+						}
+					}
+				}
+
+				# NO FOURTH MEMBER AVAILABLE
+				widget = {
+					visible = "[Not( GreaterThan_int32( GetDataModelSize(PowerBloc.GetMembersWithUniqueHeadsOfState), '(int32)3' ))]"
+
+					parentanchor = hcenter
+					size = { 280 280 }
+					position = { -210 15 }
+
+					icon = {
+						size = { 260 260 }
+						texture = "gfx/interface/power_blocs/bloc_no_member.dds"
+						alpha = 1
+					}
+				}
+
+				### BLOC MEMBER 2
+				# MEMBER AVAILABLE
+				container = {
+					visible = "[GreaterThan_int32( GetDataModelSize(PowerBloc.GetMembersWithUniqueHeadsOfState), '(int32)1' )]"
+					datacontext = "[PowerBloc.GetMemberWithUniqueHeadOfState('(int32)1')]"
+					parentanchor = hcenter
+					position = { -110 15 }
+					maximumsize = { 100 265 } # This maximumsize is to make the button for this portrait not overlap the other character's buttons
+
+					character_portrait_base = {
+						parentanchor = hcenter
+						datacontext = "[Country.GetRuler]"
+
+						size = { 250 265 }
+
+						blockoverride "portrait_size" {
+							block "character_portrait_size" {
+								size = { 280 280 }
+							}
+						}
+
+						blockoverride "portrait_texture" {
+							portrait_texture = "[Character.GetAnimatedPortrait('characters_portrait_environment', 'camera_event_right', 'idle', PdxGetWidgetScreenSize(PdxGuiWidget.Self))]"
+						}
+
+						blockoverride "portrait_mask" {
+							mask = "gfx/interface/portraits/portrait_mask_small_fade_bottom.dds"
+						}
+
+						blockoverride "portrait_icons" {}
+						blockoverride "tooltip" {}
+						blockoverride "show_hat" {}
+						blockoverride "highlight" {}
+
+						blockoverride "portrait_button" {
+							button = {
+								parentanchor = hcenter
+								size = { 100% 100% }
+
+								block "portrait_button_onclick" {
+									onclick = "[InformationPanelBar.OpenCommanderPanel(Character.AccessSelf)]"
+								}
+
+								block "portrait_button_onrightclick" {
+									onrightclick = "[RightClickMenuManager.ShowForCharacter(Character.AccessSelf)]"
+								}
+
+								onmousehierarchyenter = "[AccessHighlightManager.HighlightCharacter( PowerBloc.GetMemberWithUniqueHeadOfState('(int32)1').GetRuler )]"
+								onmousehierarchyleave = "[AccessHighlightManager.RemoveHighlight]"
+							}
+						}
+					}
+
+					textbox = {
+						visible = "[Country.IsPowerStruggling]"
+						parentanchor = hcenter
+						autoresize = yes
+						align = hcenter|nobaseline
+						max_width = 150
+						fontsize_min = 12
+						elide = right
+						text = "COUNTRY_POWER_BLOC_POWER_STRUGGLE_STATUS_CENTERED"
+
+						background = {
+							using = blurry_dark_background
+							margin = { 5 5 }
+						}
+					}
+				}
+
+				# NO SECOND MEMBER AVAILABLE
+				widget = {
+					visible = "[Not( GreaterThan_int32( GetDataModelSize(PowerBloc.GetMembersWithUniqueHeadsOfState), '(int32)1' ))]"
+					parentanchor = hcenter
+					size = { 280 280 }
+					position = { -110 5 }
+
+					icon = {
+						size = { 280 280 }
+						texture = "gfx/interface/power_blocs/bloc_no_member.dds"
+						alpha = 1
+					}
+				}
+
+				### BLOC MEMBER 5
+				# MEMBER AVAILABLE
+				container = {
+					visible = "[GreaterThan_int32( GetDataModelSize(PowerBloc.GetMembersWithUniqueHeadsOfState), '(int32)4' )]"
+					parentanchor = hcenter
+					position = { 210 15 }
+					maximumsize = { 100 265 } # This maximumsize is to make the button for this portrait not overlap the other character's buttons
+
+					character_portrait_base = {
+						parentanchor = hcenter
+						datacontext = "[PowerBloc.GetMemberWithUniqueHeadOfState('(int32)4')]"
+						datacontext = "[Country.GetRuler]"
+
+						size = { 250 270 }
+
+						blockoverride "portrait_size" {
+							block "character_portrait_size" {
+								size = { 265 265 }
+							}
+						}
+
+						blockoverride "portrait_texture" {
+							portrait_texture = "[Character.GetAnimatedPortrait('characters_portrait_environment', 'camera_event_left', 'idle', PdxGetWidgetScreenSize(PdxGuiWidget.Self))]"
+						}
+
+						blockoverride "portrait_icons" {}
+						blockoverride "tooltip" {}
+						blockoverride "show_hat" {}
+						blockoverride "highlight" {}
+
+						blockoverride "portrait_button" {
+							button = {
+								parentanchor = hcenter
+								size = { 100% 100% }
+
+								block "portrait_button_onclick" {
+									onclick = "[InformationPanelBar.OpenCommanderPanel(Character.AccessSelf)]"
+								}
+
+								block "portrait_button_onrightclick" {
+									onrightclick = "[RightClickMenuManager.ShowForCharacter(Character.AccessSelf)]"
+								}
+
+								onmousehierarchyenter = "[AccessHighlightManager.HighlightCharacter( PowerBloc.GetMemberWithUniqueHeadOfState('(int32)4').GetRuler )]"
+								onmousehierarchyleave = "[AccessHighlightManager.RemoveHighlight]"
+							}
+						}
+					}
+				}
+
+				# NO FIFTH MEMBER AVAILABLE
+				widget = {
+					visible = "[Not( GreaterThan_int32( GetDataModelSize(PowerBloc.GetMembersWithUniqueHeadsOfState), '(int32)4' ))]"
+					parentanchor = hcenter
+					size = { 280 280 }
+					position = { 210 15 }
+
+					icon = {
+						size = { 260 260 }
+						texture = "gfx/interface/power_blocs/bloc_no_member.dds"
+						mirror = horizontal
+						alpha = 1
+					}
+				}
+
+				### BLOC MEMBER 3
+				# MEMBER AVAILABLE
+				container = {
+					visible = "[GreaterThan_int32( GetDataModelSize(PowerBloc.GetMembersWithUniqueHeadsOfState), '(int32)2' )]"
+					datacontext = "[PowerBloc.GetMemberWithUniqueHeadOfState('(int32)2')]"
+					parentanchor = hcenter
+					position = { 110 15 }
+					maximumsize = { 100 265 } # This maximumsize is to make the button for this portrait not overlap the other character's buttons
+
+					character_portrait_base = {
+						parentanchor = hcenter
+						datacontext = "[Country.GetRuler]"
+
+						size = { 250 265 }
+
+						blockoverride "portrait_size" {
+							block "character_portrait_size" {
+								size = { 280 280 }
+							}
+						}
+
+						blockoverride "portrait_texture" {
+							portrait_texture = "[Character.GetAnimatedPortrait('characters_portrait_environment', 'camera_event_left', 'idle', PdxGetWidgetScreenSize(PdxGuiWidget.Self))]"
+						}
+
+						blockoverride "portrait_icons" {}
+						blockoverride "tooltip" {}
+						blockoverride "show_hat" {}
+						blockoverride "highlight" {}
+
+						blockoverride "portrait_button" {
+							button = {
+								parentanchor = hcenter
+								size = { 100% 100% }
+
+								block "portrait_button_onclick" {
+									onclick = "[InformationPanelBar.OpenCommanderPanel(Character.AccessSelf)]"
+								}
+
+								block "portrait_button_onrightclick" {
+									onrightclick = "[RightClickMenuManager.ShowForCharacter(Character.AccessSelf)]"
+								}
+
+								onmousehierarchyenter = "[AccessHighlightManager.HighlightCharacter( PowerBloc.GetMemberWithUniqueHeadOfState('(int32)2').GetRuler )]"
+								onmousehierarchyleave = "[AccessHighlightManager.RemoveHighlight]"
+							}
+						}
+					}
+
+					textbox = {
+						visible = "[Country.IsPowerStruggling]"
+						parentanchor = hcenter
+						autoresize = yes
+						align = hcenter|nobaseline
+						max_width = 150
+						fontsize_min = 12
+						elide = right
+						text = "COUNTRY_POWER_BLOC_POWER_STRUGGLE_STATUS_CENTERED"
+
+						background = {
+							using = blurry_dark_background
+							margin = { 5 5 }
+						}
+					}
+				}
+
+				# NO THIRD MEMBER AVAILABLE
+				widget = {
+					visible = "[Not( GreaterThan_int32( GetDataModelSize(PowerBloc.GetMembersWithUniqueHeadsOfState), '(int32)2' ))]"
+					parentanchor = hcenter
+					size = { 280 280 }
+					position = { 110 5 }
+
+					icon = {
+						size = { 280 280 }
+						texture = "gfx/interface/power_blocs/bloc_no_member.dds"
+						mirror = horizontal
+						alpha = 1
+					}
+				}
+
+				### BLOC MEMBER 1 (LEADER)
+				container = {
+					parentanchor = hcenter
+					maximumsize = { 100 265 } # This maximumsize is to make the button for this portrait not overlap the other character's buttons
+					datacontext = "[PowerBloc.GetLeader.GetRuler]"
+
+					character_portrait_base = {
+						parentanchor = hcenter
+						size = { 250 265 }
+
+						blockoverride "portrait_size" {
+							block "character_portrait_size" {
+								size = { 300 300 }
+							}
+						}
+
+						blockoverride "portrait_position" {
+							position = { 0 15 }
+						}
+
+						blockoverride "portrait_texture" {
+							portrait_texture = "[Character.GetAnimatedPortrait('pop_environment', 'camera_body', 'idle', PdxGetWidgetScreenSize(PdxGuiWidget.Self))]"
+						}
+
+						blockoverride "portrait_icons" {}
+						blockoverride "tooltip" {}
+						blockoverride "show_hat" {}
+						blockoverride "highlight" {}
+
+						blockoverride "portrait_button" {
+							button = {
+								parentanchor = hcenter
+								size = { 100% 100% }
+
+								block "portrait_button_onclick" {
+									onclick = "[InformationPanelBar.OpenCommanderPanel(Character.AccessSelf)]"
+								}
+
+								block "portrait_button_onrightclick" {
+									onrightclick = "[RightClickMenuManager.ShowForCharacter(Character.AccessSelf)]"
+								}
+
+								onmousehierarchyenter = "[AccessHighlightManager.HighlightCharacter( PowerBloc.GetLeader.GetRuler )]"
+								onmousehierarchyleave = "[AccessHighlightManager.RemoveHighlight]"
+							}
+						}
+					}
+
+				}
+
+				power_bloc_rank_badge = {
+					size = { 57 57 }
+					position = { 5 5 }
+					using = clickthrough_blocker
+				}
+
+				### POWER BLOC RANK VFX
+				### RANK 1
+				vfx = {
+					visible = "[PowerBloc.IsRanked('(int32)1')]"
+					position = { 0 -2 }
+
+					blockoverride "entity_instance" {
+						entity_instance = vfx_entity_ui_powerbloc_rank_01_rulers
+					}
+				}
+
+				### RANK 2
+				vfx = {
+					visible = "[PowerBloc.IsRanked('(int32)2')]"
+					position = { 0 -2 }
+
+					blockoverride "entity_instance" {
+						entity_instance = vfx_entity_ui_powerbloc_rank_02_rulers
+					}				
+				}
+
+				### RANK 3
+				vfx = {
+					visible = "[PowerBloc.IsRanked('(int32)3')]"
+					position = { 0 -2 }
+
+					blockoverride "entity_instance" {
+						entity_instance = vfx_entity_ui_powerbloc_rank_03_rulers
+					}				
+				}
+
+				### FLAGS
+				#BLOC MEMBER 1 FLAG
+				small_flag = {
+					datacontext = "[PowerBloc.GetLeader]"
+					position = { 0 -20 }
+					parentanchor = hcenter|bottom
+				}
+
+				#BLOC MEMBER 2 FLAG
+				tiny_flag = {
+					visible = "[GreaterThan_int32( GetDataModelSize(PowerBloc.GetMembersWithUniqueHeadsOfState), '(int32)1' )]"
+					position = { -110 -20 }
+					parentanchor = hcenter|bottom
+					datacontext = "[PowerBloc.GetMemberWithUniqueHeadOfState('(int32)1')]"
+				}
+
+				#BLOC MEMBER 3 FLAG
+				tiny_flag = {
+					visible = "[GreaterThan_int32( GetDataModelSize(PowerBloc.GetMembersWithUniqueHeadsOfState), '(int32)2' )]"
+					position = { 110 -20 }
+					parentanchor = hcenter|bottom
+					datacontext = "[PowerBloc.GetMemberWithUniqueHeadOfState('(int32)2')]"
+				}
+
+				#BLOC MEMBER 4 FLAG
+				tiny_flag = {
+					visible = "[GreaterThan_int32( GetDataModelSize(PowerBloc.GetMembersWithUniqueHeadsOfState), '(int32)3' )]"
+					position = { -210 -20 }
+					parentanchor = hcenter|bottom
+					datacontext = "[PowerBloc.GetMemberWithUniqueHeadOfState('(int32)3')]"
+				}
+
+				#BLOC MEMBER 5 FLAG
+				tiny_flag = {
+					visible = "[GreaterThan_int32( GetDataModelSize(PowerBloc.GetMembersWithUniqueHeadsOfState), '(int32)4' )]"
+					position = { 210 -20 }
+					parentanchor = hcenter|bottom
+					datacontext = "[PowerBloc.GetMemberWithUniqueHeadOfState('(int32)4')]"
+				}
+
+				### MAP MODES
+				container = {
+					parentanchor = hcenter
+					minimumsize = { @panel_width -1 }
+					maximumsize = { @panel_width -1 }
+
+					map_modes_minimized = {
+						parentanchor = right
+						position = { 4 10 }
+						
+						blockoverride "first_button_click" {
+							onclick = "[PowerBlocPanel.ShowLeverage]"
+						}
+
+						blockoverride "first_button_selected" {
+							visible = "[PowerBlocPanel.IsShowingLeverage]"
+						}
+
+						blockoverride "first_button_not_selected" {
+							visible = "[Not(PowerBlocPanel.IsShowingLeverage)]"
+						}
+
+						blockoverride "first_button_icon" {
+							texture = "gfx/interface/icons/map_mode_icons/selected_powerbloc.dds"
+						}
+
+						blockoverride "first_button_text" {
+							text = "SHOW_SPECIFIC_POWER_BLOCS_MAP_MODE"
+						}
+
+						blockoverride "second_button_click" {
+							onclick = "[PowerBlocPanel.ShowPowerBlocs]"
+						}
+
+						blockoverride "second_button_selected" {
+							visible = "[PowerBlocPanel.IsShowingPowerBlocs]"
+						}
+
+						blockoverride "second_button_not_selected" {
+							visible = "[Not(PowerBlocPanel.IsShowingPowerBlocs)]"
+						}
+
+						blockoverride "second_button_icon" {
+							texture = "gfx/interface/icons/map_mode_icons/all_powerblocs.dds"
+						}
+
+						blockoverride "second_button_text" {
+							text = "SHOW_ALL_POWER_BLOCS_MAP_MODE"
+						}
+
+						blockoverride "third_button" {}
+						blockoverride "fourth_button" {}
+					}
+				}
+			}
+		}
+
+		flowcontainer = {
+			parentanchor = hcenter
+			direction = vertical
+			spacing = 5
+
+			flowcontainer = {
+				direction = vertical
+				parentanchor = hcenter
+
+				background = {
+					using = fade_right_simple
+					texture = "[PowerBloc.GetMapTexture]"
+					color = "[PowerBloc.GetPrimaryColor]"
+					alpha = 0.2
+				}
+
+				### COHESION BAR AND EMBLEM
+				widget = {
+					size = { @panel_width_plus_14 95 }
+					parentanchor = hcenter
+
+					widget = {
+						size = { 500 76 }
+						parentanchor = vcenter|right
+
+						power_blocs_cohesion_item = {}
+
+						icon = {
+							position = { 45 16 }
+							size = { 73% 70% }
+							texture = "gfx/interface/progressbar/cohesion_bar.dds"
+						}
+					}
+
+					icon = {
+						parentanchor = vcenter|left
+						size = { 85 85 }
+						position = { 10 0 }
+						texture = "[PowerBloc.GetFlag.GetMediumPowerBlocCoaTexture]"
+						frame = "[PowerBloc.GetFlag.GetMediumPowerBlocCoaFrame]"
+						framesize = "[GetMediumPowerBlocCoaFrameSize]"
+
+						tooltipwidget = {
+							FancyTooltip_PowerBloc = {}
+						}
+					}
+				}
+
+				### IDENTITY HEADER - This is in this flowcontainer with the cohesion bar + bg so that we can remove the small pixel gap that otherwise would show up above this header, between the header and the cohesion bg.
+				default_header = {
+					using = default_list_position
+					blockoverride "text" {
+						text = "POWER_BLOC_IDENTITY_HEADER"
+					}
+				}
+			}
+
+
+			### CENTRAL IDENTITY - SELECTED
+			container = {
+				parentanchor = hcenter
+				minimumsize = { @panel_width_minus_10 130 }
+				datacontext = "[PowerBloc.GetIdentity]"
+
+				tooltipwidget = {
+					FancyTooltip_PowerBlocIdentity = {}
+				}
+
+				using = entry_bg_fancy
+
+				flowcontainer = {
+					parentanchor = vcenter
+					position = { 135 0 }
+					direction = vertical
+					margin = { 0 10 }
+					spacing = 5
+					
+					textbox = {
+						text = "[PowerBlocIdentity.GetNameNoFormatting]"
+						default_format = "#header"
+						align = nobaseline
+						using = fontsize_xl
+						autoresize = yes
+						max_width = 350
+						elide = right
+						fontsize_min = 14
+					}
+
+					textbox = {
+						text = "[PowerBlocIdentity.GetDesc]"
+						align = nobaseline
+						autoresize = yes
+						multiline = yes
+						max_width = 350
+						elide = right
+						fontsize_min = 14
+					}
+				}
+
+				power_bloc_identity_icon = {
+					position = { 10 5 }
+				}
+			}
+
+			default_header = {
+				using = default_list_position
+				blockoverride "text" {
+					text = "POWER_BLOC_PRINCIPLES_HEADER"
+				}
+			}
+
+			flowcontainer = {
+				direction = vertical
+				parentanchor = hcenter
+
+				flowcontainer = {
+					spacing = 10
+					parentanchor = hcenter
+
+					# PRINCIPLE SLOTS 1 AND 3
+					flowcontainer = {
+						direction = vertical
+						spacing = 10
+						parentanchor = vcenter
+
+						principle_slot = {
+							datacontext = "[PowerBlocPanel.GetPrincipleSlot( '(int32)0' )]"
+
+							blockoverride "tooltip_alignment" {
+								using = tooltip_ne
+							}
+						}
+
+						principle_slot = {
+							datacontext = "[PowerBlocPanel.GetPrincipleSlot( '(int32)2' )]"
+							visible = "[Or(PowerBlocPrincipleSlot.IsActive, HasDlcFeature('power_bloc_features'))]"
+
+							blockoverride "tooltip_alignment" {
+								using = tooltip_se
+							}
+						}
+					}
+
+					# PRINCIPLES PROGRESSBAR
+					widget = {
+						size = { 120 120 }
+						parentanchor = vcenter
+						tooltip = "POWER_BLOC_MANDATE_PROGRESS_TOOLTIP"
+						
+						icon = {
+							size = { 100% 100% }
+							texture = "gfx/interface/power_blocs/powerbloc_progressbar_frame.dds"
+						}
+
+						round_progress_default = {
+							size = { 80% 80% }
+							parentanchor = center
+							value = "[PowerBloc.GetCurrentMandateProgressPercentage]"
+
+							textbox = {
+								align = hcenter|nobaseline
+								parentanchor = vcenter|hcenter
+								autoresize = yes
+								elide = right
+								fontsize_min = 14
+								using = fontsize_xl
+								text = "POWER_BLOC_MANDATE_PROGRESS_TIMER"
+							}
+						}
+					}
+
+					# PRINCIPLE SLOTS 2 AND 4
+					flowcontainer = {
+						direction = vertical
+						spacing = 10
+						parentanchor = vcenter
+
+						principle_slot = {
+							datacontext = "[PowerBlocPanel.GetPrincipleSlot( '(int32)1' )]"
+							visible = "[Or(PowerBlocPrincipleSlot.IsActive, HasDlcFeature('power_bloc_features'))]"
+						}
+
+						principle_slot = {
+							datacontext = "[PowerBlocPanel.GetPrincipleSlot( '(int32)3' )]"
+							visible = "[Or(PowerBlocPrincipleSlot.IsActive, HasDlcFeature('power_bloc_features'))]"
+						}
+					}
+				}
+
+				# AVAILABLE MANDATES
+				flowcontainer = {
+					visible = "[PowerBloc.IsLeader(GetPlayer.Self)]"
+					parentanchor = hcenter
+					spacing = 5
+
+					icon = {
+						size = { 35 35 }
+						parentanchor = vcenter
+						texture = "gfx/interface/icons/generic_icons/mandate.dds"
+					}
+
+					textbox = {
+						align = nobaseline
+						parentanchor = vcenter
+						autoresize = yes
+						elide = right
+						fontsize_min = 14
+						text = "AVAILABLE_MANDATES"
+					}
+				}
+			}
+		}
+	}
+
+	type power_bloc_panel_members_tab = flowcontainer {
+		direction = vertical
+		using = default_list_position
+		spacing = 5
+
+		default_header = {
+			using = default_list_position
+			blockoverride "text" {
+				text = "POWER_BLOC_LEADER_HEADER"
+			}
+		}
+
+		power_bloc_leader = {}
+
+		default_header = {
+			using = default_list_position
+			blockoverride "text" {
+				text = "POWER_BLOC_MEMBERS_HEADER"
+			}
+		}
+
+		flowcontainer = {
+			minimumsize = { @panel_width -1 }
+			parentanchor = hcenter
+
+			sort_button = {
+				size = { 150 30 }
+				text = "NAME"
+				tooltip = "POWER_BLOC_MEMBER_COUNTRY_NAME_HEADER_TOOLTIP"
+				onclick = "[PowerBloc.SortMembers('name')]"
+			}
+
+			sort_button = {
+				size = { 250 30 }
+				text = "concept_prestige"
+				tooltip = "POWER_BLOC_MEMBER_PRESTIGE_HEADER_TOOLTIP"
+				onclick = "[PowerBloc.SortMembers('prestige')]"
+			}
+
+			sort_button = {
+				size = { 150 30 }
+				text = "concept_power_bloc_leverage_advantage"
+				tooltip = "POWER_BLOC_MEMBER_LEVERAGE_HEADER_TOOLTIP"
+				onclick = "[PowerBloc.SortMembers('active_leverage')]"
+			}
+		}
+
+		empty_state = {
+			blockoverride "visible" {
+				visible = "[IsDataModelEmpty(PowerBloc.GetMembers)]"
+			}
+			blockoverride "text" {
+				text = "POWER_BLOC_NO_MEMBERS"
+			}
+		}
+
+		flowcontainer = {
+			visible = "[Not(IsDataModelEmpty(PowerBloc.GetMembers))]"
+			direction = vertical
+			parentanchor = hcenter
+			datamodel = "[PowerBloc.GetMembers]"
+			spacing = 5
+
+			item = {
+				flowcontainer = {
+					visible = "[Not(PowerBloc.IsLeader(Country.Self))]"
+					direction = vertical
+
+					power_bloc_member_item = {}
+				}
+			}
+		}
+	}
+
+	type power_bloc_leader = flowcontainer {
+		parentanchor = hcenter
+		direction = vertical
+		datacontext = "[PowerBloc.GetLeader]"
+
+		background = {
+			visible = "[Country.IsLocalPlayer]"
+			using = fade_left_simple
+			texture = "gfx/interface/backgrounds/fancy_pattern_2.dds"
+			color = "[Country.GetMapColor]"
+			using = frame_small_mask
+			alpha = 0.5
+		}
+
+		using = entry_bg_fancy
+
+		# Name header
+		container = {
+			minimumsize = { @panel_width_minus_10 35 }
+
+			background = {
+				using = fade_top_entry_header_colored
+				color = "[Country.GetMapColor]"
+			}
+
+			flowcontainer = {
+				position = { 25 0 }
+				parentanchor = vcenter
+				spacing = 5
+
+				textbox = {
+					parentanchor = vcenter
+					multiline = yes
+					autoresize = yes
+					align = nobaseline
+					elide = right
+					fontsize_min = 12
+					max_width = 250
+					text = "POWER_BLOC_MEMBER_COUNTRY_NAME"
+				}
+
+				button_icon_goto = {
+					size = { 26 26 }
+					tooltip = "GO_TO_BUTTON_COUNTRY"
+					onclick = "[InformationPanelBar.OpenCountryPanelTab( Country.Self, 'default' )]"
+				}
+			}
+
+			# Power Struggling status
+			flowcontainer = {
+				position = { -6 0 }
+				parentanchor = right|vcenter
+				spacing = 5
+
+				textbox = {
+					visible = "[Country.IsPowerStruggling]"
+					parentanchor = vcenter
+					autoresize = yes
+					align = nobaseline
+					elide = right
+					fontsize_min = 12
+					max_width = 200
+					text = "COUNTRY_POWER_BLOC_POWER_STRUGGLE_STATUS"
+				}
+
+				# Zoom-to button
+				widget = {
+					parentanchor = vcenter
+					size = { 28 28 }
+
+					button_icon_zoom = {
+						size = { 100% 100% }
+						block "goto_properties" {
+							onclick = "[Country.AccessCapital.ZoomToCapital]"
+							tooltip = "ZOOM_TO_COUNTRY_CAPITAL"
+				 			enabled = "[Not( Country.GetCapital.IsZoomingToCapital )]"
+						}
+					}
+				}
+			}
+
+			rank_badge = {
+				size = { 45 45 }
+				position = { -15 -15 }
+
+				blockoverride "datacontext " {}
+
+				blockoverride "font_size_under_100_rank" {
+					using = fontsize_medium
+				}
+			}
+		}
+
+		widget = {
+			parentanchor = hcenter
+			size = { 500 90 }
+
+			fancy_flag_ui = {
+				parentanchor = vcenter
+				size = { 80 60 }
+
+				blockoverride "overlay_button_and_bg_glow_position" {
+					position = { -9 -4 }
+				}
+
+				blockoverride "rank_badge_block" {}
+			}
+
+			flowcontainer = {
+				parentanchor = vcenter
+				position = { 100 0 }
+				direction = vertical
+				spacing = 7
+
+				flowcontainer = {
+					parentanchor = hcenter
+					spacing = @grid_spacing
+
+					### PRESTIGE
+					header_grid_item = {
+						using = tooltip_se
+						tooltip = "COUNTRY_PRESTIGE_BREAKDOWN"
+
+						blockoverride "text" {
+							raw_text = "#v [Country.GetPrestige]#!"
+						}
+
+						blockoverride "icon" {
+							raw_text = "@prestige!"
+						}
+					}
+
+					### TOTAL GDP
+					header_grid_item = {
+						using = tooltip_se
+						using = GDP_tooltip_with_graph
+
+						blockoverride "text" {
+							raw_text = "[SelectLocalization(LessThan_CFixedPoint(Country.MakeScope.ScriptValue('cwp_gdp'), '(CFixedPoint)1000000000000'), 'CWP_NORMAL', 'CWP_TRILLION')]#!"
+						}
+
+						blockoverride "icon" {
+							raw_text = "#v [GetPlayer.MakeScope.Var('cwp_currency').GetFlagName]"
+						}
+					}
+
+					### TOTAL NUMBER OF BATTALIONS
+					header_grid_item = {
+						using = tooltip_se
+						tooltip = "PANEL_MILITARY_ARMY_OVERVIEW_TOOLTIP"
+
+						blockoverride "text" {
+							raw_text = "[Country.GetRegularBattalions|v] + [Country.CalcConscriptableBattalions|v]"
+						}
+
+						blockoverride "icon" {
+							raw_text = "@battalions!"
+						}
+					}
+
+				}
+
+				flowcontainer = {
+					spacing = @grid_spacing
+					parentanchor = hcenter
+
+					### LEVERAGE ON THE LEADER
+					header_grid_item = {
+						using = tooltip_se
+						tooltip = "LEVERAGE_ON_LEADER_NOT_APPLICABLE"
+
+						blockoverride "text" {
+							text = "NONE"
+							default_format = "#title"
+						}
+
+						blockoverride "icon" {
+							raw_text = "@leverage!"
+						}
+					}
+
+					### INFAMY
+					header_grid_item = {
+						using = tooltip_se
+						tooltip = "[Country.GetInfamyDesc]"
+
+						blockoverride "text" {
+							raw_text = "#v [Country.GetInfamy|1-]#!"
+						}
+
+						blockoverride "whole_icon" {
+							icon = {
+								size = { 30 30 }
+								position = { -10 0 }
+								texture = "[Country.GetInfamyIconTexture]"
+							}
+						}
+					}
+
+					### TOTAL NUMBER OF FLOTILLAS
+					header_grid_item = {
+						using = tooltip_se
+						tooltip = "PANEL_MILITARY_NAVY_CURRENT_FLOTILLAS_TOOLTIP"
+
+						blockoverride "text" {
+							raw_text = "#v [Country.GetWarships|0]#!"
+						}
+
+						blockoverride "icon" {
+							raw_text = "@flotillas!"
+						}
+					}
+				}
+			}
+
+			flowcontainer = {
+				visible = "[Or(Or(Not(IsDataModelEmpty(Country.GetAllOverlordDiploActions)), Not(IsDataModelEmpty(Country.GetAllSubjectDiploActions))), Not(IsDataModelEmpty(Country.GetAllPowerBlocMemberDiploActions)))]"
+				parentanchor = right|vcenter
+				spacing = 10
+
+				flowcontainer = {
+					direction = vertical
+					parentanchor = vcenter
+
+					### OVERLORD ACTIONS
+					diplo_actions_button = {
+						visible = "[Country.IsSubjectOf(GetPlayer.Self)]"
+						size = { 38 38 }
+
+						blockoverride "onclick" {
+							onclick = "[RightClickMenuManager.ToggleOverlordActions(Country.AccessSelf, PdxGuiWidget.AccessSelf)]"
+						}
+
+						blockoverride "tooltip" {
+							tooltip = "OVERLORD_ACTIONS_BUTTON_TOOLTIP"
+						}
+
+						blockoverride "icon_texture" {
+							texture = "gfx/interface/buttons/button_icons/overlord_interaction.dds"
+						}
+
+						blockoverride "available_number_text" {
+							text = "[GetDataModelSize(Country.GetAvailableOverlordDiploActions)|+]"
+						}
+					}
+
+					### SUBJECT ACTIONS
+					diplo_actions_button = {
+						visible = "[GetPlayer.IsSubjectOf(Country.Self)]"
+						size = { 38 38 }
+					}
+
+					### BLOC MEMBER ACTIONS
+					diplo_actions_button = {
+						visible = "[Not(IsDataModelEmpty(Country.GetAllPowerBlocMemberDiploActions))]"
+						size = { 38 38 }
+
+						blockoverride "onclick" {
+							onclick = "[RightClickMenuManager.ToggleBlocActions(Country.AccessSelf, PdxGuiWidget.AccessSelf)]"
+						}
+
+						blockoverride "tooltip" {
+							tooltip = "BLOC_ACTIONS_BUTTON_TOOLTIP"
+						}
+
+						blockoverride "icon_texture" {
+							texture = "gfx/interface/buttons/button_icons/bloc_interaction.dds"
+						}
+
+						blockoverride "available_number_text" {
+							text = "[GetDataModelSize(Country.GetAvailablePowerBlocMemberDiploActions)|+]"
+						}
+					}
+				}
+			}
+		}
+	}
+
+	type leverage_stacked_barchart = v3_stacked_barchart {
+		block "barchart_size" {
+			size = { 550 50 }
+		}
+
+		blockoverride "margins" {
+			margin = { 4 4 }
+		}
+
+		### COUNTRY LEVERAGE SHARE
+		blockoverride "additional_bars_before" {
+			hbox = {
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+
+				using = tooltip_below
+
+				block "country_bar_stretchfactor" {
+					# This is what is actually setting the size of the country bar
+					layoutstretchfactor_horizontal = "[FixedPointToInt(Multiply_CFixedPoint(Country.GetUnclaimedLeverageShare, '(CFixedPoint)100'))]"
+				}
+
+				block "country_bar_tooltip" {
+					tooltip = "COUNTRY_CURRENT_UNCLAIMED_LEVERAGE_BAR_TOOLTIP"
+				}
+
+				block "country_bar_background" {
+
+					background = {
+						texture = "gfx/interface/tooltip/tooltip_title_bg.dds"
+						mirror = horizontal
+						using = progressbar_texture_properties
+						alpha = 0.3
+						
+						block "country_bar_color" {
+							color = "[Country.GetMapColor]"
+						}
+					}
+
+					background = {
+						texture = "gfx/interface/tooltip/tooltip_title_bg.dds"
+						using = progressbar_texture_properties
+						alpha = 0.3
+						
+						block "country_bar_color" {
+							color = "[Country.GetMapColor]"
+						}
+					}
+
+					background = {
+						using = entry_bg_simple_colored
+						alpha = 0.3
+						
+						block "country_bar_color" {
+							color = "[Country.GetMapColor]"
+						}
+					}	
+				}
+
+				widget = {
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+					min_width = 35
+
+					icon = {
+						parentanchor = center
+						size = { 35 35 }
+
+						### HIGHLIGHT
+						icon = {
+							parentanchor = center
+							size = { 150% 150% }
+							using = rotate_glow_animation
+							alpha = 0.5
+							
+							block "country_highlight_visibility" {
+								visible = "[Country.HasHigherUnclaimedLeverage]"
+							}
+						}
+
+						block "country_bar_icon" {
+							tiny_flag_no_interact = {
+								parentanchor = center
+
+								blockoverride "tooltip" {}
+							}
+						}
+					}
+
+
+					icon = {
+						using = highlighted_square_selection
+
+						block "country_highlight_visibility" {
+							visible = "[Country.HasHigherUnclaimedLeverage]"
+						}
+					}
+				}
+			}
+		}
+
+		blockoverride "barchart_item_margins" {}
+
+		blockoverride "barchart_total_stretchfactor" {
+			block "power_blocs_total_stretchfactor" {
+				layoutstretchfactor_horizontal = "[FixedPointToInt(Multiply_CFixedPoint(Country.GetPowerBlocsTotalLeverageShare, '(CFixedPoint)100'))]"
+			}
+		}
+
+		blockoverride "barchart_datamodel" {
+			block "power_blocs_datamodel" {
+				datamodel = "[Country.GetPowerBlocsWithLeverage]"
+			}
+		}
+
+		blockoverride "barchart_item_stretchfactor" {
+			block "power_blocs_item_stretchfactor" {
+				layoutstretchfactor_horizontal = "[FixedPointToInt(Multiply_CFixedPoint(Country.GetCurrentLeverageShare( PowerBloc.Self ), '(CFixedPoint)100'))]"
+			}
+		}
+
+		blockoverride "barchart_item_tooltip" {
+			block "power_blocs_item_tooltip" {
+				tooltip = "POWER_BLOC_CURRENT_LEVERAGE_BAR_TOOLTIP"
+			}
+		}
+
+		blockoverride "barchart_item_background" {
+
+			### FADE COLOR TO THE LEFT
+			background = {
+				texture = "gfx/interface/tooltip/tooltip_title_bg.dds"
+				color = "[PowerBloc.GetPrimaryColor]"
+				mirror = horizontal
+
+				modify_texture = {
+					using = simple_frame_mask
+				}
+			}
+
+			### FADE COLOR TO THE RIGHT
+			background = {
+				texture = "gfx/interface/tooltip/tooltip_title_bg.dds"
+				color = "[PowerBloc.GetPrimaryColor]"
+
+				modify_texture = {
+					using = simple_frame_mask
+				}
+			}
+
+			### ADDS POWER BLOC TEXTURE ON BAR
+			background = {
+				using = simple_header_colored
+				texture = "[PowerBloc.GetMapTexture]"
+				color = "[PowerBloc.GetPrimaryColor]"
+				spriteType = Corneredtiled
+			    spriteborder = { 0 0 }
+				texture_density = 5
+
+				modify_texture = {
+					using = simple_frame_mask
+				}
+			}
+
+			### ADDS LIGHTER COLOR ON TOP
+			background = {
+				using = entry_bg_simple_colored
+				color = "[PowerBloc.GetPrimaryColor]"
+			}
+		}
+
+		blockoverride "barchart_item_bg_texture_fade_right" {}
+
+		blockoverride "barchart_item_icon" {
+			widget = {
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+				min_width = 35
+
+				flowcontainer = {
+					parentanchor = center
+					spacing = 5
+
+					icon = {
+						size = { 35 35 }
+						parentanchor = vcenter
+
+						### HIGHLIGHT
+						icon = {
+							parentanchor = center
+							size = { 150% 150% }
+							using = rotate_glow_animation
+							alpha = 0.5
+							
+							block "barchart_highlight_visibility" {
+								visible = "[GreaterThan_CFixedPoint(Country.GetLeverageAdvantage(PowerBloc.Self), '(CFixedPoint)0')]"
+							}
+						}
+
+						### POWER BLOC EMBLEM
+						power_bloc_icon_small = {
+							size = { 100% 100% }
+						}
+					}
+				}
+
+				icon = {
+					using = highlighted_square_selection
+
+					block "barchart_highlight_visibility" {
+						visible = "[GreaterThan_CFixedPoint(Country.GetLeverageAdvantage(PowerBloc.Self), '(CFixedPoint)0')]"
+					}
+				}
+			}
+		}
+	}
+
+	type leverage_target_stacked_barchart = leverage_stacked_barchart {
+		blockoverride "country_bar_stretchfactor" {
+			# This is what is actually setting the size of the country bar
+			layoutstretchfactor_horizontal = "[FixedPointToInt(Multiply_CFixedPoint(Country.GetUnclaimedLeverageShareTarget, '(CFixedPoint)100'))]"
+		}
+
+		blockoverride "country_bar_tooltip" {
+			tooltip = "COUNTRY_TARGET_UNCLAIMED_LEVERAGE_BAR_TOOLTIP"
+		}
+
+		blockoverride "country_highlight_visibility" {
+			visible = "[Country.HasHigherUnclaimedLeverageTarget]"
+		}
+
+		blockoverride "barchart_item_visibility" {
+			visible = "[GreaterThan_CFixedPoint(Country.GetTargetLeverageShare(PowerBloc.Self), '(CFixedPoint)0')]"
+		}
+
+		blockoverride "barchart_highlight_visibility" {
+			visible = "[GreaterThan_CFixedPoint(Country.GetLeverageAdvantageTarget(PowerBloc.Self), '(CFixedPoint)0')]"
+		}
+
+		blockoverride "power_blocs_item_tooltip" {
+			tooltip = "POWER_BLOC_TARGET_LEVERAGE_BAR_TOOLTIP"
+		}
+
+		blockoverride "power_blocs_total_stretchfactor" {
+			layoutstretchfactor_horizontal = "[FixedPointToInt(Multiply_CFixedPoint(Subtract_CFixedPoint('(CFixedPoint)1', Country.GetUnclaimedLeverageShareTarget), '(CFixedPoint)100'))]"
+		}
+
+		blockoverride "power_blocs_datamodel" {
+			datamodel = "[Country.GetPowerBlocsWithLeverage]"
+		}
+
+		blockoverride "power_blocs_item_stretchfactor" {
+			layoutstretchfactor_horizontal = "[FixedPointToInt(Multiply_CFixedPoint(Country.GetTargetLeverageShare( PowerBloc.Self ), '(CFixedPoint)100'))]"
+		}
+
+	}
+
+	type power_bloc_member_item = flowcontainer {
+		direction = vertical
+
+		background = {
+			visible = "[Country.IsLocalPlayer]"
+			using = fade_left_simple
+			texture = "gfx/interface/backgrounds/fancy_pattern_2.dds"
+			color = "[Country.GetMapColor]"
+			using = frame_small_mask
+			alpha = 0.5
+		}
+
+		using = entry_bg_fancy
+
+		# Name header
+		container = {
+			minimumsize = { @panel_width_minus_10 38 }
+
+			background = {
+				using = fade_top_entry_header_colored
+				color = "[Country.GetMapColor]"
+			}
+
+			flowcontainer = {
+				position = { 30 2 }
+				parentanchor = vcenter
+				spacing = 5
+
+				textbox = {
+					parentanchor = vcenter
+					multiline = yes
+					autoresize = yes
+					align = nobaseline
+					elide = right
+					fontsize_min = 12
+					max_width = 250
+					text = "POWER_BLOC_MEMBER_COUNTRY_NAME"
+				}
+
+				button_icon_goto = {
+					size = { 28 28 }
+					tooltip = "GO_TO_BUTTON_COUNTRY"
+					onclick = "[InformationPanelBar.OpenCountryPanelTab( Country.Self, 'default' )]"
+				}
+			}
+
+			flowcontainer = {
+				position = { -8 2 }
+				parentanchor = right|vcenter
+				spacing = 5
+
+				# Power Struggling status
+				textbox = {
+					visible = "[Country.IsPowerStruggling]"
+					parentanchor = vcenter
+					autoresize = yes
+					align = nobaseline
+					elide = right
+					fontsize_min = 12
+					max_width = 200
+					text = "COUNTRY_POWER_BLOC_POWER_STRUGGLE_STATUS"
+				}
+
+				# Zoom-to button
+				widget = {
+					parentanchor = vcenter
+					size = { 28 28 }
+
+					button_icon_zoom = {
+						size = { 100% 100% }
+
+						block "goto_properties" {
+							onclick = "[Country.AccessCapital.ZoomToCapital]"
+							tooltip = "ZOOM_TO_COUNTRY_CAPITAL"
+				 			enabled = "[Not( Country.GetCapital.IsZoomingToCapital )]"
+						}
+					}
+				}
+
+				# Button to remove the member from the power bloc
+				button_icon_round_action = {
+					visible = "[PowerBloc.IsLeader(GetPlayer.Self)]"
+					parentanchor = vcenter
+					size = { 28 28 }
+					onclick = "[PopupManager.AskConfirmation(PowerBloc.Kick(Country.Self))]"
+					enabled = "[IsValid(PowerBloc.Kick(Country.Self))]"
+					tooltip = "POWER_BLOC_KICK_MEMBER_TOOLTIP"
+
+					blockoverride "icon" {
+						texture = "gfx/interface/buttons/button_icons/kick_out.dds"
+					}
+
+					blockoverride "icon_size" {
+						size = { 90% 90% }
+					}
+				}
+			}
+
+			rank_badge = {
+				size = { 45 45 }
+				position = { -15 -15 }
+
+				blockoverride "datacontext " {}
+
+				blockoverride "font_size_under_100_rank" {
+					using = fontsize_medium
+				}
+			}
+		}
+
+		widget = {
+			parentanchor = hcenter
+			size = { 500 90 }
+
+			fancy_flag_ui = {
+				parentanchor = vcenter
+				size = { 80 60 }
+
+				blockoverride "overlay_button_and_bg_glow_position" {
+					position = { -9 -4 }
+				}
+
+				blockoverride "rank_badge_block" {}
+			}
+
+			flowcontainer = {
+				parentanchor = vcenter
+				position = { 100 0 }
+				direction = vertical
+				spacing = 7
+
+				flowcontainer = {
+					parentanchor = hcenter
+					spacing = @grid_spacing
+
+					### PRESTIGE
+					header_grid_item = {
+						using = tooltip_se
+						tooltip = "COUNTRY_PRESTIGE_BREAKDOWN"
+
+						blockoverride "text" {
+							raw_text = "#v [Country.GetPrestige]#!"
+						}
+
+						blockoverride "icon" {
+							raw_text = "@prestige!"
+						}
+					}
+
+					### TOTAL GDP
+					header_grid_item = {
+						using = tooltip_se
+						using = GDP_tooltip_with_graph
+
+						blockoverride "text" {
+							raw_text = "[SelectLocalization(LessThan_CFixedPoint(Country.MakeScope.ScriptValue('cwp_gdp'), '(CFixedPoint)1000000000000'), 'CWP_NORMAL', 'CWP_TRILLION')]#!"
+						}
+
+						blockoverride "icon" {
+							raw_text = "#v [GetPlayer.MakeScope.Var('cwp_currency').GetFlagName]"
+						}
+					}
+
+					### TOTAL NUMBER OF BATTALIONS
+					header_grid_item = {
+						using = tooltip_se
+						tooltip = "PANEL_MILITARY_ARMY_OVERVIEW_TOOLTIP"
+
+						blockoverride "text" {
+							raw_text = "[Country.GetRegularBattalions|v] + [Country.CalcConscriptableBattalions|v]"
+						}
+
+						blockoverride "icon" {
+							raw_text = "@battalions!"
+						}
+					}
+
+				}
+
+				flowcontainer = {
+					spacing = @grid_spacing
+					parentanchor = hcenter
+
+					### LEVERAGE ON THE MEMBER COUNTRY
+					header_grid_item = {
+						using = tooltip_se
+
+						tooltipwidget = {
+							RegularTooltip_Leverage = {
+								blockoverride "has_power_bloc_context_visibility" {
+									visible = yes
+								}
+							}
+						}
+
+						blockoverride "text" {
+							raw_text = "#v [PowerBloc.GetLeverageAdvantage(Country.Self)|0=+]#!"
+						}
+
+						blockoverride "icon" {
+							raw_text = "@leverage!"
+						}
+					}
+
+					### INFAMY
+					header_grid_item = {
+						using = tooltip_se
+						tooltip = "[Country.GetInfamyDesc]"
+
+						blockoverride "text" {
+							raw_text = "#v [Country.GetInfamy|1-]#!"
+						}
+
+						blockoverride "whole_icon" {
+							icon = {
+								size = { 30 30 }
+								position = { -10 0 }
+								texture = "[Country.GetInfamyIconTexture]"
+							}
+						}
+					}
+
+					### TOTAL NUMBER OF FLOTILLAS
+					header_grid_item = {
+						using = tooltip_se
+						tooltip = "PANEL_MILITARY_NAVY_CURRENT_FLOTILLAS_TOOLTIP"
+
+						blockoverride "text" {
+							raw_text = "#v [Country.GetWarships|0]#!"
+						}
+
+						blockoverride "icon" {
+							raw_text = "@flotillas!"
+						}
+					}
+				}
+			}
+
+			flowcontainer = {
+				visible = "[And(PowerBloc.GetLeader.IsLocalPlayer, Not(Country.IsLocalPlayer))]"
+				parentanchor = right|vcenter
+				spacing = 10
+
+				flowcontainer = {
+					direction = vertical
+					parentanchor = vcenter
+
+					### OVERLORD ACTIONS
+					diplo_actions_button = {
+						visible = "[Country.IsSubjectOf(GetPlayer.Self)]"
+						size = { 35 35 }
+
+						blockoverride "onclick" {
+							onclick = "[RightClickMenuManager.ToggleOverlordActions(Country.AccessSelf, PdxGuiWidget.AccessSelf)]"
+						}
+
+						blockoverride "tooltip" {
+							tooltip = "OVERLORD_ACTIONS_BUTTON_TOOLTIP"
+						}
+
+						blockoverride "icon_texture" {
+							texture = "gfx/interface/buttons/button_icons/overlord_interaction.dds"
+						}
+
+						blockoverride "available_number_text" {
+							text = "[GetDataModelSize(Country.GetAvailableOverlordDiploActions)|+]"
+						}
+					}
+
+					### SUBJECT ACTIONS
+					diplo_actions_button = {
+						visible = "[GetPlayer.IsSubjectOf(Country.Self)]"
+						size = { 35 35 }
+					}
+
+					### BLOC LEADER ACTIONS
+					diplo_actions_button = {
+						visible = "[Not(IsDataModelEmpty(Country.GetAllPowerBlocLeaderDiploActions))]"
+						size = { 35 35 }
+
+						blockoverride "onclick" {
+							onclick = "[RightClickMenuManager.ToggleBlocLeaderActions(Country.AccessSelf, PdxGuiWidget.AccessSelf)]"
+						}
+
+						blockoverride "tooltip" {
+							tooltip = "BLOC_LEADER_ACTIONS_BUTTON_TOOLTIP"
+						}
+
+						blockoverride "icon_texture" {
+							texture = "gfx/interface/buttons/button_icons/bloc_interaction.dds"
+						}
+
+						blockoverride "available_number_text" {
+							text = "[GetDataModelSize(Country.GetAvailablePowerBlocLeaderDiploActions)|+]"
+						}
+					}
+
+					### BLOC MEMBER ACTIONS
+					diplo_actions_button = {
+						visible = "[And(Not(IsDataModelEmpty(Country.GetAllPowerBlocMemberDiploActions)), IsDataModelEmpty(Country.GetAllPowerBlocLeaderDiploActions))]"
+						size = { 35 35 }
+
+						blockoverride "onclick" {
+							onclick = "[RightClickMenuManager.ToggleBlocActions(Country.AccessSelf, PdxGuiWidget.AccessSelf)]"
+						}
+
+						blockoverride "tooltip" {
+							tooltip = "BLOC_ACTIONS_BUTTON_TOOLTIP"
+						}
+
+						blockoverride "icon_texture" {
+							texture = "gfx/interface/buttons/button_icons/bloc_interaction.dds"
+						}
+
+						blockoverride "available_number_text" {
+							text = "[GetDataModelSize(Country.GetAvailablePowerBlocMemberDiploActions)|+]"
+						}
+					}
+				}
+			}
+		}
+	}
+
+	### COHESION BAR
+	type power_blocs_cohesion_item = flowcontainer {
+		parentanchor = center
+		spacing = 20
+
+		widget = {
+			size = { 25 25 }
+		}
+
+		widget = {
+			minimumsize = { 350 15 }
+			parentanchor = vcenter
+
+			levels_progressbar = {
+				datamodel = "[GetCohesionLevels]"
+				position = { 0 2 }
+				
+				blockoverride "item_properties" {
+					layoutstretchfactor_horizontal = "[FixedPointToInt(CohesionLevel.GetWidth)]"
+					tooltip = "[SelectLocalization( CohesionLevel.IsActive( PowerBloc.GetCohesion ), 'COHESION_LEVEL_ACTIVE_TOOLTIP', 'COHESION_LEVEL_INACTIVE_TOOLTIP' )]"
+				}
+
+				blockoverride "level_active" {
+					visible = "[CohesionLevel.IsActive( PowerBloc.GetCohesion )]"
+				}
+
+				blockoverride "last_level" {
+					visible = "[Not(EqualTo_CFixedPoint(CohesionLevel.GetUpperBound,GetDefine('NPowerBlocs','COHESION_TARGET_MAX')))]"
+				}
+				
+				blockoverride "default_progressbar_value" {
+					value = "[CohesionLevel.GetProgress( PowerBloc.GetCohesion )]"
+				}
+			}		
+		}
+
+		flowcontainer = {
+			direction = vertical
+			parentanchor = vcenter
+			minimumsize = { 50 40 }
+			maximumsize = { 80 65 }
+			datacontext = "[PowerBloc.GetCohesionLevel]"
+			tooltip = "COHESION_LEVEL_ACTIVE_TOOLTIP"
+
+			textbox = {
+				align = nobaseline
+				parentanchor = hcenter
+				text = "POWER_BLOC_COHESION"
+				autoresize = yes
+				elide = right
+			}
+
+			flowcontainer = {
+				spacing = 2
+				parentanchor = hcenter
+
+				icon = {
+					size = { 25 25 }
+					texture = "gfx/interface/icons/generic_icons/cohesion.dds"
+				}
+
+				textbox = {
+					align = nobaseline
+					parentanchor = vcenter
+					raw_text = "[PowerBloc.GetCohesion|v0]"
+					autoresize = yes
+					elide = right
+				}
+			}
+		}
+	}
+
+	### IDENTITY ICON
+	type power_bloc_identity_icon = icon {
+		size = { 120 120 }
+		texture = "gfx/interface/backgrounds/round_frame_dec.dds"
+
+		block "tooltip" {
+			tooltipwidget = {
+				FancyTooltip_PowerBlocIdentity = {}
+			}
+		}
+		
+		icon = {
+			size = { 70% 70% }
+			parentanchor = vcenter|hcenter
+
+			block "texture" {
+				texture = "[PowerBlocIdentity.GetIcon]"
+			}
+		}
+	}
+
+	### PRINCIPLES ICON + TIER BACKGROUND
+	type principle_icon_with_bg = icon {
+		size = { 100 100 }
+		texture = "[PowerBlocPrinciple.GetBackground]"
+
+		principle_icon = {
+			size = { 100% 100% }
+		}
+	}
+
+	### PRINCIPLES ICON
+	type principle_icon = icon {
+		size = { 100 100 }
+		texture = "[PowerBlocPrinciple.GetIcon]"
+
+		icon = {
+			visible = "[IsValid(PowerBlocPrinciple.UpgradeToNextLevel)]"
+			size = { 25 25 }
+			parentanchor = right|bottom
+			position = { 10 3 }
+			texture = "gfx/interface/icons/generic_icons/upgrade_arrow.dds"
+		}
+	}
+
+	### PRINCIPLE SLOTS
+	type active_principle_slot = widget {
+		allow_outside = yes
+
+		state = {
+			name = _show
+			on_start = "[PdxGuiWidget.FindChild('principle_icon_with_bg').TriggerAnimation('1')]"
+
+			block "icon_animation_triggers" {
+				trigger_when = "[PowerBlocPrincipleSlot.IsChangingPrinciple]" # Is toggled on when the selected principle is changed in the slot
+				on_finish = "[PowerBlocPrincipleSlot.OnAnimationFinished]" # Toggle off [PowerBlocPrincipleSlot.IsChangingPrinciple]
+			}
+		}
+
+		block "slot_size" {
+			size = { 190 50 }
+		}
+
+		button = {
+			using = default_button
+			allow_outside = yes
+			size = { 100% 100% }
+
+			block "onclick" {
+				onclick = "[PowerBlocPanel.ToggleSelectionWindow(PowerBlocPrincipleSlot.AccessSelf)]"
+			}
+
+			block "tooltip_alignment" {}
+
+			block "tooltip" {
+				tooltipwidget = {
+					FancyTooltip_PowerBlocPrincipleSlot = {}
+				}
+			}
+
+			flowcontainer = {
+				parentanchor = vcenter
+				spacing = 5
+
+				widget = {
+					size = { 55 55 }
+					parentanchor = vcenter
+
+					principle_icon_with_bg = {
+						name = principle_icon_with_bg
+						size = { 100% 100% }	
+						parentanchor = center
+						state = {
+							name = 1
+							next = 2
+							#alpha = 1 
+							scale = 4
+						}
+
+						state = {
+							name = 2
+							next = 3
+							duration = 0.15
+							#alpha = 1
+							scale = 0.65
+							using = Animation_Curve_Default
+						}
+
+						state = {
+							name = 3
+							scale = 1
+							duration = 0.2
+							using = Animation_Curve_Default
+						}
+					}
+				}
+
+				textbox = {
+					text = "[PowerBlocPrinciple.GetNameNoFormatting]"
+					align = nobaseline
+					parentanchor = vcenter
+					autoresize = yes
+					fontsize_min = 12
+					elide = right
+
+					block "name_max_width" {
+						max_width = 120
+					}
+				}
+			}
+
+		}
+
+		### REMOVE PRINCIPLE BUTTON
+		button_icon_round_action = {
+			size = { 25 25 }
+			position = { -10 -10 }
+			tooltip = "REMOVE_PRINCIPLE"
+			using = tooltip_above
+			allow_outside = yes
+
+			block "remove_button_properties" {}
+
+			block "remove_button_visibility" {
+				visible = no
+			}
+
+			blockoverride "icon" {
+				texture = "gfx/interface/buttons/button_icons/close.dds"
+			}
+
+			blockoverride "icon_size" {
+				size = { 100% 100% }
+			}
+		}
+	}
+
+	type new_principle_slot = button {
+		using = default_button
+
+		block "onclick" {
+			onclick = "[PowerBlocPanel.ToggleSelectionWindow(PowerBlocPrincipleSlot.AccessSelf)]"
+			enabled = "[GreaterThan_int32(PowerBloc.GetNumMandates, '(int32)0')]"
+		}
+
+		block "slot_tooltip" {
+			tooltip = "ADD_NEW_PRINCIPLE_TOOLTIP"
+		}
+		
+		block "tooltip_alignment" {}
+
+		block "slot_size" {
+			size = { 190 50 }
+		}
+
+		icon = {
+			size = { 55 55 }
+			parentanchor = vcenter
+			texture = "gfx/interface/buttons/button_icons/plus.dds"
+		}
+
+		textbox = {
+			align = nobaseline
+			parentanchor = vcenter
+			position = { 60 0 }
+			autoresize = yes
+			fontsize_min = 12
+			elide = right
+
+			block "slot_text" {
+				text = "ADD_NEW_PRINCIPLE"
+			}
+
+			block "name_max_width" {
+				max_width = 120
+			}
+		}
+	}
+
+	type unlocked_new_principle_slot = widget {
+		alpha = 0.7
+		tooltip = "TOOLTIP_NO_PRINCIPLE_SLOT"
+		block "tooltip_alignment" {}
+
+		block "slot_size" {
+			size = { 190 50 }
+		}
+
+		block "slot_tootlip" {
+			tooltip = "TOOLTIP_NO_PRINCIPLE_SLOT"
+		}
+
+		background = {
+			using = entry_bg
+			margin = { 2 2 }
+		}
+
+		icon = {
+			size = { 55 55 }
+			parentanchor = vcenter
+			texture = "gfx/interface/buttons/button_icons/unlock.dds"
+		}
+
+		textbox = {
+			text = "NO_NEW_PRINCIPLE"
+			align = nobaseline
+			parentanchor = vcenter
+			position = { 60 0 }
+			autoresize = yes
+			fontsize_min = 12
+			elide = right
+
+			block "name_max_width" {
+				max_width = 120
+			}
+		}
+	}
+
+	type locked_principle_slot = widget {
+		alpha = 0.7
+		tooltip = "TOOLTIP_LOCKED_PRINCIPLE_SLOT"
+		block "tooltip_alignment" {}
+
+		block "slot_size" {
+			size = { 190 50 }
+		}
+
+		block "slot_tooltip" {
+			tooltip = "TOOLTIP_LOCKED_PRINCIPLE_SLOT"
+		}
+
+		background = {
+			using = entry_bg_simple
+		}
+
+		icon = {
+			size = { 55 55 }
+			parentanchor = vcenter
+			texture = "gfx/interface/buttons/button_icons/lock.dds"
+		}
+
+		textbox = {
+			text = "LOCKED_PRINCIPLE_SLOT"
+			align = nobaseline
+			parentanchor = vcenter
+			position = { 60 0 }
+			autoresize = yes
+			fontsize_min = 12
+			elide = right
+
+			block "name_max_width" {
+				max_width = 120
+			}
+		}
+	}
+
+	type locked_active_principle_slot = widget {
+		block "tooltip" {
+			tooltipwidget = {
+				FancyTooltip_PowerBlocPrincipleSlot = {
+					blockoverride "text_before" {
+						text = "TOOLTIP_ACTIVE_PRINCIPLE_SLOT_MEMBER"
+						margin_bottom = 15
+					}
+					
+					# Hide if locked
+					blockoverride "upgrade_text" {}
+
+					# Hide if locked
+					blockoverride "click_text" {}
+				}
+			}
+		}
+
+		block "tooltip_alignment" {}
+
+		block "slot_size" {
+			size = { 190 50 }
+		}
+
+		background = {
+			using = entry_bg_simple
+		}
+
+		flowcontainer = {
+			parentanchor = vcenter
+			spacing = 10
+
+			principle_icon_with_bg = {
+				size = { 55 55 }
+				parentanchor = vcenter
+			}
+
+			textbox = {
+				text = "[PowerBlocPrinciple.GetNameNoFormatting]"
+				align = nobaseline
+				parentanchor = vcenter
+				autoresize = yes
+				fontsize_min = 12
+				elide = right
+				margin_right = 4
+
+				block "name_max_width" {
+					max_width = 125
+				}
+			}
+		}
+	}
+
+	type principle_slot = container {
+		# ACTIVE PRINCIPLE SLOT - LEADER - INTERACTABLE
+		active_principle_slot = {
+			visible = "[And(PowerBloc.IsLeader(GetPlayer.Self), PowerBlocPrincipleSlot.IsActive)]"
+			datacontext = "[PowerBlocPrincipleSlot.GetPrinciple]" # needed by principle_icon
+
+			blockoverride "tooltip" {
+				tooltipwidget = {
+					FancyTooltip_PowerBlocPrincipleSlot = {
+						blockoverride "principle_group_info" {
+							custom_tooltip_textbox_with_empty_line = {
+								visible = "[Not(PowerBlocPrinciple.GetGroup.IsPrimaryFor(PowerBloc.GetIdentity.Self))]"
+								datacontext = "[PowerBlocPrinciple.GetGroup]"
+								text = "DATA_PRINCIPLE_GROUP_ENTRY"
+							}
+
+							custom_tooltip_textbox_with_empty_line = {
+								visible = "[PowerBlocPrinciple.GetGroup.IsPrimaryFor(PowerBloc.GetIdentity.Self)]"
+								datacontext = "[PowerBloc.GetIdentity]"
+								datacontext = "[PowerBlocPrinciple.GetGroup]"
+								text = "DATA_PRIMARY_PRINCIPLE_GROUP_ENTRY_ACTIVE"
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		# ACTIVE PRINCIPLE SLOT - MEMBER OR OUTSIDER - NOT INTERACTABLE
+		locked_active_principle_slot = {
+			visible = "[And(Not(PowerBloc.IsLeader(GetPlayer.Self)), PowerBlocPrincipleSlot.IsActive)]"
+			datacontext = "[PowerBlocPrincipleSlot.GetPrinciple]" # needed by principle_icon
+
+			blockoverride "tooltip" {
+				tooltipwidget = {
+					FancyTooltip_PowerBlocPrincipleSlot = {
+						blockoverride "principle_group_info" {
+							custom_tooltip_textbox_with_empty_line = {
+								visible = "[Not(PowerBlocPrinciple.GetGroup.IsPrimaryFor(PowerBloc.GetIdentity.Self))]"
+								datacontext = "[PowerBlocPrinciple.GetGroup]"
+								text = "DATA_PRINCIPLE_GROUP_ENTRY"
+							}
+
+							custom_tooltip_textbox_with_empty_line = {
+								visible = "[PowerBlocPrinciple.GetGroup.IsPrimaryFor(PowerBloc.GetIdentity.Self)]"
+								datacontext = "[PowerBloc.GetIdentity]"
+								datacontext = "[PowerBlocPrinciple.GetGroup]"
+								text = "DATA_PRIMARY_PRINCIPLE_GROUP_ENTRY_ACTIVE"
+							}
+						}
+
+						# Hide if locked
+						blockoverride "upgrade_text" {}
+
+						# Hide if locked
+						blockoverride "click_text" {}
+					}
+				}
+			}
+		}
+
+		# NEXT PRINCIPLE SLOT
+		new_principle_slot = {
+			visible = "[And(And(PowerBloc.IsLeader(GetPlayer.Self), PowerBlocPrincipleSlot.IsNext), PowerBlocPrincipleSlot.IsUnlocked)]"
+		}
+
+		# UNLOCKED EMPTY PRINCIPLE SLOT
+		unlocked_new_principle_slot = {
+			visible = "[And(And(Or(Not(PowerBlocPrincipleSlot.IsNext), Not(PowerBloc.IsLeader(GetPlayer.Self))), PowerBlocPrincipleSlot.IsUnlocked), Not(PowerBlocPrincipleSlot.IsActive))]"
+		}
+
+		# LOCKED PRINCIPLE SLOT
+		locked_principle_slot = {
+			visible = "[And(Not(PowerBlocPrincipleSlot.IsUnlocked), Not(PowerBlocPrincipleSlot.IsActive))]"
+		}
+	}
+
+	# PRINCIPLE SLOT FOR THE FORMATION PANEL
+	type principle_slot_formation = container {
+		allow_outside = yes
+		
+		# ACTIVE PRINCIPLE SLOT
+		active_principle_slot = {
+			visible = "[And(PowerBlocFormationPrincipleSlot.IsActive, PowerBlocFormationPrincipleSlot.IsUnlocked)]"
+			datacontext = "[PowerBlocFormationPrincipleSlot.GetSelectedPrinciple]" # needed by principle_icon
+
+			blockoverride "icon_animation_triggers" {
+				trigger_when = "[PowerBlocFormationPrincipleSlot.IsChangingPrinciple]" # Is toggled on in [PowerBlocPrincipleSelectionWindow.SubmitFormationPrincipleSelection]
+				on_finish = "[PowerBlocFormationPrincipleSlot.OnAnimationFinished]" # Toggle off [PowerBlocFormationPrincipleSlot.IsChangingPrinciple]
+			}
+
+			blockoverride "onclick" {
+				onclick = "[PowerBlocPanel.ToggleFormationSelectionWindow(PowerBlocFormationPrincipleSlot.AccessSelf)]"
+			}
+
+			blockoverride "slot_size" {
+				size = { 250 50 }
+			}
+
+			blockoverride "name_max_width" {
+				max_width = 175
+			}
+
+			blockoverride "remove_button_visibility" {
+				visible = yes
+			}
+
+			blockoverride "remove_button_properties" {
+				onclick = "[PowerBlocFormationPrincipleSlot.RemovePrinciple]"
+			}
+
+			blockoverride "tooltip" {
+				tooltipwidget = {
+					FancyTooltip_PowerBlocPrincipleSlot = {
+						blockoverride "text_before" {
+							visible = "[PowerBlocFormation.HasSelectedPrinciple(PowerBlocPrinciple.Self)]"
+							text = "POWER_BLOC_FORMATION_HAS_THIS_PRINCIPLE"
+							margin_bottom = 15
+						}
+
+						blockoverride "principle_group_info" {
+							custom_tooltip_textbox_with_empty_line = {
+								visible = "[Not(PowerBlocPrinciple.GetGroup.IsPrimaryFor(PowerBlocFormation.GetSelectedIdentity.Self))]"
+								datacontext = "[PowerBlocPrinciple.GetGroup]"
+								text = "DATA_PRINCIPLE_GROUP_ENTRY"
+							}
+
+							custom_tooltip_textbox_with_empty_line = {
+								visible = "[PowerBlocPrinciple.GetGroup.IsPrimaryFor(PowerBlocFormation.GetSelectedIdentity.Self)]"
+								datacontext = "[PowerBlocFormation.GetSelectedIdentity]"
+								datacontext = "[PowerBlocPrinciple.GetGroup]"
+								text = "DATA_PRIMARY_PRINCIPLE_GROUP_ENTRY_FORMATION"
+							}
+						}
+					}
+				}
+			}
+		}
+
+		# NEXT PRINCIPLE SLOT
+		new_principle_slot = {
+			visible = "[And(PowerBlocFormationPrincipleSlot.IsNext, PowerBlocFormationPrincipleSlot.IsUnlocked)]"
+
+			blockoverride "onclick" {
+				onclick = "[PowerBlocPanel.ToggleFormationSelectionWindow(PowerBlocFormationPrincipleSlot.AccessSelf)]"
+				enabled = "[GreaterThan_int32(PowerBlocFormation.GetPrinciplePointsRemainingRaw, '(int32)0')]"
+			}
+
+			blockoverride "slot_tooltip" {
+				tooltip = "ADD_NEW_PRINCIPLE_DURING_FORMATION_TOOLTIP"
+			}
+
+			blockoverride "slot_size" {
+				size = { 250 50 }
+			}
+
+			blockoverride "name_max_width" {
+				max_width = 175
+			}
+		}
+
+		# UNLOCKED EMPTY PRINCIPLE SLOT
+		unlocked_new_principle_slot = {
+			visible = "[And( Not(PowerBlocFormationPrincipleSlot.IsActive), And( Not(PowerBlocFormationPrincipleSlot.IsNext), PowerBlocFormationPrincipleSlot.IsUnlocked ) )]"
+			datacontext = "[PowerBlocFormationPrincipleSlot.GetSelectedPrinciple]" # needed by principle_icon
+
+			blockoverride "slot_tootlip" {
+				tooltip = "TOOLTIP_NO_PRINCIPLE_SLOT_LEADER"
+			}
+
+			blockoverride "slot_size" {
+				size = { 250 50 }
+			}
+
+			blockoverride "name_max_width" {
+				max_width = 175
+			}
+		}
+
+		# LOCKED PRINCIPLE SLOT
+		locked_principle_slot = {
+			visible = "[And( Not(PowerBlocFormationPrincipleSlot.IsActive), And( Not(PowerBlocFormationPrincipleSlot.IsNext), Not(PowerBlocFormationPrincipleSlot.IsUnlocked ) ) )]"
+
+			blockoverride "slot_tooltip" {
+				block "locked_slot_tooltip" {
+					tooltip = "TOOLTIP_LOCKED_PRINCIPLE_SLOT_DURING_FORMATION"
+				}
+			}
+
+			blockoverride "slot_size" {
+				size = { 250 50 }
+			}
+
+			blockoverride "name_max_width" {
+				max_width = 175
+			}
+		}
+	}
+
+	type power_bloc_debug_info = flowcontainer {
+		direction = vertical
+		spacing = 5
+
+		debug_text = {
+			raw_text = "Name: [PowerBloc.GetName]"
+		}
+
+		debug_text = {
+			raw_text = "Leader: [PowerBloc.GetLeader.GetName]"
+		}
+
+		debug_text = {
+			raw_text = "Status: [Select_CString( PowerBloc.IsActive, 'Active', 'Inactive' )]"
+		}
+
+		debug_text = {
+			raw_text = "Members:"
+		}
+
+		dynamicgridbox = {
+			datamodel_wrap = 3
+			flipdirection = yes
+			datamodel = "[PowerBloc.GetMembers]"
+
+			item = {
+				flowcontainer = {
+					margin = { 5 2 }
+
+					debug_text = {
+						max_width = 170
+						elide = right
+						fontsize_min = 12
+						raw_text = "[Country.GetName]"
+					}
+				}
+			}
+		}
+
+		debug_text = {
+            raw_text = "Power Bloc Coat of Arms Large:"
+        }
+
+		power_bloc_icon_large = {
+            parentanchor = hcenter
+        }
+
+        debug_text = {
+            raw_text = "Power Bloc Coat of Arms Medium:"
+        }
+
+        power_bloc_icon = {
+            parentanchor = hcenter
+        }
+	}
+}
+
+types principle_selection 
+{
+	type principle_group = widget {
+		size = { 360 170 }
+
+		textbox = {
+			position = { 15 6 }
+			autoresize = yes
+			align = nobaseline
+			max_width = 330
+			elide = right
+			fontsize_min = 14
+			text = "PRINCIPLE_GROUP_NAME_LABEL"
+		}
+
+		widget = {
+			parentanchor = center
+			size = { 340 130 }
+			position = { 0 10 }
+
+			background = {
+				using = entry_bg_simple
+				using = dark_area
+			}
+
+			flowcontainer = {
+				parentanchor = center
+				datamodel = "[PowerBlocPrincipleGroup.GetLevels]"
+				spacing = 2
+
+				item = {
+					principle = {}
+				}
+			}
+		}
+	}
+
+	type principle = widget {
+		size = { 100 100 }
+		using = tooltip_se
+
+		tooltipwidget = {
+			FancyTooltip_PowerBlocPrincipleSelection = {}
+		}
+
+		widget = {
+			size = { 100% 100% }
+
+			block "active_visibility" {
+				visible = "[PowerBlocPrincipleSelectionWindow.IsReplacedPrinciple(PowerBlocPrinciple.Self)]"
+			}
+
+			background = {
+				using = paper_bg
+			}
+
+			### ACTIVE HIGHLIGHT
+			icon = {
+				size = { 100% 100% }
+				using = highlighted_active_square_selection
+			}
+
+			principle_icon_with_bg = {
+				parentanchor = center
+				size = { 75% 75% }
+			}
+		}
+
+		button_icon_square = {
+			size = { 100% 100% }
+
+			block "onclick" {
+				onclick = "[PowerBlocPrincipleSelectionWindow.TogglePrincipleSelection(PowerBlocPrinciple.Self)]"
+				using = principles_button_shimmer_click_sound
+			}
+
+			block "button_visibility" {
+				visible = "[Not(PowerBlocPrincipleSelectionWindow.IsReplacedPrinciple(PowerBlocPrinciple.Self))]"
+			}
+
+			block "principle_enabled" {
+				enabled = "[And(PowerBlocPrincipleSelectionWindow.CanSelectPrinciple(PowerBlocPrinciple.Self), PowerBlocPrincipleSelectionWindow.CanAffordPrinciple(PowerBlocPrinciple.Self))]"
+			}
+
+			### PRINCIPLE ICON
+			blockoverride "icon" {
+				block "alpha" {}
+				principle_icon_with_bg = {
+					size = { 100% 100% }
+				}
+			}
+
+			blockoverride "icon_size" {
+				size = { 75% 75% }
+			}
+			
+			### SELECTED GLOW
+			blockoverride = "highlight_glow" {
+				icon = {
+					block "selected_highlight_visibility" {
+						visible = "[PowerBlocPrincipleSelectionWindow.IsSelectedPrinciple(PowerBlocPrinciple.Self)]"
+					}
+
+					parentanchor = center
+					size = { 250% 250% }
+					using = rotate_glow_animation_02_with_sound
+				}
+			}
+
+			### SELECTED HIGHLIGHT
+			icon = {
+				block "selected_highlight_visibility" {
+					visible = "[PowerBlocPrincipleSelectionWindow.IsSelectedPrinciple(PowerBlocPrinciple.Self)]"
+				}
+
+				size = { 100% 100% }
+				using = highlighted_selected_square_selection
+			}
+
+			### LOCK ICON
+			icon = {
+				block "lock_visibility" {
+					visible = "[Not(PowerBlocPrincipleSelectionWindow.CanSelectPrinciple(PowerBlocPrinciple.Self))]"
+				}
+
+				parentanchor = center
+				size = { 60% 60% }
+				texture = "gfx/interface/buttons/button_icons/lock.dds"
+			}
+		}
+
+		### CAN NOT AFFORD MANDATES ICON
+		icon = {
+			block "can_not_afford_visibility" {
+				visible = "[And(Not(PowerBlocPrincipleSelectionWindow.CanAffordPrinciple(PowerBlocPrinciple.Self)), PowerBlocPrincipleSelectionWindow.CanSelectPrinciple(PowerBlocPrinciple.Self))]"
+			}
+
+			parentanchor = bottom|right
+			size = { 60% 60% }
+			texture = "gfx/interface/icons/generic_icons/mandate.dds"
+
+			icon = {
+				visible = no
+				parentanchor = bottom|right
+				position = { 0 0 }
+				size = { 55% 55% }
+				texture = "gfx/interface/icons/generic_icons/warning.dds"
+			}
+		}
+	}
+}
+
+template power_bloc_list_item_bg {
+	background = {
+		using = fade_left_simple
+		texture = "[PowerBloc.GetMapTexture]"
+		color = "[PowerBloc.GetPrimaryColor]"
+		alpha = 0.15
+		margin_bottom = -2
+
+		modify_texture = {
+			texture = "gfx/interface/backgrounds/entry_bg_mask.dds"
+			spriteType = Corneredtiled
+			spriteborder = { 12 12 }
+			texture_density = 2
+			blend_mode = alphamultiply
+			mirror = vertical
+		}
+	}
+}

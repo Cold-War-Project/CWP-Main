@@ -1,0 +1,82 @@
+﻿enforce_military_access = {
+	groups = {
+		overlord
+	}
+
+	texture = "gfx/interface/icons/diplomatic_action_icons/enforce_military_access.dds"
+
+	requires_approval = no
+	should_notify_third_parties = yes
+	show_effect_in_tooltip = yes
+	can_use_obligations = no
+
+	possible = {
+		is_at_war = yes
+		NOR = { 
+			is_diplomatic_play_enemy_of = scope:target_country 
+			has_war_with = scope:target_country
+		}
+		any_scope_war = {
+			NOT = { is_war_participant = scope:target_country }
+		}
+	}
+
+	accept_effect = {
+		every_scope_war = {
+			join_war = {
+				target = scope:target_country
+				side = root
+			}
+		}
+
+		if = {
+			limit = {
+				scope:target_country = { 
+					OR = {
+						is_subject_type = subject_type_chartered_company
+						is_subject_type = subject_type_colony
+						is_subject_type = subject_type_puppet
+						is_subject_type = subject_type_vassal
+						is_subject_type = subject_type_dominion
+						is_subject_type = subject_type_personal_union
+					}
+				}
+			}
+			
+			scope:target_country = {
+				add_liberty_desire = 10
+			}			
+		}
+		else = {
+			scope:target_country = {
+				add_liberty_desire = 20
+			}		
+		}
+	}
+
+	ai = {
+		evaluation_chance = {
+			value = 0.0
+			
+			if = {
+				limit = { is_at_war = yes }
+				add = 1.0				
+			}
+		}
+		
+		propose_score = {
+			value = 1000
+		}
+	
+		will_propose = {
+			any_scope_war = {
+				NOT = { is_war_participant = scope:target_country }
+				any_war_participant = {
+					NOT = { this = root }
+					is_adjacent_to_country = scope:target_country
+					NOT = { is_adjacent_to_country = root }
+				}
+			}
+		}
+	}
+}

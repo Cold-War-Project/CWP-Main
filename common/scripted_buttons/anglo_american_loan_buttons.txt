@@ -1,5 +1,4 @@
-﻿# TODO AI
-anglo_american_resume_payment_button = {
+﻿anglo_american_resume_payment_button = {
 	name = "anglo_american_loan_resume_payment"
 	desc = "anglo_american_loan_resume_payment_desc"
 
@@ -7,17 +6,19 @@ anglo_american_resume_payment_button = {
 	
 	#Country scope
 	ai_chance = {
-		base = 100
+		base = 0
 		modifier = {
 			trigger =  {
-				scaled_debt >= 6
+				scaled_debt <= 0.1
+				weekly_net_fixed_income > 0
 			}
-			add = -100
+			add = 100
 		}
 	}
 
-	possible = { 
+	possible = {
 		not = {
+			has_variable = payment_cooldown
 			has_variable = paying_anglo_american_loans
 		}
 	}
@@ -29,6 +30,10 @@ anglo_american_resume_payment_button = {
 			add_modifier = {
 				name = anglo_american_debt_payment
 				multiplier = anglo_american_paid_weekly_TOTAL_GBP
+			}
+			set_variable = {
+				name = payment_cooldown
+				weeks = 3
 			}
 		}
 		c:USA = {
@@ -59,18 +64,28 @@ anglo_american_stop_payment_button = {
 		base = 0
 		modifier = {
 			trigger = {
-				scaled_debt >= 6
+				scaled_debt >= 0
+				weekly_net_fixed_income < 0
 			}
 			add = 100
 		}
 	}
 
-	possible = { has_variable = paying_anglo_american_loans }
+	possible = {
+		NOT = {
+			has_variable = payment_cooldown
+		}
+		has_variable = paying_anglo_american_loans
+	}
 	
 	effect = {
 		c:GBR = {
 			remove_modifier = anglo_american_debt_payment
 			remove_variable = paying_anglo_american_loans
+			set_variable = {
+				name = payment_cooldown
+				weeks = 3
+			}
 		}
 		c:USA = {
 			remove_modifier = anglo_american_loan_payment
@@ -90,10 +105,19 @@ anglo_american_increase_payment_button = {
 	#Country scope
 	ai_chance = {
 		base = 0
-
+		modifier = {
+			trigger =  {
+				scaled_gold_reserves > 0.2
+				weekly_net_fixed_income > 0
+			}
+			add = 100
+		}	
 	}
 
 	possible = {
+		NOT = {
+			has_variable = payment_cooldown
+		}
 		or = {
 			and = {
 				var:anglo_american_loan_payment_percent < 0.05 
@@ -127,6 +151,10 @@ anglo_american_increase_payment_button = {
 						multiplier = anglo_american_paid_weekly_TOTAL_GBP
 					}
 				}
+			}
+			set_variable = {
+				name = payment_cooldown
+				weeks = 3
 			}
 		}
 		if = {
@@ -162,9 +190,21 @@ anglo_american_decrease_payment_button = {
 	#Country scope
 	ai_chance = {
 		base = 0
+		modifier = {
+			trigger = {
+				scaled_gold_reserves < 0.1
+				weekly_net_fixed_income < 0
+			}
+			add = 100
+		}
 	}
 
-	possible = { var:anglo_american_loan_payment_percent > 0.001 }
+	possible = {
+		NOT = {
+			has_variable = payment_cooldown
+		}
+		var:anglo_american_loan_payment_percent > 0.001
+	}
 	
 	effect = {
 		c:GBR = {
@@ -186,7 +226,10 @@ anglo_american_decrease_payment_button = {
 						multiplier = anglo_american_paid_weekly_TOTAL_GBP
 					}
 				}
-
+			}
+			set_variable = {
+				name = payment_cooldown
+				weeks = 3
 			}
 		}
 		if = {

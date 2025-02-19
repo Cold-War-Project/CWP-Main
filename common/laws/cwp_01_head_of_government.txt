@@ -12,14 +12,6 @@ law_hereditary = {
 		country_legitimacy_ideological_incoherence_mult = 0.1
 		country_authority_add = 200
 	}
-	possible_political_movements = {
-		law_executive
-		law_parliamentary
-		law_council_elective
-	}
-	pop_support = {
-		value = 0
-	}
 	ai_will_do = {
 		exists = ruler
 		ruler = {
@@ -39,6 +31,44 @@ law_hereditary = {
 				scope:law = var:desired_law_var
 			}
 			add = 750
+		}
+	}
+	can_impose = {
+		OR = {
+			AND = {
+				is_in_same_power_bloc = scope:target_country
+				AND = {
+					modifier:country_can_impose_same_lawgroup_governance_principles_in_power_bloc_bool = yes
+					has_law = scope:law
+				}
+			}
+			can_impose_law_default = yes
+		}
+	}
+	ai_impose_chance = {
+		value = 0
+		
+		if = {
+			limit = {
+				has_law = law_type:law_hereditary
+				has_strategy = ai_strategy_reactionary_agenda
+				power_bloc ?= { has_identity = identity:identity_ideological_union }
+				scope:target_country = { # Is their law different enough from what we want to impose?
+					NOT = { has_law = law_type:law_theocratic }
+				}
+			}
+			
+			add = base_impose_law_weight
+			if = {
+				limit = { 
+					scope:target_country = { has_law = law_type:council_elective } 
+					NOT = { has_strategy = ai_strategy_egalitarian_agenda }
+				}
+				multiply = 5
+			}	
+			else = {
+				multiply = 0.5 # AI is less likely to mess with governance principles unless dealing with council republics
+			}
 		}
 	}
 }
@@ -61,12 +91,6 @@ law_administrative = {
 		country_legitimacy_ideological_incoherence_mult = 0.15
 		country_authority_add = 250
 	}
-	possible_political_movements = {
-	}
-	pop_support = {
-		# Pops don't want this law
-		value = 0
-	}
 	ai_will_do = {
 		# AI Won't voluntarily adopt this law
 		always = no
@@ -74,6 +98,44 @@ law_administrative = {
 	ai_enact_weight_modifier = {
 		#Petitions
 		value = 0
+	}
+	can_impose = {
+		OR = {
+			AND = {
+				is_in_same_power_bloc = scope:target_country
+				AND = {
+					modifier:country_can_impose_same_lawgroup_governance_principles_in_power_bloc_bool = yes
+					has_law = scope:law
+				}
+			}
+			can_impose_law_default = yes
+		}
+	}
+	ai_impose_chance = {
+		value = 0
+		
+		if = {
+			limit = {
+				has_law = law_type:law_administrative
+				has_strategy = ai_strategy_progressive_agenda
+				power_bloc ?= { has_identity = identity:identity_ideological_union }
+				scope:target_country = { # Is their law different enough from what we want to impose?
+					NOT = { has_law = law_type:law_parliamentary }
+				}				
+			}
+			
+			add = base_impose_law_weight
+			if = {
+				limit = { 
+					scope:target_country = { has_law = law_type:council_elective } 
+					NOT = { has_strategy = ai_strategy_egalitarian_agenda }
+				}
+				multiply = 5
+			}	
+			else = {
+				multiply = 0.5 # AI is less likely to mess with governance principles unless dealing with council republics
+			}
+		}
 	}
 }
 
@@ -92,24 +154,6 @@ law_theocratic = {
 		country_legitimacy_headofstate_add = 20
 		country_legitimacy_ideological_incoherence_mult = 0.1
 		country_clergy_pol_str_mult = 0.5
-	}
-	possible_political_movements = {
-		law_hereditary
-		law_executive
-		law_parliamentary
-		law_council_elective
-	}
-	pop_support = {
-		value = 0
-		add = {
-			desc = "POP_CLERGY"
-			if = {
-				limit = {
-					is_pop_type = clergy
-				}
-				value = 0.33
-			}
-		}
 	}
 	ai_will_do = {
 		exists = ruler
@@ -132,6 +176,46 @@ law_theocratic = {
 			add = 750
 		}
 	}
+	can_impose = {
+		OR = {
+			AND = {
+				is_in_same_power_bloc = scope:target_country
+				AND = {
+					modifier:country_can_impose_same_lawgroup_governance_principles_in_power_bloc_bool = yes
+					has_law = scope:law
+				}
+			}
+			can_impose_law_default = yes
+		}
+	}
+
+	ai_impose_chance = {
+		value = 0
+		
+		if = {
+			limit = {
+				has_law = law_type:law_theocratic
+				has_strategy = ai_strategy_reactionary_agenda
+				power_bloc ?= { has_identity = identity:identity_religious }
+				religion = scope:target_country.religion
+				scope:target_country = { # Is their law different enough from what we want to impose?					
+					NOT = { has_law = law_type:law_hereditary }
+				}				
+			}
+			
+			add = base_impose_law_weight
+			if = {
+				limit = { 
+					scope:target_country = { has_law = law_type:council_elective } 
+					NOT = { has_strategy = ai_strategy_egalitarian_agenda }
+				}
+				multiply = 5
+			}		
+			else = {
+				multiply = 0.5 # AI is less likely to mess with governance principles unless dealing with council republics
+			}
+		}
+	}
 }
 
 law_executive = {
@@ -146,21 +230,6 @@ law_executive = {
 		country_legitimacy_headofstate_add = 20
 		country_legitimacy_ideological_incoherence_mult = 0.2
 		country_authority_add = 100
-	}
-	possible_political_movements = {
-		law_council_elective
-	}
-	pop_support = {
-		value = 0
-		add = {
-			desc = "POP_MIDDLE_STRATA"
-			if = {
-				limit = {
-					strata = middle
-				}
-				value = 0.05
-			}
-		}
 	}
 	ai_will_do = {
 		exists = ruler
@@ -183,6 +252,44 @@ law_executive = {
 			add = 750
 		}
 	}
+	can_impose = {
+		OR = {
+			AND = {
+				is_in_same_power_bloc = scope:target_country
+				AND = {
+					modifier:country_can_impose_same_lawgroup_governance_principles_in_power_bloc_bool = yes
+					has_law = scope:law
+				}
+			}
+			can_impose_law_default = yes
+		}
+	}
+	ai_impose_chance = {
+		value = 0
+		
+		if = {
+			limit = {
+				has_law = law_type:law_executive
+				has_strategy = ai_strategy_progressive_agenda
+				power_bloc ?= { has_identity = identity:identity_ideological_union }
+				scope:target_country = { # Is their law different enough from what we want to impose?
+					NOT = { has_law = law_type:law_parliamentary }
+				}				
+			}
+			
+			add = base_impose_law_weight
+			if = {
+				limit = { 
+					scope:target_country = { has_law = law_type:council_elective } 
+					NOT = { has_strategy = ai_strategy_egalitarian_agenda }
+				}
+				multiply = 5
+			}	
+			else = {
+				multiply = 0.5 # AI is less likely to mess with governance principles unless dealing with council republics
+			}
+		}
+	}
 }
 
 law_parliamentary = {
@@ -195,21 +302,6 @@ law_parliamentary = {
 	modifier = {
 		country_legitimacy_govt_total_votes_add = 30
 		country_authority_add = 50
-	}
-	possible_political_movements = {
-		law_council_elective
-	}
-	pop_support = {
-		value = 0
-		add = {
-			desc = "POP_MIDDLE_STRATA"
-			if = {
-				limit = {
-					strata = middle
-				}
-				value = 0.05
-			}
-		}
 	}
 	ai_will_do = {
 		exists = ruler
@@ -230,6 +322,44 @@ law_parliamentary = {
 				scope:law = var:desired_law_var
 			}
 			add = 750
+		}
+	}
+	can_impose = {
+		OR = {
+			AND = {
+				is_in_same_power_bloc = scope:target_country
+				AND = {
+					modifier:country_can_impose_same_lawgroup_governance_principles_in_power_bloc_bool = yes
+					has_law = scope:law
+				}
+			}
+			can_impose_law_default = yes
+		}
+	}
+	ai_impose_chance = {
+		value = 0
+		
+		if = {
+			limit = {
+				has_law = law_type:law_parliamentary
+				has_strategy = ai_strategy_progressive_agenda
+				power_bloc ?= { has_identity = identity:identity_ideological_union }
+				scope:target_country = { # Is their law different enough from what we want to impose?
+					NOT = { has_law = law_type:law_executive }
+				}				
+			}
+			
+			add = base_impose_law_weight
+			if = {
+				limit = { 
+					scope:target_country = { has_law = law_type:council_elective } 
+					NOT = { has_strategy = ai_strategy_egalitarian_agenda }
+				}
+				multiply = 5
+			}		
+			else = {
+				multiply = 0.5 # AI is less likely to mess with governance principles unless dealing with council republics
+			}
 		}
 	}
 }
@@ -253,22 +383,6 @@ law_council_elective = {
 		country_authority_add = 25
 
 	}
-	possible_political_movements = {
-		law_executive
-		law_parliamentary
-	}
-	pop_support = {
-		value = 0
-		add = {
-			desc = "POP_LOWER_STRATA"
-			if = {
-				limit = {
-					strata = poor
-				}
-				value = 0.05
-			}
-		}
-	}
 	ai_will_do = {
 		exists = ruler
 		ruler = {
@@ -288,6 +402,31 @@ law_council_elective = {
 				scope:law = var:desired_law_var
 			}
 			add = 750
+		}
+	}
+	can_impose = {
+		OR = {
+			AND = {
+				is_in_same_power_bloc = scope:target_country
+				AND = {
+					modifier:country_can_impose_same_lawgroup_governance_principles_in_power_bloc_bool = yes
+					has_law = scope:law
+				}
+			}
+			can_impose_law_default = yes
+		}
+	}
+	ai_impose_chance = {
+		value = 0
+		
+		if = {
+			limit = {
+				has_law = law_type:law_council_elective
+				has_strategy = ai_strategy_egalitarian_agenda				
+			}
+			
+			add = base_impose_law_weight
+			multiply = 5.0
 		}
 	}
 }

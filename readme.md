@@ -7,7 +7,7 @@ Our team's main objective is to preserve the design philosophy of vanilla Victor
 # Features
 
 - A beautiful map of the world with the borders of 1946
-- New Corruption, Political Parties, and Ideologies
+- New Political Parties, and Ideologies
 - The United Nations and other international organizations
 - The International Monetary Fund, currency exchange, and central banks
 - Decolonization, new nations to form, and new subject interactions

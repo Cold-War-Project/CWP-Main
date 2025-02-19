@@ -17,27 +17,6 @@ law_autocracy = {
 		country_legitimacy_ideological_incoherence_mult = 0.5
 		interest_group_in_government_attraction_mult = 0.5
 	}
-	possible_political_movements = {
-		law_oligarchy
-		law_anocracy
-	}
-	pop_support = {
-		value = 0
-		add = {
-			desc = "POP_landlords"
-			if = {
-				limit = {
-					owner = {
-						NOT = {
-							has_law = law_type:law_oligarchy
-						}
-					}
-					is_pop_type = landlords
-				}
-				value = 0.25
-			}
-		}
-	}
 	ai_enact_weight_modifier = {
 		#Petitions
 		value = 0
@@ -48,6 +27,41 @@ law_autocracy = {
 				scope:law = var:desired_law_var
 			}
 			add = 750
+		}
+	}
+	can_impose = {
+		OR = {
+			AND = {
+				is_in_same_power_bloc = scope:target_country
+				AND = {
+					modifier:country_can_impose_same_lawgroup_distribution_of_power_in_power_bloc_bool = yes
+					has_law = scope:law
+				}
+			}
+			can_impose_law_default = yes
+		}
+	}
+	ai_impose_chance = {
+		value = 0
+		
+		if = {
+			limit = {
+				has_law = law_type:law_autocracy
+				OR = {
+					AND = {
+						power_bloc ?= { has_identity = identity:identity_ideological_union }
+						has_strategy = ai_strategy_conservative_agenda					
+					}
+					has_strategy = ai_strategy_reactionary_agenda
+				}
+				scope:target_country = { 
+					NOR = { # Is their law different enough from what we want to impose?
+						has_law = law_type:law_oligarchy
+					}
+				}
+			}
+			
+			add = base_impose_law_weight
 		}
 	}
 }
@@ -69,27 +83,6 @@ law_oligarchy = {
 		country_legitimacy_ideological_incoherence_mult = -0.1
 		interest_group_in_government_attraction_mult = 0.25
 	}
-	possible_political_movements = {
-		law_autocracy
-		law_anocracy
-	}
-	pop_support = {
-		value = 0
-		add = {
-			desc = "POP_landlords"
-			if = {
-				limit = {
-					owner = {
-						NOT = {
-							has_law = law_type:law_autocracy
-						}
-					}
-					is_pop_type = landlords
-				}
-				value = 0.25
-			}
-		}
-	}
 	ai_enact_weight_modifier = {
 		#Petitions
 		value = 0
@@ -100,6 +93,42 @@ law_oligarchy = {
 				scope:law = var:desired_law_var
 			}
 			add = 750
+		}
+	}
+	can_impose = {
+		OR = {
+			AND = {
+				is_in_same_power_bloc = scope:target_country
+				AND = {
+					modifier:country_can_impose_same_lawgroup_distribution_of_power_in_power_bloc_bool = yes
+					has_law = scope:law
+				}
+			}
+			can_impose_law_default = yes
+		}
+	}
+	ai_impose_chance = {
+		value = 0
+		
+		if = {
+			limit = {
+				has_law = law_type:law_oligarchy
+				OR = {
+					AND = {
+						power_bloc ?= { has_identity = identity:identity_ideological_union }
+						has_strategy = ai_strategy_conservative_agenda					
+					}
+					has_strategy = ai_strategy_reactionary_agenda
+				}
+				scope:target_country = { 
+					NOR = { # Is their law different enough from what we want to impose?
+						has_law = law_type:law_autocracy
+						has_law = law_type:law_representative_democracy
+					}
+				}
+			}
+			
+			add = base_impose_law_weight
 		}
 	}
 }
@@ -119,50 +148,9 @@ law_anocracy = {
 		country_legitimacy_govt_total_clout_add = 140
 		interest_group_in_government_attraction_mult = 0.15
 	}
-	possible_political_movements = {
-		law_oligarchy
-		law_representative_democracy
-		law_consensus_democracy
-	}
 	on_activate = {
 		scripted_effect_parties_disappearance = yes
 		clear_legal_single_party = yes
-	}
-	pop_support = {
-		value = 0
-		add = {
-			desc = "POP_ADMINISTRATORS"
-			if = {
-				limit = {
-					is_pop_type = administrators
-				}
-				value = 0.25
-			}
-		}
-	}
-	pop_support = {
-		value = 0
-		add = {
-			desc = "POP_LITERACY"
-			if = {
-				limit = {
-					NOT = {
-						strata = rich
-					}
-					owner = {
-						NOR = {
-							has_law = law_type:law_representative_democracy
-							has_law = law_type:law_consensus_democracy
-							has_law = law_type:law_direct_democracy
-						}
-					}
-				}
-				add = {
-					value = literacy_rate
-					divide = 2
-				}
-			}
-		}
 	}
 	ai_enact_weight_modifier = {
 		#Petitions
@@ -174,6 +162,43 @@ law_anocracy = {
 				scope:law = var:desired_law_var
 			}
 			add = 750
+		}
+	}
+	
+	can_impose = {
+		OR = {
+			AND = {
+				is_in_same_power_bloc = scope:target_country
+				AND = {
+					modifier:country_can_impose_same_lawgroup_distribution_of_power_in_power_bloc_bool = yes
+					has_law = scope:law
+				}
+			}
+			can_impose_law_default = yes
+		}
+	}
+	ai_impose_chance = {
+		value = 0
+		
+		if = {
+			limit = {
+				has_law = law_type:law_anocracy
+				OR = {
+					AND = {
+						power_bloc ?= { has_identity = identity:identity_ideological_union }
+						has_strategy = ai_strategy_conservative_agenda					
+					}
+					has_strategy = ai_strategy_reactionary_agenda
+				}
+				scope:target_country = { 
+					NOR = { # Is their law different enough from what we want to impose?
+						has_law = law_type:law_oligarchy
+						has_law = law_type:law_representative_democracy
+					}
+				}
+			}
+			
+			add = base_impose_law_weight
 		}
 	}
 }
@@ -197,34 +222,9 @@ law_representative_democracy = {
 		country_voting_power_from_literacy_add = 30
 		country_voting_power_wealth_threshold_add = 10
 	}
-	possible_political_movements = {
-		law_anocracy
-		law_consensus_democracy
-	}
 	on_activate = {
 		scripted_effect_parties_emergence = yes
 		clear_legal_single_party = yes
-	}
-	pop_support = {
-		value = 0
-		add = {
-			desc = "POP_LITERACY"
-			if = {
-				limit = {
-					wealth < 25
-					owner = {
-						NOR = {
-							has_law = law_type:law_consensus_democracy
-							has_law = law_type:law_direct_democracy
-						}
-					}
-				}
-				add = {
-					value = literacy_rate
-					divide = 2
-				}
-			}
-		}
 	}
 	ai_enact_weight_modifier = {
 		#Petitions
@@ -236,6 +236,43 @@ law_representative_democracy = {
 				scope:law = var:desired_law_var
 			}
 			add = 750
+		}
+	}
+	can_impose = {
+		country_has_voting_franchise = yes # modification of the standard trigger, only countries with a voting franchise can impose democracy on others
+		OR = {
+			AND = {
+				is_in_same_power_bloc = scope:target_country
+				AND = {
+					modifier:country_can_impose_same_lawgroup_distribution_of_power_in_power_bloc_bool = yes
+					has_law = scope:law
+				}
+			}
+			can_impose_law_default = yes
+		}
+	}
+	ai_impose_chance = {
+		value = 0
+		
+		if = {
+			limit = {
+				has_law = law_type:law_representative_democracy
+				OR = {
+					AND = {
+						power_bloc ?= { has_identity = identity:identity_ideological_union }
+						has_strategy = ai_strategy_conservative_agenda					
+					}
+					has_strategy = ai_strategy_reactionary_agenda
+				}
+				scope:target_country = { 
+					NOR = { # Is their law different enough from what we want to impose?
+						has_law = law_type:law_oligarchy
+						has_law = law_type:law_autocracy
+					}
+				}
+			}
+			
+			add = base_impose_law_weight
 		}
 	}
 }
@@ -259,46 +296,9 @@ law_consensus_democracy = {
 		country_voting_power_base_add = 30
 		state_political_strength_from_wealth_mult = -0.25
 	}
-	possible_political_movements = {
-		law_representative_democracy
-		law_direct_democracy
-	}
 	on_activate = {
 		scripted_effect_parties_emergence = yes
 		clear_legal_single_party = yes
-	}
-	pop_support = {
-		value = 0
-		add = {
-			desc = "POP_LITERACY"
-			if = {
-				limit = {
-					owner = {
-						NOT = {
-							has_law = law_type:law_direct_democracy
-						}
-					}
-				}
-				if = {
-					limit = {
-						wealth < 15
-					}
-					add = {
-						value = literacy_rate
-						divide = 2
-					}
-				}
-				if = {
-					limit = {
-						wealth < 10
-					}
-					add = {
-						value = literacy_rate
-						divide = 2
-					}
-				}
-			}
-		}
 	}
 	ai_enact_weight_modifier = {
 		#Petitions
@@ -310,6 +310,37 @@ law_consensus_democracy = {
 				scope:law = var:desired_law_var
 			}
 			add = 750
+		}
+	}
+	can_impose = {
+		country_has_voting_franchise = yes # modification of the standard trigger, only countries with a voting franchise can impose democracy on others
+		OR = {
+			AND = {
+				is_in_same_power_bloc = scope:target_country
+				AND = {
+					modifier:country_can_impose_same_lawgroup_distribution_of_power_in_power_bloc_bool = yes
+					has_law = scope:law
+				}
+			}
+			can_impose_law_default = yes
+		}
+	}
+	ai_impose_chance = {
+		value = 0
+		
+		if = {
+			limit = {
+				has_law = law_type:law_consensus_democracy
+				has_strategy = ai_strategy_progressive_agenda	
+				scope:target_country = { # Is their law different enough from what we want to impose?
+					NOR = { 
+						has_law = law_type:law_representative_democracy 
+						has_law = law_type:law_direct_democracy
+					}
+				}
+			}
+			
+			add = base_impose_law_weight
 		}
 	}
 }
@@ -331,27 +362,11 @@ law_direct_democracy = {
 		country_authority_mult = -0.5
 		country_legitimacy_govt_size_add = 4
 	}
-	possible_political_movements = {
-		law_representative_democracy
-		law_consensus_democracy
-	}
 	on_activate = {
 		scripted_effect_parties_disappearance = yes
 		clear_legal_single_party = yes
 	}
 	ai_will_do = {
-	}
-	pop_support = {
-		value = 0
-		add = {
-			desc = "POP_LITERACY"
-			if = {
-				limit = {
-					wealth < 10
-				}
-				add = literacy_rate
-			}
-		}
 	}
 	ai_enact_weight_modifier = {
 		#Petitions
@@ -363,6 +378,36 @@ law_direct_democracy = {
 				scope:law = var:desired_law_var
 			}
 			add = 750
+		}
+	}
+	can_impose = {
+		country_has_voting_franchise = yes # modification of the standard trigger, only countries with a voting franchise can impose democracy on others
+		OR = {
+			AND = {
+				is_in_same_power_bloc = scope:target_country
+				AND = {
+					modifier:country_can_impose_same_lawgroup_distribution_of_power_in_power_bloc_bool = yes
+					has_law = scope:law
+				}
+			}
+			can_impose_law_default = yes
+		}
+	}
+	ai_impose_chance = {
+		value = 0
+		
+		if = {
+			limit = {
+				has_law = law_type:law_direct_democracy
+				has_strategy = ai_strategy_progressive_agenda			
+				scope:target_country = { # Is their law different enough from what we want to impose?
+					NOR = { 
+						has_law = law_type:law_representative_democracy
+					}
+				}
+			}
+			
+			add = base_impose_law_weight
 		}
 	}
 }

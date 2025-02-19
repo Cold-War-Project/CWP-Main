@@ -1,16 +1,23 @@
 ﻿violate_sovereignty = {
+	groups= {
+		general
+	}
 	requires_approval = yes
 	should_notify_third_parties = yes
 	violates_sovereignty = yes
 	can_use_obligations = yes
+	
+	selectable = {
+		NOT = { is_country_type = decentralized }
+	}
+	
 	potential = {
 		is_at_war = yes
-		NOT = {
-			is_country_type = decentralized
-		}
+
 		scope:target_country = {
-			NOT = {
-				is_country_type = decentralized
+			NOT = { 
+				is_country_type = decentralized 
+				is_subject_of = ROOT
 			}
 		}
 		NOT = {
@@ -18,6 +25,7 @@
 			is_in_war_together = scope:target_country
 		}
 	}
+
 	possible = {
 		# this localization only makes sense if you are already at war
 		trigger_if = {
@@ -32,17 +40,22 @@
 				}
 			}
 		}
+		
 		scope:target_country.relations:root < relations_threshold:amicable
+
 		is_revolutionary = no
+		
 		scope:target_country = {
 			is_revolutionary = no
 		}
 	}
+	
 	accept_effect = {
 		create_incident = {
 			value = 15
 			country = scope:target_country
 		}
+
 		scope:target_country = {
 			violate_sovereignty_join = {
 				violator = root
@@ -51,12 +64,15 @@
 			}
 		}
 	}
+
 	decline_effect = {
 		save_scope_as = initiator
+		
 		create_incident = {
 			value = 10
 			country = scope:target_country
 		}
+
 		scope:target_country = {
 			violate_sovereignty_join = {
 				violator = root
@@ -64,10 +80,12 @@
 				join_violator = no
 			}
 		}
+
 		# could potentially be several wars but only show one in situation for now
 		random_scope_violate_sovereignty_wars = {
 			save_scope_as = war
 		}
+
 		# send situation to all relevant countries asking them to help scope:target_country out
 		every_scope_violate_sovereignty_interested_parties = {
 			trigger_event = {
@@ -76,16 +94,34 @@
 			}
 		}
 	}
+	
 	ai = {
+		evaluation_chance = {
+			value = 0
+			
+			if = {
+				limit = { 
+					is_at_war = yes 
+					any_scope_war = {
+						is_warleader = root
+					}
+				}
+				add = 1
+			}
+		}
+	
 		propose_score = {
 			value = 100
 		}
+	
 		accept_score = {
 			value = 0
+			
 			add = {
 				desc = "DIPLOMATIC_ACCEPTANCE_BASE"
 				value = -100
 			}
+
 			if = {
 				limit = {
 					has_strategy = ai_strategy_armed_isolationism
@@ -95,6 +131,7 @@
 					add = -25
 				}
 			}
+			
 			if = {
 				limit = {
 					"scope:actor.ai_army_comparison(root)" > 0
@@ -112,6 +149,7 @@
 					value = -1000
 				}
 			}
+
 			if = {
 				limit = {
 					"scope:actor.ai_ideological_opinion(root)" > 0
@@ -134,6 +172,7 @@
 					min = -40
 				}
 			}
+			
 			add = {
 				desc = "DIPLOMATIC_ACCEPTANCE_ATTITUDE"
 				if = {
@@ -196,6 +235,7 @@
 					value = -50
 				}
 			}
+
 			add = {
 				desc = "DIPLOMATIC_ACCEPTANCE_RELATIONS"
 				if = {
@@ -225,6 +265,7 @@
 					value = 50
 				}
 			}
+			
 			add = {
 				desc = "DIPLOMATIC_ACCEPTANCE_INFAMY"
 				if = {
@@ -248,8 +289,10 @@
 					value = -50
 				}
 			}
+
 			add = {
 				desc = "DIPLOMATIC_ACCEPTANCE_RANK"
+	
 				if = {
 					limit = {
 						scope:actor = {
@@ -258,6 +301,7 @@
 					}
 					value = 20
 				}
+				
 				if = {
 					limit = {
 						scope:actor = {
@@ -267,31 +311,10 @@
 					value = -20
 				}
 			}
+
 			if = {
 				limit = {
-					any_country = {
-						NOT = {
-							this = scope:actor
-						}
-						OR = {
-							country_rank >= scope:actor.country_rank
-							army_size >= scope:actor.army_size
-						}
-						OR = {
-							has_diplomatic_pact = {
-								who = root
-								type = alliance
-							}
-							has_diplomatic_pact = {
-								who = root
-								type = customs_union
-							}
-							has_diplomatic_pact = {
-								who = root
-								type = defensive_pact
-							}
-						}
-					}
+					has_powerful_protectors = yes
 				}
 				add = {
 					desc = "DIPLOMATIC_ACCEPTANCE_POWERFUL_PROTECTORS_THEM"

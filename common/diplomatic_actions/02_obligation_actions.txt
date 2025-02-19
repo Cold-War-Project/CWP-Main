@@ -1,21 +1,26 @@
 ﻿take_on_debt = {
+	groups= {
+		general
+	}
+	
 	requires_approval = yes
 	should_notify_third_parties = yes
 	show_effect_in_tooltip = yes
+	
+	selectable = {
+		NOT = { is_country_type = decentralized }
+		is_revolutionary = no
+	}
+	
 	potential = {
-		NOT = {
-			is_country_type = decentralized
-		}
 		scope:target_country = {
-			NOT = {
-				is_country_type = decentralized
-			}
+			NOT = { is_country_type = decentralized }
+			is_revolutionary = no
 		}
 	}
-	possible = {
-		NOT = {
-			has_war_with = scope:target_country
-		}
+	
+	possible = {	
+		NOT = { has_war_with = scope:target_country }
 		has_diplomatic_relevance = scope:target_country
 		scope:target_country = {
 			scaled_debt > 0
@@ -26,6 +31,7 @@
 		}
 		is_revolutionary = no
 	}
+	
 	accept_effect = {
 		take_on_scaled_debt = {
 			who = scope:target_country
@@ -47,17 +53,10 @@
 		else_if = {
 			limit = {
 				scope:target_country = {
-					NOT = {
-						owes_obligation_to = root
-					}
-				}
+					NOT = { owes_obligation_to = root }					
+				}			
 			}
-			scope:target_country = {
-				set_owes_obligation_to = {
-					country = root
-					setting = yes
-				}
-			}
+			scope:target_country = { set_owes_obligation_to = { country = root setting = yes } }
 		}
 		else = {
 			change_relations = {
@@ -65,6 +64,7 @@
 				value = 30
 			}
 		}
+		
 		hidden_effect = {
 			scope:target_country = {
 				set_variable = {
@@ -75,11 +75,17 @@
 			}
 		}
 	}
+	
 	ai = {
+		evaluation_chance = {
+			value = 0.25
+		}		
+	
 		propose_score = {
 			value = 100
 		}
-		will_propose = {
+	
+		will_propose = { 
 			is_at_war = no
 			scaled_debt <= 0
 			scope:target_country = {
@@ -129,15 +135,18 @@
 				AND = {
 					weekly_net_fixed_income >= 250000
 					scope:target_country.weekly_net_fixed_income <= 50000
-				}
-			}
-		}
+				}					
+			}					
+		}			
+		
 		accept_score = {
 			value = 0
+			
 			add = {
 				desc = "DIPLOMATIC_ACCEPTANCE_BASE"
 				value = -100
 			}
+
 			if = {
 				limit = {
 					"scope:actor.ai_ideological_opinion(root)" > 0
@@ -158,8 +167,9 @@
 					value = "scope:actor.ai_ideological_opinion(root)"
 					multiply = 1
 					min = -40
-				}
-			}
+				}					
+			}			
+							
 			add = {
 				desc = "DIPLOMATIC_ACCEPTANCE_ATTITUDE"
 				if = {
@@ -229,8 +239,9 @@
 						}
 					}
 					value = -1000
-				}
-			}
+				}							
+			}			
+
 			add = {
 				desc = "DIPLOMATIC_ACCEPTANCE_RELATIONS"
 				if = {
@@ -274,8 +285,10 @@
 					value = 50
 				}
 			}
+
 			add = {
 				desc = "DIPLOMATIC_ACCEPTANCE_DEBT"
+				
 				if = {
 					limit = {
 						scaled_debt < 0.1
@@ -345,6 +358,8 @@
 					value = 100
 				}
 			}
+			
+			
 			add = {
 				desc = "DIPLOMATIC_ACCEPTANCE_INFAMY"
 				if = {
@@ -368,8 +383,10 @@
 					value = -50
 				}
 			}
+
 			add = {
 				desc = "DIPLOMATIC_ACCEPTANCE_RANK"
+	
 				if = {
 					limit = {
 						scope:actor = {
@@ -378,13 +395,30 @@
 					}
 					value = 10
 				}
+				
+				if = {
+					limit = { scope:actor = { country_rank < root.country_rank } }
+					value = -20
+				}				
+			}
+
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_PRINCIPLE_SACRED_CIVICS"
+
 				if = {
 					limit = {
-						scope:actor = {
-							country_rank < root.country_rank
+						AND = {
+							scope:actor.power_bloc ?= {
+								OR = {
+									has_principle = principle:principle_sacred_civics_1
+									has_principle = principle:principle_sacred_civics_2
+									has_principle = principle:principle_sacred_civics_3
+								}
+							}
+							scope:actor.religion = root.religion
 						}
 					}
-					value = -20
+					add = 20
 				}
 			}
 		}
@@ -392,7 +426,12 @@
 }
 
 redeem_obligation = {
+	groups= {
+		general
+	}
+	
 	requires_approval = no
+	
 	potential = {
 		NOT = {
 			is_country_type = decentralized
@@ -406,12 +445,14 @@ redeem_obligation = {
 			owes_obligation_to = root
 		}
 	}
+	
 	possible = {
 		is_revolutionary = no
 		scope:target_country = {
 			is_revolutionary = no
 		}
 	}
+
 	accept_effect = {
 		change_relations = {
 			country = scope:target_country
@@ -424,11 +465,17 @@ redeem_obligation = {
 			}
 		}
 	}
+	
 	ai = {
+		evaluation_chance = {
+			value = 0.25
+		}	
+	
 		propose_score = {
 			value = 10
-		}
-		will_propose = {
+		}	
+	
+		will_propose = { 
 			always = no
 		}
 	}

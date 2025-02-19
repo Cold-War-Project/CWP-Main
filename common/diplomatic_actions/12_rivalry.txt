@@ -1,125 +1,195 @@
 ﻿rivalry = {
+	groups= {
+		general
+	}
 	requires_approval = no
 	should_notify_third_parties = yes
+
 	unlocking_technologies = {
 		international_relations
 	}
-	potential = {
-		NOT = {
-			is_country_type = decentralized
-		}
-		scope:target_country = {
-			NOT = {
-				is_country_type = decentralized
-			}
-		}
+	
+	selectable = {
+		NOT = { is_country_type = decentralized }
 		is_revolutionary = no
+	}
+	
+	potential = {
 		scope:target_country = {
+			NOT = { is_country_type = decentralized }
 			is_revolutionary = no
 		}
 	}
+	
 	possible = {
 		# Might have these despite low relations due to a forced pact
-		NOT = {
-			has_diplomatic_pact = {
-				who = scope:target_country
-				type = alliance
-			}
-		}
-		NOT = {
-			has_diplomatic_pact = {
-				who = scope:target_country
-				type = defensive_pact
+		NOT = { has_diplomatic_pact = { who = scope:target_country type = alliance } }	
+		NOT = { has_diplomatic_pact = { who = scope:target_country type = defensive_pact } }	
+	}
+	
+	accept_effect = {
+		add_lobby_appeasement_from_diplomacy_unidirectional = { 
+			FIRST = root
+			SECOND = scope:target_country 
+			PRO_AMOUNT = -4
+			ANTI_AMOUNT = 4
+			FACTOR = appeasement_rivalry_declared
+		}	
+		hidden_effect = {
+			scope:target_country = {
+				create_diplomatic_catalyst = {
+					type = catalyst_rivalry_declared
+					target = root
+				}		
 			}
 		}
 	}
+	
 	pact = {
-		is_rivalry = yes
+		is_hostile = yes
+		is_rivalry = yes		
 		is_two_sided_pact = no
-		forced_duration = 60
-		relations_progress_per_day = -1		# At -100, -1 relations
+		forced_duration = 12
+		
+		relations_progress_per_day = -1 # At -100, -1 relations
 		relations_improvement_min = -20
-		requirement_to_maintain = {
+		
+		second_modifier = {
+			country_pact_leverage_generation_mult = -0.9
+		}
+
+	 	requirement_to_maintain = {
 			trigger = {
 				has_diplomatic_relevance = scope:target_country
 			}
 		}
-		requirement_to_maintain = {
+		
+	 	requirement_to_maintain = {
 			trigger = {
 				custom_tooltip = {
 					text = DIPLO_ACTION_RELATIONS_CORDIAL_OR_GREATER_NOT
 					scope:target_country.relations:root < relations_threshold:cordial
-				}
+				}		
 			}
+			
 			show_about_to_break_warning = {
-				scope:target_country.relations:root >= 17				# this is: cordial - 3
+				scope:target_country.relations:root >= 17 # this is: cordial - 3
 				scope:target_country.relations_change_rate:root > 0
-			}
+			}					
 		}
+	
 		requirement_to_maintain = {
 			trigger = {
 				custom_tooltip = {
 					text = "DIPLOMATIC_PACT_REQUIREMENT_NOT_DECENTRALIZED"
-					NOT = {
-						is_country_type = decentralized
-					}
+					NOT = { is_country_type = decentralized }
 					scope:target_country = {
-						NOT = {
-							is_country_type = decentralized
-						}
-					}
+						NOT = { is_country_type = decentralized }
+					}				
 				}
 			}
-		}
+		}		
+		
 		requirement_to_maintain = {
 			trigger = {
 				custom_tooltip = {
 					text = "DIPLOMATIC_PACT_REQUIREMENT_DIPLOMATIC_AUTONOMY"
 					aggressive_diplomatic_plays_permitted = yes
-					scope:target_country = {
-						aggressive_diplomatic_plays_permitted = yes
-					}
+					scope:target_country = { aggressive_diplomatic_plays_permitted = yes }					
 				}
 			}
 		}
+
 		requirement_to_maintain = {
 			trigger = {
 				custom_tooltip = {
 					text = "DIPLOMATIC_PACT_REQUIREMENT_NO_SUBJECT_RELATION"
-					NAND = {
-						is_non_customs_union_subject = yes
+					NOT = {
 						is_subject_of = scope:target_country
-					}
-					NAND = {
-						scope:target_country = {
-							is_non_customs_union_subject = yes
-						}
-						scope:target_country = {
-							is_subject_of = root
-						}
+						scope:target_country = { is_subject_of = root }
 					}
 				}
 			}
 		}
-		requirement_to_maintain = {
+		
+	 	requirement_to_maintain = {
 			trigger = {
 				custom_tooltip = {
 					text = "DIPLOMATIC_PACT_REQUIREMENT_VALID_RIVALS"
 					countries_are_valid_rivals = yes
-				}
+				}					
 			}
 		}
+		
 		manual_break_effect = {
+			add_lobby_appeasement_from_diplomacy_unidirectional = { 
+				FIRST = root
+				SECOND = scope:target_country 
+				PRO_AMOUNT = 4
+				ANTI_AMOUNT = -4
+				FACTOR = appeasement_rivalry_ended
+			}		
 		}
+		
 		auto_break_effect = {
-		}
+			every_political_lobby = {
+				limit = {
+					is_political_lobby_type = lobby_pro_country
+					target = scope:target_country
+				}
+				change_appeasement = {
+					amount = 4
+					factor = appeasement_rivalry_ended
+				}
+			}			
+		
+			if = {
+				limit = { country_rank > scope:target_country.country_rank }				
+				every_political_lobby = {
+					limit = {
+						is_political_lobby_type = lobby_anti_country
+						target = scope:target_country
+					}
+					
+					change_appeasement = {
+						amount = 2
+						factor = appeasement_rival_surpassed
+					}
+				}			
+			}
+			else = {
+				every_political_lobby = {
+					limit = {
+						is_political_lobby_type = lobby_anti_country
+						target = scope:target_country
+					}
+					
+					change_appeasement = {
+						amount = -4
+						factor = appeasement_rivalry_ended
+					}
+				}
+			}
+		}	
 	}
+	
 	ai = {
 		check_acceptance_for_will_break = no
+		
+		evaluation_chance = {
+			value = 0.1
+			
+			add = {
+				value = country_rank
+				multiply = 0.05
+			}			
+		}		
+	
 		propose_score = {
 			value = 10
 		}
-		will_propose = {
+	
+		will_propose = { 
 			OR = {
 				AND = {
 					country_rank > rank_value:insignificant_power
@@ -133,6 +203,7 @@
 			}
 			OR = {
 				AND = {
+					army_size >= 10
 					has_attitude = {
 						who = scope:target_country
 						attitude = antagonistic
@@ -140,23 +211,23 @@
 					OR = {
 						AND = {
 							country_rank >= scope:target_country.country_rank
-							has_strategic_adjacency = scope:target_country
+							has_strategic_adjacency = scope:target_country					
 						}
 						AND = {
 							country_rank = scope:target_country.country_rank
 							OR = {
 								country_rank = rank_value:great_power
 								capital.region = scope:target_country.capital.region
-							}
-						}
-					}
+							}				
+						}					
+					}						
 				}
 				AND = {
 					NOT = {
 						has_attitude = {
 							who = scope:target_country
 							attitude = conciliatory
-						}
+						}						
 					}
 					scope:target_country = {
 						has_diplomatic_pact = {
@@ -165,10 +236,10 @@
 						}
 					}
 				}
-			}
-			army_size >= 10
+			}			
 		}
-		will_break = {
+		
+		will_break = { 
 			NOR = {
 				has_attitude = {
 					who = scope:target_country
@@ -177,22 +248,23 @@
 				has_attitude = {
 					who = scope:target_country
 					attitude = belligerent
-				}
+				}				
 			}
 			NAND = {
 				NOT = {
 					has_attitude = {
 						who = scope:target_country
 						attitude = conciliatory
-					}
+					}						
 				}
 				scope:target_country = {
 					has_diplomatic_pact = {
 						who = root
 						type = rivalry
-					}
-				}
+					}										
+				}					
 			}
 		}
 	}
 }
+

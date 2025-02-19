@@ -1,57 +1,72 @@
 ﻿# This is a special strategy that sets the default values for different AI scores
 # All AIs always load data from this strategy, which can then be either added to or overridden by data from its other strategies
 ai_strategy_default = {
-	icon = "gfx/interface/icons/ai_strategy_icons/placate_population.dds"	# Never shown
+	icon = "gfx/interface/icons/ai_strategy_icons/placate_population.dds" # Never shown
+
+	# If this trigger evaluates to true for any active strategy, the AI will try to form a power bloc
+	# Empty trigger counts as evaluating false in this specific case
+	will_form_power_bloc = {}
+
 	# These are the tax levels the AI will try to stay within, though it can go above max tax level if in a financial emergency
 	# Using a different value in a strategy will override these values
-	desired_tax_level = very_high
-	max_tax_level = very_high
-	min_tax_level = very_low
+	desired_tax_level = medium
+	max_tax_level = high
+	min_tax_level = low
+	
 	# The AI will avoid getting this much infamy unless it's a wargoal it really wants
 	# Using a different value in a strategy will override this value
 	undesirable_infamy_level = {
 		value = 50
 	}
+	
 	# The AI will never deliberately add wargoals that will bring its infamy this high
 	# Using a different value in a strategy will override this value
 	unacceptable_infamy_level = {
 		value = 100
 	}
+
 	# How much is the AI's diplomatic acceptance, etc affected by government ideological differences
 	# Using a different value in a strategy will override this value
 	ideological_opinion_effect_mult = {
-		value = 3
-	}
+		value = 1.0
+	}	
+	
 	# Chance each day that the AI will stop enacting a law that is going to spark a civil war (1 aversion should translate into ~25% chance of avoiding a civil war)
 	# Using a different value in a strategy will override this value
 	revolution_aversion = {
-		value = 10
+		value = 5
 	}
+	
 	# If base chance for law to pass is below this, don't enact it
 	# Using a different value in a strategy will override this value
 	min_law_chance_to_pass = {
 		value = 50
 	}
+
 	# How progressive is the AI willing to be when passing laws
 	# Using a different value in a strategy will override this value
 	max_progressiveness = {
 		value = 25
-	}
+	}  
+	
 	# How regressive is the AI willing to be when passing laws
 	# Using a different value in a strategy will override this value
 	max_regressiveness = {
 		value = 25
 	}
+
 	# Added to base neutrality in diplomatic plays	
 	# Using this value in other strategies will function additively
 	diplomatic_play_neutrality = {
 		value = 25
 	}
+
 	# Added to base boldness in diplomatic plays	
 	# Using this value in other strategies will function additively
 	diplomatic_play_boldness = {
 		value = 50
 	}
+
 	# How many maneuvers are we OK with using up in the initial phase to add more wargoals
 	# Using this value in other strategies will function additively (values below 0 or above 1 have no further effect)
 	wargoal_maneuvers_fraction = {
@@ -63,27 +78,311 @@ ai_strategy_default = {
 			add = -0.1
 		}
 	}
+
+	wanted_construction_output = {
+		value = 10 # Accounts for the 10 free construction from base modifiers
+
+		add = {
+			value = investment_pool_income
+			divide = 1000 # 1 construction output per this much into the investment pool				
+		}
+
+		add = {
+			value = income
+					
+			divide = 5000 # 1 construction output per this much income
+
+			min = 0
+			max = 200 # Above a certain point more government income isn't going to lead to more AI government construction
+		}
+
+		add = {
+			value = total_population
+			
+			divide = 2000000 # 1 construction output per this much population
+			max = 100
+		}
+
+		# Kickstart private investors If above this population value
+		if = {
+			limit = {
+				total_population >= 2000000
+			}
+			add = 10
+		}		
+
+		# Add a baseline for high rank
+		if = {
+			limit = { country_rank >= rank_value:great_power }
+			add = 75
+		}		
+		else_if = {
+			limit = { 
+				OR = {
+					country_rank >= rank_value:major_power
+					country_rank >= rank_value:unrecognized_major_power
+				}
+			}
+			add = 50
+		}
+
+		# If trying to industrialize
+		if = {
+			limit = {
+				OR = {
+					has_strategy = ai_strategy_resource_expansion
+					has_strategy = ai_strategy_industrial_expansion
+				}				
+			}
+			multiply = 1.25
+		}
+
+		if = {
+			limit = {
+				OR = {
+					has_journal_entry = je_meiji_restoration
+					has_journal_entry = je_meiji_main
+				}
+			}			
+			multiply = 1.5
+		}
+
+		min = 10
+		max = 1000
+	}
+
 	# How many levels of barracks should the AI have
 	# Using this value in other strategies will function additively
 	wanted_army_size = {
+		value = 0
+		
+		# To increase base army size for small countries, capped at 1 million population
+		add = {
+			value = cached_ai_incorporated_population
+			divide = 100000 # 1 level of barracks per 100k incorporated population	
+			
+			max = 10
+		}	
+	
+		add = {
+			value = cached_ai_incorporated_population
+			divide = 250000 # 1 level of barracks per 250k incorporated population	
+		}
+
+		add = {
+			value = cached_ai_unincorporated_population
+			divide = 1000000 # 1 level of barracks per 1 million unincorporated population	
+		}
+		
+		# Coastal population reduces spending on army as that spending is needed for navy too
+		subtract = {
+			value = cached_ai_incorporated_coastal_population
+			divide = 1000000 
+		}		
+		
+		subtract = {
+			value = cached_ai_unincorporated_coastal_population
+			divide = 4000000 
+		}				
+		
+		# Extra army size from rank
+		if = {
+			limit = { country_rank = rank_value:superpower }
+			add = 25
+		}
+		if = {
+			limit = { country_rank = rank_value:major_power }
+			add = 10
+		}
+
+		save_temporary_value_as = pre_overseas_empire_value
+	
+		# Countries with a huge overseas subject population should focus more on navy
+		subtract = {
+			value = cached_ai_overseas_subject_population
+			divide = 20000000
+			max = {
+				value = scope:pre_overseas_empire_value
+				divide = 2
+			}
+		}			
+		
+		max = 200 # No more than 200 from population & rank
+
+		add = {
+			value = income
+			multiply = {
+				value = 1
+				subtract = { # Coastal population reduces spending on army as that spending is needed for navy too
+					value = cached_ai_incorporated_coastal_population
+					divide = cached_ai_incorporated_population
+					divide = 2
+				}		
+			}
+			divide = 2500 # 1 level of barracks per 2.5k income					
+		}				
+		
+		# More advanced standing armies are expensive and should be smaller relative to population
+		if = {
+			limit = { has_technology_researched = squad_based_infantry_tactics }
+			multiply = 0.8
+		}
+
+		if = {
+			limit = { has_technology_researched = combat_medics }
+			multiply = 0.8
+		}
+
+		if = {
+			limit = { has_technology_researched = towed_artillery }
+			multiply = 0.8
+		}
+		
+		if = {
+			limit = { has_technology_researched = mobile_armor }
+			multiply = 0.8
+		}	
+
+		# Factor in strategies
+		if = {
+			limit = { 
+				OR = {
+					has_strategy = ai_strategy_territorial_expansion 
+					has_strategy = ai_strategy_unify_italy
+					has_strategy = ai_strategy_unify_ethiopia
+					has_strategy = ai_strategy_unify_china
+				}
+			}
+			multiply = 1.25
+		}
+		else_if = {
+			limit = {
+				has_strategy = ai_strategy_unify_germany 
+			}
+			multiply = 2.0
+		}
+		
+
+			multiply = 0.75
+		}				
+		max = {
+			value = 500
+
+			if = {
+				limit = { 
+					has_technology_researched = modernized_logistics
+				}
+				multiply = 1.25
+			}
+		min = 1
 	}
+
 	# How many levels of naval base should the AI have
 	# Using this value in other strategies will function additively
 	wanted_navy_size = {
+		value = 0
+	
+		# 1 level of naval base per 500k coastal incorporated population							
+		add = {
+			value = cached_ai_incorporated_coastal_population
+			divide = 500000 
+		}
+
+		# 1 level of naval base per 2 million coastal unincorporated population					
+		add = {
+			value = cached_ai_unincorporated_coastal_population
+			divide = 2000000 
+		}
+
+		# 1 level of naval base per 10 million population in direct overseas subjects	
+		add = {
+			value = cached_ai_overseas_subject_population
+			divide = 10000000 
+		}	
+
+		max = 100 # No more than 100 from population		
+
+		# 1 level of naval base per 5k income, multiplied by relative incorporated coastal population to total incorporated population
+		add = {
+			value = income
+			divide = cached_ai_incorporated_population
+			multiply = cached_ai_incorporated_coastal_population
+			divide = 5000
+		}	
+		else_if = { # GPs and MPs should want to maintain a bit of a navy
+			limit = { country_rank = rank_value:superpower }
+			add = 25		
+		}
+		else_if = {
+			limit = { country_rank = rank_value:major_power }
+			add = 10
+		}
+		
+		# More advanced navies are expensive and should be smaller relative to population
+		if = {
+			limit = { has_technology_researched = ironclad_tech }
+			multiply = 0.75
+		}
+
+		if = {
+			limit = { has_technology_researched = dreadnought }
+			multiply = 0.75
+		}
+
+		if = {
+			limit = { has_technology_researched = battleship_tech }
+			multiply = 0.75
+		}
+
+		# Factor in strategies
+		if = {
+			limit = { 
+				OR = {
+					has_strategy = ai_strategy_colonial_expansion 
+					has_strategy = ai_strategy_economic_imperialism
+				}
+			}
+			multiply = 1.15
+		}
+
+		if = {
+			limit = { has_strategy = ai_strategy_armed_isolationism }
+			multiply = 0.75
+		}	
+		
+		if = {
+			limit = { country_rank < rank_value:major_power }
+			multiply = 0.5
+		}						
+		
+		if = {
+			limit = { is_country_type = unrecognized }
+			multiply = 0.5
+		}	
+		
+		if = {
+			limit = { has_strategy = ai_strategy_maintain_mandate_of_heaven }
+			multiply = 0.25
+		}		
+		
+		max = 500
+		min = 0		
 	}
+
 	# Chance each update that the AI is willing to start changing a law (1 = 1%)
 	# Using this value in other strategies will function additively
 	change_law_chance = {
-		value = 3
+		value = 1
 	}
+	
 	# Which IGs should the AI try to put in power
 	# Using this value in other strategies will function additively
-	pro_interest_groups = {
-	}
+	pro_interest_groups = {}
+	
 	# Which IGs should the AI try to avoid putting in power
 	# Using this value in other strategies will function additively
-	anti_interest_groups = {
-	}
+	anti_interest_groups = {}
+
 	# Which institutions should the AI prefer to invest in
 	# Using this value in other strategies will function additively
 	institution_scores = {
@@ -138,6 +437,7 @@ ai_strategy_default = {
 			limit = { scope:target_country.country_rank >= rank_value:great_power }
 			add = 5
 		}
+		
 		# Domineering/Protective AI wants to use the obligation to cajole the country into a subordinate relationship
 		if = {
 			limit = {
@@ -164,6 +464,7 @@ ai_strategy_default = {
 			}
 			add = 30
 		}
+
 		# Having an obligation can stop a country from attacking us
 		if = {
 			limit = {
@@ -182,6 +483,7 @@ ai_strategy_default = {
 			}
 			add = 10
 		}
+
 		# Small boost for generally friendly attitudes
 		if = {
 			limit = {
@@ -198,47 +500,73 @@ ai_strategy_default = {
 			}
 			add = 5
 		}
+
 		# Bonus if they have same alignment
 		if = {
 			limit = {
 				OR = {
 					AND = {
-						is_aligned_USA = yes
+						is_in_same_power_bloc = c:USA
 						scope:target_country = {
-							is_aligned_USA = yes
+							is_in_same_power_bloc = c:USA
 						}
 					}
 					AND = {
-						is_aligned_RUS = yes
+						is_in_same_power_bloc = c:RUS
 						scope:target_country = {
-							is_aligned_RUS = yes
+							is_in_same_power_bloc = c:RUS
 						}
 					}
 				}
 			}
 			add = 10
 		}
-		# Obligation has no value if they have opposite alignment
+	
+		multiply = {
+			value = "scope:target_country.relations:root"
+			multiply = 0.01
+			add = 1
+			min = 0.5
+			max = 2.0				
+		}	
+
+		multiply = {
+			value = "scope:target_country.ai_army_comparison(root)"
+			divide = 10
+			add = 1
+			min = 0.5
+			max = 2.0
+		}
+
+		multiply = {
+			value = "ai_ideological_opinion(scope:target_country)"
+			multiply = 0.025
+			add = 1
+			min = 0.5
+			max = 1.5
+		}
+
+		# Obligation has no value if they belong to an opposite bloc
 		if = {
 			limit = {
 				OR = {
 					AND = {
-						is_aligned_RUS = yes
+						is_in_same_power_bloc = c:RUS
 						scope:target_country = {
-							is_aligned_USA = yes
+							is_in_same_power_bloc = c:USA
 						}
 					}
 					AND = {
-						is_aligned_USA = yes
+						is_in_same_power_bloc = c:USA
 						scope:target_country = {
-							is_aligned_RUS = yes
+							is_in_same_power_bloc = c:RUS
 						}
 					}
 				}
 			}
 			subtract = 100
 		}
-		# TODO remove value if a country with same alignement is an opponent
+		
 		if = { # If AI doesn't care about them at all, they don't want an obligation
 			limit = {
 				has_attitude = {
@@ -256,6 +584,11 @@ ai_strategy_default = {
 				}						
 			}
 			multiply = 0.25
+		}			
+		
+		if = { # Overlords care a bit more about Obligations from their Subjects, since they can use them to keep them in check
+			limit = { scope:target_country = { is_subject_of = root } }
+			add = 10
 		}
 		multiply = {
 			value = "scope:target_country.relations:root"
@@ -287,14 +620,16 @@ ai_strategy_default = {
 	# root and scope:overlord is the AI doing the evaluation, scope:subject is prospective subject
 	subject_value = {
 		value = 0
-
+				
+		# PUT ALL REGULAR SUBJECT SCORES INSIDE THE BELOW IF STATEMENT TO PREVENT AI FROM TAKING UNREACHABLE SUBJECTS
 		if = {
 			limit = {
 				OR = {
 					scope:target_country = { is_subject_of = root }
 					can_reach_target_country = yes
 				}
-			}
+			}	
+			
 			add = {
 				if = {
 					limit = {
@@ -316,37 +651,71 @@ ai_strategy_default = {
 					add = {
 						value = scope:target_country.gdp
 						divide = 200000
-						max = 50						
+						max = 50		
 					}
-				}
-
-				if = {
-					limit = {
-						has_secret_goal = {
-							who = scope:target_country
-							secret_goal = protect
-						}						
-					}
-					
-					multiply = 0.5
 				}
 				
 				if = {
-					limit = {
-						NOT = { has_strategic_adjacency = scope:target_country }
+					limit = { 
+						scope:target_country = { is_subject_of = root }
 					}
-					multiply = 0.5
+				
+					# AI values subjects it already has higher than subjects it might have, and will basically never give away large subjects with a lot of prestige
+					if = {
+						limit = { 
+							scope:target_country = { 
+								prestige >= 100			
+							} 					
+						}
+						multiply = 5.0
+					}
+					else_if = {
+						limit = { 
+							scope:target_country = { 
+								prestige >= 75			
+							} 					
+						}
+						multiply = 4.0
+					}					
+					else_if = {
+						limit = { 
+							scope:target_country = { 
+								prestige >= 50			
+							} 					
+						}
+						multiply = 3.0
+					}
+					else_if = {
+						limit = { 
+							scope:target_country = { 
+								prestige >= 25			
+							} 					
+						}
+						multiply = 2.0
+					}				
+					else = {
+						multiply = 1.5	
+					}			
 				}
-			}
-
-			if = {
-				limit = { 
-					scope:target_country = { 
-						is_subject_of = root
-						prestige >= 250				
-					} 					
+				else = {				
+					if = {
+						limit = {
+							has_secret_goal = {
+								who = scope:target_country
+								secret_goal = protect
+							}							
+						}
+						
+						multiply = 0.5
+					}
+					
+					if = {
+						limit = {
+							NOT = {	has_strategic_adjacency = scope:target_country }
+						}
+						multiply = 0.5
+					}						
 				}
-				add = 100
 			}
 
 			if = {
@@ -355,10 +724,68 @@ ai_strategy_default = {
 				}
 				multiply = 0.5
 			}
-		}
 
-		min = 0
-		max = 200
+			if = {
+				limit = {
+					AND = {
+						has_radical_leftist_government = no			
+						scope:target_country = {
+							has_radical_leftist_government = yes
+						}
+					}
+					
+				}
+				multiply = 1.5
+			}
+
+			if = {
+				limit = {
+					AND = {
+						has_radical_leftist_economy = no			
+						scope:target_country = {
+							has_radical_leftist_economy = yes
+						}
+					}
+					
+				}
+				multiply = 1.5
+			}	
+		}
+		
+		# AI should open up large isolationist powers, not subjugate them
+		if = {
+			limit = {
+				has_strategy = ai_strategy_economic_imperialism
+				scope:target_country = { 
+					has_law = law_type:law_isolationism
+					gdp >= 5000000
+				} 			
+			}
+			multiply = 0.0
+		}
+		
+		if = {
+			limit = {
+				scope:target_country = { is_subject_of = root }
+			}
+			min = 100
+			max = 1000
+		}
+		else_if = {
+			limit = {
+				has_secret_goal = {
+					who = scope:target_country
+					secret_goal = dominate
+				}
+			}
+			
+			min = 50
+			max = 200
+		}
+		else = {
+			min = 0
+			max = 200
+		}
 	}
 
 	# How much does the AI desire becoming another country's subject
@@ -421,15 +848,15 @@ ai_strategy_default = {
 			limit = {
 				OR = {
 					AND = {
-						is_aligned_USA = yes
+						is_in_same_power_bloc = c:USA
 						scope:target_country = {
-							is_aligned_USA = yes
+							is_in_same_power_bloc = c:USA
 						}
 					}
 					AND = {
-						is_aligned_RUS = yes
+						is_in_same_power_bloc = c:RUS
 						scope:target_country = {
-							is_aligned_RUS = yes
+							is_in_same_power_bloc = c:RUS
 						}
 					}
 				}
@@ -439,10 +866,7 @@ ai_strategy_default = {
 
 		if = {
 			limit = {
-				has_diplomatic_pact = {
-					who = scope:overlord
-					type = customs_union
-				}					
+				is_in_customs_union_with = scope:overlord
 			}
 			add = 10
 		}					
@@ -574,7 +998,7 @@ ai_strategy_default = {
 		}	
 
 		max = 0
-		min = -100
+		min = -200
 	}
 
 	# Recklessness multiplies the AI's estimation of its own strength, so at recklessness 2 it believes its forces to be twice as strong as they actually are
@@ -651,20 +1075,44 @@ ai_strategy_default = {
 			add = 0.5
 		}
 	}
+
+	nationalization_desire = {
+		value = 0.0
+	
+		if = {
+			limit = {
+				has_law = law_type:law_socialization
+			}
+			
+			add = 100
+		}
+	}
+
 	# Add a multiplier to the score AI assigns to particular building groups (default 1)
 	# Using this value in other strategies will result in several multiplications
 	building_group_weights = {
+		bg_agriculture = 1.25
 	}
+
 	# Which buildings should the AI subsidize
 	# Using a different value in a strategy will override this value
 	subsidies = {
 		building_railway = should_have
 		building_airport = should_have
+		building_nuclear_weapons_facility = must_have
+		building_strategic_airbase = must_have
+		building_nuclear_weapons_silo = must_have
+		building_chemical_weapons_facility = must_have
+		building_biological_weapons_facility = must_have
+		building_spaceport = must_have
+		building_mission_control = must_have
+		building_airport = must_have
 	}
+
 	# Specifying values here will override subsidy priorities while at war
 	# Using a different value in a strategy will override this value
-	war_subsidies = {
-	}
+	war_subsidies = {}
+
 	# How should the AI plan for production and trade of specific goods
 	# Using a different value in a strategy will override this value
 	goods_stances = {
@@ -752,11 +1200,13 @@ ai_strategy_default = {
 			}
 		}
 	}
+
 	# How many of its interests should the AI dedicate to regions with unrecognized and decentralized powers
 	# Using a different value in a strategy will override this value
 	colonial_interest_ratio = {
 		value = 0
 	}
+
 	# How important is it that the AI maintains an interest in a specific strategic region (added on top of region value calculations set in defines)
 	# Using this value in other strategies will function additively
 	strategic_region_scores = {
@@ -1435,7 +1885,7 @@ ai_strategy_default = {
 			if = {
 				limit = {
 					country_has_primary_culture = cu:russian
-					has_law = law_type:law_supremacist
+					has_law = law_type:law_national_supremacy
 					scope:target_country = {
 						any_scope_state = {
 							OR = {
@@ -2184,7 +2634,7 @@ ai_strategy_default = {
 			min = 0
 			max = 100
 		}
-		make_puppet = {
+		make_protectorate = {
 			if = {
 				limit = {
 					OR = {
@@ -2267,186 +2717,50 @@ ai_strategy_default = {
 			min = 0
 			max = 100
 		}
-		make_dominion = {
-			if = {
-				limit = {
-					OR = {
-						has_secret_goal = {
-							who = scope:target_country
-							secret_goal = protect
-						}
-						has_secret_goal = {
-							who = scope:target_country
-							secret_goal = dominate
-						}
-					}
-				}
-				add = {
-					value = 50
-					add = {
-						value = scope:target_country.gdp
-						divide = 200000
-						max = 50
-					}
-					if = {
-						limit = {
-							has_strategic_adjacency = scope:target_country
-						}
-						multiply = 1.25
-					}
-				}
-			}
-			if = {
-				limit = {
-					AND = {
-						has_radical_leftist_government = no
-						scope:target_country = {
-							has_radical_leftist_government = yes
-						}
-					}
-				}
-				multiply = 1.5
-			}
-			if = {
-				limit = {
-					AND = {
-						has_radical_leftist_economy = no
-						scope:target_country = {
-							has_radical_leftist_economy = yes
-						}
-					}
-				}
-				multiply = 1.5
-			}
-			if = {
-				limit = {
-					lenient_ai_behavior_trigger = yes
-				}
-				multiply = 0.5
-			}
-			if = {
-				limit = {
-					army_size = 0
-				}
-				subtract = 100
-			}
-			# KOREA JE PLACEHOLDER FIX
-			if = {
-				limit = {
-					exists = c:STK
-					exists = c:NRK
-					game_date < 1955.1.1
-					NOR = {
-						this = c:STK
-						this = c:NRK
-					}
-					OR = {
-						scope:target_country = c:STK
-						scope:target_country = c:NRK
-					}
-				}
-				subtract = 1000
-			}
-			min = 0
-			max = 100
+
+		increase_autonomy = {
+			value = 100			
 		}
-		make_vassal = {
+
+		reduce_autonomy = {
+			value = 100	
+
 			if = {
 				limit = {
-					OR = {
-						has_secret_goal = {
-							who = scope:target_country
-							secret_goal = protect
-						}
-						has_secret_goal = {
-							who = scope:target_country
-							secret_goal = dominate
-						}
-					}
+					c:BIC ?= this
+					has_journal_entry = je_uneasy_raj
 				}
-				add = {
-					value = 50
-					add = {
-						value = scope:target_country.gdp
-						divide = 200000
-						max = 50
-					}
-					if = {
-						limit = {
-							has_strategic_adjacency = scope:target_country
-						}
-						multiply = 1.25
-					}
-				}
+				multiply = 0.05
 			}
+			
 			if = {
 				limit = {
-					AND = {
-						has_radical_leftist_government = no
-						scope:target_country = {
-							has_radical_leftist_government = yes
+					country_has_primary_culture = cu:russian
+					has_law = law_type:law_national_supremacy
+					has_technology_researched = nationalism
+					scope:target_country = {
+						OR = {
+							c:OZH ?= this
+							c:UZH ?= this
+							c:KZH ?= this
+							c:KAZ ?= this
 						}
 					}
 				}
-				multiply = 1.5
+				add = 100
 			}
-			if = {
-				limit = {
-					AND = {
-						has_radical_leftist_economy = no
-						scope:target_country = {
-							has_radical_leftist_economy = yes
-						}
-					}
-				}
-				add = 1.5
-			}
-			if = {
-				limit = {
-					lenient_ai_behavior_trigger = yes
-				}
-				multiply = 0.5
-			}
-			if = {
-				limit = {
-					army_size = 0
-				}
-				subtract = 100
-			}
-			# KOREA JE PLACEHOLDER FIX
-			if = {
-				limit = {
-					exists = c:STK
-					exists = c:NRK
-					game_date < 1955.1.1
-					NOR = {
-						this = c:STK
-						this = c:NRK
-					}
-					OR = {
-						scope:target_country = c:STK
-						scope:target_country = c:NRK
-					}
-				}
-				subtract = 1000
-			}
-			min = 0
-			max = 100
 		}
+
 		war_reparations = {
 			value = 0
-			if = {
-				limit = {
-					army_size = 0
-				}
-				subtract = 1000
-			}
+			
 			add = {
 				value = "scope:target_country.ai_gdp_comparison(root)"
 				add = 1
 				multiply = 5
 				min = 0
 				max = 15
+
 				if = {
 					limit = {
 						has_diplomatic_pact = {
@@ -2454,12 +2768,15 @@ ai_strategy_default = {
 							type = rivalry
 						}
 					}
+					
 					multiply = 1.5
 				}
 			}
+
 			min = 0
 			max = 100
 		}
+
 		humiliation = {
 			value = 25
 			if = {
@@ -2469,6 +2786,27 @@ ai_strategy_default = {
 				subtract = 100
 			}
 		}
+
+		join_power_bloc = {
+			if = {
+				limit = {
+					is_power_bloc_leader = yes
+					has_attitude = {
+						who = scope:target_country
+						attitude = domineering
+					}	
+				}
+			
+				add = {
+					value = scope:target_country.ai_subject_value:root
+					divide = 2
+				}	
+			}					
+
+			min = 0
+			max = 50	
+		}
+
 		regime_change = {
 			value = 0
 			if = {
@@ -2540,18 +2878,47 @@ ai_strategy_default = {
 				subtract = 1000
 			}
 		}
-		open_market = {
+
+		force_nationalization = {
 			value = 0
+			
+			# Score by how much it would cost to nationalize all their assets
+			add = {
+				value = "nationalization_cost(scope:target_country)"
+				divide = {
+					value = 1000000
+				}
+				max = 50 # Max score at 50 million nationalization cost
+			}			
+			
+			# Score by fraction of GDP that is owned by the target country
+			add = {
+				value = "gdp_ownership_ratio(scope:target_country)"
+				divide = {
+					value = root.gdp 
+					min = 100000 # Set a floor for GDP to avoid dividing by zero or other very small numbers
+				}
+				multiply = 10 # Max score at 10%+ of GDP
+				max = 50
+			}
+
 			if = {
 				limit = {
 					NOT = {
-						scope:target_country = {
-							has_law = law_type:law_isolationism
+						has_attitude = {
+							who = scope:target_country
+							attitude = antagonistic
 						}
 					}
 				}
-				subtract = 1000
+				
+				multiply = 0.5
 			}
+		}
+
+		open_market = {
+			value = 0
+			
 			if = {
 				limit = {
 					scope:target_country = {
@@ -2564,6 +2931,41 @@ ai_strategy_default = {
 				}
 				add = 50
 			}
+
+			if = {
+				limit = {
+					AND = {
+						has_radical_leftist_government = no			
+						scope:target_country = {
+							has_radical_leftist_government = yes
+						}
+					}
+				}
+				add = 50
+			}
+	
+			if = {
+				limit = {
+					AND = {
+						has_radical_leftist_economy = no			
+						scope:target_country = {
+							has_radical_leftist_economy = yes
+						}
+					}
+				}
+				add = 50
+			}					
+			
+			# Not worth doing against very small markets
+			if = {
+				limit = {
+					scope:target_country = {
+						gdp < 2000000
+					}
+				}
+				multiply = 0
+			}
+			
 			# Don't want to open our own market...
 			if = {
 				limit = {
@@ -2571,6 +2973,7 @@ ai_strategy_default = {
 				}
 				multiply = 0
 			}
+
 			# KOREA JE PLACEHOLDER FIX
 			if = {
 				limit = {
@@ -2589,101 +2992,144 @@ ai_strategy_default = {
 				subtract = 1000
 			}
 		}
+
+		foreign_investment_rights = {
+			value = 0
+			
+			if = {
+				limit = {
+					scope:target_country = {
+						has_diplomatic_pact = {
+							who = root
+							type = embargo
+						}	
+					}
+					can_reach_target_country = yes
+				}
+				add = 50
+			}
+
+			# Not worth doing against very small countries
+			if = {
+				limit = {
+					scope:target_country = {
+						gdp < 500000
+					}
+				}
+				multiply = 0
+			}				
+		}
+
 		revoke_claim = {
 			if = {
 				limit = {
-					scope:target_state = {
-						owner = root
-					}
+					scope:target_state = { owner = root }
 				}
+				
 				add = 10
+				
 				add = {
 					value = scope:target_state.state_population
 					divide = 200000
 					max = 10
 				}
+				
 				add = {
 					value = scope:target_state.gdp
 					divide = 200000
 					max = 10
 				}
+				
 				if = {
 					limit = {
-						scope:target_state = {
-							is_homeland_of_country_cultures = root
-						}
+						scope:target_state = { is_homeland_of_country_cultures = root }
 					}
 					multiply = 1.25
 				}
+
 				if = {
 					limit = {
-						scope:target_state = {
-							is_incorporated = no
-						}
+						scope:target_state = { is_incorporated = no }
 					}
 					multiply = 0.5
 				}
 			}
+
 			min = 0
 			max = 50
 		}
+
 		contain_threat = {
 			value = 1000
 		}
+
 		annex_country = {
 			value = 100
+		
 			add = {
 				value = scope:target_country.gdp
 				divide = 100000
 				max = 100
 			}
+
 			if = {
 				limit = {
 					has_strategic_adjacency = scope:target_country
 				}
 				multiply = 1.5
 			}
+			
 			if = {
 				limit = {
 					lenient_ai_behavior_trigger = yes
 				}
-				multiply = 0
+				multiply = 0.0
 			}
+
 			min = 0
 			max = 200
 		}
+
 		colonization_rights = {
-			value = 100
+			value = 0
 		}
+
 		unification = {
 			value = 100
+		
 			add = {
 				value = scope:target_country.gdp
 				divide = 100000
 				max = 100
 			}
+
 			if = {
 				limit = {
 					has_strategic_adjacency = scope:target_country
 				}
 				multiply = 1.5
-			}
+			}	
+			
 			if = {
 				limit = {
 					lenient_ai_behavior_trigger = yes
 				}
-				multiply = 0
+				multiply = 0.0
 			}
+
 			min = 0
 			max = 200
 		}
+
 		liberate_subject = {
 			value = 0
+			
 			if = {
 				limit = {
 					scope:target_country.top_overlord.infamy >= infamy_threshold:notorious
 				}
 				add = 25
+				
 				if = {
 					limit = {
 						has_diplomatic_pact = {
@@ -2691,47 +3137,47 @@ ai_strategy_default = {
 							type = rivalry
 						}
 					}
-					add = 100
+					add = 25
 				}
+
 				if = {
 					limit = {
 						scope:target_country.top_overlord.infamy >= infamy_threshold:pariah
 					}
 					add = 25
 				}
-				# Relations with subject
-				multiply = {
-					value = "scope:target_country.relations:root"
-					multiply = 0.01
-					add = 1
-					min = 0.25
-					max = 2
-				}
-				# Ideological opinion of subject
-				multiply = {
-					value = "ai_ideological_opinion(scope:target_country)"
-					multiply = 0.15
-					add = 1
-					min = 0.25
-					max = 2
-				}
 			}
+
+			# Relations with subject
+			multiply = {
+				value = "scope:target_country.relations:root"
+				multiply = 0.01
+				add = 1
+				min = 0.25
+				max = 2.0
+			}
+			
+			# Ideological opinion of subject
+			multiply = {
+				value = "ai_ideological_opinion(scope:target_country)"
+				multiply = 0.05
+				add = 1
+				min = 0.5
+				max = 2.0
+			}					
+
 			min = 0
 			max = 100
 		}
 		liberate_country = {
 			value = 0
-			if = {
-				limit = {
-					army_size = 0
-				}
-				subtract = 100
-			}
+		
 			if = {
 				limit = {
 					scope:target_country.infamy >= infamy_threshold:notorious
 				}
 				add = 25
+				
 				if = {
 					limit = {
 						has_diplomatic_pact = {
@@ -2739,61 +3185,67 @@ ai_strategy_default = {
 							type = rivalry
 						}
 					}
-					add = 100
+					add = 25
 				}
+
 				if = {
 					limit = {
 						scope:target_country.infamy >= infamy_threshold:pariah
 					}
 					add = 25
-				}
-				# Relations with target
-				multiply = {
-					value = "scope:target_country.relations:root"
-					multiply = -0.01
-					add = 1
-					min = 0.5
-					max = 2
-				}
-				# Ideological opinion of target
-				multiply = {
-					value = "ai_ideological_opinion(scope:target_country)"
-					multiply = -0.15
-					add = 1
-					min = 0.5
-					max = 2
-				}
+				}				
 			}
+			
+			# Relations with target
+			multiply = {
+				value = "scope:target_country.relations:root"
+				multiply = -0.01
+				add = 1
+				min = 0.5
+				max = 2.0				
+			}
+			
+			# Ideological opinion of target
+			multiply = {
+				value = "ai_ideological_opinion(scope:target_country)"
+				multiply = -0.05
+				add = 1
+				min = 0.5
+				max = 2.0
+			}			
+
 			min = 0
 			max = 100
 		}
-		# force_recognition = {
-		# value = 0
-		# if = {
-		# limit = {
-		# country_rank = rank_value:unrecognized_major_power
-		# navy_size >= 50
-		# army_size >= 200
-		# OR = {
-		# has_strategy = ai_strategy_nationalist_agenda
-		# has_strategy = ai_strategy_progressive_agenda
-		# has_strategy = ai_strategy_egalitarian_agenda
-		# }
-		# }
-		# add = 100
-		# }
-		# }
+
+		leave_power_bloc = {
+			value = 50
+
+			if = {
+				limit = {
+					would_accept_diplomatic_action = {
+						actor = scope:target_country
+						type = invite_to_power_bloc
+					}					
+				}
+				multiply = 0.0
+			}
+		}
+		
 		independence = {
 			value = 100
 		}
+
 		secession = {
 			value = 100
 		}
 	}
+
 	# Trigger for whether this strategy can be randomly allocated to a country
 	possible = {
 		always = no
 	}
+	
 	# Chance that this strategy will be randomly allocated to a country
 	weight = {
 		value = 0

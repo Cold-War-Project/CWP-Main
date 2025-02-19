@@ -55,9 +55,81 @@ types panel_military {
 			}
 
 			widget = { size = { 1 10 } }
-			supply_network_information_small = {
-			}
+
+			supply_network_information_small = {}
+
 			widget = { size = { 1 10 } }
+		}
+	}
+
+	type supply_network_information_small = widget {
+		onmousehierarchyenter = "[AccessHighlightManager.HighlightSupplyNetwork(Country.Self)]"
+		onmousehierarchyleave = "[AccessHighlightManager.RemoveHighlight]"
+		alwaystransparent = no
+		size = { 410 110 }
+	
+		using = entry_bg_fancy_solid_bg
+
+		vbox = {
+			margin = { 20 20 }
+			
+			hbox = {
+				tooltip = "SUPPLY_NETWORK_STRENGTH_TOOLTIP"
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+
+				textbox = {
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+					text = "SUPPLY_NETWORK_STRENGTH_TEXT"
+					align = left|nobaseline
+				}	
+				textbox = {
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+					text = "SUPPLY_NETWORK_STRENGTH_VALUE"
+					align = right|nobaseline
+				}
+			}
+
+			hbox = {
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+				tooltip = "NUM_SEA_NODES_TOOLTIP"
+
+				textbox = {
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+					text = "NUM_SEA_NODES_TEXT"
+					align = left|nobaseline
+				}
+				textbox = {
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+					text = "NUM_SEA_NODES_VALUE"
+					align = right|nobaseline
+				}
+			}
+
+			hbox = {
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+				tooltip = "NUM_CONVOYS_TOOLTIP_EXTENDED"
+				
+				textbox = {
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+					text = "USED_AVAILABE_CONVOYS_TEXT"
+					align = left|nobaseline
+				}
+				textbox = {
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+					text = "USED_AVAILABE_CONVOYS_VALUE"
+					align = right|nobaseline
+				}
+			}
+		
 		}
 	}
 
@@ -90,7 +162,7 @@ types panel_military {
 			### ARMY / FORCELIMIT
 			textbox = {
 				block "current_unit_count" {
-					raw_text = "@conscripts!#v [Country.GetConscriptedBattalions]"
+					raw_text = "@conscripts!#v [Country.CalcConscriptableBattalions]"
 				}
 				autoresize = yes
 				align = left|nobaseline
@@ -367,7 +439,8 @@ types panel_military {
 			maximumsize = { @panel_width -1 }
 			minimumsize = { @panel_width -1 }
 			multiline = yes
-			visible = "[Not(StringIsEmpty(Country.GetSeaNodesMightBeConvoyRaidedInDesc))]"
+			#visible = "[Not(StringIsEmpty(Country.GetSeaNodesMightBeConvoyRaidedInDesc))]"
+			visible = no # todo PRCAL-32539 - Remove this textbox and implement the dynamicgridbox specified in the Jira.
 			text = "[Country.GetSeaNodesMightBeConvoyRaidedInDesc]"
 		}
 
@@ -593,9 +666,8 @@ types panel_military {
 								}
 
 								dynamicgridbox = {
-									maximumsize = { 500 -1 }
 									datamodel = "[GetMobilizationOptionGroups]"
-									datamodel_wrap = 3
+									datamodel_wrap = 2
 									flipdirection = yes
 									parentanchor = hcenter
 
@@ -758,13 +830,13 @@ types panel_military {
 						}
 					}
 				}
-
-				widget = { size = { 1 10 } }
 			}
 		}
 
-		blockoverride "fixed_bottom" {	
+		blockoverride "fixed_bottom" {
+
 			flowcontainer = {
+				visible = "[Or(InformationPanel.IsTabSelected('army'), InformationPanel.IsTabSelected('navy'))]"
 				direction = vertical
 				spacing = 5
 
@@ -779,9 +851,29 @@ types panel_military {
 				widget = {
 					size = { 5 5 }
 				}
+				
+				### UPGRADE ALL UNITS IN ALL FORMATIONS
+				button = {
+					using = default_button_map_interaction
+					parentanchor = hcenter
+					size = { 520 50 }
+					onclick = "[Execute( PanelMilitary.GetUpgradeAllUnitsInAllFormationsCommand)]"
+					enabled = "[IsValid( PanelMilitary.GetUpgradeAllUnitsInAllFormationsCommand)]"
+					visible = [PanelMilitary.CanAnyUnitInAnyPlayerFormationBeUpgraded]
+					
+					textbox = {
+						parentanchor = center
+						autoresize = yes
+						align = center|nobaseline
+						text = "MILITARY_FORMATION_UNITS_UPGRADE_ALL"
+					}
+					
+					tooltip = "MILITARY_FORMATION_UNITS_UPGRADE_ALL_ALL"
+				}
 
 				### CREATE FORMATIONS
 				button = {
+					name = "tutorial_highlight_create_army"
 					using = default_button_map_interaction
 					parentanchor = hcenter
 					size = { 520 50 }
@@ -875,8 +967,14 @@ types panel_military {
 					
 					big_mobilize_all_button = {}
 				}
+
+				widget = {
+					size = { 5 5 }
+				}
 			}
 		}
+
+		blockoverride "bottom_spacing" {}
 	}
 
 	type tab_wmd = top_illu {
@@ -977,8 +1075,9 @@ types panel_military {
 								size = { 450 40 }
 								using = default_button_map_interaction
 								parentanchor = hcenter
+								direction = vertical
 								datacontext = "[Scope.AccessStrategicRegion]"
-								raw_text = "[StrategicRegion.GetName]: [GuiScope.SetRoot( StrategicRegion.MakeScope ).AddScope('initiator', GetPlayer.MakeScope ).ScriptValue('nuclear_strike_strategic_region_coverage')|v1% )]"
+								raw_text = "[StrategicRegion.GetName]: [GuiScope.SetRoot( StrategicRegion.MakeScope ).AddScope('initiator', GetPlayer.MakeScope ).ScriptValue('nuclear_strike_strategic_region_coverage')|v1% )] "
 								tooltip = "NUCLEAR_STRATEGIC_REGION_TOOLTIP"
 							}
 						}
@@ -989,7 +1088,7 @@ types panel_military {
 				blockoverride "title" {
 					parentanchor = hcenter
 					align = center
-					text = "NUCLEAR_DETONATION_FOCUS"
+					raw_text = "Nuclear Detonation Focus"
 				}
 				blockoverride "entrycontainer" {
 					parentanchor = hcenter
@@ -998,8 +1097,8 @@ types panel_military {
 						direction = horizontal
 						spacing = 10
 						button = {
-							using = default_button
-							text = "AIR_BURST"
+							using = default_button # Approve
+							raw_text = "Air Burst"
 							enabled = "[Not(GetPlayer.MakeScope.Var('air_burst_focus').IsSet)]"
 							onclick = "[GetScriptedGui('wmd_nuclear_detonation_focus_air').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 							size = { 195 40 }
@@ -1007,7 +1106,7 @@ types panel_military {
 						}
 						button = {
 							using = default_button
-							text = "GROUND_BURST"
+							raw_text = "Ground Burst" # Reject
 							enabled = "[Not(GetPlayer.MakeScope.Var('ground_burst_focus').IsSet)]"
 							onclick = "[GetScriptedGui('wmd_nuclear_detonation_focus_ground').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 							size = { 195 40 }
@@ -1030,7 +1129,7 @@ types panel_military {
 						direction = horizontal
 						spacing = 10
 						button = {
-							using = default_button
+							using = default_button # Approve
 							raw_text = "20%"
 							enabled = "[Not(EqualTo_CFixedPoint(GetPlayer.MakeScope.Var('nuclear_deployment_percentage').GetValue, '(CFixedPoint)20'))]"
 							onclick = "[GetScriptedGui('wmd_deployment_20').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
@@ -1038,28 +1137,28 @@ types panel_military {
 						}
 						button = {
 							using = default_button
-							raw_text = "40%"
+							raw_text = "40%" # Reject
 							enabled = "[Not(EqualTo_CFixedPoint(GetPlayer.MakeScope.Var('nuclear_deployment_percentage').GetValue, '(CFixedPoint)40'))]"
 							onclick = "[GetScriptedGui('wmd_deployment_40').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 							size = { 60 40 }
 						}
 						button = {
 							using = default_button
-							raw_text = "60%"
+							raw_text = "60%" # Reject
 							enabled = "[Not(EqualTo_CFixedPoint(GetPlayer.MakeScope.Var('nuclear_deployment_percentage').GetValue, '(CFixedPoint)60'))]"
 							onclick = "[GetScriptedGui('wmd_deployment_60').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 							size = { 60 40 }
 						}
 						button = {
 							using = default_button
-							raw_text = "80%"
+							raw_text = "80%" # Reject
 							enabled = "[Not(EqualTo_CFixedPoint(GetPlayer.MakeScope.Var('nuclear_deployment_percentage').GetValue, '(CFixedPoint)80'))]"
 							onclick = "[GetScriptedGui('wmd_deployment_80').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 							size = { 60 40 }
 						}
 						button = {
 							using = default_button
-							raw_text = "100%"
+							raw_text = "100%" # Reject
 							enabled = "[Not(EqualTo_CFixedPoint(GetPlayer.MakeScope.Var('nuclear_deployment_percentage').GetValue, '(CFixedPoint)100'))]"
 							onclick = "[GetScriptedGui('wmd_deployment_100').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
 							size = { 60 40 }
@@ -1068,9 +1167,9 @@ types panel_military {
 					button = {
 						parentanchor = hcenter
 						using = default_button_map_interaction
-						enabled = "[GreaterThan_CFixedPoint(GetPlayer.MakeScope.Var('nuclear_stockpile').GetValue, '(CFixedPoint)0')]"
+						enabled = "[GreaterThan_CFixedPoint(GetPlayer.MakeScope.ScriptValue('nuclear_stockpile_sv').GetValue, '(CFixedPoint)0')]"
 						onclick = "[GetScriptedGui('wmd_autotarget').Execute( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
-						text = "AUTOMATIC_TARGET_SELECTION"
+						text = "#Gold Automatically Select Targets#!"
 						tooltip = "NUCLEAR_AUTOTARGET_TOOLTIP"
 						size = { 350 40 }
 					}
@@ -1127,7 +1226,7 @@ types panel_military {
 			minimumsize = { 520 40 }
 			flowcontainer = {
 				margin = { 15 15 }
-				parentanchor = left
+				parentanchor = left|vcenter
 				textbox = {
 					block "header" {
 						raw_text = "Nuclear Weapons"
@@ -1199,11 +1298,11 @@ types panel_military {
 		}
 		textbox = {
 			visible = "[GetScriptedGui('targetlist_is_set').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
-			raw_text = "Average Delivery Effectiveness: #v [GuiScope.SetRoot( GetPlayer.MakeScope ).AddScope('initiator', GetPlayer.MakeScope ).ScriptValue('wmd_target_list_states_delivery_effectiveness_total')|d%]"
+			raw_text = "Average Delivery Effectiveness: #v [GuiScope.SetRoot( GetPlayer.MakeScope ).AddScope('initiator', GetPlayer.MakeScope ).ScriptValue('wmd_target_list_states_delivery_effectiveness_total'))|d%]"
 		}
 		textbox = {
 			visible = "[GetScriptedGui('targetlist_is_set').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
-			raw_text = "Estimated Total Casualties: [GuiScope.SetRoot( GetPlayer.MakeScope ).AddScope('initiator', GetPlayer.MakeScope ).ScriptValue('wmd_target_list_states_estimated_casualties_total')|-d]"
+			raw_text = "Estimated Total Casualties: [GuiScope.SetRoot( GetPlayer.MakeScope ).AddScope('initiator', GetPlayer.MakeScope ).ScriptValue('wmd_target_list_states_estimated_casualties_total'))|-d]"
 		}
 		scrollbox = {
 			visible = "[GetScriptedGui('targetlist_is_set').IsShown( GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
@@ -1263,9 +1362,11 @@ types panel_military {
 								}
 								textbox = {
 									raw_text = "[GuiScope.SetRoot( GetPlayer.MakeScope ).AddScope('target', Country.MakeScope ).ScriptValue('wmd_target_list_states_count_per_country')|v0 )] States - [GuiScope.SetRoot( GetPlayer.MakeScope ).AddScope('target', Country.MakeScope ).ScriptValue('wmd_target_list_states_population_per_country')|vd )] Population Targeted"
+									fontsize_min = 12
 								}
 								textbox = {
-									raw_text = "Estimated Casualties - [GuiScope.SetRoot( Country.MakeScope ).AddScope('initiator', GetPlayer.MakeScope ).ScriptValue('wmd_target_list_states_estimated_casualties_per_country')|-d]"
+									raw_text = "Estimated Casualties - [GuiScope.SetRoot( Country.MakeScope ).AddScope('initiator', GetPlayer.MakeScope ).ScriptValue('wmd_target_list_states_estimated_casualties_per_country'))|-d]"
+									fontsize_min = 12
 								}
 							}
 							flowcontainer = {
@@ -1554,10 +1655,10 @@ types mobilization_options {
 	type mobilization_option_small = widget {
 		alpha = "[TransparentIfFalse(Or(MobilizationOption.IsActivated(MilitaryFormation.AccessSelf),IsValid(MobilizationOption.Toggle(MilitaryFormation.AccessSelf))))]"
 		#visible = "[Or(MobilizationOption.IsActivated(MilitaryFormation.AccessSelf),IsValid(MobilizationOption.Toggle(MilitaryFormation.AccessSelf)))]"
-		size = { 30 30 }
+		size = { 50 50 }
 
 		widget = {
-			size = { 30 30 }
+			size = { 50 50 }
 
 			# Activate
 			widget = {
@@ -1617,7 +1718,7 @@ types mobilization_options {
 		}
 
 		icon = {
-			size = { 19 19 }
+			size = { 38 38 }
 			texture = "[MobilizationOption.GetTexture]"
 			parentanchor = center
 		}
@@ -1699,4 +1800,3 @@ types mobilization_options {
 		}
 	}
 }
-
