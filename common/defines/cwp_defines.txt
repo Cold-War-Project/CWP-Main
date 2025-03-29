@@ -10,10 +10,84 @@ NJominiMap = {
 	WATERLEVEL = 1.74						#Original Settings 3.7
 }
 
-NAI = {
-	DIPLO_PROPOSAL_BREAK_THRESHOLD = -100				# At this or less acceptance, AI breaks off an existing pact
+### Pop Growth Constants
+## Base Values per month
+@min_birthrate = 0.0012			# Minimum base birthrate per month (at POP_GROWTH_STABLE_SOL)
+@max_birthrate = 0.0025			# Maximum base birthrate per month (at SOL = 0)
+@min_mortality = 0.0004			# Minimum base mortality per month (at POP_GROWTH_STABLE_SOL)
+@max_mortality = 0.0025 		# Maximum base mortality per month (at SOL = 0)
 
+## SoL Thresholds
+@pop_growth_equilibrium_sol = 5		# Equilibrium is pops stop starving and where growth first becomes positive
+@pop_growth_transition_sol = 10     # Transition determines how long birthrate "lags" behind mortality before starting to drop. Setting to same as equilibrium leads to no "lag" (only matters for birthrate)
+@pop_growth_max_sol = 20			# Growth Max is where net growth generally is at it's highest (only matters for mortality)
+@pop_growth_stable_sol = 30			# Stable is where birthrate and mortality stop changing and hit their minimum values
+
+## Others
+@transition_birthrate_mult = 1 		# If you want the birthrate "lag" to go to a higher or lower value than max_birthrate. (you can also just change it directly below)
+@max_growth_mortality_mult = 0.35	# What proportion of birthrate_at_growth_max mortality should be at. Higher means lower growth
+
+### Pop Growth Derived values
+# Generally, for each one of these derived values below we're really just doing one of three operations (or combination of them):
+# - Calculate a Point: sol * slope + start_value   					(x_at_y)
+# - Calculate a Slope: (start_value - end_value) / number_of_steps	(x_slope)
+# - Calculate an Intercept: -slope*sol + end_value					(x_intercept)
+# Intercepts are only needed for line segments that don't start at 0 SoL
+
+@birthrate_at_transition = @[max_birthrate*transition_birthrate_mult]
+@rate_at_equilibrium = @[pop_growth_equilibrium_sol*((birthrate_at_transition-max_birthrate)/pop_growth_transition_sol)+max_birthrate] # determines both mortality and birthrate
+
+## Mortality from 0 to pop_growth_equilibrium_sol
+@mortality_starving_slope = @[(rate_at_equilibrium-max_mortality)/pop_growth_equilibrium_sol]
+
+## Birthrate from 0 to pop_growth_transition_sol
+@birthrate_pretransition_slope = @[(birthrate_at_transition-rate_at_equilibrium)/pop_growth_transition_sol]
+
+## Mortality from pop_growth_equilibrium_sol to pop_growth_max_sol
+@birthrate_at_growth_max = @[(pop_growth_max_sol-pop_growth_transition_sol)*((min_birthrate-birthrate_at_transition)/(pop_growth_stable_sol-pop_growth_transition_sol))+birthrate_at_transition]
+@mortality_at_growth_max = @[birthrate_at_growth_max*max_growth_mortality_mult]
+@mortality_equilibrium_to_growth_max_slope = @[(mortality_at_growth_max-rate_at_equilibrium)/(pop_growth_max_sol-pop_growth_equilibrium_sol)]
+@mortality_equilibrium_to_growth_max_intercept = @[-mortality_equilibrium_to_growth_max_slope*pop_growth_equilibrium_sol+rate_at_equilibrium]
+
+## Birthrate from pop_growth_transition_sol to pop_growth_stable_sol
+@birthrate_transition_slope = @[(min_birthrate-birthrate_at_transition)/(pop_growth_stable_sol-pop_growth_transition_sol)]
+@birthrate_transition_intercept = @[-birthrate_transition_slope*pop_growth_stable_sol+min_birthrate]
+
+## Mortality from pop_growth_max_sol to pop_growth_stable_sol
+@mortality_growth_max_to_stable_slope = @[(min_mortality-mortality_at_growth_max)/(pop_growth_stable_sol-pop_growth_max_sol)]
+@mortality_growth_max_to_stable_intercept = @[-mortality_growth_max_to_stable_slope*pop_growth_stable_sol+min_mortality]
+
+
+NPops = {
+	## Birthrate
+	POP_GROWTH_BIRTHRATE_PRETRANSITION_SLOPE = @birthrate_pretransition_slope
+	POP_GROWTH_BIRTHRATE_TRANSITION_SLOPE = @birthrate_transition_slope
+	POP_GROWTH_BIRTHRATE_TRANSITION_INTERCEPT = @birthrate_transition_intercept
+
+	## Mortality
+	POP_GROWTH_MORTALITY_STARVING_SLOPE = @mortality_starving_slope
+	POP_GROWTH_MORTALITY_EQUILIBRIUM_TO_GROWTH_MAX_SLOPE = @mortality_equilibrium_to_growth_max_slope
+	POP_GROWTH_MORTALITY_EQUILIBRIUM_TO_GROWTH_MAX_INTERCEPT = @mortality_equilibrium_to_growth_max_intercept
+	POP_GROWTH_MORTALITY_GROWTH_MAX_TO_STABLE_SLOPE = @mortality_growth_max_to_stable_slope
+	POP_GROWTH_MORTALITY_GROWTH_MAX_TO_STABLE_INTERCEPT = @mortality_growth_max_to_stable_intercept
+
+	## Base Values
+	POP_GROWTH_MIN_BIRTHRATE = @min_birthrate					# Minimum base birthrate per month (at POP_GROWTH_STABLE_SOL)
+	POP_GROWTH_MAX_BIRTHRATE = @max_birthrate					# Maximum base birthrate per month (at SOL = 0)
+	POP_GROWTH_MIN_MORTALITY = @min_mortality					# Minimum base mortality per month (at POP_GROWTH_STABLE_SOL)
+	POP_GROWTH_MAX_MORTALITY = @max_mortality					# Maximum base mortality per month (at SOL = 0)
+
+	## SoL Thresholds
+	POP_GROWTH_EQUILIBRIUM_SOL = @pop_growth_equilibrium_sol	# Equilibrium is pops stop starving and where growth first becomes positive
+	POP_GROWTH_TRANSITION_SOL = @pop_growth_transition_sol		# Transition determines how long birthrate "lags" behind mortality before starting to drop. Setting to same as equilibrium leads to no "lag" (only matters for birthrate)
+	POP_GROWTH_MAX_SOL = @pop_growth_max_sol					# Growth Max is where net growth generally is at it's highest (only matters for mortality)
+	POP_GROWTH_STABLE_SOL = @pop_growth_stable_sol				# Stable is where birthrate and mortality stop changing and hit their minimum values
+}
+### End Pop Growth Constant defines
+
+NAI = {
 	INFLUENCE_DEFICIT_BREAK_PACT_OVER_SPENDING_LIMIT_MULT = 0.5			# AI multiplies the value of pacts that are over their action-type spending limit by this when in an Influence deficit
+  
 CHANGE_TAX_SIGNIFICANT_DEBT_THRESHOLD = 0.01 # Extremely low, so the AI reacts to even the smallest amount of debt.
 RAISE_TAX_TO_DESIRED_INCOME_THRESHOLD = 0.3 # Drastically reduced, so the AI raises taxes as soon as income is slightly below expenses.
 RAISE_TAX_ABOVE_DESIRED_INCOME_MAX_GOLD_RESERVES_THRESHOLD = 0.01 # Very low, so the AI raises taxes even with minimal gold reserves.
@@ -52,16 +126,10 @@ RAISE_TAX_HIGH_DEBT_OVERRIDE_RATIO = 0.05 # Extremely low, so the AI raises taxe
 	PRODUCTION_BUILDING_LONG_CONSTRUCTION_TIME_THRESHOLD = 80
 	PRODUCTION_BUILDING_VERY_LONG_CONSTRUCTION_TIME_THRESHOLD = 120
 
-	# Below data is used to calculate how much weight the AI places on enacting/revoking a law
-	CHANGE_LAW_POTENTIAL_CIVIL_WAR_ENACT_CHANCE = 2 # Chance that the AI will proceed with a law change that could cause a civil war (1 = 1%)
-
 	# Below data is used to calculate how much weight the AI places on a production method
     PRODUCTION_METHOD_EMPLOYMENT_CHANGE_FACTOR = 0 # Per extra employee the employment method would require (reduced employment = higher score)
     PRODUCTION_METHOD_FAVORED_MILITARY_GOODS_FACTOR = 2.0 # Per base cost * units of goods produced that the AI favors (for military goods)
     PRODUCTION_METHOD_CHANCE_TO_CHANGE = 0.5 # Chance that the AI will consider changing a production method when evaluating methods
-
-	# For the AI to want to start a trade route, they usually want it to be at least this level
-    TRADE_ROUTE_MIN_DESIRED_LEVEL_MAX = 1
 
     # The AI never cancels current trade routes of this level or above
     TRADE_ROUTE_MAX_LEVEL_TO_CANCEL_MIN = 5
@@ -116,27 +184,20 @@ RAISE_TAX_HIGH_DEBT_OVERRIDE_RATIO = 0.05 # Extremely low, so the AI raises taxe
 
 
 	# Below data is used to determine which states are most important to defend
-	DEFEND_STATE_BARRACKS_WEIGHT = 10 # Per level of barracks
-	DEFEND_STATE_BARRACKS_MAX_WEIGHT = 250 # Per state
 	DEFEND_STATE_CAPITAL_WEIGHT = 250
 	DEFEND_STATE_CAPITAL_WAR_NEGOTIATOR_WEIGHT = 2500
+	DEFEND_STATE_OWN_CAPITAL_WEIGHT_MULT = 5
 	DEFEND_STATE_WARGOAL_WEIGHT = 1000
-	DEFEND_STATE_INCORPORATED_WEIGHT_MULT = 2.5
 
 	# Below data is used to determine which states are most important to invade
-	INVADE_STATE_BARRACKS_WEIGHT = 10 # Per level of barracks
-	INVADE_STATE_BARRACKS_MAX_WEIGHT = 250 # Per state
-	INVADE_STATE_CAPITAL_WEIGHT = 250
-	INVADE_STATE_CAPITAL_WAR_NEGOTIATOR_WEIGHT = 2500
-	INVADE_STATE_WARGOAL_WEIGHT = 1000
+	INVADE_STATE_CAPITAL_WAR_NEGOTIATOR_WEIGHT = 10
+	INVADE_STATE_WARGOAL_WEIGHT = 10000
 
 	# Below data is used for naval invasions:
-	NAVAL_INVASION_MIN_RELATIVE_LOCAL_ARMY_STRENGTH = 0.2 			# AI wants at least this fraction of defending army strength to risk a naval invasion
-	NAVAL_INVASION_MIN_RELATIVE_LOCAL_NAVY_STRENGTH = 0.4 			# AI wants at least this fraction of defending naval strength to risk a naval invasion
-	NAVAL_INVASION_MIN_RELATIVE_GLOBAL_NAVY_STRENGTH_ATTACKER = 0.05 # AI wants at least this fraction of naval strength in the overall war to risk a naval invasion as the attacking war side
-	NAVAL_INVASION_MIN_RELATIVE_GLOBAL_NAVY_STRENGTH_DEFENDER = 0.1 # AI wants at least this fraction of naval strength in the overall war to risk a naval invasion as the defending war side
+	NAVAL_INVASION_MIN_RELATIVE_GLOBAL_NAVY_STRENGTH_ATTACKER = 0.5 # AI wants at least this fraction of naval strength in the overall war to risk a naval invasion as the attacking war side
+	NAVAL_INVASION_MIN_RELATIVE_GLOBAL_NAVY_STRENGTH_DEFENDER = 1   # AI wants at least this fraction of naval strength in the overall war to risk a naval invasion as the defending war side
 	NAVAL_INVASION_COOLDOWN_DAYS = 30 								# After launching a naval invasion, the AI will wait at least this long before launching another
-	NAVAL_INVASION_MIN_SCORE = 10									# AI won't bother launching naval invasions against theaters with a lower total state score than this
+	NAVAL_INVASION_MIN_SCORE = 1000									# AI won't bother launching naval invasions against theaters with a lower total state score than this
 
     # Below data is used for General Orders:
 	HQ_DEFENSE_MIN_WANTED_GARRISON = 0.35							# Keep at least this number of local troops to garrison important HQs against enemy invasion
@@ -144,16 +205,9 @@ RAISE_TAX_HIGH_DEBT_OVERRIDE_RATIO = 0.05 # Extremely low, so the AI raises taxe
 	# If a front is worth less than this, the AI will not assign any generals to it
 	FRONT_IMPORTANCE_MIN_SCORE = 0.001
 
-	# If the AI has less units than its enemy on a front, this weight is applied to the importance that front has when deciding to attack/defend it.
-	# Use a value >= 1.0. Example: 1.2 means: add 20% importance to a front when in disadvantage.
-	FRONT_IMPORTANCE_WHEN_IN_DISADVANTAGE_WEIGHT_MULT = 2
-
 	# A percentage [0.0, 1.0] representing how many AI units are on a front out of the total (AI's + Enemy's) units, used to
 	# determine when to start applying FRONT_IMPORTANCE_WEIGHT_WHEN_IN_DISADVANTAGE.
     UNITS_PERCENTAGE_TO_BE_CONSIDERED_IN_DISADVANTAGE = 0.9
-
-	# diplo play
-	DIPLO_PLAY_SWAY_UNWANTED_OFFER = -1000 # For being offered unwanted wargoal or obligation
 
 	IDEOLOGICAL_OPINION_LAW_APPROVAL_THRESHOLD = 0.5		# If ruling IGs have at least this much approval/disapproval for a law on average, it affects ideological opinion
     IDEOLOGICAL_OPINION_STRONG_STANCE_THRESHOLD = 1.5		# If ruling IGs have at least this much approval/disapproval for a law on average, IDEOLOGICAL_OPINION_STRONG_STANCE_EFFECT_MULT comes into effect
@@ -170,7 +224,7 @@ RAISE_TAX_HIGH_DEBT_OVERRIDE_RATIO = 0.05 # Extremely low, so the AI raises taxe
     #INSTITUTION_SPENDING_DECREASE_SPENDING_RATIO = 2.0 # If current institution spending is at least max spending * this, try to degrade some institutions
 
     # Below data is used to calculate how much weight the AI places on enacting/revoking a law
-    CHANGE_LAW_POTENTIAL_CIVIL_WAR_ENACT_CHANCE = 1 # Chance that the AI will proceed with a law change that could cause a civil war (1 = 1%)
+    CHANGE_LAW_POTENTIAL_CIVIL_WAR_ENACT_CHANCE = 10 # Base chance that the AI will proceed with a law change that could cause a civil war - revolution aversion is subtracted from this value for final chance (1 = 1%)
 
 	### all power bloc related weights
 
