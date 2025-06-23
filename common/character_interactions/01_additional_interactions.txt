@@ -1,0 +1,589 @@
+﻿#icon					Path to icon for both right click menu and character panel buttons
+#clicksound				Clicksound for both right click menu and character panel buttons
+
+#						All scopes are character scopes with the interacting country stored as the actor
+#potential				Trigger to check if the interaction should be shown
+#possible 				Trigger to check if the interaction is available
+#effect					The effects of the interaction
+#cooldown				Scriptable duration that this interaction will be unavailable for the interacting country
+
+#show_requirements		Whether to always show requirements, similar to highlighted options in events
+#show_confirmation_box	Whether to require confirmation
+
+#ai_chance				Scriptable value for the chance (0-100) that the AI will use this interaction when available, default 0
+
+arrange_accident = {
+	clicksound = "event:/SFX/DLC/1.3_ip1/UI/exile_character"
+
+	potential = {
+		is_in_exile_pool = no
+		is_in_void = no
+		is_ruler = no
+		is_heir = no
+		OR = {
+			has_role = general
+			has_role = admiral
+			has_role = politician
+			has_role = agitator
+		}
+		is_immortal = no
+	}
+
+	show_requirements = yes
+
+	possible = {
+		owner ?= {
+			has_law = law_type:law_secret_police
+		}
+		interest_group = {
+			is_marginal = no
+		}
+	}
+
+	effect = {
+		this.interest_group = {
+			save_scope_as = relevant_ig
+		}
+		this = {
+			save_scope_as = assassinated_scope
+		}
+		if = {
+			limit = {
+				exists = institution:institution_criminal_justice_system
+			}
+			random_list = {
+				40 = {
+					modifier = {
+						if = {
+							limit = {
+								owner.institution:institution_criminal_justice_system.investment >= 2
+							}
+							add = 25
+						}
+						if = {
+							limit = {
+								owner.institution:institution_criminal_justice_system.investment >= 3
+							}
+							add = 25
+						}
+						if = {
+							limit = {
+								owner.institution:institution_criminal_justice_system.investment >= 4
+							}
+							add = 25
+						}
+						if = {
+							limit = {
+								owner.institution:institution_criminal_justice_system.investment >= 5
+							}
+							add = 25
+						}
+					}
+					kill_character = yes
+				}
+				40 = {
+					owner ?= {
+						post_notification = arranged_accident_failed
+					}
+					custom_tooltip = assassination_attempt_failed_tt
+				}
+				20 = {
+					modifier = {
+						if = {
+							limit = {
+								owner.institution:institution_home_affairs.investment >= 2
+							}
+							subtract = 5
+						}
+						if = {
+							limit = {
+								owner.institution:institution_home_affairs.investment >= 3
+							}
+							subtract = 5
+						}
+						if = {
+							limit = {
+								owner.institution:institution_home_affairs.investment >= 4
+							}
+							subtract = 5
+						}
+						if = {
+							limit = {
+								owner.institution:institution_home_affairs.investment >= 5
+							}
+							subtract = 5
+						}
+					}
+					custom_tooltip = assassination_attempt_failed_loud_tt
+					owner ?= {
+						add_radicals = {
+							value = very_large_radicals
+							interest_group = scope:relevant_ig
+						}
+					}
+					if = {
+						limit = {
+							character_supports_political_movement = yes
+						}
+						this.political_movement = {
+							add_modifier = {
+								name = modifier_government_accident_attempt
+								months = long_modifier_time
+							}
+						}
+					}
+					else_if = {
+						limit = {
+							has_role = politician
+							THIS.interest_group = {
+								interest_group_supports_political_movement = yes
+							}
+						}
+						owner ?= {
+							random_political_movement = {
+								limit = {
+									any_influenced_interest_group = {
+										this = scope:relevant_ig
+									}
+								}
+								add_modifier = {
+									name = modifier_government_accident_attempt
+									months = long_modifier_time
+								}
+							}
+						}
+					}
+					owner ?= {
+						post_notification = arranged_accident_failed_incrimination
+					}
+				}
+			}
+		}
+		else = { # Exists purely to generate a tooltip when inactive
+			random_list = {
+				40 = {
+					kill_character = yes
+				}
+				40 = {
+					custom_tooltip = assassination_attempt_failed_tt
+				}
+				20 = {
+					custom_tooltip = assassination_attempt_failed_loud_tt
+					owner ?= {
+						add_radicals = {
+							value = very_large_radicals
+							interest_group = scope:relevant_ig
+						}
+					}
+					if = {
+						limit = {
+							character_supports_political_movement = yes
+						}
+						this.political_movement = {
+							add_modifier = {
+								name = modifier_government_accident_attempt
+								months = long_modifier_time
+							}
+						}
+					}
+					else_if = {
+						limit = {
+							has_role = politician
+							THIS.interest_group = {
+								interest_group_supports_political_movement = yes
+							}
+						}
+						owner ?= {
+							random_political_movement = {
+								limit = {
+									any_influenced_interest_group = {
+										this = scope:relevant_ig
+									}
+								}
+								add_modifier = {
+									name = modifier_government_accident_attempt
+									months = long_modifier_time
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	cooldown = { months = normal_modifier_time }
+	show_confirmation_box = yes
+
+	ai_chance = {
+		value = -50
+		if = {
+			limit = {
+				interest_group = {
+					ig_approval <= -5
+				}		
+			}
+			add = 25
+		}
+		if = {
+			limit = {
+				interest_group = {
+					ig_approval <= -10
+				}		
+			}
+			add = 30
+		}
+		if = {
+			limit = {
+				scope:actor ?= {
+					NOR = {
+						has_law = law_type:law_autocracy
+						has_law = law_type:law_oligarchy
+						has_law = law_type:law_single_party_state
+					}
+				}			
+			}
+			add = -25
+		}
+		if = {
+			limit = {
+				scope:actor ?= {
+					has_law = law_type:law_outlawed_dissent
+				}			
+			}
+			add = 30
+		}
+		if = {
+			limit = {
+				scope:actor ?= {
+					has_law = law_type:law_censorship
+				}			
+			}
+			add = 10
+		}
+		if = {
+			limit = {
+				scope:actor ?= {
+					has_law = law_type:law_right_of_assembly
+				}			
+			}
+			add = -10
+		}
+		if = {
+			limit = {
+				scope:actor ?= {
+					has_law = law_type:law_protected_speech
+				}			
+			}
+			add = -20
+		}
+		if = {
+			limit = {
+				scope:actor ?= {
+					any_interest_group = {
+						is_insurrectionary = yes
+					}
+				}			
+			}
+			add = 25
+		}
+		if = {
+			limit = {
+				scope:actor ?= {
+					ruler = {
+						OR = {
+							has_trait = cruel
+						}
+					}
+				}			
+			}
+			add = 15
+		}
+		if = {
+			limit = {
+				scope:actor ?= {
+					ruler = {
+						OR = {
+							has_trait = imperious
+						}
+					}
+				}			
+			}
+			add = 10
+		}
+	}
+}
+
+resign_from_office = {
+	clicksound = "event:/SFX/UI/Military/command_grant"
+
+	potential = {
+		has_dlc_feature = voice_of_the_people_content
+		owner ?= scope:actor
+		is_ruler = yes
+		is_immortal = no
+		owner ?= {
+			NOR = {
+				has_law = law_type:law_hereditary
+				has_law = law_type:law_theocratic
+			}
+		}
+	}
+
+	possible = {
+		OR = {
+			interest_group = {
+				ig_approval <= angry
+			}
+			interest_group = {
+				is_marginal = yes
+			}
+			popularity <= -50
+			OR = {
+				has_trait = psychological_affliction
+				has_trait = cancer
+				has_trait = senile
+				has_trait = wounded
+			}
+			owner ?= {
+				any_political_movement = {
+					is_insurrectionary = yes
+					exists = most_desired_law			
+					trigger_if = {
+						limit = { 
+							is_insurrectionary = yes
+							exists = most_desired_law
+						}
+						most_desired_law ?= { save_temporary_scope_as = revolutionary_law }
+						custom_tooltip = {	
+							text = ruler_disapproves_of_revolutionary_law					
+							root = {						
+								OR = {
+									law_enactment_stance = {
+										law = scope:revolutionary_law
+										value < neutral
+									}
+									interest_group ?= {
+										law_enactment_stance = {
+											law = scope:revolutionary_law
+											value < neutral
+										}									
+									}
+								}
+							}	
+						}						
+					}
+					trigger_else = {
+						custom_tooltip = ruler_disapproves_of_revolutionary_law_contextless
+					}
+				}
+			}
+		}
+	}
+
+	effect = {
+		if = {
+			limit = {
+				owner ?= {
+					any_interest_group = {
+						is_insurrectionary = yes
+					}
+				}
+			}
+			owner ?= {
+				trigger_event = { id = resignation.2 popup = yes }
+			}
+		}
+		else = {
+			owner ?= {
+				trigger_event = { id = resignation.1 popup = yes }
+			}
+		}
+	}
+
+	cooldown = { months = 180 }
+	show_confirmation_box = yes
+
+	ai_chance = {
+		value = -50
+		if = {
+			limit = {	
+				interest_group = {
+					ig_approval <= angry
+				}
+			}
+			add = 25
+		}	
+		if = {
+			limit = {
+				interest_group = {
+					is_marginal = yes
+				}				
+			}
+			add = 25
+		}
+		if = {
+			limit = {
+				popularity <= -50			
+			}
+			add = 25
+		}
+		if = {
+			limit = {
+				popularity <= -75			
+			}
+			add = 25
+		}
+		if = {
+			limit = {
+				OR = {
+					has_trait = psychological_affliction
+					has_trait = cancer
+					has_trait = senile
+					has_trait = wounded
+				}			
+			}
+			add = 25
+		}
+		if = {
+			limit = {
+				OR = {
+					has_trait = arrogant
+					has_trait = imperious
+				}			
+			}
+			add = -50
+		}
+	}
+}
+
+send_to_jail = {
+	clicksound = "event:/SFX/DLC/1.3_ip1/UI/exile_character"
+
+	potential = {
+		is_in_exile_pool = no
+		is_in_void = no
+		is_ruler = no
+		is_heir = no
+		has_role = agitator
+		is_immortal = no
+		has_dlc_feature = ip2_content
+	}
+
+	show_requirements = yes
+
+	possible = {
+		owner ?= {
+			NOT = {
+				has_law = law_type:law_protected_speech
+			}
+		}
+	}
+
+	effect = {
+		this = {
+			save_scope_as = prisoner_scope
+		}
+		trigger_event = { id = jail.1 popup = yes }
+	}
+
+	cooldown = { months = short_modifier_time }
+
+	ai_chance = {
+		value = -50
+		if = {
+			limit = {
+				interest_group = {
+					ig_approval <= -5
+				}		
+			}
+			add = 25
+		}
+		if = {
+			limit = {
+				interest_group = {
+					ig_approval <= -10
+				}		
+			}
+			add = 30
+		}
+		if = {
+			limit = {
+				scope:actor ?= {
+					NOR = {
+						has_law = law_type:law_autocracy
+						has_law = law_type:law_oligarchy
+						has_law = law_type:law_anocracy
+					}
+				}			
+			}
+			add = -25
+		}
+		if = {
+			limit = {
+				scope:actor ?= {
+					has_law = law_type:law_outlawed_dissent
+				}			
+			}
+			add = 30
+		}
+		if = {
+			limit = {
+				scope:actor ?= {
+					has_law = law_type:law_censorship
+				}			
+			}
+			add = 10
+		}
+		if = {
+			limit = {
+				scope:actor ?= {
+					has_law = law_type:law_right_of_assembly
+				}			
+			}
+			add = -10
+		}
+		if = {
+			limit = {
+				scope:actor ?= {
+					has_law = law_type:law_protected_speech
+				}			
+			}
+			add = -20
+		}
+		if = {
+			limit = {
+				scope:actor ?= {
+					any_interest_group = {
+						is_insurrectionary = yes
+					}
+				}			
+			}
+			add = 25
+		}
+		if = {
+			limit = {
+				scope:actor ?= {
+					ruler = {
+						OR = {
+							has_trait = cruel
+						}
+					}
+				}			
+			}
+			add = 15
+		}
+		if = {
+			limit = {
+				scope:actor ?= {
+					ruler = {
+						OR = {
+							has_trait = imperious
+						}
+					}
+				}			
+			}
+			add = 10
+		}
+	}
+}
