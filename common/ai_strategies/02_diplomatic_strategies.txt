@@ -12,13 +12,11 @@
 
 		if = {
 			limit = {
-				has_technology_researched = pan-nationalism
 			}
 			multiply = 1.5
 		}
 		else_if = {
 			limit = {
-				has_technology_researched = nationalism
 			}
 			multiply = 1.25
 		}
@@ -29,13 +27,11 @@
 
 		if = {
 			limit = {
-				has_technology_researched = pan-nationalism
 			}
 			multiply = 1.5
 		}
 		else_if = {
 			limit = {
-				has_technology_researched = nationalism
 			}
 			multiply = 1.25
 		}
@@ -223,6 +219,755 @@
 		if = {
 			limit = { country_rank >= rank_value:major_power }
 			add = 25
+		}
+	}
+}
+
+ai_strategy_economic_imperialism = {
+	icon = "gfx/interface/icons/ai_strategy_icons/economic_imperialism.dds"
+
+	type = diplomatic
+
+	will_form_power_bloc = {
+		OR = {
+			global_country_ranking <= 3
+			AND = {
+				country_rank >= rank_value:great_power
+			}
+		}
+	}
+
+	undesirable_infamy_level = {
+		value = 25
+
+		if = {
+			limit = {
+			}
+			multiply = 1.5
+		}
+		else_if = {
+			limit = {
+			}
+			multiply = 1.25
+		}
+	}
+
+	unacceptable_infamy_level = {
+		value = 50
+
+		if = {
+			limit = {
+			}
+			multiply = 1.5
+		}
+		else_if = {
+			limit = {
+			}
+			multiply = 1.25
+		}
+	}
+
+	ideological_opinion_effect_mult = {
+		value = 1.0
+	}
+
+	wargoal_maneuvers_fraction = {
+		value = 0
+
+		if = {
+			limit = {
+				scope:enemy_country = { is_country_type = unrecognized }
+			}
+			add = 0.25
+		}
+	}
+
+	obligation_value = {
+		if = { # Countries with Economic Imperialism is always looking to bring more countries into their market
+			limit = {
+				scope:target_country.country_rank < country_rank
+				NOR = {
+					scope:target_country = { is_subject = yes }
+					is_in_customs_union_with = scope:target_country
+				}
+			}
+			add = 5
+		}
+	}
+
+	diplomatic_play_neutrality = {
+		value = 10
+	}
+
+	diplomatic_play_boldness = {
+		value = -10
+	}
+
+	recklessness = {
+		value = -0.1
+	}
+
+	aggression = {
+		value = 0.5
+		if = {
+			limit = {
+				NOT = { is_country_type = unrecognized }
+				scope:target_country = { is_country_type = unrecognized }
+				institution_investment_level = {
+					institution = institution_colonial_affairs
+					value >= 1
+				}
+			}
+			add = 0.5
+
+			if = {
+				limit = {
+					power_bloc ?= { has_principle = principle:principle_colonial_offices_3 }
+				}
+				add = 0.5
+			}
+
+			if = {
+				limit = {}
+				add = 0.5
+
+				if = {
+					limit = { has_strategic_adjacency = scope:target_country }
+					add = 0.5
+				}
+			}
+
+			if = {
+				limit = {
+					scope:target_country = {
+						is_subject = yes
+						is_country_type = unrecognized
+						top_overlord ?= {
+							NOT = { is_country_type = unrecognized }
+						}
+					}
+				}
+				multiply = 0.1
+			}
+		}
+
+		# Very aggressive about opening up Japan
+		if = {
+			limit = {
+				country_rank = rank_value:great_power
+				navy_size >= 25
+				scope:target_country = {
+					exists = c:JAP
+					this = c:JAP
+					has_law = law_type:law_isolationism
+					gdp >= 5000000
+				}
+			}
+			add = 20
+		}
+
+		# Less aggressive against countries we're just antagonistic against, rather than belligerent/domineering
+		if = {
+			limit = {
+				has_attitude = {
+					who = scope:target_country
+					attitude = antagonistic
+				}
+			}
+			multiply = 0.25
+		}
+
+		# More aggressive against ideological enemies, a bit less aggressive against ideological allies
+		multiply = {
+			value = "ai_ideological_opinion(scope:target_country)"
+			multiply = -0.1
+			add = 1
+			max = 2.0
+			min = 0.5
+		}
+	}
+
+	building_group_weights = {
+		bg_navy = 1.5
+	}
+
+	colonial_interest_ratio = {
+		value = 0.10
+
+		if = {
+			limit = { navy_size >= 30 }
+			add = 0.05
+		}
+
+		if = {
+			limit = { navy_size >= 60 }
+			add = 0.05
+		}
+
+		if = {
+			limit = { navy_size >= 90 }
+			add = 0.05
+		}
+
+		if = {
+			limit = { navy_size >= 120 }
+			add = 0.05
+		}
+	}
+
+	strategic_region_scores = {
+		region_east_asia = { # Great Powers with significant navies should pay attention to Japan
+			if = {
+				limit = {
+					exists = c:JAP
+					c:JAP = { has_law = law_type:law_isolationism }
+					country_rank = rank_value:great_power
+					navy_size >= 25
+				}
+				add = 1000
+			}
+		}
+	}
+
+	secret_goal_scores = {
+		dominate = {
+			if = {
+				limit = {
+					NOT = { scope:target_country = { is_subject_of = root } }
+					country_rank = rank_value:great_power
+					navy_size >= 25
+					scope:target_country = {
+						has_law = law_type:law_isolationism
+						gdp >= 2000000
+						capital.region = sr:region_east_asia
+					}
+				}
+				add = 500
+			}
+			else_if = {
+				limit = {
+					NOT = { scope:target_country = { is_subject_of = root } }
+					has_strategic_adjacency = scope:target_country
+					scope:target_country = {
+						has_law = law_type:law_isolationism
+						gdp >= 2000000
+						NOT = { capital.region = sr:region_east_asia }
+					}
+				}
+				add = 100
+			}
+
+			if = {
+				limit = {
+					NOT = { scope:target_country = { is_subject_of = root } }
+					has_strategic_adjacency = scope:target_country
+					root.country_rank > scope:target_country.country_rank
+					scope:target_country.country_rank < rank_value:major_power
+					scope:target_country = {
+						NOR = {
+							has_law = law_type:law_free_trade
+							has_law = law_type:law_isolationism
+						}
+					}
+				}
+				add = 50
+
+				if = {
+					limit = {
+						NOT = { scope:target_country = { is_subject_of = root } }
+						scope:target_country = { is_country_type = unrecognized }
+					}
+					add = 50
+				}
+			}
+		}
+		conquer = {
+			if = {
+				limit = {
+					has_strategic_adjacency = scope:target_country
+					scope:target_country = { is_country_type = unrecognized }
+				}
+				add = 50
+			}
+			if = {
+				limit = {
+					scope:target_country = { NOT = { is_country_type = unrecognized } }
+				}
+				add = -50
+			}
+
+			# Don't attack Japan outright, open them instead
+			if = {
+				limit = {
+					scope:target_country = {
+						has_law = law_type:law_isolationism
+						gdp >= 2000000
+						capital.region = sr:region_east_asia
+					}
+				}
+				add = -1000
+			}
+		}
+	}
+
+	wargoal_weights = {
+		make_protectorate = 1.5
+		make_tributary = 1.5
+		make_dominion = 1.5
+		force_nationalization = 1.5
+	}
+
+	treaty_port_value = {
+		if = {
+			limit = {
+				can_reach_target_state = yes
+				scope:target_country = {
+					has_law = law_type:law_isolationism
+					gdp >= 2000000 # Not worth doing against very small markets
+				}
+				scope:target_state = { is_incorporated = yes }
+			}
+			add = {
+				value = 50
+
+				# More likely to grab a treaty port if we're already enemies in a play, ie they attacked us first
+				if = {
+					limit = { is_diplomatic_play_enemy_of = scope:target_country }
+					multiply = 2.0
+				}
+			}
+		}
+	}
+
+	wargoal_scores = {
+		# Need to have identical weights for foreign_investment_rights and open_market here as which one is used depends on whether Foreign Investment is available
+		foreign_investment_rights = {
+			value = 0
+
+			if = {
+				limit = {
+					country_rank = rank_value:great_power
+					can_reach_target_country = yes
+					scope:target_country = {
+						has_law = law_type:law_isolationism
+						gdp >= 5000000 # Not worth doing against small markets
+					}
+				}
+				add = {
+					value = 100
+
+					# Less interested in foreign investment rights as a sway or defensive wargoal
+					if = {
+						limit = { is_diplomatic_play_involved_with = scope:target_country }
+						multiply = 0.2
+					}
+					else_if = { # Very high score for opening Japan
+						limit = {
+							scope:target_country = {
+								exists = c:JAP
+								this = c:JAP
+								has_law = law_type:law_isolationism
+							}
+						}
+						multiply = 10
+					}
+				}
+			}
+		}
+		open_market = {
+			value = 0
+
+			if = {
+				limit = {
+					country_rank = rank_value:great_power
+					can_reach_target_country = yes
+					scope:target_country = {
+						has_law = law_type:law_isolationism
+						gdp >= 5000000 # Not worth doing against small markets
+					}
+				}
+				add = {
+					value = 100
+
+					# Less interested in open market as a sway or defensive wargoal
+					if = {
+						limit = { is_diplomatic_play_involved_with = scope:target_country }
+						multiply = 0.2
+					}
+					else_if = { # Very high score for opening Japan
+						limit = {
+							scope:target_country = {
+								exists = c:JAP
+								this = c:JAP
+								has_law = law_type:law_isolationism
+							}
+						}
+						multiply = 10
+					}
+				}
+			}
+		}
+	}
+
+	possible = {
+		is_subject = no
+		navy_size >= 25
+		is_country_type = recognized
+		NOT = { has_law = law_type:law_isolationism }
+		OR = {
+			country_rank = rank_value:major_power
+			country_rank = rank_value:great_power
+		}
+	}
+
+	weight = {
+		value = 10
+
+		if = {
+			limit = { country_rank = rank_value:great_power }
+			add = 10
+		}
+
+		if = {
+			limit = {
+				exists = c:FRA
+				c:FRA = this
+				ruler = {
+					OR = {
+						has_variable = bonapartist_leader
+						has_variable = orleanist_leader
+					}
+				}
+			}
+			add = 10
+		}
+
+		# AI implications for Power Blocs: 'Economic Imperialism' strategy is more likely for Blocs with Market Unification
+		if = {
+			limit = {
+				power_bloc ?= {
+					has_principle_group = principle_group:principle_group_market_unification
+				}
+			}
+			add = 5
+		}
+
+		if = {
+			limit = {
+				exists = c:JAP
+				has_strategic_adjacency = c:JAP
+				c:JAP = { has_law = law_type:law_isolationism }
+			}
+			multiply = 2.0
+		}
+
+		if = {
+			limit = { navy_size < 50 }
+			multiply = 0.5
+		}
+
+		if = {
+			limit = { navy_size >= 75 }
+			multiply = 1.5
+		}
+
+		if = {
+			limit = { has_radical_leftist_government = yes }
+			multiply = 0.25
+		}
+	}
+}
+
+ai_strategy_territorial_expansion = {
+	icon = "gfx/interface/icons/ai_strategy_icons/territorial_expansion.dds"
+
+	type = diplomatic
+
+	will_form_power_bloc = {
+		OR = {
+			global_country_ranking <= 3
+			AND = {
+				country_rank >= rank_value:great_power
+			}
+		}
+	}
+
+	undesirable_infamy_level = {
+		value = 50
+
+		if = {
+			limit = {
+			}
+			multiply = 1.5
+		}
+		else_if = {
+			limit = {
+			}
+			multiply = 1.25
+		}
+	}
+
+	unacceptable_infamy_level = {
+		value = 100
+	}
+
+	ideological_opinion_effect_mult = {
+		value = 0.75
+	}
+
+	wargoal_maneuvers_fraction = {
+		value = 0.15
+	}
+
+	diplomatic_play_neutrality = {
+		value = 25
+	}
+
+	diplomatic_play_boldness = {
+		value = 25
+	}
+
+	recklessness = {
+		value = 0.25
+	}
+
+	aggression = {
+		value = 1
+
+		if = {
+			limit = {
+				NOT = { is_country_type = unrecognized }
+				scope:target_country = { is_country_type = unrecognized }
+			}
+			add = 1
+		}
+
+		# Less aggressive against countries we're just antagonistic against, rather than belligerent/domineering
+		if = {
+			limit = {
+				has_attitude = {
+					who = scope:target_country
+					attitude = antagonistic
+				}
+			}
+			multiply = 0.25
+		}
+
+		# More aggressive against ideological enemies, a bit less aggressive against ideological allies
+		multiply = {
+			value = "ai_ideological_opinion(scope:target_country)"
+			multiply = -0.1
+			add = 1
+			max = 2.0
+			min = 0.5
+		}
+	}
+
+	building_group_weights = {
+		bg_army = 1.5
+	}
+
+	secret_goal_weights = {
+		protect = 0.5
+		conquer = 1.5
+	}
+
+	wargoal_weights = {
+		conquer_state = 1.5
+		return_state = 1.5
+		force_nationalization = 0.25
+	}
+
+	secret_goal_scores = {
+		conquer = {
+			if = {
+				limit = {
+					NOT = { scope:target_country = { is_subject_of = root } }
+					can_reach_target_country = yes
+					has_strategic_adjacency = scope:target_country
+					scope:target_country.country_rank <= root.country_rank
+				}
+
+				if = {
+					limit = {
+						NOT = { is_country_type = unrecognized }
+						scope:target_country = { NOT = { is_country_type = unrecognized } }
+					}
+					add = 25
+				}
+				else_if = {
+					limit = {
+						scope:target_country = { is_country_type = unrecognized }
+					}
+					add = 50
+				}
+			}
+		}
+	}
+
+	possible = {
+		is_subject = no
+	}
+
+	weight = {
+		value = 10
+
+		if = {
+			limit = {
+				exists = c:FRA
+				c:FRA = this
+				ruler = {
+					has_variable = bonapartist_leader
+				}
+			}
+			add = 5
+		}
+
+		# AI implications for Power Blocs: 'Territorial Expansion' strategy is more likely for Blocs with Aggressive Coordination
+		if = {
+			limit = {
+				power_bloc ?= {
+					has_principle_group = principle_group:principle_group_aggressive_coordination
+				}
+			}
+			add = 5
+		}
+
+		if = {
+			limit = { ig:ig_armed_forces = { is_powerful = yes } }
+			multiply = 1.5
+		}
+
+		if = {
+			limit = { country_is_in_europe = yes }
+			multiply = 0.25
+		}
+
+		if = {
+			limit = { has_radical_leftist_government = yes }
+			multiply = 0.5
+		}
+	}
+}
+
+ai_strategy_armed_isolationism = {
+	icon = "gfx/interface/icons/ai_strategy_icons/armed_isolationism.dds"
+
+	type = diplomatic
+
+	undesirable_infamy_level = {
+		value = 25
+
+		if = {
+			limit = {
+			}
+			multiply = 1.5
+		}
+		else_if = {
+			limit = {
+			}
+			multiply = 1.25
+		}
+	}
+
+	unacceptable_infamy_level = {
+		value = 50
+
+		if = {
+			limit = {
+			}
+			multiply = 1.5
+		}
+		else_if = {
+			limit = {
+			}
+			multiply = 1.25
+		}
+	}
+
+	ideological_opinion_effect_mult = {
+		value = 0.75
+	}
+
+	wargoal_maneuvers_fraction = {
+		value = -0.1
+	}
+
+	diplomatic_play_neutrality = {
+		value = 50
+	}
+
+	diplomatic_play_boldness = {
+		value = 0
+	}
+
+	recklessness = {
+		value = -0.5
+	}
+
+	aggression = {
+		value = 0
+	}
+
+	building_group_weights = {
+		bg_army = 1.5
+	}
+
+	secret_goal_weights = {
+		dominate = 0.0
+		protect = 0.0
+	}
+
+	wargoal_weights = {
+		conquer_state = 0.0
+		make_protectorate = 0.0
+		reduce_autonomy = 0.0
+		make_tributary = 0.0
+		force_nationalization = 2.0
+	}
+
+	possible = {
+		is_subject = no
+		NOT = { country_rank = rank_value:great_power }
+		NOT = { has_radical_leftist_government = yes }
+	}
+
+	weight = {
+		value = 10
+
+		if = {
+			limit = { is_country_type = unrecognized }
+			add = 50
+		}
+
+		if = {
+			limit = { has_law = law_type:law_national_militia }
+			add = 50
+		}
+
+		if = {
+			limit = { has_law = law_type:law_isolationism }
+			add = 100
+		}
+
+		if = {
+			limit = {
+				OR = {
+					has_modifier = shogun_ig_forced_to_open_market
+					has_journal_entry = je_meiji_main
+				}
+			}
+			multiply = 0.1
+		}
+
+		if = {
+			limit = { country_rank = rank_value:great_power }
+			multiply = 0.1
+		}
+
+		if = {
+			limit = { country_rank = rank_value:major_power }
+			multiply = 0.5
 		}
 	}
 }
