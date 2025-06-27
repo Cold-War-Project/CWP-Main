@@ -3,18 +3,22 @@
 # cost												The cost in AUT to set this Decree on a state (scales with Power Rank)
 # unlocking_technologies							A list of technologies, at least one of which must be known to the country to use this Focus
 # unlocking_laws									A list of laws, at least one which must be active in the country to use this Focus. If the country switches away from all unlocking laws the Focus will be removed
-# valid												A trigger in state context that determines if the Decree is permitted or not; should invalidate the Decree on a weekly basis if found invalid 
+# country_trigger									A trigger in country context that determines if the Decree is permitted/shown in interface or not; should invalidate the Decree on a weekly basis if found invalid
+# state_trigger										A trigger in state context that determines if the Decree is permitted or not; should invalidate the Decree on a weekly basis if found invalid
 # ai_weight											Scripted value which determines the chance of getting the Decree by AI
+
 decree_road_maintenance = {
 	texture = "gfx/interface/icons/decree/decree_road_maintenance.dds"
 	modifier = {
 		state_infrastructure_from_population_add = 1
 		state_infrastructure_from_population_max_add = 20
-		state_construction_mult = 0.1
+		state_construction_mult = 0.10
 	}
 	cost = 100
+
 	ai_weight = {
 		value = 25
+
 		if = {
 			limit = {
 				OR = {
@@ -27,6 +31,7 @@ decree_road_maintenance = {
 			}
 			add = 100
 		}
+
 		if = {
 			limit = {
 				OR = {
@@ -39,6 +44,7 @@ decree_road_maintenance = {
 			}
 			add = 100
 		}
+
 		if = {
 			limit = {
 				OR = {
@@ -51,6 +57,7 @@ decree_road_maintenance = {
 			}
 			add = 100
 		}
+
 		if = {
 			limit = {
 				OR = {
@@ -68,6 +75,10 @@ decree_road_maintenance = {
 
 decree_violent_suppression = {
 	texture = "gfx/interface/icons/decree/decree_violent_suppression.dds"
+
+	country_trigger = {
+		NOT = { has_law = law_type:law_guaranteed_liberties }
+	}
 	state_trigger = {
 		owner = {
 			NOT = {
@@ -81,8 +92,10 @@ decree_violent_suppression = {
 		state_mortality_turmoil_mult = 0.02
 	}
 	cost = 100
+
 	ai_weight = {
 		value = 100
+
 		if = {
 			limit = {
 				turmoil >= 0.5
@@ -95,28 +108,56 @@ decree_violent_suppression = {
 			}
 			add = 100
 		}
-		# if = {
-		# limit = {
-		# scope:country = {
-		# OR = {
-		# has_strategy = ai_strategy_egalitarian_agenda
-		# has_strategy = ai_strategy_progressive_agenda
-		# }
-		# }
-		# }
-		# multiply = 0.5
-		# }
+		if = {
+			limit = {
+				scope:country = {
+					OR = {
+						has_strategy = ai_strategy_egalitarian_agenda
+						has_strategy = ai_strategy_progressive_agenda
+					}
+				}
+			}
+			multiply = 0.5
+		}
 	}
 }
+
 
 decree_emergency_relief = {
 	texture = "gfx/interface/icons/decree/decree_emergency_relief.dds"
 	modifier = {
 		state_welfare_payments_add = 0.5
+		state_tax_collection_mult = -0.5
+		state_infrastructure_mult = 0.1
+		state_market_access_price_impact = 0.05
+		state_food_security_add = 0.05
 	}
-	cost = 100
+
+	state_trigger = {
+		OR = {
+			has_famine = yes
+			devastation > 0.2
+			ROOT.state_region = {
+				OR = {
+					has_harvest_condition = flood
+					has_harvest_condition = wildfire
+					has_harvest_condition = drought
+					has_harvest_condition = disease_outbreak
+					has_harvest_condition = extreme_winds
+				}
+			}
+			any_scope_pop = {
+				percent >= 0.2
+				is_in_starvation = yes
+			}
+		}
+	}
+
+	cost = 50
+
 	ai_weight = {
 		value = 0
+
 		if = {
 			limit = {
 				average_sol < average_expected_sol
@@ -127,7 +168,7 @@ decree_emergency_relief = {
 			limit = {
 				scope:country = {
 					OR = {
-						# has_strategy = ai_strategy_nationalist_agenda
+						has_strategy = ai_strategy_nationalist_agenda
 						has_strategy = ai_strategy_reactionary_agenda
 					}
 				}
@@ -139,13 +180,34 @@ decree_emergency_relief = {
 
 decree_promote_social_mobility = {
 	texture = "gfx/interface/icons/decree/decree_promote_social_mobility.dds"
+
+	state_trigger = {
+		NOT = {
+			AND = {
+				owner ?= {
+					OR = {
+						has_law = law_type:law_hindu_caste_enforced
+						has_law = law_type:law_hindu_caste_codified
+					}
+				}
+				religion_percent_state = {
+					target = rel:hindu
+					value >= 0.3
+				}
+			}
+		}
+	}
+
 	modifier = {
 		state_education_access_add = 0.25
 		state_pop_qualifications_mult = 0.25
 	}
+
 	cost = 100
+
 	ai_weight = {
 		value = 0
+
 		if = {
 			limit = {
 				literacy_rate < 0.25
@@ -170,23 +232,22 @@ decree_promote_social_mobility = {
 					OR = {
 						has_strategy = ai_strategy_reactionary_agenda
 						has_strategy = ai_strategy_conservative_agenda
-						# has_strategy = ai_strategy_maintain_mandate_of_heaven
 					}
 				}
 			}
 			multiply = 0.5
 		}
-		# if = {
-		# limit = {
-		# scope:country = {
-		# OR = {
-		# has_strategy = ai_strategy_progressive_agenda
-		# has_strategy = ai_strategy_egalitarian_agenda
-		# }
-		# }
-		# }
-		# multiply = 1.5
-		# }
+		if = {
+			limit = {
+				scope:country = {
+					OR = {
+						has_strategy = ai_strategy_progressive_agenda
+						has_strategy = ai_strategy_egalitarian_agenda
+					}
+				}
+			}
+			multiply = 1.5
+		}
 	}
 }
 
@@ -203,6 +264,7 @@ decree_promote_national_values = {
 		state_conversion_mult = 1
 	}
 	cost = 100
+
 	ai_weight = {
 		value = 0
 		if = {
@@ -210,20 +272,19 @@ decree_promote_national_values = {
 				scope:country = {
 					OR = {
 						has_strategy = ai_strategy_reactionary_agenda
-						# has_strategy = ai_strategy_maintain_mandate_of_heaven
 					}
 				}
 			}
 			add = 100
 		}
-		# if = {
-		# limit = {
-		# scope:country = {
-		# has_strategy = ai_strategy_nationalist_agenda
-		# }
-		# }
-		# add = 200
-		# }
+		if = {
+			limit = {
+				scope:country = {
+					has_strategy = ai_strategy_nationalist_agenda
+				}
+			}
+			add = 200
+		}
 		if = {
 			limit = {
 				state_population < 100000
@@ -242,23 +303,22 @@ decree_promote_national_values = {
 					OR = {
 						has_strategy = ai_strategy_reactionary_agenda
 						has_strategy = ai_strategy_conservative_agenda
-						# has_strategy = ai_strategy_maintain_mandate_of_heaven
 					}
 				}
 			}
 			multiply = 0.5
 		}
-		# if = {
-		# limit = {
-		# scope:country = {
-		# OR = {
-		# has_strategy = ai_strategy_progressive_agenda
-		# has_strategy = ai_strategy_egalitarian_agenda
-		# }
-		# }
-		# }
-		# multiply = 1.5
-		# }
+		if = {
+			limit = {
+				scope:country = {
+					OR = {
+						has_strategy = ai_strategy_progressive_agenda
+						has_strategy = ai_strategy_egalitarian_agenda
+					}
+				}
+			}
+			multiply = 1.5
+		}
 	}
 }
 
@@ -276,6 +336,7 @@ decree_encourage_manufacturing_industry = {
 		building_group_bg_urban_facilities_throughput_add = 0.2
 	}
 	cost = 100
+
 	ai_weight = {
 		value = 0
 		if = {
@@ -329,6 +390,7 @@ decree_encourage_agricultural_industry = {
 		building_group_bg_ranching_throughput_add = 0.2
 	}
 	cost = 100
+
 	ai_weight = {
 		value = 0
 		if = {
@@ -395,10 +457,11 @@ decree_encourage_resource_industry = {
 		building_group_bg_mining_throughput_add = 0.2
 		building_group_bg_logging_throughput_add = 0.2
 		building_group_bg_fishing_throughput_add = 0.2
-		building_group_bg_fossil_fuels_throughput_add = 0.2
+		building_group_bg_oil_rig_throughput_add = 0.2
 		building_group_bg_rubber_throughput_add = 0.2
 	}
 	cost = 100
+
 	ai_weight = {
 		value = 0
 		if = {
@@ -408,7 +471,7 @@ decree_encourage_resource_industry = {
 						is_building_group = bg_mining
 						is_building_group = bg_logging
 						is_building_group = bg_fishing
-						is_building_group = bg_fossil_fuels
+						is_building_group = bg_oil_rig
 					}
 				}
 			}
@@ -421,7 +484,7 @@ decree_encourage_resource_industry = {
 						is_building_group = bg_mining
 						is_building_group = bg_logging
 						is_building_group = bg_fishing
-						is_building_group = bg_fossil_fuels
+						is_building_group = bg_oil_rig
 					}
 					count >= 3
 				}
@@ -435,7 +498,7 @@ decree_encourage_resource_industry = {
 						is_building_group = bg_mining
 						is_building_group = bg_logging
 						is_building_group = bg_fishing
-						is_building_group = bg_fossil_fuels
+						is_building_group = bg_oil_rig
 					}
 					count >= 5
 				}
@@ -459,9 +522,11 @@ decree_greener_grass_campaign = {
 		is_isolated_from_market = no
 	}
 	modifier = {
+		state_migration_pull_add = 20
 		state_migration_pull_mult = 0.5
 	}
 	cost = 100
+
 	ai_weight = {
 		value = 0
 		if = {
@@ -493,6 +558,13 @@ decree_greener_grass_campaign = {
 		}
 		if = {
 			limit = {
+				is_incorporated = no
+				scope:country = { NOT = { has_law = law_type:law_colonial_resettlement } } # Already gives a hefty migration bonus
+			}
+			multiply = 2.0
+		}
+		if = {
+			limit = {
 				state_unemployment_rate >= 0.1
 			}
 			multiply = 0
@@ -506,9 +578,21 @@ decree_enlistment_efforts = {
 		state_conscription_rate_add = 0.05
 		building_training_rate_mult = 0.25
 	}
+
 	cost = 100
+
 	ai_weight = {
 		value = 0
+
+		if = {
+			limit = {
+				any_scope_building = {
+					is_building_type = building_barracks
+					count >= 5
+				}
+			}
+			add = 25
+		}
 		if = {
 			limit = {
 				any_scope_building = {
@@ -527,6 +611,7 @@ decree_enlistment_efforts = {
 			}
 			add = 50
 		}
+
 		if = {
 			limit = {
 				any_scope_building = {
