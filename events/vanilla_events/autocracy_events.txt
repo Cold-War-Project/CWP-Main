@@ -1,0 +1,291 @@
+﻿namespace = autocracy
+
+autocracy.1 = {
+	type = country_event
+	placement = ROOT
+
+	title = autocracy.1.t
+	desc = autocracy.1.d
+	flavor = autocracy.1.f
+
+	event_image = {
+		video = "votp_monarch_holding_court"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+
+	duration = 3
+
+	trigger = {
+		# triggered by je_autocracy completion
+	}
+
+	immediate = {
+		ruler = {
+			save_scope_as = monarch_scope
+		}
+		random_primary_culture = {
+			save_scope_as = primary_culture_scope
+		}
+		ig:ig_devout = {
+			save_scope_as = church_scope
+		}
+	}
+
+	option = { # increase ruler popularity and IG attraction
+		name = autocracy.1.a
+		default_option = yes
+		ruler = {
+			add_modifier = {
+				name = popular_autocrat
+				days = very_long_modifier_time
+			}
+			interest_group = {
+				add_modifier = {
+					name = popular_autocrat_ig
+					days = very_long_modifier_time
+				}
+			}
+		}
+	}
+
+	option = { # increase assimilation and gain same culture loyalists
+		name = autocracy.1.b
+		add_loyalists = {
+			culture = scope:primary_culture_scope
+			value = 0.05
+		}
+		add_modifier = {
+			name = russification_modifier
+			days = very_long_modifier_time
+		}
+	}
+
+	option = { # increase conversion
+		name = autocracy.1.c
+		add_loyalists = {
+			pop_type = clergymen
+			religion = root.religion
+			value = 0.6
+		}
+		add_modifier = {
+			name = religious_orthodocy_enforced_mod
+			days = very_long_modifier_time
+		}
+	}
+}
+
+# secret societies
+autocracy.2 = {
+	type = country_event
+	placement = scope:secret_societies_state
+
+	title = autocracy.2.t
+	desc = autocracy.2.d
+	flavor = autocracy.2.f
+
+	event_image = {
+		video = "votp_conspiring"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_scales.dds"
+
+	duration = 3
+
+	cooldown = { days = very_long_modifier_time }
+
+	trigger = {
+		NOT = {
+			has_variable = secret_societies_timer
+		}
+		OR = {
+			has_law = law_type:law_monarchy
+			has_law = law_type:law_theocracy
+		}
+		has_law = law_type:law_state_religion
+		has_law = law_type:law_autocracy
+		ig:ig_intelligentsia = {
+			is_marginal = no
+			is_in_government = no
+		}
+		OR = {
+			has_law = law_type:law_censorship
+			has_law = law_type:law_outlawed_dissent
+		}
+		any_scope_state = {
+			is_incorporated = yes
+			any_scope_pop = {
+				is_pop_type = academics
+			}
+		}
+	}
+
+	immediate = {
+		set_variable = {
+			name = secret_societies_timer
+			days = normal_modifier_time
+		}
+		ig:ig_intelligentsia = {
+			save_scope_as = secret_society_ig
+		}
+		random_scope_state = {
+			limit = {
+				is_incorporated = yes
+				any_scope_pop = {
+					is_pop_type = academics
+				}
+			}
+			save_scope_as = secret_societies_state
+			random_scope_pop = {
+				limit = {
+					is_pop_type = academics
+				}
+				save_scope_as = secret_society_pop
+			}
+		}
+	}
+
+	cancellation_trigger = {
+		scope:secret_societies_state = {
+			is_incorporated = yes
+			NOT = {
+				any_scope_pop = {
+					is_pop_type = academics
+				}
+			}
+		}
+	}
+
+	option = { # tolerate them
+		name = autocracy.2.a
+		default_option = yes
+		scope:secret_society_ig = {
+			add_modifier = {
+				name = tolerated_secret_societies
+				days = normal_modifier_time
+			}
+		}
+	}
+
+	option = { # crack down on secret societies
+		name = autocracy.2.b
+		scope:secret_society_ig = {
+			add_modifier = {
+				name = suppressed_secret_societies
+				days = normal_modifier_time
+			}
+		}
+		scope:secret_societies_state = {
+			add_radicals_in_state = {
+				pop_type = academics
+				value = very_large_radicals
+			}
+		}
+	}
+}
+
+# Devout keep serfs content
+autocracy.3 = {
+	type = country_event
+	placement = scope:religious_serfs_state
+
+	title = autocracy.3.t
+	desc = autocracy.3.d
+	flavor = autocracy.3.f
+
+	event_image = {
+		video = "europenorthamerica_russian_serfs"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_default.dds"
+
+	duration = 3
+
+	cooldown = { days = very_long_modifier_time }
+
+	trigger = {
+		NOT = { has_variable = religious_serfs_timer }
+		ig:ig_devout = {
+			is_powerful = yes
+			is_in_government = yes
+		}
+		has_law = law_type:law_serfdom
+		haS_law = law_type:law_state_religion
+		any_scope_state = {
+			is_incorporated = yes
+			any_scope_pop = {
+				pop_acceptance >= acceptance_status_4
+				is_pop_type = peasants
+				religion = root.religion
+			}
+			any_scope_pop = {
+				is_pop_type = clergymen
+				religion = root.religion
+			}
+			NOR = {
+				has_modifier = loyal_religious_serfs
+				has_modifier = less_radical_religious_serfs
+			}
+		}
+	}
+
+	immediate = {
+		set_variable = {
+			name = religious_serfs_timer
+			days = normal_modifier_time
+		}
+		random_scope_state = {
+			limit = {
+				is_incorporated = yes
+				any_scope_pop = {
+					is_pop_type = peasants
+					religion = root.religion
+					pop_acceptance >= acceptance_status_4
+				}
+				any_scope_pop = {
+					is_pop_type = clergymen
+					religion = root.religion
+				}
+			}
+			save_scope_as = religious_serfs_state
+			random_scope_pop = {
+				limit = {
+					is_pop_type = peasants
+					pop_acceptance >= acceptance_status_4
+					religion = root.religion
+				}
+				save_scope_as = religious_serf_pop
+			}
+		}
+		ig:ig_devout = {
+			save_scope_as = church_scope
+		}
+	}
+
+	option = { # increase loyalty
+		name = autocracy.3.a
+		default_option = yes
+		scope:religious_serfs_state = {
+			add_modifier = {
+				name = loyal_religious_serfs
+				days = long_modifier_time
+			}
+		}
+	}
+
+	option = { # reduce radicals
+		name = autocracy.3.b
+		scope:religious_serfs_state = {
+			add_modifier = {
+				name = less_radical_religious_serfs
+				days = long_modifier_time
+			}
+		}
+	}
+}
