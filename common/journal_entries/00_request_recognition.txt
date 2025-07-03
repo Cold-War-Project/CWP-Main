@@ -1,0 +1,183 @@
+﻿je_earn_recognition = {
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+
+	group = je_group_foreign_affairs
+
+	scripted_progress_bar = earn_recognition_progress_bar
+
+	is_shown_when_inactive = {
+		is_country_type = unrecognized
+	}
+
+	immediate = {
+		set_variable = {
+			name = recognition_progress_var
+			value = 0
+		}
+	}
+
+	possible = {
+		is_country_type = unrecognized
+		
+		OR = {
+			country_rank >= rank_value:unrecognized_major_power
+			any_overlord_or_above = {
+				country_rank >= rank_value:great_power
+			}
+		}
+	}
+
+	complete = {
+		any_country = {
+			country_rank >= rank_value:great_power
+			relations:root >= relations_threshold:amicable
+		}
+		custom_tooltip = {
+			text = je_earn_recognition_complete_tt
+			scope:journal_entry ?= {
+				"scripted_bar_progress(earn_recognition_progress_bar)" >= 200
+			}
+		}
+	}
+
+	on_complete = {
+		custom_tooltip = {
+			text = je_earn_recognition_tt
+			trigger_event = { id = earn_recognition_events.1 days = 0 popup = yes }
+		}
+		show_as_tooltip = {
+			set_country_type = recognized
+		}
+	}
+
+	fail = {
+	}
+
+	on_fail = {
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			# Wargoal enforced scores are handled in the on_wargoal_enforced on_action
+			# Advance Conditions
+			if = {
+				limit = {
+					# Your GDP per Capita is relatively high
+					gdp_per_capita_ranking <= 20
+				}
+				change_variable = {
+					name = recognition_progress_var
+					add = 1
+				}
+			}
+			if = {
+				limit = {
+					# Your Standard of Living is relatively high
+					sol_ranking <= 20
+				}
+				change_variable = {
+					name = recognition_progress_var
+					add = 1
+				}
+			}
+			if = {
+				limit = {
+					# Country has voting rights
+					country_has_voting_franchise = yes
+				}
+				change_variable = {
+					name = recognition_progress_var
+					add = 1
+				}
+			}
+			if = {
+				limit = {
+					# Literacy rating is high-isch
+					literacy_rate >= 0.4
+				}
+				change_variable = {
+					name = recognition_progress_var
+					add = 1
+				}
+			}
+			# Deplete Conditions
+			if = {
+				limit = {
+					# Slavery is legal
+					NOT = {
+						has_law = law_type:law_slavery_banned
+					}
+				}
+				change_variable = {
+					name = recognition_progress_var
+					add = -1
+				}
+			}
+			if = {
+				limit = {
+					# Serfdom is legal
+					has_law = law_type:law_serfdom
+				}
+				change_variable = {
+					name = recognition_progress_var
+					add = -1
+				}
+			}
+			if = {
+				limit = {
+					# Traditional economic system
+					has_law = law_type:law_traditionalism
+				}
+				change_variable = {
+					name = recognition_progress_var
+					add = -1
+				}
+			}
+			if = {
+				limit = {
+					# 'Draconic' law
+					has_law = law_type:law_outlawed_dissent
+				}
+				change_variable = {
+					name = recognition_progress_var
+					add = -1
+				}
+			}
+			if = {
+				limit = {
+					# Literacy rating is low
+					literacy_rate <= 0.2
+				}
+				change_variable = {
+					name = recognition_progress_var
+					add = -1
+				}
+			}
+			if = {
+				limit = {
+					# Your GDP per Capita is relatively low
+					gdp_per_capita_ranking >= 50
+				}
+				change_variable = {
+					name = recognition_progress_var
+					add = -1
+				}
+			}
+			if = {
+				limit = {
+					# Your Standard of Living is relatively low
+					sol_ranking >= 50
+				}
+				change_variable = {
+					name = recognition_progress_var
+					add = -1
+				}
+			}
+			clamp_variable = { name = recognition_progress_var max = 200 min = 0 }
+		}
+	}
+
+	weight = 100
+
+	should_be_pinned_by_default = yes
+}
