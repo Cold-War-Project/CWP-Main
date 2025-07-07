@@ -1,0 +1,489 @@
+﻿ig_devout = {
+	color = hsv{ 0.50 0.30 0.67 }
+	texture = "gfx/interface/icons/ig_icons/devout.dds"
+	layer = "revolution_dynamic_devout"
+	index = 1
+
+	ideologies = {
+		ideology_pious
+		ideology_moralist
+		ideology_patriarchal
+	}
+
+	character_ideologies = {
+		ideology_moderate
+		ideology_traditionalist
+		ideology_legitimist
+	}
+
+	enable = {
+		always = yes
+	}
+
+	# Deprecated; use on_enable effect to assign traits instead
+	traits = {}
+
+	on_enable = {
+		ig:ig_devout = {
+			# Country specific IG traits should be assigned here using IF & ELSE_IF statements
+			# For non country specific IGs, use the ELSE statement containing the generic IG traits
+			set_ig_trait = ig_trait:ig_trait_pious_fiction
+			set_ig_trait = ig_trait:ig_trait_divine_right
+			set_ig_trait = ig_trait:ig_trait_be_fruitful_and_multiply
+		}
+
+		# Country specific IG ideologies should be assigned here using IF & ELSE_IF statements
+
+		### Generic Religious IGs
+		# Catholic Church
+		if = {
+			limit = { country_has_state_religion = rel:catholic }
+			ig:ig_devout = {
+				set_interest_group_name = ig_catholic_church
+			}
+		}
+		# Evangelical Church
+		else_if = {
+			limit = {
+				country_has_state_religion = rel:protestant
+			}
+			ig:ig_devout = {
+				set_interest_group_name = ig_evangelical_church
+			}
+		}
+		# Sunni Ulema
+		else_if = {
+			limit = { country_has_state_religion = rel:sunni }
+			ig:ig_devout = {
+				set_interest_group_name = ig_sunni_madrasahs
+			}
+		}
+		# Shi'a Ulema
+		else_if = {
+			limit = { country_has_state_religion = rel:shiite }
+			ig:ig_devout = {
+				set_interest_group_name = ig_shia_madrasahs
+			}
+		}
+		# Oriental Orthodox Church
+		else_if = {
+			limit = { country_has_state_religion = rel:oriental_orthodox }
+			ig:ig_devout = {
+				set_interest_group_name = ig_oriental_orthodox_church
+				remove_ideology = ideology_patriarchal
+				add_ideology = ideology_oriental_orthodox_patriarch
+			}
+		}
+		# Orthodox Church
+		else_if = {
+			limit = {
+				country_has_state_religion = rel:orthodox
+				NOR = {
+					country_has_primary_culture = cu:russian
+					country_has_primary_culture = cu:byelorussian
+					country_has_primary_culture = cu:ukrainian
+				}
+			}
+			ig:ig_devout = {
+				set_interest_group_name = ig_orthodox_church
+				remove_ideology = ideology_patriarchal
+				add_ideology = ideology_orthodox_patriarch
+			}
+		}
+		# Hindu Priesthood
+		else_if = {
+			limit = {
+				country_has_state_religion = rel:hindu
+			}
+			ig:ig_devout = {
+				set_interest_group_name = ig_hindu_priesthood
+				remove_ideology = ideology_moralist
+				add_ideology = ideology_hindu_moralist
+			}
+		}
+		# Vajrayana Monks
+		else_if = {
+			limit = { country_has_state_religion = rel:gelugpa }
+			ig:ig_devout = {
+				set_interest_group_name = ig_vajrayana_monks
+				remove_ideology = ideology_moralist
+				add_ideology = ideology_buddhist_moralist
+			}
+		}
+		# Vajrayana Monks
+		else_if = {
+			limit = { country_has_state_religion = rel:theravada }
+			ig:ig_devout = {
+				set_interest_group_name = ig_theravada_monks
+				remove_ideology = ideology_moralist
+				add_ideology = ideology_buddhist_moralist
+			}
+		}
+		# Mahayana Monks
+		else_if = {
+			limit = { country_has_state_religion = rel:mahayana }
+			ig:ig_devout = {
+				set_interest_group_name = ig_mahayana_monks
+				remove_ideology = ideology_moralist
+				add_ideology = ideology_buddhist_moralist
+			}
+		}
+		# Sikh Granthis
+		else_if = {
+			limit = { country_has_state_religion = rel:sikh }
+			ig:ig_devout = {
+				set_interest_group_name = ig_granthis
+				remove_ideology = ideology_moralist
+				add_ideology = ideology_sikh_moralist
+			}
+		}
+
+		# This normally happens when a country has researched corporatism in vanilla
+		# So for the mod at the moment, this applies to all countries
+		ig:ig_devout = {
+			remove_ideology = ideology_pious
+			add_ideology = ideology_corporatist
+		}
+	}
+
+	on_disable = {}
+
+	# Country scope
+	priority_cultures = {}
+
+	on_character_ig_membership = {
+		if = {
+			limit = {
+				NOT = {
+					owner = {
+						has_law = law_type:law_state_atheism
+					}
+				}
+			}
+			
+			change_character_religion = scope:interest_group.owner.religion
+		}
+		
+		else = {
+			change_character_religion = scope:interest_group.owner.country_definition.religion
+		}
+	}
+
+
+	pop_potential = {
+		has_state_religion = yes
+		NOT = { has_pop_religion = atheist }
+	}
+
+	pop_weight = {
+		add = {
+			desc = "POP_BASE_ATTRACTION"
+			value = 25
+		}
+
+		add = {
+			desc = "POP_CLERGYMEN"
+			if = {
+				limit = {
+					is_pop_type = clergymen
+				}
+				value = 250
+			}
+		}
+
+		add = {
+			desc = "POP_PEASANTS"
+			if = {
+				limit = {
+					is_pop_type = peasants
+				}
+				value = 100
+			}
+		}
+
+		if = {
+			limit = {
+				owner = {
+					has_law = law_type:law_state_atheism
+				}
+			}
+			multiply = {
+				desc = "STATE_ATHEISM_LAW"
+				value = 0.1
+			}
+		}
+
+		if = {
+			limit = {
+				owner = {
+					has_law = law_type:law_state_religion
+				}
+			}
+			multiply = {
+				desc = "STATE_RELIGION_LAW"
+				value = 1.5
+			}
+		}
+
+		if = {
+			limit = {
+				owner = {
+					has_law = law_type:law_freedom_of_conscience
+				}
+			}
+			multiply = {
+				desc = "FREEDOM_OF_CONSCIENCE_LAW"
+				value = 1.25
+			}
+		}
+
+		if = {
+			limit = {
+				owner = {
+					has_law = law_type:law_religious_schools
+				}
+			}
+			multiply = {
+				desc = "RELIGIOUS_SCHOOLS_LAW"
+				value = owner.institution:institution_schools.investment
+				divide = 5
+				add = 1
+			}
+		}
+
+		add = {
+			desc = "POP_LITERACY"
+			this = {
+				value = literacy_rate
+				multiply = -20
+			}
+		}
+
+		multiply = {
+			desc = "LEADER_POPULARITY"
+			scope:interest_group = {
+				leader ?= {
+					value = popularity
+					multiply = 0.0025
+					add = 1
+					max = 1.25
+					min = 0.75
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				scope:interest_group = {
+					is_in_government = yes
+				}
+			}
+			multiply = {
+				desc = "IN_GOVERNMENT_ATTRACTION"
+				value = 1
+				add = scope:interest_group.modifier:interest_group_in_government_attraction_mult
+				min = 0
+			}
+		}
+
+		if = {
+			limit = {
+				scope:interest_group = {
+					is_in_government = yes
+				}
+			}
+			multiply = { # Multiplied by 1.25x max
+				desc = "POP_LOYALISTS"
+				value = pop_loyalist_fraction
+				divide = 4
+				add = 1
+			}
+		}
+
+		if = {
+			limit = {
+				scope:interest_group = {
+					is_in_government = no
+				}
+			}
+			multiply = { # Multiplied by 1.25x max
+				desc = "POP_RADICALS"
+				value = pop_radical_fraction
+				divide = 4
+				add = 1
+			}
+		}
+	}
+
+	monarch_weight = {
+		value = 1.0
+		# Monarch is not likely to adopt a marginal IG
+		if = {
+			limit = {
+				is_marginal = yes
+			}
+			multiply = {
+				value = 0.1
+			}
+		}
+		# Monarch is more likely to adopt a Powerful IG
+		if = {
+			limit = {
+				is_powerful = yes
+			}
+			multiply = {
+				value = 2
+			}
+		}
+		# More likely with State Religion
+		if = {
+			limit = {
+				owner = {
+					has_law = law_type:law_state_religion
+				}
+			}
+			multiply = {
+				value = 2
+			}
+		}
+		# Less likely without State Religion
+		if = {
+			limit = {
+				owner = {
+					NOT = { has_law = law_type:law_state_religion }
+				}
+			}
+			multiply = {
+				value = 0.25
+			}
+		}
+		# Basically impossible with State Atheism
+		if = {
+			limit = {
+				owner = {
+					has_law = law_type:law_state_atheism
+				}
+			}
+			multiply = {
+				value = 0
+			}
+		}
+		# Muslims and Theravada more likely to adopt Devout
+		if = {
+			limit = {
+				OR = {
+					owner.religion = rel:sunni
+					owner.religion = rel:shiite
+					owner.religion = rel:theravada
+				}
+			}
+			multiply = 2
+		}
+	}
+
+	agitator_weight = {
+		# Agitators more likely to come from populist IG's rather than elitist
+		value = 0.5
+
+		# Agitators will never be part of a marginalized IG
+		if = {
+			limit = {
+				owner.ig:ig_devout = {
+					is_marginal = yes
+				}
+			}
+			multiply = {
+				value = 0
+			}
+		}
+	}
+
+	commander_weight = {
+		value = 1.0
+	}
+
+	executive_weight = {
+		value = 1.0
+	}
+
+	noble_chance = {
+		value = 0.5
+	}
+
+	female_commander_chance = {
+		value = 0.0
+	}
+
+	female_executive_chance = {
+		value = 0.0
+	}
+
+	female_politician_chance = {
+		value = 0.0
+
+		if = {
+			limit = {
+				owner = {
+					has_law = law_type:law_womens_suffrage
+				}
+			}
+
+			add = {
+				value = 0.01
+			}
+		}
+	}
+
+	female_agitator_chance = {
+		value = 0.01
+
+		if = {
+			limit = { 
+				owner = { 
+					has_law = law_type:law_women_own_property 
+				} 
+			}
+
+			add = {
+				value = 0.01
+			}
+		}
+
+		if = {
+			limit = {
+				owner = {
+					has_law = law_type:law_women_in_the_workplace
+				}
+
+			}
+			add = {
+				value = 0.01
+			}
+		}
+
+		if = {
+			limit = {
+				owner = {
+					has_law = law_type:law_womens_suffrage
+				}
+
+			}
+			add = {
+				value = 0.01
+			}
+		}
+	}
+
+	# The chance that a commander belonging to this IG takes over leadership when it changes
+	# scope:character is the most popular commander in the IG
+	commander_leader_chance = {
+		value = 0.25
+		multiply = ig_commander_leader_chance_mult
+	}
+
+	# The chance that a executive belonging to this IG takes over leadership when it changes
+	# scope:character is the most popular executive in the IG
+	executive_leader_chance = {
+		value = 0.25
+	}
+}
