@@ -1,0 +1,325 @@
+﻿namespace = government_petition_events
+
+government_petition_events.1 = {
+	type = country_event
+	placement = root
+	event_image = {
+		trigger = {
+			var:government_petition_variant = 1
+		}
+		video = "europenorthamerica_capitalists_meeting"
+	}
+	event_image = {
+		trigger = {
+			var:government_petition_variant = 2
+		}
+		video = "unspecific_ruler_speaking_to_people"
+	}
+	event_image = {
+		trigger = {
+			var:government_petition_variant = 3
+		}
+		video = "asia_politician_parliament_motion"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_scales.dds"
+
+	title = government_petition_events.1.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = government_petition_events.1.d
+				trigger = {
+					has_variable = government_petition_variant
+					var:government_petition_variant = 1
+				}
+			}
+			triggered_desc = {
+				desc = government_petition_events.1.d2
+				trigger = {
+					has_variable = government_petition_variant
+					var:government_petition_variant = 2
+				}
+			}
+			triggered_desc = {
+				desc = government_petition_events.1.d3
+				trigger = {
+					has_variable = government_petition_variant
+					var:government_petition_variant = 3
+				}
+			}
+		}
+	}
+	flavor = {
+		first_valid = {
+			triggered_desc = {
+				desc = government_petition_events.1.f
+				trigger = {
+					has_variable = government_petition_variant
+					var:government_petition_variant = 1
+				}
+			}
+			triggered_desc = {
+				desc = government_petition_events.1.f2
+				trigger = {
+					has_variable = government_petition_variant
+					var:government_petition_variant = 2
+				}
+			}
+			triggered_desc = {
+				desc = government_petition_events.1.f3
+				trigger = {
+					has_variable = government_petition_variant
+					var:government_petition_variant = 3
+				}
+			}
+		}
+	}
+
+	duration = 3
+
+	trigger = {
+		#Triggered by JE
+	}
+
+	immediate = {
+		random_interest_group = {
+            limit = {
+                is_in_government = yes
+                is_marginal = no
+                any_preferred_law = {
+                    law_is_valid_for_ig_petition = yes
+                }
+            }
+            save_scope_as = government_petition_ig
+            ordered_preferred_law = {
+                limit = {
+					law_is_valid_for_ig_petition = yes
+                }
+                min = 0
+                max = 2
+                check_range_bounds = no
+                save_scope_as = government_petition_law
+            }
+			ordered_preferred_law = {
+                limit = {
+					law_is_valid_for_ig_petition = yes
+					NOT = {
+						scope:government_petition_law ?= THIS
+					}
+                }
+                min = 1
+                max = 3
+                check_range_bounds = no
+                save_scope_as = government_petition_law_2
+            }
+			set_variable = { name = petitioning_ig days = 100 }
+        }
+		random_list = {
+			1 = {
+				set_variable = { name = government_petition_variant value = 1 }
+			}
+			4 = {
+				trigger = {
+					NAND = {  # Will not trigger twice in a row
+						has_variable = government_petition_variant
+						var:government_petition_variant = 2
+					}
+					scope:government_petition_ig ?= {
+						ig_approval < 0
+					}
+				}
+				set_variable = { name = government_petition_variant value = 2 }
+			}
+			4 = {
+				trigger = {
+					NAND = { # Will not trigger twice in a row
+						has_variable = government_petition_variant
+						var:government_petition_variant = 3
+					}
+					scope:government_petition_ig ?= { # Just in general a competent politician
+						leader = {
+							OR = {
+								has_trait = basic_political_operator
+								has_trait = experienced_political_operator
+								has_trait = expert_political_operator
+								has_trait = charismatic
+								has_trait = inspirational_orator
+								has_trait = firebrand
+								has_trait = ambitious
+								has_trait = persistent
+							}
+						}
+					}
+				}
+				set_variable = { name = government_petition_variant value = 3 }
+			}
+		}
+	}
+
+	cancellation_trigger = {
+		NOR = {
+			exists = scope:government_petition_ig
+			exists = scope:government_petition_law
+		}
+	}
+
+	option = {
+		name = government_petition_events.1.a
+		default_option = yes
+        if = {
+            limit = {
+                exists = scope:government_petition_law
+            }
+            set_variable = { name = desired_law_var value = scope:government_petition_law }
+        }
+		custom_tooltip = government_petition_tt
+		add_journal_entry = {
+			type = je_government_petition
+		}
+	}
+
+	option = {
+		name = government_petition_events.1.b
+		trigger = {
+			exists = scope:government_petition_law_2
+		}
+        if = {
+            limit = {
+                exists = scope:government_petition_law_2
+            }
+            set_variable = { name = desired_law_var value = scope:government_petition_law_2 }
+        }
+		custom_tooltip = government_petition_2_tt
+		add_journal_entry = {
+			type = je_government_petition
+		}
+	}
+
+	option = {
+		name = government_petition_events.1.c1
+		trigger = {
+			NOT = {
+				scope:government_petition_ig = {
+					has_variable = government_petition_rejected
+				}
+			}
+		}
+		custom_tooltip = government_petition_blown_off_tt
+		scope:government_petition_ig = {
+			set_variable = { name = government_petition_rejected years = 20 }
+		}
+		add_modifier = {
+			name = modifier_petition_rejected_legitimacy
+			days = normal_modifier_time
+			is_decaying = yes
+		}
+		scope:government_petition_ig = {
+			add_modifier = {
+				name = modifier_petition_rejected_ig_opinion
+				days = normal_modifier_time
+				is_decaying = yes
+			}
+		}
+	}
+
+	option = {
+		name = government_petition_events.1.c2
+		trigger = {
+			scope:government_petition_ig = {
+				has_variable = government_petition_rejected
+			}
+		}
+		custom_tooltip = government_petition_blown_off_2_tt
+		scope:government_petition_ig = {
+			set_variable = { name = government_petition_rejected years = 20 }
+		}
+		add_modifier = {
+			name = modifier_petition_rejected_legitimacy
+			days = normal_modifier_time
+			multiplier = 3
+			is_decaying = yes
+		}
+		scope:government_petition_ig = {
+			add_modifier = {
+				name = modifier_petition_rejected_ig_opinion
+				days = normal_modifier_time
+				multiplier = 4
+				is_decaying = yes
+			}
+		}
+	}
+}
+
+namespace = government_collapse
+
+government_collapse.1 = {
+	type = country_event
+	placement = root
+	event_image = {
+		video = "middleeast_courtroom_upheaval"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+
+	title = government_collapse.1.t
+	desc = government_collapse.1.d
+	flavor = government_collapse.1.f
+
+	duration = 3
+
+	trigger = {
+		#Triggered by on_action
+	}
+
+	cooldown = { days = 91 }
+
+	immediate = {
+		random_active_party = {
+			save_scope_as = relevant_party
+		}
+		ordered_interest_group = {
+			limit = {
+				has_party = yes
+				is_in_government = no
+				is_insurrectionary = yes
+			}
+			order_by = ig_clout
+			save_scope_as = relevant_ig
+		}
+	}
+
+	option = {
+		name = government_collapse.1.a
+		default_option = yes
+		random_active_party = {
+			disband_party = yes
+		}
+		scripted_effect_parties_disappearence = yes
+		activate_law = law_type:law_oligarchy
+	}
+	option = {
+		name = government_collapse.1.b
+		trigger = {
+			exists = currently_enacting_law
+			scope:relevant_ig = {
+				law_stance = {
+					law = owner.currently_enacting_law.type
+					value < neutral
+				}
+			}
+		}
+		scope:relevant_ig = {
+			add_modifier = {
+				name = modifier_last_minute_compromise
+				days = short_modifier_time
+				is_decaying = yes
+			}
+		}
+		cancel_enactment = yes
+	}
+}
