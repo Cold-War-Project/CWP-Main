@@ -5,7 +5,7 @@
 	index = 3
 
 	ideologies = {
-		ideology_liberal_modern
+		ideology_liberal
 		ideology_anti_clerical
 		ideology_republican
 	}
@@ -16,7 +16,6 @@
 		ideology_radical
 		ideology_reformer
 		ideology_sovereignist_leader
-		ideology_orleanist
 		ideology_despotic_utopian
 		ideology_humanitarian
 		ideology_utopian
@@ -31,19 +30,24 @@
 
 	on_enable = {
 		ig:ig_intelligentsia ?= {
-			# Country specific IG traits should be assigned here using IF & ELSE_IF statements
-			# For non country specific IGs, use the ELSE statement containing the generic IG traits
 			set_ig_trait = ig_trait:ig_trait_social_criticism
 			set_ig_trait = ig_trait:ig_trait_avant_garde
 			set_ig_trait = ig_trait:ig_trait_propagandists
 		}
-		# Country specific IG ideologies should be assigned here using IF & ELSE_IF statements
+
+		every_interest_group = {
+			limit = {
+				has_ideology = ideology:ideology_liberal
+			}
+			remove_ideology = ideology_liberal
+			add_ideology = ideology_liberal_modern
+		}
 	}
 
 	on_disable = {}
 
-	# Country scope
-	priority_cultures = {}
+	priority_cultures = { #Country scope
+	}
 
 	on_character_ig_membership = {}
 
@@ -279,6 +283,21 @@
 
 	executive_weight = {
 		value = 2.0
+		
+		# The company owning BIC should not get non-industrialist executives
+		if = {
+			limit = {
+				exists = scope:company
+				exists = c:BIC
+				c:BIC = {
+					exists = owning_company
+					owning_company = scope:company
+				}
+			}
+			multiply = {
+				value = 0
+			}
+		}
 	}
 
 	noble_chance = {
@@ -296,15 +315,19 @@
 	female_politician_chance = {
 		value = 0.0
 
+
 		if = {
 			limit = {
 				owner = {
 					has_law_or_variant = law_type:law_womens_suffrage
 				}
-
+				law_stance = {
+					law = law_type:law_womens_suffrage
+					value >= approve
+				}
 			}
 			add = {
-				value = 0.035
+				value = 0.05
 			}
 		}
 	}

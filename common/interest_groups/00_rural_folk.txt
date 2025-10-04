@@ -1,20 +1,21 @@
-﻿ig_rural_folk = {
-	color = hsv{ 0.32 0.45 0.47 }
-	texture = "gfx/interface/icons/ig_icons/rural_folk.dds"
-	layer = "revolution_dynamic_rural_folk"
-	index = 6
+﻿ig_trade_unions = {
+	color = hsv{ 0 0.56 0.58 }
+	texture = "gfx/interface/icons/ig_icons/trade_unions.dds"
+	layer = "revolution_dynamic_trade_unions"
+	index = 7
 
 	ideologies = {
-		ideology_agrarian
-		ideology_particularist
-		ideology_isolationist
+		ideology_proletarian
+		ideology_egalitarian
+		ideology_populist
+		ideology_anti_slavery
 	}
 
 	character_ideologies = {
 		ideology_moderate
-		ideology_pacifist
-		ideology_bonapartist
-		ideology_legitimist
+		ideology_reformer
+		ideology_radical
+		ideology_utopian
 	}
 
 	enable = {
@@ -25,19 +26,27 @@
 	traits = {}
 
 	on_enable = {
-		ig:ig_rural_folk ?= {
-			# Country specific IG traits should be assigned here using IF & ELSE_IF statements
-			# For non country specific IGs, use the ELSE statement containing the generic IG traits
-			set_ig_trait = ig_trait:ig_trait_old_ways
-			set_ig_trait = ig_trait:ig_trait_honest_work
-			set_ig_trait = ig_trait:ig_trait_farmers_markets
+		ig:ig_trade_unions ?= {
+			set_ig_trait = ig_trait:ig_trait_work_to_rule
+			set_ig_trait = ig_trait:ig_trait_industrial_organizers
+			set_ig_trait = ig_trait:ig_trait_solidarity
+			add_ideology = ideology_socialist
 		}
-		# Country specific IG ideologies should be assigned here using IF & ELSE_IF statements
+
+		### Feminism
+		every_interest_group = {
+			limit = {
+				has_ideology = ideology:ideology_egalitarian
+			}
+			remove_ideology = ideology_egalitarian
+			add_ideology = ideology_egalitarian_modern
+		}
 	}
+
 	on_disable = {}
 
-	# Country scope
-	priority_cultures = {}
+	priority_cultures = { #Country scope
+	}
 
 	on_character_ig_membership = {}
 
@@ -45,15 +54,30 @@
 		NOR = {
 			is_pop_type = aristocrats
 			is_pop_type = capitalists
+			is_pop_type = officers
 		}
 		OR = {
-			pop_employment_building_group = bg_agriculture
-			pop_employment_building_group = bg_ranching
-			pop_employment_building_group = bg_plantations
-			pop_employment_building_group = bg_logging
-			pop_employment_building_group = bg_fishing
-			pop_employment_building_group = bg_whaling
-			pop_employment_building_group = bg_manor_houses
+			AND = {
+				custom_tooltip = {
+					text = owner_has_modern_agriculture_tt
+					owner = {
+						OR = {
+							has_law_or_variant = law_type:law_commercialized_agriculture
+							has_law_or_variant = law_type:law_collectivized_agriculture
+						}
+					}
+				}
+				strata = lower
+				NOR = {
+					pop_employment_building_group = bg_subsistence_agriculture
+					pop_employment_building_group = bg_subsistence_ranching
+				}
+			}
+			NOR = {
+				pop_employment_building_group = bg_agriculture
+				pop_employment_building_group = bg_ranching
+				pop_employment_building_group = bg_plantations
+			}
 		}
 	}
 
@@ -61,58 +85,79 @@
 		value = 0
 
 		add = {
-			desc = "RURAL_POP"
+			desc = "URBAN_POP"
 			if = {
 				limit = {
-					OR = {
+					NOR = {
 						pop_employment_building_group = bg_agriculture
 						pop_employment_building_group = bg_ranching
 						pop_employment_building_group = bg_plantations
-						pop_employment_building_group = bg_logging
-						pop_employment_building_group = bg_fishing
-						pop_employment_building_group = bg_whaling
-						pop_employment_building_group = bg_manor_houses
 					}
+				}
+				value = 50
+				if = {
+					limit = {
+						strata = middle
+					}
+					subtract = {
+						value = this.standard_of_living
+						add = 10 # 15 SoL [Middling] will halve middle-strata pops' attraction to the unions
+					}
+				}
+			}
+		}
+
+		add = {
+			desc = "POP_MACHINISTS"
+			if = {
+				limit = {
+					is_pop_type = machinists
+				}
+				value = 150
+			}
+		}
+
+		add = {
+			desc = "POP_LABORERS"
+			if = {
+				limit = {
+					is_pop_type = laborers
 				}
 				if = {
 					limit = {
-						is_pop_type = clergymen
+						NOR = {
+							pop_employment_building_group = bg_agriculture
+							pop_employment_building_group = bg_ranching
+							pop_employment_building_group = bg_plantations
+						}
 					}
-					value = 25
-				}
-				else = {
 					value = 100
 				}
+				else = {
+					value = 50
+				}
 			}
 		}
 
 		add = {
-			desc = "POP_FARMERS"
+			desc = "POP_CLERKS"
 			if = {
 				limit = {
-					is_pop_type = farmers
+					is_pop_type = clerks
 				}
-				value = 200
+				value = 35
+				subtract = standard_of_living
 			}
 		}
 
 		add = {
-			desc = "POP_PEASANTS"
+			desc = "CONSCRIPTS"
 			if = {
 				limit = {
-					is_pop_type = peasants
+					is_pop_type = soldiers
+					pop_employment_building_group = bg_conscription
 				}
-				value = 200
-			}
-		}
-
-		add = {
-			desc = "POP_CLERGYMEN"
-			if = {
-				limit = {
-					is_pop_type = clergymen
-				}
-				value = 75
+				value = 25
 			}
 		}
 
@@ -126,6 +171,20 @@
 					max = 1.25
 					min = 0.75
 				}
+			}
+		}
+
+		multiply = {
+			desc = "decentralized_power"
+			value = 1.0
+
+			if = {
+				limit = {
+					owner = {
+						is_country_type = decentralized
+					}
+				}
+				value = 0.0
 			}
 		}
 		if = {
@@ -171,7 +230,7 @@
 	}
 
 	monarch_weight = {
-		value = 0.25 # this is just inherently unlikely
+		value = 0.1 # this is just inherently unlikely
 		# Monarch is not likely to adopt a marginal IG
 		if = {
 			limit = {
@@ -190,22 +249,22 @@
 				value = 2
 			}
 		}
-		# More likely with Homesteading
+		# More likely with Worker's Protections
 		if = {
 			limit = {
 				owner = {
-					has_law_or_variant = law_type:law_homesteading
+					has_law_or_variant = law_type:law_worker_protections
 				}
 			}
 			multiply = {
 				value = 2
 			}
 		}
-		# Impossible with Serfdom
+		# Impossible with No Workers Rights
 		if = {
 			limit = {
 				owner = {
-					has_law_or_variant = law_type:law_serfdom
+					has_law_or_variant = law_type:law_no_workers_rights
 				}
 			}
 			multiply = {
@@ -220,7 +279,7 @@
 		# Agitators will never be part of a marginalized IG
 		if = {
 			limit = {
-				owner.ig:ig_rural_folk ?= {
+				owner.ig:ig_trade_unions ?= {
 					is_marginal = yes
 				}
 			}
@@ -231,15 +290,15 @@
 	}
 
 	commander_weight = {
-		value = 1.0
+		value = 0.5
 	}
 
 	executive_weight = {
-		value = 0.1
+		value = 0.2
 	}
 
 	noble_chance = {
-		value = 0.2
+		value = 0.05
 	}
 
 	female_commander_chance = {
@@ -258,16 +317,19 @@
 				owner = {
 					has_law_or_variant = law_type:law_womens_suffrage
 				}
-
+				law_stance = {
+					law = law_type:law_womens_suffrage
+					value >= approve
+				}
 			}
 			add = {
-				value = 0.025
+				value = 0.1
 			}
 		}
 	}
 
 	female_agitator_chance = {
-		value = 0.025
+		value = 0.05
 
 		if = {
 			limit = {
@@ -277,7 +339,7 @@
 
 			}
 			add = {
-				value = 0.025
+				value = 0.05
 			}
 		}
 
@@ -289,7 +351,7 @@
 
 			}
 			add = {
-				value = 0.025
+				value = 0.05
 			}
 		}
 
@@ -301,7 +363,7 @@
 
 			}
 			add = {
-				value = 0.025
+				value = 0.05
 			}
 		}
 	}
@@ -309,13 +371,13 @@
 	# The chance that a commander belonging to this IG takes over leadership when it changes
 	# scope:character is the most popular commander in the IG
 	commander_leader_chance = {
-		value = 0.5
+		value = 0.25
 		multiply = ig_commander_leader_chance_mult
 	}
 
 	# The chance that a executive belonging to this IG takes over leadership when it changes
 	# scope:character is the most popular executive in the IG
 	executive_leader_chance = {
-		value = 0.2
+		value = 0.25
 	}
 }

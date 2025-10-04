@@ -6,9 +6,9 @@
 
 	ideologies = {
 		ideology_proletarian
-		ideology_egalitarian_modern
+		ideology_egalitarian
 		ideology_populist
-		ideology_socialist
+		ideology_anti_slavery
 	}
 
 	character_ideologies = {
@@ -16,6 +16,7 @@
 		ideology_reformer
 		ideology_radical
 		ideology_utopian
+		ideology_despotic_utopian
 	}
 
 	enable = {
@@ -23,23 +24,38 @@
 	}
 
 	# Deprecated; use on_enable effect to assign traits instead
-	traits = {}
+	traits = {
+		ig_trait_solidarity
+		ig_trait_industrial_organizers
+		ig_trait_work_to_rule
+	}
 
 	on_enable = {
 		ig:ig_trade_unions ?= {
-			# Country specific IG traits should be assigned here using IF & ELSE_IF statements
-			# For non country specific IGs, use the ELSE statement containing the generic IG traits
 			set_ig_trait = ig_trait:ig_trait_work_to_rule
 			set_ig_trait = ig_trait:ig_trait_industrial_organizers
 			set_ig_trait = ig_trait:ig_trait_solidarity
 		}
-		# Country specific IG ideologies should be assigned here using IF & ELSE_IF statements
+
+		### Socialism
+		ig:ig_trade_unions ?= {
+			add_ideology = ideology_socialist
+		}
+
+		### Feminism
+		every_interest_group = {
+			limit = {
+				has_ideology = ideology:ideology_egalitarian
+			}
+			remove_ideology = ideology_egalitarian
+			add_ideology = ideology_egalitarian_modern
+		}
 	}
 
 	on_disable = {}
-
-	# Country scope
-	priority_cultures = {}
+	
+	priority_cultures = { #Country scope
+	}
 
 	on_character_ig_membership = {}
 
@@ -47,7 +63,6 @@
 		NOR = {
 			is_pop_type = aristocrats
 			is_pop_type = capitalists
-			is_pop_type = shopkeepers
 			is_pop_type = officers
 		}
 		OR = {
@@ -93,7 +108,10 @@
 					limit = {
 						strata = middle
 					}
-					divide = 2
+					subtract = {
+						value = this.standard_of_living
+						add = 10 # 15 SoL [Middling] will halve middle-strata pops' attraction to the unions
+					}
 				}
 			}
 		}
@@ -104,7 +122,7 @@
 				limit = {
 					is_pop_type = machinists
 				}
-				value = 100
+				value = 150
 			}
 		}
 
@@ -114,7 +132,41 @@
 				limit = {
 					is_pop_type = laborers
 				}
-				value = 50
+				if = {
+					limit = {
+						NOR = {
+							pop_employment_building_group = bg_agriculture
+							pop_employment_building_group = bg_ranching
+							pop_employment_building_group = bg_plantations
+						}
+					}
+					value = 100
+				}
+				else = {
+					value = 50
+				}
+			}
+		}
+
+		add = {
+			desc = "POP_CLERKS"
+			if = {
+				limit = {
+					is_pop_type = clerks
+				}
+				value = 35
+				subtract = standard_of_living
+			}
+		}
+
+		add = {
+			desc = "CONSCRIPTS"
+			if = {
+				limit = {
+					is_pop_type = soldiers
+					pop_employment_building_group = bg_conscription
+				}
+				value = 25
 			}
 		}
 
@@ -255,7 +307,7 @@
 	}
 
 	noble_chance = {
-		value = 0.1
+		value = 0.05
 	}
 
 	female_commander_chance = {
@@ -274,10 +326,13 @@
 				owner = {
 					has_law_or_variant = law_type:law_womens_suffrage
 				}
-
+				law_stance = {
+					law = law_type:law_womens_suffrage
+					value >= approve
+				}
 			}
 			add = {
-				value = 0.05
+				value = 0.1
 			}
 		}
 	}
