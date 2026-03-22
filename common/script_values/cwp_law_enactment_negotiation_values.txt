@@ -1,0 +1,949 @@
+﻿law_estimated_pass_chance = { # needs law_type scope
+	add = this.law_estimated_enactment_chance
+	subtract = this.law_estimated_stall_chance
+}
+
+law_estimated_enactment_chance = { # needs law_type scope
+	save_temporary_scope_as = law_type_to_test
+	add = "root.enactment_chance_for_law_without_enactment_modifier(scope:law_type_to_test)"
+	multiply = 100
+}
+
+# root = { #manual method works but doesn't include movements
+# 	every_interest_group = {
+# 		limit = {
+# 			ig_counts_as_marginal = no
+# 			law_enactment_stance = {
+# 				law = scope:law_type_to_test
+# 				value >= approve
+# 			}
+# 		}
+# 		add = ig_clout
+# 		multiply = 100
+# 	}
+# }
+
+
+law_approval_including_negative_hit = { #IG scope. Uses scope:law_type_to_test. Powers the script immediately below
+	add = ig_approval
+	add = {
+		value = 0
+		#add hit to approval
+		if = {
+			limit = {
+				law_enactment_stance = {
+					law = scope:law_type_to_test
+					value = disapprove
+				}
+			}
+			add = -5
+		}
+		else_if = {
+			limit = {
+				law_enactment_stance = {
+					law = scope:law_type_to_test
+					value = strongly_disapprove
+				}
+			}
+			add = -10
+		}
+		#multiply by certain law groups
+		if = {
+			limit = {
+				scope:law_type_to_test = {
+					OR = {
+						is_same_law_group_as = law_type:law_monarchy
+						is_same_law_group_as = law_type:law_debt_slavery
+					}
+				}
+			}
+			multiply = 2
+		}
+		else_if = {
+			limit = {
+				scope:law_type_to_test = {
+					OR = {
+						is_same_law_group_as = law_type:law_serfdom
+					}
+				}
+			}
+			multiply = 1.5
+		}
+	}
+}
+
+law_estimated_stall_chance = { # needs law_type scope
+##Actually needs to accommodate for approval changes
+	save_temporary_scope_as = law_type_to_test
+	#disapproval lowers approval by 5
+	root = {
+		every_interest_group = {
+			limit = {
+				ig_counts_as_marginal = no
+				law_enactment_stance = {
+					law = scope:law_type_to_test
+					value <= disapprove
+				}
+			}
+			#Stall chance takes approval into account.
+			add = {
+				add = ig_clout
+				if = {
+					limit = { #neutral
+						law_approval_including_negative_hit < define:NPolitics|APPROVAL_THRESHOLD_HAPPY
+						law_approval_including_negative_hit > define:NPolitics|APPROVAL_THRESHOLD_UNHAPPY
+					}
+					multiply = 0.5
+				}
+				else_if = { #angry
+					limit = { law_approval_including_negative_hit <= define:NPolitics|APPROVAL_THRESHOLD_ANGRY }
+					multiply = 1.5
+				}
+			}
+		}
+	}
+
+	save_temporary_value_as = including_approval_changes
+
+	#This version includes movement influence but not approval changes
+	value = "root.stall_chance_for_law_without_enactment_modifier(scope:law_type_to_test)"
+	save_temporary_value_as = including_movements
+
+	#take the highest
+	if = {
+		limit = { scope:including_approval_changes > scope:including_movements }
+		value = scope:including_approval_changes
+	}
+	else = {
+		value = scope:including_movements
+	}
+	multiply = 100
+}
+
+ig_clout_neg_multiplier = 4 #Relation between clout and amenability used in multiple places
+
+active_clout = { #accommodates for the fact that opposes IGs have their clout multiplied by approval when opposing laws
+	add = ig_clout
+	if = {
+		limit = {
+			opposes_law = yes
+			ig_approval < define:NPolitics|APPROVAL_THRESHOLD_HAPPY
+			ig_approval > define:NPolitics|APPROVAL_THRESHOLD_UNHAPPY
+		}
+		multiply = 0.5
+	}
+	else_if = {
+		limit = {
+			opposes_law = yes
+			ig_approval <= angry
+		}
+		multiply = 1.5
+	}
+}
+
+movement_balance_factor = 60
+movement_max_factor = 35
+
+##Simplest way to balance negotiation difficulty is to search BEST LEVER HERE below and alter the amenability penalty.
+amenability = { #runs in IG scope. owner is the county.
+	#min and max set by defines
+	save_temporary_scope_as = ig_for_calc
+	value = {
+		add = { #legitimacy adds base value
+			desc = "amenability_base"
+			add = 50
+		}
+
+		add = { #legitimacy adds base value
+			desc = "amenability_legitimacy"
+			add = owner.legitimacy
+			multiply = 0.35
+			add = 5
+		}
+
+		add = { #clout removes
+			desc = "amenability_clout"
+			add = ig_clout
+			multiply = 100 #convert from percentage
+			subtract = 8 #IG smaller than this actually seeks to get bigger.
+			multiply = -1 #make negative
+			multiply = ig_clout_neg_multiplier
+		}
+
+		add = { #approval adds (can be negative)
+			desc = "amenability_approval"
+			add = ig_approval
+			multiply = 2.5
+		}
+
+		if = { #ruler popularity
+			limit = { exists = owner.ruler }
+			add = {
+				desc = "amenability_ruler_popularity"
+				add = owner.ruler.popularity
+				multiply = 0.05
+			}
+		}
+
+		# if = { #boost if in government. TESTING: Seems not required.
+		# 	limit = {
+		# 		is_in_government = yes
+		# 	}
+		# 	add = {
+		# 		desc = "amenability_in_gov"
+		# 		add = 0
+		# 	}
+		# }
+
+		if = { #positive movements
+			limit = {
+				owner = {
+					any_political_movement = {
+						supports_law = yes
+						any_influenced_interest_group = { this = scope:ig_for_calc }
+					}
+				}
+			}
+			add = {
+				desc = "amenability_pressuring_supporting_movements"
+				owner = {
+					every_political_movement = {
+						limit = {
+							supports_law = yes
+							any_influenced_interest_group = { this = scope:ig_for_calc }
+						}
+						add = {
+							value = "movement_pressure(scope:ig_for_calc)"
+							multiply = movement_balance_factor
+							max = movement_max_factor
+						}
+					}
+				}
+			}
+		}
+
+		if = { #negative movements
+			limit = {
+				owner = {
+					any_political_movement = {
+						opposes_law = yes
+						any_influenced_interest_group = { this = scope:ig_for_calc }
+					}
+				}
+			}
+			add = {
+				desc = "amenability_pressuring_opposing_movements"
+				owner = {
+					every_political_movement = {
+						limit = {
+							opposes_law = yes
+							any_influenced_interest_group = { this = scope:ig_for_calc }
+						}
+						add = {
+							value = "movement_pressure(scope:ig_for_calc)"
+							multiply = movement_balance_factor
+							max = movement_max_factor
+							multiply = -1 #take away
+						}
+					}
+				}
+			}
+		}
+
+		if = { #neutral parties have less effect on law stance, so should be discounted, while angry parties will have a larger effect. Doing this instead of just using active_clout for visibility.
+			limit = {
+				opposes_law = yes
+				ig_approval > unhappy
+			}
+			add = {
+				desc = "amenability_neutral_and_opposing"
+				add = {
+					add = ig_clout
+					multiply = 100
+					subtract = 8 #IG smaller than this actually seeks to get bigger.
+					multiply = ig_clout_neg_multiplier
+					multiply = 0.5
+				}
+			}
+		}
+		# else_if = { #TESTING: This doesn't seem needed as approval already is hard hit.
+		# 	limit = {
+		# 		root = {
+		# 			opposes_law = yes
+		# 			ig_approval <= angry
+		# 		}
+		# 	}
+		# 	add = {
+		# 		desc = "amenability_angry_and_opposing"
+		# 		add = {
+		# 			add = ig_clout
+		# 			multiply = 100
+		# 			subtract = 8 #IG smaller than this actually seeks to get bigger.
+		# 			multiply = ig_clout_neg_multiplier
+		# 			multiply = 0.25 #there is already approval effect, softening
+		# 			multiply = -1 #negative effect
+		# 		}
+		# 	}
+		# }
+
+		if = { #drain if strongly oppose, as opposed to just oppose
+			limit = {
+				law_enactment_stance = {
+					law = owner.currently_enacting_law.type
+					value < disapprove
+				}
+			}
+			add = {
+				desc = "amenability_strongly_oppose"
+				add = -15
+			}
+		}
+
+		##modifiers on IG
+		add = {
+			value = modifier:interest_group_amenability_add
+			desc = "amenability_ig_additional_adds"
+		}
+
+		##modifiers on Nation
+		add = {
+			value = owner.modifier:country_amenability_add
+			desc = "amenability_country_additional_adds"
+		}
+
+		### Enactment chance
+		##if looking very likely will pass even without negotiating, scaled slightly based on lead. The IG are looking for a freebie, since law is gonna pass anyway.
+		if = {
+			limit = {
+				owner.enactment_chance > {
+					add = owner.stall_chance
+					add = 0.15
+				}
+			}
+			add = {
+				add = 25
+				desc = "amenability_law_likely_to_pass"
+			}
+		}
+		else_if = {
+			limit = {
+				owner.enactment_chance > {
+					add = owner.stall_chance
+					add = 0.08
+				}
+			}
+			add = {
+				add = 10
+				desc = "amenability_law_likely_to_pass"
+			}
+		}
+		else_if = {
+			limit = {
+				owner.enactment_chance > {
+					add = owner.stall_chance
+					add = 0.02
+				}
+			}
+			add = {
+				add = 5
+				desc = "amenability_law_likely_to_pass"
+			}
+		}
+		##Otherwise, extra amenability if sure their support will make no difference and it will fail anyway. Two levels.
+		else_if = {
+			limit = {
+				owner.enactment_chance <= {
+					add = owner.stall_chance
+					subtract = active_clout
+					add = -0.15
+				}
+			}
+			add = {
+				add = 20
+				desc = "amenability_law_makes_no_difference"
+			}
+		}
+		else_if = {
+			limit = {
+				owner.enactment_chance <= {
+					add = owner.stall_chance
+					subtract = active_clout
+					add = -0.10
+				}
+			}
+			add = {
+				add = 10
+				desc = "amenability_law_makes_no_difference"
+			}
+		}
+		else_if = {
+			limit = {
+				owner.enactment_chance <= {
+					add = owner.stall_chance
+					subtract = active_clout
+					add = -0.05
+				}
+			}
+			add = {
+				add = 5
+				desc = "amenability_law_makes_no_difference"
+			}
+		}
+		##Otherwise, afraid of being the tiebreaker
+		##Balance note, this is an easy way to make negotiation harder whenever it is most effective, while keeping it the same in other places. BEST LEVER HERE.
+		else_if = {
+			limit = {
+				owner.enactment_chance >= {
+					add = owner.stall_chance
+					subtract = active_clout
+					add = -0.05
+				}
+			}
+			add = {
+				add = -5
+				desc = "amenability_law_worried_to_be_tie_breaker"
+			}
+		}
+
+		if = { #happy IGs do not block laws, even if they support them
+			limit = {
+				opposes_law = yes
+				ig_approval >= happy
+			}
+			add = {
+				value = -500
+				desc = "amenability_already_letting_go"
+			}
+		}
+
+		if = { # If there is more than two "steps" between the IG's stance on the currently enacting law and the currently active law, they will not negotiate
+			limit = {
+				OR = {
+					AND = {
+						law_stance = {
+							law = owner.currently_enacting_law.type
+							value = strongly_disapprove
+						}
+						law_stance = {
+							law = owner.currently_enacting_law.currently_active_law_in_group.type
+							value >= approve
+						}
+					}
+					AND = {
+						law_stance = {
+							law = owner.currently_enacting_law.type
+							value <= disapprove
+						}
+						law_stance = {
+							law = owner.currently_enacting_law.currently_active_law_in_group.type
+							value = strongly_approve
+						}
+					}
+				}
+			}
+			add = {
+				value = -500
+				desc = "amenability_too_large_gap"
+			}
+		}
+
+		round = 1
+		min = define:NPolitics|MIN_AMENABILITY
+		max = define:NPolitics|MAX_AMENABILITY
+	}
+}
+
+neg_option_7_modifier = {
+	if = {
+		limit = { scope:ig = { is_interest_group_type = ig_petty_bourgeoisie } }
+		add = 20
+	}
+	else_if = {
+		limit = {
+			scope:ig = {
+				OR = {
+					is_interest_group_type = ig_industrialists
+					is_interest_group_type = ig_landowners
+				}
+			}
+			root = {
+				OR = {
+					has_law_or_variant = law_type:law_proportional_taxation
+					has_law_or_variant = law_type:law_per_capita_based_taxation
+					has_law_or_variant = law_type:law_graduated_taxation
+				}
+			}
+		}
+		add = 10
+	}
+}
+
+neg_option_9_modifier = {
+	if = {
+		limit = {
+			scope:ig = {
+				OR = {
+					is_interest_group_type = ig_devout
+					is_interest_group_type = ig_trade_unions
+				}
+			}
+		}
+		add = 30
+	}
+}
+
+amenability_level = { #determines multipliers for negotiate effects based on amenability. Less amenability means more severe effects
+	if = { #extra hard
+		limit = { amenability < 50 }
+		value = 4
+	}
+	else_if = {
+		limit = { amenability < 75 }
+		value = 2
+	}
+	else_if = {
+		limit = { amenability <= 100 }
+		value = 1
+	}
+}
+
+amenability_level_inverse = { #determines multipliers for negotiate effects based on amenability. In this case, less amenability will lower effects. Use for positive modifiers.
+	if = {
+		limit = { amenability < 50 }
+		value = 1
+	}
+	else_if = {
+		limit = { amenability < 75 }
+		value = 2
+	}
+	else_if = {
+		limit = { amenability <= 100 }
+		value = 3
+	}
+}
+
+neg_bribe_amount = {
+	value = money_amount_multiplier_medium
+	multiply = 1.50 #balance. Still works out cheaper than lowering taxes, but much worse for your people
+	multiply = scope:ig.amenability_level
+}
+
+
+convert_gdp_to_army_size = { #average conversion of army_size to army_power_projection. Balance here.
+	value = gdp
+	min = 1
+	divide = 5000
+}
+
+average_barracks_power_projection = { #use country scope. Used to help AI figure out how many barracks to queue and complete army quest.
+	value = army_power_projection
+	divide = army_size
+	min = 1 #stops divide by 0 errors
+}
+
+negotiate_app_increase = { #IG Scope. Use gdp to add the expected amount of troops to the existing army
+	value = owner.convert_gdp_to_army_size
+	#multiply by 0.15 x quest degree
+	if = {
+		limit = { exists = var:promise_quest_degree }
+		multiply = { #1.1 x 1.6 depending on how hard the negotiations were
+			value = scope:ig.var:promise_quest_degree
+			multiply = 0.15
+			add = 1
+		}
+	}
+	subtract = owner.convert_gdp_to_army_size
+	add = owner.army_power_projection
+	round = 1
+}
+
+slight_bureaucracy_amount = {
+	add = bureaucracy_usage
+	multiply = 1.10
+	subtract = produced_bureaucracy
+}
+
+neg_promised_sol_level = {
+	save_temporary_scope_as = ig_for_calc
+	value = owner.average_sol
+	round = yes
+	multiply = 0.1
+	min = 0.5
+	max = 2 #late game SOL peaks
+	multiply = var:promise_quest_degree
+	max = 8 #maximum possible plausible amount
+	add = owner.average_sol
+}
+
+
+building_scaler = { #uses IG scope Use this to balance link of gdp to how many buildings asked to build.
+	if = {
+		limit = { owner.gdp > 0 }
+		add = owner.gdp
+		divide = 4000000
+	}
+	else = {
+		value = 0.01
+	}
+}
+
+building_levels_extra = {#uses IG scope
+	add = building_levels_to_increase_value
+	subtract = building_levels_existing
+}
+
+building_levels_existing = { #uses IG scope
+	save_temporary_scope_as = ig_for_calc
+	add = "owner.country_has_building_type_levels(scope:ig_for_calc.var:promised_building_type)"
+}
+
+building_levels_to_increase_value = { #uses IG scope
+	save_temporary_scope_as = ig_for_calc
+	if = {
+		limit = {
+			exists = var:promised_building_type
+		}
+		add = { #minimum expected to build
+			if = { #construction sectors have super low cost, so they require an exception, if they are added to the list.
+				limit = {
+					var:promised_building_type ?= {
+						this = bt:building_construction_sector
+					}
+				}
+				add = 1
+				multiply = building_scaler
+				min = 1
+				multiply = scope:ig_for_calc.var:promise_quest_degree
+				round = 1
+			}
+			else_if = { #trade centers and gov admin get a discount.
+				limit = {
+					var:promised_building_type ?= {
+						OR = {
+							this = bt:building_trade_center
+							this = bt:building_government_administration
+						}
+					}
+				}
+				add = 4
+				multiply = building_scaler
+				min = 1
+				multiply = scope:ig_for_calc.var:promise_quest_degree
+				round = 1
+			}
+			else_if = {
+				limit = {
+					exists = var:promised_building_type.required_construction
+					var:promised_building_type.required_construction > 0
+				}
+				add = { #scale based on construction cost and nation GDP
+					add = 800
+					divide = var:promised_building_type.required_construction
+					multiply = building_scaler
+					if = { #Railroads are always useful.
+						limit = {
+							var:promised_building_type = {
+								is_in_building_group = {
+									BUILDING_GROUP = bg_private_infrastructure
+								}
+							}
+						}
+						multiply = 0.90
+					}
+					else = {
+						multiply = 0.80 #Being a bit nicer since we are asking for specific building types, as opposed to groups. '
+					}
+					min = 1
+					multiply = scope:ig_for_calc.var:promise_quest_degree
+					round = 1
+				}
+			}
+		}
+		add = building_levels_existing
+	}
+	else = {
+		add = 88888888
+	}
+}
+
+total_free_arable_land = {
+	every_scope_state = { add = this.free_arable_land }
+}
+
+je_negotiate_taxes_timeout = 3650
+
+building_groups_extra = {
+	add = building_group_levels_to_increase_value
+	subtract = building_group_levels_existing
+}
+
+building_group_levels_existing = { #used for loc, uses scope:ig.
+	save_temporary_scope_as = ig_for_calc
+	add = "owner.country_has_building_group_levels(scope:ig_for_calc.var:promised_building_group)"
+}
+
+building_group_levels_to_increase_value = { #requires scope:ig, building group saved as variable ontop of it. Building groups must match exactly
+	save_temporary_scope_as = ig_for_calc
+	if = {
+		limit = {
+			exists = var:promised_building_group
+		}
+		add = { #minimum expected to build
+			if = { #things that cost 800
+				limit = {
+					var:promised_building_group = {
+						OR = {
+							this = bg:bg_heavy_industry
+							this = bg:bg_private_infrastructure
+							this = bg:bg_infrastructure
+						}
+					}
+				}
+				add = 1
+			}
+			else_if = { #things that cost 600
+				limit = {
+					var:promised_building_group = {
+						OR = {
+							this = bg:bg_light_industry
+						}
+					}
+				}
+				add = 1.35
+			}
+			else_if = { #things that cost 400
+				limit = {
+					var:promised_building_group = {
+						OR = {
+							this = bg:bg_technology
+							this = bg:bg_arts
+						}
+					}
+				}
+				add = 2
+			}
+			else_if = { #things that cost 200
+				limit = {
+					var:promised_building_group = {
+						OR = {
+							this = bg:bg_agriculture
+							this = bg:bg_plantations
+							this = bg:bg_staple_crops
+							this = bg:bg_fishing
+							this = bg:bg_whaling
+							this = bg:bg_whaling
+							this = bg:bg_logging
+						}
+					}
+				}
+				add = 4
+			}
+			else_if = { #things that cost 100
+				limit = {
+					var:promised_building_group = {
+						OR = {
+							this = bg:bg_trade
+							this = bg:bg_bureaucracy
+						}
+					}
+				}
+				add = 8
+			}
+			else = { #backup
+				add = 3
+			}
+		}
+		multiply = building_scaler
+		min = 1
+		multiply = scope:ig_for_calc.var:promise_quest_degree
+		round = 1
+		add = "owner.country_has_building_group_levels(scope:ig_for_calc.var:promised_building_group)"
+	}
+	else = { #if you see this number we know exactly where the bug is
+		value = 88888888
+	}
+}
+
+
+law_enactment_change = { #uses IG scope. For Loc
+	value = ig_clout
+	if = {
+		limit = {
+			law_enactment_stance = {
+				law = owner.currently_enacting_law.type
+				value < neutral
+			}
+		}
+		if = {
+			limit = { ig_approval <= angry }
+			multiply = 2
+		}
+		else_if = {
+			limit = { ig_approval <= unhappy }
+			multiply = 1
+		}
+		else = {
+			multiply = 0.5
+		}
+	}
+}
+
+neg_quest_failure_degree = { #scales failure penalty based on proximity to goal for negotiation quests.
+	value = scope:ig.var:promise_quest_degree
+	##taxes
+	if = {
+		limit = {
+			scope:ig.var:promise_quest_type ?= 4
+			exists = root.var:neg_taxes_remaining_months
+		}
+		multiply = {
+			value = root.var:neg_taxes_remaining_months
+			
+			divide = {
+				value = 48
+				if = {
+					limit = { scope:ig.var:promise_quest_degree ?= 1 }
+					multiply = 0.5
+				}
+			}
+
+			multiply = 10
+			round = yes
+			divide = 10
+			min = min_mult_value_per_quest_degree
+			max = 1
+		}
+	}
+
+	##buildings
+	else_if = {
+		limit = {
+			scope:ig.var:promise_quest_type ?= 3
+			exists = scope:ig.var:starting_building_amount
+			exists = scope:ig.var:current_building_amount
+		}
+		multiply = {
+			value = 1
+			subtract = {
+				value = {
+					add = scope:ig.var:current_building_amount
+					subtract = scope:ig.var:starting_building_amount
+				}
+				
+				divide = { #these other variables are shared
+					if = { #switch on quest type, building group vs individual buildings
+						limit = {
+							exists = scope:ig.var:building_level_increase
+							scope:ig.var:building_level_increase > 0
+						}
+						add = scope:ig.var:building_level_increase
+					}
+					else = {
+						add = scope:ig.var:building_group_level_increase
+					}
+					subtract = scope:ig.var:starting_building_amount
+				}
+				
+				multiply = 10
+				round = yes
+				divide = 10
+				
+				max = {
+					add = 1
+					subtract = min_mult_value_per_quest_degree
+				}
+				
+				min = 0
+			}
+		}
+	}
+	##law
+	else_if = { #if enactment goes on for more than 2 years, half.
+		limit = {
+			scope:ig.var:promise_quest_type ?= 2
+			exists = scope:ig.var:law_attempt_months
+			scope:ig.var:law_attempt_months >= 24
+		}
+		multiply = 0.6
+	}
+	###SOL
+	else_if = {
+		limit = {
+			scope:ig.var:promise_quest_type ?= 5
+			exists = scope:ig.var:starting_sol
+			exists = scope:ig.var:current_sol
+		}
+		multiply = {
+			value = 1
+			subtract = {
+				value = {
+					add = scope:ig.var:current_sol
+					subtract = scope:ig.var:starting_sol
+				}
+				
+				divide = { #these other variables are shared
+					add = scope:ig.var:promised_sol_level
+					subtract = scope:ig.var:starting_sol
+				}
+				
+				multiply = 10
+				round = yes
+				divide = 10
+				
+				max = {
+					add = 1
+					subtract = min_mult_value_per_quest_degree
+				}
+				
+				min = 0
+			}
+		}
+	}
+	##army_size
+	else_if = {
+		limit = {
+			scope:ig.var:promise_quest_type ?= 1
+			exists = scope:ig.var:starting_army_amount
+			exists = scope:ig.var:current_army_amount
+		}
+		multiply = {
+			value = 1
+			subtract = {
+				value = {
+					add = scope:ig.var:current_army_amount
+					subtract = scope:ig.var:starting_army_amount
+				}
+
+				divide = { #these other variables are shared
+					add = scope:ig.var:desired_army_size
+					subtract = scope:ig.var:starting_army_amount
+				}
+
+				multiply = 10
+				round = yes
+				divide = 10
+				
+				max = {
+					add = 1
+					subtract = min_mult_value_per_quest_degree
+				}
+				
+				min = 0
+			}
+		}
+	}
+}
+
+min_mult_value_per_quest_degree = {
+	if = {
+		limit = { scope:ig.var:promise_quest_degree ?= 1 }
+		value = 0.20
+	}
+	else_if = {
+		limit = { scope:ig.var:promise_quest_degree ?= 2 }
+		value = 0.10
+	}
+	else = {
+		value = 0.05
+	}
+}

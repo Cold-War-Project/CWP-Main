@@ -1,0 +1,171 @@
+﻿button_implement_law_imposition = {
+	name = "button_implement_law_imposition"
+	desc = "button_implement_law_imposition_desc"
+
+	visible = {
+		scope:journal_entry = { NOT = { has_variable = has_been_abandoned } }
+		has_journal_entry = je_law_imposition
+		NOT = { has_law = scope:foreign_imposition_law.type }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = law_imposition_already_enacting_law
+			NOT = { currently_enacting_law ?= imposed_law }
+		}
+	}
+
+	effect = {
+		if = {
+			limit = {
+				NOT = { currently_enacting_law ?= imposed_law }
+				enacting_any_law = yes
+			}
+			cancel_enactment = yes
+		}
+		start_enactment = imposed_law.type
+		add_enactment_modifier = { name = agreeable_to_imposition }
+		hidden_effect = {
+			scope:journal_entry = {
+				if = {
+					limit = { has_modifier = foreign_legislative_interference }
+					remove_modifier = foreign_legislative_interference
+					add_modifier = foreign_legislative_interference_enactment
+				}
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 0
+
+		if = {
+			limit = { "enactment_chance_for_law(imposed_law.type)" > 0.1 }
+			add = 10
+		}
+
+		if = {
+			limit = { "enactment_chance_for_law(imposed_law.type)" > 0.2 }
+			add = 20
+		}
+
+		if = {
+			limit = { "enactment_chance_for_law(imposed_law.type)" > 0.3 }
+			add = 30
+		}
+
+		if = {
+			limit = { "enactment_chance_for_law(imposed_law.type)" > 0.4 }
+			add = 40
+		}
+
+		if = {
+			limit = { "enactment_chance_for_law(imposed_law.type)" > 0.5 }
+			add = 50
+		}
+
+		if = {
+			limit = {
+				is_subject = yes
+				liberty_desire > 50
+			}
+			add = -25
+		}
+
+		if = {
+			limit = {
+				is_subject = yes
+				liberty_desire > 75
+			}
+			add = -25
+		}
+	}
+}
+
+button_refuse_law_imposition = {
+	name = "button_refuse_law_imposition"
+	desc = "button_refuse_law_imposition_desc"
+
+	visible = {
+		scope:journal_entry = { NOT = { has_variable = has_been_abandoned } }
+		has_journal_entry = je_law_imposition
+		NOT = { has_law = scope:foreign_imposition_law.type }
+	}
+
+	effect = {
+		if = {
+			limit = { currently_enacting_law ?= imposed_law }
+			cancel_enactment = yes
+		}
+
+		imposed_law = { cancel_imposition = yes }
+		
+        change_relations = {
+			country = scope:foreign_imposition_country
+			value = -50
+		}
+		
+        if = {
+			limit = { is_subject_of = scope:foreign_imposition_country }
+			add_liberty_desire = 10
+		}
+		else_if = {
+			limit = { power_bloc ?= scope:foreign_imposition_country.power_bloc }
+			power_bloc = { add_cohesion_percent = -0.10 }
+		}
+
+		every_political_lobby = {
+			limit = { pro_foreign_imposition_country = yes }
+			change_appeasement = { amount = -2 factor = appeasement_imposed_law_rejected }
+		}
+		
+        trigger_event = { id = law_imposition_events.2 popup = yes }
+		
+        scope:foreign_imposition_country = { trigger_event = { id = law_imposition_events.3 } }
+		
+        scope:journal_entry = { set_variable = has_been_abandoned }
+		
+        hidden_effect = {
+			scope:journal_entry = {
+				if = {
+					limit = { has_modifier = foreign_legislative_interference_enactment }
+					remove_modifier = foreign_legislative_interference_enactment
+					add_modifier = foreign_legislative_interference
+				}
+			}
+		}
+	}
+
+	ai_chance = {
+		value = -25
+
+		if = {
+			limit = { NOT = { currently_enacting_law ?= imposed_law } }
+			add = 15
+		}
+		
+        if = {
+            # 500 days
+			limit = { scope:journal_entry = { journal_entry_age > 500 } }
+			add = 10
+		}
+		
+        if = {
+            # 1000 days
+			limit = { scope:journal_entry = { journal_entry_age > 1000 } }
+			add = 10
+		}
+		
+        if = {
+            # 1500 days
+			limit = { scope:journal_entry = { journal_entry_age > 1500 } }
+			add = 10
+		}
+		
+        if = {
+            # 2000 days
+			limit = { scope:journal_entry = { journal_entry_age > 2000 } }
+			add = 10
+		}
+	}
+}

@@ -1,0 +1,663 @@
+﻿lobby_pro_overlord = {
+	category = foreign_pro_country
+
+	texture = "gfx/interface/icons/political_lobby_icons/lobby_pro.dds"
+
+	can_create = {
+		NOT = { is_country_type = decentralized }
+		is_revolutionary = no
+		scope:target_country = { is_revolutionary = no }
+	}
+
+	requirement_to_maintain = {
+		trigger = { is_subject_of = scope:target_country }
+		swap_type_on_failed = lobby_pro_country
+		on_failed = { scope:political_lobby = { initialize_lobby_custom_name = yes } }
+	}
+
+	requirement_to_maintain = {
+		trigger = {
+			OR = {
+				NOT = { exists = scope:political_lobby }
+				scope:political_lobby ?= { any_lobby_member = { ig_counts_as_marginal = no } }
+			}
+		}
+		on_failed = { }
+	}
+
+	on_created = {
+		save_temporary_scope_as = lobby_country
+		scope:political_lobby ?= {
+			change_appeasement = {
+			   amount = pro_overlord_lobby_starting_appeasement
+			   factor = appeasement_diplomatic_status_quo
+			}
+			initialize_lobby_custom_name = yes
+		}
+	}
+
+	appeasement_factors_pro = {
+		appeasement_relations_increased
+		appeasement_autonomy_decreased
+		appeasement_became_subject
+		appeasement_knowledge_sharing_started
+		appeasement_support_regime_started
+		appeasement_foreign_investment_agreement_formed
+	}
+
+	appeasement_factors_anti = {
+		appeasement_relations_decreased
+		appeasement_autonomy_increased
+		appeasement_gained_independence
+		appeasement_independence_supported
+		appeasement_knowledge_sharing_ended
+		appeasement_support_regime_ended
+		appeasement_foreign_investment_agreement_broken
+	}
+
+	available_for_interest_group = {
+		NOT = { any_political_lobby = { target = scope:target_country } }
+	}
+
+	join_weight = {
+		### Stickyness factor if already in lobby
+		if = {
+			limit = {
+				exists = scope:political_lobby
+				scope:political_lobby = { any_lobby_member = { this = root } }
+			}
+			add = {
+				value = 50
+				desc = "member_of_lobby"
+			}
+		}
+
+		if = {
+			limit = {
+				scope:target_country = {
+					any_interest_group = {
+						is_same_interest_group_type = ROOT
+						is_in_government = yes
+					}
+				}
+			}
+			add = {
+				value = 10
+				desc = "preferred_igs_in_government"
+			}
+		}
+
+		scope:target_country = {
+			add = {
+				every_active_law = {
+					if = {
+						limit = {
+							ROOT = {
+								law_stance = {
+									law = PREV.type
+									value >= approve
+								}
+							}
+						}
+						add = 5
+					}
+					else_if = {
+						limit = {
+							ROOT = {
+								law_stance = {
+									law = PREV.type
+									value <= disapprove
+								}
+							}
+						}
+						add = -5
+					}
+				}
+
+				max = 100
+				min = -100
+
+				if = {
+					limit = { is_lobby_formation_reason_ideology = yes }
+					multiply = 1.5
+				}
+
+				desc = "enacted_laws"
+			}
+		}
+
+		### Culture
+		add = {
+			if = {
+				limit = {
+					OR = {
+						has_ideology = ideology:ideology_patriotic
+						leader ?= {
+							OR = {
+								has_ideology = ideology:ideology_ethno_nationalist
+								has_ideology = ideology:ideology_fascist
+							}
+						}
+					}
+				}
+				if = {
+					limit = { scope:target_country = { any_primary_culture = { is_primary_culture_of = ROOT.owner } } }
+					add = 50 # Settler Colonies
+				}
+				else_if = {
+					limit = {
+						scope:target_country = {
+							NOT = {
+								any_primary_culture = {
+									OR = {
+										shares_heritage_trait_group_with_any_primary_culture = ROOT.owner
+										shares_language_trait_group_with_any_primary_culture = ROOT.owner
+										shares_tradition_trait_with_any_primary_culture = ROOT.owner
+									}
+								}
+							}
+						}
+					}
+					add = -15
+				}
+			}
+
+			desc = "primary_culture_similarity"
+		}
+
+		### Religion
+		add = {
+			if = {
+				limit = {
+					OR = {
+						is_interest_group_type = ig_devout
+						leader ?= {
+							OR = {
+								has_ideology = ideology:ideology_theocrat
+								has_trait = pious
+							}
+						}
+					}
+				}
+
+				if = {
+					limit = { scope:target_country = { religion = ROOT.owner.religion } }
+					add = 15
+				}
+				else_if = {
+					limit = {
+						scope:target_country.capital = {
+							state_religious_acceptance = {
+								target = ROOT.owner.religion
+								value < religious_acceptance_medium
+							}
+						}
+					}
+					add = -15
+				}
+			}
+
+			desc = "religion_opinion"
+		}
+
+		# Communists
+		if = {
+			limit = { scope:target_country = { has_law_or_variant = law_type:law_council_republic } }
+			if = {
+				limit = {
+					law_stance = {
+						law = law_type:law_council_republic
+						value <= disapprove
+					}
+				}
+				add = {
+					value = -200
+					desc = "anti_communism"
+				}
+			}
+			else_if = {
+				limit = {
+					law_stance = {
+						law = law_type:law_council_republic
+						value < approve
+					}
+				}
+				add = -100
+				desc = "baseline_opposition_to_communism"
+			}
+			else_if = {
+				limit = {
+					NOT = { # Equals 'count'
+						law_stance = {
+							law = law_type:law_council_republic
+							value > strongly_approve
+						}
+					}
+				}
+				add = {
+					value = 200
+					desc = "communist_solidarity"
+				}
+			}
+		}
+
+		min = 0
+
+		# Pacts
+		if = {
+			limit = {
+				scope:target_country = {
+					has_diplomatic_pact = {
+						who = scope:country
+						type = fund_lobbies
+					}
+				}
+			}
+			multiply = {
+				value = 1.25
+				desc = "funding_lobbies"
+			}
+		}
+
+		if = {
+			limit = {
+				scope:target_country = {
+					any_rivaling_country = {
+						has_diplomatic_pact = {
+							who = scope:country
+							type = fund_lobbies
+						}
+					}
+				}
+			}
+			multiply = {
+				value = 0.75
+				desc = "rival_funding_lobbies"
+			}
+		}
+
+		### Overlord Relations
+		if = {
+			limit = {
+				OR = {
+					is_interest_group_type = ig_industrialists
+					is_interest_group_type = ig_landowners
+				}
+			}
+			add = {
+				desc = "economic_dependence_for_upper_classes"
+				owner ?= {
+					value = "economic_dependence(scope:target_country)"
+					multiply = 10
+					max = 50
+					min = 0
+				}
+			}
+		}
+
+		if = {
+			limit = { is_interest_group_type = ig_petty_bourgeoisie }
+			add = {
+				desc = "economic_dependence_for_middle_classes"
+				owner ?= {
+					value = "economic_dependence(scope:target_country)"
+					multiply = 5
+					max = 25
+					min = 0
+				}
+			}
+		}
+
+		if = {
+			limit = { is_in_government = yes }
+			scope:target_country = {
+				if = {
+					limit = { relations:root < 0 }
+					multiply = {
+						value = 0.5
+						desc = "relations_negative"
+					}
+				}
+			}
+
+			owner = {
+				if = {
+					limit = { liberty_desire < define:NDiplomacy|WAR_GOAL_INFAMY_LOW_LIBERTY_DESIRE_THRESHOLD }
+					multiply = {
+						value = 1.05
+						desc = "low_liberty_desire"
+					}
+				}
+			}
+		}
+	}
+}
+
+lobby_anti_overlord = {
+	category = foreign_anti_country
+
+	texture = "gfx/interface/icons/political_lobby_icons/lobby_anti.dds"
+
+	can_create = {
+		NOT = { is_country_type = decentralized }
+		is_revolutionary = no
+		scope:target_country = { is_revolutionary = no }
+	}
+
+	requirement_to_maintain = {
+		trigger = { is_subject_of = scope:target_country }
+		swap_type_on_failed = lobby_anti_country
+		on_failed = { scope:political_lobby = { initialize_lobby_custom_name = yes } }
+	}
+
+	requirement_to_maintain = {
+		trigger = {
+			OR = {
+				NOT = { exists = scope:political_lobby }
+				scope:political_lobby ?= { any_lobby_member = { ig_counts_as_marginal = no } }
+			}
+		}
+		on_failed = { }
+	}
+
+	on_created = {
+		save_temporary_scope_as = lobby_country
+		scope:political_lobby ?= {
+			change_appeasement = {
+			   amount = anti_overlord_lobby_starting_appeasement
+			   factor = appeasement_diplomatic_status_quo
+			}
+			initialize_lobby_custom_name = yes
+		}
+	}
+
+	appeasement_factors_pro = {
+		appeasement_relations_decreased
+		appeasement_autonomy_increased
+		appeasement_gained_independence
+		appeasement_independence_supported
+		appeasement_knowledge_sharing_ended
+		appeasement_support_regime_ended
+		appeasement_foreign_investment_agreement_broken
+	}
+
+	appeasement_factors_anti = {
+		appeasement_relations_increased
+		appeasement_autonomy_decreased
+		appeasement_became_subject
+		appeasement_knowledge_sharing_started
+		appeasement_support_regime_started
+		appeasement_foreign_investment_agreement_formed
+	}
+
+	available_for_interest_group = {
+		NOT = { any_political_lobby = { target = scope:target_country } }
+	}
+
+	join_weight = {
+		### Stickyness factor if already in lobby
+		if = {
+			limit = {
+				exists = scope:political_lobby
+				scope:political_lobby = { any_lobby_member = { this = root } }
+			}
+			add = {
+				value = 50
+				desc = "member_of_lobby"
+			}
+		}
+
+		scope:target_country = {
+			add = {
+				every_active_law = {
+					if = {
+						limit = {
+							ROOT = {
+								law_stance = {
+									law = PREV.type
+									value >= approve
+								}
+							}
+						}
+						add = -5
+					}
+					else_if = {
+						limit = {
+							ROOT = {
+								law_stance = {
+									law = PREV.type
+									value <= disapprove
+								}
+							}
+						}
+						add = 5
+					}
+				}
+
+				max = 100
+				min = -100
+
+				if = {
+					limit = { is_lobby_formation_reason_ideology = yes }
+					multiply = 1.5
+				}
+
+				desc = "enacted_laws"
+			}
+		}
+
+		### Culture
+		add = {
+			if = {
+				limit = {
+					OR = {
+						has_ideology = ideology:ideology_patriotic
+						leader ?= {
+							OR = {
+								has_ideology = ideology:ideology_ethno_nationalist
+								has_ideology = ideology:ideology_fascist
+							}
+						}
+					}
+				}
+				if = {
+					limit = { scope:target_country = { any_primary_culture = { is_primary_culture_of = ROOT.owner } } }
+					add = -25
+				}
+				else_if = {
+					limit = {
+						scope:target_country = {
+							NOT = {
+								any_primary_culture = {
+									OR = {
+										shares_heritage_trait_group_with_any_primary_culture = ROOT.owner
+										shares_language_trait_group_with_any_primary_culture = ROOT.owner
+										shares_tradition_trait_with_any_primary_culture = ROOT.owner
+									}
+								}
+							}
+						}
+					}
+					add = 15
+				}
+			}
+
+			desc = "primary_culture_similarity"
+		}
+
+		### Religion
+		add = {
+			if = {
+				limit = {
+					OR = {
+						is_interest_group_type = ig_devout
+						leader ?= {
+							OR = {
+								has_ideology = ideology:ideology_theocrat
+								has_trait = pious
+							}
+						}
+					}
+				}
+
+				if = {
+					limit = { scope:target_country = { religion = ROOT.owner.religion } }
+					add = -15
+				}
+				else_if = {
+					limit = {
+						scope:target_country.capital = {
+							state_religious_acceptance = {
+								target = ROOT.owner.religion
+								value < religious_acceptance_medium
+							}
+						}
+					}
+					add = 25
+				}
+			}
+
+			desc = "religion_opinion"
+		}
+
+		### Ideologies
+		# Communists
+		if = {
+			limit = { scope:target_country = { has_law_or_variant = law_type:law_council_republic } }
+			if = {
+				limit = {
+					law_stance = {
+						law = law_type:law_council_republic
+						value <= disapprove
+					}
+				}
+				add = {
+					value = 200
+					desc = "anti_communism"
+				}
+			}
+			else_if = {
+				limit = {
+					law_stance = {
+						law = law_type:law_council_republic
+						value < approve
+					}
+				}
+				add = {
+					value = 100
+					desc = "baseline_opposition_to_communism"
+				}
+			}
+			else_if = {
+				limit = {
+					NOT = { # Equals 'count'
+						law_stance = {
+							law = law_type:law_council_republic
+							value > strongly_approve
+						}
+					}
+				}
+				add = {
+					value = -50
+					desc = "communist_solidarity"
+				}
+			}
+		}
+
+		# Ideological Republicans
+		if = {
+			limit = {
+				OR = {
+					has_ideology = ideology:ideology_republican
+					leader ?= {
+						OR = {
+							has_ideology = ideology:ideology_republican_leader
+							has_ideology = ideology:ideology_radical
+							has_ideology = ideology:ideology_positivist
+						}
+					}
+				}
+				scope:target_country = { has_law = law_type:law_monarchy }
+			}
+			add = {
+				value = 25
+				desc = "republican_anti_monarchism"
+			}
+		}
+
+		min = 0
+
+		# Pacts
+		if = {
+			limit = {
+				scope:target_country = {
+					has_diplomatic_pact = {
+						who = scope:country
+						type = fund_lobbies
+					}
+				}
+			}
+			multiply = {
+				value = 0.5
+				desc = "funding_lobbies"
+			}
+		}
+
+		if = {
+			limit = {
+				scope:target_country = {
+					any_rivaling_country = {
+						has_diplomatic_pact = {
+							who = scope:country
+							type = fund_lobbies
+						}
+					}
+				}
+			}
+			multiply = {
+				value = 1.25
+				desc = "rival_funding_lobbies"
+			}
+		}
+
+		### Overlord Relations
+		if = {
+			limit = {
+				OR = {
+					is_interest_group_type = ig_rural_folk
+					is_interest_group_type = ig_trade_unions
+				}
+			}
+			add = {
+				desc = "economic_dependence_for_lower_classes"
+				owner ?= {
+					value = "economic_dependence(scope:target_country)"
+					multiply = 10
+					max = 50
+					min = 0
+				}
+			}
+		}
+
+		add = {
+			desc = "from_liberty_desire"
+			owner ?= {
+				value = liberty_desire
+				multiply = 0.75
+				max = 75
+				min = 0
+			}
+		}
+
+		if = {
+			limit = {
+				is_in_government = yes
+				scope:target_country = { relations:root < 0 }
+			}
+			multiply = {
+				value = 1.5
+				desc = "relations_negative"
+			}
+		}
+	}
+}

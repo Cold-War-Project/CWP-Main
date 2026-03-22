@@ -1,0 +1,108 @@
+﻿je_negotiate_buildings = {
+	icon = "gfx/interface/icons/event_icons/event_trade.dds"
+
+	group = je_group_internal_affairs
+
+	scripted_button = negotiation_go_away_button
+	scripted_button = negotiation_extension_button
+
+	immediate = {
+		random_interest_group = {
+			limit = {
+				has_variable = ig_new_quest_starting
+				has_variable = promise_quest_type
+				var:promise_quest_type = 3 #buildings
+			}
+			save_scope_as = ig
+			remove_variable = ig_new_quest_starting
+			#IG already has var:promise_quest_degree
+			#IG already has var:building_level_increase
+			#IG already has var:promised_building_type
+		}
+		scope:ig = {
+			set_variable = {
+				name = starting_building_amount
+				value = scope:ig.building_levels_existing
+			}
+
+			set_variable = {
+				name = current_building_amount
+				value = scope:ig.building_levels_existing
+			}
+		}
+	}
+
+	on_monthly_pulse = { #powers division of fail effects
+		effect = {
+			scope:ig = {
+				set_variable = {
+					name = current_building_amount
+					value = scope:ig.building_levels_existing
+				}
+			}
+		}
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_negotiate_buildings_status
+			}
+		}
+	}
+
+	complete = {
+		trigger_if = {
+			#build
+			limit = { scope:ig.var:promise_quest_type = 3 }
+			country_has_building_type_levels = {
+				target = scope:ig.var:promised_building_type 
+				value >= scope:ig.var:building_level_increase
+			}
+		}
+	}
+
+	on_complete = {
+		promise_quest_completed = yes		   
+	}
+
+	fail = {
+		OR = {
+			is_promise_abandoned = yes
+			custom_tooltip = {
+				text = time_runs_out_tt
+				scope:journal_entry.journal_entry_age >= {
+					value = 3650 # 5 years
+
+					if = {
+						limit = { scope:journal_entry = { has_variable = asked_for_extension_var } }
+						add = 1095
+					}
+				}
+			}
+		}
+	}
+
+	on_fail = {
+		promise_quest_failed = yes
+	}
+
+	on_timeout = {
+		hidden_effect = { #no need to repeat this on UI
+			promise_quest_failed = yes
+		}
+	}
+
+	timeout = {
+		value = 3650 # 10 years
+
+		if = {
+			limit = { scope:journal_entry = { has_variable = asked_for_extension_var } }
+			add = 1095
+		}
+	}
+
+	weight = 1000
+
+	should_be_pinned_by_default = yes
+}

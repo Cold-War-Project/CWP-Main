@@ -1,0 +1,423 @@
+﻿# the weight of being picked when a new battle occurs on a Front
+# root = commander
+# is_advancing_side = whether this side is the one advancing or not (defending = no)
+front_commander_pick_weight = {
+	value = root.command_limit_num_units
+
+	if = {
+		limit = { scope:is_advancing_side = no }
+		if = {
+			limit = { has_commander_order = defend }
+			add = 25
+		}
+		if = {
+			limit = { has_trait = stalwart_defender }
+			add = 5
+		}
+		if = {
+			limit = { has_trait = trench_rat }
+			add = 10
+		}
+		if = {
+			limit = { has_trait = defense_in_depth_specialist }
+			add = 15
+		}
+		if = {
+			limit = { has_trait = basic_defensive_strategist }
+			add = 5
+		}
+		if = {
+			limit = { has_trait = experienced_defensive_strategist }
+			add = 10
+		}
+		if = {
+			limit = { has_trait = expert_defensive_strategist }
+			add = 15
+		}
+		if = {
+			limit = { has_commander_order = defend }
+			add = 25
+		}
+	}
+	else = {
+		if = {
+			limit = { has_trait = basic_offensive_planner }
+			add = 5
+		}
+		if = {
+			limit = { has_trait = experienced_offensive_planner }
+			add = 10
+		}
+		if = {
+			limit = { has_trait = expert_offensive_planner }
+			add = 15
+		}
+	}
+
+	# Commanders shouldn't be picked for multiple battles
+	if = {
+		limit = { is_in_battle = yes }
+		multiply = 0
+	}
+}
+
+# root = state
+# front = the front we're evaluating basecamp states for
+# own_commander = the commander leading this side in battle
+# is_strategic_objective = indicates whether the root state is the Front's Strategic Objective
+# is_adjacent_to_strategic_objective = indicates whether the root state is adjacent to the Front's Strategic Objective
+# distance_to_strategic_objective = *squared* distance to this front active Strategic Objective, if any (use `exists` to check). Always > 0.0 when it exists.
+# distance_to_closest_war_goal = *squared* distance to this front closest War Goal, if any (use `exists` to check). Always > 0.0 when it exists.
+# if the console variable `debug_front_battle_weight` is enabled, data will be logged to std::cout.
+# No randomness allowed
+front_battle_state_weight = {
+	value = 100000
+	
+	if = {
+		limit = { scope:is_strategic_objective = yes }
+		add = 1000
+	}
+	else_if = {
+		limit = { scope:is_adjacent_to_strategic_objective = yes }
+		add = 100
+	}
+	else_if = {
+		limit = { exists = scope:distance_to_strategic_objective }
+		divide = scope:distance_to_strategic_objective
+	}
+	else_if = {
+		limit = { exists = scope:distance_to_closest_war_goal }
+		divide = scope:distance_to_closest_war_goal
+	}
+	else = {
+		subtract = 100
+	}
+}
+
+# root = province
+# front = the front this battle will happen on
+# own_commander = the commander leading this side in battle
+# enemy_commander = the commander defending in this battle (if any)
+# is_strategic_objective = indicates whether the root province lies in the Front Strategic Objective
+# is_adjacent_to_strategic_objective = indicates whether the root province is adjacent to the Front's Strategic Objective
+# distance_to_strategic_objective = *squared* distance to this front active Strategic Objective, if any (use `exists` to check). Always > 0.0 when it exists.
+# distance_to_closest_war_goal = *squared* distance to this front closest War Goal, if any (use `exists` to check). Always > 0.0 when it exists.
+# if the console variable `debug_front_battle_weight` is enabled, data will be logged to std::cout.
+# No randomness allowed
+front_battle_province_weight = {
+	value = 100000
+
+	if = {
+		limit = { exists = scope:distance_to_strategic_objective }
+		divide = scope:distance_to_strategic_objective
+	}
+	else_if = {
+		limit = { exists = scope:distance_to_closest_war_goal }
+		divide = scope:distance_to_closest_war_goal
+	}
+}
+
+province_terrain_infrastructure_force_limit = {
+	value = 5
+	add = {
+		value = scope:province.state.infrastructure
+		divide = 2
+	}
+	multiply = scope:province.combat_width
+}
+
+# the battalion size for each side in a land battle
+# root = a country on the side being evaluated (this general's country, or this theater side owner if none)
+# enemy_country = a country on the opposing side (the other general's country, or that theater side owner if none)
+# front = the front to calculate troop weight for
+# own_commander = the commander leading this side in battle (if any; could be garrison)
+# enemy_commander = the commander leading this side in battle (if any; could be garrison)
+# is_advancing_side = whether this side is the one advancing or not (defending = no)
+# is_naval_invasion = if the battle is related to a naval invasion
+# province = the province where the battle is happening
+land_battle_size = {
+	# Start with a baseline number of battalions equal to the amount of allied troops on the front
+	value = {
+		value = "scope:front.num_total_battalions(root)"
+		desc = "BATTLE_SIZE_BASE_TOTAL_BATTALIONS_ON_FRONT"
+	}
+
+	# If it's a land or naval invasion defender can bring additional troops
+	if = {
+		limit = {
+			exists = scope:front.invasion
+			scope:is_advancing_side = no
+		}
+		add = {
+			value = "scope:province.land_controller_hq.num_garrison_units"
+			desc = "BATTLE_SIZE_INVASION_GARRISONED_BATTALIONS"
+		}
+	}
+
+	save_temporary_value_as = num_units_on_front_and_hq
+
+	# For regular land battles, subtract a random number of battalions depending on how many battalions are on the front compared to how long it is
+	if = {
+		limit = { exists = scope:front }
+		subtract = {
+			fixed_range = {
+				min = 0
+				max = {
+					add = "scope:front.num_total_battalions(root)"
+					subtract = {
+						add = "scope:front.num_total_battalions(root)"
+						divide = "scope:front.front_length"
+					}
+					divide = 2
+				}
+			}
+			floor = yes
+			desc = "BATTLE_SIZE_CONCENTRATION_ACROSS_LENGTH_OF_FRONT"
+		}
+	}
+
+	save_temporary_value_as = pre_combat_width_cap
+
+	# Cap to infrastructure-based combat width
+	if = {
+		limit = { scope:pre_combat_width_cap > province_terrain_infrastructure_force_limit }
+		max = {
+			value = province_terrain_infrastructure_force_limit
+			ceiling = yes
+			desc = "BATTLE_SIZE_TERRAIN_INFRASTRUCTRE"
+		}
+	}
+
+	save_temporary_value_as = pre_numeric_advantage
+
+	# In a regular land battle, if we have a general and outnumber the enemy we may be able to bring additional troops
+	if = {
+		limit = {
+			scope:is_naval_invasion = no
+			exists = scope:own_commander
+			exists = scope:front
+			"scope:front.num_total_battalions(root)" > "scope:front.num_total_battalions(scope:enemy_country)"
+			"scope:front.num_total_battalions(scope:enemy_country)" > 0
+		}
+		value = {
+			add = scope:pre_numeric_advantage
+			multiply = {
+				fixed_range = {
+					min = 1
+					max = {
+						add = "scope:front.num_total_battalions(root)"
+						divide = "scope:front.num_total_battalions(scope:enemy_country)"
+						subtract = 1
+						multiply = 1.5
+						add = 1
+						max = 3
+					}
+				}
+			}
+			ceiling = yes
+			desc = "BATTLE_SIZE_NUMERIC_ADVANTAGE"
+		}
+	}
+
+	save_temporary_value_as = pre_max_amount_cap
+
+	# Multiply by any total combat width modifiers
+	multiply = {
+		value = {
+			add = 1
+			add = modifier:battle_total_combat_width_mult
+		}
+		desc = "battle_total_combat_width_mult"
+	}
+
+	# Cap to *actually available* troops
+	if = {
+		limit = {
+			scope:is_advancing_side = yes
+			scope:pre_max_amount_cap > {
+				add = "scope:front.num_total_battalions(root)"
+				subtract = "scope:front.num_defending_battalions(root)"
+			}
+		}
+		max = {
+			add = "scope:front.num_total_battalions(root)"
+			subtract = "scope:front.num_defending_battalions(root)"
+			desc = "BATTLE_SIZE_MAX_AMOUNT_REACHED"
+		}
+	}
+	else_if = {
+		limit = {
+			scope:is_advancing_side = no
+			scope:pre_max_amount_cap > scope:num_units_on_front_and_hq
+		}
+		max = {
+			add = scope:num_units_on_front_and_hq
+			desc = "BATTLE_SIZE_MAX_AMOUNT_REACHED"
+		}
+	}
+
+	save_temporary_value_as = pre_min_amount_cap
+
+	# If we're advancing, ensure at least 1 Battalion is doing so
+	if = {
+		limit = {
+			scope:is_advancing_side = yes
+			scope:pre_min_amount_cap < 1
+		}
+		min = {
+			value = 1
+			desc = "BATTLE_SIZE_MIN_AMOUNT_REACHED"
+		}
+	}
+}
+
+# Defines weights for selecting Combat Units when a land battle is created.
+# Units with weight <= 0 are never selected.
+# root = combat unit
+# own_commander = the commander leading this side in battle (if any; could be garrison)
+# province = land province this battle takes place in
+# is_advancing_side = boolean indicating whether this is the advancing side of the battle
+land_battle_unit_selection_weight = {
+	if = {
+		limit = {
+			OR = {
+				manpower < define:NMilitary|MIN_USABLE_MANPOWER
+				morale < 0.20
+			}
+		}
+		value = -1
+	}
+	else = {
+		value = manpower
+		multiply = morale
+
+		# Generals have a stronger tendency to bring their own Battalions than borrowed ones
+		if = {
+			limit = {
+				exists = scope:own_commander
+				unit_formation_has_commander = scope:own_commander
+			}
+			multiply = 2
+		}
+
+		if = {
+			limit = { exists = scope:own_commander }
+			multiply = mobilization
+		}
+
+		if = {
+			limit = { scope:is_advancing_side = yes }
+			multiply = offense
+		}
+
+		else_if = {
+			limit = { scope:is_advancing_side = no }
+			multiply = defense
+		}
+	}
+}
+
+# the flotilla size for each side in a naval battle
+# root = country
+# province = the naval province where the battle is happening
+# enemy_country = the other country
+# own_commander = the commander leading this side in battle (if any; could be garrison)
+# military_formation = the military formation in this side of the battle
+# enemy_commander = the commander leading this side in battle (if any; could be garrison)
+naval_battle_size = {
+	# Start with a baseline number of available flotillas not engaged in battle
+	value = {
+		value = scope:province.num_units_not_in_battle:root
+		desc = "NAVAL_BATTLE_SIZE_ADMIRAL_SHARE"
+	}
+
+	save_temporary_value_as = pre_max_amount_cap
+
+	# Cap to the command limit of how many flotillas the admiral can command
+	if = {
+		limit = { scope:pre_max_amount_cap > scope:own_commander.command_limit_num_units }
+		max = {
+			add = scope:own_commander.command_limit_num_units
+			desc = "[concept_command_limit]"
+		}
+	}
+
+	# If we have more units than enemy formation - reduce the number (no more than by 50%) so we don't send too many units to battle
+	if = {
+		limit = { scope:own_commander.command_limit_num_units > scope:enemy_commander.command_limit_num_units }
+		multiply = {
+			fixed_range = {
+				min = {
+					value = 1.5
+					subtract = {
+						# Calculate the *strength* ratio, which is between 0.5 and 1 here
+						value = scope:own_commander.command_limit_num_units
+						divide = {
+							value = scope:own_commander.command_limit_num_units
+							add = scope:enemy_commander.command_limit_num_units
+						}
+					}
+					# Resulted minimum is between 0.5 (too strong) and 1 (too weak)
+				}
+				max = 1
+			}
+			desc = "NAVAL_BATTLE_SIZE_UNIT_RATIO_TO_ENEMY"
+		}
+	}
+
+	# If we have fewer units than enemy formation - increase the number (no more than by 100%) so we have a higher chance to defeat the enemy
+	if = {
+		limit = { scope:own_commander.command_limit_num_units < scope:enemy_commander.command_limit_num_units }
+		multiply = {
+			fixed_range = {
+				min = 1
+				max = {
+					value = 2
+					subtract = {
+						# Calculate the *strength* ratio, which is between 0 and 0.5 here
+						value = scope:own_commander.command_limit_num_units
+						divide = {
+							value = scope:own_commander.command_limit_num_units
+							add = scope:enemy_commander.command_limit_num_units
+						}
+						multiply = 2
+					}
+					# Resulted maximum is between 1 (too strong) and 2 (too weak)
+				}
+			}
+			desc = "NAVAL_BATTLE_SIZE_UNIT_RATIO_TO_ENEMY"
+		}
+	}
+
+	save_temporary_value_as = post_max_amount_cap
+
+	# Cap to the number of units available for battle (not involved in another battle)
+	if = {
+		limit = { scope:post_max_amount_cap > scope:province.num_units_not_in_battle:root }
+		max = {
+			add = scope:province.num_units_not_in_battle:root
+			desc = "NAVAL_BATTLE_SIZE_UNIT_NOT_IN_BATTLE"
+		}
+	}
+}
+
+# Defines weights for selecting Combat Units when a naval battle is created.
+# Units with weight <= 0 are never selected.
+# root = combat unit
+# own_commander = the commander leading this side in battle
+# province = naval province this battle takes place in
+# is_advancing_side = boolean indicating whether this is the attacker side of the battle.
+naval_battle_unit_selection_weight = {
+	if = {
+		limit = {
+			OR = {
+				manpower < define:NMilitary|MIN_USABLE_MANPOWER
+				morale < 0.20
+			}
+		}
+		value = -1
+	}
+	else = {
+		value = 1
+	}
+}
