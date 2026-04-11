@@ -1,0 +1,1746 @@
+﻿#######################
+##### Coup Events #####
+#######################
+namespace = cwp_coup
+
+# Start event
+cwp_coup.1 = {
+	type = country_event
+	placement = root
+
+	duration = 3
+
+	title = cwp_coup.1.t
+	desc = cwp_coup.1.d
+	flavor = cwp_coup.1.f
+
+	is_popup = yes
+
+	gui_window = event_window_1char_tabloid
+
+	left_icon = scope:coup_character_leader
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/misc/2Characters"
+
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+
+	trigger = {
+		NOT = { has_journal_entry = je_coup }
+		NOT = { has_free_government_reform = yes } # Election grace period
+		any_scope_character = {
+			OR = {
+				has_role = general
+				has_role = admiral
+			}
+			interest_group = {
+				ig_approval <= define:NPolitics|APPROVAL_THRESHOLD_ANGRY
+				is_secessionist = no
+			}
+			commander_coup_strength >= { # Commander can plausibly coup the government with help
+				value = owner.country_coup_resistance
+				multiply = 0.9
+			}
+			trigger_if = {
+				limit = {
+					exists = owner.currently_enacting_law
+				}
+				NOT = { # Prevents characters from launching a coup against law enactments they approve of
+					law_enactment_stance = {
+						law = owner.currently_enacting_law.type
+						value > neutral
+					}
+				}
+			}
+		}
+		NOT = { has_variable = coup_event_active }
+		NOT = { has_variable = coup_cooldown_var }
+		NOT = { has_variable = coup_immunity }
+	}
+
+	cancellation_trigger = {
+		NOT = { exists = scope:coup_character_leader }
+	}
+
+	immediate = {
+		set_variable = { name = coup_event_active days = 90 }
+		ordered_scope_character = {
+			limit = {
+				OR = {
+					has_role = general
+					has_role = admiral
+				}
+				interest_group = {
+					ig_approval <= define:NPolitics|APPROVAL_THRESHOLD_ANGRY
+					is_secessionist = no
+				}
+				commander_coup_strength >= { # Commander can plausibly coup the government with help
+					value = owner.country_coup_resistance
+					multiply = 0.9
+				}
+				trigger_if = {
+					limit = { exists = owner.currently_enacting_law }
+					NOT = { # Prevents characters from launching a coup against law enactments they approve of
+						law_enactment_stance = {
+							law = owner.currently_enacting_law.type
+							value > neutral
+						}
+					}
+				}
+			}
+			order_by = popularity
+			position = 0
+			check_range_bounds = no
+			set_variable = coup_character_leader_var
+			set_variable = { name = monthly_cached_units_share value = this.num_units_share } # Updates at start of coup
+			set_variable = { name = monthly_cached_commander_coup_strength value = this.commander_coup_strength }
+			save_scope_as = coup_character_leader
+			interest_group = {
+				set_variable = coup_interest_group_var
+				save_scope_as = coup_interest_group
+			}
+		}
+		generate_2_common_name = {
+			CULTURE_1 = primary_culture
+			CULTURE_2 = primary_culture
+		}
+	}
+
+	# Advance the coup
+	option = {
+		name = cwp_coup.1.a
+		add_journal_entry = { type = je_coup }
+		scope:coup_character_leader ?= {
+			add_modifier = {
+				name = coup_supported
+				days = short_modifier_time
+			}
+		}
+		clear_generated_names = yes
+	}
+
+	# Resist the coup
+	option = {
+		name = cwp_coup.1.b
+		default_option = yes
+		add_journal_entry = { type = je_coup }
+		add_modifier = {
+			name = coup_resisted
+			days = short_modifier_time
+		}
+		clear_generated_names = yes
+	}
+
+	after = {
+		show_as_tooltip = {
+			custom_tooltip = if_coup_is_successful_tt
+			coup_victory_effect = yes
+		}
+		remove_variable = coup_event_active
+	}
+}
+
+# Success Event
+cwp_coup.2 = {
+	type = country_event
+	placement = scope:pronunciamento_state
+
+	duration = 3
+
+	title = cwp_coup.2.t
+	desc = cwp_coup.2.d
+	flavor = cwp_coup.2.f
+
+	gui_window = event_window_1char_tabloid
+
+	left_icon = scope:coup_character_leader
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/misc/2Characters"
+
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+
+	# No cooldown
+
+	trigger = {
+
+	}
+
+	cancellation_trigger = {
+		NOT = { exists = scope:coup_character_leader }
+	}
+
+	immediate = {
+		random_scope_character = {
+			limit = { has_variable = coup_character_leader_var }
+			save_scope_as = coup_character_leader
+			interest_group = { save_scope_as = coup_interest_group }
+		}
+		scope:coup_character_leader ?= { # This looks worse than it really is.
+			if = {
+				limit = { exists = commander_military_formation }
+				commander_military_formation ?= {
+					if = {
+						limit = { exists = current_hq }
+						current_hq ?= {  # Case 1 - the commander has a formation and is stationed in an HQ
+							region ?= {
+								if = { # Case 1.1 - the commander has a formation and is stationed in an HQ, and ROOT owns at least one state in this HQ.
+									limit = { any_scope_state = { owner = ROOT } }
+									coup_get_owned_pronunciamento_state = yes
+								}
+								else = { # Case 1.2 - the commander has a formation and is stationed in an HQ, and ROOT does not own at least one state in this HQ.
+									coup_get_unowned_pronunciamento_state = yes
+								}
+							}
+						}
+					}
+					else_if = {
+						limit = { exists = front }
+						front ?= {  # Case 2 - the commander has a formation and is on or travelling to a front
+							if = {  # Case 2.1 - the commander has a formation and is on or travelling to a front, and ROOT owns at least one state on this front.
+								limit = { any_scope_state = { owner = ROOT } }
+								coup_get_owned_pronunciamento_state = yes
+							}
+							else_if = { # Case 2.2 - the commander has a formation and is on or travelling to a front, and any allied country owns at least one state on this front.
+								limit = { any_scope_state = { owner = { is_diplomatic_play_ally_of = ROOT } } }
+								coup_get_allied_pronunciamento_state = yes
+							}
+							else = {  # Case 2.3 - the commander has a formation and is on or travelling to a front, and no allied country owns at least one state on this front.
+								ordered_scope_state = {
+									order_by = gdp
+									position = 0
+									check_range_bounds = no
+									save_scope_as = pronunciamento_state
+								}
+							}
+						}
+					}
+					else_if = {
+						limit = { exists = home_hq }
+						home_hq ?= {  # Case 3 - the commander has a formation but somehow has neither a front nor a current HQ.
+							region ?= {
+								if = { # Case 3.1 - the commander has a formation but somehow has neither a front nor a current HQ, and ROOT owns at least one state in the home HQ.
+									limit = { any_scope_state = { owner = ROOT } }
+									coup_get_owned_pronunciamento_state = yes
+								}
+								else = { # Case 3.2 - the commander has a formation but somehow has neither a front nor a current HQ, and ROOT does not own at least one state in the home HQ.
+									coup_get_unowned_pronunciamento_state = yes
+								}
+							}
+						}
+					}
+					else = { # Case 4 - the commander has no current HQ, front, or home HQ, but does have a formation. This should never happen.
+						ROOT.capital = { save_scope_as = pronunciamento_state }
+					}
+				}
+			}
+			else = { # Case 5 - the commander has no formation but somehow is still valid.
+				capital = { save_scope_as = pronunciamento_state }
+			}
+		}
+		scope:coup_interest_group ?= {
+            ordered_preferred_law = {
+				limit = {
+					law_is_available = yes
+					law_is_valid_for_ig_petition = yes
+					NOT = { ROOT = { has_law = prev.type } }
+				}
+				position = 0
+                check_range_bounds = no
+                save_scope_as = coup_desired_law
+            }
+		}
+		set_variable = { name = coup_event_active days = 90 }
+	}
+
+	# Do whatever they say.
+	option = {
+		name = cwp_coup.2.a
+		default_option = yes
+		trigger = {
+			scope:coup_character_leader ?= {
+				NOR = {
+					has_variable = commander_doing_coup_on_player_behalf
+					has_modifier = modifier_preempetive_coup
+				}
+			}
+		}
+		ai_chance = {
+			base = 25
+		}
+		custom_tooltip = pronunciamento_victory_tt
+		coup_victory_effect = yes
+		scope:coup_character_leader ?= { remove_variable = coup_character_leader_var }
+		random_interest_group = {
+			limit = { has_variable = coup_interest_group_var }
+			remove_variable = coup_interest_group_var
+		}
+	}
+
+	# Nononononononono-
+	option = {
+		name = cwp_coup.2.b
+		default_option = yes
+		highlighted_option = yes
+		trigger = {
+			OR = {
+				custom_tooltip = {
+					text = doing_coup_for_player_tt
+					scope:coup_character_leader ?= { has_variable = commander_doing_coup_on_player_behalf }
+				}
+				custom_tooltip = {
+					text = pronunciamento_immediately_var_tt
+					scope:coup_character_leader ?= { has_modifier = modifier_preempetive_coup }
+				}
+				root.government_legitimacy >= scope:coup_character_leader.popularity
+				trigger_if = {
+					limit = { scope:coup_character_leader ?= { has_role = admiral } }
+					scope:coup_character_leader.num_units_share < {
+						value = root.navy_size
+						multiply = 0.10
+					}
+				}
+				trigger_if = {
+					limit = { scope:coup_character_leader ?= { has_role = general } }
+					scope:coup_character_leader.num_units_share < {
+						value = root.army_size
+						multiply = 0.10
+					}
+				}
+			}
+		}
+		ai_chance = {
+			base = 100 # If the AI can avert a coup, it will try to
+		}
+		scope:pronunciamento_state ?= { add_devastation = 25 }
+		random_list = {
+			1 = {
+				modifier = {
+					add = { value = scope:coup_character_leader.commander_coup_strength }
+					min = 0
+				}
+				custom_tooltip = pronunciamento_victory_tt
+				coup_victory_effect = yes
+			}
+			1 = {
+				modifier = {
+					add = { value = root.country_coup_resistance }
+					min = 0
+				}
+				custom_tooltip = pronunciamento_crushed_tt
+				ROOT = { save_scope_as = coup_country } # For the notification
+				post_notification = failed_coup_in_country
+				scope:pronunciamento_state ?= {
+					if = {
+						limit = { scope:coup_character_leader.popularity >= 0 }
+						add_radicals_in_state = {
+							value = {
+								add = scope:coup_character_leader.popularity
+								divide = 100
+								max = 0.75
+							}
+							interest_group = scope:coup_interest_group
+						}
+					}
+					else = {
+						add_radicals_in_state = { value = small_radicals }
+					}
+				}
+				add_radicals = {
+					value = {
+						add = scope:coup_character_leader.num_units_share
+						divide = owner.army_size
+					}
+					pop_type = soldiers
+				}
+				add_radicals = {
+					value = {
+						add = scope:coup_character_leader.num_units_share
+						divide = owner.army_size
+					}
+					pop_type = officers
+				}
+				if = {
+					limit = { has_variable = exile_coup_character_leader_var }
+					scope:coup_character_leader ?= {
+						show_as_tooltip = { exile_character = yes }
+						hidden_effect = { exile_character_with_martyrdom = yes }
+					}
+					remove_variable = exile_coup_character_leader_var
+				}
+				else_if = {
+					limit = { has_variable = retire_coup_character_leader_var }
+					scope:coup_character_leader ?= {
+						if = {
+							limit = { has_role = general }
+							remove_character_role = general
+						}
+
+						if = {
+							limit = { has_role = admiral }
+							remove_character_role = admiral
+						}
+					}
+					remove_variable = retire_coup_character_leader_var
+				}
+				change_global_variable = { name = failed_coups add = 1 }
+			}
+		}
+		scope:coup_character_leader ?= { remove_variable = coup_character_leader_var }
+		random_interest_group = {
+			limit = { has_variable = coup_interest_group_var }
+			remove_variable = coup_interest_group_var
+		}
+	}
+
+	after = {
+		remove_variable = coup_event_active
+	}
+}
+
+cwp_coup.3 = {
+	type = country_event
+	placement = root
+
+	duration = 3
+
+	title = cwp_coup.3.t
+	desc = cwp_coup.3.d
+	flavor = cwp_coup.3.f
+
+	event_image = {
+		video = "votp_conspiring"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+
+	trigger = {
+		# triggered by je_coup
+	}
+
+	cancellation_trigger = {
+		NOT = { exists = scope:coup_character_leader }
+	}
+
+	immediate = {
+		random_interest_group = {
+			limit = { has_variable = coup_interest_group_var }
+			save_scope_as = coup_interest_group
+		}
+		random_scope_character = {
+			limit = { has_variable = coup_character_leader_var }
+			save_scope_as = coup_character_leader
+		}
+		capital = { save_scope_as = capital_scope }
+	}
+
+	option = {
+		name = cwp_coup.3.a
+		default_option = yes
+		scope:coup_interest_group = {
+			add_modifier = {
+				name = failed_coup
+				days = normal_modifier_time
+			}
+			set_variable = { name = coup_guilty days = 3650 }
+		}
+		scope:coup_character_leader = {
+			add_modifier = {
+				name = incompetent_coup_attempt
+				days = very_long_modifier_time
+				# large popularity reduction
+			}
+		}
+		scope:coup_character_leader ?= { remove_variable = coup_character_leader_var }
+		random_interest_group = {
+			limit = { has_variable = coup_interest_group_var }
+			remove_variable = coup_interest_group_var
+		}
+	}
+
+	option = {
+		name = cwp_coup.3.b
+		highlighted_option = yes
+		trigger = {
+			OR = {
+				has_law = law_type:law_secret_police
+				has_law = law_type:law_outlawed_dissent
+			}
+		}
+		scope:coup_interest_group = {
+			add_modifier = {
+				name = modifier_super_failed_coup
+				days = normal_modifier_time
+			}
+			set_variable = { name = coup_guilty days = 3650 }
+		}
+		random_list = {
+			50 = {
+				modifier = {
+					if = {
+						limit = { owner.institution:institution_home_affairs.investment >= 2 }
+						add = 25
+					}
+					
+					if = {
+						limit = { owner.institution:institution_home_affairs.investment >= 3 }
+						add = 25
+					}
+
+					if = {
+						limit = { owner.institution:institution_home_affairs.investment >= 4 }
+						add = 25
+					}
+
+					if = {
+						limit = { owner.institution:institution_home_affairs.investment >= 5 }
+						add = 25
+					}
+				}
+				scope:coup_character_leader = { kill_character = yes }
+			}
+			50 = { 
+				scope:coup_character_leader = { exile_character = yes }
+			}
+		}
+		scope:coup_character_leader ?= { remove_variable = coup_character_leader_var }
+		random_interest_group = {
+			limit = { has_variable = coup_interest_group_var }
+			remove_variable = coup_interest_group_var
+		}
+	}
+}
+
+# For characters realising that they're getting marginalised
+cwp_coup.4 = {
+	type = country_event
+	placement = root
+
+	duration = 3
+
+	title = cwp_coup.4.t
+	desc = cwp_coup.4.d
+	flavor = cwp_coup.4.f
+
+	event_image = {
+		video = "votp_conspiring"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+
+	# Cooldown is handled by ip4_coup_4_var
+
+	trigger = {
+		# triggered by je_coup
+		any_scope_character = {
+			has_variable = coup_character_leader_var
+			has_variable = monthly_cached_units_share
+			trigger_if = {
+				limit = { has_variable = monthly_cached_units_share }
+				this.num_units_share <= {
+					value = this.var:monthly_cached_units_share # Their amount of controlled units has declined by at least 20%
+					multiply = 0.8
+				}
+			}
+			NOT = { has_variable = ip4_coup_4_var }
+		}
+	}
+
+	cancellation_trigger = {
+		OR = {
+			NOT = { exists = scope:coup_character_leader }
+			NOT = { has_journal_entry = je_coup }
+		}
+	}
+
+	immediate = {
+		random_interest_group = {
+			limit = { has_variable = coup_interest_group_var }
+			save_scope_as = coup_interest_group
+		}
+		random_scope_character = {
+			limit = {
+				has_variable = coup_character_leader_var
+				this.num_units_share <= {
+					value = this.var:monthly_cached_units_share # Their amount of controlled units has declined by at least 20%
+					multiply = 0.8
+				}
+			}
+			save_scope_as = coup_character_leader
+			set_variable = { name = ip4_coup_4_var days = short_modifier_time }
+		}
+		capital = { save_scope_as = capital_scope }
+		generate_2_common_name = {
+			CULTURE_1 = primary_culture
+			CULTURE_2 = primary_culture
+		}
+	}
+
+	option = {
+		name = cwp_coup.4.a
+		default_option = yes
+		scope:coup_character_leader.interest_group ?= {
+			add_modifier = {
+				name = modifier_sabotaged_military_forces
+				days = normal_modifier_time
+				multiplier = 2
+			}
+		}
+		custom_tooltip = {
+			text = je_coup_progress_bar_add_50_tt
+			je:je_coup ?= { add_progress = { value = 50 name = je_coup_progress_bar } }
+		}
+		clear_generated_names = yes
+	}
+
+	option = {
+		name = cwp_coup.4.b
+		scope:coup_character_leader.interest_group ?= {
+			add_modifier = {
+				name = modifier_sabotaged_military_forces
+				days = normal_modifier_time
+				multiplier = 4
+			}
+		}
+		add_radicals = {
+			pop_type = officers
+			value = large_radicals
+		}
+		add_radicals = {
+			pop_type = soldiers
+			value = large_radicals
+		}
+		clear_generated_names = yes
+	}
+}
+
+#############################
+##### Coup Pulse Events #####
+#############################
+namespace = coup_pulse_events
+
+coup_pulse_events.1 = {
+	type = country_event
+	placement = ROOT
+
+	title = coup_pulse_events.1.t
+	desc = coup_pulse_events.1.d
+	flavor = coup_pulse_events.1.f
+
+	gui_window = event_window_1char_tabloid
+	left_icon = scope:accused_general
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/misc/1Character_Banner"
+
+	icon = "gfx/interface/icons/event_icons/bicorne_hat.dds"
+
+	duration = 3
+
+	cooldown = { days = normal_modifier_time }
+
+	trigger = {
+		any_scope_character = {
+			has_role = general
+			is_ruler = no
+			NOT = { has_variable = coup_character_leader_var }
+		}
+	}
+
+	immediate = {
+		random_scope_character = {
+			limit = {
+				has_role = general
+				is_ruler = no
+				NOT = { has_variable = coup_character_leader_var }
+			}
+			save_scope_as = accused_general
+			interest_group = { save_scope_as = accused_general_ig }
+		}
+	}
+
+	cancellation_trigger = {
+		OR = {
+			scope:accused_general ?= { is_character_alive = no }
+			NOT = { exists = scope:accused_general }
+			NOT = { has_journal_entry = je_coup }
+		}
+	}
+
+	option = {
+		name = coup_pulse_events.1.a
+		default_option = yes
+		scope:accused_general_ig = {
+			add_modifier = {
+				name = modifier_persecuted_general
+				days = normal_modifier_time
+			}
+		}
+		custom_tooltip = {
+			text = coup_pulse_events.1.a.tt
+			scope:accused_general = { kill_character = { hidden = yes } }
+		}
+
+		if = {
+			limit = { scope:accused_general_ig = { is_same_interest_group_type = scope:coup_interest_group } }
+			je:je_coup ?= { add_progress = { value = -15 name = je_coup_progress_bar } }
+			custom_tooltip = coup_retreat_15_tt
+		}
+		else = {
+			je:je_coup ?= { add_progress = { value = 15 name = je_coup_progress_bar } }
+			custom_tooltip = coup_advance_15_tt
+		}
+	}
+
+	option = {
+		name = coup_pulse_events.1.b
+		add_modifier = {
+			name = modifier_uncertain_loyalties_country
+			days = normal_modifier_time
+		}
+
+		if = {
+			limit = { scope:accused_general = { interest_group = { is_same_interest_group_type = scope:coup_interest_group } } }
+			je:je_coup ?= { add_progress = { value = 15 name = je_coup_progress_bar } }
+			custom_tooltip = coup_advance_15_tt
+		}
+		else = {
+			je:je_coup ?= { add_progress = { value = -15 name = je_coup_progress_bar } }
+			custom_tooltip = coup_retreat_15_tt
+		}
+	}
+}
+
+coup_pulse_events.2 = {
+	type = country_event
+	placement = ROOT
+
+	title = coup_pulse_events.2.t
+	desc = coup_pulse_events.2.d
+	flavor = coup_pulse_events.2.f
+
+	event_image = {
+		video = "unspecific_politicians_arguing"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_scales.dds"
+
+	duration = 3
+
+	cooldown = { days = normal_modifier_time }
+
+	trigger = {
+		any_active_party = {
+			AND = {
+				has_party_member = scope:coup_interest_group
+				any_member = { is_in_government = no }
+			}
+		}
+	}
+
+	immediate = {
+		random_active_party = {
+			limit = {
+				has_party_member = scope:coup_interest_group
+				any_member = { is_in_government = no }
+			}
+			random_member = {
+				limit = { is_in_government = no }
+				save_scope_as = conflicted_loyalty_ig
+			}
+			save_scope_as = conflicted_loyalty_party
+		}
+	}
+
+	cancellation_trigger = {
+		NOT = { has_journal_entry = je_coup }
+	}
+
+	option = {
+		name = coup_pulse_events.2.a
+		default_option = yes
+		scope:conflicted_loyalty_ig = {
+			add_modifier = {
+				name = modifier_appeased_regarding_coup
+				days = normal_modifier_time
+			}
+		}
+		je:je_coup ?= { add_progress = { value = -15 name = je_coup_progress_bar } }
+		custom_tooltip = coup_retreat_15_tt
+	}
+
+	option = {
+		name = coup_pulse_events.2.b
+		scope:conflicted_loyalty_ig = {
+			add_modifier = {
+				name = modifier_conflicted_about_coup
+				days = normal_modifier_time
+			}
+		}
+	}
+}
+
+coup_pulse_events.3 = {
+	type = country_event
+	placement = ROOT
+
+	title = coup_pulse_events.3.t
+	desc = coup_pulse_events.3.d
+	flavor = coup_pulse_events.3.f
+
+	event_image = {
+		video = "unspecific_ruler_speaking_to_people"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+
+	duration = 3
+
+	cooldown = { days = normal_modifier_time }
+
+	trigger = {
+		any_interest_group = {
+			NOT = { scope:coup_interest_group ?= this }
+			ig_approval >= -9
+			is_in_government = no
+			ig_counts_as_marginal = no
+		}
+	}
+
+	immediate = {
+		random_interest_group = {
+			limit = {
+				NOT = { scope:coup_interest_group ?= this }
+				ig_approval >= -9
+				is_in_government = no
+				ig_counts_as_marginal = no
+			}
+			save_scope_as = critical_support_ig
+		}
+	}
+
+	cancellation_trigger = {
+		NOT = { has_journal_entry = je_coup }
+	}
+
+	option = {
+		name = coup_pulse_events.3.a
+		default_option = yes
+		scope:critical_support_ig = {
+			add_modifier = {
+				name = modifier_critical_support_against_coup
+				days = short_modifier_time
+			}
+		}
+		je:je_coup ?= { add_progress = { value = -15 name = je_coup_progress_bar } }
+		custom_tooltip = coup_retreat_15_tt
+	}
+
+	option = {
+		name = coup_pulse_events.3.b
+		scope:critical_support_ig = {
+			add_modifier = {
+				name = modifier_critical_support_denied
+				days = normal_modifier_time
+			}
+		}
+		capital = {
+			add_loyalists_in_state = {
+				strata = upper
+				value = small_radicals
+			}
+		}
+		je:je_coup ?= { add_progress = { value = 15 name = je_coup_progress_bar } }
+		custom_tooltip = coup_advance_15_tt
+	}
+}
+
+coup_pulse_events.4 = {
+	type = country_event
+	placement = scope:investor_affected_state
+
+	title = coup_pulse_events.4.t
+	desc = coup_pulse_events.4.d
+	flavor = coup_pulse_events.4.f
+
+	event_image = {
+		video = "unspecific_factory_closed"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_industry.dds"
+
+	duration = 3
+
+	cooldown = { days = normal_modifier_time }
+
+	trigger = {
+		capital = {
+			any_scope_building = {
+				OR = {
+					is_building_group = bg_light_industry
+					is_building_group = bg_heavy_industry
+				}
+			}
+		}
+		scope:coup_interest_group = { NOT = { is_interest_group_type = ig_industrialists } }
+		ig:ig_industrialists ?= { ig_counts_as_marginal = no }
+	}
+
+	immediate = {
+		capital = { save_scope_as = investor_affected_state }
+		ig:ig_industrialists ?= { save_scope_as = investor_ig }
+	}
+
+	cancellation_trigger = {
+		NOT = { has_journal_entry = je_coup }
+	}
+
+	option = {
+		name = coup_pulse_events.4.a
+		default_option = yes
+		add_modifier = {
+			name = modifier_wary_investors_country
+			days = normal_modifier_time
+		}
+		je:je_coup ?= { add_progress = { value = -10 name = je_coup_progress_bar } }
+		custom_tooltip = coup_retreat_10_tt
+	}
+
+	option = {
+		name = coup_pulse_events.4.b
+		capital = {
+			random_scope_building = {
+				limit = {
+					is_building_group = bg_light_industry
+					NOT = { has_modifier = modifier_wary_investors_building }
+				}
+				add_modifier = {
+					name = modifier_wary_investors_building
+					months = 12
+				}
+			}
+			random_scope_building = {
+				limit = {
+					is_building_group = bg_heavy_industry
+					NOT = { has_modifier = modifier_wary_investors_building }
+				}
+				add_modifier = {
+					name = modifier_wary_investors_building
+					months = 12
+				}
+			}
+		}
+		ig:ig_industrialists ?= {
+			add_modifier = {
+				name = modifier_economic_uncertainty
+				days = normal_modifier_time
+			}
+		}
+		je:je_coup ?= { add_progress = { value = 10 name = je_coup_progress_bar } }
+		custom_tooltip = coup_advance_10_tt
+	}
+}
+
+coup_pulse_events.5 = {
+	type = country_event
+	placement = ROOT
+
+	title = coup_pulse_events.5.t
+	desc = coup_pulse_events.5.d
+	flavor = coup_pulse_events.5.f
+
+	event_image = {
+		video = "votp_conspiring"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+
+	duration = 3
+
+	cooldown = { days = normal_modifier_time }
+
+	trigger = {
+		any_interest_group = {
+			is_in_government = no
+			ig_counts_as_marginal = no
+			NOT = { scope:coup_interest_group ?= this }
+		}
+	}
+
+	immediate = {
+		random_interest_group = {
+			limit = {
+				is_in_government = no
+				ig_counts_as_marginal = no
+				NOT = { scope:coup_interest_group ?= this }
+			}
+			save_scope_as = approached_ig
+		}
+	}
+
+	cancellation_trigger = {
+		NOT = { has_journal_entry = je_coup }
+	}
+
+	option = {
+		name = coup_pulse_events.5.a
+		default_option = yes
+		scope:approached_ig = {
+			add_modifier = {
+				name = modifier_new_junior_partner
+				days = normal_modifier_time
+			}
+		}
+		je:je_coup ?= { add_progress = { value = 15 name = je_coup_progress_bar } }
+		custom_tooltip = coup_advance_15_tt
+	}
+
+	option = {
+		name = coup_pulse_events.5.b
+		je:je_coup ?= { add_progress = { value = -10 name = je_coup_progress_bar } }
+		custom_tooltip = coup_retreat_10_tt
+	}
+}
+
+coup_pulse_events.6 = {
+	type = country_event
+	placement = scope:protest_state
+
+	title = coup_pulse_events.6.t
+	desc = coup_pulse_events.6.d
+	flavor = coup_pulse_events.6.f
+
+	event_image = {
+		video = "africa_public_protest"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+
+	duration = 3
+
+	cooldown = { days = normal_modifier_time }
+
+	trigger = {
+		country_has_voting_franchise = yes
+		any_interest_group = {
+			is_in_government = yes
+			NOT = { scope:coup_interest_group ?= this }
+		}
+	}
+
+	immediate = {
+		capital = { save_scope_as = protest_state }
+		random_interest_group = {
+			limit = {
+				is_in_government = yes
+				NOT = { scope:coup_interest_group ?= this }
+			}
+			save_scope_as = pro_government_ig
+		}
+	}
+
+	cancellation_trigger = {
+		NOT = { has_journal_entry = je_coup }
+	}
+
+	option = {
+		name = coup_pulse_events.6.a
+		default_option = yes
+		je:je_coup ?= { add_progress = { value = -15 name = je_coup_progress_bar } }
+		custom_tooltip = coup_retreat_15_tt
+		add_modifier = {
+			name = modifier_widespread_protests
+			days = short_modifier_time
+		}
+		scope:pro_government_ig = {
+			add_modifier = {
+				name = modifier_defenders_of_democracy
+				days = normal_modifier_time
+			}
+		}
+	}
+
+	option = {
+		name = coup_pulse_events.6.b
+		scope:protest_state = {
+			add_radicals_in_state = {
+				strata = lower
+				value = medium_radicals
+			}
+		}
+		scope:pro_government_ig = {
+			add_modifier = {
+				name = modifier_defenders_of_democracy
+				days = normal_modifier_time
+			}
+		}
+	}
+}
+
+coup_pulse_events.7 = {
+	type = country_event
+	placement = scope:assassination_state
+
+	title = coup_pulse_events.7.t
+	desc = coup_pulse_events.7.d
+	flavor = coup_pulse_events.7.f
+
+	event_image = {
+		video = "southamerica_public_figure_assassination"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_skull.dds"
+
+	duration = 3
+
+	cooldown = { days = normal_modifier_time }
+
+	trigger = {
+		any_interest_group = {
+			NOT = { scope:coup_interest_group ?= this }
+			is_in_government = yes
+			ig_counts_as_marginal = no
+		}
+	}
+
+	immediate = {
+		capital = { save_scope_as = assassination_state }
+		random_interest_group = {
+			limit = {
+				NOT = { scope:coup_interest_group ?= this }
+				is_in_government = yes
+				ig_counts_as_marginal = no
+			}
+			save_scope_as = assassination_ig
+		}
+	}
+
+	cancellation_trigger = {
+		NOT = {
+			has_journal_entry = je_coup
+		}
+	}
+
+	option = {
+		name = coup_pulse_events.7.a
+		default_option = yes
+		add_modifier = {
+			name = modifier_in_too_deep
+			days = short_modifier_time
+		}
+		scope:assassination_ig = {
+			add_modifier = {
+				name = modifier_investigating_suspicious_death
+				days = short_modifier_time
+			}
+		}
+		je:je_coup ?= { add_progress = { value = -15 name = je_coup_progress_bar } }
+		custom_tooltip = coup_retreat_15_tt
+	}
+
+	option = {
+		name = coup_pulse_events.7.b
+		scope:assassination_ig = {
+			add_modifier = {
+				name = modifier_disregarded_suspicious_death
+				days = short_modifier_time
+			}
+		}
+		je:je_coup ?= { add_progress = { value = 15 name = je_coup_progress_bar } }
+		custom_tooltip = coup_advance_15_tt
+	}
+}
+
+coup_pulse_events.8 = {
+	type = country_event
+	placement = ROOT
+
+	title = coup_pulse_events.8.t
+	desc = coup_pulse_events.8.d
+	flavor = coup_pulse_events.8.f
+
+	event_image = {
+		video = "votp_conspiring"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+
+	duration = 3
+
+	cooldown = { days = normal_modifier_time }
+
+	trigger = {
+		NOT = { has_variable = coup_sponsor }
+		any_country = {
+			country_rank >= rank_value:major_power
+			has_interest_marker_in_region = root.capital.region
+			relations:root >= 0
+			any_interest_group = {
+				is_in_government = yes
+				is_same_interest_group_type = scope:coup_interest_group
+				ig_counts_as_marginal = no
+			}
+			NOT = { this = root }
+		}
+	}
+
+	cancellation_trigger = {
+		OR = {
+			has_variable = coup_sponsor
+			NOT = { has_journal_entry = je_coup }
+		}
+	}
+
+	immediate = {
+		random_country = {
+			limit = {
+				country_rank >= rank_value:major_power
+				has_interest_marker_in_region = root.capital.region
+				relations:root >= 0
+				any_interest_group = {
+					is_in_government = yes
+					is_same_interest_group_type = scope:coup_interest_group
+					ig_counts_as_marginal = no
+				}
+				NOT = { this = root }
+			}
+			save_scope_as = coup_sponsor_country
+		}
+	}
+
+	cancellation_trigger = {
+		NOT = { has_journal_entry = je_coup }
+	}
+
+	option = {
+		name = coup_pulse_events.8.a
+		default_option = yes
+		custom_tooltip = coup_sponsor_tt
+		je:je_coup ?= { add_progress = { value = 25 name = je_coup_progress_bar } }
+		custom_tooltip = coup_advance_25_tt
+		ROOT = { set_variable = { name = coup_sponsor value = scope:coup_sponsor_country } }
+	}
+
+	option = {
+		name = coup_pulse_events.8.b
+		scope:coup_interest_group = {
+			add_modifier = {
+				name = modifier_rejected_foreign_influence_coup
+				days = normal_modifier_time
+			}
+		}
+	}
+}
+
+coup_pulse_events.9 = {
+	type = country_event
+	placement = scope:informant_state
+
+	title = coup_pulse_events.9.t
+	desc = coup_pulse_events.9.d
+	flavor = coup_pulse_events.9.f
+
+	event_image = {
+		video = "votp_agitators_sneaking"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_skull.dds"
+
+	duration = 3
+
+	cooldown = { days = normal_modifier_time }
+
+	trigger = {
+		any_scope_state = {
+			has_building = building_government_administration
+			is_incorporated = yes
+		}
+	}
+
+	immediate = {
+		random_scope_state = {
+			limit = {
+				has_building = building_government_administration
+				is_incorporated = yes
+			}
+			save_scope_as = informant_state
+			random_scope_building = {
+				limit = { is_building_type = building_government_administration }
+				save_scope_as = informant_building
+			}
+		}
+		scope:coup_interest_group = { leader = { save_scope_as = coup_character_leader } }
+	}
+
+	cancellation_trigger = {
+		NOT = { has_journal_entry = je_coup }
+	}
+
+	option = {
+		name = coup_pulse_events.9.a
+		default_option = yes
+		scope:coup_character_leader = {
+			add_modifier = {
+				name = modifier_blundered_defenestration
+				days = normal_modifier_time
+			}
+		}
+		je:je_coup ?= { add_progress = { value = -15 name = je_coup_progress_bar } }
+		custom_tooltip = coup_retreat_15_tt
+	}
+
+	option = {
+		name = coup_pulse_events.9.b
+		scope:coup_interest_group = {
+			add_modifier = {
+				name = modifier_silenced_informant
+				days = normal_modifier_time
+			}
+		}
+		je:je_coup ?= { add_progress = { value = 15 name = je_coup_progress_bar } }
+		custom_tooltip = coup_advance_15_tt
+	}
+}
+
+coup_pulse_events.10 = {
+	type = country_event
+	placement = scope:barracks_theft_state
+
+	title = coup_pulse_events.10.t
+	desc = coup_pulse_events.10.d
+	flavor = coup_pulse_events.10.f
+
+	event_image = {
+		video = "europenorthamerica_before_the_battle"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+
+	duration = 3
+
+	cooldown = { days = normal_modifier_time }
+
+	trigger = {
+		any_scope_state = {
+			has_building = building_barracks
+			is_incorporated = yes
+		}
+	}
+
+	immediate = {
+		random_scope_state = {
+			limit = {
+				has_building = building_barracks
+				is_incorporated = yes
+			}
+			save_scope_as = barracks_theft_state
+			random_scope_building = {
+				limit = { has_building = building_barracks }
+				save_scope_as = barracks_theft_building
+			}
+		}
+		ig:ig_armed_forces ?= { save_scope_as = armed_forces_ig }
+	}
+
+	cancellation_trigger = {
+		NOT = { has_journal_entry = je_coup }
+	}
+
+	option = {
+		name = coup_pulse_events.10.a
+		default_option = yes
+		scope:barracks_theft_building = {
+			add_modifier = {
+				name = modifier_siphoning_of_arms
+				days = short_modifier_time
+			}
+		}
+		je:je_coup ?= { add_progress = { value = 10 name = je_coup_progress_bar } }
+		custom_tooltip = coup_advance_10_tt
+	}
+
+	option = {
+		name = coup_pulse_events.10.b
+		scope:armed_forces_ig = {
+			add_modifier = {
+				name = modifier_accused_of_theft
+				days = short_modifier_time
+			}
+		}
+	}
+}
+
+#################################
+##### Coup Aftermath Events #####
+#################################
+namespace = coup_aftermath_events
+
+coup_aftermath_events.1 = {
+	type = country_event
+	placement = scope:legacy_of_democracy_state
+
+	title = coup_aftermath_events.1.t
+	desc = coup_aftermath_events.1.d
+	flavor = coup_aftermath_events.1.f
+
+	event_image = {
+		video = "europenorthamerica_political_extremism"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+
+	duration = 3
+
+	cooldown = { days = normal_modifier_time }
+
+	trigger = {
+		has_variable = coup_aftermath_var
+		country_has_voting_franchise = no
+		any_interest_group = {
+			law_enactment_stance = {
+				law = law_type:law_census_voting # At the least
+				value > neutral
+			}
+			is_in_government = no
+			ig_counts_as_marginal = no
+		}
+		any_scope_state = { NOT = { is_capital = yes } }
+	}
+
+	immediate = {
+		random_interest_group = {
+			limit = {
+				law_enactment_stance = {
+					law = law_type:law_census_voting # At the least
+					value > neutral
+				}
+				is_in_government = no
+				ig_counts_as_marginal = no
+			}
+			save_scope_as = legacy_of_democracy_ig
+		}
+		capital = {
+			random_neighbouring_state = {
+				limit = { owner = ROOT }
+				save_scope_as = legacy_of_democracy_state
+			}
+		}
+		random_scope_character = {
+			limit = { is_ruler = yes }
+			save_scope_as = coup_character_leader
+		}
+		remove_variable = coup_aftermath_var
+	}
+
+	option = {
+		name = coup_aftermath_events.1.a
+		default_option = yes
+		scope:legacy_of_democracy_ig = {
+			add_modifier = {
+				name = modifier_legacy_of_democratic_rule_ig
+				days = normal_modifier_time
+			}
+		}
+		scope:legacy_of_democracy_state = {
+			add_radicals_in_state = { value = large_radicals }
+			add_modifier = {
+				name = modifier_legacy_of_democratic_rule_state
+				days = normal_modifier_time
+			}
+		}
+	}
+
+	option = {
+		name = coup_aftermath_events.1.b
+		add_modifier = {
+			name = modifier_legacy_of_democratic_rule_country
+			days = normal_modifier_time
+		}
+		scope:legacy_of_democracy_state = { add_radicals_in_state = { value = medium_radicals } }
+		capital = { add_radicals_in_state = { value = medium_radicals } }
+		capital = {
+			random_neighbouring_state = {
+				limit = { owner = ROOT }
+				add_radicals_in_state = { value = small_radicals }
+			}
+		}
+	}
+}
+
+coup_aftermath_events.2 = {
+	type = country_event
+	placement = ROOT
+
+	title = coup_aftermath_events.2.t
+	desc = coup_aftermath_events.2.d
+	flavor = coup_aftermath_events.2.f
+
+	event_image = {
+		video = "middleeast_courtroom_upheaval"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+
+	duration = 3
+
+	cooldown = { days = normal_modifier_time }
+
+	trigger = {
+		has_variable = coup_aftermath_var
+		any_interest_group = {
+			is_in_government = no
+			ig_counts_as_marginal = no
+		}
+	}
+
+	immediate = {
+		random_interest_group = {
+			limit = {
+				is_in_government = no
+				ig_counts_as_marginal = no
+			}
+			save_scope_as = harsh_contrast_ig
+		}
+		random_scope_character = {
+			limit = { is_ruler = yes }
+			save_scope_as = coup_character_leader
+		}
+		remove_variable = coup_aftermath_var
+	}
+
+	option = {
+		name = coup_aftermath_events.2.a
+		default_option = yes
+		scope:harsh_contrast_ig ?= {
+			add_modifier = {
+				name = modifier_opportunistic_allies
+				days = normal_modifier_time
+			}
+			leader = { set_ideology = ideology:ideology_moderate }
+		}
+	}
+
+	option = {
+		name = coup_aftermath_events.2.b
+		scope:harsh_contrast_ig ?= {
+			add_modifier = {
+				name = modifier_alone_in_the_cold
+				days = normal_modifier_time
+			}
+			leader = { set_ideology = ideology:ideology_reformer }
+		}
+	}
+}
+
+coup_aftermath_events.3 = {
+	type = country_event
+	placement = scope:national_discontent_state
+
+	title = coup_aftermath_events.3.t
+	desc = coup_aftermath_events.3.d
+	flavor = coup_aftermath_events.3.f
+
+	event_image = {
+		video = "africa_diplomats_negotiating"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+
+	duration = 3
+
+	cooldown = { days = normal_modifier_time }
+
+	trigger = {
+		has_variable = coup_aftermath_var
+		any_scope_state = {
+			owner = ROOT
+			any_scope_culture = {
+				ROOT = { country_average_culture_pop_acceptance = { culture = prev value < acceptance_status_5 } }
+				has_homeland = PREV
+				save_temporary_scope_as = discrim_culture
+			}
+			culture_percent_state = {
+			    target = scope:discrim_culture
+			    value >= 0.1
+			}
+		}
+		any_interest_group = {
+			law_stance = {
+				law = law_type:law_multicultural
+				value < neutral
+			}
+			ig_counts_as_marginal = no
+		}
+	}
+
+	immediate = {
+		random_scope_state = {
+			limit = {
+				any_scope_culture = {
+					ROOT = { country_average_culture_pop_acceptance = { culture = prev value < acceptance_status_5 } }
+					has_homeland = PREV
+					save_temporary_scope_as = discrim_culture
+				}
+				culture_percent_state = {
+					target = scope:discrim_culture
+					value >= 0.1
+				}
+			}
+			save_scope_as = national_discontent_state
+			random_scope_culture = {
+				limit = {
+					ROOT = { country_average_culture_pop_acceptance = { culture = prev value < acceptance_status_5 } }
+					has_homeland = PREV
+				}
+				save_scope_as = national_discontent_culture
+			}
+		}
+		random_scope_character = {
+			limit = { is_ruler = yes }
+			save_scope_as = coup_character_leader
+		}
+		remove_variable = coup_aftermath_var
+	}
+
+	option = {
+		name = coup_aftermath_events.3.a
+		default_option = yes
+		scope:national_discontent_state = {
+			add_modifier = {
+				name = modifier_national_discontent
+				days = normal_modifier_time
+			}
+			add_radicals_in_state = {
+				value = large_radicals
+				culture = scope:national_discontent_culture
+			}
+		}
+	}
+
+	option = {
+		name = coup_aftermath_events.3.b
+		random_interest_group = {
+			limit = {
+				law_stance = {
+					law = law_type:law_multicultural
+					value < neutral
+				}
+				ig_counts_as_marginal = no
+			}
+			add_modifier = {
+				name = modifier_demonstrated_weakness
+				days = normal_modifier_time
+			}
+		}
+	}
+}
+
+coup_aftermath_events.4 = {
+	type = country_event
+	placement = scope:university_state
+
+	title = coup_aftermath_events.4.t
+	desc = coup_aftermath_events.4.d
+	flavor = coup_aftermath_events.4.f
+
+	event_image = {
+		video = "middleeast_middleclass_cafe"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+
+	duration = 3
+
+	cooldown = { days = normal_modifier_time }
+
+	trigger = {
+		has_variable = coup_aftermath_var
+		ig:ig_intelligentsia ?= {
+			law_stance = {
+				law = scope:coup_desired_law.type
+				value < neutral
+			}
+			is_in_government = no
+			ig_counts_as_marginal = no
+		}
+		any_scope_state = { has_building = building_university }
+	}
+
+	immediate = {
+		ig:ig_intelligentsia ?= { save_scope_as = intelligentsia_ig }
+		random_scope_character = {
+			limit = { is_ruler = yes }
+			save_scope_as = coup_character_leader
+		}
+		random_scope_state = {
+			limit = { has_building = building_university }
+			save_scope_as = university_state
+			random_scope_building = {
+				limit = { is_building_type = building_university }
+				save_scope_as = university_state_building
+			}
+		}
+		remove_variable = coup_aftermath_var
+	}
+
+	option = {
+		name = coup_aftermath_events.4.a
+		default_option = yes
+		scope:university_state = {
+			add_radicals_in_state = {
+				pop_type = academics
+				value = medium_radicals
+			}
+			scope:university_state_building = {
+				add_modifier = {
+					name = modifier_conscripted_students_building
+					days = short_modifier_time
+				}
+			}
+		}
+	}
+
+	option = {
+		name = coup_aftermath_events.4.b
+		ig:ig_intelligentsia ?= {
+			add_modifier = {
+				name = modifier_emboldened_academia
+				days = normal_modifier_time
+			}
+		}
+		add_modifier = {
+			name = modifier_circulating_sedition
+			days = normal_modifier_time
+		}
+	}
+}

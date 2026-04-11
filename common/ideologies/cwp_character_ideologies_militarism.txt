@@ -1,0 +1,151 @@
+﻿# Militarism Ideologies: War, peace, and international posture
+# - Jingoist Leader
+# - Pacifist
+
+ideology_jingoist_leader = {
+	icon = "gfx/interface/icons/ideology_icons/ideology_leader/ideology_leader_jingoist.dds"
+
+	character_ideology = yes
+
+	lawgroup_army_model = {
+		law_mass_conscription = strongly_approve
+		law_professional_army = approve
+		law_national_militia = neutral
+		law_peasant_levies = disapprove
+	}
+
+	interest_group_leader_trigger = {
+		ideology_jingoist_leader_valid_trigger = yes
+	}
+
+	non_interest_group_leader_trigger = {
+		# Agitators should have an ideology at odds with current laws
+		NAND = {
+			has_role = agitator
+			owner = { has_law_or_variant = law_type:law_mass_conscription }
+		}
+		interest_group = {
+			ideology_jingoist_leader_valid_trigger = yes
+		}
+	}
+
+	interest_group_leader_weight = {
+		value = 100
+		
+		# less likely if issues are not relevant
+		if = {
+			limit = { owner = { has_law_or_variant = law_type:law_mass_conscription } }
+			add = -75
+		}
+		
+		# more likely if there's something to colonize nearby
+		if = {
+			limit = { any_decentralized_country = { has_overlapping_interests = ROOT.owner } }
+			add = 75
+		}
+
+		# more likely if you border a rival
+		if = {
+			limit = { owner = { any_rival_country = { any_neighbouring_state = { owner = root.owner } } } }
+			add = 50
+		}
+
+		# more likely if you're the defender in a war
+		if = {
+			limit = { 
+				owner = {
+					is_at_war = yes
+					any_scope_war = { defender_warleader = { this = ROOT.owner } }
+				}
+			}
+			add = 50
+		}
+	}
+
+	non_interest_group_leader_weight = {
+		value = 100
+	}
+}
+
+ideology_pacifist = {
+	icon = "gfx/interface/icons/ideology_icons/ideology_leader/ideology_leader_pacifist.dds"
+
+	character_ideology = yes
+
+	lawgroup_army_model = {
+		law_national_militia = approve
+		law_professional_army = disapprove
+		law_peasant_levies = disapprove
+		law_mass_conscription = disapprove
+	}
+
+	interest_group_leader_trigger = {
+		ideology_pacifist_valid_trigger = yes
+	}
+
+	non_interest_group_leader_trigger = { # No pacifist agitators
+		NOT = { has_role = agitator }
+	}
+
+	interest_group_leader_weight = {
+		value = 100
+
+		# emerges to counter powerful armed forces
+		if = {
+			limit = {
+				owner = {
+					exists = ig:ig_armed_forces
+					ig:ig_armed_forces ?= { is_powerful = yes }
+				}
+			}
+			add = 50
+		}
+
+		# less likely if issues are not relevant
+		if = {
+			limit = {
+				owner = {
+					NOR = {
+						has_law_or_variant = law_type:law_peasant_levies
+						has_law_or_variant = law_type:law_mass_conscription
+					}
+				}
+			}
+			add = -75
+		}
+
+		# more likely if a war you started isn't going well
+		if = {
+			limit = {
+				owner = {
+					is_at_war = yes
+					any_scope_war = {
+						attacker_warleader = { this = ROOT.owner }
+						has_war_support = {
+							target = root.owner
+							value < 0
+						}
+					}
+				}
+			}
+			add = 100
+		}
+		
+		# more likely with devastation in incorporated states
+		if = {
+			limit = {
+				owner = {
+					any_scope_state = {
+						is_incorporated = yes
+						devastation > 0.2
+					}
+				}
+			}
+			add = 50
+		}
+	}
+
+	non_interest_group_leader_weight = {
+		value = 100
+	}
+}
