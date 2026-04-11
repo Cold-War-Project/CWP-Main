@@ -16,7 +16,7 @@ military_travel_graphics_type = {
 	tags = {
 		<tag_name> = {
 			# [Default = always yes] Trigger to determine if entities with this tag can spawn
-            # Root scope is of type Country. Has `scope:military_formation`, and `scope:state` available. (state based on start of the route)
+			# Root scope is of type Country. Has `scope:military_formation`, and `scope:state` available. (state based on start of the route)
 			trigger = {}
 		}
 	}
@@ -30,7 +30,7 @@ military_travel_graphics_type = {
 			# [Optional] Tags that must be active for this entity to spawn. If empty, entity can always spawn
 			tags = { <tag_name_1> <tag_name_2> ... }
 
-            entity = "entity_1"			# Entity key that is specified in .asset files
+			entity = "entity_1"			# Entity key that is specified in .asset files
 			position = 0				# Position defines the order in which entities will be position, if positions are the same random entity would be picked
 			entity_length = 3.0			# Entity length is the length used for placing entities on the route
 			count = {}					# [Default = 1] Count is scripted value to determine amount of entities placed. Root scope is of type Country.  Has `scope:military_formation`, and `scope:state` available. (state based on start of route)

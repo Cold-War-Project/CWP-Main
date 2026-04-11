@@ -1,0 +1,290 @@
+﻿base_impose_law_weight= {
+	value = 0.01
+
+	# Impose law is a fairly hostile act, AIs should use it mostly when angry at a subject
+	if = {
+		limit = {
+			has_attitude = {
+				who = scope:target_country
+				attitude = domineering
+			}
+		}
+		multiply = 0.5
+	}
+
+	# Non ideological unions make less use of this
+	if = {
+		limit = { NOT = { power_bloc ?= { has_identity = identity:identity_ideological_union } } }
+		multiply = 0.5
+	}
+
+	# Less likely to do this to subjects unless LD is low
+	if = {
+		limit = {
+			scope:target_country = {
+				is_subject = yes
+				liberty_desire > 25
+			}
+		}
+		multiply = 0.5
+	}
+
+	# Shouldn't care much about meddling in really tiny countries
+	if = {
+		limit = { scope:target_country = { gdp < 100000 } }
+		multiply = 0.25
+	}
+	else_if = {
+		limit = { scope:target_country = { gdp < 250000 } }
+		multiply = 0.5
+	}
+	else_if = {
+		limit = { scope:target_country = { gdp < 500000 } }
+		multiply = 0.75
+	}
+
+	# Impact of AI strategies
+	if = {
+		limit = {
+			OR = {
+				has_strategy = ai_strategy_anti_imperialism
+				has_strategy = ai_strategy_maintain_power_balance
+			}
+		}
+		multiply = 2
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_strategy = ai_strategy_armed_isolationism
+			}
+		}
+		multiply = 0.5
+	}
+}
+
+
+wanted_army_size_script_value = {
+	# How many levels of barracks should the AI have
+	# Using this value in other strategies will function additively
+	value = 0
+
+	# To increase base army size for small countries, capped at 1 million population
+	add = {
+		value = cached_ai_incorporated_population
+		divide = 100000 # 1 level of barracks per 100k incorporated population
+		max = 10
+	}
+
+	add = {
+		value = cached_ai_incorporated_population
+		divide = 250000 # 1 level of barracks per 250k incorporated population
+	}
+
+	add = {
+		value = cached_ai_unincorporated_population
+		divide = 1000000 # 1 level of barracks per 1 million unincorporated population
+	}
+
+	# Coastal population reduces spending on army as that spending is needed for navy too
+	subtract = {
+		value = cached_ai_incorporated_coastal_population
+		divide = 1000000
+	}
+
+	subtract = {
+		value = cached_ai_unincorporated_coastal_population
+		divide = 4000000
+	}
+
+	# Extra army size from rank
+	if = {
+		limit = { country_rank = rank_value:great_power }
+		add = 25
+	}
+
+	if = {
+		limit = { country_rank = rank_value:major_power }
+		add = 10
+	}
+
+	save_temporary_value_as = pre_overseas_empire_value
+
+	# Countries with a huge overseas subject population should focus more on navy
+	subtract = {
+		value = cached_ai_overseas_subject_population
+		divide = 20000000
+		max = {
+			value = scope:pre_overseas_empire_value
+			divide = 2
+		}
+	}
+
+	max = 200 # No more than 200 from population & rank
+
+	if = {
+		limit = {
+			cached_ai_incorporated_population > 0
+			cached_ai_incorporated_coastal_population > 0
+		}
+		add = {
+			value = fixed_income
+			multiply = {
+				value = 1
+				subtract = { # Coastal population reduces spending on army as that spending is needed for navy too
+					value = cached_ai_incorporated_coastal_population
+					divide = cached_ai_incorporated_population
+					divide = 2
+				}
+			}
+			divide = 2500 # 1 level of barracks per 2.5k income
+		}
+	}
+
+	# More advanced standing armies are expensive and should be smaller relative to population
+	if = {	# Combat Unit Type - Armored Brigade & Mechanized Brigade
+		limit = { has_technology_researched = armored_warfare }
+		multiply = 0.95
+	}
+	if = {	# Combat Unit Type - Air Mobile Brigade & Air Mobile Howitzers
+		limit = { has_technology_researched = airmobile_warfare }
+		multiply = 0.95
+	}
+	if = {	# Combat Unit Type - Tactical Brigade
+		limit = { has_technology_researched = fourth_generation_warfare }
+		multiply = 0.95
+	}
+	if = {	# Combat Unit Type - Rocket Artillery
+		limit = { has_technology_researched = rocketry }
+		multiply = 0.95
+	}
+	if = {	# Combat Unit Type - Tactical Ballistic Missile Launchers
+		limit = { has_technology_researched = tactical_ballistic_weapons }
+		multiply = 0.95
+	}
+	if = {	# Combat Unit Type - Air Superiority Fighters
+		limit = { has_technology_researched = jet_engine }
+		multiply = 0.95
+	}
+	if = {	# Combat Unit Type - Fighter-Bombers
+		limit = { has_technology_researched = multi_role_jets }
+		multiply = 0.95
+	}
+	if = {	# Combat Unit Type - Stealth Aircraft
+		limit = { has_technology_researched = stealth_aircraft }
+		multiply = 0.95
+	}
+
+	if = {
+		limit = { has_law_or_variant = law_type:law_national_militia }
+		multiply = 0.33
+	}
+
+	min = {
+		value = 1
+	}
+}
+
+
+wanted_navy_size_script_value = {
+	value = 0
+
+	# 1 level of naval base per 500k coastal incorporated population
+	add = {
+		value = cached_ai_incorporated_coastal_population
+		divide = 500000
+	}
+
+	# 1 level of naval base per 2 million coastal unincorporated population
+	add = {
+		value = cached_ai_unincorporated_coastal_population
+		divide = 2000000
+	}
+
+	# 1 level of naval base per 10 million population in direct overseas subjects
+	add = {
+		value = cached_ai_overseas_subject_population
+		divide = 10000000
+	}
+
+	max = 100 # No more than 100 from population
+
+	# 1 level of naval base per 5k income, multiplied by relative incorporated coastal population to total incorporated population
+	if = {
+		limit = {
+			cached_ai_incorporated_population > 0
+			cached_ai_incorporated_coastal_population > 0
+		}
+		add = {
+			value = fixed_income
+			divide = cached_ai_incorporated_population
+			multiply = cached_ai_incorporated_coastal_population
+			divide = 5000
+		}
+	}
+
+	if = {
+		limit = { country_rank = rank_value:superpower }
+		add = 50
+	}
+	else_if = { # GPs and MPs should want to maintain a bit of a navy
+		limit = { country_rank = rank_value:great_power }
+		add = 25
+	}
+	else_if = {
+		limit = { country_rank = rank_value:major_power }
+		add = 10
+	}
+
+	# More advanced navies are expensive and should be smaller relative to population
+	if = {	# Combat Unit Type - Modernized Escorts
+		limit = { has_technology_researched = anti_submarine_rockets }
+		multiply = 0.9
+	}
+	if = {	# Combat Unit Type - Guided Missile Corvette
+		limit = { has_technology_researched = surface_raiders }
+		multiply = 0.9
+	}
+	if = {	# Combat Unit Type - Guided Missile Cruiser
+		limit = { has_technology_researched = integrated_air_defense }
+		multiply = 0.9
+	}
+	if = {	# Combat Unit Type - Aircraft Carrier
+		limit = { has_technology_researched = naval_aviation }
+		multiply = 0.9
+	}
+	if = {	# Combat Unit Type - Nuclear Supercarrier & Nuclear Submarine
+		limit = { has_technology_researched = marine_reactor }
+		multiply = 0.9
+	}
+	if = {	# Combat Unit Type - Modern Aircraft Carrier
+		limit = { has_technology_researched = modern_aircraft_carriers }
+		multiply = 0.9
+	}
+
+	# Factor in strategies
+	if = {
+		limit = {
+			OR = {
+				has_strategy = ai_strategy_colonial_expansion
+				has_strategy = ai_strategy_economic_imperialism
+			}
+		}
+		multiply = 1.15
+	}
+
+	if = {
+		limit = { has_strategy = ai_strategy_armed_isolationism }
+		multiply = 0.75
+	}
+
+	if = {
+		limit = { country_rank < rank_value:major_power }
+		multiply = 0.5
+	}
+
+	if = {
+		limit = { is_country_type = unrecognized }
+		multiply = 0.5
+	}
+}
