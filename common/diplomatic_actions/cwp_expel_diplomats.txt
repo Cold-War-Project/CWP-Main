@@ -1,0 +1,151 @@
+﻿expel_diplomats = {
+	groups= {
+		general
+	}
+
+	requires_approval = no
+	should_notify_third_parties = no
+	show_effect_in_tooltip = yes
+
+	selectable = {
+		NOT = { is_country_type = decentralized }
+		is_revolutionary = no
+	}
+
+	potential = {
+		scope:target_country = {
+			NOT = { is_country_type = decentralized }
+			is_revolutionary = no
+		}
+	}
+
+	possible = {
+		NOT = { has_war_with = scope:target_country }
+		is_revolutionary = no
+		has_diplomatic_relevance = scope:target_country
+		NOT = { has_diplomatic_pact = { who = scope:target_country type = increase_relations } }
+		NOT = { has_diplomats_expelled = scope:target_country }
+		OR = {
+			NOT = { is_subject_of = scope:target_country }
+			liberty_desire >= 75
+		}
+	}
+
+	accept_effect = {
+		change_relations = { country = scope:target_country value = -30 }
+		set_diplomats_expelled = scope:target_country
+		if = {
+			limit = {
+				scope:target_country = {
+					is_in_power_bloc = yes
+					is_power_bloc_leader = yes
+				}
+			}
+			custom_tooltip = { text = expel_diplomats_leverage_generation_tt }
+		}
+		if = {
+			limit = {
+				scope:target_country = {
+					has_diplomatic_pact = {
+						who = root
+						type = support_separatism
+					}
+				}
+			}
+			show_as_tooltip = { # this is handled in support_separatism
+				scope:target_country = {
+					remove_diplomatic_pact = {
+						country = root
+						type = support_separatism
+					}
+				}
+			}
+		}
+		if = {
+			limit = { scope:target_country = { country_rank = rank_value:superpower } }
+			change_infamy = 15
+		}
+		else_if = {
+			limit = {
+				scope:target_country = {
+					OR = {
+						country_rank = rank_value:great_power
+						country_rank = rank_value:major_power
+					}
+				}
+			}
+			change_infamy = 10
+		}
+		else_if = {
+			limit = {
+				scope:target_country = {
+					OR = {
+						country_rank = rank_value:minor_power
+						country_rank = rank_value:unrecognized_major_power
+					}
+				}
+			}
+			change_infamy = 7.5
+		}
+		else_if = {
+			limit = {
+				scope:target_country = {
+					OR = {
+						country_rank = rank_value:insignificant_power
+						country_rank = rank_value:unrecognized_regional_power
+					}
+				}
+			}
+			change_infamy = 5
+		}
+		else_if = {
+			limit = { scope:target_country = { country_rank = rank_value:unrecognized_power } }
+			change_infamy = 2.5
+		}
+	}
+
+	ai = {
+		evaluation_chance = {
+			value = 0.25
+		}
+
+		propose_score = {
+			value = 100
+		}
+
+		will_propose = {
+			scope:target_country.relations:root >= relations_threshold:cordial
+
+			OR = {
+				AND = {
+					country_rank >= rank_value:great_power
+					scope:target_country = { infamy >= infamy_threshold:pariah }
+				}
+				AND = {
+					OR = {
+						has_attitude = {
+							who = scope:target_country
+							attitude = domineering
+						}
+						has_attitude = {
+							who = scope:target_country
+							attitude = belligerent
+						}
+					}
+					scope:target_country.relations:root >= relations_threshold:cordial
+					infamy < infamy_threshold:infamous
+					OR = {
+						# Not enough to damage relations normally
+						influence < 200
+						
+						# They are countering damage relations with improve relations
+						scope:target_country = { has_diplomatic_pact = { who = root type = increase_relations } }
+
+						# They are supporting our subjects, which is almost as good as improving relations
+						scope:target_country = { has_diplomatic_pact = { who = root type = support_separatism } }
+					}
+				}
+			}
+		}
+	}
+}

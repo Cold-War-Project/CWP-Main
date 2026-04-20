@@ -18,6 +18,7 @@ law_autocracy = {
 
 	on_activate = {
 		scripted_effect_parties_disappearence = yes
+		cleanup_voting_strength_modifiers = yes
 	}
 
 	modifier = {
@@ -137,6 +138,8 @@ law_technocracy = {
 		}
 
 		scripted_effect_parties_disappearence = yes
+		cleanup_voting_strength_modifiers = yes
+
 		# add_journal_entry = { type = je_technocracy }
 	}
 
@@ -207,6 +210,7 @@ law_oligarchy = {
 
 	on_activate = {
 		scripted_effect_parties_disappearence = yes
+		cleanup_voting_strength_modifiers = yes
 	}
 
 	modifier = {
@@ -371,6 +375,7 @@ law_elder_council = {
 			activate_law = law_type:law_appointed_bureaucrats
 		}
 		scripted_effect_parties_disappearence = yes
+		cleanup_voting_strength_modifiers = yes
 	}
 
 	modifier = {
@@ -418,12 +423,27 @@ law_landed_voting = {
 		country_clergymen_voting_power_add = 50
 		country_capitalists_voting_power_add = 50
 		country_authority_add = 100
+		country_electoral_confidence_impact_mult = -0.3
 	}
 
 	can_enact = {}
 
 	on_activate = {
+		if = {
+			limit = {
+				game_date > 1946.1.1
+				country_has_voting_franchise = yes
+			}
+			initialize_electoral_confidence = yes
+		}
+
+		random_law = {
+			limit = { type = law_type:law_landed_voting }
+			save_scope_as = relevant_voting_law
+		}
+
 		scripted_effect_parties_emergence = yes
+		
 		#if = {
 		#	limit = {
 		#		has_law_or_variant = law_type:law_monarchy
@@ -508,12 +528,27 @@ law_wealth_voting = {
 		country_voting_power_base_add = 50
 		country_voting_power_wealth_threshold_add = 20
 		country_authority_add = 100
+		country_electoral_confidence_impact_mult = -0.2
 	}
 
 	can_enact = {}
 
 	on_activate = {
+		if = {
+			limit = {
+				game_date > 1946.1.1
+				country_has_voting_franchise = yes
+			}
+			initialize_electoral_confidence = yes
+		}
+
+		random_law = {
+			limit = { type = law_type:law_wealth_voting }
+			save_scope_as = relevant_voting_law
+		}
+		
 		scripted_effect_parties_emergence = yes
+		
 		#if = {
 		#	limit = {
 		#		has_law_or_variant = law_type:law_monarchy
@@ -592,12 +627,27 @@ law_census_voting = {
 		country_voting_power_wealth_threshold_add = 10
 		country_voting_power_from_literacy_add = 50
 		country_authority_add = 50
+		country_electoral_confidence_impact_mult = -0.1
 	}
 
 	can_enact = {}
 
 	on_activate = {
+		if = {
+			limit = {
+				game_date > 1946.1.1
+				country_has_voting_franchise = yes
+			}
+			initialize_electoral_confidence = yes
+		}
+
+		random_law = {
+			limit = { type = law_type:law_census_voting }
+			save_scope_as = relevant_voting_law
+		}
+
 		scripted_effect_parties_emergence = yes
+		
 		#if = {
 		#	limit = {
 		#		has_law_or_variant = law_type:law_monarchy
@@ -678,7 +728,21 @@ law_universal_suffrage = {
 	can_enact = {}
 
 	on_activate = {
+		if = {
+			limit = {
+				game_date > 1946.1.1
+				country_has_voting_franchise = yes
+			}
+			initialize_electoral_confidence = yes
+		}
+
+		random_law = {
+			limit = { type = law_type:law_universal_suffrage }
+			save_scope_as = relevant_voting_law
+		}
+		
 		scripted_effect_parties_emergence = yes
+
 		#if = {
 		#	limit = {
 		#		has_law_or_variant = law_type:law_monarchy
@@ -760,6 +824,7 @@ law_anarchy = {
 
 	on_activate = {
 		scripted_effect_parties_disappearence = yes
+		cleanup_voting_strength_modifiers = yes
 	}
 
 	ai_will_do = {
@@ -840,6 +905,7 @@ law_single_party_state = {
 		country_authority_add = 250
 		country_voting_power_base_add = 50
 		interest_group_in_government_attraction_mult = 0.20
+		country_electoral_confidence_impact_mult = -1.0
 	}
 
 	on_activate = {
@@ -850,9 +916,7 @@ law_single_party_state = {
 			every_interest_group = {
 				limit = {
 					is_in_government = yes
-					NOT = { #Removes all IGs from government that aren't in your party
-						has_party = yes
-					}
+					NOT = { has_party = yes }	# Removes all IGs from government that aren't in your party
 				}
 				remove_ruling_interest_group = yes
 			}
@@ -876,6 +940,14 @@ law_single_party_state = {
 		#		add_journal_entry = { type = je_king_in_parliament }
 		#	}
 		#}
+
+		if = {
+			limit = {
+				game_date > 1946.1.1
+				country_has_voting_franchise = yes
+			}
+			initialize_electoral_confidence = yes
+		}
 	}
 
 	on_deactivate = {
@@ -886,9 +958,7 @@ law_single_party_state = {
 	ai_will_do = {
 		exists = ruler
 		ruler = {
-			interest_group = {
-				has_party = yes
-			}
+			interest_group = { has_party = yes }
 			law_stance = {
 				law = law_type:law_single_party_state
 				value > neutral

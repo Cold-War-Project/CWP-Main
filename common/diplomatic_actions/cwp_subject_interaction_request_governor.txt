@@ -1,0 +1,114 @@
+﻿da_request_colonial_governor = {
+	groups= { subject }
+
+	requires_approval = no
+	should_notify_third_parties = yes
+	show_effect_in_tooltip = yes
+
+	texture = "gfx/interface/icons/diplomatic_action_icons/da_appoint_colonial_governor.dds" # Same as appoint governor (intentional)
+	confirmation_sound = "event:/SFX/UI/MapInteraction/SubjectInteractions/diplomatic_action_subjects_04_appoint_governor_benign" # Same as appoint governor (intentional)
+
+	potential = {
+		NOT = { has_variable = colonial_governor }
+		scope:target_country = { NOT = { is_diplomatic_play_enemy_of = root } }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = "APPOINT_COLONIAL_GOVERNOR_ON_COOLDOWN"
+			NOR = {
+				has_variable = colonial_governor
+				has_variable = colonial_governor_timed
+			}
+		}
+		
+		is_revolutionary = no
+		
+		has_law = law_type:law_colonial_administration
+		
+		scope:target_country = { is_revolutionary = no }
+		
+		OR = {
+			AND = {
+				is_country_type = unrecognized
+				scope:target_country = {
+					is_country_type = recognized
+					country_is_colonial_or_company = yes
+				}
+			}
+			AND = {
+				OR = {
+					is_country_type = recognized
+					country_is_colonial_or_company = yes
+				}
+				OR = {
+					is_subject_type = subject_type_chartered_company
+					is_subject_type = subject_type_colony
+					is_subject_type = subject_type_puppet
+					is_subject_type = subject_type_dominion
+					is_subject_type = subject_type_vassal
+					is_subject_type = subject_type_crown_land
+				}
+				scope:target_country = {
+					OR = {
+						is_country_type = recognized
+						country_is_colonial_or_company = yes
+					}
+				}
+			}
+			AND = {
+				is_country_type = unrecognized
+				OR = {
+					is_subject_type = subject_type_chartered_company
+					is_subject_type = subject_type_colony
+					is_subject_type = subject_type_puppet
+					is_subject_type = subject_type_dominion
+					is_subject_type = subject_type_vassal
+					is_subject_type = subject_type_crown_land
+				}
+				scope:target_country = { is_country_type = unrecognized }
+			}
+		}
+	}
+
+	accept_effect = {
+		set_variable = colonial_governor
+		
+		set_variable = {
+			name = colonial_governor_timed
+			days = normal_modifier_time
+		}
+		
+		trigger_event = { id = subject_interactions_colonial_governor.2 popup = yes }
+		
+		add_modifier = {
+			name = cwp_modifier_requested_colonial_governor
+			days = normal_modifier_time
+		}
+		
+		save_scope_as = source_country
+		
+		scope:target_country = { post_notification = cwp_requested_new_governor_notification }
+	}
+
+	ai = {
+		evaluation_chance = {
+			value = 0.25
+		}
+
+		propose_score = {
+			value = 10
+		}
+
+		will_propose = {
+			"ai_ideological_opinion(scope:target_country)" <= -25
+			OR = {
+				scope:target_country = { liberty_desire < define:NDiplomacy|WAR_GOAL_INFAMY_LOW_LIBERTY_DESIRE_THRESHOLD }
+				has_attitude = {
+					who = scope:target_country
+					attitude = domineering
+				}
+			}
+		}
+	}
+}
