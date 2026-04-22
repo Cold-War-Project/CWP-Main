@@ -373,3 +373,176 @@ clean_up_exile_character_roles = { # scope: character
 		remove_character_role = admiral
 	}
 }
+
+run_colonial_governor_cycle = { # Run in character scope
+	save_scope_as = current_governor
+	owner = { # Saving scopes for the sake of the templates
+		save_colonial_governor_generation_scopes = yes
+	}
+	if = {
+		limit = {
+			has_variable = colonial_governor_term
+		}
+		random_list = { # Average term length of 4 years
+			4 = {
+				change_variable = { name = colonial_governor_term add = 1 }
+			}
+			0 = {
+				modifier = {
+					add = {
+						value = var:colonial_governor_term
+					}
+					min = 0
+				}
+				owner = {
+					set_variable = { name = hide_ruler_change_notification days = 7 }
+					post_notification = colonial_governor_cycle
+					generate_governor_of_same_type = yes
+				}
+			}
+		}
+	}
+	else = {
+		set_variable = { name = colonial_governor_term value = 1 } # Just in case something strange has happened
+	}
+}
+
+save_colonial_governor_generation_scopes = { # Run in an owner scope
+	save_scope_as = colony_scope
+	random_primary_culture = {
+		save_scope_as = primary_culture_scope
+	}
+	if = {
+		limit = { # BIC governors are company men
+			c:BIC ?= this
+		}
+		ig:ig_industrialists ?= {
+			save_scope_as = business_ig_scope
+			save_scope_as = plantation_ig_scope
+			save_scope_as = extraction_ig_scope
+		}
+	}
+	else = {
+		ig:ig_landowners ?= {
+			save_scope_as = plantation_ig_scope
+		}
+		ig:ig_petty_bourgeoisie ?= {
+			save_scope_as = business_ig_scope
+		}
+		ig:ig_industrialists ?= {
+			save_scope_as = extraction_ig_scope
+		}
+	}
+	overlord = {
+		random_primary_culture = {
+			save_scope_as = overlord_primary_culture
+		}
+		religion = {
+			save_scope_as = overlord_religion
+		}
+	}
+}
+
+generate_governor_of_same_type = { # Run in country scope
+	if = {
+		limit = {
+			scope:current_governor ?= {
+				has_trait = special_character_colonial_plantation
+			}
+		}
+		scope:current_governor ?= {
+			remove_variable = colonial_governor_term
+		}
+		create_character = {
+			template = character_template_colonial_governor_plantation
+			on_created = {
+				set_character_as_ruler = yes
+				remove_character_role = general
+				set_variable = { name = colonial_governor_term value = 0 }
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			scope:current_governor ?= {
+				has_trait = special_character_colonial_local
+			}
+		}
+		scope:current_governor ?= {
+			remove_variable = colonial_governor_term
+		}
+		create_character = {
+			template = character_template_colonial_governor_local
+			on_created = {
+				set_character_as_ruler = yes
+				remove_character_role = general
+				set_variable = { name = colonial_governor_term value = 0 }
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			scope:current_governor ?= {
+				has_trait = special_character_colonial_extraction
+			}
+		}
+		scope:current_governor ?= {
+			remove_variable = colonial_governor_term
+		}
+		create_character = {
+			template = character_template_colonial_governor_extraction
+			on_created = {
+				set_character_as_ruler = yes
+				remove_character_role = general
+				set_variable = { name = colonial_governor_term value = 0 }
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			scope:current_governor ?= {
+				has_trait = special_character_colonial_business
+			}
+		}
+		scope:current_governor ?= {
+			remove_variable = colonial_governor_term
+		}
+		create_character = {
+			template = character_template_colonial_governor_business
+			on_created = {
+				set_character_as_ruler = yes
+				remove_character_role = general
+				set_variable = { name = colonial_governor_term value = 0 }
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			scope:current_governor ?= {
+				has_trait = special_character_colonial_military
+			}
+		}
+		scope:current_governor ?= {
+			remove_variable = colonial_governor_term
+		}
+		create_character = {
+			template = character_template_colonial_governor_military
+			on_created = {
+				set_character_as_ruler = yes
+				set_variable = { name = colonial_governor_term value = 0 }
+			}
+		}
+	}
+	else = { # Fallback for edge cases
+		scope:current_governor ?= {
+			remove_variable = colonial_governor_term
+		}
+		create_character = {
+			template = character_template_colonial_governor_military
+			on_created = {
+				set_character_as_ruler = yes
+				set_variable = { name = colonial_governor_term value = 0 }
+			}
+		}
+	}
+}
