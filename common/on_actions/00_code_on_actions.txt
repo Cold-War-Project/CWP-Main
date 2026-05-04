@@ -140,6 +140,7 @@ on_yearly_pulse_country = {
 
 	on_actions = { # delay ensures events won't fire simultaneously
 		on_memento_mori # IG leader death
+		on_yearly_events_politics
 	}
 }
 
@@ -782,25 +783,19 @@ on_treaty_article_removed = {
 # Root = Releasing Country
 # scope:target = Released Country
 on_country_released_as_independent = {
-	effect = {
-		scope:target = { set_variable = { name = newly_released_country days = 90 } } # Used for the Trialist Manifesto
-	}
+	effect = { }
 }
 
 # Root = Releasing Country
 # scope:target = Released Country
 on_country_released_as_own_subject = {
-	effect = {
-		scope:target = { set_variable = { name = newly_released_country days = 90 } } # Used for the Trialist Manifesto at the moment
-	}
+	effect = { }
 }
 
 # Root = Releasing Country
 # scope:target = Released Country
 on_country_released_as_company_subject = {
 	effect = {
-		scope:target = { set_variable = { name = newly_released_country days = 90 } } # Used for the Trialist Manifesto at the moment
-
 		activate_law = law_type:law_colonial_administration
 		activate_law = law_type:law_oligarchy
 		activate_law = law_type:law_subjecthood
@@ -820,9 +815,7 @@ on_country_released_as_company_subject = {
 # Root = Releasing Country
 # scope:target = Released Country
 on_country_released_as_overlord_subject = {
-	effect = {
-		scope:target = { set_variable = { name = newly_released_country days = 90 } } # Used for the Trialist Manifesto at the moment
-	}
+	effect = { }
 }
 
 # Root = Country
@@ -2189,18 +2182,58 @@ on_stop_supporting_unification = {
 }
 
 # Root = Country
-# scope:region - the sea region where the raid happened
-on_enemy_convoys_raided = {
+# scope:region - the strategic region where the raid happened
+# scope:attacker_commander - the raiding commander
+# scope:attacker - the raiding country
+# scope:defender_commander - the raided commander
+# scope:defender - the raided country
+# scope:num_sunk_ships - the number of sunk supply ships
+# scope:battle - the naval battle
+on_enemy_supply_ships_raided = {
 	effect = {
-		post_notification = enemy_convoys_raided
+		post_notification = enemy_supply_ships_raided
 	}
 }
 
 # Root = Country
-# scope:region - the sea region where the raid happened
-on_our_convoys_raided = {
+# scope:region - the strategic region where the raid happened
+# scope:attacker_commander - the raiding commander
+# scope:attacker - the raiding country
+# scope:defender_commander - the raided commander
+# scope:defender - the raided country
+# scope:num_sunk_ships - the number of sunk supply ships
+# scope:battle - the naval battle
+on_our_supply_ships_raided = {
 	effect = {
-		post_notification = our_convoys_raided
+		post_notification = our_supply_ships_raided
+	}
+}
+
+# Root = Country
+# scope:region - the strategic region where the raid happened
+# scope:attacker_commander - the raiding commander
+# scope:attacker - the raiding country
+# scope:defender_commander - the intercepting commander
+# scope:defender - the intercepting country
+# scope:num_sunk_ships - the number of sunk supply ships
+# scope:battle - the naval battle
+on_our_supply_ship_raiders_intercepted = {
+	effect = {
+		post_notification = our_supply_ship_raiders_intercepted
+	}
+}
+
+# Root = Country
+# scope:region - the strategic region where the raid happened
+# scope:attacker_commander - the raiding commander
+# scope:attacker - the raiding country
+# scope:defender_commander - the intercepting commander
+# scope:defender - the intercepting country
+# scope:num_sunk_ships - the number of sunk supply ships
+# scope:battle - the naval battle
+on_enemy_supply_ship_raiders_intercepted = {
+	effect = {
+		post_notification = enemy_supply_ship_raiders_intercepted
 	}
 }
 
@@ -2388,6 +2421,13 @@ on_military_formation_created = {
 	effect = { }
 }
 
+# Root = Military Formation
+on_fleet_destroyed = {
+	effect = {
+		post_notification = fleet_destroyed
+	}
+}
+
 # Root = Country
 # scope:negotiating_interest_group is the selected interest_group
 # Add popup = yes within each event here to ensure they popup.
@@ -2420,7 +2460,54 @@ on_national_awakening_started = {
 }
 
 # Root = Country
+# scope:strait is the strait in question
+# TODO: PRCAL-41459 Straits Add the access level as event targets
+on_strait_access_setting_changed = {
+}
+
+# Root = Country
 # scope:amendment = amendment being repealed
 on_amendment_repealed = {
 	effect = {}
+}
+
+# Root = Invader Country
+# scope:invasion = the invasion
+# scope:target_state = the invaded state
+# scope:target_country = the defender country
+on_invasion_succeeded = {
+	effect = {
+		if = {
+			limit = {
+				scope:invasion = {
+					is_naval_invasion = yes
+					invasion_has_marines = yes
+				}
+				scope:target_state = {
+					is_capital = yes
+				}
+			}
+			set_variable = has_taken_enemy_capital_with_marines
+		}
+	}
+}
+
+# Root = Owner Country
+# scope:ship = the newly constructed ship
+# scope:fleet = the fleet the ship was added to
+on_ship_constructed = {
+	effect = {
+		scope:ship = {
+			if = {
+				limit = {
+					is_ship_type = ship_type:ship_type_monitor
+					NOT = { has_global_variable = first_monitor_built }
+				}
+				set_global_variable = first_monitor_built
+				ROOT = {
+					set_variable = son_of_varmland_var
+				}
+			}
+		}
+	}
 }
