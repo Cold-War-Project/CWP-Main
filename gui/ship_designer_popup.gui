@@ -1,0 +1,1288 @@
+
+ship_designer_popup_type = {
+	name = ship_designer_popup
+}
+
+types ship_designer_popup_types
+{
+	type ship_designer_popup_type = default_popup_two_lines
+	{
+		blockoverride "window_header_name"
+		{
+			text = "SHIP_DESIGNER_POPUP_TITLE"
+		}
+
+		blockoverride "second_text" {
+			text = "SHIP_DESIGNER_POPUP_SUBTITLE"
+		}
+
+		blockoverride "header_close_button_visibility"
+		{
+			visible = yes
+		}
+
+		blockoverride "header_close_button"
+		{
+			visible = yes
+			onclick = "[PopupManager.HideShipDesignerPopup]"
+		}
+
+		blockoverride "behind_header" {
+			icon = {
+				parentanchor = hcenter
+				size = { 663 103 }
+				position = { 0 -85}
+				texture = "gfx/interface/ship_designer/ship_designer_popup_frame_decoration.dds"
+
+			}
+		}
+
+		blockoverride "content"
+		{
+			flowcontainer = {
+				direction = vertical
+				resizeparent = yes
+				margin_top = 85
+				margin_bottom = 25
+				margin_left = 20
+				margin_right = 20
+				datacontext = "[ShipDesignerPopup.GetCurrentShipType]"
+
+				state = {
+					name = _show
+					using = viewport_sound_parameter_open
+					using = ship_designer_panel_open
+				}
+
+				state = {
+					name = _hide
+					using = viewport_sound_parameter_close
+				}
+
+				flowcontainer = {
+					background = {
+						texture = "gfx/interface/illustrations/war/defeat_navy.dds"
+						using = top_illu_properties
+						alpha = 0.4
+					}
+
+					scrollarea = {
+						scrollbaralign_vertical = right
+						size = { 320 700 }
+						scrollbarpolicy_horizontal = always_off
+
+						scrollbar_vertical = {
+							using = vertical_scrollbar
+						}
+
+						scrollwidget = {
+
+							flowcontainer = {
+								parentanchor = hcenter
+								direction = vertical
+
+								flowcontainer = {
+									direction = vertical
+									spacing = 12
+
+									flowcontainer = {
+										parentanchor = hcenter
+										margin_top = 2
+										direction = vertical
+										spacing = 0
+										datamodel = "[ShipDesignerPopup.GetModificationSlots]"
+
+										item = {
+											flowcontainer = {
+											modification_slot = {}
+											}
+										}
+									}
+
+									flowcontainer = {
+										direction = vertical
+										margin_top = 0
+										visible = "[Not(IsDataModelEmpty(ShipDesignerPopup.GetUtilityModificationSlots))]"
+
+										flowcontainer = {
+											direction = vertical
+											margin = { 5 0 }
+											margin_bottom = 5
+											spacing = 0
+
+											background = {
+												using = entry_bg_fancy_dark
+												alpha = 0.4
+											}
+
+											widget = {
+												size = { 300 34 }
+
+												background = {
+													using = default_header_bg
+													using = entry_bg_mask_top
+													margin = { 1 0 }
+													margin_top = -2
+												}
+
+												textbox = {
+													default_format = "#header"
+													parentanchor = vcenter
+													margin = { 7 0 }
+													autoresize = yes
+													align = nobaseline
+													text = "concept_ship_utility_modifications_short"
+												}
+											}
+
+											flowcontainer = {
+												margin = { 0 5 }
+												direction = vertical
+												parentanchor = hcenter
+												spacing = 5
+												datamodel = "[ShipDesignerPopup.GetUtilityModificationSlots]"
+
+												item = {
+													flowcontainer = {
+														direction = vertical
+
+														utility_modification_slot_button = {
+															visible = "[ShipDesignerModSlot.HasSelection]"
+															datacontext = "[ShipDesignerModSlot.GetSelectedModification]"
+															using = tooltip_ne
+
+															tooltipwidget = {
+																FancyTooltip_ShipModificationType = {
+																	blockoverride "tooltip_content_before" {
+																		custom_tooltip_textbox_with_empty_line = {
+																			text = "CURRENTLY_SELECTED"
+																		}
+																	}
+																}
+															}
+														}
+
+														utility_modification_slot_button = {
+															visible = "[Not(ShipDesignerModSlot.HasSelection)]"
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+
+					flowcontainer = {
+						direction = vertical
+
+
+						flowcontainer = {
+							spacing = 1
+
+							#Ship window
+							flowcontainer = {
+								direction = vertical
+
+
+								flowcontainer = {
+									direction = vertical
+									margin = { 2 2 }
+
+
+
+									ship_viewer = {
+										size = { 700 640 }
+										datacontext = "[ShipDesignerPopup.GetShipViewer]"
+
+										console_button = {
+											visible = "[InDebugMode]"
+											parentanchor = left
+											position = { 40 120 }
+											raw_text = "Entity States"
+											onclick = "[ExecuteConsoleCommand('gui.CreateDockable gui/debug_menues.gui ship_viewer_entity_states_from_ship_designer')]"
+										}
+
+										console_button = {
+											visible = "[InDebugMode]"
+											parentanchor = left
+											position = { 40 160 }
+											raw_text = "Free Camera"
+											onclick = "[ExecuteConsoleCommand('ShipViewer.FreeCamera')]"
+										}
+
+										flowcontainer = {
+											visible = "[GreaterThan_int32(ShipDesignerPopup.GetNumGraphicsTypesAvailable, '(int32)1')]"
+											position = { 190 20 }
+
+
+											button = {
+												size = { 40 40 }
+												texture = "gfx/interface/buttons/round_button_small_wood.dds"
+												onclick = "[RightClickMenuManager.ToggleShipDesignerSkinsMenu( ShipDesignerPopup.AccessSelf, PdxGuiWidget.AccessSelf )]"
+												tooltip = "SHIP_DESIGNER_SKINS_BUTTON_TOOLTIP"
+												using = tooltip_ne
+
+													icon = {
+														size = { 24	24 }
+														parentanchor = center
+														texture = "gfx/interface/icons/military_icons/navy_icons/ship_designer_icons/skins.dds"
+													}
+											}
+										}
+
+										flowcontainer = {
+											position = { 20 20 }
+											direction = vertical
+
+											background = {
+												using = entry_bg_simple
+											}
+
+											background = {
+												using = dark_area
+												using = simple_frame_mask
+												color = { .0 .0 .0 1 }
+												alpha = 0.7
+											}
+
+											textbox = {
+												parentanchor = hcenter
+												autoresize = yes
+												margin = { 10 5 }
+												margin_top = 10
+												align = nobaseline
+												using = elide_fontsize_min
+												max_width = 170
+												text = "[ShipType.GetName]"
+											}
+
+											button = {
+												size = { 170 48 }
+												using = default_button
+												onclick = "[RightClickMenuManager.ToggleShipDesignerSelectShipTypeMenu( ShipDesignerPopup.AccessSelf, PdxGuiWidget.AccessSelf )]"
+												tooltip = "SHIP_DESIGNER_SELECT_SHIP_TYPE_BUTTON"
+
+												ship_type_silhouette = {
+													parentanchor = center
+												}
+											}
+										}
+
+										### Stat bars
+										ship_designer_bars_flowcontainer = {
+											datacontext = "[ShipDesignerPopup.GetTemplate.GetModifier]"
+											parentanchor = top|right
+											position = { -10 10 }
+										}
+
+										flowcontainer = {
+											parentanchor = bottom|hcenter
+											direction = vertical
+											spacing = 2
+											margin = { 20 20 }
+
+											# Set a custom name
+											editbox = {
+												name = "ship_template_name_edit"
+												parentanchor = right
+												maxcharacters = 17
+												size = { 200 40 }
+												margin_left = 10
+												alwaystransparent = no
+												focuspolicy = click
+												focus_on_visible = no
+												align = nobaseline
+												text = "[ShipDesignerPopup.GetChosenName]"
+												ontextedited = "[ShipDesignerPopup.OnEditName]"
+
+												background = {
+													using = text_edit_bg
+													alpha = 1
+												}
+
+												textbox = {
+													visible = "[StringIsEmpty(ShipDesignerPopup.GetChosenName)]"
+													parentanchor = vcenter
+													align = nobaseline
+													position = { 10 0 }
+													autoresize = yes
+													default_format = "#title"
+													text = "SHIP_DESIGNER_POPUP_TITLE"
+												}
+											}
+										}
+
+										icon = {
+											size = { 100% 100% }
+											alwaystransparent = yes
+											texture = "gfx/interface/navy/navy_bg_frame.dds"
+											spriteType = Corneredtiled
+
+											spriteborder_left = 200
+											spriteborder_right = 60
+											spriteborder_top = 170
+											spriteborder_bottom = 180
+
+											texture_density = 2
+										}
+									}
+								}
+							}
+
+
+							### Stats and Graph
+							flowcontainer = {
+								direction = vertical
+								spacing = 1
+
+								ship_designer_stats_list_flowcontainer = {
+									datacontext = "[ShipDesignerPopup.GetTemplate]"
+								}
+
+								background = {
+									visible = no
+									texture = "gfx/interface/illustrations/war/victory_navy.dds"
+									using = top_illu_properties
+									alpha = 0.2
+								}
+
+								flowcontainer = {
+									parentanchor = hcenter
+									direction = vertical
+
+
+									widget = {
+										size = { 330 220 }
+										parentanchor = hcenter
+
+										background = {
+											using = dark_area
+											alpha = 0.2
+											margin = { 0 0 }
+										}
+
+										background = {
+											texture = "gfx/interface/ship_designer/graph_background.dds"
+											spriteType = Corneredstretched
+											spriteborder = { 1 1 }
+											texture_density = 2
+											margin = { 1 1 }
+											alpha = 1
+
+											modify_texture = {
+												texture = "gfx/interface/backgrounds/default_bg_shading.dds"
+												spriteType = Corneredstretched
+												spriteborder = { 0 0 }
+												blend_mode = overlay
+												alpha = 0.2
+											}
+										}
+
+										widget = {
+											name = "cost_curve_container"
+											size = { 280 200 }
+											parentanchor = hcenter|bottom
+											allow_outside = yes
+
+											plotline = {
+												parentanchor = center
+												size = { 100% 100% }
+												using = plot_line
+												width = 2
+												color = { .8 .6 .3 0.8 }
+												plotpoints = "[ShipDesignerPopup.GetCostCurve]"
+											}
+
+											datamodel = "[ShipDesignerPopup.GetCostPoints]"
+											item = {
+												container = {
+													tooltip = SHIP_DESIGNER_COST_POINT_TOOLTIP
+													allow_outside = yes
+													using = tooltip_nw
+													widgetanchor = center
+													position = "[ShipCostPoint.GetPosition]"
+
+													icon = {
+														size = { 20 20 }
+														parentanchor = center
+														visible = "[ShipCostPoint.IsIncluded]"
+														block "texture" {
+															texture = "gfx/interface/navy/graph_dot.dds"
+														}
+													}
+
+													icon = {
+														size = { 20 20 }
+														parentanchor = center
+														visible = "[Not(ShipCostPoint.IsIncluded)]"
+														block "texture" {
+															texture = "gfx/interface/navy/graph_dot_dark.dds"
+														}
+													}
+
+													icon = {
+														size = { 46 46  }
+														parentanchor = center
+														visible = "[ShipCostPoint.IsCurrent]"
+														block "texture" {
+															texture = "gfx/interface/navy/graph_highlight.dds"
+														}
+													}
+
+													icon = {
+														size = { 32 32  }
+														parentanchor = center
+														visible = "[ShipCostPoint.IsCurrent]"
+														block "texture" {
+															texture = "gfx/interface/navy/graph_dot_highlighted.dds"
+														}
+													}
+												}
+											}
+										}
+
+										textbox = {
+											parentanchor = hcenter|bottom
+											allow_outside = yes
+
+											plotline = {
+												parentanchor = center
+												size = { 100% 100% }
+												using = plot_line
+												width = 2
+												color = { .9 .9 .9 1.0 }
+												plotpoints = "[ShipDesignerPopup.GetCostCurve]"
+											}
+										}
+									}
+								}
+
+								flowcontainer = {
+									parentanchor = hcenter
+									datacontext = "[ShipDesignerPopup.GetTemplate]"
+
+									### Predicted Construction Cost
+									ship_designer_grid_stat = {
+										blockoverride "tooltip" {
+											tooltip = "SHIP_TEMPLATE_CONSTRUCTION_COST_TOOLTIP"
+										}
+
+										blockoverride "value" {
+											text = "SHIP_TEMPLATE_CONSTRUCTION_COST_VALUE"
+										}
+									}
+
+									### Maintenance Cost
+									ship_designer_grid_stat = {
+										blockoverride "tooltip" {
+											tooltip = "SHIP_TEMPLATE_MAINTENANCE_COST_TOOLTIP"
+										}
+
+										blockoverride "texture" {
+											texture = "gfx/interface/icons/generic_icons/money.dds"
+										}
+
+										blockoverride "label" {
+											text = "SHIP_MAINTENANCE_LABEL"
+										}
+
+										blockoverride "value" {
+											text = "SHIP_MAINTENANCE_VALUE"
+										}
+									}
+								}
+							}
+						}
+
+						widget = {
+							size = { 5 5 }
+						}
+
+						flowcontainer = {
+							spacing = 15
+
+							container = {
+								minimumsize = { 700 80 }
+
+								textbox = {
+									parentanchor = center
+									maximumsize = { 500 80 }
+									align = nobaseline
+									autoresize = yes
+									multiline = yes
+									using = elide_fontsize_min
+									text = "[ShipDesignerPopup.GetCurrentShipType.GetDescription]"
+								}
+							}
+
+							flowcontainer = {
+								datacontext = "[ShipDesignerPopup.GetTemplate]"
+								parentanchor = vcenter
+								direction = vertical
+								margin = { 3 0 }
+								spacing = 5
+
+								flowcontainer = {
+									parentanchor = hcenter
+									spacing = 20
+
+									# Construction cost in goods
+									textbox = {
+										parentanchor = vcenter
+										autoresize = yes
+										align = nobaseline
+										text = "SHIP_TEMPLATE_CONSTRUCTION_GOODS_COST"
+										using = fontsize_large
+										tooltip = "SHIP_TEMPLATE_CONSTRUCTION_GOODS_COST_TOOLTIP"
+									}
+
+									flowcontainer = {
+										visible = "[NotZero(AccessPlayer.GetShipList.GetNumShipsOfTemplate(ShipTemplate.Self))]"
+										parentanchor = vcenter
+										spacing = 5
+
+										textbox = {
+											parentanchor = vcenter
+											autoresize = yes
+											align = nobaseline
+											using = elide_fontsize_min
+											max_width = 240
+											text = "SHIP_TEMPLATE_RETROFIT"
+										}
+
+										checkbutton = {
+											using = check_button
+											size = { 24 24 }
+											onclick = "[ShipDesignerPopup.ToggleRetrofit]"
+											checked = "[ShipDesignerPopup.WillRetrofit]"
+											tooltip = "SHIP_DESIGNER_RETROFIT_TOOLTIP"
+										}
+									}
+								}
+
+								widget = {
+									size = { 290 32 }
+									visible = no
+
+									# Construction cost in goods
+									textbox = {
+										parentanchor = center
+										autoresize = yes
+										align = nobaseline
+										text = "SHIP_TEMPLATE_CONSTRUCTION_GOODS_COST"
+										using = fontsize_large
+										tooltip = "SHIP_TEMPLATE_CONSTRUCTION_GOODS_COST_TOOLTIP"
+									}
+
+									flowcontainer = {
+										visible = "[NotZero(AccessPlayer.GetShipList.GetNumShipsOfTemplate(ShipTemplate.Self))]"
+										parentanchor = right|vcenter
+										spacing = 5
+
+										textbox = {
+											parentanchor = vcenter
+											autoresize = yes
+											align = nobaseline
+											using = elide_fontsize_min
+											max_width = 240
+											text = "SHIP_TEMPLATE_RETROFIT"
+										}
+
+										checkbutton = {
+											using = check_button
+											size = { 24 24 }
+											onclick = "[ShipDesignerPopup.ToggleRetrofit]"
+											checked = "[ShipDesignerPopup.WillRetrofit]"
+											tooltip = "SHIP_DESIGNER_RETROFIT_TOOLTIP"
+										}
+									}
+								}
+
+								# Confirm button
+								button = {
+									visible = "[ShipDesignerPopup.IsCreating]"
+									name = "confirm_create"
+									size = { 300 50 }
+									using = default_button_primary_action
+									using = fontsize_large
+									using = ship_designer_template_save
+									input_action = "confirm"
+									tooltip = "SHIP_DESIGNER_CREATE_TEMPLATE_TOOLTIP"
+									enabled = "[IsValid( ShipDesignerPopup.CreateTemplate)]"
+									onclick = "[Execute( ShipDesignerPopup.CreateTemplate )]"
+									onclick = "[PopupManager.HideShipDesignerPopup]"
+
+									flowcontainer = {
+										parentanchor = center
+
+										textbox = {
+											parentanchor = vcenter
+											autoresize = yes
+											align = hcenter|nobaseline
+											text = "SHIP_DESIGNER_CREATE_TEMPLATE"
+										}
+									}
+								}
+
+								flowcontainer = {
+									visible = "[ShipDesignerPopup.IsEditing]"
+									direction = vertical
+
+									button = {
+										name = "confirm_edit"
+										size = { 320 50 }
+										using = default_button_primary_action
+										using = fontsize_large
+										using = ship_designer_template_save
+										input_action = "confirm"
+										tooltip = "SHIP_DESIGNER_EDIT_TEMPLATE_TOOLTIP"
+										enabled = "[IsValid( ShipDesignerPopup.EditTemplate)]"
+										onclick = "[Execute( ShipDesignerPopup.EditTemplate )]"
+										onclick = "[PopupManager.HideShipDesignerPopup]"
+
+										flowcontainer = {
+											parentanchor = center
+
+											textbox = {
+												parentanchor = vcenter
+												autoresize = yes
+												align = hcenter|nobaseline
+												text = "SHIP_DESIGNER_EDIT_TEMPLATE"
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+
+	type ship_designer_grid_stat = widget {
+		size = { 165 65 }
+		using = tooltip_se
+
+		block "background" {
+			background = {
+				using = dark_area_rounded
+				texture = "gfx/interface/buttons/default_button_frame.dds"
+			}
+		}
+
+		block "tooltip" {
+		}
+
+		flowcontainer = {
+			parentanchor = vcenter
+			margin = { 20 5 }
+			spacing = 5
+
+			flowcontainer = {
+				parentanchor = vcenter
+				direction = vertical
+
+				textbox = {
+					autoresize = yes
+					align = nobaseline
+					max_width = 140
+					using = elide_fontsize_min
+
+					block "label" {
+						raw_text = "SHIP_CONSTRUCTION_SHORT_CONCEPT"
+					}
+				}
+
+				flowcontainer = {
+					icon = {
+						size = { 26 26 }
+
+						block "texture" {
+							texture = "gfx/interface/icons/state_status_icons/ship_construction.dds"
+						}
+					}
+
+					textbox = {
+						autoresize = yes
+						align = nobaseline
+						max_width = 100
+						using = fontsize_large
+						using = elide_fontsize_min
+						default_format = "#v"
+
+						block "value" {
+						}
+					}
+				}
+			}
+		}
+	}
+
+	type ship_designer_bars_flowcontainer = flowcontainer {
+		margin = { 10 5 }
+		parentanchor = hcenter
+
+		military_formation_icon_and_bars = {
+			size = { 200 80 }
+
+			blockoverride "first_bar_size" {
+				size = { 200 25 }
+			}
+
+			blockoverride "second_bar_size" {
+				size = { 200 18 }
+			}
+
+			blockoverride "third_bar_size" {
+				size = { 200 18 }
+			}
+
+			blockoverride "datacontext" {}
+
+			blockoverride "first_bar_tooltip" {
+				tooltip = "[Modifier.GetShipHitPointsMaxTooltip]"
+			}
+
+			blockoverride "second_bar_tooltip" {
+				tooltip = "[Modifier.GetShipCrewMaxTooltip]"
+			}
+
+			blockoverride "third_bar_tooltip" {
+				tooltip = "[Modifier.GetShipSupplyCapacityTooltip]"
+			}
+
+			blockoverride "first_bar_values" {
+				min = 0
+				max = 1
+				value = 1
+			}
+
+			blockoverride "second_bar_values" {
+				min = 0
+				max = 1
+				value = 1
+			}
+
+			blockoverride "third_bar_values" {
+				min = 0
+				max = 1
+				value = 1
+			}
+
+			blockoverride "first_bar_text" {
+				raw_text = "@ship_hp! #b [Modifier.GetShipHitPointsMax|0]#!"
+			}
+
+			blockoverride "second_bar_text" {
+				raw_text = "@crew! #b [Modifier.GetShipCrewMax|D0]#!"
+			}
+
+			blockoverride "third_bar_text" {
+				raw_text = "@ship_supplies! #b [Modifier.GetShipSupplyCapacity|D]#!"
+			}
+
+			blockoverride "entire_icon" {}
+		}
+	}
+
+	type ship_designer_stats_list_flowcontainer = flowcontainer {
+		parentanchor = hcenter
+		direction = vertical
+
+		### Crit Chance
+		ship_template_stat_critical_hit_chance = {
+			size = { 300 36 }
+		}
+
+		### Crit Damage
+		ship_template_stat_critical_hit_damage = {
+			size = { 300 36 }
+		}
+
+		### Vulnerability
+		ship_template_stat_vulnerability = {
+			size = { 300 36 }
+		}
+
+		### Screening
+		ship_template_stat_screening = {
+			size = { 300 36 }
+		}
+
+		### Supply Capacity
+		ship_template_stat_supply_capacity = {
+			size = { 300 36 }
+		}
+
+		### Supply Efficiency
+		ship_template_stat_supply_efficiency = {
+			size = { 300 36 }
+		}
+
+		### Carrying Capacity
+		ship_template_stat_carrying_capacity = {
+			size = { 300 36 }
+		}
+
+		### Marine Capacity
+		ship_template_stat_marine_capacity = {
+			size = { 300 36 }
+		}
+
+		### Visibility
+		ship_template_stat_visibility = {
+			size = { 300 36 }
+		}
+
+		### Detection/Stealth
+		ship_template_stat_detection = {
+			size = { 300 36 }
+		}
+	}
+
+	type modification_slot = widget {
+		size = { 300 105 }
+
+		background = {
+			using = entry_bg_fancy_dark
+			alpha = 0.6
+		}
+
+
+		vbox = {
+			layoutpolicy_horizontal = expanding
+			layoutpolicy_vertical = expanding
+
+			hbox = {
+				datacontext = "[ShipDesignerModSlot.GetSlot]"
+				datacontext = "[ShipDesignerPopup.GetTemplate.GetModifier]"
+				layoutpolicy_horizontal = expanding
+				margin = { 10 10 }
+				margin_top = 7
+				spacing = 2
+
+				background = {
+					using = default_header_bg
+					using = entry_bg_mask_top
+					margin = { -4 0 }
+					margin_top = -2
+				}
+
+				textbox = {
+					autoresize = yes
+					align = nobaseline
+					text = "[ShipModificationSlotType.GetName]"
+				}
+
+				expand = {}
+
+				icon = {
+					visible = "[Not(ObjectsEqual(ShipModificationSlotType.Self, GetShipModificationSlotType('ship_mod_slot_guns').Self))]"
+					size = { 20 20 }
+					texture = "[ShipModificationSlotType.GetIcon]"
+				}
+
+				textbox = {
+					visible = "[ObjectsEqual(ShipModificationSlotType.Self, GetShipModificationSlotType('ship_mod_slot_armor').Self)]"
+					autoresize = yes
+					align = right|nobaseline
+					text = "[Modifier.GetShipArmor|v0]"
+					tooltip = "[Modifier.GetShipArmorTooltip]"
+				}
+
+				textbox = {
+					visible = "[ObjectsEqual(ShipModificationSlotType.Self, GetShipModificationSlotType('ship_mod_slot_guns').Self)]"
+					autoresize = yes
+					align = right|nobaseline
+					tooltip = "SHIP_TEMPLATE_ATTACK_DAMAGE_TOOLTIP"
+					raw_text = "@hull_attack_damage!#v [Modifier.GetShipHullDamage|0]#! @crew_attack_damage!#v [Modifier.GetShipCrewDamage|0]#!"
+				}
+
+				textbox = {
+					visible = "[ObjectsEqual(ShipModificationSlotType.Self, GetShipModificationSlotType('ship_mod_slot_propulsion').Self)]"
+					autoresize = yes
+					align = right|nobaseline
+					text = "[Modifier.GetShipSpeed|v^2]"
+					tooltip = "[Modifier.GetShipSpeedTooltip]"
+				}
+
+				textbox = {
+					visible = "[ObjectsEqual(ShipModificationSlotType.Self, GetShipModificationSlotType('ship_mod_slot_range').Self)]"
+					autoresize = yes
+					align = right|nobaseline
+					text = "[Modifier.GetShipSupplyCapacity|vD]"
+					tooltip = "[Modifier.GetShipSupplyCapacityTooltip]"
+				}
+			}
+
+			hbox = {
+				layoutpolicy_horizontal = expanding
+				margin = { 15 2 }
+				spacing = 2
+				datacontext = "[ShipDesignerModSlot.GetSelectedModification]"
+
+				tooltipwidget = {
+					FancyTooltip_ShipModificationType = {
+					}
+				}
+
+				textbox = {
+					layoutpolicy_horizontal = expanding
+					size = { 0 20 }
+					elide = right
+					align = nobaseline
+					using = fontsize_medium
+					text = "[ShipModificationType.GetNameNoFormatting]"
+				}
+
+				expand = {}
+			}
+
+			hbox = {
+				layoutpolicy_horizontal = expanding
+
+				expand = {}
+
+				hbox = {
+					spacing = 2
+					margin_bottom = 5
+					datamodel = "[ShipDesignerModSlot.GetModifications]"
+
+					item = {
+						widget = {
+							size = { 35 35 } # size = { 92 35 }
+							using = tooltip_se
+
+							tooltipwidget = {
+								FancyTooltip_ShipModificationType = {
+									blockoverride "tooltip_content_before" {
+										custom_tooltip_textbox_with_empty_line = {
+											visible = "[ShipDesignerModSlot.IsModificationSelectedInSlot(ShipModificationType.Self)]"
+											text = "CURRENTLY_SELECTED"
+										}
+									}
+								}
+							}
+
+							button = {
+								visible = "[Not(ShipDesignerModSlot.IsModificationSelectedInSlot(ShipModificationType.Self))]"
+								size = { 100% 100% }
+								using = default_button
+								enabled = "[ShipModificationType.HasRequiredTech]"
+								onclick = "[ShipDesignerModSlot.OnSelectModificationForSlot( ShipModificationType.Self )]"
+								clicksound = "[ShipModificationType.GetClickSound]"
+							}
+
+							background = {
+								visible = "[ShipDesignerModSlot.IsModificationSelectedInSlot(ShipModificationType.Self)]"
+								using = paper_bg
+							}
+
+							icon = {
+								visible = "[ShipDesignerModSlot.IsModificationSelectedInSlot(ShipModificationType.Self)]"
+								using = highlighted_square_selection
+							}
+
+							icon = {
+								size = { 28 28 }
+								parentanchor = center
+								texture = "[ShipModificationType.GetIcon]"
+							}
+						}
+					}
+				}
+
+				expand = {}
+			}
+
+			expand = {}
+		}
+	}
+
+	type utility_modification_slot_button = button {
+		size = { 280 50 }
+		using = default_button
+		onclick = "[RightClickMenuManager.ToggleShipDesignerUtilityMenu(ShipDesignerModSlot.AccessSelf, PdxGuiWidget.AccessSelf)]"
+
+		vbox = {
+			layoutpolicy_horizontal = expanding
+			layoutpolicy_vertical = expanding
+			margin = { 10 5 }
+			margin_left = 15
+
+			hbox = {
+				layoutpolicy_horizontal = expanding
+
+				button = {
+					visible = "[Not(ShipDesignerModSlot.HasSelection)]"
+					size = { 40 40 }
+					alwaystransparent = yes
+					texture = "gfx/interface/buttons/button_icons/plus.dds"
+				}
+
+				textbox = {
+					visible = "[Not(ShipDesignerModSlot.HasSelection)]"
+					align = nobaseline
+					autoresize = yes
+					using = fontsize_large
+					text = "SHIP_DESIGNER_ADD_UTILITY_MOD"
+				}
+
+				textbox = {
+					visible = "[ShipDesignerModSlot.HasSelection]"
+					align = nobaseline
+					autoresize = yes
+					using = fontsize_large
+					text = "[ShipDesignerModSlot.GetSelectedModification.GetNameNoFormatting]"
+				}
+
+				expand = {}
+
+				icon = {
+					visible = "[ShipDesignerModSlot.HasSelection]"
+					size = { 40 40 }
+					texture = "[ShipDesignerModSlot.GetSelectedModification.GetIcon]"
+				}
+			}
+
+		}
+	}
+}
+
+right_click_menu = {
+	name = "ship_designer_ship_type_menu"
+	parentanchor = right
+
+	blockoverride "title_text" {
+		text = "SHIP_DESIGNER_SELECT_SHIP_TYPE"
+	}
+
+	blockoverride "items" {
+		using = default_content_fade
+		margin_top = 10
+		margin_bottom = 10
+
+		### List of ship types in this group
+		flowcontainer = {
+			direction = vertical
+			#spacing = 10
+			datamodel = "[ShipDesignerPopup.GetShipTypes]"
+
+			item = {
+				button = {
+					using = default_button
+					size = { 300 40 }
+					enabled = "[ShipType.HasRequiredTech]"
+					onclick = "[ShipDesignerPopup.SetShipType( ShipType.Self )]"
+					onclick = "[RightClickMenuManager.Close]"
+
+					tooltipwidget = {
+						FancyTooltip_ShipType = {}
+					}
+
+					textbox = {
+						parentanchor = vcenter
+						autoresize = yes
+						position = { 10 0 }
+						align = nobaseline
+						using = elide_fontsize_min
+						max_width = 140
+						text = "[ShipType.GetNameNoFormatting]"
+					}
+
+					ship_type_silhouette = {
+						parentanchor = right|vcenter
+						position = { -10 0 }
+
+						blockoverride "fittype" {
+							fittype = end
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+right_click_menu = {
+	name = "ship_designer_skins_menu"
+	parentanchor = left
+	widgetanchor = right
+	datacontext = "[ShipDesignerPopup.GetCurrentShipType]"
+
+	blockoverride "title_text" {
+		text = "SHIP_DESIGNER_SKINS_HEADER"
+	}
+
+	blockoverride "items" {
+		using = default_content_fade
+		margin_top = 10
+		margin_bottom = 10
+
+		### List of skins for the selected ship type
+		flowcontainer = {
+			direction = vertical
+			datamodel = "[ShipDesignerPopup.GetGraphicsTypesAvailable]"
+
+			item = {
+				widget = {
+					layoutpolicy_horizontal = expanding
+					layoutpolicy_vertical = expanding
+					size = { 240 40 }
+
+					tooltip = "[ShipGraphicsType.GetDescription]"
+
+					button = {
+						visible = "[Not(ObjectsEqual(ShipDesignerPopup.GetGraphicsTypeSelected, ShipGraphicsType.Self))]"
+						size = { 100% 100% }
+						using = default_button
+						onclick = "[ShipDesignerPopup.SelectGraphicsType(ShipGraphicsType.Self)]"
+						onclick = "[RightClickMenuManager.Close]"
+
+						textbox = {
+							parentanchor = vcenter
+							autoresize = yes
+							position = { 10 0 }
+							align = nobaseline
+							using = elide_fontsize_min
+							max_width = 140
+							text = "[ShipGraphicsType.GetNameNoFormatting]"
+						}
+					}
+
+					widget = {
+						visible = "[ObjectsEqual(ShipDesignerPopup.GetGraphicsTypeSelected, ShipGraphicsType.Self)]"
+						size = { 100% 100% }
+
+						background = {
+							using = paper_bg
+						}
+
+						textbox = {
+							parentanchor = vcenter
+							autoresize = yes
+							position = { 10 0 }
+							align = nobaseline
+							using = elide_fontsize_min
+							max_width = 140
+							text = "[ShipGraphicsType.GetNameNoFormatting]"
+						}
+
+						icon = {
+							using = highlighted_square_selection
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+right_click_menu = {
+	name = "ship_designer_utility_menu"
+	parentanchor = right
+
+	blockoverride "title_text" {
+		text = "SHIP_UTILITY_MODIFICATIONS_SHORT_CONCEPT"
+	}
+
+	blockoverride "items" {
+		using = default_content_fade
+		margin_top = 10
+		margin_bottom = 10
+
+		### Deselect button
+		button = {
+			visible = "[ShipDesignerModSlot.HasSelection]"
+			size = { 345 40 }
+			using = default_button
+			using = ui_item_remove
+			onclick = "[ShipDesignerModSlot.OnDeselectModification]"
+			onclick = "[RightClickMenuManager.Close]"
+
+			textbox = {
+				parentanchor = left|vcenter
+				margin_left = 20
+				autoresize = yes
+				align = nobaseline
+				using = fontsize_large
+				text = "SHIP_DESIGNER_REMOVE_UTILITY_MOD"
+			}
+		}
+
+		### List of utility modifications
+		flowcontainer = {
+			direction = vertical
+			datamodel = "[ShipDesignerModSlot.GetModifications]"
+
+			item = {
+				widget = {
+					visible = "[Or(ShipDesignerModSlot.IsModificationSelectedInSlot(ShipModificationType.Self), Not(ShipDesignerModSlot.IsModificationSelectedInOtherSlot(ShipModificationType.Self)))]"
+					size = { 345 50 }
+
+					button = {
+						visible = "[Not(ShipDesignerModSlot.IsModificationSelectedInSlot(ShipModificationType.Self))]"
+						enabled = "[Not(ShipDesignerModSlot.IsModificationBlocked(ShipModificationType.Self))]"
+						size = { 100% 100% }
+						using = default_button
+						using = ship_designer_modification_wildcard
+						onclick = "[ShipDesignerModSlot.OnSelectModificationForSlot(ShipModificationType.Self)]"
+						onclick = "[RightClickMenuManager.Close]"
+					}
+
+					background = {
+						visible = "[ShipDesignerModSlot.IsModificationSelectedInSlot(ShipModificationType.Self)]"
+						using = paper_bg
+					}
+
+					icon = {
+						visible = "[ShipDesignerModSlot.IsModificationSelectedInSlot(ShipModificationType.Self)]"
+						using = highlighted_square_selection
+					}
+
+					hbox = {
+						margin = { 10 0 }
+						spacing = 5
+
+						icon = {
+							size = { 40 40 }
+							texture = "gfx/interface/buttons/button_icons/plus.dds"
+						}
+
+						textbox = {
+							autoresize = yes
+							align = nobaseline
+							using = elide_fontsize_min
+							max_width = 260
+							using = fontsize_large
+							text = "[ShipModificationType.GetNameNoFormatting]"
+						}
+
+						expand = {}
+
+						icon = {
+							size = { 40 40 }
+							texture = "[ShipModificationType.GetIcon]"
+						}
+					}
+
+					tooltipwidget = {
+						FancyTooltip_ShipModificationType = {
+							blockoverride "tooltip_content_before" {
+								custom_tooltip_textbox_with_empty_line = {
+									visible = "[ShipDesignerModSlot.IsModificationSelectedInSlot(ShipModificationType.Self)]"
+									text = "CURRENTLY_SELECTED"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

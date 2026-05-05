@@ -193,9 +193,9 @@ liberty_desire_weekly_change = { #AKA liberty_desire_weekly_progress
 				any_scope_character = {
 					has_ideology = ideology:ideology_sovereignist_leader
 					OR = {
-						is_ruler = yes
+						is_ruler_of_own_country = yes
 						AND = {
-							has_role = politician
+							has_role_of_type = politician
 							interest_group = { is_in_government = yes }
 						}
 					}
@@ -704,7 +704,7 @@ liberty_desire_weekly_change = { #AKA liberty_desire_weekly_progress
 		limit = {
 			root.second_country.market = root.first_country.market
 			root.first_country.supply_network_strength < 1
-			root.second_country = { has_port = yes }
+			root.second_country = { has_port_country = yes }
 			NOT = { root.second_country = { is_adjacent_to_country = root.first_country }}
 		}
 		add = {
@@ -1163,3 +1163,165 @@ static_treaty_acceptance = {
 		}
 	}
 }
+
+threaten_naval_hostilities_acceptance = {
+	# Relative naval strength
+	add = {
+		value = "scope:other_country.ai_navy_comparison(root)"
+		multiply = 5
+		max = 25
+		min = 5 # You have to have higher navy power projection to use this at all
+		desc = "country_navy_power_projection"
+	}
+	
+	# Vulnerability - how much do we rely on our coast & trade
+	multiply = {
+		desc = "DIPLOMATIC_ACCEPTANCE_NAVAL_VULNERABILITY"
+		value = 0.1
+		add = {
+			value = naval_vulnerability
+			multiply = 1.9
+		}		
+	}
+	
+	# Have they followed through on previous threats?
+	if = {
+		limit = {
+			"scope:other_country.naval_hostility_average_damage_dealt" >= 0
+		}
+		
+		multiply = {
+			desc = "DIPLOMATIC_ACCEPTANCE_NAVAL_HOSTILITIES_PAST_DAMAGE"
+			value = "scope:other_country.naval_hostility_average_damage_dealt"
+			divide = 65
+			min = 0.1
+			max = 1.5
+		}
+	}
+	
+	# Are they lower rank?
+	if = {
+		limit = { country_rank > scope:other_country.country_rank }
+		desc = "DIPLOMATIC_ACCEPTANCE_NAVAL_HOSTILITIES_RANK"
+		multiply = 0.25
+	}
+}
+
+threaten_naval_hostilities_infamy = {
+	value = 5
+
+	if = {
+		limit = {
+			scope:other_country.country_rank = rank_value:great_power
+		}
+		
+		multiply = 3.0
+	}
+	else_if = {
+		limit = {
+			scope:other_country.country_rank = rank_value:major_power
+		}
+		
+		multiply = 2.5
+	}	
+	else_if = {
+		limit = {
+			NOT = { scope:other_country = { is_country_type = unrecognized } }
+		}
+		
+		multiply = 2.0
+	}
+	else_if = {
+		limit = {
+			scope:other_country.country_rank = rank_value:unrecognized_major_power
+		}
+		
+		multiply = 1.5
+	}
+}
+
+ai_threaten_naval_hostilities_chance = {
+	value = 0
+
+	if = { 
+		limit = {
+			"ai_navy_comparison(scope:other_country)" >= 1.0 # Roughly 2x as strong navy required
+			is_diplomatic_play_committed_participant = no
+			infamy < infamy_threshold:notorious
+			country_rank > scope:other_country.country_rank
+			NOR = {
+				has_attitude = {
+					who = scope:other_country
+					attitude = protective		
+				}
+				has_attitude = {
+					who = scope:other_country
+					attitude = genial		
+				}
+				has_attitude = {
+					who = scope:other_country
+					attitude = cooperative	
+				}
+				has_attitude = {
+					who = scope:other_country
+					attitude = conciliatory	
+				}					
+			}
+		}
+		
+		add = { # Base 5-25% based on relative navy strength
+			value = "ai_navy_comparison(scope:other_country)"
+			multiply = 0.05
+			max = 0.25
+		}
+		
+		divide = { # Lower chance the higher the infamy
+			value = threaten_naval_hostilities_infamy
+			divide = 10
+			min = 1
+		}
+		
+		if = { # Less likely unless we have a hostile attitude
+			limit = {
+				OR = {
+					has_attitude = {
+						who = scope:other_country
+						attitude = antagonistic
+					}
+					has_attitude = {
+						who = scope:other_country
+						attitude = domineering
+					}
+					has_attitude = {
+						who = scope:other_country
+						attitude = belligerent
+					}
+				}
+			}
+			multiply = 0.33
+		}	
+	}
+}
+
+## Interest Tier Effects & Trigger Values
+# When adjusting these ensure that you also adjust the effect tooltips in the interest_tier_types
+interest_tier_effect_infamy_cost_increase_high_value = 0.25
+interest_tier_effect_infamy_cost_increase_medium_value = 0.1
+interest_tier_effect_infamy_cost_decrease_medium_value = -0.2
+
+interest_tier_effect_infamy_cost_increase_max_tier = 2
+interest_tier_effect_infamy_cost_decrease_min_tier = 5
+
+interest_tier_effect_colonial_claim_generation_threshold = 0.5
+interest_tier_effect_colonial_claim_generation_minor_threshold = 0.2
+interest_tier_effect_colonial_claim_generation_min_tier = 2
+
+interest_tier_effect_can_start_diplomatic_plays_min_tier = 2
+interest_tier_effect_can_join_diplomatic_plays_min_tier = 2
+interest_tier_effect_can_sign_alliance_min_tier = 3
+interest_tier_effect_can_sign_defensive_pact_min_tier = 2
+interest_tier_effect_can_sign_support_independence_min_tier = 3
+interest_tier_effect_can_sign_guarantee_independence_min_tier = 2
+interest_tier_effect_stake_colonial_claim_min_tier = 3
+interest_tier_effect_stake_colonial_claim_unrecognized_min_tier = 4
+interest_tier_effect_can_establish_missions_min_tier = 3
