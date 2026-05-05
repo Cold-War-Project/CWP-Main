@@ -5,7 +5,7 @@ example_route_graphics_type = {		# Route graphics type key
 	
 	speed = 0.5						# Speed is how fast the caravan of this type is moving
 	min_caravan_distance = 0.5		# Min distance between caravans on the spline system
-	routes_to_caravans_ratio = 1    # by default one, max limit in comparison to stripes of given type
+	routes_to_caravans_ratio = 1	# by default one, max limit in comparison to stripes of given type
 	max_count = 20					# Max count is max amount of those caravans shown on the map
 	max_path_length = 5				# Max amount of sequential splines entity can traverse
 	path_generation_mode = <land/naval> # Type of path generation for entities <land> by default

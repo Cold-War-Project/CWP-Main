@@ -1,0 +1,466 @@
+﻿create_coup_from_character = { # Takes scope golpista_character
+	if = { # Ignores the cooldown
+		limit = { has_variable = coup_cooldown_var }
+		remove_variable = coup_cooldown_var
+	}
+
+	$CHARACTER$ = {
+		set_variable = coup_character_leader_var
+		save_scope_as = coup_character_leader
+		
+		interest_group = {
+			set_variable = coup_interest_group_var
+			save_scope_as = coup_interest_group
+		}
+		
+		set_variable = { name = monthly_cached_units_share value = this.num_units_share } # Updates at start of coup
+		set_variable = { name = monthly_cached_commander_coup_strength value = this.commander_coup_strength }
+		
+		owner = { add_journal_entry = { type = je_coup } }
+	}
+}
+
+character_execute_immediate_coup = { # Must be executed in an "owner" scope when the relevant character is "root"
+	if = {
+		limit = {
+			has_journal_entry = je_coup
+			je:je_coup.journal_entry_age < 180
+		}
+		ROOT = {
+			add_modifier = {
+				name = modifier_preempetive_coup
+				days = 180
+				multiplier = {
+					value = 1
+					multiply = {
+						value = 180
+						subtract = owner.je:je_coup.journal_entry_age
+						divide = 180
+					}
+				}
+			}
+		}
+	}
+	hidden_effect = {
+		trigger_event = { id = cwp_coup.2 popup = yes }
+	}
+
+	custom_tooltip = pronunciamento_immediately_tt
+	
+	show_as_tooltip = {
+		custom_tooltip = if_coup_is_successful_tt
+		coup_victory_effect_interaction_display = yes
+	}
+}
+
+coup_get_owned_pronunciamento_state = {
+	if = {
+		limit = { scope:coup_character_leader ?= { has_role_of_type = general } }
+		if = {
+			limit = {
+				any_scope_state = {
+					owner = ROOT
+					has_building = building_barrack
+				}
+			}
+			ordered_scope_state = {
+				limit = {
+					owner = ROOT
+					has_building = building_barrack
+				}
+				order_by = b:building_barrack.level
+				position = 0
+				check_range_bounds = no
+				save_scope_as = pronunciamento_state
+			}
+		}
+		else = {
+			ordered_scope_state = {
+				limit = { owner = ROOT }
+				order_by = gdp
+				position = 0
+				check_range_bounds = no
+				save_scope_as = pronunciamento_state
+			}
+		}
+	}
+	else_if = {
+		limit = { scope:coup_character_leader ?= { has_role_of_type = admiral } }
+		if = {
+			limit = {
+				any_scope_state = {
+					owner = ROOT
+					has_building = building_naval_administration
+				}
+			}
+			ordered_scope_state = {
+				limit = {
+					owner = ROOT
+					has_building = building_naval_administration
+				}
+				order_by = b:building_naval_administration.level
+				position = 0
+				check_range_bounds = no
+				save_scope_as = pronunciamento_state
+			}
+		}
+		else = {
+			ordered_scope_state = {
+				limit = { owner = ROOT }
+				order_by = gdp
+				position = 0
+				check_range_bounds = no
+				save_scope_as = pronunciamento_state
+			}
+		}
+	}
+}
+
+coup_get_unowned_pronunciamento_state = {
+	if = {
+		limit = { scope:coup_character_leader ?= { has_role_of_type = general } }
+		if = {
+			limit = { any_scope_state = { has_building = building_barrack } }
+			ordered_scope_state = {
+				limit = { has_building = building_barrack }
+				order_by = b:building_barrack.level
+				position = 0
+				check_range_bounds = no
+				save_scope_as = pronunciamento_state
+			}
+		}
+		else = {
+			ordered_scope_state = {
+				order_by = gdp
+				position = 0
+				check_range_bounds = no
+				save_scope_as = pronunciamento_state
+			}
+		}
+	}
+	else_if = {
+		limit = { scope:coup_character_leader ?= { has_role_of_type = admiral } }
+		if = {
+			limit = { any_scope_state = { has_building = building_naval_administration } }
+			ordered_scope_state = {
+				limit = { has_building = building_naval_administration }
+				order_by = b:building_naval_administration.level
+				position = 0
+				check_range_bounds = no
+				save_scope_as = pronunciamento_state
+			}
+		}
+		else = {
+			ordered_scope_state = {
+				order_by = gdp
+				position = 0
+				check_range_bounds = no
+				save_scope_as = pronunciamento_state
+			}
+		}
+	}
+}
+
+coup_get_allied_pronunciamento_state = {
+	if = {
+		limit = { scope:coup_character_leader ?= { has_role_of_type = general } }
+		if = {
+			limit = {
+				any_scope_state = {
+					owner = { is_diplomatic_play_ally_of = ROOT }
+					has_building = building_barrack
+				}
+			}
+			ordered_scope_state = {
+				limit = {
+					owner = { is_diplomatic_play_ally_of = ROOT }
+					has_building = building_barrack
+				}
+				order_by = b:building_barrack.level
+				position = 0
+				check_range_bounds = no
+				save_scope_as = pronunciamento_state
+			}
+		}
+		else = {
+			ordered_scope_state = {
+				limit = { owner = { is_diplomatic_play_ally_of = ROOT } }
+				order_by = gdp
+				position = 0
+				check_range_bounds = no
+				save_scope_as = pronunciamento_state
+			}
+		}
+	}
+	else_if = {
+		limit = { scope:coup_character_leader ?= { has_role_of_type = admiral } }
+		if = {
+			limit = {
+				any_scope_state = {
+					owner = { is_diplomatic_play_ally_of = ROOT }
+					has_building = building_naval_administration
+				}
+			}
+			ordered_scope_state = {
+				limit = {
+					owner = { is_diplomatic_play_ally_of = ROOT }
+					has_building = building_naval_administration
+				}
+				order_by = b:building_naval_administration.level
+				position = 0
+				check_range_bounds = no
+				save_scope_as = pronunciamento_state
+			}
+		}
+		else = {
+			ordered_scope_state = {
+				limit = { owner = { is_diplomatic_play_ally_of = ROOT } }
+				order_by = gdp
+				position = 0
+				check_range_bounds = no
+				save_scope_as = pronunciamento_state
+			}
+		}
+	}
+}
+
+coup_victory_effect = {
+	# For notifications
+	ROOT = { save_scope_as = coup_country }
+	coup_victory_government_effects = yes
+	coup_victory_law_effects = yes
+	coup_victory_special_effects = yes
+	coup_victory_technical_effects = yes
+}
+
+coup_victory_government_effects = {
+	if = {
+		limit = { scope:coup_interest_group ?= { is_insurrectionary = yes } }
+		scope:coup_interest_group ?= { abandon_revolution = yes }
+	}
+
+	if = {
+		limit = {
+			OR = {
+				has_law = law_type:law_parliamentary_republic
+				has_law = law_type:law_presidential_republic
+				has_law = law_type:law_council_republic
+				has_law = law_type:law_corporate_state
+				has_law = law_type:law_colonial_administration
+				has_gov_regency = yes
+			}
+			dynastic_coup_trigger = no
+		}
+		hidden_effect = {
+			if = {
+				limit = { has_gov_regency = yes }
+				if = {
+					limit = { ruler = { is_immortal = yes } }
+					ruler = { set_character_immortal = no }
+				}
+				scope:coup_interest_group.leader ?= { set_character_immortal = yes }
+			}
+		}
+		set_variable = { name = keep_current_ruler_var days = 7 }
+
+		scope:coup_interest_group.leader ?= { set_character_as_ruler = yes }
+	}
+
+	scope:coup_interest_group = {
+		add_modifier = {
+			name = modifier_successful_coup
+			days = short_modifier_time
+			is_decaying = yes
+		}
+	}
+	
+	if = {
+		limit = { scope:coup_interest_group ?= { has_party = yes } }
+		scope:coup_interest_group.party ?= { set_ruling_party = yes }
+	}
+	else = {
+		if = {
+			limit = { scope:coup_interest_group ?= { is_in_government = no } }
+			scope:coup_interest_group ?= { add_ruling_interest_group = yes }
+		}
+
+		every_interest_group = {
+			limit = {
+				is_in_government = yes
+				NOT = { scope:coup_interest_group ?= this }
+			}
+			remove_ruling_interest_group = yes
+		}
+	}
+
+	if = {
+		limit = {
+			owner ?= {
+				country_has_voting_franchise = yes
+				in_election_campaign = no
+			}
+		}
+		owner ?= { call_election = { months = 3 } }
+	}
+
+	add_modifier = {
+		name = modifier_government_recently_couped
+		days = short_modifier_time
+		is_decaying = yes
+	}
+}
+
+coup_victory_law_effects = {
+	if = {
+		limit = {
+			exists = currently_enacting_law
+			scope:coup_interest_group ?= {
+				law_enactment_stance = {
+					law = owner.currently_enacting_law.type
+					value <= neutral # Will halt enactment unless they approve of the law
+				}
+			}
+		}
+		cancel_enactment = yes
+	}
+	
+	if = {
+		limit = { exists = scope:coup_desired_law }
+		activate_law = scope:coup_desired_law.type
+	}
+	else_if = { # In case
+		limit = {
+			scope:coup_interest_group ?= {
+				any_preferred_law = {
+					law_is_available = yes
+					law_is_valid_for_ig_petition = yes
+					NOT = { ROOT = { has_law = prev.type } }
+				}
+			}
+		}
+		scope:coup_interest_group ?= {
+			ordered_preferred_law = {
+				limit = {
+					law_is_available = yes
+					law_is_valid_for_ig_petition = yes
+					NOT = { ROOT = { has_law = prev.type } }
+				}
+				position = 0
+				check_range_bounds = no
+				ROOT = { activate_law = prev.type }
+			}
+		}
+	}
+}
+
+coup_victory_special_effects = {
+	if = {
+		limit = { dynastic_coup_trigger = yes }
+		ip4_coup_victory_dynastic_effects = yes
+	}
+}
+
+coup_victory_technical_effects = {
+	every_diplomatically_relevant_country = {
+		limit = { has_overlapping_interests = ROOT }
+		post_notification = successful_coup_in_country
+	}
+
+	if = {
+		limit = {
+			has_variable = coup_sponsor
+			var:coup_sponsor ?= { is_country_alive = yes }
+		}
+		set_owes_obligation_to = {
+			country = var:coup_sponsor
+			setting = yes
+		}
+		remove_variable = coup_sponsor
+	}
+
+	set_variable = { name = recent_coup_or_revolution_var value = 0 }
+	change_global_variable = { name = successful_coups add = 1 }
+	set_variable = { name = coup_aftermath_var years = 1 }
+}
+
+ip4_coup_victory_dynastic_effects = {
+	if = {
+		limit = { has_gov_regency = yes }
+		remove_regency_modifier = yes
+	}
+
+	if = {
+		limit = { exists = heir }
+		heir ?= { exile_character_with_martyrdom = yes }
+	}
+}
+
+coup_victory_effect_interaction_display = {
+	if = {
+		limit = { root.interest_group ?= { is_insurrectionary = yes } }
+		root.interest_group ?= { abandon_revolution = yes }
+	}
+
+	if = {
+		limit = { root.interest_group ?= { has_party = yes } }
+		root.interest_group.party ?= { set_ruling_party = yes }
+	}
+	else = {
+		root.interest_group ?= { add_ruling_interest_group = yes }
+		every_interest_group = {
+			limit = {
+				is_in_government = yes
+				NOT = { root.interest_group ?= this }
+			}
+			remove_ruling_interest_group = yes
+		}
+	}
+
+	if = {
+		limit = {
+			exists = owner.currently_enacting_law
+			root.interest_group ?= {
+				law_enactment_stance = {
+					law = owner.currently_enacting_law.type
+					value < neutral
+				}
+			}
+		}
+		owner ?= { cancel_enactment = yes }
+	}
+
+	root.interest_group ?= {
+		ordered_preferred_law = {
+			limit = {
+				law_is_available = yes
+				NOT = { owner = { has_law = prev.type } }
+			}
+			position = 0
+			check_range_bounds = no
+			owner = { activate_law = prev.type }
+		}
+	}
+
+	if = {
+		limit = {
+			OR = {
+				has_law = law_type:law_parliamentary_republic
+				has_law = law_type:law_presidential_republic
+				has_law = law_type:law_council_republic
+				has_law = law_type:law_corporate_state
+				has_gov_regency = yes
+			}
+		}
+		scope:coup_interest_group.leader ?= { set_character_as_ruler = yes }
+	}
+
+	if = {
+		limit = {
+			owner ?= {
+				country_has_voting_franchise = yes
+				in_election_campaign = no
+			}
+		}
+		owner ?= { call_election = { months = 3 } }
+	}
+}

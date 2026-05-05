@@ -1,0 +1,289 @@
+﻿commander_coup_strength = {
+	add = {
+		desc = "coup_popularity_tt"
+		value = popularity
+		divide = 10
+	}
+	
+	if = { # Land coups
+		limit = {
+			exists = owner
+			has_role_of_type = general
+			owner.army_size_including_raised_conscripts > 0
+		}
+		add = {
+			desc = "coup_num_army_units_tt"
+			value = this.num_units_share
+			divide = owner.army_size_including_raised_conscripts
+			multiply = 5
+		}
+	}
+	
+	if = { # Boat coups
+		limit = {
+			exists = owner
+			has_role_of_type = admiral
+			owner.navy_size > 0
+		}
+		add = {
+			desc = "coup_num_navy_units_tt"
+			value = this.num_units_share
+			divide = owner.navy_size
+			multiply = 5
+		}
+	}
+	
+	if = {
+		limit = {
+			exists = owner
+			exists = this.commander_military_formation.current_hq
+			this.commander_military_formation.current_hq.region ?= owner.capital.region
+		}
+		add = {
+			desc = "coup_commander_core_location_tt"
+			value = 2
+		}
+	}
+	else_if = {
+		limit = {
+			exists = owner
+			exists = this.commander_military_formation.current_hq
+			this.commander_military_formation.current_hq.region ?= {
+				any_scope_state = {
+					owner = root.owner
+					is_incorporated = yes
+				}
+			}
+		}
+		add = {
+			desc = "coup_commander_periphery_location_tt"
+			value = 1
+		}
+	}
+	else_if = {
+		limit = {
+			exists = owner
+			exists = this.commander_military_formation.current_hq
+			this.commander_military_formation.current_hq.region ?= {
+				any_scope_state = {
+					owner ?= root.owner
+					is_incorporated = no
+				}
+			}
+		}
+		add = {
+			desc = "coup_commander_colony_location_tt"
+			value = -2
+		}
+	}
+	else_if = {
+		limit = { NOT = { exists = this.commander_military_formation.current_hq } }
+		add = {
+			desc = "coup_commander_no_location_tt"
+			value = -1
+		}
+	}
+
+	add = {
+		desc = "coup_clout_tt"
+		value = this.interest_group.ig_clout
+		multiply = 10
+	}
+	
+	add = {
+		desc = "coup_strength_modifier_add_tt"
+		value = modifier:character_coup_strength_add
+	}
+	
+	multiply = {
+		desc = "coup_strength_modifier_tt"
+		value = 1
+		add = modifier:character_coup_strength_mult
+	}
+}
+
+commander_coup_strength_country_display = { # Note - absolute fraud script value for tooltip purposes. Must equal the above.
+	add = {
+		desc = "coup_popularity_vs_legitimacy_tt"
+		every_scope_character = {
+			limit = { has_variable = coup_character_leader_var }
+			value = popularity
+			divide = 10
+		}
+	}
+	
+	if = { # Land coups
+		limit = {
+			army_size_including_raised_conscripts > 0
+			any_scope_character = {
+				has_variable = coup_character_leader_var
+				has_role_of_type = general
+			}
+		}
+		add = {
+			desc = "coup_commander_num_army_units_tt"
+			every_scope_character = {
+				limit = {
+					has_variable = coup_character_leader_var
+					has_role_of_type = general
+				}
+				value = this.num_units_share
+				divide = owner.army_size_including_raised_conscripts
+				multiply = 5
+			}
+		}
+	}
+	
+	if = { # Boat coups
+		limit = {
+			navy_size > 0
+			any_scope_character = {
+				has_variable = coup_character_leader_var
+				has_role_of_type = admiral
+			}
+		}
+		add = {
+			desc = "coup_commander_num_navy_units_tt"
+			every_scope_character = {
+				limit = {
+					has_variable = coup_character_leader_var
+					has_role_of_type = admiral
+				}
+				value = this.num_units_share
+				divide = owner.navy_size
+				multiply = 5
+			}
+		}
+	}
+	
+	if = {
+		limit = {
+			any_scope_character = {
+				has_variable = coup_character_leader_var
+				exists = this.commander_military_formation.current_hq
+				this.commander_military_formation.current_hq.region ?= owner.capital.region
+			}
+		}
+		add = {
+			desc = "coup_commander_core_location_progress_tt"
+			value = 2
+		}
+	}
+	else_if = {
+		limit = {
+			any_scope_character = {
+				has_variable = coup_character_leader_var
+				exists = this.commander_military_formation.current_hq
+				this.commander_military_formation.current_hq.region ?= {
+					any_scope_state = {
+						owner = root.owner
+						is_incorporated = yes
+					}
+				}
+			}
+		}
+		add = {
+			desc = "coup_commander_periphery_location_progress_tt"
+			value = 1
+		}
+	}
+	else_if = {
+		limit = {
+			any_scope_character = {
+				has_variable = coup_character_leader_var
+				exists = this.commander_military_formation.current_hq
+				this.commander_military_formation.current_hq.region ?= {
+					any_scope_state = {
+						owner = root.owner
+						is_incorporated = no
+					}
+				}
+			}
+		}
+		add = {
+			desc = "coup_commander_colony_location_progress_tt"
+			value = -2
+		}
+	}
+	else_if = {
+		limit = {
+			any_scope_character = {
+				has_variable = coup_character_leader_var
+				NOT = { exists = this.commander_military_formation.current_hq }
+			}
+		}
+		add = {
+			desc = "coup_commander_no_location_progress_tt"
+			value = -1
+		}
+	}
+
+	add = {
+		desc = "coup_clout_of_coup_interest_group_tt"
+		every_interest_group = {
+			limit = { has_variable = coup_interest_group_var }
+			value = ig_clout
+			multiply = 10
+		}
+	}
+
+	add = {
+		desc = "coup_strength_modifier_add_tt"
+		every_scope_character = {
+			limit = { has_variable = coup_character_leader_var }
+			value = 1
+			
+			add = modifier:character_coup_strength_add
+		}
+	}
+
+	multiply = {
+		desc = "coup_strength_modifier_tt"
+		every_scope_character = {
+			limit = { has_variable = coup_character_leader_var }
+			value = 1
+			
+			add = modifier:character_coup_strength_mult
+		}
+	}
+}
+
+country_coup_resistance = {
+	add = {
+		desc = "coup_legitimacy_tt"
+		value = legitimacy
+		divide = 10
+	}
+
+	add = {
+		desc = "coup_resistance_modifier_add_tt"
+		value = 1
+		add = modifier:country_coup_resistance_add
+	}
+
+	multiply = {
+		desc = "coup_resistance_modifier_tt"
+		value = 1
+		add = modifier:country_coup_resistance_mult
+	}
+}
+
+country_coup_resistance_reversed = { # Must exactly match country_coup_resistance but reversed. I don't like that this has to exist either.
+	subtract = {
+		desc = "coup_legitimacy_tt"
+		value = legitimacy
+		divide = 10
+	}
+
+	subtract = {
+		desc = "coup_resistance_modifier_add_tt"
+		value = 1
+		add = modifier:country_coup_resistance_add
+	}
+
+	multiply = {
+		desc = "coup_resistance_modifier_tt"
+		value = 1
+		add = modifier:country_coup_resistance_mult
+	}
+}

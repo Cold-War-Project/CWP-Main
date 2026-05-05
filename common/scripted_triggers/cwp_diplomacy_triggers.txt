@@ -1,0 +1,300 @@
+﻿# Treaty Shorthands
+has_friendly_diplomatic_pact = {
+	OR = {
+		any_scope_treaty = {
+			binds = $TARGET$
+			any_scope_article = {
+				has_type = trade_privilege
+				source_country = $TARGET$
+			}
+		}
+		any_scope_treaty = {
+			binds = $TARGET$
+			any_scope_article = { has_type = alliance }
+		}
+		any_scope_treaty = {
+			binds = $TARGET$
+			any_scope_article = { has_type = defensive_pact }
+		}
+		any_scope_treaty = {
+			binds = $TARGET$
+			any_scope_article = {
+				has_type = foreign_investment_rights
+				source_country = $TARGET$
+			}
+		}
+	}
+}
+
+has_treaty_alliance_with = {
+	custom_description = {
+		text = has_treaty_alliance_with_trigger
+		subject = this
+		object = $TARGET$
+
+		any_scope_treaty = {
+			binds = $TARGET$
+			any_scope_article = { has_type = alliance }
+		}
+	}
+}
+
+has_treaty_defensive_pact_with = {
+	custom_description = {
+		text = has_treaty_defensive_pact_with_trigger
+		subject = this # Country
+		object = $TARGET$ # Country
+
+		any_scope_treaty = {
+			binds = $TARGET$
+			any_scope_article = { has_type = defensive_pact }
+		}
+	}
+}
+
+has_treaty_foreign_investment_rights_with = {
+	custom_description = {
+		text = has_treaty_foreign_investment_rights_with_trigger
+		subject = this # Country
+		object = $TARGET$ # Country
+
+		hidden_trigger = {
+			any_scope_treaty = {
+				binds = $TARGET$
+				any_scope_article = {
+					has_type = foreign_investment_rights
+					source_country = $TARGET$
+				}
+			}
+		}
+	}
+}
+
+has_treaty_trade_privilege_with = {
+	custom_description = {
+		text = has_treaty_trade_privilege_with_trigger
+		subject = this # Country
+		object = $TARGET$ # Country
+
+		hidden_trigger = {
+			any_scope_treaty = {
+				binds = $TARGET$
+				any_scope_article = {
+					has_type = trade_privilege
+					source_country = $TARGET$
+				}
+			}
+		}
+	}
+}
+
+violate_sovereignty_war_check = {
+	save_temporary_scope_as = relevant_war
+
+	scope:target_country = {
+		any_scope_theater = {
+			is_land_theater = yes
+
+			save_temporary_scope_as = target_theater
+
+			scope:relevant_war.attacker_warleader = {
+				any_scope_theater = {
+					is_land_theater = yes
+
+					check_area = {
+						mode = adjacent
+						target = scope:target_theater
+					}
+				}
+			}
+
+			scope:relevant_war.defender_warleader = {
+				any_scope_theater = {
+					is_land_theater = yes
+
+					check_area = {
+						mode = adjacent
+						target = scope:target_theater
+					}
+				}
+			}
+		}
+	}
+}
+
+countries_are_valid_rivals = {
+	has_overlapping_interests = scope:target_country
+
+	trigger_if = {
+		limit = { country_rank = rank_value:superpower }
+		scope:target_country = {
+			OR = {
+				country_rank = rank_value:superpower
+				country_rank = rank_value:great_power
+			}
+		}
+	}
+
+	trigger_if = {
+		limit = { country_rank = rank_value:great_power }
+		scope:target_country = {
+			OR = {
+				country_rank = rank_value:superpower
+				country_rank = rank_value:great_power
+				country_rank = rank_value:major_power
+			}
+		}
+	}
+
+	trigger_if = {
+		limit = { country_rank = rank_value:major_power }
+		scope:target_country = {
+			OR = {
+				country_rank = rank_value:great_power
+				country_rank = rank_value:major_power
+				country_rank = rank_value:minor_power
+			}
+		}
+	}
+
+	trigger_if = {
+		limit = { country_rank = rank_value:minor_power }
+		scope:target_country = {
+			OR = {
+				country_rank = rank_value:major_power
+				country_rank = rank_value:minor_power
+				country_rank = rank_value:insignificant_power
+			}
+		}
+	}
+
+	trigger_if = {
+		limit = { country_rank = rank_value:insignificant_power }
+		scope:target_country = {
+			OR = {
+				country_rank = rank_value:minor_power
+				country_rank = rank_value:insignificant_power
+			}
+		}
+	}
+
+	trigger_if = {
+		limit = { country_rank = rank_value:unrecognized_major_power }
+		scope:target_country = {
+			OR = {
+				country_rank = rank_value:unrecognized_major_power
+				country_rank = rank_value:unrecognized_regional_power
+			}
+		}
+	}
+
+	trigger_if = {
+		limit = { country_rank = rank_value:unrecognized_regional_power }
+		scope:target_country = {
+			OR = {
+				country_rank = rank_value:unrecognized_major_power
+				country_rank = rank_value:unrecognized_regional_power
+				country_rank = rank_value:unrecognized_power
+			}
+		}
+	}
+
+	trigger_if = {
+		limit = { country_rank = rank_value:unrecognized_power }
+		scope:target_country = {
+			OR = {
+				country_rank = rank_value:unrecognized_regional_power
+				country_rank = rank_value:unrecognized_power
+			}
+		}
+	}
+}
+
+is_in_civil_war = {
+	custom_tooltip = {
+		text = is_in_civil_war_tt
+		any_diplomatic_play = {
+			any_scope_play_involved = { this = root }
+			initiator = {
+				NOT = { this = ROOT }
+				country_definition = root.country_definition
+			}
+		}
+	}
+}
+
+can_reach_target_country = {
+	has_diplomatic_relevance = scope:target_country
+	OR = {
+		has_strategic_adjacency = scope:target_country
+		AND = {
+			has_port_country = yes
+			scope:target_country = { has_port_country = yes }
+		}
+	}
+}
+
+can_be_reached_by_target_country = {
+	has_diplomatic_relevance = scope:target_country
+	OR = {
+		has_strategic_adjacency = scope:target_country
+		AND = {
+			has_port_country = yes
+			scope:target_country = { has_port_country = yes }
+			scope:target_country = { navy_size >= 10 }
+		}
+	}
+}
+
+can_reach_target_state = {
+	has_diplomatic_relevance = scope:target_state.owner
+	OR = {
+		has_strategic_adjacency = scope:target_state
+		AND = {
+			has_port_country = yes
+			scope:target_state = { is_coastal = yes }
+		}
+	}
+}
+
+is_active_in_diplomatic_play = {
+	OR = {
+		is_diplomatic_play_committed_participant = yes
+		is_diplomatic_play_initiator = yes
+		is_diplomatic_play_target = yes
+	}
+}
+
+diplomatic_play_has_no_relations_blockers = {
+	diplomatic_play_has_no_relations_blocker_with_target = yes
+	diplomatic_play_has_no_relations_blocker_with_overlord = yes
+}
+
+diplomatic_play_has_no_relations_blocker_with_target = {
+	custom_tooltip = {
+		text = DIPLO_ACTION_RELATIONS_CORDIAL_OR_GREATER_NOT
+		scope:target_country.relations:root < relations_threshold:cordial
+	}
+}
+
+diplomatic_play_has_no_relations_blocker_with_overlord = {
+	trigger_if = {
+		limit = { scope:target_country = { is_subject = yes } }
+		custom_tooltip = {
+			text = DIPLO_ACTION_OVERLORD_RELATIONS_CORDIAL_OR_GREATER_NOT
+			scope:target_country.overlord.relations:root < relations_threshold:cordial
+		}
+	}
+	trigger_if = {
+		limit = {
+			scope:target_country = {
+				is_subject = yes
+				NOT = { overlord = top_overlord }
+			}
+		}
+		custom_tooltip = {
+			text = DIPLO_ACTION_TOP_OVERLORD_RELATIONS_CORDIAL_OR_GREATER_NOT
+			scope:target_country.overlord.relations:root < relations_threshold:cordial
+		}
+	}
+}

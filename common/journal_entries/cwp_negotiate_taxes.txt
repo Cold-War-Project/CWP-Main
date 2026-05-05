@@ -1,0 +1,103 @@
+﻿je_negotiate_taxes = {
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+
+	group = je_group_internal_affairs
+
+	scripted_button = negotiation_go_away_button
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_negotiate_taxes_status
+			}
+		}
+	}
+
+	immediate = {
+		random_interest_group = {
+			limit = {
+				has_variable = ig_new_quest_starting
+				has_variable = promise_quest_type
+				var:promise_quest_type = 4 #taxes
+			}
+			save_scope_as = ig
+			remove_variable = ig_new_quest_starting
+			#IG already has var:promise_quest_degree
+		}
+
+		set_variable = { #scripted progress bar needs access to this variable, so copying to country scope
+			name = promise_quest_degree_country
+			value = scope:ig.var:promise_quest_degree
+		}
+		
+		set_variable = { #scripted progress bar needs access to this variable, so copying to country scope
+			name = neg_taxes_remaining_months
+			value = {
+				add = 48 # Connected to max of neg_taxes_progress_bar, neg_taxes_remaining_months, and neg_quest_failure_degree
+				if = {
+					limit = { scope:ig.var:promise_quest_degree <= 1 }
+					multiply = 0.5
+				}
+			}
+		}
+	}
+
+	on_monthly_pulse = { #powers division of fail effects
+		effect = {
+			if = {
+				limit = {
+					OR = {
+						AND = {
+							scope:ig.var:promise_quest_degree <= 2
+							tax_level <= low
+						}
+						tax_level = very_low
+					}
+				}
+				change_variable = {
+					name = neg_taxes_remaining_months
+					subtract = 1
+				}
+			}
+		}
+	}
+
+	complete = {
+		custom_tooltip = {
+			text = neg_taxes_remain_low_tt
+			var:neg_taxes_remaining_months <= 0
+		}
+	}
+
+	on_complete = {
+		promise_quest_completed = yes
+		hidden_effect = { # JE specific cleanup
+			remove_variable = promise_quest_degree_country
+			remove_variable = neg_taxes_remaining_months
+		}
+	}
+
+	fail = {
+		OR = {
+			custom_tooltip = {
+				text = neg_taxes_change_level_tt
+				trigger_if = {
+					limit = { scope:ig.var:promise_quest_degree <= 2 }
+					tax_level > low
+				}
+				trigger_else = {
+					tax_level > very_low
+				}
+			}
+			is_promise_abandoned = yes
+		}
+	}
+
+	on_fail = {
+		promise_quest_failed = yes
+	}
+
+	weight = 1000
+
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}

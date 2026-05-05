@@ -1,0 +1,1226 @@
+﻿improve_law_stance = {
+	if = { #neutral
+		limit = {
+			law_enactment_stance = {
+				law = owner.currently_enacting_law.type
+				value >= neutral
+			}
+		}
+		custom_tooltip = {
+			text = NEGOTIATE_LAW_SUCCESS_CHANCE_INCREASE_TT
+			improve_stance = 1
+		}
+	}
+	else_if = {
+		limit = {
+			law_enactment_stance = {
+				law = owner.currently_enacting_law.type
+				value = strongly_disapprove
+			}
+		}
+		custom_tooltip = {
+			text = NEGOTIATE_LAW_STALL_CHANCE_DECREASE_TT
+			improve_stance = 2
+		}
+	}
+	else_if = {
+		limit = {
+			law_enactment_stance = {
+				law = owner.currently_enacting_law.type
+				value = disapprove
+			}
+		}
+		custom_tooltip = {
+			text = NEGOTIATE_LAW_STALL_CHANCE_DECREASE_TT
+			improve_stance = 1
+		}
+	}
+}
+
+negotiation_end = {
+	hidden_effect = {
+		scope:ig = {
+			finish_negotiation = "unknown_promise" # This is here as a backup for anyone adding more options, it will have no effect if an option already has finished negotiations. The loc string is for telemetry.
+			
+			if = { #remove saved law if not doing quest
+				limit = { NOT = { var:promise_quest_type ?= 2 } }
+				remove_variable = desired_law_var
+			}
+
+			if = { #remove saved building if not doing quest
+				limit = { NOT = { var:promise_quest_type ?= 3 } }
+				remove_variable = promised_building_type
+				remove_variable = promised_building_group
+			}
+		}
+		ROOT = {
+			remove_variable = negotiation_variant
+			remove_variable = negotiation_option_a
+			remove_variable = negotiation_option_b
+			remove_variable = negotiation_option_c
+		}
+	}
+}
+
+neg_option_3_effects = {
+	scope:ig = {
+		set_variable = { #to show in tooltip
+			name = desired_army_size
+			value = negotiate_app_increase
+		}
+	}
+}
+
+neg_option_4_effects = {
+	scope:ig = {
+		ordered_preferred_law = {
+			limit = {
+				trigger_if = {
+					limit = { scope:ig = { can_propose_difficult_law = yes } }
+					is_difficult_law = yes
+					neg_universal_law_checks = yes
+				}
+				trigger_if = {
+					limit = { scope:ig = { can_propose_medium_law = yes } }
+					is_medium_law = yes
+					neg_universal_law_checks = yes
+				}
+				trigger_if = {
+					limit = { scope:ig = { can_propose_easy_law = yes } }
+					is_easy_law = yes
+					neg_universal_law_checks = yes
+				}
+			}
+			min = 0
+			max = 1
+			check_range_bounds = no
+			save_temporary_scope_as = promised_law
+		}
+		set_variable = { #to show in tooltip
+			name = desired_law_var
+			value = scope:promised_law
+		}
+	}
+}
+
+neg_option_5_effects = {
+	scope:ig = {
+		set_variable = { #to show in tooltip
+			name = building_level_increase
+			value = scope:ig.building_levels_to_increase_value
+		}
+	}
+}
+
+neg_option_6_effects = {
+	scope:ig = {
+		set_variable = { #to show in tooltip
+			name = building_group_level_increase
+			value = scope:ig.building_group_levels_to_increase_value
+		}
+	}
+}
+
+neg_option_7_effects = {
+	#Container for later changes if required
+}
+
+neg_option_8_effects = {
+	scope:law = {
+		if = {
+			limit = {
+				any_possible_amendment_type = {
+					save_temporary_scope_as = possible_amendment
+					amendment_is_valid_for_promise_quest_degree = yes
+					NOR = {
+						amendment_is_generic = yes
+						
+						# Refers to scope:law
+						# Refers to any_possible_amendment_type
+						PREV = {  any_scope_amendment = { type ?= scope:possible_amendment } }
+					}
+					scope:ig = { would_sponsor_amendment = scope:possible_amendment }
+				}
+			}
+			random_possible_amendment_type = {
+				limit = {
+					save_temporary_scope_as = possible_amendment
+					amendment_is_valid_for_promise_quest_degree = yes
+					NOR = {
+						amendment_is_generic = yes
+						
+						# Refers to scope:law
+						# Refers to random_possible_amendment_type
+						PREV = { any_scope_amendment = { type ?= scope:possible_amendment } }
+					}
+					scope:ig = { would_sponsor_amendment = scope:possible_amendment }
+				}
+				save_temporary_scope_as = amendment_type_to_test
+			}
+		}
+		else = {
+			random_possible_amendment_type = { # Will always be one of the generic amendments valid for this negotiation level
+				limit = {
+					save_temporary_scope_as = possible_amendment
+					amendment_is_valid_for_promise_quest_degree = yes
+					
+					# Refers to scope:law
+					# Refers to random_possible_amendment_type
+					NOT = { PREV = { any_scope_amendment = { type ?= scope:possible_amendment  } } }
+					
+					scope:ig = { would_sponsor_amendment = scope:possible_amendment }
+				}
+				save_temporary_scope_as = amendment_type_to_test
+			}
+		}
+	}
+	scope:ig = {
+		set_variable = {
+			name = amendment_type
+			value = scope:amendment_type_to_test
+		}
+	}
+}
+
+neg_option_9_effects = {
+	scope:ig = {
+		set_variable = {
+			name = promised_sol_level
+			value = neg_promised_sol_level
+		}
+	}
+}
+
+set_promised_building_group = { #Note: ig_scope
+	# First perform arable land check and set variable for staple crops. This system can be expanded to check for other resources.
+	scope:ig = {
+		set_variable = {
+			name = promised_building_group
+			value = bg:bg_agriculture
+		}
+	}
+	if = {
+		limit = { has_enough_arable_land = yes }
+		set_variable = arable_land_true
+		remove_variable = promised_building_group
+	}
+	else = {
+		remove_variable = promised_building_group
+	}
+
+	#now set the desired building group
+  	if = {##Landowners and rural folk want farms.
+		limit = { is_interest_group_type = ig_landowners }
+		random_list = {
+			50 = {
+				trigger = {
+					has_variable = arable_land_true
+					bg:bg_agriculture = { building_group_can_be_promised = yes }
+				}
+				set_variable = {
+					name = promised_building_group
+					value = bg:bg_agriculture
+				}
+			}
+		}
+	}
+   	else_if = {##Landowners and rural folk want farms.
+		limit = { is_interest_group_type = ig_rural_folk }
+		random_list = {
+			95 = {
+				trigger = { #arable land checked later
+					has_variable = arable_land_true
+					bg:bg_agriculture = { building_group_can_be_promised = yes }
+				}
+				set_variable = {
+					name = promised_building_group
+					value = bg:bg_agriculture
+				}
+			}
+		}
+	}
+	else_if = {##PB want light industry
+		limit = { is_interest_group_type = ig_petty_bourgeoisie }
+		random_list = {
+			50 = {
+				trigger = { #arable land checked later
+					bg:bg_light_industry = { building_group_can_be_promised = yes }
+				}
+				set_variable = {
+					name = promised_building_group
+					value = bg:bg_light_industry
+				}
+			}
+		}
+	}
+
+	else_if = {##Industrialist want Heavy industry
+		limit = { is_interest_group_type = ig_industrialists }
+		random_list = {
+			30 = {
+				trigger = { #arable land checked later
+					bg:bg_heavy_industry = { building_group_can_be_promised = yes }
+				}
+				set_variable = {
+					name = promised_building_group
+					value = bg:bg_heavy_industry
+				}
+			}
+		}
+	}
+	else_if = {##trade unions want jobs.
+		limit = { is_interest_group_type = ig_trade_unions }
+		random_list = {
+			30 = {
+				trigger = { #arable land checked later
+					bg:bg_heavy_industry = { building_group_can_be_promised = yes }
+				}
+				set_variable = {
+					name = promised_building_group
+					value = bg:bg_heavy_industry
+				}
+			}
+			50 = {
+				trigger = { #arable land checked later
+					bg:bg_light_industry = { building_group_can_be_promised = yes }
+				}
+				set_variable = {
+					name = promised_building_group
+					value = bg:bg_light_industry
+				}
+			}
+		}
+	}
+}
+
+construction_balance_effects = {
+	if = {
+		limit = { scope:ig.var:promise_quest_degree <= 1 }
+		root = {
+			add_modifier = {
+				name = private_construction_contracts
+				days = short_modifier_time
+			}
+		}
+	}
+	else_if = {
+		limit = { scope:ig.var:promise_quest_degree = 2 }
+		root = {
+			add_modifier = {
+				name = private_construction_contracts
+				days = normal_modifier_time
+			}
+		}
+	}
+	else_if = {
+		limit = { scope:ig.var:promise_quest_degree > 2 }
+		root = {
+			add_modifier = {
+				name = private_construction_contracts
+				days = long_modifier_time
+			}
+		}
+	}
+}
+
+set_promised_building_type = { #uses ig scope. Runs in immediate of event to power the option 5 trigger (which checks if this worked). Making this a scripted trigger in case for future uses. This will power the building_levels_to_increase_value script value.
+	if = {##Industrialists
+		limit = {
+			is_interest_group_type = ig_industrialists
+			amenability_level <= 2
+		}
+		random_list = {
+			30 = { #railways
+				trigger = { bt:building_railway = { building_can_be_promised = yes } }
+				set_variable = {
+					name = promised_building_type
+					value = bt:building_railway
+				}
+			}
+			5 = { #heavy_industry
+				trigger = {
+					owner = {
+						any_scope_building = {
+							is_building_group = bg_heavy_industry
+							type = { building_can_be_promised = yes }
+						}
+					}
+				}
+				owner = {
+					random_scope_building = {
+						limit = {
+							is_building_group = bg_heavy_industry
+							type = { building_can_be_promised = yes }
+						}
+						type = { save_temporary_scope_as = potential_building_type }
+					}
+				}
+				set_variable = {
+					name = promised_building_type
+					value = scope:potential_building_type
+				}
+			}
+			40 = { #powerplants
+				trigger = { 
+					OR = {
+						bt:building_combustion_plant = { building_can_be_promised = yes }
+						bt:building_nuclear_power_plant = { building_can_be_promised = yes }
+					}
+				}
+				set_variable = {
+					name = promised_building_type
+					value = {
+						value = bt:building_combustion_plant
+						add =bt:building_nuclear_power_plant
+					}
+				}
+			}
+		}
+	}
+
+	else_if = {##Intelligentsia want uni and arts
+		limit = { is_interest_group_type = ig_intelligentsia }
+		random_list = {
+			50 = {
+				trigger = { bt:building_university = { building_can_be_promised = yes } }
+				set_variable = {
+					name = promised_building_type
+					value = bt:building_university
+				}
+			}
+			5 = {
+				trigger = { bt:building_government_administration = { building_can_be_promised = yes } }
+				modifier = {
+					if = {
+						limit = { owner = { bureaucracy < slight_bureaucracy_amount } }
+						add = 10
+					}
+					else_if = {
+						limit = { owner = { bureaucracy < 0 } }
+						add = 30
+					}
+				}
+				set_variable = {
+					name = promised_building_type
+					value = bt:building_government_administration
+				}
+			}
+		}
+	}
+
+	else_if = {##PB don't mind gov admin, light industry.
+		limit = {
+			is_interest_group_type = ig_petty_bourgeoisie
+			amenability_level <= 2
+		}
+		random_list = {
+			30 = {
+				trigger = { bt:building_government_administration = { building_can_be_promised = yes } }
+				modifier = {
+					if = {
+						limit = { owner = { bureaucracy < slight_bureaucracy_amount } }
+						add = 10
+					}
+					else_if = {
+						limit = { owner = { bureaucracy < 0 } }
+						add = 30
+					}
+				}
+				set_variable = {
+					name = promised_building_type
+					value = bt:building_government_administration
+				}
+			}
+			40 = { #light_industry
+				trigger = {
+					amenability_level = 1 # Balance is off to ask for too many
+					owner = { any_scope_building = { is_building_group = bg_light_industry } }
+				}
+				owner = {
+					random_scope_building = {
+						limit = {
+							is_building_group = bg_light_industry
+							type = { building_can_be_promised = yes }
+						}
+						type = { save_temporary_scope_as = potential_building_type }
+					}
+				}
+				set_variable = {
+					name = promised_building_type
+					value = scope:potential_building_type
+				}
+			}
+			20 = {
+				trigger = {
+					amenability_level != 4
+					bt:building_trade_center = { building_can_be_promised = yes }
+				}
+				set_variable = {
+					name = promised_building_type
+					value = bt:building_trade_center
+				}
+			}
+		}
+	}
+
+	else_if = {##Armed_forces want for military factories
+		limit = {
+			is_interest_group_type = ig_armed_forces
+			amenability_level <= 2
+		}
+		random_list = {
+			50 = {
+				trigger = { bt:building_drydocks = { building_can_be_promised = yes } }
+				set_variable = {
+					name = promised_building_type
+					value = bt:building_drydocks
+				}
+			}
+			20 = {
+				trigger = { bt:building_munitions_plants = { building_can_be_promised = yes } }
+				set_variable = {
+					name = promised_building_type
+					value = bt:building_munitions_plants
+				}
+			}
+			40 = {
+				trigger = { bt:building_small_arms_manufactories = { building_can_be_promised = yes } }
+				set_variable = {
+					name = promised_building_type
+					value = bt:building_small_arms_manufactories
+				}
+			}
+		}
+	}
+
+	else_if = {##Devout want uni and admin if state religion is active
+		limit = {
+			is_interest_group_type = ig_devout
+			amenability_level <= 2
+		}
+		random_list = {
+			50 = { #if State Religion, go nuts.
+				trigger = {
+					owner = { has_law = law_type:law_state_religion }
+					bt:building_university = { building_can_be_promised = yes }
+				}
+				set_variable = {
+					name = promised_building_type
+					value = bt:building_university
+				}
+			}
+			35 = {
+				trigger = {
+					owner = { has_law = law_type:law_state_religion }
+					bt:building_government_administration = { building_can_be_promised = yes }
+				}
+				modifier = {
+					if = {
+						limit = { owner = { bureaucracy < slight_bureaucracy_amount } }
+						add = 20
+					}
+					else_if = {
+						limit = { owner = { bureaucracy < 0 } }
+						add = 80
+					}
+				}
+				set_variable = {
+					name = promised_building_type
+					value = bt:building_government_administration
+				}
+			}
+		}
+	}
+}
+
+
+promise_quest = { #requires scope:ig
+	custom_tooltip = negotiate_promise_tt
+	
+	add_modifier = { ##CAUTION: Used for checks to see if has active quest.
+		name = active_ig_promise_country
+		multiplier = scope:ig.amenability_level
+	}
+
+	scope:ig ?= {
+		set_variable = ig_new_quest_starting
+		custom_tooltip = {
+			text = will_not_negotiate_again_tt
+			add_modifier = { name = active_ig_promise }
+		}
+		set_variable = ig_new_quest_starting
+		improve_law_stance = yes
+	}
+}
+
+promise_quest_completed = { #Requires scope:ig
+	scope:ig ?= {
+		add_modifier = {
+			name = negotiation_completed_quest
+			multiplier = scope:ig.var:promise_quest_degree
+			days = long_modifier_time
+		}
+	}
+	add_loyalists = {
+		value = {
+			add = medium_radicals
+			multiply = scope:ig.var:promise_quest_degree
+		}
+		interest_group = scope:ig
+	}
+	quest_cleanup = yes
+}
+
+promise_quest_failed = { #requires scope:ig
+	if = {
+		#law promise
+		limit = { scope:ig.var:promise_quest_type = 2 }
+		custom_tooltip = law_two_years_tt
+	}
+	else = {
+		custom_tooltip = closer_we_get_neg_tt
+	}
+
+	scope:ig ?= {
+		add_modifier = {
+			name = negotiation_failed_quest
+			multiplier = neg_quest_failure_degree
+			days = moderately_long_modifier_time
+			is_decaying = yes
+		}
+	}
+
+	add_modifier = {
+		name = negotiation_failed_quest_legit
+		multiplier = neg_quest_failure_degree
+		days = normal_modifier_time
+	}
+	
+	add_radicals = {
+		interest_group = scope:ig
+		value = {
+			add = very_large_radicals
+			multiply = neg_quest_failure_degree
+		}
+	}
+	
+	post_notification = neg_failed_quest_toast
+	quest_cleanup = yes
+}
+
+quest_cleanup = { #requires scope:ig
+	hidden_effect = {
+		scope:ig = { #remove all variables
+			remove_variable = promise_quest_degree
+			remove_variable = promise_quest_type #crucial to remove
+			remove_variable = desired_army_size
+			remove_variable = desired_law_var
+			remove_variable = promised_building_type
+			remove_variable = promised_building_group
+			remove_variable = current_building_amount
+			remove_variable = starting_building_amount
+			remove_variable = law_attempt_months
+			remove_variable = starting_army_amount
+			remove_variable = current_army_amount
+			remove_variable = promised_sol_level
+			remove_variable = starting_sol
+			remove_variable = current_sol
+			
+			if = {
+				limit = { has_modifier = active_ig_promise }
+				remove_modifier = active_ig_promise
+			}
+		}
+
+		root = { #modifier tooltip doesn't scale by multiplier when this is displayed, so leaving it in a hidden effect is better than wrong info
+			if = {
+				limit = { has_modifier = active_ig_promise_country }
+				remove_modifier = active_ig_promise_country
+			}
+		}
+	}
+}
+
+set_negotiation_loc = { #used for negotiations, putting here for script readability. Sets loc and art. Note: One cannot save scopes in a random_list
+	random_list = {
+		##difficult negotiations
+		1 = {
+			trigger = {
+				scope:ig.amenability_level >= 3
+			}
+			random_list = {
+				1 = {
+					set_variable = {
+						name = negotiation_variant
+						value = 1
+					}
+				}
+				1 = {
+					set_variable = {
+						name = negotiation_variant
+						value = 2
+					}
+				}
+				1 = {
+					set_variable = {
+						name = negotiation_variant
+						value = 3
+					}
+				}
+			}
+		}
+		##pragmatic normal negotiations
+		1 = {
+			trigger = {
+				scope:ig.amenability_level = 2
+			}
+			random_list = {
+				1 = {
+					set_variable = {
+						name = negotiation_variant
+						value = 4
+					}
+				}
+				1 = {
+					set_variable = {
+						name = negotiation_variant
+						value = 5
+					}
+				}
+				1 = {
+					trigger = {
+						any_interest_group = {
+							is_in_government = yes
+							ig_counts_as_marginal = no
+							supports_law = yes
+						}
+					}
+					set_variable = {
+						name = negotiation_variant
+						value = 6
+					}
+					random_interest_group = { #used for loc
+						limit = {
+							is_in_government = yes
+							ig_counts_as_marginal = no
+							supports_law = yes
+						}
+						save_temporary_scope_as = supporter_law_ig
+						#cannot save permanent scopes in a random list.
+					}
+					root = { #For loc
+						set_variable = {
+							name = supporting_ig
+							value = scope:supporter_law_ig
+						}
+					}
+					if = {
+						limit = {
+							has_variable = supporting_ig
+							always = no
+						}
+						#Removes errors about unused variable.
+					}
+				}
+			}
+		}
+		##friendly negotiations
+		1 = {
+			trigger = { #pragmatic normal negotiations
+				scope:ig.amenability_level <= 1
+			}
+			random_list = {
+				1 = {
+					set_variable = {
+						name = negotiation_variant
+						value = 7
+					}
+				}
+				1 = {
+					set_variable = {
+						name = negotiation_variant
+						value = 8
+					}
+				}
+				1 = {
+					set_variable = {
+						name = negotiation_variant
+						value = 9
+					}
+				}
+			}
+		}
+	}
+}
+
+
+
+set_neg_options = { ## Sets three options out of a random list of possible negotiation offers (each with their own triggers) and a "no deal" option to back out.
+	##Making this a scripted effect in case multiple events want to use the negotiation options. The options themselves must be manually copied over though.
+
+	##SET OPTION A
+	random_list = {
+		10 = { #option 1 bribes
+			set_variable = {
+				name = negotiation_option_a
+				value = 1
+			}
+		}
+		10 = {#option 2 bureaucracy
+			trigger = {
+				neg_option_2_trigger = yes
+			}
+			set_variable = {
+				name = negotiation_option_a
+				value = 2
+			}
+		}
+		30 = {#option 3 army size, armed forces only
+			trigger = {
+				neg_option_3_trigger = yes
+			}
+			set_variable = {
+				name = negotiation_option_a
+				value = 3
+			}
+			neg_option_3_effects = yes
+		}
+		20 = {#option 4 law
+			trigger = {
+				neg_option_4_trigger = yes
+			}
+			set_variable = {
+				name = negotiation_option_a
+				value = 4
+			}
+			neg_option_4_effects = yes
+		}
+		10 = {#option 5 buildings
+			trigger = {
+				neg_option_5_trigger = yes
+			}
+			set_variable = {
+				name = negotiation_option_a
+				value = 5
+			}
+			neg_option_5_effects = yes
+		}
+		10 = {#option 6 building groups
+			trigger = {
+				neg_option_6_trigger = yes
+			}
+			set_variable = {
+				name = negotiation_option_a
+				value = 6
+			}
+			neg_option_6_effects = yes
+		}
+		5 = {#option 7 taxes
+			trigger = {
+				neg_option_7_trigger = yes
+			}
+			modifier = {
+				value = neg_option_7_modifier
+			}
+			set_variable = {
+				name = negotiation_option_a
+				value = 7
+			}
+			neg_option_7_effects = yes
+		}
+		80 = {#option 8 option, law_amendment
+			trigger = {
+				neg_option_8_trigger = yes
+			}
+			set_variable = {
+				name = negotiation_option_a
+				value = 8
+			}
+			neg_option_8_effects = yes
+		}
+		5 = {#option 9 SOL
+			trigger = {
+				neg_option_9_trigger = yes
+			}
+			modifier = {
+				value = neg_option_9_modifier
+			}
+			set_variable = {
+				name = negotiation_option_a
+				value = 9
+			}
+			neg_option_9_effects = yes
+		}
+		1 = { #No Option. Stops unset var errors. Small chance the Gods above and Gods below say no.
+			set_variable = {
+				name = negotiation_option_a
+				value = 1000
+			}
+		}
+	}
+	##SET OPTION B
+	random_list = {
+		10 = {#option 1 bribes
+			trigger = {
+				NOT = {
+					var:negotiation_option_a = 1
+				}
+			}
+			set_variable = {
+				name = negotiation_option_b
+				value = 1
+			}
+		}
+		10 = {#option 2 bureaucracy
+			trigger = {
+				NOT = {
+					var:negotiation_option_a = 2
+				}
+				neg_option_2_trigger = yes
+			}
+			set_variable = {
+				name = negotiation_option_b
+				value = 2
+			}
+		}
+		30 = {#option 3 army size, armed forces only
+			trigger = {
+				NOT = {
+					var:negotiation_option_a = 3
+				}
+				neg_option_3_trigger = yes
+			}
+			set_variable = {
+				name = negotiation_option_b
+				value = 3
+			}
+			neg_option_3_effects = yes
+		}
+		20 = {#option 4 law
+			trigger = {
+				NOT = {
+					var:negotiation_option_a = 4
+				}
+				neg_option_4_trigger = yes
+			}
+			set_variable = {
+				name = negotiation_option_b
+				value = 4
+			}
+			neg_option_4_effects = yes
+		}
+		10 = {#option 5 buildings
+			trigger = {
+				NOT = {
+					var:negotiation_option_a = 5
+				}
+				neg_option_5_trigger = yes
+			}
+			set_variable = {
+				name = negotiation_option_b
+				value = 5
+			}
+			neg_option_5_effects = yes
+		}
+		10 = {#option 6 building groups
+			trigger = {
+				NOT = {
+					var:negotiation_option_a = 6
+				}
+				neg_option_6_trigger = yes
+			}
+			set_variable = {
+				name = negotiation_option_b
+				value = 6
+			}
+			neg_option_6_effects = yes
+		}
+		5 = {#option 7 taxes
+			trigger = {
+				NOT = {
+					var:negotiation_option_a = 7
+				}
+				neg_option_7_trigger = yes
+			}
+			modifier = {
+				value = neg_option_7_modifier
+			}
+			set_variable = {
+				name = negotiation_option_b
+				value = 7
+			}
+			neg_option_7_effects = yes
+		}
+		80 = {#option 8 option, law_amendment
+			trigger = {
+				NOT = {
+					var:negotiation_option_a = 8
+				}
+				neg_option_8_trigger = yes
+			}
+			set_variable = {
+				name = negotiation_option_b
+				value = 8
+			}
+			neg_option_8_effects = yes
+		}
+		5 = {#option 9 SOL
+			trigger = {
+				NOT = {
+					var:negotiation_option_a = 9
+				}
+				neg_option_9_trigger = yes
+			}
+			modifier = {
+				value = neg_option_9_modifier
+			}
+			set_variable = {
+				name = negotiation_option_b
+				value = 9
+			}
+			neg_option_9_effects = yes
+		}
+		1 = { #No Option. Stops unset var errors. Bad luck strikes
+			set_variable = {
+				name = negotiation_option_b
+				value = 1000
+			}
+		}
+	}
+	##SET OPTION C
+	random_list = {
+		10 = {#option 1 bribes
+			trigger = {
+				NOR = {
+					var:negotiation_option_a = 1
+					var:negotiation_option_b = 1
+				}
+			}
+			set_variable = {
+				name = negotiation_option_c
+				value = 1
+			}
+		}
+		10 = {#option 2 bureaucracy
+			trigger = {
+				NOR = {
+					var:negotiation_option_a = 2
+					var:negotiation_option_b = 2
+				}
+				neg_option_2_trigger = yes
+			}
+			set_variable = {
+				name = negotiation_option_c
+				value = 2
+			}
+		}
+		30 = {#option 3 army size, armed forces only
+			trigger = {
+				NOR = {
+					var:negotiation_option_a = 3
+					var:negotiation_option_b = 3
+				}
+				neg_option_3_trigger = yes
+			}
+			set_variable = {
+				name = negotiation_option_c
+				value = 3
+			}
+			neg_option_3_effects = yes
+		}
+		20 = {#option 4 law
+			trigger = {
+				NOT = {
+					var:negotiation_option_a = 4
+					var:negotiation_option_b = 4
+				}
+				neg_option_4_trigger = yes
+			}
+			set_variable = {
+				name = negotiation_option_c
+				value = 4
+			}
+			neg_option_4_effects = yes
+		}
+		10 = {#option 5 buildings
+			trigger = {
+				NOT = {
+					var:negotiation_option_a = 5
+					var:negotiation_option_b = 5
+				}
+				neg_option_5_trigger = yes
+			}
+			set_variable = {
+				name = negotiation_option_c
+				value = 5
+			}
+			neg_option_5_effects = yes
+		}
+		10 = {#option 6 building groups
+			trigger = {
+				NOT = {
+					var:negotiation_option_a = 6
+					var:negotiation_option_b = 6
+				}
+				neg_option_6_trigger = yes
+			}
+			set_variable = {
+				name = negotiation_option_c
+				value = 6
+			}
+			neg_option_6_effects = yes
+		}
+		5 = {#option 7 taxes
+			trigger = {
+				NOT = {
+					var:negotiation_option_a = 7
+					var:negotiation_option_b = 7
+				}
+				neg_option_7_trigger = yes
+			}
+			modifier = {
+				value = neg_option_7_modifier
+			}
+			set_variable = {
+				name = negotiation_option_c
+				value = 7
+			}
+			neg_option_7_effects = yes
+		}
+		80 = {#option 8 option, law_amendment
+			trigger = {
+				NOT = {
+					var:negotiation_option_a = 8
+					var:negotiation_option_b = 8
+				}
+				neg_option_8_trigger = yes
+			}
+			set_variable = {
+				name = negotiation_option_c
+				value = 8
+			}
+			neg_option_8_effects = yes
+		}
+		5 = {#option 9
+			trigger = {
+				NOT = {
+					var:negotiation_option_a = 9
+					var:negotiation_option_b = 9
+				}
+				neg_option_9_trigger = yes
+			}
+			modifier = {
+				value = neg_option_9_modifier
+			}
+			set_variable = {
+				name = negotiation_option_c
+				value = 9
+			}
+			neg_option_9_effects = yes
+		}
+		1 = { #No Option. Stops unset var errors.
+			set_variable = {
+				name = negotiation_option_c
+				value = 1000
+			}
+		}
+	}
+}
+
+je_government_petition_negotiation_immediate = {
+    random_interest_group = {
+        limit = {
+            has_variable = ig_new_quest_starting
+            has_variable = promise_quest_type
+            var:promise_quest_type = 2 #law
+        }
+        save_scope_as = ig
+        remove_variable = ig_new_quest_starting
+    }
+    scope:ig.var:desired_law_var = {
+        save_scope_as = government_petition_law
+    }
+    currently_enacting_law = {
+		save_scope_as = law
+	}
+	scope:ig = {
+		set_variable = {
+			name = law_attempt_months
+			value = 0
+		}
+	}
+    ## scope:ig already has var:promise_quest_degree
+}
+
+je_government_petition_negotiation_monthly_pulse = {
+	if = {
+		limit = {
+			is_enacting_law = scope:government_petition_law.type
+		}
+		scope:ig = {
+			change_variable = {
+				name = law_attempt_months
+				add = 1
+			}
+		}
+	}
+}
+
+je_government_petition_negotiation_yearly_pulse = {
+	#they help you pass the law if enactment chance is smaller than stall.
+	if = {
+		limit = {
+			is_enacting_law = scope:government_petition_law.type
+			enactment_chance < "stall_chance"
+		}
+		post_notification = help_from_ig
+		#different scales of help depending on how far behind enactment chance is.
+		if = {
+			limit = {
+				enactment_chance >= {
+					value = "stall_chance"
+					add = -15
+				}
+			}
+			add_enactment_modifier = {
+				name = negotiation_pushing_for_law
+			}
+		}
+		else_if = {
+			limit = {
+				enactment_chance >= {
+					value = "stall_chance"
+					add = -30
+				}
+			}
+			add_enactment_modifier = {
+				name = negotiation_pushing_for_law
+				multiplier = 2
+			}
+		}
+		else_if = {
+			limit = {
+				enactment_chance >= {
+					value = "stall_chance"
+					add = -45
+				}
+			}
+			add_enactment_modifier = {
+				name = negotiation_pushing_for_law
+				multiplier = 3
+			}
+		}
+		else_if = {
+			limit = {
+				enactment_chance >= {
+					value = "stall_chance"
+					add = -100
+				}
+			}
+			add_enactment_modifier = {
+				name = negotiation_pushing_for_law
+				multiplier = 4
+			}
+		}
+	}
+}

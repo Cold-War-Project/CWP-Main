@@ -1,0 +1,78 @@
+﻿# Root = Country
+has_voting_franchise = {
+	country_has_voting_franchise = yes
+}
+
+# Root = Country
+can_form_power_bloc = {
+	country_can_form_power_bloc = yes
+}
+
+# Root = Country
+can_lead_power_bloc = {
+	country_rank >= rank_value:major_power
+}
+
+# Checks if any diplomatic play is possible against the target country
+# Root = Country
+# scope:target_country = target of a diplomatic play
+can_start_diplomatic_plays_against = {
+	# Not allowed to attack subjects of play participants
+	NOT = {
+		scope:target_country.top_overlord ?= {
+			is_diplomatic_play_participant_with = root
+		}
+	}
+	# Might be disallowed by power bloc
+	NOT = {
+		custom_tooltip = {
+			text = "power_bloc_disallow_war_bool"
+			is_in_same_power_bloc = scope:target_country
+			power_bloc ?= {
+				modifier:power_bloc_disallow_war_bool = yes
+			}
+			# Conflicts between Overlord and (their own) Subject are always permitted despite Power Bloc special conditions
+			NOR = {
+				is_direct_subject_of = scope:target_country
+				scope:target_country = {
+					is_direct_subject_of = root
+				}
+			}
+		}
+	}
+	NOT = {
+		# Disallow plays targeting your indirect subjects
+		scope:target_country = {
+			is_indirect_subject_of = root
+		}
+	}
+}
+
+# Checks if Country can join the target country's side in a diplomatic play
+# Root = Country
+# scope:target_country = country of the side to join to
+# scope:enemy_country = enemy country of target_country to which we could fight against
+can_join_side_in_diplomatic_play = {
+	# Might be disallowed by power bloc
+	NOT = {
+		custom_tooltip = {
+			text = "POWER_BLOC_CANNOT_SIDE_AGAINST_OVERLORD"
+			is_in_same_power_bloc = scope:target_country
+			is_in_same_power_bloc = scope:enemy_country
+			power_bloc ?= {
+				modifier:power_bloc_disallow_war_bool = yes
+			}
+			# Conflicts between Overlord and (their own) Subject are always permitted despite Power Bloc special conditions
+			# We can join the overlord side but not the subject's one
+			scope:target_country = {
+				is_direct_subject_of = scope:enemy_country
+			}
+		}
+	}
+	NOT = {
+		# Disallow plays targeting your indirect subjects
+		scope:enemy_country = {
+			is_indirect_subject_of = root
+		}
+	}
+}

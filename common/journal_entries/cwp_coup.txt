@@ -1,0 +1,140 @@
+﻿je_coup = {
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+
+	group = je_group_crises
+
+	scripted_progress_bar = je_coup_progress_bar
+
+	immediate = {
+		random_interest_group = {
+			limit = { has_variable = coup_interest_group_var }
+			save_scope_as = coup_interest_group
+		}
+
+		random_scope_character = {
+			limit = { has_variable = coup_character_leader_var }
+			save_scope_as = coup_character_leader
+		}
+		
+		change_global_variable = { name = num_coups add = 1 }
+	}
+
+	on_weekly_pulse = {
+		events = {
+			cwp_coup.4
+		}
+	}
+
+	on_monthly_pulse = {
+		random_events = {
+			150 = 0
+			10 = coup_pulse_events.1
+			10 = coup_pulse_events.2
+			10 = coup_pulse_events.3
+			10 = coup_pulse_events.4
+			10 = coup_pulse_events.5
+			10 = coup_pulse_events.6
+			10 = coup_pulse_events.7
+			10 = coup_pulse_events.8
+			10 = coup_pulse_events.9
+			10 = coup_pulse_events.10
+		}
+	}
+
+	complete = {
+		custom_tooltip = {
+			text = coup_progress_reached_100_tt
+			scope:journal_entry = { "scripted_bar_progress(je_coup_progress_bar)" >= 120 }
+		}
+	}
+
+	timeout = 730
+
+	on_complete = {
+		trigger_event = { id = cwp_coup.2 popup = yes }
+
+		show_as_tooltip = {
+			custom_tooltip = if_coup_is_successful_tt
+			coup_victory_effect = yes
+		}
+		
+		set_variable = { name = coup_cooldown_var days = short_modifier_time }
+	}
+
+	fail = {
+		OR = {
+			scope:coup_character_leader ?= { is_character_alive = no }
+			scope:coup_character_leader ?= { is_in_exile_pool = yes }
+			custom_tooltip = {
+				text = coup_progress_reached_0_tt
+				scope:journal_entry = { "scripted_bar_progress(je_coup_progress_bar)" <= 0 }
+			}
+		}
+	}
+
+	on_fail = {
+		scope:coup_character_leader ?= { remove_variable = coup_character_leader_var }
+		
+		random_interest_group = {
+			limit = { has_variable = coup_interest_group_var }
+			remove_variable = coup_interest_group_var
+		}
+		
+		if = {
+			limit = {
+				scope:coup_character_leader ?= {
+					is_character_alive = yes
+					owner ?= root
+				}
+			}
+			trigger_event = { id = cwp_coup.3 popup = yes }
+		}
+
+		change_global_variable = { name = failed_coups add = 1 }
+		
+		set_variable = { name = coup_cooldown_var days = short_modifier_time }
+	}
+
+	on_timeout = {
+		scope:coup_character_leader ?= { remove_variable = coup_character_leader_var }
+		
+		random_interest_group = {
+			limit = { has_variable = coup_interest_group_var }
+			remove_variable = coup_interest_group_var
+		}
+
+		if = {
+			limit = {
+				scope:coup_character_leader ?= {
+					is_character_alive = yes
+					owner ?= root
+				}
+			}
+			trigger_event = { id = cwp_coup.3 popup = yes }
+		}
+		
+		change_global_variable = { name = failed_coups add = 1 }
+		
+		set_variable = { name = coup_cooldown_var days = short_modifier_time }
+	}
+
+	invalid = {
+		OR = {
+			scope:coup_character_leader ?= { has_modifier = modifier_preempetive_coup }
+			scope:coup_interest_group ?= { is_secessionist = yes }
+		}
+	}
+
+	on_invalid = {
+		set_variable = { name = coup_cooldown_var days = short_modifier_time }
+	}
+
+	status_desc = { }
+
+	should_be_pinned_by_default_uninvolved_or_context = yes
+
+	transferable = no
+	can_revolution_inherit = no
+
+	weight = 100
+}

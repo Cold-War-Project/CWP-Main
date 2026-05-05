@@ -1,0 +1,186 @@
+﻿ig_counts_as_marginal = {
+	trigger_if = {
+		limit = { owner ?= { country_has_voting_franchise = yes } }
+		ig_clout < define:NPolitics|MARGINAL_IG_THRESHOLD
+	}
+	trigger_else = {
+		is_marginal = yes
+	}
+}
+
+ig_desires_laws_for_petition = {
+	any_interest_group = {
+		is_in_government = yes
+		ig_counts_as_marginal = no
+		any_preferred_law = { law_is_valid_for_ig_petition = yes }
+	}
+}
+
+law_is_valid_for_ig_petition = {
+	# Can the law be enacted at all?
+
+	# Special code trigger that checks if:
+	# 1: Anyone in government wants to enact this law, and nobody in government actively opposes it
+	# 2: The law would ever be considered for enactment again by the AI (ie, no going back to serfdom)
+	# 3: The law wouldn't be an unnecessarily radical enactment option (based on progressiveness delta to current law) when an alternative exists
+	is_reasonable_law_for_petition = yes
+}
+
+has_paternalist_ideology = {
+	has_ideology = ideology:ideology_paternalistic
+}
+
+ig_is_socialist = {
+	OR = {
+		has_ideology = ideology:ideology_socialist
+		leader = { has_ideology = ideology:ideology_vanguardist }
+		leader = { has_ideology = ideology:ideology_nihilist }
+		leader = { has_ideology = ideology:ideology_anarchist }
+		leader = { has_ideology = ideology:ideology_communist }
+		law_stance = {
+			law = law_type:law_council_republic
+			value > neutral
+		}
+	}
+}
+
+ig_is_liberal = {
+	OR = {
+		has_ideology = ideology:ideology_republican
+		has_ideology = ideology:ideology_liberal
+		leader = { has_ideology = ideology:ideology_radical }
+		leader = { has_ideology = ideology:ideology_republican_leader }
+		leader = { has_ideology = ideology:ideology_social_democrat }
+		AND = {
+			law_stance = {
+				law = law_type:law_autocracy
+				value < neutral
+			}
+			law_stance = {
+				law = law_type:law_council_republic
+				value < neutral
+			}
+		}
+	}
+}
+
+ig_is_reactionary = {
+	OR = {
+		has_ideology = ideology:ideology_reactionary
+		has_ideology = ideology:ideology_pro_slavery
+		leader = {
+			OR = {
+				has_ideology = ideology:ideology_slaver
+				has_ideology = ideology:ideology_fascist
+				has_ideology = ideology:ideology_integralist
+				has_ideology = ideology:ideology_royalist
+				has_ideology = ideology:ideology_theocrat
+			}
+		}
+		AND = {
+			law_stance = {
+				law = law_type:law_autocracy
+				value >= neutral
+			}
+			law_stance = {
+				law = law_type:law_council_republic
+				value < neutral
+			}
+		}
+	}
+}
+
+government_ig_supports_enaction = {
+	exists = currently_enacting_law
+	any_interest_group = {
+		ig_counts_as_marginal = no
+		is_in_government = yes
+		law_enactment_stance = {
+			law = owner.currently_enacting_law.type
+			value > neutral
+		}
+	}
+}
+
+government_ig_opposes_enaction = {
+	any_interest_group = {
+		ig_counts_as_marginal = no
+		is_in_government = yes
+		law_enactment_stance = {
+			law = owner.currently_enacting_law.type
+			value < neutral
+		}
+	}
+}
+
+government_ig_ambivalent_enaction = {
+	any_interest_group = {
+		ig_counts_as_marginal = no
+		is_in_government = yes
+		law_enactment_stance = {
+			law = owner.currently_enacting_law.type
+			value = neutral
+		}
+	}
+}
+
+ig_type_matches_former = { #Temporary Workaround
+	save_temporary_scope_as = exile_temp
+	custom_tooltip = {
+		text = ig_type_matches_former_tt
+		OR = {
+			AND = {
+				is_interest_group_type = ig_armed_forces
+				scope:ex_ig = { is_interest_group_type = ig_armed_forces }
+			}
+			AND = {
+				is_interest_group_type = ig_devout
+				scope:ex_ig = { is_interest_group_type = ig_devout }
+			}
+			AND = {
+				is_interest_group_type = ig_industrialists
+				scope:ex_ig = { is_interest_group_type = ig_industrialists }
+			}
+			AND = {
+				is_interest_group_type = ig_intelligentsia
+				scope:ex_ig = { is_interest_group_type = ig_intelligentsia }
+			}
+			AND = {
+				is_interest_group_type = ig_landowners
+				scope:ex_ig = { is_interest_group_type = ig_landowners }
+			}
+			AND = {
+				is_interest_group_type = ig_petty_bourgeoisie
+				scope:ex_ig = { is_interest_group_type = ig_petty_bourgeoisie }
+			}
+			AND = {
+				is_interest_group_type = ig_rural_folk
+				scope:ex_ig = { is_interest_group_type = ig_rural_folk }
+			}
+			AND = {
+				is_interest_group_type = ig_trade_unions
+				scope:ex_ig = { is_interest_group_type = ig_trade_unions }
+			}
+		}
+	}
+}
+
+interest_group_has_liberal_ideology = {
+	leader = { has_liberal_ideology = yes }
+}
+
+interest_group_has_progressive_ideology = {
+	leader = { has_progressive_ideology = yes }
+}
+
+interest_group_has_socialist_ideology = {
+	leader = { has_socialist_ideology = yes }
+}
+
+interest_group_has_reactionary_ideology = {
+	leader = { has_reactionary_ideology = yes }
+}
+
+interest_group_has_conservative_ideology = {
+	leader = { has_conservative_ideology = yes }
+}

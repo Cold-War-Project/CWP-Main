@@ -1,0 +1,292 @@
+﻿is_promise_abandoned = {
+	custom_tooltip = {
+		text = has_been_abandoned_neg_tt
+		scope:journal_entry ?= { has_variable = has_been_abandoned }
+	}
+}
+
+building_can_be_promised = { #can't be first building of type - happens in building type scope
+	save_temporary_scope_as = building_type_to_test
+	root.owner = { any_scope_building = { type = scope:building_type_to_test } }
+}
+
+building_group_can_be_promised = { #can't be first building of type
+	save_temporary_scope_as = building_group_to_test
+	root.owner = {
+		country_has_building_group_levels = {
+			type = scope:building_group_to_test
+			value >= 1
+		}
+	}
+}
+
+is_in_building_group = { #hack to check building group from building type. $BUILDING_GROUP$
+	save_temporary_scope_as = building_type
+	any_country = {
+		country_rank >= rank_value:major_power #performance
+		any_scope_building = {
+			type = scope:building_type
+			is_building_group = $BUILDING_GROUP$
+		}
+	}
+}
+
+has_enough_arable_land = { #uses scope:ig, and scope:ig.var:promised_building_group, checks enough arable land.
+	root = {
+		total_free_arable_land >= {
+			add = scope:ig.building_groups_extra
+			multiply = 1.05
+			add = 5
+		}
+	}
+}
+
+building_exists_worldwide = { #uses building_type scope
+	save_temporary_scope_as = building_type
+	any_country = {
+		country_rank >= rank_value:major_power #performance
+		any_scope_building = { type = scope:building_type }
+	}
+}
+
+supports_law = { #IG scope, checks currently enacting law
+	law_enactment_stance = {
+		law = owner.currently_enacting_law.type
+		value > neutral
+	}
+}
+
+opposes_law = { #IG scope, checks currently enacting law
+	law_enactment_stance = {
+		law = owner.currently_enacting_law.type
+		value < neutral
+	}
+}
+
+can_propose_difficult_law = { #uses scope:IG
+	scope:ig.amenability_level >= 3 #difficult negotiations only
+	any_preferred_law = {
+		is_difficult_law = yes
+		neg_universal_law_checks = yes
+	}
+}
+
+is_difficult_law = { #must be a little progressive difference and not too easy to pass, but not stupidly impossible
+	law_is_available = yes
+	this.type = {
+		law_estimated_enactment_chance > {
+			add = law_estimated_stall_chance
+			add = -45
+		}
+		OR = {
+			AND = { #some overlap with medium if law is a big jump
+				law_estimated_enactment_chance < {
+					add = law_estimated_stall_chance
+					add = -15
+				}
+				"law_progressiveness_difference( root.currently_enacting_law.type )" > 25
+			}
+			law_estimated_enactment_chance < {
+				add = law_estimated_stall_chance
+				add = -20
+			}
+		}
+	}
+}
+
+can_propose_medium_law = { #uses scope:IG
+	scope:ig.amenability_level = 2 #Pragmatic negotiations only
+	any_preferred_law = {
+		is_medium_law = yes
+		neg_universal_law_checks = yes
+	}
+}
+
+is_medium_law = { #should be within 20% -0 pass over stall.
+	law_is_available = yes
+	this.type = {
+		law_estimated_enactment_chance > {
+			add = law_estimated_stall_chance
+			add = -20
+		}
+		law_estimated_enactment_chance < law_estimated_stall_chance
+	}
+}
+
+can_propose_easy_law = { #uses scope:IG
+	scope:ig.amenability_level <= 1 #friendly negotiations only
+	any_preferred_law = {
+		is_easy_law = yes
+		neg_universal_law_checks = yes
+	}
+}
+
+is_easy_law = { #within 10 of passing, or easy to pass, and a good idea
+	law_is_valid_for_ig_petition = yes
+	this.type = {
+		law_estimated_enactment_chance > {
+			add = law_estimated_stall_chance
+			add = -10
+		}
+	}
+}
+
+neg_universal_law_checks = { #error free way to check these are not in same law group, or that the desired law is already enacted
+	currently_active_law_in_group != scope:law.currently_active_law_in_group
+	scope:ig.owner = { NOT = { has_law = prev.type } }
+	trigger_if = {
+		limit = { scope:ig.owner = { has_journal_entry = je_government_petition_negotiation_version } }
+		NOT = {
+			any_interest_group = {
+				has_variable = desired_law_var
+				var:desired_law_var.type = prev.type
+			}
+		}
+	}
+}
+
+neg_law_not_active = {
+	scope:ig.owner = { NOT = { has_law = prev.type } }
+}
+
+approves_law = { #same as supports_law, for ease of scripting
+	supports_law = yes
+}
+
+disapproves_law = { #IG scope, checks currently enacting law
+	law_enactment_stance = {
+		law = owner.currently_enacting_law.type
+		value < neutral
+	}
+}
+
+ignores_law = { #IG scope, checks currently enacting law
+	law_enactment_stance = {
+		law = owner.currently_enacting_law.type
+		value = neutral
+	}
+}
+
+is_neutral_on_law = { #IG scope same as is_neutral_on_law, for ease of scripting
+	ignores_law = yes
+}
+
+neg_option_2_trigger = {
+	NOT = { has_modifier = negotiation_bureaucracy }
+}
+
+neg_option_3_trigger = {
+	NOT = { scope:ig = { has_modifier = active_ig_promise } }
+	scope:ig = { is_interest_group_type = ig_armed_forces }
+	trigger_if = {
+		limit = { has_journal_entry = je_negotiate_army_quest }
+		any_interest_group = { var:promise_quest_type ?= 1 }
+	}
+}
+
+neg_option_4_trigger = {
+	scope:ig = {
+		OR = {
+			can_propose_difficult_law = yes
+			can_propose_medium_law = yes
+			can_propose_easy_law = yes
+		}
+		NOT = { has_modifier = active_ig_promise }
+		#max 2 law promises
+		owner = { NOT = { has_journal_entry = je_government_petition_negotiation_version_b } }
+	}
+}
+
+neg_option_5_trigger = { #checks if a valid promise building_type was set.
+	exists = scope:ig.var:promised_building_type
+	NOT = { scope:ig = { has_modifier = active_ig_promise } }
+	NOT = { #Other building quest is not too severe
+		any_interest_group = {
+			has_variable = promise_quest_type
+			var:promise_quest_type = 3 #buildings
+			var:promise_quest_degree != 4
+		}
+	}
+	NOR = { has_journal_entry = je_negotiate_buildings }
+}
+
+neg_option_6_trigger = { #checks if a valid promise building_group was set. Arable land is checked during the setting of building group
+	exists = scope:ig.var:promised_building_group
+	NOT = { scope:ig = { has_modifier = active_ig_promise } }
+	NOT = {  #Other building quest is not too severe
+		any_interest_group = {
+			has_variable = promise_quest_type
+			var:promise_quest_type = 3 #buildings
+			var:promise_quest_degree != 4
+		}
+	}
+	NOR = { has_journal_entry = je_negotiate_building_group }
+}
+
+neg_option_7_trigger = { #checks taxes are not already low and no other similar promise exists.
+	NOT = { scope:ig = { has_modifier = active_ig_promise } }
+	NOT = { has_journal_entry = je_negotiate_taxes }
+	root = { tax_level > low }
+}
+
+neg_option_8_trigger = { #law_amendment_is_available.
+	scope:law = {
+		any_possible_amendment_type = {
+			save_temporary_scope_as = amendment_to_assess
+			amendment_is_valid_for_promise_quest_degree = yes
+			# Refers to any_possible_amendment_type
+			NOT = { prev = { any_scope_amendment = { type ?= scope:amendment_to_assess } } }
+			scope:ig = { would_sponsor_amendment = prev }
+		}
+	}
+}
+
+neg_option_9_trigger = { #cannot be easy promise, too easy.
+	NOT = {
+		scope:ig = {
+			has_modifier = active_ig_promise
+			var:promise_quest_degree != 1
+		}
+	}
+	NOT = { has_journal_entry = je_negotiate_sol }
+}
+
+amendment_is_valid_for_promise_quest_degree = { # Inside an any_possible_amendment_type
+	NOR = {
+		this = amendment_type:amendment_generic_sponsor_polstr_increase
+		this = amendment_type:amendment_generic_sponsor_polstr_approval_increase
+	}
+	trigger_if = {
+		limit = { scope:ig.var:promise_quest_degree = 1 }
+		NOR = { # Enables any amendment for easy negotiations
+			this = amendment_type:amendment_generic_sponsor_polstr_increase_negotiation_2
+			this = amendment_type:amendment_generic_sponsor_polstr_increase_negotiation_3
+		}
+	}
+	trigger_else_if = {
+		limit = { scope:ig.var:promise_quest_degree = 2 }
+		OR = {
+			this = amendment_type:amendment_redemption_payments
+			this = amendment_type:amendment_individual_redemption_payments
+			this = amendment_type:amendment_generic_sponsor_polstr_increase_negotiation_2
+		}
+	}
+	trigger_else_if = {
+		limit = { scope:ig.var:promise_quest_degree >= 3 }
+		OR = {
+			this = amendment_type:amendment_redemption_payments
+			this = amendment_type:amendment_individual_redemption_payments
+			this = amendment_type:amendment_generic_sponsor_polstr_increase_negotiation_3
+		}
+	}
+}
+
+amendment_is_generic = { # Inside an any_possible_amendment_type
+	OR = {
+		this = amendment_type:amendment_generic_sponsor_polstr_increase
+		this = amendment_type:amendment_generic_sponsor_polstr_approval_increase
+		this = amendment_type:amendment_generic_sponsor_polstr_increase_negotiation_1
+		this = amendment_type:amendment_generic_sponsor_polstr_increase_negotiation_2
+		this = amendment_type:amendment_generic_sponsor_polstr_increase_negotiation_3
+	}
+}
