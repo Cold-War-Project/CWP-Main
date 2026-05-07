@@ -1,0 +1,103 @@
+﻿da_change_culture = {
+	groups= { overlord }
+
+	requires_approval = no
+	should_notify_third_parties = yes
+	show_effect_in_tooltip = yes
+
+	texture = "gfx/interface/icons/diplomatic_action_icons/change_culture.dds"
+	#confirmation_sound = "event:/SFX/UI/MapInteraction/SubjectInteractions/diplomatic_action_subjects_04_appoint_governor_benign"
+
+	potential = {
+		scope:target_country = { NOT = { is_diplomatic_play_enemy_of = root } }
+	}
+
+	possible = {
+		NOT = {
+			scope:target_country = {
+				any_primary_culture = {
+					OR = {
+						shares_language_trait_with_any_primary_culture = ROOT
+						is_primary_culture_of = ROOT
+					}
+				}
+			}
+		}
+		is_revolutionary = no
+		scope:target_country = {
+			is_revolutionary = no
+			has_law = law_type:law_colonial_administration
+		}
+	}
+
+	accept_effect = {
+		scope:target_country = {
+			capital = { save_temporary_scope_as = colonial_capital_scope }
+			every_primary_culture = {
+				prev = {
+					add_radicals = {
+						value = large_radicals
+						culture = prev
+					}
+					remove_primary_culture = prev
+				}
+			}
+		}
+
+		ordered_primary_culture = {
+			order_by = "root.culture_percent_country(this)"
+			save_scope_as = main_culture_scope
+		}
+
+		every_primary_culture = { # ROOT's primary cultures
+			save_temporary_scope_as = temp_primary_culture
+			scope:target_country = { add_primary_culture = scope:temp_primary_culture }
+		}
+		
+		scope:target_country = {
+			ordered_scope_pop = {
+				limit = { is_pop_type = bureaucrats }
+				order_by = total_size
+				position = 0
+				check_range_bounds = no
+				change_pop_culture = {
+					target = scope:main_culture_scope
+					value = 0.05
+				}
+			}
+			add_modifier = {
+				name = modifier_changed_administrative_language
+				days = normal_modifier_time
+				is_decaying = yes
+			}
+			capital = {
+				add_modifier = {
+					name = modifier_changed_administrative_language_state
+					days = normal_modifier_time
+					is_decaying = yes
+				}
+			}
+		}
+	}
+
+	ai = {
+		evaluation_chance = {
+			value = 0.25
+		}
+
+		propose_score = {
+			value = 10
+		}
+
+		will_propose = {
+			"ai_ideological_opinion(scope:target_country)" <= -25
+			OR = {
+				scope:target_country = { liberty_desire < define:NDiplomacy|WAR_GOAL_INFAMY_LOW_LIBERTY_DESIRE_THRESHOLD }
+				has_attitude = {
+					who = scope:target_country
+					attitude = domineering
+				}
+			}
+		}
+	}
+}

@@ -42,6 +42,8 @@ base_values = {
 	state_aristocrats_investment_pool_contribution_add = 0.20
 	state_capitalists_investment_pool_contribution_add = 0.30
 
+	state_literacy_growth_add = 0.001
+
 	# To balance for unincorporated states not paying taxes
 	state_unincorporated_starting_wages_mult = -0.20
 	building_unincorporated_subsistence_output_mult = -0.20
@@ -54,6 +56,7 @@ base_values = {
 	country_company_construction_efficiency_bonus_add = 0.3
 
 	country_max_weekly_construction_progress_add = 10
+	country_ship_construction_progress_max_add = 0
 
 	military_formation_organization_gain_add = 0.5 # 200 days to get max organization
 
@@ -72,8 +75,14 @@ base_values = {
 	state_max_trade_advantage_from_capacity_add = 0.2
 
 	country_party_whip_impact_add = 0.5
-	
+
 	state_blockade_resistance_add = 100
+	state_fortification_bombardment_resistance_add = 100
+
+	state_building_naval_fortification_max_level_add = 5
+
+	country_max_unassigned_generals_add = 3
+	country_max_unassigned_admirals_add = 3
 }
 
 # Scales with a country's global prestige rank, so at 20/100 this is multiplied by 0.8x, 50/100 by 0.5x, etc
@@ -92,6 +101,17 @@ top_prestige_ranking = {
 
 character_base_values = {
 	character_health_add = 1	# Must be != 0. Even better if it's > 0
+	character_loyalty_add = 50
+}
+
+# Applied to characters with the noble flag
+character_noble = {
+	character_prominence_add = 5
+}
+
+# Applied to historical characters
+character_historical = {
+	character_prominence_add = 10
 }
 
 coastal_state = {
@@ -165,6 +185,26 @@ severe_starvation_penalty = {
 	state_mortality_mult = 1.0
 }
 
+flagship_battle_won = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_flag_positive.dds
+	country_prestige_add = 5
+}
+
+flagship_battle_lost = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_flag_negative.dds
+	country_prestige_add = -5
+}
+
+flagship_destroyed = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_flag_negative.dds
+	country_prestige_add = -10
+}
+
+flagship_interest_gain = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_flag_positive.dds
+	military_formation_interest_gain_mult = 0.1
+}
+
 commander_battle_end_victory = {
 	icon = gfx/interface/icons/timed_modifier_icons/modifier_rifle_positive.dds
 	character_popularity_add = 1	# scaled by a positive define
@@ -201,6 +241,8 @@ declared_bankruptcy = {
 }
 
 incorporated_state = {
+	state_allow_assimilation_without_presence_bool = yes
+	state_allow_conversion_without_presence_bool = yes
 }
 
 unincorporated_state = {
@@ -382,6 +424,29 @@ military_wages_very_high = {
 	unit_morale_recovery_mult = 0.2
 }
 
+country_supply_ship_construction_ratio_very_low = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_coins_positive.dds
+}
+
+country_supply_ship_construction_ratio_low = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_coins_positive.dds
+	country_supply_ship_construction_ratio_add = 0.25
+}
+
+country_supply_ship_construction_ratio_medium = {
+	country_supply_ship_construction_ratio_add = 0.50
+}
+
+country_supply_ship_construction_ratio_high = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_coins_negative.dds
+	country_supply_ship_construction_ratio_add = 0.75
+}
+
+country_supply_ship_construction_ratio_very_high = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_coins_negative.dds
+	country_supply_ship_construction_ratio_add = 1.0
+}
+
 # Scales with the % of a unit's input that is prestige goods
 prestige_goods_supply_army = {
 	unit_army_offense_mult = 0.15
@@ -390,8 +455,6 @@ prestige_goods_supply_army = {
 }
 
 prestige_goods_supply_navy = {
-	unit_navy_offense_mult = 0.15
-	unit_navy_defense_mult = 0.15
 	unit_morale_recovery_mult = 0.25
 }
 
@@ -438,6 +501,18 @@ revolution_lost_ig = {
 	interest_group_pol_str_factor = -1.0
 }
 
+# Characters apply this to their IG when their prominence is higher than 'significant'
+# Scaled by amount of prominence, from 0x at significant to 1x at max
+prominence_ig_modifier = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_flag_positive.dds
+	interest_group_pol_str_mult = 0.25
+}
+
+# Applied to Magnates, scales against the revenue of their holding
+holding_revenue_magnate_scale = {
+	character_prominence_add = 50
+}
+
 debug_ig_approval = {
 	icon = gfx/interface/icons/timed_modifier_icons/modifier_flag_positive.dds
 	interest_group_approval_add = 1
@@ -451,6 +526,12 @@ debug_ig_clout = {
 economy_of_scale = {
 	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
 	building_throughput_add = 0.01
+}
+
+# Scaled by average trade distance in the state and applied to the Trade Center
+trade_distance = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_negative.dds
+	building_goods_input_mult = 0.05
 }
 
 pm_retooling = {
@@ -474,17 +555,6 @@ pm_offense_defense_readjustment_minor = {
 insufficient_urbanization = {
 	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_negative.dds
 	building_throughput_add = -0.05
-}
-
-# Excess convoys decreases convoy raiding damage taken by -50% at 2x production to usage
-surplus_convoys = {
-	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
-	country_convoy_damage_taken_mult = -0.5
-}
-
-# Insufficient convoys has no additional effect beyond weakening supply network
-insufficient_convoys = {
-	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_negative.dds
 }
 
 # Excess BUR increases construction speed by +10% at 2x production to usage
@@ -540,7 +610,7 @@ battle_army_offense = {
 
 battle_navy_offense = {
 	icon = gfx/interface/icons/timed_modifier_icons/modifier_rifle_positive.dds
-	unit_navy_offense_add = 1.0
+	ship_hull_damage_add = 1
 }
 
 battle_army_defense = {
@@ -550,7 +620,7 @@ battle_army_defense = {
 
 battle_navy_defense = {
 	icon = gfx/interface/icons/timed_modifier_icons/modifier_rifle_positive.dds
-	unit_navy_defense_add = 1.0
+	ship_armor_add = 1
 }
 
 battle_army_average_morale_damage = {
@@ -605,7 +675,6 @@ battle_army_experience = {
 
 battle_navy_experience = {
 	icon = gfx/interface/icons/timed_modifier_icons/modifier_rifle_positive.dds
-	unit_navy_experience_gain_add = 5.0
 }
 
 battle_unit_experience = {
@@ -746,7 +815,6 @@ country_army_power_projection = {
 # Scales with total navy power projection of a country
 country_navy_power_projection = {
 	icon = gfx/interface/icons/timed_modifier_icons/modifier_rifle_positive.dds
-	country_max_declared_interests_add = 0.01
 }
 
 
@@ -766,19 +834,16 @@ excess_innovation = {
 # Scales with admiral convoy raiding strength
 convoy_raiding = {
 	icon = gfx/interface/icons/timed_modifier_icons/modifier_rifle_negative.dds
-	country_convoys_capacity_add = -1
 }
 
 # an intercepted naval invasion force gives penalty in land combat depending on naval battle outcome
 battle_naval_invasion_beachhead_penalty = {
 	icon = gfx/interface/icons/timed_modifier_icons/modifier_rifle_negative.dds
-	unit_offense_mult = -1
 }
 
-# a naval invasion force without Landing Craft gives a flat penalty in land combat
-battle_naval_invasion_landing_penalty = {
-	icon = gfx/interface/icons/timed_modifier_icons/modifier_rifle_negative.dds
-	unit_offense_mult = -0.25
+battle_naval_invasion_fortification_defense = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_rifle_positive.dds
+	unit_defense_mult = 1.0
 }
 
 country_humiliated = {
@@ -814,15 +879,23 @@ law_enactment_chance = {
 }
 
 # scaled by a formation's lack of organization, down to the minimum value set in defines
-low_organization = {
+low_organization_army = {
 	icon = gfx/interface/icons/timed_modifier_icons/modifier_rifle_negative.dds
 	unit_offense_mult = -0.75
 	unit_defense_mult = -0.75
 	unit_morale_recovery_mult = -1
 	unit_recovery_rate_add = -0.5
-	unit_blockade_mult = -0.75
-	unit_convoy_defense_mult = -0.75
-	unit_convoy_raiding_mult = -0.75
+}
+
+# scaled by a formation's lack of organization, down to the minimum value set in defines
+low_organization_fleet = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_rifle_negative.dds
+	ship_accuracy_mult = -0.75
+	ship_hull_damage_mult = -0.75
+	ship_crew_damage_mult = -0.75
+	ship_blockade_strength_mult = -0.75
+	ship_readiness_gain_mult = -0.75
+	ship_critical_hit_chance_mult = -0.75
 }
 
 blockaded = {
@@ -832,6 +905,17 @@ blockaded = {
 
 battle_occupation = {
 	unit_occupation_mult = 1.0
+}
+
+# applied as a timed modifier to interest groups with active commanders when a player promotes a commander unnecessarily
+unnecessary_promotion = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_statue_negative.dds
+	interest_group_approval_add = -2
+}
+
+recently_promoted = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_rifle_positive.dds
+	character_loyalty_add = 10
 }
 
 # applied whenever a formation has more current units than command limit, unscaled

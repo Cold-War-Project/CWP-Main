@@ -17,10 +17,10 @@ grant_command_to_ruler = {
 	clicksound = "event:/SFX/UI/Military/command_grant"
 
 	potential = {
-		is_ruler = yes
+		is_ruler_of_own_country = yes
 		NOR = {
-			has_role = general
-			has_role = admiral
+			has_role_of_type = general
+			has_role_of_type = admiral
 		}
 		owner ?= scope:actor
 	}
@@ -67,8 +67,8 @@ remove_command_from_ruler = {
 	clicksound = "event:/SFX/UI/Military/command_remove"
 
 	potential = {
-		is_ruler = yes
-		has_role = general
+		is_ruler_of_own_country = yes
+		has_role_of_type = general
 		owner ?= scope:actor
 	}
 
@@ -103,8 +103,7 @@ grant_leadership_to_agitator = {
 	clicksound = "event:/SFX/DLC/1.3_ip1/UI/agitator_promote"
 
 	potential = {
-		has_dlc_feature = agitators
-		has_role = agitator
+		has_role_of_type = agitator
 		exists = owner
 		owner ?= scope:actor
 	}
@@ -203,10 +202,9 @@ grant_command_to_agitator = {
 	clicksound = "event:/SFX/UI/Military/command_grant"
 
 	potential = {
-		has_dlc_feature = agitators
-		has_role = agitator
-		NOT = { has_role = general }
-		NOT = { has_role = admiral }
+		has_role_of_type = agitator
+		NOT = { has_role_of_type = general }
+		NOT = { has_role_of_type = admiral }
 		owner ?= scope:actor
 	}
 
@@ -253,8 +251,8 @@ marry_ruler_or_heir = {
 	potential = {
 		owner ?= scope:actor
 		OR = {
-			is_ruler = yes
-			is_heir = yes
+			is_ruler_of_own_country = yes
+			is_heir_of_own_country = yes
 		}
 		scope:actor ?= {
 			has_law = law_type:law_monarchy
@@ -294,9 +292,8 @@ abdicate_monarch = {
 	clicksound = "event:/SFX/UI/Military/command_grant"
 
 	potential = {
-		has_dlc_feature = voice_of_the_people_content
 		owner ?= scope:actor
-		is_ruler = yes
+		is_ruler_of_own_country = yes
 		owner ?= {
 			has_law = law_type:law_monarchy
 			has_gov_regency = no
@@ -440,12 +437,12 @@ exile_character = {
 	potential = {
 		is_in_exile_pool = no
 		is_in_void = no
-		is_ruler = no
-		is_heir = no
+		is_ruler_of_own_country = no
+		is_heir_of_own_country = no
 		# Cannot exile pure commanders, we have the retire interaction for that
 		OR = {
-			has_role = politician
-			has_role = agitator
+			has_role_of_type = politician
+			has_role_of_type = agitator
 		}
 	}
 
@@ -458,11 +455,12 @@ exile_character = {
 				has_law_or_variant = law_type:law_guaranteed_liberties
 			}
 		}
-		
 		is_busy = no
-
 		trigger_if = {
-			limit = { has_role = agitator }
+			limit = {
+				has_role_of_type = agitator
+			}
+
 			political_movement ?= { is_insurrectionary = no }
 		}
 		trigger_else = {
@@ -472,29 +470,38 @@ exile_character = {
 				ig_counts_as_marginal = no
 			}
 		}
-
 		custom_tooltip = {
 			text = ideology_not_too_close_tt
 			NOT = {
 				OR = {
 					AND = {
-						owner.ruler = { has_socialist_ideology = yes }
+						owner.ruler = {
+							has_socialist_ideology = yes
+						}
 						has_socialist_ideology = yes
 					}
 					AND = {
-						owner.ruler = { has_progressive_ideology = yes }
+						owner.ruler = {
+							has_progressive_ideology = yes
+						}
 						has_progressive_ideology = yes
 					}
 					AND = {
-						owner.ruler = { has_liberal_ideology = yes }
+						owner.ruler = {
+							has_liberal_ideology = yes
+						}
 						has_liberal_ideology = yes
 					}
 					AND = {
-						owner.ruler = { has_reactionary_ideology = yes }
+						owner.ruler = {
+							has_reactionary_ideology = yes
+						}
 						has_reactionary_ideology = yes
 					}
 					AND = {
-						owner.ruler = { has_conservative_ideology = yes }
+						owner.ruler = {
+							has_conservative_ideology = yes
+						}
 						has_conservative_ideology = yes
 					}
 				}
@@ -502,10 +509,12 @@ exile_character = {
 		}
 		custom_tooltip = {
 			text = pending_coup_event_tt
-			NOT = { owner = { has_variable = coup_event_active } }
+			NOT = {
+				owner = {
+					has_variable = coup_event_active
+				}
+			}
 		}
-		
-		# Need to discuss what to do with DLC only features in the mod
 		trigger_if = {
 			limit = {
 				OR = {
@@ -515,29 +524,42 @@ exile_character = {
 			}
 			custom_tooltip = {
 				text = doing_coup_for_player_tt
-				NOT = { has_variable = commander_doing_coup_on_player_behalf }
+				NOT = {
+					has_variable = commander_doing_coup_on_player_behalf
+				}
 			}
 		}
 	}
 
 	effect = {
-		this.interest_group ?= { save_scope_as = relevant_ig }
-		this = { save_scope_as = exile_scope }
-		owner ?= { save_scope_as = exiling_country_scope }
-
+		this.interest_group ?= {
+			save_scope_as = relevant_ig
+		}
+		this = {
+			save_scope_as = exile_scope
+		}
+		owner ?= {
+			save_scope_as = exiling_country_scope
+		}
 		if = {
 			limit = {
-				owner = { has_journal_entry = je_ip4_coup }
-				root = { has_variable = golpista_var }
+				owner = {
+					has_journal_entry = je_coup
+				}
+				root = {
+					has_variable = coup_character_leader_var
+				}
 			}
 			owner = {
-				set_variable = exile_golpista_var
+				set_variable = exile_coup_character_leader_var
 				character_execute_immediate_coup = yes
 			}
 		}
 		else = {
 			if = {
-				limit = { has_role = politician }
+				limit = {
+					has_role_of_type = politician
+				}
 				owner ?= {
 					scope:relevant_ig = {
 						add_modifier = {
@@ -548,31 +570,40 @@ exile_character = {
 					}
 				}
 			}
-
 			hidden_effect = {
 				if = {
-					limit = { NOT = { has_role = agitator } }
+					limit = {
+						NOT = { has_role_of_type = agitator }
+					}
 					add_character_role = agitator
 				}
 				if = {
-					limit = { has_role = general }
+					limit = {
+						has_role_of_type = general
+					}
 					remove_character_role = general
 				}
 				if = {
-					limit = { has_role = admiral }
+					limit = {
+						has_role_of_type = admiral
+					}
 					remove_character_role = admiral
 				}
 				if = {
-					limit = { has_role = politician }
+					limit = {
+						has_role_of_type = politician
+					}
 					remove_character_role = politician
 				}
 			}
-
-			owner ?= { custom_tooltip = exiling_dissident_radicals_factors }
-
+			owner ?= {
+				custom_tooltip = exiling_dissident_radicals_factors
+			}
 			# Extra radical from exiling a popular character
 			if = {
-				limit = { popularity >= 50 }
+				limit = {
+					popularity >= 50
+				}
 				owner ?= {
 					add_radicals = {
 						value = small_radicals
@@ -580,9 +611,11 @@ exile_character = {
 					}
 				}
 			}
-
-			if = {	# Standard radicals from having Right of Assembly	
-				limit = { owner ?= { has_law_or_variant = law_type:law_right_of_assembly } }
+			# Standard radicals from having Right of Assembly
+			if = {
+				limit = {
+				owner ?= { has_law_or_variant = law_type:law_right_of_assembly }
+				}
 				owner ?= {
 					add_radicals = {
 						value = medium_radicals
@@ -590,8 +623,11 @@ exile_character = {
 					}
 				}
 			}
-			else_if = {	# Fewer radicals from Censorship
-				limit = { owner ?= { has_law_or_variant = law_type:law_censorship } }
+			# Fewer radicals from Censorship
+			else_if = {
+				limit = {
+				owner ?= { has_law_or_variant = law_type:law_censorship }
+				}
 				owner ?= {
 					add_radicals = {
 						value = small_radicals
@@ -599,7 +635,6 @@ exile_character = {
 					}
 				}
 			}
-
 			# Boring characters should be made interesting when being exiled
 			if = {
 				limit = {
@@ -610,13 +645,18 @@ exile_character = {
 				}
 				adopt_random_antigovernment_ideology = yes
 			}
-
 			hidden_effect = {
 				if = {
-					limit = { popularity > 15 }
-					add_modifier = { name = in_exile_modifier }
+					limit = {
+						popularity > 15
+					}
+					add_modifier = {
+						name = in_exile_modifier
+					}
 					every_country = {
-						limit = { has_diplomatic_relevance = scope:exiling_country_scope }
+						limit = {
+							has_diplomatic_relevance = scope:exiling_country_scope
+						}
 						post_notification = exile_notification
 					}
 				}
@@ -627,7 +667,6 @@ exile_character = {
 					}
 				}
 			}
-
 			custom_tooltip = {
 				text = exile_dissident_tt
 				exile_character_with_martyrdom = yes
@@ -644,60 +683,101 @@ exile_character = {
 		if = {
 			limit = {
 				OR = {
-					interest_group ?= { ig_approval < 0 }
-					political_movement ?= { is_being_suppressed = yes }
+					interest_group ?= {
+						ig_approval < 0
+				}
+					political_movement ?= {
+						is_being_suppressed = yes
+					}
 				}
 			}
+
 			add = {
 				value = popularity
 				multiply = 0.2
-			}
+		}
 
-			if = {
-				limit = { scope:actor ?= { has_law_or_variant = law_type:law_outlawed_dissent } }
+		if = {
+			limit = {
+				scope:actor ?= {
+					has_law_or_variant = law_type:law_outlawed_dissent
+				}
+			}
 				multiply = 1.5
-			}
+		}
 			else_if = {
-				limit = { scope:actor ?= { has_law_or_variant = law_type:law_censorship } }
+			limit = {
+				scope:actor ?= {
+					has_law_or_variant = law_type:law_censorship
+				}
+			}
 				multiply = 1.25
-			}
+		}
 			else_if = {
-				limit = { scope:actor ?= { has_law_or_variant = law_type:law_right_of_assembly } }
+			limit = {
+				scope:actor ?= {
+					has_law_or_variant = law_type:law_right_of_assembly
+				}
+			}
 				multiply = 0.75
-			}
+		}
 
-			if = {
-				limit = { scope:actor ?= { has_law_or_variant = law_type:law_secret_police } }
+		if = {
+			limit = {
+				scope:actor ?= {
+						has_law_or_variant = law_type:law_secret_police
+				}
+			}
 				multiply = 1.5
 			}
 			else_if = {
-				limit = { scope:actor ?= { has_law_or_variant = law_type:law_national_guard } }
+				limit = {
+					scope:actor ?= {
+						has_law_or_variant = law_type:law_national_guard
+					}
+				}
 				multiply = 1.25
 			}
 			else_if = {
-				limit = { scope:actor ?= { has_law_or_variant = law_type:law_no_home_affairs } }
+				limit = {
+					scope:actor ?= {
+						has_law_or_variant = law_type:law_no_home_affairs
+					}
+				}
 				multiply = 0.5
 			}
 
 			if = {
-				limit = { interest_group ?= { ig_approval <= -5 } }
+				limit = {
+					interest_group ?= {
+						ig_approval <= -5
+					}
+				}
 				multiply = 1.25
 			}
 			else_if = {
-				limit = { interest_group ?= { ig_approval <= -10 } }
+				limit = {
+					interest_group ?= {
+						ig_approval <= -10
+					}
+				}
 				multiply = 1.5
 			}
 
 			if = { # If we are Conservative dont immediately hang any Liberal politician and so on
 				limit = {
-					scope:actor ?= { has_strategy = ai_strategy_conservative_agenda }
+					scope:actor ?= {
+						has_strategy = ai_strategy_conservative_agenda
+					}
 					has_liberal_ideology = yes
 				}
 				multiply = 0.5
 			}
 			else_if = {
 				limit = {
-					scope:actor ?= { has_strategy = ai_strategy_progressive_agenda }
+					scope:actor ?= {
+						has_strategy = ai_strategy_progressive_agenda
+					}
 					OR = {
 						has_liberal_ideology = yes
 						has_progressive_ideology = yes
@@ -721,7 +801,9 @@ exile_character = {
 			}
 			else_if = {
 				limit = {
-					scope:actor ?= { has_strategy = ai_strategy_egalitarian_agenda }
+					scope:actor ?= {
+						has_strategy = ai_strategy_egalitarian_agenda
+					}
 					OR = {
 						has_progressive_ideology = yes
 						has_socialist_ideology = yes
@@ -732,7 +814,9 @@ exile_character = {
 
 
 			if = { # Be less inclined to toss out politicians
-				limit = { NOT = { has_role = agitator } }
+				limit = {
+					NOT = { has_role_of_type = agitator }
+				}
 				multiply = 0.25
 			}
 		}
@@ -763,10 +847,10 @@ invite_exile = {
 		# Devout exiles must have country religion
 		trigger_if = {
 			limit = { is_interest_group_type = ig_devout }
-		    custom_tooltip = {
-		        text = invite_exile_devout_tt
-		        religion = scope:actor.religion
-		    }
+			custom_tooltip = {
+				text = invite_exile_devout_tt
+				religion = scope:actor.religion
+			}
 		}
 		
 		# If you have state religion, exiles must have your religion
@@ -903,59 +987,41 @@ retire_commander = {
 	potential = {
 		owner ?= scope:actor
 		is_commander = yes
-		is_ruler = no
+		is_ruler_of_own_country = no
 	}
 
 	possible = {
-		is_ruler = no
+		is_ruler_of_own_country = no
 		interest_group ?= { is_insurrectionary = no }
 		commander_is_available = yes
 		years_of_service >= 1
-		
-		custom_tooltip = {
-			text = pending_coup_event_tt
-			NOT = { owner = { has_variable = coup_event_active } }
-		}
-		
-		custom_tooltip = {
-			text = pending_coup_event_tt
-			NOT = { owner = { has_variable = coup_event_active } }
-		}
 
-		trigger_if = {
-			limit = {
-				OR = {
-					has_dlc_feature = voice_of_the_people_content
-					has_dlc_feature = ip4_content
-				}
-			}
-			custom_tooltip = {
-				text = doing_coup_for_player_tt
-				NOT = { has_variable = commander_doing_coup_on_player_behalf }
-			}
+		custom_tooltip = {
+			text = pending_coup_event_tt
+			NOT = { owner = { has_variable = coup_event_active } }
 		}
 	}
 
 	effect = {
 		if = {
 			limit = {
-				owner = { has_journal_entry = je_ip4_coup }
-				root = { has_variable = golpista_var }
+				owner = { has_journal_entry = je_coup }
+				root = { has_variable = coup_character_leader_var }
 			}
 			owner = {
-				set_variable = retire_golpista_var
+				set_variable = retire_coup_character_leader_var
 				character_execute_immediate_coup = yes
 			}
 		}
 		else = {
 			hidden_effect = {
 				if = {
-					limit = { has_role = general }
+					limit = { has_role_of_type = general }
 					remove_character_role = general
 				}
 
 				if = {
-					limit = { has_role = admiral }
+					limit = { has_role_of_type = admiral }
 					remove_character_role = admiral
 				}
 			}
@@ -982,7 +1048,6 @@ retire_commander = {
 
 	ai_chance = {
 		value = -50
-
 		if = {
 			limit = { popularity <= -50 }
 			add = 25
@@ -1009,7 +1074,7 @@ retire_commander = {
 			}
 			add = 25
 		}
-
+		
 		if = {
 			limit = {
 				OR = {
@@ -1035,7 +1100,7 @@ retire_commander = {
 			}
 			add = -100
 		}
-
+		
 		if = {
 			limit = {
 				OR = {
@@ -1048,7 +1113,7 @@ retire_commander = {
 			}
 			add = -75
 		}
-
+		
 		if = {
 			limit = {
 				OR = {
@@ -1061,7 +1126,7 @@ retire_commander = {
 			}
 			add = -50
 		}
-
+		
 		if = {
 			limit = {
 				owner ?= {
@@ -1073,7 +1138,7 @@ retire_commander = {
 			}
 			add = -50
 		}
-
+		
 		if = {
 			limit = { owner ?= { any_scope_war = { any_scope_front = { is_vulnerable_front = root.owner } } } }
 			add = -150
@@ -1085,12 +1150,12 @@ return_to_home_country = {
 
 	potential = {
 		is_in_exile_pool = no
-		has_role = agitator
-		NOT = { has_role = general }
-		NOT = { has_role = admiral }
-		NOT = { has_role = politician }
-		is_ruler = no
-		is_heir = no
+		has_role_of_type = agitator
+		NOT = { has_role_of_type = general }
+		NOT = { has_role_of_type = admiral }
+		NOT = { has_role_of_type = politician }
+		is_ruler_of_own_country = no
+		is_heir_of_own_country = no
 		exists = root.home_country
 		NOT = { root.home_country = this.owner }
 	}
