@@ -1,0 +1,184 @@
+﻿chinese_civil_war_initialize_variables = {
+	if = {
+		limit = { NOT = { has_global_variable = prc_chinese_civil_war_score } }
+		set_global_variable = { name = prc_chinese_civil_war_score value = 0 }
+	}
+	if = {
+		limit = { NOT = { has_global_variable = roc_chinese_civil_war_score } }
+		set_global_variable = { name = roc_chinese_civil_war_score value = 0 }
+	}
+	if = {
+		limit = { NOT = { has_global_variable = chinese_civil_war_guerilla_phase } }
+		set_global_variable = chinese_civil_war_guerilla_phase
+	}
+}
+
+chinese_civil_war_start_content = {
+	if = {
+		limit = {
+			exists = c:PRC
+			exists = c:ROC
+			NOT = { has_global_variable = chinese_civil_war_started }
+		}
+		set_global_variable = chinese_civil_war_started
+		chinese_civil_war_initialize_variables = yes
+		c:PRC ?= {
+			add_contextless_journal_entry = je_chinese_civil_war
+			add_modifier = { name = chinese_civil_war_yanan_network days = -1 }
+			trigger_event = { id = chinese_civil_war.1 days = 5 popup = yes }
+		}
+		c:ROC ?= {
+			add_modifier = { name = chinese_civil_war_nanjing_exhaustion days = -1 }
+			trigger_event = { id = chinese_civil_war.1 days = 5 popup = yes }
+		}
+		c:RUS ?= {
+			set_global_variable = chinese_civil_war_manchuria_prompted
+			trigger_event = { id = chinese_civil_war.2 days = 20 popup = yes }
+		}
+	}
+}
+
+chinese_civil_war_transfer_manchuria_to_prc = {
+	if = {
+		limit = {
+			exists = c:RUS
+			exists = c:PRC
+			c:RUS = { owns_entire_state_region = STATE_SOUTHERN_MANCHURIA }
+			c:RUS = { owns_entire_state_region = STATE_NORTHERN_MANCHURIA }
+		}
+		create_treaty = {
+			name = treaty_name_chinese_civil_war_manchuria_handover
+			first_country = c:RUS
+			second_country = c:PRC
+			is_draft = no
+			binding_period = { years = 5 }
+
+			articles_to_create = {
+				{
+					article = state_transfer
+					source_country = c:RUS
+					target_country = c:PRC
+					inputs = {
+						{ state = s:STATE_SOUTHERN_MANCHURIA.region_state:RUS }
+					}
+				}
+				{
+					article = state_transfer
+					source_country = c:RUS
+					target_country = c:PRC
+					inputs = {
+						{ state = s:STATE_NORTHERN_MANCHURIA.region_state:RUS }
+					}
+				}
+			}
+		}
+	}
+	s:STATE_SOUTHERN_MANCHURIA.region_state:PRC ?= {
+		add_modifier = { name = chinese_civil_war_soviet_arsenals years = 5 is_decaying = yes }
+	}
+	s:STATE_NORTHERN_MANCHURIA.region_state:PRC ?= {
+		add_modifier = { name = chinese_civil_war_soviet_arsenals years = 5 is_decaying = yes }
+	}
+	c:PRC ?= {
+		add_modifier = { name = chinese_civil_war_manchurian_base_area years = 5 is_decaying = yes }
+	}
+	change_global_variable = { name = prc_chinese_civil_war_score add = 5 }
+	je:je_chinese_civil_war ?= { add_progress = { value = -5 name = je_chinese_civil_war_score_bar } }
+	set_global_variable = chinese_civil_war_manchuria_resolved
+}
+
+chinese_civil_war_end_play = {
+	every_diplomatic_play = {
+		limit = {
+			is_diplomatic_play_type = dp_revolution
+			is_diplomatic_play_participant_with = c:PRC
+			is_diplomatic_play_participant_with = c:ROC
+		}
+		end_play = yes
+	}
+}
+
+chinese_civil_war_retreat_to_taipei = {
+	set_global_variable = chinese_civil_war_roc_retreat
+	c:ROC ?= {
+		set_capital = STATE_FORMOSA
+		set_market_capital = STATE_FORMOSA
+		add_modifier = { name = kuomintang_relocation years = 5 is_decaying = yes }
+	}
+	s:STATE_FORMOSA.region_state:ROC ?= {
+		add_modifier = { name = chinese_civil_war_taipei_emergency_capital years = 10 is_decaying = yes }
+	}
+	c:PRC ?= {
+		add_modifier = { name = chinese_civil_war_decisive_campaign years = 1 is_decaying = yes }
+	}
+}
+
+chinese_civil_war_apply_armistice_lines = {
+	c:ROC ?= {
+		every_scope_state = {
+			limit = {
+				NOT = { owner = c:PRC }
+				controller = { c:PRC ?= this }
+			}
+			set_state_owner = c:PRC
+		}
+	}
+	c:PRC ?= {
+		every_scope_state = {
+			limit = {
+				NOT = { owner = c:ROC }
+				controller = { c:ROC ?= this }
+			}
+			set_state_owner = c:ROC
+		}
+	}
+}
+
+chinese_civil_war_settle_tibet = {
+	c:TIB ?= {
+		make_independent = yes
+	}
+}
+
+chinese_civil_war_enact_armistice = {
+	set_global_variable = chinese_civil_war_armistice
+	chinese_civil_war_apply_armistice_lines = yes
+	chinese_civil_war_settle_tibet = yes
+	chinese_civil_war_end_play = yes
+	c:PRC ?= {
+		create_bidirectional_truce = { country = c:ROC months = 60 }
+		add_modifier = { name = chinese_civil_war_armistice years = 5 is_decaying = yes }
+	}
+	c:ROC ?= {
+		add_modifier = { name = chinese_civil_war_armistice years = 5 is_decaying = yes }
+	}
+}
+
+chinese_civil_war_cleanup = {
+	remove_global_variable = prc_chinese_civil_war_score
+	remove_global_variable = roc_chinese_civil_war_score
+	remove_global_variable = chinese_civil_war_guerilla_phase
+	remove_global_variable = chinese_civil_war_decisive_campaign
+	remove_global_variable = chinese_civil_war_hold_the_line
+	remove_global_variable = chinese_civil_war_roc_retreat
+	remove_global_variable = chinese_civil_war_armistice
+	remove_global_variable = chinese_civil_war_manchuria_prompted
+	remove_global_variable = chinese_civil_war_roc_retreat_prompted
+	remove_global_variable = chinese_civil_war_conventional_event_seen
+	remove_variable = cwp_ccw_opening_seen
+	remove_variable = cwp_ccw_advisors_in_northeast_cooldown
+	remove_variable = cwp_ccw_land_reform_cooldown
+	remove_variable = cwp_ccw_manchurian_bureau_seen
+	remove_variable = cwp_ccw_gold_yuan_cooldown
+	remove_variable = cwp_ccw_taiwan_contingency_seen
+	remove_variable = cwp_ccw_manchuria_opens_seen
+	remove_variable = cwp_ccw_nanjing_protests_seen
+	remove_variable = cwp_ccw_armistice_offer_cooldown
+	remove_modifier = chinese_civil_war_guerilla_phase
+	remove_modifier = chinese_civil_war_yanan_network
+	remove_modifier = chinese_civil_war_nanjing_exhaustion
+	remove_modifier = chinese_civil_war_decisive_campaign
+	remove_modifier = chinese_civil_war_hold_the_line
+	remove_modifier = chinese_civil_war_supply_shortages
+	remove_modifier = chinese_civil_war_overextended_front
+}

@@ -1,0 +1,132 @@
+﻿je_chinese_civil_war = {
+	group = je_group_global_international_situations
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+
+	is_shown_in_lobby = {
+		OR = {
+			c:PRC ?= this
+			c:ROC ?= this
+		}
+	}
+
+	modifiers_while_active = {
+		chinese_civil_war_guerilla_phase
+	}
+
+	scripted_progress_bar = je_chinese_civil_war_score_bar
+	scripted_button = je_chinese_civil_war_decisive_campaign_button
+	scripted_button = je_chinese_civil_war_hold_the_line_button
+	scripted_button = je_chinese_civil_war_armistice_button
+	scripted_button = je_chinese_civil_war_retreat_to_taipei_button
+
+	should_be_involved = {
+		OR = {
+			c:PRC ?= this
+			c:ROC ?= this
+		}
+	}
+
+	should_show_when_not_involved = { always = no }
+
+	immediate = {
+		chinese_civil_war_initialize_variables = yes
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_chinese_civil_war_status_manchuria
+				trigger = { NOT = { has_global_variable = chinese_civil_war_manchuria_resolved } }
+			}
+			triggered_desc = {
+				desc = je_chinese_civil_war_status_guerilla
+				trigger = { has_global_variable = chinese_civil_war_guerilla_phase }
+			}
+			triggered_desc = {
+				desc = je_chinese_civil_war_status_conventional
+				trigger = { always = yes }
+			}
+		}
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			if = {
+				limit = {
+					exists = c:RUS
+					NOT = { has_global_variable = chinese_civil_war_manchuria_resolved }
+					NOT = { has_global_variable = chinese_civil_war_manchuria_prompted }
+				}
+				set_global_variable = chinese_civil_war_manchuria_prompted
+				c:RUS ?= { trigger_event = chinese_civil_war.2 }
+			}
+			c:PRC ?= {
+				random_list = {
+					8 = {}
+					1 = { trigger_event = chinese_civil_war.4 }
+					1 = { trigger_event = chinese_civil_war.5 }
+					1 = { trigger_event = chinese_civil_war.6 }
+				}
+			}
+			c:ROC ?= {
+				if = {
+					limit = {
+						exists = c:PRC
+						owns_entire_state_region = STATE_FORMOSA
+						NOT = { has_global_variable = chinese_civil_war_roc_retreat }
+						NOT = { has_global_variable = chinese_civil_war_roc_retreat_prompted }
+						any_scope_state = {
+							NOT = { state_region = s:STATE_FORMOSA }
+							controller = { c:PRC ?= this }
+						}
+					}
+					set_global_variable = chinese_civil_war_roc_retreat_prompted
+					trigger_event = { id = chinese_civil_war.9 popup = yes }
+				}
+				random_list = {
+					8 = {}
+					1 = { trigger_event = chinese_civil_war.7 }
+					1 = { trigger_event = chinese_civil_war.8 }
+				}
+			}
+		}
+	}
+
+	complete = {
+		custom_tooltip = {
+			text = je_chinese_civil_war_complete
+			OR = {
+				NAND = {
+					exists = c:PRC
+					exists = c:ROC
+				}
+				has_global_variable = chinese_civil_war_armistice
+			}
+		}
+	}
+
+	on_complete_all_involved = {
+		if = {
+			limit = { c:PRC ?= this }
+			if = {
+				limit = { NOT = { exists = c:ROC } }
+				add_modifier = { name = chinese_civil_war_prc_mainland_victory years = 10 is_decaying = yes }
+				trigger_event = chinese_civil_war.10
+			}
+		}
+		else_if = {
+			limit = { c:ROC ?= this }
+			if = {
+				limit = { NOT = { exists = c:PRC } }
+				add_modifier = { name = chinese_civil_war_roc_mainland_victory years = 10 is_decaying = yes }
+				trigger_event = chinese_civil_war.10
+			}
+		}
+		hidden_effect = { chinese_civil_war_cleanup = yes }
+	}
+
+	weight = 10000
+	should_be_pinned_by_default_involved = yes
+	should_be_pinned_by_default_uninvolved_or_context = no
+	can_revolution_inherit = yes
+}

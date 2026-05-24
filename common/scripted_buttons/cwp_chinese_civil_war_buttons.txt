@@ -1,0 +1,118 @@
+﻿je_chinese_civil_war_decisive_campaign_button = {
+	name = "je_chinese_civil_war_decisive_campaign"
+	desc = "je_chinese_civil_war_decisive_campaign_desc"
+	visible = { c:PRC ?= this }
+	possible = {
+		c:PRC ?= this
+		hidden_trigger = { NOT = { has_global_variable = chinese_civil_war_decisive_campaign } }
+		OR = {
+			global_var:prc_chinese_civil_war_score >= 8
+			AND = {
+				has_global_variable = chinese_civil_war_manchuria_resolved
+				owns_entire_state_region = STATE_SOUTHERN_MANCHURIA
+			}
+		}
+	}
+	selected = { has_global_variable = chinese_civil_war_decisive_campaign }
+	effect = {
+		set_global_variable = chinese_civil_war_decisive_campaign
+		remove_global_variable = chinese_civil_war_guerilla_phase
+		add_modifier = { name = chinese_civil_war_decisive_campaign years = 2 is_decaying = yes }
+		c:ROC ?= { add_modifier = { name = chinese_civil_war_overextended_front years = 2 is_decaying = yes } }
+		trigger_event = { id = chinese_civil_war.3 popup = yes }
+	}
+	ai_chance = { value = 20 }
+}
+
+je_chinese_civil_war_hold_the_line_button = {
+	name = "je_chinese_civil_war_hold_the_line"
+	desc = "je_chinese_civil_war_hold_the_line_desc"
+	visible = { c:ROC ?= this }
+	possible = {
+		c:ROC ?= this
+		hidden_trigger = { NOT = { has_global_variable = chinese_civil_war_hold_the_line } }
+		OR = {
+			global_var:roc_chinese_civil_war_score >= 8
+			owns_entire_state_region = STATE_NANJING
+			owns_entire_state_region = STATE_FORMOSA
+		}
+	}
+	selected = { has_global_variable = chinese_civil_war_hold_the_line }
+	effect = {
+		set_global_variable = chinese_civil_war_hold_the_line
+		remove_global_variable = chinese_civil_war_guerilla_phase
+		add_modifier = { name = chinese_civil_war_hold_the_line years = 2 is_decaying = yes }
+		c:PRC ?= { add_modifier = { name = chinese_civil_war_supply_shortages years = 2 is_decaying = yes } }
+		trigger_event = { id = chinese_civil_war.3 popup = yes }
+	}
+	ai_chance = { value = 10 }
+}
+
+je_chinese_civil_war_armistice_button = {
+	name = "propose_armistice_for_chinese_civil_war"
+	desc = "propose_armistice_for_chinese_civil_war_desc"
+	visible = { OR = { c:PRC ?= this c:ROC ?= this } }
+	possible = {
+		OR = { c:PRC ?= this c:ROC ?= this }
+		exists = c:PRC
+		exists = c:ROC
+		NOT = { has_global_variable = chinese_civil_war_armistice }
+		NOT = { has_variable = cwp_ccw_armistice_offer_cooldown }
+		OR = {
+			has_global_variable = chinese_civil_war_roc_retreat
+			AND = {
+				global_var:prc_chinese_civil_war_score >= 3
+				global_var:roc_chinese_civil_war_score >= 3
+			}
+			AND = {
+				NOT = { c:PRC ?= { owns_entire_state_region = STATE_NANJING } }
+				NOT = { c:ROC ?= { owns_entire_state_region = STATE_NORTHERN_MANCHURIA } }
+			}
+		}
+	}
+	selected = { has_global_variable = chinese_civil_war_armistice }
+	effect = {
+		trigger_event = { id = chinese_civil_war.14 popup = yes }
+	}
+	ai_chance = {
+		value = 5
+		if = {
+			limit = {
+				global_var:prc_chinese_civil_war_score >= 5
+				global_var:roc_chinese_civil_war_score >= 5
+			}
+			add = 10
+		}
+	}
+}
+
+je_chinese_civil_war_retreat_to_taipei_button = {
+	name = "je_chinese_civil_war_retreat_to_taipei"
+	desc = "je_chinese_civil_war_retreat_to_taipei_desc"
+	visible = { c:ROC ?= this }
+	possible = {
+		c:ROC ?= this
+		exists = c:PRC
+		NOT = { has_global_variable = chinese_civil_war_roc_retreat }
+		any_scope_state = {
+			NOT = { state_region = s:STATE_FORMOSA }
+			controller = { c:PRC ?= this }
+		}
+	}
+	selected = { has_global_variable = chinese_civil_war_roc_retreat }
+	effect = {
+		trigger_event = { id = chinese_civil_war.9 popup = yes }
+	}
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				any_scope_state = {
+					NOT = { state_region = s:STATE_FORMOSA }
+					controller = { c:PRC ?= this }
+				}
+			}
+			add = 25
+		}
+	}
+}
