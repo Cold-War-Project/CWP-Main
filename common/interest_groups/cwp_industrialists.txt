@@ -1,18 +1,19 @@
-﻿ig_rural_folk = {
-	color = hsv{ 0.32 0.45 0.47 }
-	texture = "gfx/interface/icons/ig_icons/rural_folk.dds"
-	layer = "revolution_dynamic_rural_folk"
-	index = 6
+﻿ig_industrialists = {
+	color = hsv{ 0.06 0.60 0.89 }
+	texture = "gfx/interface/icons/ig_icons/industrialists.dds"
+	layer = "revolution_dynamic_industrialists"
+	index = 3
 
 	ideologies = {
-		ideology_agrarian
-		ideology_particularist
-		ideology_isolationist
+		ideology_plutocratic
+		ideology_laissez_faire
+		ideology_individualist
 	}
 
 	character_ideologies = {
 		ideology_moderate
-		ideology_pacifist
+		ideology_market_liberal
+		ideology_protectionist
 	}
 
 	enable = {
@@ -21,18 +22,19 @@
 
 	# Deprecated; use on_enable effect to assign traits instead
 	traits = {
-		ig_trait_farmers_markets
-		ig_trait_honest_work
-		ig_trait_old_ways
+		ig_trait_job_creators
+		ig_trait_engines_of_progress
+		ig_trait_tax_avoidance
 	}
 
 	on_enable = {
-		ig:ig_rural_folk ?= {
-			set_ig_trait = ig_trait:ig_trait_old_ways
-			set_ig_trait = ig_trait:ig_trait_honest_work
-			set_ig_trait = ig_trait:ig_trait_farmers_markets
-		}	
+		ig:ig_industrialists = {
+			set_ig_trait = ig_trait:ig_trait_tax_avoidance
+			set_ig_trait = ig_trait:ig_trait_engines_of_progress
+			set_ig_trait = ig_trait:ig_trait_job_creators
+		}
 	}
+
 	on_disable = {}
 
 	priority_cultures = { #Country scope
@@ -41,17 +43,10 @@
 	on_character_ig_membership = {}
 
 	pop_potential = {
-		NOR = {
-			is_pop_type = aristocrats
-			is_pop_type = capitalists
-		}
 		OR = {
-			pop_employment_building_group = bg_agriculture
-			pop_employment_building_group = bg_ranching
-			pop_employment_building_group = bg_plantations
-			pop_employment_building_group = bg_logging
-			pop_employment_building_group = bg_fishing
-			pop_employment_building_group = bg_manor_houses
+			is_pop_type = capitalists
+			is_pop_type = engineers
+			is_pop_type = shopkeepers
 		}
 	}
 
@@ -59,49 +54,35 @@
 		value = 0
 
 		add = {
-			desc = "RURAL_POP"
+			desc = "POP_CAPITALISTS"
+			if = { 
+				limit = { is_pop_type = capitalists }
+				value = 250
+				add = this.standard_of_living
+			}
+		}
+
+		add = {
+			desc = "POP_ENGINEERS"
 			if = {
-				limit = {
-					OR = {
-						pop_employment_building_group = bg_agriculture
-						pop_employment_building_group = bg_ranching
-						pop_employment_building_group = bg_plantations
-						pop_employment_building_group = bg_logging
-						pop_employment_building_group = bg_fishing
-						pop_employment_building_group = bg_manor_houses
-					}
-				}
-				if = {
-					limit = { is_pop_type = clergymen }
-					value = 25
-				}
-				else = {
-					value = 100
+				limit = { is_pop_type = engineers }
+				value = 50
+				add = {
+					value = this.standard_of_living
+					multiply = 2
 				}
 			}
 		}
 
 		add = {
-			desc = "POP_FARMERS"
+			desc = "POP_SHOPKEEPERS"
 			if = {
-				limit = { is_pop_type = farmers }
-				value = 200
-			}
-		}
-
-		add = {
-			desc = "POP_PEASANTS"
-			if = {
-				limit = { is_pop_type = peasants }
-				value = 200
-			}
-		}
-
-		add = {
-			desc = "POP_CLERGYMEN"
-			if = {
-				limit = { is_pop_type = clergymen }
-				value = 75
+				limit = { is_pop_type = shopkeepers }
+				value = 50
+				add = {
+					value = this.standard_of_living
+					multiply = 2
+				}
 			}
 		}
 
@@ -117,6 +98,17 @@
 				}
 			}
 		}
+
+		multiply = {
+			desc = "decentralized_power"
+			value = 1.0
+
+			if = {
+				limit = { owner = { is_country_type = decentralized } }
+				value = 0.0
+			}
+		}
+
 		if = {
 			limit = { scope:interest_group = { is_in_government = yes } }
 			multiply = {
@@ -149,7 +141,7 @@
 	}
 
 	monarch_weight = {
-		value = 0.25 # this is just inherently unlikely
+		value = 1
 
 		# Monarch is not likely to adopt a marginal IG
 		if = {
@@ -163,40 +155,47 @@
 			multiply = { value = 2 }
 		}
 
-		# More likely with Homesteading
+		# More likely with Wealth Voting or Oligarchy
 		if = {
-			limit = { owner = { has_law_or_variant = law_type:law_peasant_proprietorship } }
+			limit = {
+				owner = {
+					OR = {
+						has_law_or_variant = law_type:law_oligarchy
+						has_law_or_variant = law_type:law_wealth_voting
+					}
+				}
+			}
 			multiply = { value = 2 }
 		}
 
-		# Impossible with Serfdom
+		# Slightly more likely with LF
 		if = {
-			limit = { owner = { has_law_or_variant = law_type:law_serfdom } }
-			multiply = { value = 0 }
-		}
+			limit = { owner = { has_law_or_variant = law_type:law_laissez_faire } }
+			multiply = { value = 1.25 }
+		}		
 	}
 
 	agitator_weight = {
 		# Agitators more likely to come from populist IG's rather than elitist
-		value = 1.0
+		value = 0.25
 
 		# Agitators will never be part of a marginalized IG
 		if = {
-			limit = { owner.ig:ig_rural_folk ?= { is_marginal = yes } }
+			limit = { owner.ig:ig_industrialists = { is_marginal = yes } }
 			multiply = { value = 0 }
 		}
 	}
 
 	commander_weight = {
-		value = 1.0
+		value = 0.5
 	}
 
 	executive_weight = {
-		value = 0.1
+		value = 5.0
 	}
 
 	noble_chance = {
-		value = 0.2
+		value = 0.3
 	}
 
 	female_commander_chance = {
@@ -210,15 +209,8 @@
 	female_politician_chance = {
 		value = 0.0
 
-
 		if = {
-			limit = {
-				owner = { has_law_or_variant = law_type:law_womens_suffrage }
-				law_stance = {
-					law = law_type:law_womens_suffrage
-					value >= approve
-				}
-			}
+			limit = { owner = { has_law_or_variant = law_type:law_womens_suffrage } }
 			add = { value = 0.025 }
 		}
 	}
@@ -257,6 +249,6 @@
 	# The chance that a executive belonging to this IG takes over leadership when it changes
 	# scope:character is the most popular executive in the IG
 	executive_leader_weight = {
-		value = 0.2
+		value = 0.75
 	}
 }
