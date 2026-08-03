@@ -1,0 +1,153 @@
+﻿# Ideology: Radical
+ideology_radical = {
+	icon = "gfx/interface/icons/ideology_icons/ideology_leader/ideology_leader_radical.dds"
+
+	character_ideology = yes
+
+	lawgroup_governance_principles = {
+		law_monarchy = strongly_disapprove
+		law_theocracy = strongly_disapprove
+		law_council_republic = strongly_disapprove
+		law_presidential_republic = approve
+		law_parliamentary_republic = approve
+	}
+
+	lawgroup_distribution_of_power = {
+		law_universal_suffrage = strongly_approve
+		law_census_voting = approve
+		law_wealth_voting = neutral
+		law_technocracy = disapprove
+		law_landed_voting = disapprove
+		law_anarchy = strongly_disapprove
+		law_oligarchy = strongly_disapprove
+		law_autocracy = strongly_disapprove
+		law_single_party_state = disapprove
+	}
+
+	lawgroup_free_speech = {
+		law_protected_speech = strongly_approve
+		law_right_of_assembly = approve
+		law_censorship = disapprove
+		law_outlawed_dissent = strongly_disapprove
+	}
+
+	lawgroup_internal_security = {
+		law_no_home_affairs = approve
+		law_national_guard = strongly_disapprove
+		law_secret_police = strongly_disapprove
+	}
+
+	lawgroup_education_system = {
+		law_public_schools = approve
+		law_private_schools = neutral
+		law_no_schools = disapprove
+		law_religious_schools = disapprove
+	}
+
+	lawgroup_policing = {
+		law_no_police = approve
+		law_dedicated_police = disapprove
+		law_local_police = strongly_disapprove
+		law_militarized_police = strongly_disapprove
+	}
+
+	country_trigger = {}
+
+	interest_group_leader_trigger = {
+		ideology_radical_valid_trigger = yes
+	}
+
+	non_interest_group_leader_trigger = {
+		# Agitators should have an ideology at odds with current laws
+		NAND = {
+			has_role_of_type = agitator
+			owner = {
+				OR = {
+					has_law_or_variant = law_type:law_presidential_republic
+					has_law_or_variant = law_type:law_parliamentary_republic
+				}
+				has_law_or_variant = law_type:law_universal_suffrage
+				has_law_or_variant = law_type:law_protected_speech
+			}
+		}
+
+		# Monarchs cannot be republicans
+		NAND = {
+			owner = { has_law_or_variant = law_type:law_monarchy }
+			OR = {
+				is_ruler_of_own_country = yes
+				is_heir_of_own_country = yes
+			}
+		}
+
+		interest_group = {
+			ideology_radical_valid_trigger = yes
+		}
+	}
+
+	interest_group_leader_weight = {
+		value = 100
+
+		# more likely if issues are relevant and people are angry
+		if = {
+			limit = {
+				owner = {
+					OR = {
+						has_law_or_variant = law_type:law_national_guard
+						has_law_or_variant = law_type:law_secret_police
+						has_law_or_variant = law_type:law_outlawed_dissent
+						has_law_or_variant = law_type:law_autocracy
+						has_law_or_variant = law_type:law_oligarchy
+					}
+					any_scope_state = {
+						is_incorporated = yes
+						turmoil >= 0.25
+					}
+				}
+			}
+			add = 100
+		}
+
+		if = {
+			limit = {
+				owner = {
+					OR = {
+						has_law_or_variant = law_type:law_censorship
+						has_law_or_variant = law_type:law_landed_voting
+					}
+					any_scope_state = {
+						is_incorporated = yes
+						turmoil >= 0.5
+					}
+				}
+			}
+			add = 50
+		}
+
+		# less likely if issues are not relevant
+		if = {
+			limit = {
+				owner = {
+					NOR = {
+						has_law_or_variant = law_type:law_national_guard
+						has_law_or_variant = law_type:law_secret_police
+						has_law_or_variant = law_type:law_outlawed_dissent
+						has_law_or_variant = law_type:law_autocracy
+						has_law_or_variant = law_type:law_oligarchy
+					}
+				}
+			}
+			add = -75
+		}
+
+		# very unlikely for trade unions after socialism is researched
+		if = {
+			limit = { is_interest_group_type = ig_trade_unions }
+			add = -200
+		}
+	}
+
+	non_interest_group_leader_weight = {
+		value = 100
+	}
+}
