@@ -1,66 +1,148 @@
-﻿commander_coup_strength = {
-	add = {
-		desc = "coup_popularity_tt"
+﻿# Collected Army Commander Ranks
+cwp_country_collected_army_commander_ranks = {
+	if = {
+		limit = { any_scope_character = { has_role_of_type = general } }
+		value = 0
+		every_scope_character = {
+			limit = {
+				has_role_of_type = general
+				exists = commander_rank
+			}
+			add = this.commander_rank
+		}
+	}
+	else = {
+		value = 0
+	}
+}
+
+
+# Collected Navy Commander Ranks
+cwp_country_collected_navy_commander_ranks = {
+	if = {
+		limit = { any_scope_character = { has_role_of_type = admiral } }
+		value = 0
+		every_scope_character = {
+			limit = {
+				has_role_of_type = admiral
+				exists = commander_rank
+			}
+			add = this.commander_rank
+		}
+	}
+	else = {
+		value = 0
+	}
+}
+
+
+
+# Country Coup Resistance
+cwp_country_coup_resistance = {
+	add = {	# Government legitimacy
+		desc = "cwp_coup_legitimacy_tt"
+		value = legitimacy
+		divide = 10
+	}
+
+	add = {	# Coup resistance modifier
+		desc = "cwp_coup_resistance_modifier_add_tt"
+		value = 1
+		add = modifier:country_coup_resistance_add
+	}
+
+	multiply = {	# Coup resistance modifier
+		desc = "cwp_coup_resistance_modifier_tt"
+		value = 1
+		add = modifier:country_coup_resistance_mult
+	}
+}
+
+# Inverse of country's coup resistance - Must exactly match cwp_country_coup_resistance but reversed
+cwp_country_coup_resistance_reversed = {
+	subtract = {
+		desc = "cwp_coup_legitimacy_tt"
+		value = legitimacy
+		divide = 10
+	}
+
+	subtract = {
+		desc = "coup_resistance_modifier_add_tt"
+		value = 1
+		add = modifier:country_coup_resistance_add
+	}
+
+	multiply = {
+		desc = "coup_resistance_modifier_tt"
+		value = 1
+		add = modifier:country_coup_resistance_mult
+	}
+}
+
+
+# Commander Coup Strength
+cwp_commander_coup_strength = {
+	add = {	# Popularity of the commander
+		desc = "cwp_coup_commander_popularity_tt"
 		value = popularity
 		divide = 10
 	}
 	
-	if = { # Land coups
+	if = {	# General led coup
 		limit = {
 			exists = owner
 			has_role_of_type = general
 			owner.army_size_including_raised_conscripts > 0
 		}
 		add = {
-			desc = "coup_num_army_units_tt"
-			value = this.num_units_share
-			divide = owner.army_size_including_raised_conscripts
-			multiply = 5
+			desc = "cwp_coup_commander_rank_tt"
+			value = this.commander_rank
+			divide = owner.cwp_country_collected_army_commander_ranks
 		}
 	}
-	
-	if = { # Boat coups
+
+	if = {	# Admiral led coup
 		limit = {
 			exists = owner
 			has_role_of_type = admiral
 			owner.navy_size > 0
 		}
 		add = {
-			desc = "coup_num_navy_units_tt"
-			value = this.num_units_share
-			divide = owner.navy_size
+			desc = "cwp_coup_commander_rank_tt"
+			value = this.commander_rank
+			divide = owner.cwp_country_collected_navy_commander_ranks
 			multiply = 5
 		}
 	}
-	
-	if = {
+
+	if = {	# Is the commander in the capital region?
 		limit = {
 			exists = owner
 			exists = this.commander_military_formation.current_hq
 			this.commander_military_formation.current_hq.region ?= owner.capital.region
 		}
 		add = {
-			desc = "coup_commander_core_location_tt"
+			desc = "cwp_coup_commander_core_location_tt"
 			value = 2
 		}
 	}
-	else_if = {
+	else_if = {	# Is the commander in an incorporated state that is not the capital region?
 		limit = {
 			exists = owner
 			exists = this.commander_military_formation.current_hq
 			this.commander_military_formation.current_hq.region ?= {
 				any_scope_state = {
-					owner = root.owner
+					owner ?= root.owner
 					is_incorporated = yes
 				}
 			}
 		}
 		add = {
-			desc = "coup_commander_periphery_location_tt"
+			desc = "cwp_coup_commander_periphery_location_tt"
 			value = 1
 		}
 	}
-	else_if = {
+	else_if = {	# Is the commander in a non-incorporated state?
 		limit = {
 			exists = owner
 			exists = this.commander_military_formation.current_hq
@@ -72,41 +154,52 @@
 			}
 		}
 		add = {
-			desc = "coup_commander_colony_location_tt"
+			desc = "cwp_coup_commander_colony_location_tt"
 			value = -2
 		}
 	}
-	else_if = {
-		limit = { NOT = { exists = this.commander_military_formation.current_hq } }
+	else_if = {	# Is the commander not in a state at all but is assigned to a military formation?
+		limit = {
+			exists = this.commander_military_formation
+			NOT = { exists = this.commander_military_formation.current_hq }
+		}
 		add = {
-			desc = "coup_commander_no_location_tt"
+			desc = "cwp_coup_commander_no_location_tt"
 			value = -1
 		}
 	}
+	else_if = {	# Is the commander not assigned to a military formation at all?
+		limit = { NOT = { exists = this.commander_military_formation } }
+		add = {
+			desc = "cwp_coup_commander_unassigned_location_tt"
+			value = 2
+		}
+	}
 
-	add = {
-		desc = "coup_clout_tt"
+	add = {	# Clout of the interest group backing the coup
+		desc = "cwp_coup_interest_group_clout_tt"
 		value = this.interest_group.ig_clout
 		multiply = 10
 	}
-	
-	add = {
-		desc = "coup_strength_modifier_add_tt"
+
+	add = {	# Coup strength modifier of the commander
+		desc = "cwp_coup_commander_strength_modifier_add_tt"
 		value = modifier:character_coup_strength_add
 	}
-	
-	multiply = {
-		desc = "coup_strength_modifier_tt"
-		value = 1
-		add = modifier:character_coup_strength_mult
+
+	multiply = {	# Coup strength modifier of the commander
+		desc = "cwp_coup_commander_strength_modifier_tt"
+		value = modifier:character_coup_strength_mult
 	}
 }
 
-commander_coup_strength_country_display = { # Note - absolute fraud script value for tooltip purposes. Must equal the above.
+
+# Calculate coup strength for tooltip - Must match cwp_commander_coup_strength
+cwp_commander_coup_strength_country_display = { 
 	add = {
 		desc = "coup_popularity_vs_legitimacy_tt"
 		every_scope_character = {
-			limit = { has_variable = coup_character_leader_var }
+			limit = { has_variable = cwp_coup_character_leader_variable }
 			value = popularity
 			divide = 10
 		}
@@ -116,7 +209,7 @@ commander_coup_strength_country_display = { # Note - absolute fraud script value
 		limit = {
 			army_size_including_raised_conscripts > 0
 			any_scope_character = {
-				has_variable = coup_character_leader_var
+				has_variable = cwp_coup_character_leader_variable
 				has_role_of_type = general
 			}
 		}
@@ -124,7 +217,7 @@ commander_coup_strength_country_display = { # Note - absolute fraud script value
 			desc = "coup_commander_num_army_units_tt"
 			every_scope_character = {
 				limit = {
-					has_variable = coup_character_leader_var
+					has_variable = cwp_coup_character_leader_variable
 					has_role_of_type = general
 				}
 				value = this.num_units_share
@@ -138,7 +231,7 @@ commander_coup_strength_country_display = { # Note - absolute fraud script value
 		limit = {
 			navy_size > 0
 			any_scope_character = {
-				has_variable = coup_character_leader_var
+				has_variable = cwp_coup_character_leader_variable
 				has_role_of_type = admiral
 			}
 		}
@@ -146,7 +239,7 @@ commander_coup_strength_country_display = { # Note - absolute fraud script value
 			desc = "coup_commander_num_navy_units_tt"
 			every_scope_character = {
 				limit = {
-					has_variable = coup_character_leader_var
+					has_variable = cwp_coup_character_leader_variable
 					has_role_of_type = admiral
 				}
 				value = this.num_units_share
@@ -159,7 +252,7 @@ commander_coup_strength_country_display = { # Note - absolute fraud script value
 	if = {
 		limit = {
 			any_scope_character = {
-				has_variable = coup_character_leader_var
+				has_variable = cwp_coup_character_leader_variable
 				exists = this.commander_military_formation.current_hq
 				this.commander_military_formation.current_hq.region ?= owner.capital.region
 			}
@@ -172,7 +265,7 @@ commander_coup_strength_country_display = { # Note - absolute fraud script value
 	else_if = {
 		limit = {
 			any_scope_character = {
-				has_variable = coup_character_leader_var
+				has_variable = cwp_coup_character_leader_variable
 				exists = this.commander_military_formation.current_hq
 				this.commander_military_formation.current_hq.region ?= {
 					any_scope_state = {
@@ -190,7 +283,7 @@ commander_coup_strength_country_display = { # Note - absolute fraud script value
 	else_if = {
 		limit = {
 			any_scope_character = {
-				has_variable = coup_character_leader_var
+				has_variable = cwp_coup_character_leader_variable
 				exists = this.commander_military_formation.current_hq
 				this.commander_military_formation.current_hq.region ?= {
 					any_scope_state = {
@@ -208,7 +301,7 @@ commander_coup_strength_country_display = { # Note - absolute fraud script value
 	else_if = {
 		limit = {
 			any_scope_character = {
-				has_variable = coup_character_leader_var
+				has_variable = cwp_coup_character_leader_variable
 				NOT = { exists = this.commander_military_formation.current_hq }
 			}
 		}
@@ -221,7 +314,7 @@ commander_coup_strength_country_display = { # Note - absolute fraud script value
 	add = {
 		desc = "coup_clout_of_coup_interest_group_tt"
 		every_interest_group = {
-			limit = { has_variable = coup_interest_group_var }
+			limit = { has_variable = cwp_coup_interest_group_variable }
 			value = ig_clout
 			multiply = 10
 		}
@@ -230,7 +323,7 @@ commander_coup_strength_country_display = { # Note - absolute fraud script value
 	add = {
 		desc = "coup_strength_modifier_add_tt"
 		every_scope_character = {
-			limit = { has_variable = coup_character_leader_var }
+			limit = { has_variable = cwp_coup_character_leader_variable }
 			value = 1
 			
 			add = modifier:character_coup_strength_add
@@ -240,50 +333,10 @@ commander_coup_strength_country_display = { # Note - absolute fraud script value
 	multiply = {
 		desc = "coup_strength_modifier_tt"
 		every_scope_character = {
-			limit = { has_variable = coup_character_leader_var }
+			limit = { has_variable = cwp_coup_character_leader_variable }
 			value = 1
 			
 			add = modifier:character_coup_strength_mult
 		}
-	}
-}
-
-country_coup_resistance = {
-	add = {
-		desc = "coup_legitimacy_tt"
-		value = legitimacy
-		divide = 10
-	}
-
-	add = {
-		desc = "coup_resistance_modifier_add_tt"
-		value = 1
-		add = modifier:country_coup_resistance_add
-	}
-
-	multiply = {
-		desc = "coup_resistance_modifier_tt"
-		value = 1
-		add = modifier:country_coup_resistance_mult
-	}
-}
-
-country_coup_resistance_reversed = { # Must exactly match country_coup_resistance but reversed. I don't like that this has to exist either.
-	subtract = {
-		desc = "coup_legitimacy_tt"
-		value = legitimacy
-		divide = 10
-	}
-
-	subtract = {
-		desc = "coup_resistance_modifier_add_tt"
-		value = 1
-		add = modifier:country_coup_resistance_add
-	}
-
-	multiply = {
-		desc = "coup_resistance_modifier_tt"
-		value = 1
-		add = modifier:country_coup_resistance_mult
 	}
 }

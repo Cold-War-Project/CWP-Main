@@ -1,0 +1,99 @@
+﻿# Grant Leadership to Agitator
+grant_leadership_to_agitator = {
+	icon = "gfx/interface/character_panel/grant_command_not.dds"
+	clicksound = "event:/SFX/DLC/1.3_ip1/UI/agitator_promote"
+
+	potential = {
+		has_role_of_type = agitator
+		exists = owner
+		owner ?= scope:actor
+	}
+
+	possible = {
+		interest_group ?= { is_in_government = yes }
+
+		trigger_if = {
+			limit = {
+				scope:actor ?= {
+					AND = {
+						has_law_or_variant = law_type:law_multicultural
+						has_law_or_variant = law_type:law_total_separation
+					}
+				}
+			}
+			character_acceptance = { # In light of the Multiculturalism nerf
+				target = scope:actor
+				value >= acceptance_status_3
+			}
+		}
+		trigger_else_if = {
+			limit = { owner ?= { has_law_or_variant = law_type:law_state_atheism } }
+			character_acceptance = {
+				target = scope:actor
+				value >= acceptance_status_4
+			}
+			NOR = {
+				has_ideology = ideology:ideology_theocrat
+				has_ideology = ideology:ideology_integralist
+				has_ideology = ideology:ideology_traditionalist
+				has_ideology = ideology:ideology_traditionalist_minoritarian
+			}
+		}
+		trigger_else = {
+			character_acceptance = {
+				target = scope:actor
+				value >= acceptance_status_4
+			}
+		}
+
+		OR = {
+			is_female = no
+			scope:actor ?= { has_law_or_variant = law_type:law_womens_suffrage }
+		}
+
+		custom_tooltip = {
+			text = grant_leadership_must_be_pressured_ig
+			political_movement ?= { any_influenced_interest_group = { this = root.interest_group } }
+		}
+	}
+
+	effect = {
+		remove_character_role = agitator
+		add_character_role = politician
+		custom_tooltip = {
+			text = make_agitator_ig_leader_tt
+			set_as_interest_group_leader = yes
+		}
+	}
+
+	cooldown = { days = normal_modifier_time }
+
+	ai_chance = {
+		value = -50
+
+		if = {
+			limit = { popularity > interest_group.leader.popularity }
+			add = 25
+		}
+
+		if = {
+			limit = { interest_group.leader.popularity <= -50 }
+			add = 50
+		}
+
+		if = {
+			limit = { interest_group.leader.popularity >= 50 }
+			add = -50
+		}
+
+		if = {
+			limit = { interest_group ?= { ig_approval <= 0 } }
+			add = 25
+		}
+
+		if = {
+			limit = { this.ideology = owner.ruler.ideology }
+			add = 50
+		}
+	}
+}

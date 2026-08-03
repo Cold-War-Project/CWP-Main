@@ -1,30 +1,60 @@
-﻿create_coup_from_character = { # Takes scope golpista_character
+﻿# Takes scope from coup commander
+create_coup_from_character = {
 	if = { # Ignores the cooldown
-		limit = { has_variable = coup_cooldown_var }
-		remove_variable = coup_cooldown_var
+		limit = { has_variable = cwp_coup_cooldown_variable }
+		remove_variable = cwp_coup_cooldown_variable
 	}
 
 	$CHARACTER$ = {
-		set_variable = coup_character_leader_var
-		save_scope_as = coup_character_leader
+		set_variable = cwp_coup_character_leader_variable
+		save_scope_as = cwp_coup_character_leader
 		
 		interest_group = {
-			set_variable = coup_interest_group_var
-			save_scope_as = coup_interest_group
+			set_variable = cwp_coup_interest_group_variable
+			save_scope_as = cwp_coup_interest_group
 		}
 		
 		set_variable = { name = monthly_cached_units_share value = this.num_units_share } # Updates at start of coup
-		set_variable = { name = monthly_cached_commander_coup_strength value = this.commander_coup_strength }
+		set_variable = { name = monthly_cached_commander_coup_strength value = this.cwp_commander_coup_strength }
+
+		cwp_character_get_and_save_coup_reason = yes
 		
-		owner = { add_journal_entry = { type = je_ip4_coup } }
+		owner = { add_journal_entry = { type = je_cwp_coup } }
 	}
 }
 
-character_execute_immediate_coup = { # Must be executed in an "owner" scope when the relevant character is "root"
+
+# Takes scope from coup commander
+create_coup_event_from_character = {
+	if = { # Ignores the cooldown
+		limit = { has_variable = cwp_coup_cooldown_variable }
+		remove_variable = cwp_coup_cooldown_variable
+	}
+
+	$CHARACTER$ = {
+		set_variable = cwp_coup_character_leader_variable
+		save_scope_as = cwp_coup_character_leader
+		
+		interest_group = {
+			set_variable = cwp_coup_interest_group_variable
+			save_scope_as = cwp_coup_interest_group
+		}
+		
+		set_variable = { name = monthly_cached_units_share value = this.num_units_share } # Updates at start of coup
+		set_variable = { name = monthly_cached_commander_coup_strength value = this.cwp_commander_coup_strength }
+		
+		cwp_character_get_and_save_coup_reason = yes
+
+		owner = { hidden_effect = { trigger_event = { id = cwp_coup_events.5 } } }
+	}
+}
+
+
+cwp_character_execute_immediate_coup = { # Must be executed in an "owner" scope when the relevant character is "root"
 	if = {
 		limit = {
-			has_journal_entry = je_ip4_coup
-			je:je_ip4_coup.journal_entry_age < 180
+			has_journal_entry = je_cwp_coup
+			je:je_cwp_coup.journal_entry_age < 180
 		}
 		ROOT = {
 			add_modifier = {
@@ -34,7 +64,7 @@ character_execute_immediate_coup = { # Must be executed in an "owner" scope when
 					value = 1
 					multiply = {
 						value = 180
-						subtract = owner.je:je_ip4_coup.journal_entry_age
+						subtract = owner.je:je_cwp_coup.journal_entry_age
 						divide = 180
 					}
 				}
@@ -42,20 +72,20 @@ character_execute_immediate_coup = { # Must be executed in an "owner" scope when
 		}
 	}
 	hidden_effect = {
-		trigger_event = { id = cwp_coup.2 popup = yes }
+		# trigger_event = { id = cwp_coup.2 popup = yes } # Succss event - ip4_coup.2
 	}
 
-	custom_tooltip = pronunciamento_immediately_tt
+	custom_tooltip = cwp_character_execute_immediate_coup_tt
 	
 	show_as_tooltip = {
-		custom_tooltip = if_coup_is_successful_tt
-		coup_victory_effect_interaction_display = yes
+		custom_tooltip = cwp_if_coup_is_successful_tt
+		cwp_coup_victory_effect_interaction_display = yes
 	}
 }
 
-coup_get_owned_pronunciamento_state = {
+cwp_coup_get_owned_pronunciamento_state = {
 	if = {
-		limit = { scope:coup_character_leader ?= { has_role_of_type = general } }
+		limit = { scope:cwp_coup_character_leader ?= { has_role_of_type = general } }
 		if = {
 			limit = {
 				any_scope_state = {
@@ -71,7 +101,7 @@ coup_get_owned_pronunciamento_state = {
 				order_by = b:building_barrack.level
 				position = 0
 				check_range_bounds = no
-				save_scope_as = pronunciamento_state
+				save_scope_as = cwp_pronunciamento_state
 			}
 		}
 		else = {
@@ -80,12 +110,12 @@ coup_get_owned_pronunciamento_state = {
 				order_by = gdp
 				position = 0
 				check_range_bounds = no
-				save_scope_as = pronunciamento_state
+				save_scope_as = cwp_pronunciamento_state
 			}
 		}
 	}
 	else_if = {
-		limit = { scope:coup_character_leader ?= { has_role_of_type = admiral } }
+		limit = { scope:cwp_coup_character_leader ?= { has_role_of_type = admiral } }
 		if = {
 			limit = {
 				any_scope_state = {
@@ -101,7 +131,7 @@ coup_get_owned_pronunciamento_state = {
 				order_by = b:building_naval_administration.level
 				position = 0
 				check_range_bounds = no
-				save_scope_as = pronunciamento_state
+				save_scope_as = cwp_pronunciamento_state
 			}
 		}
 		else = {
@@ -110,15 +140,15 @@ coup_get_owned_pronunciamento_state = {
 				order_by = gdp
 				position = 0
 				check_range_bounds = no
-				save_scope_as = pronunciamento_state
+				save_scope_as = cwp_pronunciamento_state
 			}
 		}
 	}
 }
 
-coup_get_unowned_pronunciamento_state = {
+cwp_coup_get_unowned_pronunciamento_state = {
 	if = {
-		limit = { scope:coup_character_leader ?= { has_role_of_type = general } }
+		limit = { scope:cwp_coup_character_leader ?= { has_role_of_type = general } }
 		if = {
 			limit = { any_scope_state = { has_building = building_barrack } }
 			ordered_scope_state = {
@@ -126,7 +156,7 @@ coup_get_unowned_pronunciamento_state = {
 				order_by = b:building_barrack.level
 				position = 0
 				check_range_bounds = no
-				save_scope_as = pronunciamento_state
+				save_scope_as = cwp_pronunciamento_state
 			}
 		}
 		else = {
@@ -134,12 +164,12 @@ coup_get_unowned_pronunciamento_state = {
 				order_by = gdp
 				position = 0
 				check_range_bounds = no
-				save_scope_as = pronunciamento_state
+				save_scope_as = cwp_pronunciamento_state
 			}
 		}
 	}
 	else_if = {
-		limit = { scope:coup_character_leader ?= { has_role_of_type = admiral } }
+		limit = { scope:cwp_coup_character_leader ?= { has_role_of_type = admiral } }
 		if = {
 			limit = { any_scope_state = { has_building = building_naval_administration } }
 			ordered_scope_state = {
@@ -147,7 +177,7 @@ coup_get_unowned_pronunciamento_state = {
 				order_by = b:building_naval_administration.level
 				position = 0
 				check_range_bounds = no
-				save_scope_as = pronunciamento_state
+				save_scope_as = cwp_pronunciamento_state
 			}
 		}
 		else = {
@@ -155,15 +185,15 @@ coup_get_unowned_pronunciamento_state = {
 				order_by = gdp
 				position = 0
 				check_range_bounds = no
-				save_scope_as = pronunciamento_state
+				save_scope_as = cwp_pronunciamento_state
 			}
 		}
 	}
 }
 
-coup_get_allied_pronunciamento_state = {
+cwp_coup_get_allied_pronunciamento_state = {
 	if = {
-		limit = { scope:coup_character_leader ?= { has_role_of_type = general } }
+		limit = { scope:cwp_coup_character_leader ?= { has_role_of_type = general } }
 		if = {
 			limit = {
 				any_scope_state = {
@@ -179,7 +209,7 @@ coup_get_allied_pronunciamento_state = {
 				order_by = b:building_barrack.level
 				position = 0
 				check_range_bounds = no
-				save_scope_as = pronunciamento_state
+				save_scope_as = cwp_pronunciamento_state
 			}
 		}
 		else = {
@@ -188,12 +218,12 @@ coup_get_allied_pronunciamento_state = {
 				order_by = gdp
 				position = 0
 				check_range_bounds = no
-				save_scope_as = pronunciamento_state
+				save_scope_as = cwp_pronunciamento_state
 			}
 		}
 	}
 	else_if = {
-		limit = { scope:coup_character_leader ?= { has_role_of_type = admiral } }
+		limit = { scope:cwp_coup_character_leader ?= { has_role_of_type = admiral } }
 		if = {
 			limit = {
 				any_scope_state = {
@@ -209,7 +239,7 @@ coup_get_allied_pronunciamento_state = {
 				order_by = b:building_naval_administration.level
 				position = 0
 				check_range_bounds = no
-				save_scope_as = pronunciamento_state
+				save_scope_as = cwp_pronunciamento_state
 			}
 		}
 		else = {
@@ -218,25 +248,103 @@ coup_get_allied_pronunciamento_state = {
 				order_by = gdp
 				position = 0
 				check_range_bounds = no
-				save_scope_as = pronunciamento_state
+				save_scope_as = cwp_pronunciamento_state
 			}
 		}
 	}
 }
 
-coup_victory_effect = {
-	# For notifications
-	ROOT = { save_scope_as = coup_country }
-	coup_victory_government_effects = yes
-	coup_victory_law_effects = yes
-	coup_victory_special_effects = yes
-	coup_victory_technical_effects = yes
+cwp_character_get_and_save_coup_reason = {
+	if = {
+		limit = { owner ?= { any_political_lobby = { has_variable = cwp_coup_lobby_variable } } }
+		owner = {
+			set_variable = {	# Case 5 - Foreign-Backed Coup
+				name = cwp_coup_reason_variable
+				value = 6
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			save_temporary_scope_as = cwp_coupist_to_be
+			
+			owner ?= { # Case 1 - owner is enacting a law the character does not approve of
+				save_temporary_scope_as = cwp_couped_to_be
+				
+				exists = currently_enacting_law
+				
+				OR = {
+					scope:cwp_coupist_to_be ?= {
+						law_enactment_stance = { # Refers to any_scope_character
+							law = scope:cwp_couped_to_be.currently_enacting_law.type # Refers to owner
+							value < neutral # Disapproves of the law
+						}
+					}
+					AND = {
+						scope:cwp_coupist_to_be ?= {
+							law_enactment_stance = { # Refers to any_scope_character
+								law = scope:cwp_couped_to_be.currently_enacting_law.type # Refers to owner
+								value < approve # Character does not approve of the law
+							}
+							interest_group ?= {
+								law_enactment_stance = { # Refers to any_scope_character's interest group
+									law = scope:cwp_couped_to_be.currently_enacting_law.type # Refers to owner
+									value < neutral # Interest group opposes the law
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		owner = {
+			set_variable = {
+				name = cwp_coup_reason_variable
+				value = 1
+			}
+		}
+	}
+	else_if = { # Case 2 - owner has failed a petition for this.interest_group
+		limit = { this.interest_group = { has_modifier = modifier_failed_to_meet_petition } }
+		owner = {
+			set_variable = {
+				name = cwp_coup_reason_variable
+				value = 2
+			}
+		}
+	}
+	else_if = {	# Case 3 - owner has failed a negotiation for this.interest_group
+		limit = { this.interest_group ?= { has_modifier = negotiation_failed_quest } }
+		owner = {
+			set_variable = {
+				name = cwp_coup_reason_variable
+				value = 3
+			}
+		}
+	}
+	else = {	# If 0, something is broken
+		owner = {
+			set_variable = {
+				name = cwp_coup_reason_variable
+				value = 0
+			}
+		}
+	}
 }
 
-coup_victory_government_effects = {
+cwp_coup_victory_effect = {
+	# For notifications
+	ROOT = { save_scope_as = coup_country }
+	cwp_coup_victory_government_effects = yes
+	cwp_coup_victory_law_effects = yes
+	cwp_coup_victory_special_effects = yes
+	cwp_coup_victory_technical_effects = yes
+}
+
+cwp_coup_victory_government_effects = {
 	if = {
-		limit = { scope:coup_interest_group ?= { is_insurrectionary = yes } }
-		scope:coup_interest_group ?= { abandon_revolution = yes }
+		limit = { scope:cwp_coup_interest_group ?= { is_insurrectionary = yes } }
+		scope:cwp_coup_interest_group ?= { abandon_revolution = yes }
 	}
 
 	if = {
@@ -257,15 +365,15 @@ coup_victory_government_effects = {
 					limit = { ruler = { is_immortal = yes } }
 					ruler = { set_character_immortal = no }
 				}
-				scope:coup_interest_group.leader ?= { set_character_immortal = yes }
+				scope:cwp_coup_interest_group.leader ?= { set_character_immortal = yes }
 			}
 		}
 		set_variable = { name = keep_current_ruler_var days = 7 }
 
-		scope:coup_interest_group.leader ?= { set_character_as_ruler = yes }
+		scope:cwp_coup_interest_group.leader ?= { set_character_as_ruler = yes }
 	}
 
-	scope:coup_interest_group = {
+	scope:cwp_coup_interest_group = {
 		add_modifier = {
 			name = modifier_successful_coup
 			days = short_modifier_time
@@ -274,19 +382,19 @@ coup_victory_government_effects = {
 	}
 	
 	if = {
-		limit = { scope:coup_interest_group ?= { has_party = yes } }
-		scope:coup_interest_group.party ?= { set_ruling_party = yes }
+		limit = { scope:cwp_coup_interest_group ?= { has_party = yes } }
+		scope:cwp_coup_interest_group.party ?= { set_ruling_party = yes }
 	}
 	else = {
 		if = {
-			limit = { scope:coup_interest_group ?= { is_in_government = no } }
-			scope:coup_interest_group ?= { add_ruling_interest_group = yes }
+			limit = { scope:cwp_coup_interest_group ?= { is_in_government = no } }
+			scope:cwp_coup_interest_group ?= { add_ruling_interest_group = yes }
 		}
 
 		every_interest_group = {
 			limit = {
 				is_in_government = yes
-				NOT = { scope:coup_interest_group ?= this }
+				NOT = { scope:cwp_coup_interest_group ?= this }
 			}
 			remove_ruling_interest_group = yes
 		}
@@ -309,11 +417,11 @@ coup_victory_government_effects = {
 	}
 }
 
-coup_victory_law_effects = {
+cwp_coup_victory_law_effects = {
 	if = {
 		limit = {
 			exists = currently_enacting_law
-			scope:coup_interest_group ?= {
+			scope:cwp_coup_interest_group ?= {
 				law_enactment_stance = {
 					law = owner.currently_enacting_law.type
 					value <= neutral # Will halt enactment unless they approve of the law
@@ -324,12 +432,12 @@ coup_victory_law_effects = {
 	}
 	
 	if = {
-		limit = { exists = scope:coup_desired_law }
-		activate_law = scope:coup_desired_law.type
+		limit = { exists = scope:cwp_coup_desired_law }
+		activate_law = scope:cwp_coup_desired_law.type
 	}
 	else_if = { # In case
 		limit = {
-			scope:coup_interest_group ?= {
+			scope:cwp_coup_interest_group ?= {
 				any_preferred_law = {
 					law_is_available = yes
 					law_is_valid_for_ig_petition = yes
@@ -337,7 +445,7 @@ coup_victory_law_effects = {
 				}
 			}
 		}
-		scope:coup_interest_group ?= {
+		scope:cwp_coup_interest_group ?= {
 			ordered_preferred_law = {
 				limit = {
 					law_is_available = yes
@@ -352,14 +460,14 @@ coup_victory_law_effects = {
 	}
 }
 
-coup_victory_special_effects = {
+cwp_coup_victory_special_effects = {
 	if = {
 		limit = { dynastic_coup_trigger = yes }
-		ip4_coup_victory_dynastic_effects = yes
+		cwp_coup_victory_dynastic_effects = yes
 	}
 }
 
-coup_victory_technical_effects = {
+cwp_coup_victory_technical_effects = {
 	every_diplomatically_relevant_country = {
 		limit = { has_overlapping_interests = ROOT }
 		post_notification = successful_coup_in_country
@@ -367,22 +475,22 @@ coup_victory_technical_effects = {
 
 	if = {
 		limit = {
-			has_variable = coup_sponsor
-			var:coup_sponsor ?= { is_country_alive = yes }
+			has_variable = cwp_coup_sponsor
+			var:cwp_coup_sponsor ?= { is_country_alive = yes }
 		}
 		set_owes_obligation_to = {
-			country = var:coup_sponsor
+			country = var:cwp_coup_sponsor
 			setting = yes
 		}
-		remove_variable = coup_sponsor
+		remove_variable = cwp_coup_sponsor
 	}
 
 	set_variable = { name = recent_coup_or_revolution_var value = 0 }
 	change_global_variable = { name = successful_coups add = 1 }
-	set_variable = { name = coup_aftermath_var years = 1 }
+	set_variable = { name = cwp_coup_aftermath_variable years = 1 }
 }
 
-ip4_coup_victory_dynastic_effects = {
+cwp_coup_victory_dynastic_effects = {
 	if = {
 		limit = { has_gov_regency = yes }
 		remove_regency_modifier = yes
@@ -394,7 +502,7 @@ ip4_coup_victory_dynastic_effects = {
 	}
 }
 
-coup_victory_effect_interaction_display = {
+cwp_coup_victory_effect_interaction_display = {
 	if = {
 		limit = { root.interest_group ?= { is_insurrectionary = yes } }
 		root.interest_group ?= { abandon_revolution = yes }
@@ -449,7 +557,7 @@ coup_victory_effect_interaction_display = {
 				has_gov_regency = yes
 			}
 		}
-		scope:coup_interest_group.leader ?= { set_character_as_ruler = yes }
+		scope:cwp_coup_interest_group.leader ?= { set_character_as_ruler = yes }
 	}
 
 	if = {
@@ -461,4 +569,76 @@ coup_victory_effect_interaction_display = {
 		}
 		owner ?= { call_election = { months = 3 } }
 	}
+}
+
+cwp_coup_cleanup_effects = {
+	set_variable = {
+		name = cwp_coup_cooldown_variable
+		days = normal_modifier_time
+	}
+	
+	if = {
+		limit = { has_variable = cwp_coup_event_active_variable }
+		remove_variable = cwp_coup_event_active_variable
+	}
+
+	every_political_lobby = {
+		limit = { has_variable = cwp_coup_lobby_variable }
+		remove_variable = cwp_coup_lobby_variable
+	}
+	
+	every_interest_group = {
+		limit = {has_variable = cwp_coup_interest_group_variable }
+		remove_variable = cwp_coup_interest_group_variable
+	}
+	
+	if = {
+		limit = { has_variable = cwp_coup_sponsor }
+		if = {
+			limit = {
+				var:cwp_coup_sponsor ?= {
+					has_diplomatic_pact = {
+						who = ROOT
+						type = orchestrate_coup
+					}
+				}
+			}
+			hidden_effect = {
+				var:cwp_coup_sponsor ?= {
+					remove_diplomatic_pact = {
+						country = root
+						type = orchestrate_coup
+					}
+				}
+			}
+		}
+		remove_variable = cwp_coup_sponsor
+	}
+	
+	if = {
+		limit = { has_variable = cwp_orchestrate_coup_aborted }
+		remove_variable = cwp_orchestrate_coup_aborted
+	}
+	
+	if = {
+		limit = { has_variable = cwp_coup_reason_variable }
+		remove_variable = cwp_coup_reason_variable
+	}
+	
+	if = {
+		limit = { has_variable = cwp_coup_loc_character_variable }
+		remove_variable = cwp_coup_loc_character_variable
+	}
+	
+	if = {
+		limit = { has_variable = cwp_coup_loc_law_variable }
+		remove_variable = cwp_coup_loc_law_variable
+	}
+	
+	if = {
+		limit = { has_variable = cwp_coup_loc_lobby_country_variable }
+		remove_variable = cwp_coup_loc_lobby_country_variable
+	}
+	
+	scope:cwp_coup_character_leader ?= { remove_variable = cwp_coup_character_leader_variable }
 }

@@ -1,0 +1,140 @@
+﻿# Resign from Office
+resign_from_office = {
+	clicksound = "event:/SFX/UI/Military/command_grant"
+
+	potential = {
+		has_dlc_feature = voice_of_the_people_content
+		owner ?= scope:actor
+		is_ruler_of_own_country = yes
+		is_immortal = no
+		owner ?= {
+			NOR = {
+				has_law = law_type:law_monarchy
+				has_law_or_variant = law_type:law_theocracy
+			}
+		}
+	}
+
+	possible = {
+		OR = {
+			interest_group ?= { ig_approval <= angry }
+			interest_group ?= { ig_counts_as_marginal = yes }
+			popularity <= -50
+			OR = {
+				has_trait = psychological_affliction
+				has_trait = cancer
+				has_trait = senile
+				has_trait = wounded
+			}
+			owner ?= {  # Our thanks to UHM for reporting this
+				trigger_if = {
+					limit = {
+						any_political_movement = {
+							is_revolutionary = yes
+							exists = most_desired_law
+						}
+					}
+					AND = {
+						any_political_movement = {
+							is_revolutionary = yes
+							exists = most_desired_law
+							most_desired_law ?= { save_temporary_scope_as = revolutionary_law }
+						}
+						custom_tooltip = {
+							text = ruler_disapproves_of_revolutionary_law
+							root = {
+								OR = {
+									law_enactment_stance = {
+										law = scope:revolutionary_law
+										value < neutral
+									}
+									interest_group ?= {
+										law_enactment_stance = {
+											law = scope:revolutionary_law
+											value < neutral
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+				trigger_else = {
+					AND = {
+						any_political_movement = { is_revolutionary = yes }
+						custom_tooltip = {
+							text = ruler_disapproves_of_revolutionary_law_contextless
+							always = no
+						}
+					}
+				}
+			}
+		}
+	}
+
+	effect = {
+		if = {
+			limit = {
+				owner ?= {
+					any_political_movement = {
+						exists = most_desired_law
+						is_revolutionary = yes
+					}
+				}
+			}
+			owner ?= { trigger_event = { id = resignation.2 popup = yes } }
+		}
+		else = {
+			owner ?= { trigger_event = { id = resignation.1 popup = yes } }
+		}
+	}
+
+	cooldown = { months = 180 }
+	show_confirmation_box = yes
+
+	ai_chance = {
+		value = -50
+
+		if = {
+			limit = { interest_group = { ig_approval <= angry } }
+			add = 25
+		}
+
+		if = {
+			limit = { interest_group = { ig_counts_as_marginal = yes } }
+			add = 25
+		}
+
+		if = {
+			limit = { popularity <= -50 }
+			add = 25
+		}
+
+		if = {
+			limit = { popularity <= -75 }
+			add = 25
+		}
+
+		if = {
+			limit = {
+				OR = {
+					has_trait = psychological_affliction
+					has_trait = cancer
+					has_trait = senile
+					has_trait = wounded
+				}
+			}
+			add = 25
+		}
+
+		if = {
+			limit = {
+				OR = {
+					has_trait = arrogant
+					has_trait = imperious
+				}
+			}
+			add = -50
+		}
+	}
+}
