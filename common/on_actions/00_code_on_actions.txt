@@ -933,6 +933,17 @@ on_treaty_article_removed = {
 	}
 }
 
+# Root = New host country that inherited the treaty ports (e.g. a victorious revolution or annexation)
+# scope:target_country = Foreign power that holds the inherited treaty port(s)
+on_treaty_ports_inherited = {
+	effect = {
+		trigger_event = {
+			id = treaty_port_inheritance_events.1
+			popup = yes
+		}
+	}
+}
+
 # Root = Releasing Country
 # scope:target = Released Country
 on_country_released_as_independent = {
@@ -1758,7 +1769,11 @@ on_secession_end = {
 			}
 		}
 
-		add_to_variable_list = { name = failed_uprisings_culture_list target = scope:rebel_culture years = 20 }
+		trigger_event = {
+			id = bulgaria_events.3
+			days = 1
+			popup = yes
+		}
 	}
 }
 
@@ -1929,7 +1944,26 @@ on_wargoal_enforced = {
 				}
 			}
 			set_variable = { name = enforced_wargoal_on_enemy days = 90 }
-		}	
+		}
+		
+		if = { # recently crushed a secession
+			limit = { scope:diplomatic_play ?= { is_diplomatic_play_type = dp_secession } }
+			ROOT ?= {
+				set_variable = {
+					name = crushed_secession
+					days = 90
+				}
+			}
+		}
+
+		# Any war victory over the country that reneged on our inherited treaty ports settles the grudge
+		if = {
+			limit = {
+				has_variable = wants_treaty_port_revenge_against
+				var:wants_treaty_port_revenge_against ?= scope:target
+			}
+			remove_variable = wants_treaty_port_revenge_against
+		}
 	}
 }
 
@@ -2606,6 +2640,20 @@ on_strait_access_setting_changed = {
 # scope:amendment = amendment being repealed
 on_amendment_repealed = {
 	effect = {}
+}
+
+# Root = Country
+# scope:amendment = amendment that timed out
+# scope:law = law the amendment was attached to
+on_amendment_timeout = {
+	effect = {
+		scope:amendment.type = {
+			save_scope_as = timed_out_amendment_type
+		}
+		scope:law = {
+			post_notification = amendment_timed_out
+		}
+	}
 }
 
 # Root = Invader Country
