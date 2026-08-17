@@ -94,7 +94,7 @@ types ship_designer_popup_types
 
 										item = {
 											flowcontainer = {
-											modification_slot = {}
+												modification_slot = {}
 											}
 										}
 									}
@@ -116,7 +116,7 @@ types ship_designer_popup_types
 											}
 
 											widget = {
-												size = { 300 34 }
+												size = { 300 42 }
 
 												background = {
 													using = default_header_bg
@@ -126,9 +126,8 @@ types ship_designer_popup_types
 												}
 
 												textbox = {
-													default_format = "#header"
 													parentanchor = vcenter
-													margin = { 7 0 }
+													margin = { 10 0 }
 													autoresize = yes
 													align = nobaseline
 													text = "concept_ship_utility_modifications_short"
@@ -280,14 +279,27 @@ types ship_designer_popup_types
 
 										flowcontainer = {
 											parentanchor = bottom|hcenter
-											direction = vertical
-											spacing = 2
+											spacing = 5
 											margin = { 20 20 }
 
-											# Set a custom name
+											button = {
+												size = { 40 40 }
+												using = default_button
+												enabled = "[GreaterThan_int32(GetDataModelSize(ShipTemplateList.GetTemplatesOfType(ShipDesignerPopup.GetCurrentShipType.Self)), '(int32)1')]"
+												onclick = "[RightClickMenuManager.ToggleShipDesignerTemplateMenu( ShipDesignerPopup.AccessSelf, PdxGuiWidget.AccessSelf )]"
+												tooltip = "SHIP_DESIGNER_SELECT_TEMPLATE_TOOLTIP"
+												using = tooltip_ne
+
+												button = {
+													size = { 75% 75% }
+													parentanchor = center
+													alwaystransparent = yes
+													texture = "gfx/interface/buttons/button_icons/menu.dds"
+												}
+											}
+
 											editbox = {
 												name = "ship_template_name_edit"
-												parentanchor = right
 												maxcharacters = 17
 												size = { 200 40 }
 												margin_left = 10
@@ -338,8 +350,20 @@ types ship_designer_popup_types
 								direction = vertical
 								spacing = 1
 
-								ship_designer_stats_list_flowcontainer = {
-									datacontext = "[ShipDesignerPopup.GetTemplate]"
+								scrollarea = {
+									scrollbaralign_vertical = right
+									size = { 330 360 }
+									scrollbarpolicy_horizontal = always_off
+
+									scrollbar_vertical = {
+										using = vertical_scrollbar
+									}
+									
+									scrollwidget = {
+										ship_designer_stats_list_flowcontainer = {
+											datacontext = "[ShipDesignerPopup.GetTemplate]"
+										}
+									}
 								}
 
 								background = {
@@ -803,19 +827,24 @@ types ship_designer_popup_types
 		ship_template_stat_critical_hit_damage = {
 			size = { 300 36 }
 		}
+		
+		### Visibility
+		ship_template_stat_visibility = {
+			size = { 300 36 }
+		}
+		
+		### Detection/Stealth
+		ship_template_stat_detection = {
+			size = { 300 36 }
+		}
 
 		### Vulnerability
 		ship_template_stat_vulnerability = {
 			size = { 300 36 }
 		}
-
+		
 		### Screening
 		ship_template_stat_screening = {
-			size = { 300 36 }
-		}
-
-		### Supply Capacity
-		ship_template_stat_supply_capacity = {
 			size = { 300 36 }
 		}
 
@@ -833,26 +862,31 @@ types ship_designer_popup_types
 		ship_template_stat_marine_capacity = {
 			size = { 300 36 }
 		}
-
-		### Visibility
-		ship_template_stat_visibility = {
+				
+		### Readiness
+		ship_template_stat_readiness_gain = {
 			size = { 300 36 }
 		}
 
-		### Detection/Stealth
-		ship_template_stat_detection = {
+		### Blockade Strength
+		ship_template_stat_blockade_strength = {
 			size = { 300 36 }
 		}
+
+		### Accuracy
+		ship_template_stat_accuracy = {
+			size = { 300 36 }
+		}
+
 	}
 
 	type modification_slot = widget {
-		size = { 300 105 }
+		size = { 308 110 }
 
 		background = {
 			using = entry_bg_fancy_dark
 			alpha = 0.6
 		}
-
 
 		vbox = {
 			layoutpolicy_horizontal = expanding
@@ -862,8 +896,7 @@ types ship_designer_popup_types
 				datacontext = "[ShipDesignerModSlot.GetSlot]"
 				datacontext = "[ShipDesignerPopup.GetTemplate.GetModifier]"
 				layoutpolicy_horizontal = expanding
-				margin = { 10 10 }
-				margin_top = 7
+				margin = { 12 10 }
 				spacing = 2
 
 				background = {
@@ -876,13 +909,15 @@ types ship_designer_popup_types
 				textbox = {
 					autoresize = yes
 					align = nobaseline
+					max_width = 230
+					using = elide_fontsize_min
 					text = "[ShipModificationSlotType.GetName]"
 				}
 
 				expand = {}
 
 				icon = {
-					visible = "[Not(ObjectsEqual(ShipModificationSlotType.Self, GetShipModificationSlotType('ship_mod_slot_guns').Self))]"
+					visible = "[Not(ObjectsEqual(ShipModificationSlotType.Self, GetShipModificationSlotType('ship_mod_slot_weapons').Self))]"
 					size = { 20 20 }
 					texture = "[ShipModificationSlotType.GetIcon]"
 				}
@@ -896,7 +931,7 @@ types ship_designer_popup_types
 				}
 
 				textbox = {
-					visible = "[ObjectsEqual(ShipModificationSlotType.Self, GetShipModificationSlotType('ship_mod_slot_guns').Self)]"
+					visible = "[ObjectsEqual(ShipModificationSlotType.Self, GetShipModificationSlotType('ship_mod_slot_weapons').Self)]"
 					autoresize = yes
 					align = right|nobaseline
 					tooltip = "SHIP_TEMPLATE_ATTACK_DAMAGE_TOOLTIP"
@@ -912,7 +947,7 @@ types ship_designer_popup_types
 				}
 
 				textbox = {
-					visible = "[ObjectsEqual(ShipModificationSlotType.Self, GetShipModificationSlotType('ship_mod_slot_range').Self)]"
+					visible = "[ObjectsEqual(ShipModificationSlotType.Self, GetShipModificationSlotType('ship_mod_slot_supply').Self)]"
 					autoresize = yes
 					align = right|nobaseline
 					text = "[Modifier.GetShipSupplyCapacity|vD]"
@@ -927,8 +962,7 @@ types ship_designer_popup_types
 				datacontext = "[ShipDesignerModSlot.GetSelectedModification]"
 
 				tooltipwidget = {
-					FancyTooltip_ShipModificationType = {
-					}
+					FancyTooltip_ShipModificationType = {}
 				}
 
 				textbox = {
@@ -955,7 +989,7 @@ types ship_designer_popup_types
 
 					item = {
 						widget = {
-							size = { 35 35 } # size = { 92 35 }
+							size = { 35 35 }	# size = { 94 35 }
 							using = tooltip_se
 
 							tooltipwidget = {
@@ -1054,235 +1088,3 @@ types ship_designer_popup_types
 	}
 }
 
-right_click_menu = {
-	name = "ship_designer_ship_type_menu"
-	parentanchor = right
-
-	blockoverride "title_text" {
-		text = "SHIP_DESIGNER_SELECT_SHIP_TYPE"
-	}
-
-	blockoverride "items" {
-		using = default_content_fade
-		margin_top = 10
-		margin_bottom = 10
-
-		### List of ship types in this group
-		flowcontainer = {
-			direction = vertical
-			#spacing = 10
-			datamodel = "[ShipDesignerPopup.GetShipTypes]"
-
-			item = {
-				button = {
-					using = default_button
-					size = { 300 40 }
-					enabled = "[ShipType.HasRequiredTech]"
-					onclick = "[ShipDesignerPopup.SetShipType( ShipType.Self )]"
-					onclick = "[RightClickMenuManager.Close]"
-
-					tooltipwidget = {
-						FancyTooltip_ShipType = {}
-					}
-
-					textbox = {
-						parentanchor = vcenter
-						autoresize = yes
-						position = { 10 0 }
-						align = nobaseline
-						using = elide_fontsize_min
-						max_width = 140
-						text = "[ShipType.GetNameNoFormatting]"
-					}
-
-					ship_type_silhouette = {
-						parentanchor = right|vcenter
-						position = { -10 0 }
-
-						blockoverride "fittype" {
-							fittype = end
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
-right_click_menu = {
-	name = "ship_designer_skins_menu"
-	parentanchor = left
-	widgetanchor = right
-	datacontext = "[ShipDesignerPopup.GetCurrentShipType]"
-
-	blockoverride "title_text" {
-		text = "SHIP_DESIGNER_SKINS_HEADER"
-	}
-
-	blockoverride "items" {
-		using = default_content_fade
-		margin_top = 10
-		margin_bottom = 10
-
-		### List of skins for the selected ship type
-		flowcontainer = {
-			direction = vertical
-			datamodel = "[ShipDesignerPopup.GetGraphicsTypesAvailable]"
-
-			item = {
-				widget = {
-					layoutpolicy_horizontal = expanding
-					layoutpolicy_vertical = expanding
-					size = { 240 40 }
-
-					tooltip = "[ShipGraphicsType.GetDescription]"
-
-					button = {
-						visible = "[Not(ObjectsEqual(ShipDesignerPopup.GetGraphicsTypeSelected, ShipGraphicsType.Self))]"
-						size = { 100% 100% }
-						using = default_button
-						onclick = "[ShipDesignerPopup.SelectGraphicsType(ShipGraphicsType.Self)]"
-						onclick = "[RightClickMenuManager.Close]"
-
-						textbox = {
-							parentanchor = vcenter
-							autoresize = yes
-							position = { 10 0 }
-							align = nobaseline
-							using = elide_fontsize_min
-							max_width = 140
-							text = "[ShipGraphicsType.GetNameNoFormatting]"
-						}
-					}
-
-					widget = {
-						visible = "[ObjectsEqual(ShipDesignerPopup.GetGraphicsTypeSelected, ShipGraphicsType.Self)]"
-						size = { 100% 100% }
-
-						background = {
-							using = paper_bg
-						}
-
-						textbox = {
-							parentanchor = vcenter
-							autoresize = yes
-							position = { 10 0 }
-							align = nobaseline
-							using = elide_fontsize_min
-							max_width = 140
-							text = "[ShipGraphicsType.GetNameNoFormatting]"
-						}
-
-						icon = {
-							using = highlighted_square_selection
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
-right_click_menu = {
-	name = "ship_designer_utility_menu"
-	parentanchor = right
-
-	blockoverride "title_text" {
-		text = "SHIP_UTILITY_MODIFICATIONS_SHORT_CONCEPT"
-	}
-
-	blockoverride "items" {
-		using = default_content_fade
-		margin_top = 10
-		margin_bottom = 10
-
-		### Deselect button
-		button = {
-			visible = "[ShipDesignerModSlot.HasSelection]"
-			size = { 345 40 }
-			using = default_button
-			using = ui_item_remove
-			onclick = "[ShipDesignerModSlot.OnDeselectModification]"
-			onclick = "[RightClickMenuManager.Close]"
-
-			textbox = {
-				parentanchor = left|vcenter
-				margin_left = 20
-				autoresize = yes
-				align = nobaseline
-				using = fontsize_large
-				text = "SHIP_DESIGNER_REMOVE_UTILITY_MOD"
-			}
-		}
-
-		### List of utility modifications
-		flowcontainer = {
-			direction = vertical
-			datamodel = "[ShipDesignerModSlot.GetModifications]"
-
-			item = {
-				widget = {
-					visible = "[Or(ShipDesignerModSlot.IsModificationSelectedInSlot(ShipModificationType.Self), Not(ShipDesignerModSlot.IsModificationSelectedInOtherSlot(ShipModificationType.Self)))]"
-					size = { 345 50 }
-
-					button = {
-						visible = "[Not(ShipDesignerModSlot.IsModificationSelectedInSlot(ShipModificationType.Self))]"
-						enabled = "[Not(ShipDesignerModSlot.IsModificationBlocked(ShipModificationType.Self))]"
-						size = { 100% 100% }
-						using = default_button
-						using = ship_designer_modification_wildcard
-						onclick = "[ShipDesignerModSlot.OnSelectModificationForSlot(ShipModificationType.Self)]"
-						onclick = "[RightClickMenuManager.Close]"
-					}
-
-					background = {
-						visible = "[ShipDesignerModSlot.IsModificationSelectedInSlot(ShipModificationType.Self)]"
-						using = paper_bg
-					}
-
-					icon = {
-						visible = "[ShipDesignerModSlot.IsModificationSelectedInSlot(ShipModificationType.Self)]"
-						using = highlighted_square_selection
-					}
-
-					hbox = {
-						margin = { 10 0 }
-						spacing = 5
-
-						icon = {
-							size = { 40 40 }
-							texture = "gfx/interface/buttons/button_icons/plus.dds"
-						}
-
-						textbox = {
-							autoresize = yes
-							align = nobaseline
-							using = elide_fontsize_min
-							max_width = 260
-							using = fontsize_large
-							text = "[ShipModificationType.GetNameNoFormatting]"
-						}
-
-						expand = {}
-
-						icon = {
-							size = { 40 40 }
-							texture = "[ShipModificationType.GetIcon]"
-						}
-					}
-
-					tooltipwidget = {
-						FancyTooltip_ShipModificationType = {
-							blockoverride "tooltip_content_before" {
-								custom_tooltip_textbox_with_empty_line = {
-									visible = "[ShipDesignerModSlot.IsModificationSelectedInSlot(ShipModificationType.Self)]"
-									text = "CURRENTLY_SELECTED"
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-}
