@@ -1,0 +1,166 @@
+﻿# Retire Commander
+retire_commander = {
+	# icon = ""
+	clicksound = "event:/SFX/UI/Military/commander_retire"
+
+	potential = {
+		owner ?= scope:actor
+		is_commander = yes
+		is_ruler_of_own_country = no
+	}
+
+	possible = {
+		is_ruler_of_own_country = no
+		interest_group ?= { is_insurrectionary = no }
+		commander_is_available = yes
+		years_of_service >= 1
+
+		custom_tooltip = {
+			text = pending_coup_event_tt
+			NOT = { owner = { has_variable = cwp_coup_event_active_variable } }
+		}
+	}
+
+	effect = {
+		if = {
+			limit = {
+				owner = { has_journal_entry = je_cwp_coup }
+				root = { has_variable = cwp_coup_character_leader_variable }
+			}
+			owner = {
+				set_variable = cwp_coup_character_retire_variable
+				cwp_character_execute_immediate_coup = yes
+			}
+		}
+		else = {
+			hidden_effect = {
+				if = {
+					limit = { has_role_of_type = general }
+					remove_character_role = general
+				}
+
+				if = {
+					limit = { has_role_of_type = admiral }
+					remove_character_role = admiral
+				}
+			}
+
+			interest_group ?= {
+				add_modifier = {
+					name = retired_commander_interest_group_impact
+					multiplier = {
+						value = root.popularity
+						divide = 100
+						add = 1
+						min = 1
+						multiply = root.commander_rank
+						round = yes
+					}
+					years = 5
+					is_decaying = yes
+				}
+			}
+		}
+	}
+
+	show_confirmation_box = yes
+
+	ai_chance = {
+		value = -50
+		if = {
+			limit = { popularity <= -50 }
+			add = 25
+		}
+
+		if = {
+			limit = { popularity <= -75 }
+			add = 25
+		}
+
+		if = {
+			limit = { age >= 75 }
+			add = 50
+		}
+
+		if = {
+			limit = {
+				OR = {
+					has_trait = psychological_affliction
+					has_trait = syphilis
+					has_trait = wounded
+					has_trait = kidney_stones
+				}
+			}
+			add = 25
+		}
+		
+		if = {
+			limit = {
+				OR = {
+					has_trait = alcoholic
+					has_trait = cocaine_addiction
+				}
+			}
+			add = 25
+		}
+
+		if = {
+			limit = { has_trait = shellshocked }
+			add = 25
+		}
+
+		if = {
+			limit = {
+				OR = {
+					has_trait = trench_rat
+					has_trait = stalwart_defender
+					has_trait = defense_in_depth_specialist
+				}
+			}
+			add = -100
+		}
+		
+		if = {
+			limit = {
+				OR = {
+					has_trait = expert_convoy_raider
+					has_trait = expert_artillery_commander
+					has_trait = expert_offensive_planner
+					has_trait = expert_defensive_strategist
+					has_trait = expert_naval_commander
+				}
+			}
+			add = -75
+		}
+		
+		if = {
+			limit = {
+				OR = {
+					has_trait = experienced_convoy_raider
+					has_trait = experienced_artillery_commander
+					has_trait = experienced_offensive_planner
+					has_trait = experienced_defensive_strategist
+					has_trait = experienced_naval_commander
+				}
+			}
+			add = -50
+		}
+		
+		if = {
+			limit = {
+				owner ?= {
+					OR = {
+						is_diplomatic_play_committed_participant = yes
+						is_at_war = yes
+					}
+				}
+			}
+			add = -50
+		}
+		
+		if = {
+			limit = { owner ?= { any_scope_war = { any_scope_front = { is_vulnerable_front = root.owner } } } }
+			add = -150
+		}
+	}
+}

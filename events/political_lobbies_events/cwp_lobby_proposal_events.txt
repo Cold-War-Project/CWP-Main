@@ -1,0 +1,676 @@
+﻿# Political lobby proposal events
+namespace = lobby_proposal
+
+# Pro-Lobby Demand
+lobby_proposal.1 = {
+	type = country_event
+	placement = root
+
+	title = lobby_proposal.1.t
+	desc = lobby_proposal.1.d
+	flavor = lobby_proposal.1.f
+
+	duration = 3
+
+	event_image = {
+		video = "ep1_power_blocs"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+
+	trigger = {
+		is_player = yes
+
+		any_political_lobby = {
+			is_political_lobby_type = lobby_pro_country
+			target = { save_temporary_scope_as = relevant_country }
+		}
+		
+		NOR = {
+			has_journal_entry = je_anti_lobby_opportunity
+			has_journal_entry = je_pro_lobby_opportunity
+			has_journal_entry = je_anti_lobby_demand
+			has_journal_entry = je_pro_lobby_demand
+		}
+
+		any_diplomatically_relevant_country = {
+			NOT = { THIS = ROOT }
+			
+			has_diplomatic_relevance = ROOT
+			
+			"relations(scope:relevant_country)" <= relations_threshold:poor
+			
+			OR = {
+				has_diplomatic_pact = {
+					who = scope:relevant_country
+					type = rivalry
+				}
+				has_attitude = {
+					who = scope:relevant_country
+					attitude = belligerent
+				}
+				has_attitude = {
+					who = scope:relevant_country
+					attitude = domineering
+				}
+				has_attitude = {
+					who = scope:relevant_country
+					attitude = antagonistic
+				}
+			}
+			
+			save_temporary_scope_as = third_party_country
+		}
+		any_pro_lobby_demand_is_valid = yes
+	}
+
+	cancellation_trigger = {
+		OR = {
+			NOT = { exists = scope:relevant_country }
+			NOT = { exists = scope:third_party_country }
+			NOR = {
+				has_variable = pro_lobby_proposal_break_alliance
+				has_variable = pro_lobby_proposal_break_defensive_pact
+				has_variable = pro_lobby_proposal_revoke_trade_privilege
+				has_variable = pro_lobby_proposal_embargo
+				has_variable = pro_lobby_proposal_rivalry
+				has_variable = pro_lobby_proposal_war
+				has_variable = pro_lobby_proposal_leave_power_bloc
+			}
+		}
+	}
+
+	immediate = {
+		debug_log = "EVENT_LOG_TRIGGERED"
+		random_political_lobby = {
+			limit = { is_political_lobby_type = lobby_pro_country }
+			save_scope_as = relevant_lobby
+			target = { save_scope_as = relevant_country }
+		}
+
+		random_diplomatically_relevant_country = {
+			limit = {
+				NOT = { THIS = ROOT }
+				
+				has_diplomatic_relevance = ROOT
+				
+				"relations(scope:relevant_country)" <= relations_threshold:poor
+				
+				OR = {
+					has_diplomatic_pact = {
+						who = scope:relevant_country
+						type = rivalry
+					}
+					has_attitude = {
+						who = scope:relevant_country
+						attitude = belligerent
+					}
+					has_attitude = {
+						who = scope:relevant_country
+						attitude = domineering
+					}
+					has_attitude = {
+						who = scope:relevant_country
+						attitude = antagonistic
+					}
+				}
+			}
+
+			save_scope_as = third_party_country
+			ROOT = { set_variable = { name = pro_lobby_third_party_var value = PREV days = 180 } }
+		}
+
+		if = {
+			limit = { exists = scope:third_party_country }
+			generate_pro_lobby_diplomatic_pact_proposal = yes
+		}
+	}
+
+	option = {
+		name = lobby_proposal.1.a
+		default_option = yes
+		add_journal_entry = {
+			type = je_pro_lobby_demand
+			target = scope:relevant_country
+		}
+	}
+
+	option = {
+		name = lobby_proposal.1.b
+		scope:relevant_lobby ?= {
+			change_appeasement = {
+				amount = -5
+				factor = appeasement_lobby_request_failed
+			}
+		}
+		clear_pro_lobby_vars = yes
+	}
+}
+
+
+# Anti-Lobby Demand
+lobby_proposal.2 = {
+	type = country_event
+	placement = root
+
+	title = lobby_proposal.2.t
+	desc = lobby_proposal.2.d
+	flavor = lobby_proposal.2.f
+
+	duration = 3
+
+	event_image = {
+		video = "unspecific_politicians_arguing"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+
+	trigger = {
+		is_player = yes
+
+		any_political_lobby = {
+			is_political_lobby_type = lobby_anti_country
+			target = { save_temporary_scope_as = relevant_country }
+		}
+		
+		NOR = {
+			has_journal_entry = je_anti_lobby_opportunity
+			has_journal_entry = je_pro_lobby_opportunity
+			has_journal_entry = je_anti_lobby_demand
+			has_journal_entry = je_pro_lobby_demand
+		}
+		
+		any_anti_lobby_demand_is_valid = yes
+	}
+
+	cooldown = { days = stupidly_long_modifier_time }
+
+	cancellation_trigger = {
+		OR = {
+			NOT = { exists = scope:relevant_country }
+			NOR = {
+				has_variable = anti_lobby_proposal_break_alliance
+				has_variable = anti_lobby_proposal_break_defensive_pact
+				has_variable = anti_lobby_proposal_revoke_trade_privilege
+				has_variable = anti_lobby_proposal_embargo
+				has_variable = anti_lobby_proposal_rivalry
+				has_variable = anti_lobby_proposal_war
+				has_variable = anti_lobby_proposal_leave_power_bloc
+			}
+		}
+	}
+
+	immediate = {
+		debug_log = "EVENT_LOG_TRIGGERED"
+		random_political_lobby = {
+			limit = { is_political_lobby_type = lobby_anti_country }
+			save_scope_as = relevant_lobby
+			target = { save_scope_as = relevant_country }
+		}
+
+		if = {
+			limit = { exists = scope:relevant_country }
+			generate_anti_lobby_diplomatic_pact_proposal = yes
+		}
+	}
+
+	option = {
+		name = lobby_proposal.2.a
+		default_option = yes
+		add_journal_entry = {
+			type = je_anti_lobby_demand
+			target = scope:relevant_country
+		}
+	}
+
+	option = {
+		name = lobby_proposal.2.b
+		scope:relevant_lobby ?= {
+			change_appeasement = {
+				amount = -5
+				factor = appeasement_lobby_request_failed
+			}
+		}
+		clear_anti_lobby_vars = yes
+	}
+}
+
+
+# Pro-Lobby Opportunity
+lobby_proposal.3 = {
+	type = country_event
+	placement = root
+
+	title = lobby_proposal.3.t
+	desc = lobby_proposal.3.d
+	flavor = lobby_proposal.3.f
+
+	duration = 3
+
+	event_image = {
+		video = "europenorthamerica_capitalists_meeting"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+
+	trigger = {
+		is_player = yes
+		
+		any_political_lobby = {
+			is_political_lobby_type = lobby_pro_country
+
+			any_lobby_member = { is_in_government = yes }
+			
+			target = {
+				NOR = {
+					has_diplomatic_pact = {
+						who = ROOT
+						type = rivalry
+					}
+					has_attitude = {
+						who = ROOT
+						attitude = belligerent
+					}
+					has_attitude = {
+						who = ROOT
+						attitude = domineering
+					}
+					has_attitude = {
+						who = ROOT
+						attitude = antagonistic
+					}
+				}
+				
+				ROOT = {
+					OR = {
+						can_create_treaty = {
+							first_country = root
+							second_country = PREV
+							is_draft = no
+							binding_period = { years = 2 }
+							articles_to_create = { { article = alliance } }
+						}
+
+						can_create_treaty = {
+							first_country = root
+							second_country = PREV
+							is_draft = no
+							binding_period = { years = 2 }
+							articles_to_create = { { article = defensive_pact } }
+						}
+
+						can_create_treaty = {
+							first_country = root
+							second_country = PREV
+							is_draft = no
+							binding_period = { years = 2 }
+							articles_to_create = {
+								{
+									article = trade_privilege
+									source_country = root
+									target_country = PREV
+								}
+							}
+						}
+
+						can_create_diplomatic_pact = {
+							target = PREV
+							type = join_power_bloc
+						}
+						
+						can_create_diplomatic_pact = {
+							target = PREV
+							type = invite_to_power_bloc
+						}
+					}
+				}
+			}
+		}
+		NOR = {
+			has_journal_entry = je_anti_lobby_opportunity
+			has_journal_entry = je_pro_lobby_opportunity
+			has_journal_entry = je_anti_lobby_demand
+			has_journal_entry = je_pro_lobby_demand
+		}
+	}
+
+	cooldown = { days = stupidly_long_modifier_time }
+
+	cancellation_trigger = {
+		OR = {
+			NOT = { exists = scope:relevant_country }
+			NOR = {
+				has_variable = pro_lobby_proposal_defensive_pact
+				has_variable = pro_lobby_proposal_alliance
+				has_variable = pro_lobby_proposal_trade_privilege
+				has_variable = pro_lobby_proposal_power_bloc
+				has_variable = pro_lobby_proposal_power_bloc_invite
+				has_variable = pro_lobby_proposal_investment_agreement
+				has_variable = pro_lobby_proposal_military_assistance
+			}
+		}
+	}
+
+	immediate = {
+		debug_log = "EVENT_LOG_TRIGGERED"
+		random_political_lobby = {
+			limit = {
+				is_political_lobby_type = lobby_pro_country
+
+				any_lobby_member = { is_in_government = yes }
+				
+				target = {
+					NOR = {
+						has_diplomatic_pact = {
+							who = ROOT
+							type = rivalry
+						}
+						has_attitude = {
+							who = ROOT
+							attitude = belligerent
+						}
+						has_attitude = {
+							who = ROOT
+							attitude = domineering
+						}
+						has_attitude = {
+							who = ROOT
+							attitude = antagonistic
+						}
+					}
+					
+					ROOT = {
+						OR = {
+							can_create_treaty = {
+								first_country = root
+								second_country = PREV
+								is_draft = no
+								binding_period = { years = 2 }
+								articles_to_create = { { article = alliance } }
+							}
+
+							can_create_treaty = {
+								first_country = root
+								second_country = PREV
+								is_draft = no
+								binding_period = { years = 2 }
+								articles_to_create = { { article = defensive_pact } }
+							}
+							
+							can_create_treaty = {
+								first_country = root
+								second_country = PREV
+								is_draft = no
+								binding_period = { years = 2 }
+								articles_to_create = {
+									{
+										article = trade_privilege
+										source_country = root
+										target_country = PREV
+									}
+								}
+							}
+							
+							can_create_diplomatic_pact = { target = PREV type = join_power_bloc }
+							
+							can_create_diplomatic_pact = { target = PREV type = invite_to_power_bloc }
+						}
+					}
+				}
+			}
+			save_scope_as = relevant_lobby
+
+			target = { save_scope_as = relevant_country }
+		}
+
+		if = {
+			limit = { exists = scope:relevant_country }
+			generate_pro_lobby_diplomatic_pact_opportunity = yes
+		}
+	}
+
+	option = {
+		name = lobby_proposal.3.a
+		default_option = yes
+		add_journal_entry = {
+			type = je_pro_lobby_opportunity
+			target = scope:relevant_country
+		}
+	}
+
+	option = {
+		name = lobby_proposal.3.b
+		clear_pro_lobby_vars = yes
+	}
+}
+
+
+# Anti-Lobby Opportunity
+lobby_proposal.4 = {
+	type = country_event
+	placement = root
+
+	title = lobby_proposal.4.t
+	desc = lobby_proposal.4.d
+	flavor = lobby_proposal.4.f
+
+	duration = 3
+
+	event_image = {
+		video = "gfx/event_pictures/ep1_clandestine_meeting.bk2"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+
+	trigger = {
+		is_player = yes
+		
+		any_political_lobby = {
+			is_political_lobby_type = lobby_anti_country
+			any_lobby_member = { is_in_government = yes }
+			target = { save_temporary_scope_as = relevant_country }
+		}
+
+		NOR = {
+			has_journal_entry = je_anti_lobby_opportunity
+			has_journal_entry = je_pro_lobby_opportunity
+			has_journal_entry = je_anti_lobby_demand
+			has_journal_entry = je_pro_lobby_demand
+		}
+
+		any_diplomatically_relevant_country = {
+			NOT = { THIS = ROOT }
+			
+			has_diplomatic_relevance = ROOT
+			
+			relations:root >= relations_threshold:poor
+			
+			"relations(scope:relevant_country)" <= relations_threshold:poor
+			
+			OR = {
+				has_diplomatic_pact = {
+					who = scope:relevant_country
+					type = rivalry
+				}
+				has_attitude = {
+					who = scope:relevant_country
+					attitude = belligerent
+				}
+				has_attitude = {
+					who = scope:relevant_country
+					attitude = domineering
+				}
+				has_attitude = {
+					who = scope:relevant_country
+					attitude = antagonistic
+				}
+			}
+			
+			ROOT = {
+				OR = {
+					can_create_treaty = {
+						first_country = root
+						second_country = PREV
+						is_draft = no
+						binding_period = { years = 2 }
+						articles_to_create = { { article = alliance } }
+					}
+					
+					can_create_treaty = {
+						first_country = root
+						second_country = PREV
+						is_draft = no
+						binding_period = { years = 2 }
+						articles_to_create = { { article = defensive_pact } }
+					}
+					
+					can_create_treaty = {
+						first_country = root
+						second_country = PREV
+						is_draft = no
+						binding_period = { years = 2 }
+						articles_to_create = {
+							{
+								article = trade_privilege
+								source_country = root
+								target_country = PREV
+							}
+						}
+					}
+					
+					can_create_diplomatic_pact = { target = PREV type = join_power_bloc }
+					
+					can_create_diplomatic_pact = { target = PREV type = invite_to_power_bloc }
+				}
+			}
+		}
+	}
+
+	cooldown = { days = stupidly_long_modifier_time }
+
+	cancellation_trigger = {
+		OR = {
+			NOR = {
+				has_variable = anti_lobby_proposal_defensive_pact
+				has_variable = anti_lobby_proposal_alliance
+				has_variable = anti_lobby_proposal_trade_privilege
+				has_variable = anti_lobby_proposal_power_bloc
+				has_variable = anti_lobby_proposal_power_bloc_invite
+				has_variable = anti_lobby_proposal_investment_agreement
+				has_variable = anti_lobby_proposal_military_assistance
+			}
+			NOT = { exists = scope:third_party_country }
+			NOT = { exists = scope:relevant_country }
+		}
+	}
+
+	immediate = {
+		debug_log = "EVENT_LOG_TRIGGERED"
+		random_political_lobby = {
+			limit = {
+				is_political_lobby_type = lobby_anti_country
+				any_lobby_member = { is_in_government = yes }
+			}
+			save_scope_as = relevant_lobby
+			target = { save_scope_as = relevant_country }
+		}
+
+		random_diplomatically_relevant_country = {
+			limit = {
+				NOT = { THIS = ROOT }
+				
+				has_diplomatic_relevance = ROOT
+				
+				relations:root >= relations_threshold:poor
+				
+				"relations(scope:relevant_country)" <= relations_threshold:poor
+				
+				OR = {
+					has_diplomatic_pact = {
+						who = scope:relevant_country
+						type = rivalry
+					}
+					has_attitude = {
+						who = scope:relevant_country
+						attitude = belligerent
+					}
+					has_attitude = {
+						who = scope:relevant_country
+						attitude = domineering
+					}
+					has_attitude = {
+						who = scope:relevant_country
+						attitude = antagonistic
+					}
+				}
+				
+				ROOT = {
+					OR = {
+						can_create_treaty = {
+							first_country = root
+							second_country = PREV
+							is_draft = no
+							binding_period = { years = 2 }
+							articles_to_create = { { article = alliance } }
+						}
+						
+						can_create_treaty = {
+							first_country = root
+							second_country = PREV
+							is_draft = no
+							binding_period = { years = 2 }
+							articles_to_create = { { article = defensive_pact } }
+						}
+						
+						can_create_treaty = {
+							first_country = root
+							second_country = PREV
+							is_draft = no
+							binding_period = { years = 2 }
+							articles_to_create = {
+								{
+									article = trade_privilege
+									source_country = root
+									target_country = PREV
+								}
+							}
+						}
+						
+						can_create_diplomatic_pact = { target = PREV type = join_power_bloc }
+						
+						can_create_diplomatic_pact = { target = PREV type = invite_to_power_bloc }
+					}
+				}
+			}
+			save_scope_as = third_party_country
+			ROOT = { set_variable = { name = anti_lobby_third_party_var value = PREV days = 180 } }
+		}
+		
+		if = {
+			limit = { exists = scope:third_party_country }
+			generate_anti_lobby_diplomatic_pact_opportunity = yes
+		}
+	}
+
+	option = {
+		name = lobby_proposal.4.a
+		default_option = yes
+		add_journal_entry = {
+			type = je_anti_lobby_opportunity
+			target = scope:relevant_country
+		}
+	}
+
+	option = {
+		name = lobby_proposal.4.b
+		clear_anti_lobby_vars = yes
+	}
+}

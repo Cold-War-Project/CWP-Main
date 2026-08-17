@@ -1,0 +1,193 @@
+﻿namespace = bulgaria_events
+
+#Bulgarian Horrors Event
+bulgaria_events.3 = {
+	type = country_event
+	placement = ROOT
+
+	title = bulgaria_events.3.t
+	desc = bulgaria_events.3.d
+	flavor = bulgaria_events.3.f
+
+	event_image = {
+		video = "ip3_angry_mob_raiding_minorities"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+
+	duration = 4
+
+	cooldown = { days = long_modifier_time }
+
+	trigger = {
+		has_variable = crushed_secession
+		country_average_culture_pop_acceptance = { culture = scope:rebel_culture value <= acceptance_status_2 }
+		NOT = { has_variable = bulgaria_events_3 }
+	}
+
+	immediate = {
+		#Uprising primary culture is saved as value of var:uprising_country_culture, which is saved on_actions at the end of a succession in c:TUR.
+		ROOT ?= {
+			save_scope_as = ottoman
+			set_variable = bulgaria_events_3
+		}
+		set_closest_great_power = yes
+		random_scope_character = {
+			limit = { has_role_of_type = general }
+			save_scope_as = scapegoat
+		}
+	}
+
+	option = { #Infamy
+		name = bulgaria_events.3.a
+		default_option = yes
+		change_infamy = 20
+
+		ai_chance = {
+			base = 1
+
+			modifier = {
+				trigger = { infamy <= infamy_threshold:infamous }
+				add = 4
+			}
+		}
+	}
+
+	option = { # Sacrifice General
+		name = bulgaria_events.3.b
+		trigger = { scope:scapegoat = { is_character_alive = yes } }
+		change_infamy = 10
+		scope:scapegoat = {
+			interest_group ?= {
+				add_modifier = {
+					name = modifier_bul_scapegoated
+					days = long_modifier_time
+					is_decaying = yes
+				}
+			}
+			kill_character = yes
+		}
+
+		ai_chance = {
+			base = 5
+		}
+	}
+
+	option = { # gp vouch for you
+		name = bulgaria_events.3.c
+		trigger = {
+			exists = scope:closest_great_power
+			scope:closest_great_power = { relations:root >= relations_threshold:cordial }
+		}
+		change_infamy = 10
+		scope:closest_great_power = {
+			change_relations = {
+				country = root
+				value = -30
+			}
+		}
+
+		ai_chance = {
+			base = 5
+		}
+	}
+
+	option = { # embrace the villainy
+		name = bulgaria_events.3.e
+		change_infamy = 30
+		add_modifier = {
+			name = terrified_dissidents
+			days = long_modifier_time
+			is_decaying = yes
+		}
+
+		ai_chance = {
+			base = 0
+
+			modifier = {
+				trigger = { infamy <= infamy_threshold:infamous }
+				add = 1
+			}
+
+			modifier = {
+				trigger = {
+					ruler ?= {
+						OR = {
+							has_trait = cruel
+							has_trait = wrathful
+							has_trait = bigoted
+							has_trait = war_criminal
+							has_trait = ruthless
+						}
+					}
+				}
+				add = 1
+			}
+
+			modifier = {
+				trigger = {
+					ruler ?= {
+						OR = {
+							has_ideology = ideology:ideology_ethno_nationalist
+							has_ideology = ideology:ideology_integralist
+							has_ideology = ideology:ideology_fascist
+						}
+					}
+				}
+				add = 1
+			}
+
+			modifier = {
+				trigger = { infamy >= infamy_threshold:notorious }
+				add = -1
+			}
+
+			modifier = {
+				trigger = {
+					ruler ?= {
+						OR = {
+							has_trait = tactful
+							has_trait = cautious
+							has_trait = honorable
+						}
+					}
+				}
+				add = -1
+			}
+
+			modifier = {
+				trigger = {
+					ruler ?= {
+						OR = {
+							has_ideology = ideology:ideology_humanitarian
+							has_ideology = ideology:ideology_humanitarian_royalist
+							has_ideology = ideology:ideology_pacifist
+						}
+					}
+				}
+				add = -1
+			}
+		}
+	}
+
+	after = {
+		scope:former_rebel_capital ?= { # state_region scope
+			add_devastation = 20
+			random_scope_state = {
+				limit = { owner = root }
+				add_modifier = {
+					name = modifier_rebellion_horrific_reprisals
+					days = long_modifier_time
+					is_decaying = yes
+				}
+				
+				kill_population_percent_in_state = {
+					percent = 0.1
+					culture = scope:rebel_culture
+				}
+			}
+		}
+	}
+}

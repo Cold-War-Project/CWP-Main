@@ -1,0 +1,49 @@
+﻿# Scripted triggers for the CWP Coup Journal Entry
+
+cwp_character_has_valid_reason_for_coup = {
+	save_temporary_scope_as = cwp_coupist_to_be
+
+	OR = {
+		owner ?= {	# Case 1 - owner is enacting a law the character does not approve of
+			save_temporary_scope_as = cwp_couped_to_be
+
+			exists = currently_enacting_law
+
+			OR = {
+				scope:cwp_coupist_to_be ?= {
+					law_enactment_stance = {	# Refers to any_scope_character
+						law = scope:cwp_couped_to_be.currently_enacting_law.type	# Refers to owner
+						value < neutral	# Disapproves of the law
+					}
+				}
+
+				AND = {
+					scope:cwp_coupist_to_be ?= {
+						law_enactment_stance = {	# Refers to any_scope_character
+							law = scope:cwp_couped_to_be.currently_enacting_law.type	# Refers to owner
+							value < approve	# Character does not approve of the law
+						}
+
+						interest_group ?= {
+							law_enactment_stance = {	# Refers to any_scope_character's interest group
+								law = scope:cwp_couped_to_be.currently_enacting_law.type	# Refers to owner
+								value < neutral	# Interest group opposes the law
+							}
+						}
+					}
+				}
+			}
+		}
+
+		this.interest_group = {
+			OR = {
+				has_modifier = modifier_failed_to_meet_petition # Case 2 - owner has failed a petition for this.interest_group
+                has_modifier = negotiation_failed_quest # Case 3 - owner has failed a negotiation for this.interest_group
+			}
+		}
+
+		# Not in this trigger, but exposed elsewhere:
+        # Case 4 - Foreign-Backed Coup
+        # Case 5 - Foreign-Backed Coup		
+	}
+}

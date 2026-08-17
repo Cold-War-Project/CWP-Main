@@ -1,0 +1,83 @@
+﻿# Ideology: Pacifist
+ideology_pacifist = {
+	icon = "gfx/interface/icons/ideology_icons/ideology_leader/ideology_leader_pacifist.dds"
+
+	character_ideology = yes
+
+	lawgroup_army_model = {
+		law_national_militia = approve
+		law_professional_army = disapprove
+		law_peasant_levies = disapprove
+		law_mass_conscription = disapprove
+	}
+
+	interest_group_leader_trigger = {
+		ideology_pacifist_valid_trigger = yes
+	}
+
+	non_interest_group_leader_trigger = { # No pacifist agitators
+		NOT = { has_role_of_type = agitator }
+	}
+
+	interest_group_leader_weight = {
+		value = 100
+
+		# emerges to counter powerful armed forces
+		if = {
+			limit = {
+				owner = {
+					exists = ig:ig_armed_forces
+					ig:ig_armed_forces ?= { is_powerful = yes }
+				}
+			}
+			add = 50
+		}
+
+		# less likely if issues are not relevant
+		if = {
+			limit = {
+				owner = {
+					NOR = {
+						has_law_or_variant = law_type:law_peasant_levies
+						has_law_or_variant = law_type:law_mass_conscription
+					}
+				}
+			}
+			add = -75
+		}
+
+		# more likely if a war you started isn't going well
+		if = {
+			limit = {
+				owner = {
+					is_at_war = yes
+					any_scope_war = {
+						attacker_warleader = { this = ROOT.owner }
+						has_war_support = {
+							target = root.owner
+							value < 0
+						}
+					}
+				}
+			}
+			add = 100
+		}
+		
+		# more likely with devastation in incorporated states
+		if = {
+			limit = {
+				owner = {
+					any_scope_state = {
+						is_incorporated = yes
+						devastation > 0.2
+					}
+				}
+			}
+			add = 50
+		}
+	}
+
+	non_interest_group_leader_weight = {
+		value = 100
+	}
+}
