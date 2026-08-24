@@ -67,77 +67,44 @@
 wanted_army_size_script_value = {
 	# How many levels of barracks should the AI have
 	# Using this value in other strategies will function additively
+	save_temporary_scope_as = army_planning_country
 	value = 0
 
-	# To increase base army size for small countries, capped at 1 million population
+	# GDP is the economic basis of the standing army. The first two terms are
+	# capped so that very large economies continue to grow their armies, but at
+	# a much slower rate.
 	add = {
-		value = cached_ai_incorporated_population
-		divide = 100000 # 1 level of barracks per 100k incorporated population
-		max = 10
+		value = gdp
+		divide = 250000
+		max = 20
 	}
 
 	add = {
-		value = cached_ai_incorporated_population
-		divide = 250000 # 1 level of barracks per 250k incorporated population
-	}
-
-	add = {
-		value = cached_ai_unincorporated_population
-		divide = 1000000 # 1 level of barracks per 1 million unincorporated population
-	}
-
-	# Coastal population reduces spending on army as that spending is needed for navy too
-	subtract = {
-		value = cached_ai_incorporated_coastal_population
+		value = gdp
 		divide = 1000000
+		max = 100
 	}
 
-	subtract = {
-		value = cached_ai_unincorporated_coastal_population
-		divide = 4000000
+	add = {
+		value = gdp
+		divide = 8000000
 	}
 
-	# Extra army size from rank
-	if = {
-		limit = { country_rank = rank_value:great_power }
-		add = 25
-	}
-
-	if = {
-		limit = { country_rank = rank_value:major_power }
-		add = 10
-	}
-
-	save_temporary_value_as = pre_overseas_empire_value
-
-	# Countries with a huge overseas subject population should focus more on navy
-	subtract = {
-		value = cached_ai_overseas_subject_population
-		divide = 20000000
-		max = {
-			value = scope:pre_overseas_empire_value
-			divide = 2
-		}
-	}
-
-	max = 200 # No more than 200 from population & rank
-
+	# Maritime countries reserve up to a quarter of their military spending for
+	# the navy. This preserves the old coastal adjustment without making the
+	# army itself population-driven.
 	if = {
 		limit = {
-			cached_ai_incorporated_population > 0
-			cached_ai_incorporated_coastal_population > 0
+			cached_ai_total_population > 0
+			cached_ai_coastal_population > 0
 		}
-		add = {
-			value = fixed_income
-			multiply = {
-				value = 1
-				subtract = { # Coastal population reduces spending on army as that spending is needed for navy too
-					value = cached_ai_incorporated_coastal_population
-					divide = cached_ai_incorporated_population
-					divide = 2
-				}
+		multiply = {
+			value = 1
+			subtract = {
+				value = cached_ai_coastal_population
+				divide = cached_ai_total_population
+				divide = 4
 			}
-			divide = 2500 # 1 level of barracks per 2.5k income
 		}
 	}
 
@@ -175,79 +142,208 @@ wanted_army_size_script_value = {
 		multiply = 0.95
 	}
 
+	# Diplomatic strategy sets the military posture. Expansionist and
+	# interventionist strategies support a larger standing army, while
+	# defensive strategies receive a smaller readiness bonus.
+	if = {
+		limit = {
+			OR = {
+				has_strategy = ai_strategy_territorial_expansion
+				has_strategy = ai_strategy_restore_natural_borders
+			}
+		}
+		multiply = 1.25
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_strategy = ai_strategy_economic_imperialism
+				has_strategy = ai_strategy_colonial_expansion
+				has_strategy = ai_strategy_global_liberalism
+				has_strategy = ai_strategy_international_socialism
+			}
+		}
+		multiply = 1.15
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_strategy = ai_strategy_armed_isolationism
+				has_strategy = ai_strategy_maintain_power_balance
+				has_strategy = ai_strategy_anti_imperialism
+			}
+		}
+		multiply = 1.10
+	}
+
+	# Hegemons and autarkic superpowers devote additional economic capacity to
+	# their armed forces.
+	if = {
+		limit = {
+			OR = {
+				has_strategy = ai_strategy_maintain_hegemony
+				has_strategy = ai_strategy_superpower_industrial_complex
+			}
+		}
+		multiply = 1.10
+	}
+
+	# Subjects preparing for independence prioritize land forces, while a
+	# compliant subject is less likely to maintain an oversized army.
+	if = {
+		limit = { has_strategy = ai_strategy_subject_break_free }
+		multiply = 1.25
+	}
+	else_if = {
+		limit = { has_strategy = ai_strategy_subject_strengthen_self }
+		multiply = 1.15
+	}
+	else_if = {
+		limit = { has_strategy = ai_strategy_subject_maintain_autonomy }
+		multiply = 1.05
+	}
+	else_if = {
+		limit = { has_strategy = ai_strategy_subject_overlord_compliance }
+		multiply = 0.90
+	}
+
+	# Autocratic and military-led regimes sustain larger standing armies.
+	# Political strategies are included so the AI begins adapting before its
+	# preferred distribution-of-power law has finished enacting.
+	if = {
+		limit = {
+			OR = {
+				has_strategy = ai_strategy_autocratic_agenda
+				has_strategy = ai_strategy_juntaist_agenda
+				has_strategy = ai_strategy_hardline_communist
+				has_law_or_variant = law_type:law_autocracy
+				has_law_or_variant = law_type:law_single_party_state
+			}
+		}
+		multiply = 1.20
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_strategy = ai_strategy_nationalist_agenda
+				has_strategy = ai_strategy_reactionary_agenda
+				has_strategy = ai_strategy_conservative_communist
+				has_strategy = ai_strategy_security_agenda
+				has_law_or_variant = law_type:law_oligarchy
+			}
+		}
+		multiply = 1.10
+	}
+
+	# Rivalries are one-sided diplomatic pacts, so both directions must be
+	# checked. A peer-or-higher rank, or a rival with at least 75% of this
+	# country's GDP, creates additional military pressure.
+	if = {
+		limit = {
+			OR = {
+				any_rival_country = {
+					OR = {
+						country_rank >= scope:army_planning_country.country_rank
+						gdp >= {
+							value = scope:army_planning_country.gdp
+							multiply = 0.75
+						}
+					}
+				}
+				any_rivaling_country = {
+					OR = {
+						country_rank >= scope:army_planning_country.country_rank
+						gdp >= {
+							value = scope:army_planning_country.gdp
+							multiply = 0.75
+						}
+					}
+				}
+			}
+		}
+		multiply = 1.15
+	}
+
 	if = {
 		limit = { has_law_or_variant = law_type:law_national_militia }
 		multiply = 0.33
 	}
 
-	min = {
-		value = 1
+	min = 1
+
+	# Population is a true final ceiling, applied after every economic,
+	# strategic, political, and rivalry modifier. The curve is adapted from the
+	# old population-based target: incorporated population supplies most of the
+	# manpower, while unincorporated population contributes at a reduced rate.
+	max = {
+		value = cached_ai_incorporated_population
+		divide = 100000
+		max = 10
+		add = {
+			value = cached_ai_incorporated_population
+			divide = 250000
+		}
+		add = {
+			value = cached_ai_unincorporated_population
+			divide = 1000000
+		}
+		min = 1
 	}
 }
 
 
 wanted_marines_size_script_value = {
+	save_temporary_scope_as = marine_planning_country
 	value = 0
 
-	# 1 marine per 1 mil coastal incorporated population
-	add = {
-		value = cached_ai_incorporated_coastal_population
-		divide = 1000000
-	}
-	# 1 marine per 5 million coastal unincorporated population
-	add = {
-		value = cached_ai_unincorporated_coastal_population
-		divide = 5000000
-	}
-	# 1 marine per 20 million population in direct overseas subjects
-	add = {
-		value = cached_ai_overseas_subject_population
-		divide = 20000000
-	}
-	max = 25 # No more than 25 from population
-	# 1 marine per 15k income, multiplied by relative incorporated coastal population to total incorporated population
+	# GDP is the economic basis of the marine force. These diminishing terms are
+	# one fifth of the navy curve, since marines are a specialized expeditionary
+	# component rather than a second standing army.
 	if = {
-		limit = {
-			cached_ai_incorporated_population > 0
-			cached_ai_incorporated_coastal_population > 0
+		limit = { cached_ai_coastal_population > 0 }
+		add = {
+			value = gdp
+			divide = 5000000
+			max = 4
 		}
 		add = {
-			value = fixed_income
-			divide = cached_ai_incorporated_population
-			multiply = cached_ai_incorporated_coastal_population
-			divide = 15000
+			value = gdp
+			divide = 20000000
+			max = 10
+		}
+		add = {
+			value = gdp
+			divide = 75000000
+		}
+		add = {
+			value = cached_ai_overseas_subject_population
+			divide = 50000000
+			max = 5
 		}
 	}
-	# Special logic for british isles - this should be reworked to be less specific later
+
+	# A small coastline still permits a marine force, but countries with a larger
+	# coastal share can apply more of their GDP-backed expeditionary capacity.
 	if = {
 		limit = {
-			c:USA ?= this
+			cached_ai_total_population > 0
+			cached_ai_coastal_population > 0
 		}
-		add = 10
+		multiply = {
+			value = cached_ai_coastal_population
+			divide = cached_ai_total_population
+			divide = 2
+			add = 0.5
+		}
 	}
-	else_if = { # SPs and GPs and MPs should want to maintain some marines
-		limit = { country_rank = rank_value:superpower }
-		add = 8
-	}
-	else_if = {
-		limit = { country_rank = rank_value:great_power }
-		add = 5
-	}
-	else_if = {
-		limit = { country_rank = rank_value:major_power }
-		add = 2
-	}
-	
-	# General multiplier for easy adjustment
-	multiply = 0.5
-	
+
 	# Less marines before we have steel ships
 	if = {
 		limit = { NOT = { has_technology_researched = naval_aviation } }
 		multiply = 0.5
-	}	
+	}
 
-	# Factor in strategies
+	# Expeditionary and expansionist strategies support a larger marine force.
 	if = {
 		limit = {
 			OR = {
@@ -257,78 +353,197 @@ wanted_marines_size_script_value = {
 		}
 		multiply = 1.25
 	}
-	if = {
+	else_if = {
+		limit = {
+			OR = {
+				has_strategy = ai_strategy_territorial_expansion
+				has_strategy = ai_strategy_restore_natural_borders
+				has_strategy = ai_strategy_global_liberalism
+				has_strategy = ai_strategy_international_socialism
+			}
+		}
+		multiply = 1.15
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_strategy = ai_strategy_maintain_power_balance
+				has_strategy = ai_strategy_anti_imperialism
+			}
+		}
+		multiply = 1.10
+	}
+	else_if = {
 		limit = { has_strategy = ai_strategy_armed_isolationism }
 		multiply = 0.5
 	}
+
 	if = {
-		limit = { 
+		limit = {
 			OR = {
-				country_rank < rank_value:minor_power
+				has_strategy = ai_strategy_maintain_hegemony
+				has_strategy = ai_strategy_superpower_industrial_complex
+			}
+		}
+		multiply = 1.10
+	}
+
+	# Subjects preparing for independence maintain more expeditionary troops;
+	# compliant subjects maintain fewer.
+	if = {
+		limit = { has_strategy = ai_strategy_subject_break_free }
+		multiply = 1.25
+	}
+	else_if = {
+		limit = { has_strategy = ai_strategy_subject_strengthen_self }
+		multiply = 1.15
+	}
+	else_if = {
+		limit = { has_strategy = ai_strategy_subject_maintain_autonomy }
+		multiply = 1.05
+	}
+	else_if = {
+		limit = { has_strategy = ai_strategy_subject_overlord_compliance }
+		multiply = 0.90
+	}
+
+	# Autocratic and military-led regimes apply the same readiness preference to
+	# their marine forces as to their standing armies.
+	if = {
+		limit = {
+			OR = {
+				has_strategy = ai_strategy_autocratic_agenda
+				has_strategy = ai_strategy_juntaist_agenda
+				has_strategy = ai_strategy_hardline_communist
+				has_law_or_variant = law_type:law_autocracy
+				has_law_or_variant = law_type:law_single_party_state
+			}
+		}
+		multiply = 1.20
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_strategy = ai_strategy_nationalist_agenda
+				has_strategy = ai_strategy_reactionary_agenda
+				has_strategy = ai_strategy_conservative_communist
+				has_strategy = ai_strategy_security_agenda
+				has_law_or_variant = law_type:law_oligarchy
+			}
+		}
+		multiply = 1.10
+	}
+
+	# Rivalries are one-sided, so check both directions. A peer-or-higher rank,
+	# or a rival with at least 75% of this country's GDP, increases readiness.
+	if = {
+		limit = {
+			OR = {
+				any_rival_country = {
+					OR = {
+						country_rank >= scope:marine_planning_country.country_rank
+						gdp >= {
+							value = scope:marine_planning_country.gdp
+							multiply = 0.75
+						}
+					}
+				}
+				any_rivaling_country = {
+					OR = {
+						country_rank >= scope:marine_planning_country.country_rank
+						gdp >= {
+							value = scope:marine_planning_country.gdp
+							multiply = 0.75
+						}
+					}
+				}
+			}
+		}
+		multiply = 1.15
+	}
+
+	# Smaller or unrecognized countries focus on a limited expeditionary force
+	# rather than being prohibited from maintaining marines entirely.
+	if = {
+		limit = {
+			OR = {
+				country_rank < rank_value:major_power
 				is_country_type = unrecognized
 			}
 		}
-		multiply = 0
+		multiply = 0.5
 	}
-	
+
 	# Multiply final value by diplomatic pact expenses ratio - countries paying a lot to pacts have lower spending ambitions
 	multiply = {
 		value = 1
 		subtract = diplomatic_pact_expense_ratio
 	}
-	
+
+	# Population is a true final ceiling. Incorporated coastal population
+	# supplies most marines, with smaller contributions from unincorporated
+	# coasts and direct overseas subjects.
+	max = {
+		value = cached_ai_incorporated_coastal_population
+		divide = 1000000
+		add = {
+			value = cached_ai_unincorporated_coastal_population
+			divide = 5000000
+		}
+		add = {
+			value = cached_ai_overseas_subject_population
+			divide = 20000000
+		}
+	}
+
+	# The fleet must have enough transport capacity for the requested force.
 	max = total_marine_capacity
 }
 
 
 wanted_navy_size_script_value = {
+	save_temporary_scope_as = navy_planning_country
 	value = 0
 
-	# 1 level of naval base per 500k coastal incorporated population
-	add = {
-		value = cached_ai_incorporated_coastal_population
-		divide = 500000
-	}
-
-	# 1 level of naval base per 2 million coastal unincorporated population
-	add = {
-		value = cached_ai_unincorporated_coastal_population
-		divide = 2000000
-	}
-
-	# 1 level of naval base per 10 million population in direct overseas subjects
-	add = {
-		value = cached_ai_overseas_subject_population
-		divide = 10000000
-	}
-
-	max = 100 # No more than 100 from population
-
-	# 1 level of naval base per 5k income, multiplied by relative incorporated coastal population to total incorporated population
+	# GDP is the economic basis of the fleet. Landlocked countries receive no
+	# naval target, while the diminishing terms prevent the largest economies
+	# from scaling fleets linearly without limit.
 	if = {
-		limit = {
-			cached_ai_incorporated_population > 0
-			cached_ai_incorporated_coastal_population > 0
+		limit = { cached_ai_coastal_population > 0 }
+		add = {
+			value = gdp
+			divide = 1000000
+			max = 20
 		}
 		add = {
-			value = fixed_income
-			divide = cached_ai_incorporated_population
-			multiply = cached_ai_incorporated_coastal_population
-			divide = 5000
+			value = gdp
+			divide = 4000000
+			max = 50
+		}
+		add = {
+			value = gdp
+			divide = 15000000
+		}
+		add = {
+			value = cached_ai_overseas_subject_population
+			divide = 10000000
+			max = 25
 		}
 	}
 
+	# A small coastline still permits a fleet, but countries with a larger
+	# coastal share can apply more of their GDP-backed naval capacity.
 	if = {
-		limit = { country_rank = rank_value:superpower }
-		add = 50
-	}
-	else_if = { # GPs and MPs should want to maintain a bit of a navy
-		limit = { country_rank = rank_value:great_power }
-		add = 25
-	}
-	else_if = {
-		limit = { country_rank = rank_value:major_power }
-		add = 10
+		limit = {
+			cached_ai_total_population > 0
+			cached_ai_coastal_population > 0
+		}
+		multiply = {
+			value = cached_ai_coastal_population
+			divide = cached_ai_total_population
+			divide = 2
+			add = 0.5
+		}
 	}
 
 	# More advanced navies are expensive and should be smaller relative to population
@@ -357,7 +572,7 @@ wanted_navy_size_script_value = {
 		multiply = 0.9
 	}
 
-	# Factor in strategies
+	# Naval and interventionist strategies set fleet ambition.
 	if = {
 		limit = {
 			OR = {
@@ -365,22 +580,95 @@ wanted_navy_size_script_value = {
 				has_strategy = ai_strategy_economic_imperialism
 			}
 		}
+		multiply = 1.25
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_strategy = ai_strategy_global_liberalism
+				has_strategy = ai_strategy_international_socialism
+				has_strategy = ai_strategy_maintain_power_balance
+			}
+		}
 		multiply = 1.15
 	}
-
-	if = {
+	else_if = {
+		limit = {
+			OR = {
+				has_strategy = ai_strategy_territorial_expansion
+				has_strategy = ai_strategy_restore_natural_borders
+			}
+		}
+		multiply = 1.10
+	}
+	else_if = {
 		limit = { has_strategy = ai_strategy_armed_isolationism }
 		multiply = 0.75
 	}
 
 	if = {
-		limit = { country_rank < rank_value:major_power }
+		limit = {
+			OR = {
+				has_strategy = ai_strategy_maintain_hegemony
+				has_strategy = ai_strategy_superpower_industrial_complex
+			}
+		}
+		multiply = 1.10
+	}
+
+	# A powerful rival increases fleet ambition as well as army ambition.
+	if = {
+		limit = {
+			OR = {
+				any_rival_country = {
+					OR = {
+						country_rank >= scope:navy_planning_country.country_rank
+						gdp >= {
+							value = scope:navy_planning_country.gdp
+							multiply = 0.75
+						}
+					}
+				}
+				any_rivaling_country = {
+					OR = {
+						country_rank >= scope:navy_planning_country.country_rank
+						gdp >= {
+							value = scope:navy_planning_country.gdp
+							multiply = 0.75
+						}
+					}
+				}
+			}
+		}
+		multiply = 1.15
+	}
+
+	# Smaller or unrecognized countries maintain a more limited blue-water
+	# fleet. Apply this only once when both conditions are true.
+	if = {
+		limit = {
+			OR = {
+				country_rank < rank_value:major_power
+				is_country_type = unrecognized
+			}
+		}
 		multiply = 0.5
 	}
 
-	if = {
-		limit = { is_country_type = unrecognized }
-		multiply = 0.5
+	# This final ceiling makes manpower genuinely binding. Coastal population
+	# provides most sailors, with smaller contributions from unincorporated
+	# coasts and direct overseas subjects.
+	max = {
+		value = cached_ai_incorporated_coastal_population
+		divide = 250000
+		add = {
+			value = cached_ai_unincorporated_coastal_population
+			divide = 1000000
+		}
+		add = {
+			value = cached_ai_overseas_subject_population
+			divide = 2500000
+		}
 	}
 }
 
