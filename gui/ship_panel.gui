@@ -1,0 +1,4635 @@
+﻿# COPY-PASTED FOR NOW
+@panel_width_minus_10 = 530			# used to be 450
+@panel_width = 540  				# used to be 460
+@panel_width_half = 270				# used to be 230
+@panel_width_plus_10 = 550  		# used to be 470
+@panel_width_plus_14 = 554			# used to be 474
+@panel_width_plus_14_half = 277		# used to be 237
+@panel_width_plus_20 = 560			# used to be 480
+@panel_width_plus_30 = 570			# used to be 490
+@panel_width_plus_70 = 610			# used to be 530
+
+ship_change_name_popup_type = {
+	name = ship_change_name_popup
+}
+
+types ship_change_name
+{
+	type ship_change_name_popup_type = default_popup
+	{
+		datacontext = "[ShipChangeNamePopup.GetShip]"
+
+		blockoverride "window_header_name"
+		{
+			text = "CHANGE_NAME"
+		}
+
+		blockoverride "header_close_button_visibility"
+		{
+			visible = yes
+		}
+
+		blockoverride "header_close_button"
+		{
+			visible = yes
+			onclick = "[PopupManager.HideShipChangeName]"
+		}
+
+		blockoverride "entire_scrollarea"
+		{
+			flowcontainer = {
+				direction = vertical
+
+				#background = {
+				#	using = default_background
+				#}
+
+				# "Choose Name" section
+				flowcontainer = {
+					direction = vertical
+					spacing = 10
+
+					# Set a custom name
+					editbox = {
+						visible = yes
+						background = {
+							using = text_edit_bg
+						}
+
+						# The name is referenced in code. If you change it, it will no longer get properly reset
+						name = "ship_name_edit"
+						ontextedited = "[ShipChangeNamePopup.OnEditName]"
+						maxcharacters = 50
+						size = { 420 40 }
+						margin_left = 10
+						alwaystransparent = no
+						focuspolicy = all
+						focus_on_visible = yes
+						align = left|nobaseline
+					}
+
+					flowcontainer = {
+						direction = horizontal
+						using = default_list_position
+						spacing = 20
+
+						button = {
+							using = default_button
+							using = close_button_sound
+							size = { 140 40 }
+							text = "CANCEL"
+							shortcut = "close_window"
+							onclick = "[PopupManager.HideShipChangeName]"
+						}
+						button = {
+							using = default_button_primary_action
+							using = confirm_button_sound
+							name = "confirmation_button"
+							size = { 140 40 }
+							text = "CONFIRM"
+							enabled = "[IsValid(ShipChangeNamePopup.Confirm)]"
+							onclick = "[Execute(ShipChangeNamePopup.Confirm)]"
+							tooltip = "[GetDesc(ShipChangeNamePopup.Confirm)]"
+							onclick = "[PopupManager.HideShipChangeName]"
+						}
+					}
+
+					widget = {
+						size = { 420 10 }
+					}
+				}
+
+
+			}
+		}
+
+		blockoverride "bottom_margin"
+		{
+			margin_bottom = 50
+		}
+	}
+}
+
+types ship_viewer_types
+{
+	type ship_viewer = icon {
+		name = "ship_viewer_widget"
+		size = { 100% 370 }
+		gfxtype = jomini_entitygfx_sprite
+		entity_instance = "[ShipViewer.GetEntity]"
+		#using = frame_small_mask
+
+		shaderfile = "gfx/FX/pdxgui_default.shader"
+		effectname = "PdxGuiDefault"
+		render_pass = "[GetGuiEntityShaderRenderpass]"
+
+		gfx_environment_file = "gfx/map/environment/ui_ship_viewer_environment.txt"
+		enabled_post_effects = luminance
+
+		camera_position = "[ShipViewer.GetCameraPosition]"
+		camera_look_at = "[ShipViewer.GetCameraLookAt]"
+		camera_fov_y_degrees = 12
+		camera_near_far = { 0.1 300.0 }
+		alwaystransparent = no
+	}
+}
+
+types ship_panel_types
+{
+	type ship_panel = default_block_window_two_lines {
+		name = "ship_panel"
+		datacontext = "[ShipPanel.GetShip]"
+
+		blockoverride "animation_state_block" {
+			state = {
+				name = _show
+				start_sound = {
+					soundeffect = "event:/SFX/UI/SideBar/military"
+				}
+			}
+
+			state = {
+				name = _hide
+				start_sound = {
+					soundeffect = "event:/SFX/UI/SideBar/military_stop"
+				}
+			}
+		}
+
+		blockoverride "window_header_name"
+		{
+			text = "SHIP_PANEL_NAME"
+		}
+
+		blockoverride "window_header_name_line_two"
+		{
+			text = "SHIP_SUBTITLE"
+		}
+
+		blockoverride "goto_visibility" {}
+
+		blockoverride "goto_properties" {
+			onclick = "[Ship.ZoomTo]"
+			tooltip = "ZOOM_TO_SHIP"
+			enabled = "[Not( Ship.IsZoomingTo )]"
+		}
+
+		blockoverride "edit_visibility" {
+			visible = "[Ship.GetCountry.IsLocalPlayer]"
+		}
+
+		blockoverride "edit_tooltip" {
+			tooltip = "CHANGE_NAME"
+		}
+
+		blockoverride "edit_properties" {
+			onclick = "[PopupManager.ShowShipChangeName(Ship.Self)]"
+			#enabled = yes
+		}
+
+		blockoverride "goto_button" {
+			button_icon_goto = {
+				size = { 30 30 }
+				datacontext = "[Ship.GetFleet]"
+				tooltip = "GO_TO_BUTTON_MILITARY_FORMATION"
+				onclick = "[InformationPanelBar.OpenMilitaryFormationPanelTab( MilitaryFormation.Self, 'default' )]"
+				input_action = "go_to_details"
+			}
+		}
+
+		blockoverride "fixed_bottom" {
+			flowcontainer = {
+				minimumsize = { @panel_width_plus_14 -1 }
+				direction = vertical
+				spacing = 5
+				using = default_fade_in_out
+
+				divider_clean = {
+					size = { @panel_width_plus_14 4 }
+				}
+
+				background = {
+					using = dark_area
+				}
+
+				widget = {
+					size = { 5 2 }
+				}
+
+				flowcontainer = {
+					parentanchor = hcenter
+					spacing = 5
+
+					### Flagship info
+					flowcontainer = {
+						direction = vertical
+						visible = "[HasDlcFeature('ship_designer')]"
+
+						button = {
+							visible = "[And(Not(Ship.IsFlagship), Ship.GetCountry.IsLocalPlayer)]"
+							using = default_button_action
+							size = { 180 40 }
+							onclick = "[PopupManager.AskConfirmation(Ship.AssignAsFlagship)]"
+							enabled = "[IsValid(Ship.AssignAsFlagship)]"
+
+							text = "ASSIGN_AS_FLAGSHIP_BUTTON"
+							tooltip = "ASSIGN_AS_FLAGSHIP_BUTTON_TOOLTIP"
+							using = tooltip_ne
+						}
+
+						button = {
+							visible = "[And(Ship.IsFlagship, Ship.GetCountry.IsLocalPlayer)]"
+							using = default_button_action
+							size = { 180 40 }
+							onclick = "[PopupManager.AskConfirmation(Ship.UnassignAsFlagship)]"
+							enabled = "[IsValid(Ship.UnassignAsFlagship)]"
+
+							text = "UNASSIGN_AS_FLAGSHIP_BUTTON"
+							tooltip = "UNASSIGN_AS_FLAGSHIP_BUTTON_TOOLTIP"
+							using = tooltip_ne
+
+							icon = {
+								using = highlighted_active_square_selection
+							}
+						}
+					}
+
+					### RETROFIT
+					flowcontainer = {
+						direction = vertical
+
+						### START RETROFIT
+						button = {
+							visible = "[Not(Ship.IsToRetrofit)]"
+							using = default_button
+							size = { 180 40 }
+							using = action_send_ship_to_retrofit
+							enabled = "[IsValid(Ship.Retrofit)]"
+							onclick = "[Execute(Ship.Retrofit)]"
+
+							text = "RETROFIT_SHIP_BUTTON"
+							tooltip = "RETROFIT_SHIP_BUTTON_TOOLTIP"
+							using = tooltip_ne
+						}
+
+						### CANCEL RETROFIT
+						button = {
+							visible = "[Ship.IsToRetrofit]"
+							using = default_button_action
+							size = { 180 40 }
+							using = fleet_panel_construction_template_build_cancel
+							enabled = "[IsValid(Ship.CancelRetrofit)]"
+							onclick = "[Execute(Ship.CancelRetrofit)]"
+
+							text = "CANCEL_RETROFIT_SHIPS_BUTTON"
+							tooltip = "RETROFIT_SHIP_CANCEL_BUTTON_TOOLTIP"
+							using = tooltip_ne
+						}
+					}
+
+					flowcontainer = {
+						direction = vertical
+
+						### Change Template
+						button = {
+							using = default_button
+							size = { 180 40 }
+							onclick = "[RightClickMenuManager.ToggleShipChangeTemplateActions(Ship.AccessSelf, PdxGuiWidget.AccessSelf)]"
+
+							text = "CHANGE_TEMPLATE"
+							tooltip = "BUTTON_CHANGE_TEMPLATE_SINGLE_SHIP_TOOLTIP"
+							using = tooltip_ne
+						}
+					}
+				}
+
+				widget = {
+					size = { 5 2 }
+				}
+			}
+		}
+
+		blockoverride "bottom_spacing" {}
+
+		blockoverride "scrollarea_content"
+		{
+			flowcontainer = {
+				direction = vertical
+				minimumsize = { @panel_width_plus_14 -1 }
+				maximumsize = { @panel_width_plus_14 -1 }
+				spacing = 2
+				datacontext = "[Ship.GetFleet]"
+
+				widget = {
+					parentanchor = hcenter
+					size = { @panel_width_plus_14 370 }
+
+					### 3D Ship View
+					ship_viewer = {
+						datacontext = "[ShipPanel.GetShipViewer]"
+
+						console_button = {
+							visible = "[InDebugMode]"
+							parentanchor = left
+							position = { 10 70 }
+							raw_text = "Entity States"
+							onclick = "[ExecuteConsoleCommand('gui.CreateDockable gui/debug_menues.gui ship_viewer_entity_states_from_ship_panel')]"
+						}
+					}
+
+					icon = {
+						parentanchor = top
+						position = { 8 0 }
+						size = { 55	55 }
+						alpha = 0.8
+						texture = "gfx/interface/icons/generic_icons/rotate_zoom.dds"
+					}
+
+					### Reset Camera Button
+					button_icon_round_action = {
+						size = { 34 34 }
+						parentanchor = top
+						position = { 70 10 }
+						tooltip = "RESET_CAMERA"
+						onclick = "[ShipPanel.GetShipViewer.ResetCamera]"
+
+						blockoverride "icon_size" {
+							size = { 75% 75% }
+						}
+
+						blockoverride "icon" {
+							texture = "gfx/interface/buttons/button_icons/reset_camera.dds"
+						}
+					}
+
+					### DELETE FORMATION
+					button_icon_round_action = {
+						size = { 34 34 }
+						parentanchor = right
+						position = { -10 10 }
+						tooltip = "DECOMMISSION_SHIP_TOOLTIP"
+						enabled = "[IsValid( Ship.Decommission )]"
+						onclick = "[PopupManager.AskConfirmationCustomWithSound(Ship.Decommission, 'ship_decommission_confirmation_window', 'event:/SFX/UI/FleetPanel/fleetpanel_ship_decommission')]"
+
+						blockoverride "icon_size" {
+							size = { 65% 65% }
+						}
+
+						blockoverride "icon" {
+							texture = "gfx/interface/icons/military_icons/disband_formation.dds"
+						}
+					}
+
+					icon = {
+						size = { 100% 100% }
+						texture = "gfx/interface/navy/navy_bg_frame.dds"
+						spriteType = Corneredtiled
+
+						spriteborder_left = 200
+						spriteborder_right = 60
+						spriteborder_top = 170
+						spriteborder_bottom = 180
+
+						texture_density = 2
+					}
+
+					### Flagship Ornament Selector
+					flowcontainer = {
+						parentanchor = bottom|hcenter
+						position = { 0 -10 }
+						visible = "[And(Ship.IsFlagship, HasDlcFeature('ship_designer'))]"
+						spacing = 5
+
+						button_select_arrow = {
+							parentanchor = vcenter
+							mirror = horizontal
+							size = { 33 33 }
+							using = confirm_button_sound
+							enabled = "[IsValid( Ship.SetPrevFlagshipOrnament )]"
+							onclick = "[Execute( Ship.SetPrevFlagshipOrnament )]"
+							tooltip = "FLAGSHIP_ORNAMENT_PREV_TOOLTIP"
+							using = tooltip_se
+						}
+
+						textbox = {
+							background = {
+								using = dark_area
+								alpha = 0.4
+							}
+
+							margin = { 0 3 }
+							parentanchor = vcenter
+							autoresize = yes
+							align = hcenter|nobaseline
+							min_width = 150
+							max_width = 220
+							default_format = "#title"
+							text = "[Ship.GetFlagshipOrnamentName]"
+						}
+
+						button_select_arrow = {
+							parentanchor = vcenter
+							size = { 33 33 }
+							using = confirm_button_sound
+							enabled = "[IsValid( Ship.SetNextFlagshipOrnament )]"
+							onclick = "[Execute( Ship.SetNextFlagshipOrnament )]"
+							tooltip = "FLAGSHIP_ORNAMENT_NEXT_TOOLTIP"
+							using = tooltip_se
+						}
+
+						textbox = {
+							visible = "[Ship.GetTemplate.HasFlagshipSignalFlagsEntity]"
+
+							background = {
+								using = dark_area
+								alpha = 0.4
+							}
+
+							checkbutton = {
+								parentanchor = vcenter
+								using = check_button
+								position = { 3 0 }
+								size = { 24 24 }
+								onclick = "[Execute(Ship.ToggleFlagshipSignalFlags)]"
+								checked = "[Ship.HasFlagshipSignalFlags]"
+							}
+
+							margin = { 35 3 }
+							parentanchor = vcenter
+							autoresize = yes
+							align = hcenter|nobaseline
+							min_width = 150
+							max_width = 220
+							default_format = "#title"
+							text = "FLAGSHIP_SIGNALFLAGS_LABEL"
+						}
+					}
+
+					state = {
+						name = _show
+						using = viewport_sound_parameter_open
+						using = ship_panel_open
+					}
+
+					state = {
+						name = _hide
+						using = viewport_sound_parameter_close
+					}
+
+				}
+
+				naval_battle_item = {
+					visible = "[Ship.IsInBattle]"
+					datacontext = "[Ship.GetNavalBattle]"
+					parentanchor = hcenter
+				}
+
+				default_header = {
+					using = default_list_position
+
+					blockoverride "text" {
+						text = "SHIP_DETAILS_HEADER"
+					}
+				}
+
+				widget = {
+					size = { 5 5 }
+				}
+
+				#SHIP NAME AND SILHOUETTE
+				flowcontainer = {
+					parentanchor = hcenter
+					spacing = 20
+					margin = { 20 10 }
+
+					background = {
+						using = entry_bg_simple
+					}
+
+					flowcontainer = {
+						parentanchor = vcenter
+						direction = vertical
+
+						textbox = {
+							autoresize = yes
+							align = nobaseline
+							using = fontsize_small
+							text = "[Ship.GetType.GetName]"
+						}
+
+						textbox = {
+							autoresize = yes
+							align = nobaseline
+							text = "[Ship.GetTemplate.GetName]"
+						}
+
+						widget = {
+							size = { 10 5 }
+						}
+
+						ship_type_silhouette = {
+							datacontext = "[Ship.GetType]"
+
+							blockoverride "fittype" {
+								fittype = start
+							}
+						}
+					}
+
+					flowcontainer = {
+						parentanchor = vcenter
+						direction = vertical
+						spacing = 10
+
+						military_formation_icon_and_bars = {
+							datacontext = "[Ship.GetFleet]"
+							size = { 300 80 }
+
+							blockoverride "first_bar_size" {
+								size = { 300 25 }
+							}
+
+							blockoverride "second_bar_size" {
+								size = { 300 18 }
+							}
+
+							blockoverride "third_bar_size" {
+								size = { 300 18 }
+							}
+
+							blockoverride "first_bar_tooltip" {
+								tooltip = "SHIP_HIT_POINTS_TOOLTIP"
+							}
+
+							blockoverride "second_bar_tooltip" {
+								tooltip = "SHIP_CREW_TOOLTIP"
+							}
+
+							blockoverride "first_bar_values" {
+								min = 0
+								max = 1
+								value = "[FixedPointToFloat(Ship.GetHitPointsPercentage)]"
+							}
+
+							blockoverride "second_bar_values" {
+								min = 0
+								max = "[Ship.GetCrewMax]"
+								value = "[Ship.GetTotalCrew]"
+							}
+
+							blockoverride "first_bar_text" {
+								raw_text = "@ship_hp! #b [Ship.GetHitPoints|0]#!/[Ship.GetHitPointsMax|0]" #todo
+							}
+
+							blockoverride "second_bar_text" {
+								raw_text = "@crew! #b [Ship.GetTotalCrew|D]#! / [Ship.GetCrewMax|D]"
+							}
+
+							blockoverride "entire_icon" {}
+						}
+					}
+				}
+
+				#SHIP MODIFICATIONS
+				container = {
+					parentanchor = hcenter
+					minimumsize = { @panel_width_minus_10 -1 }
+					maximumsize = { @panel_width_minus_10 -1 }
+
+					background = {
+						using = entry_bg_simple
+					}
+
+					flowcontainer = {
+						direction = vertical
+						spacing = 1
+						margin = { 20 10 }
+						datamodel = "[Ship.GetModifications]"
+
+						item = {
+							flowcontainer = {
+								spacing = 2
+
+								icon = {
+									size = { 24 24 }
+									texture = "[ShipModificationType.GetIcon]"
+								}
+
+								textbox = {
+									parentanchor = vcenter
+									autoresize = yes
+									max_width = 220
+									text = "[ShipModificationType.GetName]"
+								}
+							}
+						}
+					}
+
+					flowcontainer = {
+						parentanchor = right
+						direction = vertical
+						spacing = 1
+						margin = { 25 10 }
+
+						textbox = {
+							visible = "[IsDataModelEmpty(Ship.GetUtilityModifications)]"
+							autoresize = yes
+							align = nobaseline
+							using = elide_fontsize_min
+							using = empty_state_text_properties
+							text = "NO_UTILITY_MODIFICATIONS"
+						}
+
+						flowcontainer = {
+							visible = "[Not(IsDataModelEmpty(Ship.GetUtilityModifications))]"
+							direction = vertical
+							spacing = 2
+							datamodel = "[Ship.GetUtilityModifications]"
+
+							item = {
+								flowcontainer = {
+									spacing = 2
+
+									icon = {
+										size = { 24 24 }
+										texture = "[ShipModificationType.GetIcon]"
+									}
+
+									textbox = {
+										parentanchor = vcenter
+										autoresize = yes
+										max_width = 220
+										text = "[ShipModificationType.GetName]"
+									}
+								}
+							}
+						}
+					}
+				}
+
+				widget = {
+					size = { 5 5 }
+				}
+
+				divider_clean = {}
+
+				flowcontainer = {
+					datacontext = "[Ship.GetModifier]"
+					parentanchor = hcenter
+
+					flowcontainer = {
+						direction = vertical
+
+						ship_stat_upkeep = {}
+
+						### Armor
+						ship_stat_armor = {}
+
+						### Crew Damage
+						ship_stat_crew_damage = {}
+
+						# Hull Damage
+						ship_stat_hull_damage = {}
+
+						### Crit Chance
+						ship_stat_critical_hit_chance = {}
+
+						### Crit Damage
+						ship_stat_critical_hit_multiplier = {}
+
+						### Visibility
+						ship_stat_visibility = {}
+
+						### Detection/Stealth
+						ship_stat_detection = {}
+
+						### Veteran Rank
+						ship_stat_veterancy = {}
+
+						### Accuracy
+						ship_stat_accuracy = {}
+
+					}
+
+					vertical_divider_full = {}
+
+					flowcontainer = {
+						direction = vertical
+
+						### Vulnerability
+						ship_stat_vulnerability = {}
+
+						### Screening
+						ship_stat_screening = {}
+
+						### Speed
+						ship_stat_movement_speed = {}
+
+						### Supply Efficiency
+						ship_stat_supply_efficiency = {}
+
+						### Supply Capacity
+						ship_stat_supply_capacity = {}
+
+						### Carrying Capacity
+						ship_stat_carrying_capacity = {}
+
+						### Marine Capacity
+						ship_stat_marine_capacity = {}
+
+						### Readiness Gain
+						ship_stat_readiness_gain = {}
+
+						### Blockade Strength
+						ship_stat_blockade_strength = {}
+
+						ship_modifier_battle_against_ship_type_arsenal_ship_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_arsenal_ship_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_arsenal_ship_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_arsenal_ship_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_arsenal_ship_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_arsenal_ship_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_arsenal_ship_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_arsenal_ship_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_attack_submarine_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_attack_submarine_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_attack_submarine_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_attack_submarine_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_attack_submarine_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_attack_submarine_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_attack_submarine_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_attack_submarine_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_aviation_cruiser_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_aviation_cruiser_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_aviation_cruiser_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_aviation_cruiser_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_aviation_cruiser_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_aviation_cruiser_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_aviation_cruiser_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_aviation_cruiser_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_battlecruiser_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_battlecruiser_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_battlecruiser_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_battlecruiser_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_battlecruiser_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_battlecruiser_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_battlecruiser_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_battlecruiser_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_battleship_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_battleship_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_battleship_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_battleship_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_battleship_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_battleship_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_battleship_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_battleship_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_corvette_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_corvette_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_corvette_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_corvette_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_corvette_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_corvette_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_corvette_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_corvette_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_cruise_missile_submarine_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_cruise_missile_submarine_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_cruise_missile_submarine_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_cruise_missile_submarine_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_cruise_missile_submarine_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_cruise_missile_submarine_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_cruise_missile_submarine_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_cruise_missile_submarine_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_cruiser_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_cruiser_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_cruiser_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_cruiser_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_cruiser_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_cruiser_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_cruiser_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_cruiser_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_destroyer_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_destroyer_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_destroyer_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_destroyer_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_destroyer_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_destroyer_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_destroyer_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_destroyer_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_diesel_electric_submarine_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_diesel_electric_submarine_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_diesel_electric_submarine_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_diesel_electric_submarine_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_diesel_electric_submarine_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_diesel_electric_submarine_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_diesel_electric_submarine_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_diesel_electric_submarine_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_escort_carrier_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_escort_carrier_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_escort_carrier_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_escort_carrier_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_escort_carrier_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_escort_carrier_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_escort_carrier_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_escort_carrier_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_fleet_carrier_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_fleet_carrier_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_fleet_carrier_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_fleet_carrier_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_fleet_carrier_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_fleet_carrier_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_fleet_carrier_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_fleet_carrier_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_frigate_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_frigate_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_frigate_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_frigate_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_frigate_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_frigate_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_frigate_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_frigate_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_guided_missile_corvette_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_corvette_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_guided_missile_corvette_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_corvette_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_guided_missile_corvette_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_corvette_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_guided_missile_corvette_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_corvette_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_guided_missile_cruiser_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_cruiser_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_guided_missile_cruiser_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_cruiser_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_guided_missile_cruiser_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_cruiser_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_guided_missile_cruiser_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_cruiser_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_guided_missile_destroyer_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_destroyer_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_guided_missile_destroyer_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_destroyer_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_guided_missile_destroyer_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_destroyer_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_guided_missile_destroyer_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_destroyer_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_guided_missile_frigate_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_frigate_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_guided_missile_frigate_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_frigate_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_guided_missile_frigate_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_frigate_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_guided_missile_frigate_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_frigate_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_landing_ship_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_landing_ship_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_landing_ship_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_landing_ship_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_landing_ship_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_landing_ship_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_landing_ship_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_landing_ship_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_modern_corvette_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_modern_corvette_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_modern_corvette_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_modern_corvette_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_modern_corvette_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_modern_corvette_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_modern_corvette_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_modern_corvette_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_modern_cruiser_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_modern_cruiser_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_modern_cruiser_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_modern_cruiser_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_modern_cruiser_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_modern_cruiser_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_modern_cruiser_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_modern_cruiser_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_modern_destroyer_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_modern_destroyer_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_modern_destroyer_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_modern_destroyer_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_modern_destroyer_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_modern_destroyer_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_modern_destroyer_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_modern_destroyer_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_modern_frigate_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_modern_frigate_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_modern_frigate_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_modern_frigate_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_modern_frigate_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_modern_frigate_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_modern_frigate_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_modern_frigate_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_nuclear_attack_submarine_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_nuclear_attack_submarine_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_nuclear_attack_submarine_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_nuclear_attack_submarine_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_nuclear_attack_submarine_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_nuclear_attack_submarine_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_nuclear_attack_submarine_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_nuclear_attack_submarine_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_supercarrier_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_supercarrier_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_supercarrier_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_supercarrier_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_supercarrier_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_supercarrier_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_supercarrier_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_supercarrier_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_troopship_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_troopship_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_troopship_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_troopship_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_troopship_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_troopship_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_troopship_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_troopship_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_ultracarrier_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_ultracarrier_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_ultracarrier_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_ultracarrier_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_ultracarrier_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_ultracarrier_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_ultracarrier_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_ultracarrier_hull_damage_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_underway_replenishment_ship_accuracy_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_underway_replenishment_ship_accuracy_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_underway_replenishment_ship_accuracy_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_underway_replenishment_ship_accuracy_mult'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_underway_replenishment_ship_hull_damage_add = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_underway_replenishment_ship_hull_damage_add'))]"
+						}
+	
+						ship_modifier_battle_against_ship_type_underway_replenishment_ship_hull_damage_mult = {
+							visible = "[NotZero_CFixedPoint(Modifier.GetValueFor('ship_battle_against_ship_type_underway_replenishment_ship_hull_damage_mult'))]"
+						}
+					}
+				}
+
+				widget = {
+					size = { 5 5 }
+				}
+
+				default_header = {
+					using = default_list_position
+
+					blockoverride "text" {
+						text = "SHIP_CREW_ORIGIN_STATES_HEADER"
+					}
+				}
+
+				### States and Buildings - Crew
+				flowcontainer = {
+					parentanchor = hcenter
+					direction = vertical
+
+					flowcontainer = {
+						parentanchor = hcenter
+
+						sort_button = {
+							size = { 360 30 }
+							text = "SHIP_BUILDING_AND_STATES_SORT_BUTTON_TEXT"
+							align = nobaseline
+							onclick = "[Ship.SortCrewOriginStates('state_name')]"
+						}
+
+						sort_button = {
+							size = { 90 30 }
+							tooltip = "[concept_building_level]"
+							text = "concept_building_levels_short"
+							align = hcenter|nobaseline
+							onclick = "[Ship.SortCrewOriginStates('building_level')]"
+						}
+
+						sort_button = {
+							size = { 90 30 }
+							tooltip = "SHIP_CREW_FROM_STATE_SORT_BUTTON_TOOLTIP"
+							text = "SHIP_CREW_FROM_STATE_SORT_BUTTON"
+							align = hcenter|nobaseline
+							onclick = "[Ship.SortCrewOriginStates('num_crew')]"
+						}
+					}
+
+					flowcontainer = {
+						visible = "[Not(IsDataModelEmpty(Ship.GetCrewOriginStates))]"
+						parentanchor = hcenter
+						direction = vertical
+						datamodel = "[Ship.GetCrewOriginStates]"
+
+						item = {
+							flowcontainer = {
+								direction = vertical
+
+								widget = {
+									visible = "[State.HasBuilding('building_naval_administration')]"
+									size = { 540 40 }
+									datacontext = "[State.AccessBuilding('building_naval_administration')]"
+
+									background = {
+										using = fade_right_entry_header_colored
+										color = "[State.GetOwner.GetMapColor]"
+									}
+
+									flowcontainer = {
+										parentanchor = vcenter
+										spacing = 5
+										margin_left = 5
+
+										icon = {
+											parentanchor = vcenter
+											size = { 30 30 }
+											texture = "[Building.GetIcon]"
+										}
+
+										textbox = {
+											parentanchor = vcenter
+											autoresize = yes
+											max_width = 280
+											align = nobaseline
+											using = elide_fontsize_min
+											text = "SHIP_CREW_BUILDING_AND_STATE_NAME"
+										}
+
+										button_icon_goto = {
+											parentanchor = vcenter
+											size = { 25 25 }
+											tooltip = "GO_TO_BUTTON_BUILDING"
+											onclick = "[InformationPanelBar.OpenBuildingDetailsPanel(Building.AccessSelf)]"
+										}
+									}
+
+									flowcontainer = {
+										parentanchor = vcenter|right
+										datacontext = "[State.AccessBuilding('building_naval_administration')]"
+
+										textbox = {
+											parentanchor = vcenter
+											size = { 90 30 }
+											align = hcenter|nobaseline
+											using = elide_fontsize_min
+											text = "BUILDING_SIZE"
+
+											tooltipwidget = {
+												FancyTooltip_Building = {}
+											}
+										}
+
+										textbox = {
+											parentanchor = vcenter
+											size = { 90 30 }
+											tooltip = "SHIP_CREW_STATE_TOOLTIP"
+											align = hcenter|nobaseline
+											default_format = "#v"
+											margin_right = 15
+											using = elide_fontsize_min
+											raw_text = "@crew! #v [Ship.GetNumCrewFromState(State.Self)|D]#!"
+										}
+									}
+
+									divider_clean = {
+										parentanchor = bottom|hcenter
+										size = { 100% 1 }
+									}
+
+								}
+
+								widget = {
+									visible = "[Not(State.HasBuilding('building_naval_administration'))]"
+									size = { 540 40 }
+
+									background = {
+										using = fade_right_entry_header_colored
+										color = "[State.GetOwner.GetMapColor]"
+									}
+
+									flowcontainer = {
+										parentanchor = vcenter
+										spacing = 5
+										margin_left = 5
+
+										textbox = {
+											parentanchor = vcenter
+											autoresize = yes
+											max_width = 280
+											align = nobaseline
+											using = elide_fontsize_min
+											text = "SHIP_CREW_STATE_NAME"
+										}
+
+										button_icon_goto = {
+											parentanchor = vcenter
+											size = { 25 25 }
+											tooltip = "GO_TO_BUTTON_STATE"
+											onclick = "[InformationPanelBar.OpenStatePanel(State.AccessSelf)]"
+										}
+									}
+
+									flowcontainer = {
+										parentanchor = vcenter|right
+
+										textbox = {
+											parentanchor = vcenter
+											size = { 90 30 }
+											align = hcenter|nobaseline
+											using = elide_fontsize_min
+											text = "DASH_WITH_SPACING"
+										}
+
+										textbox = {
+											parentanchor = vcenter
+											size = { 90 30 }
+											tooltip = "SHIP_CREW_STATE_TOOLTIP"
+											align = hcenter|nobaseline
+											default_format = "#v"
+											margin_right = 15
+											using = elide_fontsize_min
+											raw_text = "@crew! #v [Ship.GetNumCrewFromState(State.Self)|D]#!"
+										}
+									}
+
+									divider_clean = {
+										parentanchor = bottom|hcenter
+										size = { 100% 1 }
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+types ship_types
+{
+	type ship_stat = widget {
+		parentanchor = left
+		size = { 270 36 }
+
+		hbox = {
+			layoutpolicy_horizontal = expanding
+			margin = { 10 5 }
+			spacing = 5
+
+			container = {
+				icon = {
+					size = { 24 24 }
+					block "stat_icon" {
+						texture = "gfx/interface/icons/harvest_condition_icons/placeholder.dds"
+					}
+				}
+				block "stat_icon_extra" {}
+			}
+
+			textbox = {
+				size = { 46 30 }
+				align = nobaseline
+				using = elide_fontsize_min
+
+				block "stat_tooltip" {
+				}
+
+				block "stat_value" {
+				}
+			}
+
+			textbox = {
+				layoutpolicy_horizontal = expanding
+				layoutpolicy_vertical = expanding
+				align = nobaseline
+				using = elide_fontsize_min
+
+				block "stat_label" {
+					text = "[concept_ship_speed]"
+				}
+			}
+		}
+
+		divider_clean = {
+			parentanchor = bottom
+		}
+	}
+
+	## Base Stat types
+	type ship_stat_base_armor = ship_stat {
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/armor_navy.dds"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_ship_armor]"
+		}
+	}
+
+	type ship_stat_base_upkeep = ship_stat {
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/topbar/income_power_icon.dds"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_ship_upkeep]"
+		}
+	}
+
+	type ship_stat_base_carrying_capacity = ship_stat {
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/carry_capacity_navy.dds"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_carrying_capacity]"
+		}
+	}
+
+	type ship_stat_base_crew_damage = ship_stat {
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/crew_damage_navy.dds"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_crew_attack_damage]"
+		}
+	}
+
+	type ship_stat_base_critical_hit_chance = ship_stat {
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/critical_chance_navy.dds"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_critical_hit_chance]"
+		}
+	}
+
+	type ship_stat_base_detection = ship_stat {
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/detection_navy.dds"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_detection]"
+		}
+	}
+
+	type ship_stat_base_hit_points = ship_stat {
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_healthpoints_navy.dds"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_ship_hit_points]"
+		}
+	}
+
+	type ship_stat_base_hull_damage = ship_stat {
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_hull_attack_damage]"
+		}
+	}
+
+	type ship_stat_base_marine_capacity = ship_stat {
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/marine_capacity.dds"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_marine_capacity]"
+		}
+	}
+
+	type ship_stat_base_screening = ship_stat {
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/screening.dds"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_screening]"
+		}
+	}
+
+	type ship_stat_base_movement_speed = ship_stat {
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/speed_navy.dds"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_ship_speed]"
+		}
+	}
+
+	type ship_stat_base_supply_capacity = ship_stat {
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/supplies_navy.dds"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_supply_capacity]"
+		}
+	}
+
+	type ship_stat_base_supply_efficiency = ship_stat {
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/supply_efficiency.dds"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_supply_efficiency]"
+		}
+	}
+
+	type ship_stat_base_visibility = ship_stat {
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/visibility.dds"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_visibility]"
+		}
+	}
+
+	type ship_stat_base_vulnerability = ship_stat {
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/vulnerability.dds"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_vulnerability]"
+		}
+	}
+
+	type ship_stat_base_hit_points_max = ship_stat {
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_healthpoints_navy.dds"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_ship_hit_points]"
+		}
+	}
+
+	type ship_stat_base_accuracy = ship_stat {
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_accuracy]"
+		}
+	}
+
+	type ship_stat_base_veterancy = ship_stat {
+		blockoverride "stat_icon" {
+			texture = "[Ship.GetVeterancyLevel.GetTexture]"
+			tooltip = "SHIP_VETERANCY_TOOLTIP"
+			#parentanchor = vcenter|hcenter # todo PRCAL-45075 - comment back in once veteran rank number has been added by code
+        	#position = { 0 -9 } # todo PRCAL-45075 - comment back in once veteran rank number has been added by code
+		}
+
+		# blockoverride "stat_icon_extra" { # todo PRCAL-45075 - comment back in once veteran rank number has been added by code
+		# 	white_progressbar_vertical = {
+		# 		visible = "[Not(Ship.IsAtMaxVeterancy)]"
+		# 		size = { 20 6 }
+		# 		parentanchor = bottom|hcenter
+		# 		position = { 0 -3 }
+		# 		tooltip = "SHIP_VETERANCY_TOOLTIP"
+
+		# 		blockoverride "values" {
+		# 			min = "[Ship.GetVeterancyLevel.GetExperienceThreshold]"
+		# 			max = "[Ship.GetVeterancyLevel.GetNextLevel.GetExperienceThreshold]"
+		# 			value = "[Ship.GetVeterancyExperience]"
+		# 		}
+		# 		blockoverride "color" {
+		# 			color = { 0.6 0.4 0.6 1 }
+		# 		}
+		# 	}
+		# }
+
+		blockoverride "stat_label" {
+			text = "[concept_veterancy_level]"
+		}
+	}
+
+	type ship_stat_base_blockade_strength = ship_stat {
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/blockade_strength_navy.dds"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_blockade_strength]"
+		}
+	}
+
+	type ship_stat_base_readiness_gain = ship_stat {
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/readiness_gain.dds"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_readiness]"
+		}
+	}
+
+	type ship_stat_base_critical_hit_multiplier = ship_stat {
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/critical_damage_navy.dds"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_critical_hit_multiplier]"
+		}
+	}
+
+	type ship_stat_base_crew_max = ship_stat {
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/total_crew_navy.dds"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_ship_crew]"
+		}
+	}
+
+	## Modifier types
+	type ship_modifier_stat_armor = ship_stat_base_armor {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetShipArmorTooltip]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetShipArmor|v0]"
+		}
+	}
+
+	type ship_modifier_stat_carrying_capacity = ship_stat_base_carrying_capacity {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetShipCarryingCapacityTooltip]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetShipCarryingCapacity|vD]"
+		}
+	}
+
+	type ship_modifier_stat_crew_damage = ship_stat_base_crew_damage {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetShipCrewDamageTooltip]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetShipCrewDamage|v0]"
+		}
+	}
+
+	type ship_modifier_stat_critical_hit_chance = ship_stat_base_critical_hit_chance {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetShipCriticalHitChanceTooltip]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetShipCriticalHitChance|v0%]"
+		}
+	}
+
+	type ship_modifier_stat_critical_hit_damage = ship_stat_base_critical_hit_multiplier {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetShipCriticalHitMultiplierTooltip]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetShipCriticalHitMultiplier|v0%]"
+		}
+	}
+
+	type ship_modifier_stat_detection = ship_stat_base_detection {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetShipDetectionTooltip]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetShipDetection|v0]"
+		}
+	}
+
+	type ship_modifier_stat_hit_points = ship_stat_base_hit_points {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetShipHitPointsMaxTooltip]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetShipHitPointsMax|v0]"
+		}
+	}
+
+	type ship_modifier_stat_hull_damage = ship_stat_base_hull_damage {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetShipHullDamageTooltip]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetShipHullDamage|v0]"
+		}
+	}
+
+	type ship_modifier_stat_marine_capacity = ship_stat_base_marine_capacity {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetShipMarineCapacityTooltip]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetShipMarineCapacity|vD]"
+		}
+	}
+
+	type ship_modifier_stat_screening = ship_stat_base_screening {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetShipScreeningTooltip]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetShipScreening|v0]"
+		}
+	}
+
+	type ship_modifier_stat_blockade_strength = ship_stat_base_blockade_strength {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetShipBlockadeStrengthTooltip]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetShipBlockadeStrength|v0]"
+		}
+	}
+
+	type ship_modifier_stat_movement_speed = ship_stat_base_movement_speed {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetShipSpeedTooltip]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetShipSpeed|v^2]"
+		}
+	}
+
+	type ship_modifier_stat_supply_capacity = ship_stat_base_supply_capacity {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetShipSupplyCapacityTooltip]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetShipSupplyCapacity|v0]"
+		}
+	}
+
+	type ship_modifier_stat_supply_efficiency = ship_stat_base_supply_efficiency {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetShipSupplyEfficiencyTooltip]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetShipSupplyEfficiency|v0%]"
+		}
+	}
+
+	type ship_modifier_stat_visibility = ship_stat_base_visibility {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetShipVisibilityTooltip]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetShipVisibility|v0]"
+		}
+	}
+
+	type ship_modifier_stat_vulnerability = ship_stat_base_vulnerability {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetShipVulnerabilityTooltip]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetShipVulnerability|v0]"
+		}
+	}
+
+	type ship_modifier_stat_accuracy = ship_stat_base_accuracy {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetShipAccuracyTooltip]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetShipAccuracy|v0]"
+		}
+	}
+
+	type ship_modifier_stat_readiness_gain = ship_stat_base_readiness_gain {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetShipReadinessGainTooltip]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetShipReadinessGain|v0]"
+		}
+	}
+
+	## Template types
+	type ship_template_stat_armor = ship_stat_base_armor {
+		blockoverride "stat_tooltip" {
+			tooltip = "[ShipTemplate.GetArmorBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[ShipTemplate.GetArmor|v0]"
+		}
+	}
+
+	type ship_template_stat_carrying_capacity = ship_stat_base_carrying_capacity {
+		blockoverride "stat_tooltip" {
+			tooltip = "[ShipTemplate.GetCarryingCapacityBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[ShipTemplate.GetCarryingCapacity|vD]"
+		}
+	}
+
+	type ship_template_stat_crew_damage = ship_stat_base_crew_damage {
+		blockoverride "stat_tooltip" {
+			tooltip = "[ShipTemplate.GetCrewDamageBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[ShipTemplate.GetCrewDamage|v0]"
+		}
+	}
+
+	type ship_template_stat_critical_hit_chance = ship_stat_base_critical_hit_chance {
+		blockoverride "stat_tooltip" {
+			tooltip = "[ShipTemplate.GetCriticalHitChanceBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[ShipTemplate.GetCriticalHitChance|v0%]"
+		}
+	}
+
+	type ship_template_stat_critical_hit_damage = ship_stat_base_critical_hit_multiplier {
+		blockoverride "stat_tooltip" {
+			tooltip = "[ShipTemplate.GetCriticalHitMultiplierBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[ShipTemplate.GetCriticalHitMultiplier|v0%]"
+		}
+	}
+
+	type ship_template_stat_detection = ship_stat_base_detection {
+		blockoverride "stat_tooltip" {
+			tooltip = "[ShipTemplate.GetDetectionBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[ShipTemplate.GetDetection|v0]"
+		}
+	}
+
+	type ship_template_stat_hit_points = ship_stat_base_hit_points {
+		blockoverride "stat_tooltip" {
+			tooltip = "[ShipTemplate.GetHitPointsMaxBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[ShipTemplate.GetHitPointsMax|v0]"
+		}
+	}
+
+	type ship_template_stat_hull_damage = ship_stat_base_hull_damage {
+		blockoverride "stat_tooltip" {
+			tooltip = "[ShipTemplate.GetHullDamageBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[ShipTemplate.GetHullDamage|v0]"
+		}
+	}
+
+	type ship_template_stat_marine_capacity = ship_stat_base_marine_capacity {
+		blockoverride "stat_tooltip" {
+			tooltip = "[ShipTemplate.GetMarineCapacityBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[ShipTemplate.GetMarineCapacity|vD]"
+		}
+	}
+
+	type ship_template_stat_screening = ship_stat_base_screening {
+		blockoverride "stat_tooltip" {
+			tooltip = "[ShipTemplate.GetScreeningBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[ShipTemplate.GetScreening|v0]"
+		}
+	}
+
+	type ship_template_stat_movement_speed = ship_stat_base_movement_speed {
+		blockoverride "stat_tooltip" {
+			tooltip = "[ShipTemplate.GetMovementSpeedBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[ShipTemplate.GetMovementSpeed|v^2]"
+		}
+	}
+
+	type ship_template_stat_supply_capacity = ship_stat_base_supply_capacity {
+		blockoverride "stat_tooltip" {
+			tooltip = "[ShipTemplate.GetSupplyCapacityBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[ShipTemplate.GetSupplyCapacity|v0]"
+		}
+	}
+
+	type ship_template_stat_supply_efficiency = ship_stat_base_supply_efficiency {
+		blockoverride "stat_tooltip" {
+			tooltip = "[ShipTemplate.GetSupplyEfficiencyBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[ShipTemplate.GetSupplyEfficiency|v0%]"
+		}
+	}
+
+	type ship_template_stat_visibility = ship_stat_base_visibility {
+		blockoverride "stat_tooltip" {
+			tooltip = "[ShipTemplate.GetVisibilityBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[ShipTemplate.GetVisibility|v0-]"
+		}
+	}
+
+	type ship_template_stat_vulnerability = ship_stat_base_vulnerability {
+		blockoverride "stat_tooltip" {
+			tooltip = "[ShipTemplate.GetVulnerabilityBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[ShipTemplate.GetVulnerability|v0-]"
+		}
+	}
+
+	type ship_template_stat_accuracy = ship_stat_base_accuracy {
+		blockoverride "stat_tooltip" {
+			tooltip = "[ShipTemplate.GetAccuracyBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[ShipTemplate.GetAccuracy|v0]"
+		}
+	}
+
+	type ship_template_stat_blockade_strength = ship_stat_base_blockade_strength {
+		blockoverride "stat_tooltip" {
+			tooltip = "[ShipTemplate.GetBlockadeStrength]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[ShipTemplate.GetBlockadeStrength|v0]"
+		}
+	}
+
+	type ship_template_stat_readiness_gain = ship_stat_base_readiness_gain {
+		blockoverride "stat_tooltip" {
+			tooltip = "[ShipTemplate.GetReadinessGainBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[ShipTemplate.GetReadinessGain|v0]"
+		}
+	}
+
+	## Ships
+	type ship_stat_accuracy = ship_stat_base_accuracy {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Ship.GetAccuracyBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Ship.GetAccuracy|v0]"
+		}
+	}
+
+	type ship_stat_veterancy = ship_stat_base_veterancy {
+		blockoverride "stat_tooltip" {
+			tooltip = "SHIP_VETERANCY_TOOLTIP"
+		}
+
+		blockoverride "stat_value" {
+			#text = "[Ship.GetVeterancyLevel.GetNameNoIcon]" # todo PRCAL-45075 - comment back in once veteran rank number has been added by code.
+			white_progressbar_vertical = { # todo PRCAL-45075 - delete once veteran rank number has been added by code.
+				visible = "[Not(Ship.IsAtMaxVeterancy)]"
+				size = { 6 20 }
+				parentanchor = vcenter|left
+				tooltip = "SHIP_VETERANCY_TOOLTIP"
+
+				blockoverride "values" {
+					min = "[Ship.GetVeterancyLevel.GetExperienceThreshold]"
+					max = "[Ship.GetVeterancyLevel.GetNextLevel.GetExperienceThreshold]"
+					value = "[Ship.GetVeterancyExperience]"
+				}
+				blockoverride "color" {
+					color = { 0.6 0.4 0.6 1 }
+				}
+			}
+		}
+	}
+
+	type ship_stat_upkeep = ship_stat_base_upkeep {
+		blockoverride "stat_tooltip" {
+			tooltip = "SHIP_UPKEEP_TOOLTIP"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Ship.GetUpkeepCost|0-K]"
+		}
+	}
+
+	type ship_stat_armor = ship_stat_base_armor {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Ship.GetArmorBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Ship.GetArmor|v0]"
+		}
+	}
+
+	type ship_stat_blockade_strength = ship_stat_base_blockade_strength {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Ship.GetBlockadeStrengthBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Ship.GetBlockadeStrength|v0]"
+		}
+	}
+
+	type ship_stat_carrying_capacity = ship_stat_base_carrying_capacity {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Ship.GetCarryingCapacityBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Ship.GetCarryingCapacity|vD]"
+		}
+	}
+
+	type ship_stat_crew_damage = ship_stat_base_crew_damage {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Ship.GetCrewDamageBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Ship.GetCrewDamage|v0]"
+		}
+	}
+
+	type ship_stat_crew_max = ship_stat_base_crew_max {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Ship.GetCrewMaxBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Ship.GetCrewMax|v0]"
+		}
+	}
+
+	type ship_stat_critical_hit_chance = ship_stat_base_critical_hit_chance {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Ship.GetCriticalHitChanceBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Ship.GetCriticalHitChance|v0%]"
+		}
+	}
+
+	type ship_stat_critical_hit_multiplier = ship_stat_base_critical_hit_multiplier {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Ship.GetCriticalHitMultiplierBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Ship.GetCriticalHitMultiplier|v0%]"
+		}
+	}
+
+	type ship_stat_detection = ship_stat_base_detection {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Ship.GetDetectionBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Ship.GetDetection|v0]"
+		}
+	}
+
+	type ship_stat_hit_points_max = ship_stat_base_hit_points_max {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Ship.GetHitPointsMaxBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Ship.GetHitPointsMax|v0]"
+		}
+	}
+
+	type ship_stat_hull_damage = ship_stat_base_hull_damage {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Ship.GetHullDamageBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Ship.GetHullDamage|v0]"
+		}
+	}
+
+	type ship_stat_marine_capacity = ship_stat_base_marine_capacity {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Ship.GetMarineCapacityBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Ship.GetMarineCapacity|vD]"
+		}
+	}
+
+	type ship_stat_readiness_gain = ship_stat_base_readiness_gain {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Ship.GetReadinessGainBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Ship.GetReadinessGain|v0]"
+		}
+	}
+
+	type ship_stat_screening = ship_stat_base_screening {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Ship.GetScreeningBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Ship.GetScreening|v0]"
+		}
+	}
+
+	type ship_stat_movement_speed = ship_stat_base_movement_speed {
+		blockoverride "stat_tooltip" {
+			tooltip = "SHIP_SPEED_TOOLTIP"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Ship.GetMovementSpeed|v^2]"
+		}
+	}
+
+	type ship_stat_supply_capacity = ship_stat_base_supply_capacity {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Ship.GetSupplyCapacityBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Ship.GetSupplyCapacity|v0]"
+		}
+	}
+
+	type ship_stat_supply_efficiency = ship_stat_base_supply_efficiency {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Ship.GetSupplyEfficiencyBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Ship.GetSupplyEfficiency|v0%]"
+		}
+	}
+
+	type ship_stat_visibility = ship_stat_base_visibility {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Ship.GetVisibilityBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Ship.GetVisibility|v0]"
+		}
+	}
+
+	type ship_stat_vulnerability = ship_stat_base_vulnerability {
+		blockoverride "stat_tooltip" {
+			tooltip = "[Ship.GetVulnerabilityBreakdown]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Ship.GetVulnerability|v0]"
+		}
+	}
+
+	type ship_modifier_accuracy_mult = ship_stat {
+		size = { 350 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_accuracy_mult')|+=v0%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_accuracy]"
+		}
+	}
+
+	type ship_modifier_battle_condition_accuracy_penalty = ship_stat {
+		size = { 350 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_condition_accuracy_penalty_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_condition_accuracy_penalty_mult')|v0%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "ship_battle_condition_accuracy_penalty_mult"
+		}
+	}
+
+	type ship_modifier_blockade_strength_mult = ship_stat {
+		size = { 350 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/blockade_strength_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_blockade_strength_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_blockade_strength_mult')|+=v0%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_blockade_strength]"
+		}
+	}
+
+	type ship_modifier_critical_hit_chance_mult = ship_stat {
+		size = { 350 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/critical_chance_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_critical_hit_chance_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_critical_hit_chance_mult')|+=v0%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_critical_hit_chance]"
+		}
+	}
+
+	type ship_modifier_hull_damage_mult = ship_stat {
+		size = { 350 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_hull_damage_mult')|+=v0%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[concept_hull_attack_damage]"
+		}
+	}
+
+	type ship_modifier_naval_invasion_efficiency = ship_stat {
+		size = { 350 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/marine_capacity.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_naval_invasion_efficiency_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_naval_invasion_efficiency_mult')|+=v0%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "ship_naval_invasion_efficiency_mult"
+		}
+	}
+
+	type ship_modifier_suffered_accuracy = ship_stat {
+		size = { 350 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_suffered_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_suffered_accuracy_mult')|-=v0%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "ship_suffered_accuracy_mult"
+		}
+	}
+
+	type ship_modifier_suffered_crew_damage = ship_stat {
+		size = { 350 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/crew_casualties.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_suffered_crew_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_suffered_crew_damage_mult')|-=v0%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "ship_suffered_crew_damage_mult"
+		}
+	}
+
+	type ship_modifier_suffered_crit_chance = ship_stat {
+		size = { 350 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/critical_chance_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_suffered_crit_chance_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_suffered_crit_chance_mult')|-=v0%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "ship_suffered_crit_chance_mult"
+		}
+	}
+
+	type ship_modifier_suffered_crit_damage = ship_stat {
+		size = { 350 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/critical_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_suffered_crit_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_suffered_crit_damage_mult')|-=v0%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "ship_suffered_crit_damage_mult"
+		}
+	}
+
+	type ship_modifier_suffered_hull_damage = ship_stat {
+		size = { 350 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/armor_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_suffered_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_suffered_hull_damage_mult')|-=v0%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "ship_suffered_hull_damage_mult"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_arsenal_ship_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_arsenal_ship_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_arsenal_ship_accuracy_add')|+=v0%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_arsenal_ship').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_arsenal_ship_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_arsenal_ship_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_arsenal_ship_accuracy_mult')|+=v0%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_arsenal_ship').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_arsenal_ship_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_arsenal_ship_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_arsenal_ship_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_arsenal_ship').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_arsenal_ship_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_arsenal_ship_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_arsenal_ship_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_arsenal_ship').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_attack_submarine_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_attack_submarine_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_attack_submarine_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_attack_submarine').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_attack_submarine_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_attack_submarine_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_attack_submarine_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_attack_submarine').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_attack_submarine_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_attack_submarine_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_attack_submarine_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_attack_submarine').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_attack_submarine_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_attack_submarine_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_attack_submarine_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_attack_submarine').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_aviation_cruiser_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_aviation_cruiser_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_aviation_cruiser_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_aviation_cruiser').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_aviation_cruiser_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_aviation_cruiser_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_aviation_cruiser_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_aviation_cruiser').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_aviation_cruiser_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_aviation_cruiser_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_aviation_cruiser_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_aviation_cruiser').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_aviation_cruiser_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_aviation_cruiser_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_aviation_cruiser_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_aviation_cruiser').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_battlecruiser_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_battlecruiser_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_battlecruiser_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_battlecruiser').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_battlecruiser_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_battlecruiser_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_battlecruiser_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_battlecruiser').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_battlecruiser_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_battlecruiser_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_battlecruiser_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_battlecruiser').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_battlecruiser_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_battlecruiser_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_battlecruiser_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_battlecruiser').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_battleship_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_battleship_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_battleship_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_battleship').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_battleship_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_battleship_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_battleship_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_battleship').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_battleship_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_battleship_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_battleship_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_battleship').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_battleship_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_battleship_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_battleship_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_battleship').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_corvette_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_corvette_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_corvette_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_corvette').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_corvette_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_corvette_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_corvette_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_corvette').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_corvette_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_corvette_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_corvette_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_corvette').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_corvette_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_corvette_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_corvette_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_corvette').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_cruise_missile_submarine_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_cruise_missile_submarine_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_cruise_missile_submarine_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_cruise_missile_submarine').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_cruise_missile_submarine_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_cruise_missile_submarine_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_cruise_missile_submarine_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_cruise_missile_submarine').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_cruise_missile_submarine_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_cruise_missile_submarine_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_cruise_missile_submarine_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_cruise_missile_submarine').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_cruise_missile_submarine_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_cruise_missile_submarine_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_cruise_missile_submarine_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_cruise_missile_submarine').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_cruiser_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_cruiser_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_cruiser_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_cruiser').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_cruiser_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_cruiser_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_cruiser_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_cruiser').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_cruiser_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_cruiser_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_cruiser_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_cruiser').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_cruiser_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_cruiser_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_cruiser_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_cruiser').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_destroyer_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_destroyer_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_destroyer_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_destroyer').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_destroyer_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_destroyer_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_destroyer_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_destroyer').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_destroyer_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_destroyer_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_destroyer_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_destroyer').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_destroyer_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_destroyer_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_destroyer_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_destroyer').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_diesel_electric_submarine_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_diesel_electric_submarine_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_diesel_electric_submarine_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_diesel_electric_submarine').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_diesel_electric_submarine_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_diesel_electric_submarine_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_diesel_electric_submarine_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_diesel_electric_submarine').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_diesel_electric_submarine_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_diesel_electric_submarine_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_diesel_electric_submarine_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_diesel_electric_submarine').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_diesel_electric_submarine_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_diesel_electric_submarine_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_diesel_electric_submarine_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_diesel_electric_submarine').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_escort_carrier_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_escort_carrier_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_escort_carrier_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_escort_carrier').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_escort_carrier_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_escort_carrier_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_escort_carrier_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_escort_carrier').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_escort_carrier_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_escort_carrier_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_escort_carrier_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_escort_carrier').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_escort_carrier_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_escort_carrier_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_escort_carrier_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_escort_carrier').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_fleet_carrier_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_fleet_carrier_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_fleet_carrier_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_fleet_carrier').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_fleet_carrier_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_fleet_carrier_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_fleet_carrier_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_fleet_carrier').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_fleet_carrier_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_fleet_carrier_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_fleet_carrier_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_fleet_carrier').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_fleet_carrier_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_fleet_carrier_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_fleet_carrier_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_fleet_carrier').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_frigate_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_frigate_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_frigate_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_frigate').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_frigate_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_frigate_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_frigate_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_frigate').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_frigate_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_frigate_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_frigate_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_frigate').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_frigate_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_frigate_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_frigate_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_frigate').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_guided_missile_corvette_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_guided_missile_corvette_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_corvette_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_guided_missile_corvette').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_guided_missile_corvette_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_guided_missile_corvette_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_corvette_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_guided_missile_corvette').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_guided_missile_corvette_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_guided_missile_corvette_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_corvette_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_guided_missile_corvette').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_guided_missile_corvette_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_guided_missile_corvette_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_corvette_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_guided_missile_corvette').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_guided_missile_cruiser_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_guided_missile_cruiser_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_cruiser_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_guided_missile_cruiser').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_guided_missile_cruiser_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_guided_missile_cruiser_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_cruiser_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_guided_missile_cruiser').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_guided_missile_cruiser_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_guided_missile_cruiser_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_cruiser_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_guided_missile_cruiser').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_guided_missile_cruiser_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_guided_missile_cruiser_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_cruiser_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_guided_missile_cruiser').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_guided_missile_destroyer_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_guided_missile_destroyer_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_destroyer_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_guided_missile_destroyer').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_guided_missile_destroyer_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_guided_missile_destroyer_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_destroyer_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_guided_missile_destroyer').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_guided_missile_destroyer_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_guided_missile_destroyer_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_destroyer_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_guided_missile_destroyer').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_guided_missile_destroyer_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_guided_missile_destroyer_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_destroyer_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_guided_missile_destroyer').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_guided_missile_frigate_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_guided_missile_frigate_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_frigate_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_guided_missile_frigate').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_guided_missile_frigate_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_guided_missile_frigate_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_frigate_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_guided_missile_frigate').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_guided_missile_frigate_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_guided_missile_frigate_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_frigate_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_guided_missile_frigate').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_guided_missile_frigate_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_guided_missile_frigate_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_guided_missile_frigate_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_guided_missile_frigate').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_landing_ship_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_landing_ship_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_landing_ship_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_landing_ship').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_landing_ship_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_landing_ship_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_landing_ship_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_landing_ship').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_landing_ship_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_landing_ship_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_landing_ship_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_landing_ship').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_landing_ship_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_landing_ship_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_landing_ship_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_landing_ship').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_modern_corvette_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_modern_corvette_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_modern_corvette_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_modern_corvette').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_modern_corvette_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_modern_corvette_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_modern_corvette_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_modern_corvette').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_modern_corvette_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_modern_corvette_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_modern_corvette_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_modern_corvette').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_modern_corvette_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_modern_corvette_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_modern_corvette_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_modern_corvette').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_modern_cruiser_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_modern_cruiser_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_modern_cruiser_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_modern_cruiser').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_modern_cruiser_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_modern_cruiser_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_modern_cruiser_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_modern_cruiser').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_modern_cruiser_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_modern_cruiser_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_modern_cruiser_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_modern_cruiser').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_modern_cruiser_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_modern_cruiser_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_modern_cruiser_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_modern_cruiser').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_modern_destroyer_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_modern_destroyer_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_modern_destroyer_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_modern_destroyer').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_modern_destroyer_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_modern_destroyer_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_modern_destroyer_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_modern_destroyer').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_modern_destroyer_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_modern_destroyer_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_modern_destroyer_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_modern_destroyer').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_modern_destroyer_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_modern_destroyer_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_modern_destroyer_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_modern_destroyer').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_modern_frigate_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_modern_frigate_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_modern_frigate_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_modern_frigate').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_modern_frigate_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_modern_frigate_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_modern_frigate_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_modern_frigate').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_modern_frigate_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_modern_frigate_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_modern_frigate_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_modern_frigate').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_modern_frigate_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_modern_frigate_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_modern_frigate_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_modern_frigate').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_nuclear_attack_submarine_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_nuclear_attack_submarine_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_nuclear_attack_submarine_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_nuclear_attack_submarine').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_nuclear_attack_submarine_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_nuclear_attack_submarine_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_nuclear_attack_submarine_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_nuclear_attack_submarine').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_nuclear_attack_submarine_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_nuclear_attack_submarine_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_nuclear_attack_submarine_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_nuclear_attack_submarine').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_nuclear_attack_submarine_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_nuclear_attack_submarine_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_nuclear_attack_submarine_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_nuclear_attack_submarine').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_supercarrier_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_supercarrier_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_supercarrier_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_supercarrier').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_supercarrier_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_supercarrier_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_supercarrier_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_supercarrier').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_supercarrier_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_supercarrier_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_supercarrier_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_supercarrier').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_supercarrier_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_supercarrier_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_supercarrier_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_supercarrier').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_troopship_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_troopship_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_troopship_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_troopship').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_troopship_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_troopship_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_troopship_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_troopship').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_troopship_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_troopship_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_troopship_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_troopship').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_troopship_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_troopship_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_troopship_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_troopship').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_ultracarrier_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_ultracarrier_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_ultracarrier_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_ultracarrier').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_ultracarrier_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_ultracarrier_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_ultracarrier_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_ultracarrier').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_ultracarrier_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_ultracarrier_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_ultracarrier_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_ultracarrier').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_ultracarrier_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_ultracarrier_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_ultracarrier_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_ultracarrier').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_underway_replenishment_ship_accuracy_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_underway_replenishment_ship_accuracy_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_underway_replenishment_ship_accuracy_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_underway_replenishment_ship').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_underway_replenishment_ship_accuracy_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/accuracy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_underway_replenishment_ship_accuracy_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_underway_replenishment_ship_accuracy_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_underway_replenishment_ship').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_underway_replenishment_ship_hull_damage_add = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_underway_replenishment_ship_hull_damage_add')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_underway_replenishment_ship_hull_damage_add')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_underway_replenishment_ship').GetName]"
+		}
+	}
+
+	type ship_modifier_battle_against_ship_type_underway_replenishment_ship_hull_damage_mult = ship_stat {
+		size = { 245 36 }
+
+		blockoverride "stat_icon" {
+			texture = "gfx/interface/icons/military_icons/navy_icons/hull_damage_navy.dds"
+		}
+
+		blockoverride "stat_tooltip" {
+			tooltip = "[Modifier.GetDescFor('ship_battle_against_ship_type_underway_replenishment_ship_hull_damage_mult')]"
+		}
+
+		blockoverride "stat_value" {
+			text = "[Modifier.GetValueFor('ship_battle_against_ship_type_underway_replenishment_ship_hull_damage_mult')|+=v2%]"
+		}
+
+		blockoverride "stat_label" {
+			text = "[GetShipType('ship_type_underway_replenishment_ship').GetName]"
+		}
+	}
+}
