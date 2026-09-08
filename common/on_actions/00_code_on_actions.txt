@@ -536,14 +536,6 @@ on_diplomatic_play_started = {
 on_character_creation = {
 	effect = {
 		if = {
-			limit = { NOT = { has_variable = memento_mori_immunity } }
-			set_variable = {
-				name = memento_mori_immunity
-				years = 10
-			}
-		}
-
-		if = {
 			limit = { has_ideology = ideology:ideology_nihilist }
 			change_character_religion = rel:atheist
 		}
@@ -563,51 +555,93 @@ on_character_creation = {
 
 # Root = Character
 on_character_death = {
-	on_actions = {
-		# Replace Interest Group Leader
-		on_action_replacement_interest_group_leader
+	effect = {
+		if = { # Hijacks the deaths of colonial governors
+			limit = {
+				is_ruler_of_own_country = yes
+				has_variable = colonial_governor_term
+				owner ?= {
+					is_country_type = colonial
+					has_law = law_type:law_colonial_administration
+				}
+			}
+			save_scope_as = current_governor
+			owner ?= {
+				set_variable = { name = hide_ruler_change_notification days = 3 }
+				save_colonial_governor_generation_scopes = yes
+				generate_governor_of_same_type = yes
+				post_notification = colonial_governor_cycle
+			}
+		}
 	}
-
-	effect = { }
 }
 
 # Root = Character
-on_new_interest_group_leader = { }
+on_new_interest_group_leader = {
+	effect = {
+		add_career_length = { # Becoming IG leader increases career length
+			years = 5
+			random_range = { 1.0 2.0 } # 5 to 10 extra years
+		}
+	}
+}
 
 # Root = Character
 on_new_ruler = {
 	effect = {
 		if = {
 			limit = {
-				owner = { NOT = { has_variable = hide_ruler_change_notification } }
-				age >= define:NCharacters|ADULT_AGE
-			}
-			post_notification = new_ruler
-		}
-
-		if = {
-			limit = {
-				owner = { has_law_or_variant = law_type:law_theocracy }
-				NOT = { religion = owner.religion }
-			}
-			change_character_religion = owner.religion
-		}
-
-		if = {
-			limit = {
-				owner = {
-					has_law = law_type:law_monarchy
+				owner = { # Assigning a regent should never fire this on_action
 					has_gov_regency = no
 				}
-				age < define:NCharacters|ADULT_AGE
-				NOT = { has_variable = regency_complete }
 			}
-			owner = {
-				trigger_event = {
-					id = regency.1
-					popup = yes
+			if = {
+				limit = {
+					owner = {
+						NOT = {
+							has_variable = hide_ruler_change_notification
+						}
+					}
+					is_adult = yes
+				}
+				post_notification = new_ruler
+			}
+			if = {
+				limit = {
+					owner = {
+						has_law_or_variant = law_type:law_theocracy
+					}
+					NOT = { religion = owner.religion }
+				}
+				change_character_religion = owner.religion
+			}
+
+			# Setup regencies
+			if = {
+				limit = {
+					owner = {
+						has_law = law_type:law_monarchy
+						has_gov_regency = no
+					}
+					is_adult = no
+					NOT = { has_variable = regency_complete }
+				}
+				owner = {
+					trigger_event = {
+						id = regency.1
+						popup = yes
+					}
 				}
 			}
+
+			if = { # Handles total years in power, not consecutive years. Mostly for Japan.
+			limit = {
+				NOT = {
+					has_variable = year_in_power
+				}
+			}
+			set_variable = { name = year_in_power value = 1 } # In case all else fails
+		}
 		}
 	}
 }
