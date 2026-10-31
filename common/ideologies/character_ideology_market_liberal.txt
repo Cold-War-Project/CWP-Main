@@ -1,0 +1,173 @@
+﻿# Ideology: Market Liberal
+ideology_market_liberal = {
+	icon = "gfx/interface/icons/ideology_icons/ideology_leader/ideology_leader_market_liberal.dds"
+
+	character_ideology = yes
+
+	lawgroup_economic_system = {
+		law_laissez_faire = strongly_approve
+		law_interventionism = neutral
+		law_agrarianism = disapprove
+		law_traditionalism = disapprove
+		law_cooperative_ownership = strongly_disapprove
+		law_command_economy = strongly_disapprove
+		law_industry_banned = strongly_disapprove
+		law_extraction_economy = strongly_disapprove
+	}
+
+	lawgroup_childrens_rights = {
+		law_child_labor_allowed = approve
+		law_restricted_child_labor = disapprove
+		law_compulsory_primary_school = strongly_disapprove
+	}
+
+	lawgroup_trade_policy = {
+		law_free_trade = strongly_approve
+		law_mercantilism = disapprove
+		law_protectionism = disapprove
+		law_isolationism = strongly_disapprove
+	}
+
+	lawgroup_labor_rights = {
+		law_regulatory_bodies = disapprove
+		law_worker_protections = strongly_disapprove
+	}
+
+	lawgroup_land_reform = {
+		law_collectivized_agriculture = strongly_disapprove
+		law_serfdom = disapprove
+		law_tenant_farmers = neutral
+		law_peasant_proprietorship = neutral
+		law_commercialized_agriculture = approve
+	}
+
+	country_trigger = {
+		# capitalism must be relevant
+		exists = ig:ig_industrialists
+		ig:ig_industrialists ?= { is_marginal = no }
+	}
+
+	interest_group_leader_trigger = {
+		ideology_market_liberal_valid_trigger = yes
+	}
+
+	non_interest_group_leader_trigger = {
+		# Agitator ideologies should disapprove of a current law
+		NAND = {
+			has_role_of_type = agitator
+			owner = {
+				has_law_or_variant = law_type:law_laissez_faire
+				has_law_or_variant = law_type:law_child_labor_allowed
+				has_law_or_variant = law_type:law_free_trade
+				has_law_or_variant = law_type:law_commercialized_agriculture
+			}
+		}
+
+		interest_group = {
+			ideology_market_liberal_valid_trigger = yes
+		}
+	}
+
+	interest_group_leader_weight = {
+		value = 100
+
+		# more likely for industrialists
+		if = {
+			limit = { is_interest_group_type = ig_industrialists }
+			add = 50
+		}
+
+		# more likely for intelligentsia, industrialists, and PB with traditional economic laws
+		if = {
+			limit = {
+				OR = {
+					is_interest_group_type = ig_petty_bourgeoisie
+					is_interest_group_type = ig_intelligentsia
+					is_interest_group_type = ig_industrialists
+				}
+				owner = {
+					OR = {
+						has_law_or_variant = law_type:law_agrarianism
+						has_law_or_variant = law_type:law_traditionalism
+						has_law_or_variant = law_type:law_isolationism
+						has_law_or_variant = law_type:law_mercantilism
+					}
+				}
+			}
+			add = 50
+		}
+
+		# more likely for weaker landowers when industrialists are powerful
+		if = {
+			limit = {
+				is_interest_group_type = ig_landowners
+				is_powerful = no
+				owner = {
+					exists = ig:ig_industrialists
+					ig:ig_industrialists ?= { is_powerful = yes }
+				}
+			}
+			add = 75
+		}
+
+		# less likely for powerful landowners under traditional laws
+		if = {
+			limit = {
+				is_interest_group_type = ig_landowners
+				is_powerful = yes
+				owner = {
+					OR = {
+						has_law_or_variant = law_type:law_agrarianism
+						has_law_or_variant = law_type:law_traditionalism
+					}
+				}
+			}
+			add = -75
+		}
+
+		# very unlikely in countries without a large urban center
+		if = {
+			limit = {
+				owner = {
+					NOT = {
+						any_scope_state = {
+							any_scope_building = {
+								is_building_type = building_urban_center
+								level >= 10
+							}
+						}
+					}
+				}
+			}
+			add = -150
+		}
+
+		# Less likely for unrecognized countries
+		if = {
+			limit = { owner = { is_country_type = unrecognized } }
+			add = -50
+		}
+
+		# More likely for GP's
+		if = {
+			limit = { owner = { country_rank = rank_value:great_power } }
+			add = 25
+		}
+
+		# Less likely if issues are not relevant
+		if = {
+			limit = {
+				owner = {
+					has_law_or_variant = law_type:law_free_trade
+					has_law_or_variant = law_type:law_laissez_faire
+					has_law_or_variant = law_type:law_commercialized_agriculture
+				}
+			}
+			add = -75
+		}
+	}
+
+	non_interest_group_leader_weight = {
+		value = 100
+	}
+}

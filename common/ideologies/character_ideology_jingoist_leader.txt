@@ -1,0 +1,65 @@
+﻿# Ideology: Jingoist Leader
+ideology_jingoist_leader = {
+	icon = "gfx/interface/icons/ideology_icons/ideology_leader/ideology_leader_jingoist.dds"
+
+	character_ideology = yes
+
+	lawgroup_army_model = {
+		law_mass_conscription = strongly_approve
+		law_professional_army = approve
+		law_national_militia = neutral
+		law_peasant_levies = disapprove
+	}
+
+	interest_group_leader_trigger = {
+		ideology_jingoist_leader_valid_trigger = yes
+	}
+
+	non_interest_group_leader_trigger = {
+		# Agitators should have an ideology at odds with current laws
+		NAND = {
+			has_role_of_type = agitator
+			owner = { has_law_or_variant = law_type:law_mass_conscription }
+		}
+		interest_group = {
+			ideology_jingoist_leader_valid_trigger = yes
+		}
+	}
+
+	interest_group_leader_weight = {
+		value = 100
+		
+		# less likely if issues are not relevant
+		if = {
+			limit = { owner = { has_law_or_variant = law_type:law_mass_conscription } }
+			add = -75
+		}
+		
+		# more likely if there's something to colonize nearby
+		if = {
+			limit = { any_decentralized_country = { has_overlapping_interests = ROOT.owner } }
+			add = 75
+		}
+
+		# more likely if you border a rival
+		if = {
+			limit = { owner = { any_rival_country = { any_neighbouring_state = { owner = root.owner } } } }
+			add = 50
+		}
+
+		# more likely if you're the defender in a war
+		if = {
+			limit = { 
+				owner = {
+					is_at_war = yes
+					any_scope_war = { defender_warleader = { this = ROOT.owner } }
+				}
+			}
+			add = 50
+		}
+	}
+
+	non_interest_group_leader_weight = {
+		value = 100
+	}
+}

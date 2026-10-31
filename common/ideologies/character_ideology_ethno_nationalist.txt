@@ -1,0 +1,111 @@
+﻿# Ideology: Ethno-Nationalist
+ideology_ethno_nationalist = {
+	icon = "gfx/interface/icons/ideology_icons/ideology_leader/ideology_leader_ethno_nationalist.dds"
+
+	character_ideology = yes
+
+	lawgroup_citizenship = {
+		law_ethnostate = strongly_approve
+		law_national_supremacy = approve
+		law_racial_segregation = approve
+		law_cultural_exclusion = disapprove
+		law_multicultural = strongly_disapprove
+	}
+
+	lawgroup_migration = {
+		law_migration_controls = strongly_approve
+		law_closed_borders = approve
+		law_no_migration_controls = disapprove
+	}
+
+	country_trigger = {}
+
+	interest_group_leader_trigger = {
+		ideology_ethno_nationalist_valid_trigger = yes
+	}
+
+	non_interest_group_leader_trigger = {
+		# Agitator ideologies should disapprove of a current law
+		NAND = {
+			has_role_of_type = agitator
+			owner = {
+				has_law_or_variant = law_type:law_ethnostate
+				has_law_or_variant = law_type:law_migration_controls
+			}
+		}
+		interest_group = {
+			ideology_ethno_nationalist_valid_trigger = yes
+		}
+	}
+
+	interest_group_leader_weight = {
+		value = 100
+		
+		# More likely with unowned claims
+		if = {
+			limit = { any_state = { has_claim_by = root.owner } }
+			add = 75
+		}
+
+		# More likely with a convenient scapegoat
+		if = {
+			limit = {
+				owner = {
+					any_scope_state = {
+						is_incorporated = yes
+						any_scope_pop = { pop_acceptance < acceptance_status_4 }
+					}
+				}
+			}
+			add = 50
+		}
+
+		# More likely with a convenient scapegoat and is angry without ethnostate
+		if = {
+			limit = {
+				owner = {
+					NOT = { has_law_or_variant = law_type:law_ethnostate }
+					any_scope_state = {
+						is_incorporated = yes
+						any_scope_pop = { pop_acceptance < acceptance_status_4 }
+					}
+				}
+				ig_approval <= -5
+			}
+			add = 75
+		}
+
+		# More likely if angry and issues are relevant
+		if = {
+			limit = {
+				owner = {
+					NOR = {
+						has_law_or_variant = law_type:law_ethnostate
+						has_law_or_variant = law_type:law_national_supremacy
+					}
+				}
+				ig_approval <= -5
+			}
+			add = 50
+		}
+
+		# Less likely in council republic
+		if = {
+			limit = { owner = { has_law_or_variant = law_type:law_council_republic } }
+			add = -75
+		}
+
+		# less likely if content without ethnostate
+		if = {
+			limit = {
+				owner = { NOT = { has_law_or_variant = law_type:law_ethnostate } }
+				ig_approval >= 5
+			}
+			add = -75
+		}
+	}
+
+	non_interest_group_leader_weight = {
+		value = 100
+	}
+}

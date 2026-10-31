@@ -1,0 +1,121 @@
+﻿# Ideology: Land Reformer
+ideology_land_reformer = {
+	icon = "gfx/interface/icons/ideology_icons/ideology_leader/ideology_leader_land_reformer.dds"
+
+	character_ideology = yes
+
+	lawgroup_taxation = {
+		law_land_based_taxation = strongly_disapprove
+		law_consumption_based_taxation = neutral
+		law_per_capita_based_taxation = neutral
+		law_proportional_taxation = neutral
+		law_graduated_taxation = neutral
+	}
+
+	lawgroup_land_reform = {
+		law_serfdom = strongly_disapprove
+		law_tenant_farmers = disapprove
+		law_commercialized_agriculture = neutral
+		law_peasant_proprietorship = approve
+		law_collectivized_agriculture = approve
+	}
+
+	country_trigger = {}
+
+	interest_group_leader_trigger = {
+		ideology_land_reformer_valid_trigger = yes
+	}
+
+	non_interest_group_leader_trigger = {
+		# Agitator ideologies should disapprove of a current law
+		NAND = {
+			has_role_of_type = agitator
+			owner = {
+				NOT = { has_law_or_variant = law_type:law_land_based_taxation }
+				OR = {
+					has_law_or_variant = law_type:law_peasant_proprietorship
+					has_law_or_variant = law_type:law_collectivized_agriculture
+				}
+			}
+		}
+		interest_group = {
+			ideology_land_reformer_valid_trigger = yes
+		}
+	}
+
+	interest_group_leader_weight = {
+		value = 100
+
+		# more likely when issues are relevant
+		if = {
+			limit = {
+				owner = {
+					OR = {
+						has_law_or_variant = law_type:law_serfdom
+						has_law_or_variant = law_type:law_tenant_farmers
+						has_law_or_variant = law_type:law_land_based_taxation
+					}
+				}
+			}
+			add = 50
+		}
+
+		# more likely for displeased peasants
+		if = {
+			limit = {
+				is_interest_group_type = ig_rural_folk
+				ig_approval <= 0
+				owner = {
+					OR = {
+						has_law_or_variant = law_type:law_serfdom
+						has_law_or_variant = law_type:law_tenant_farmers
+						has_law_or_variant = law_type:law_land_based_taxation
+					}
+				}
+			}
+			add = 150
+		}
+
+		# likely to emerge if landowners are powerful
+		if = {
+			limit = {
+				owner = {
+					exists = ig:ig_landowners
+					ig:ig_landowners ?= { is_powerful = yes }
+				}
+			}
+			add = 75
+		}
+
+		# likely to emerge if agrarian
+		if = {
+			limit = {
+				owner = {
+					OR = {
+						has_law_or_variant = law_type:law_agrarianism
+						has_law_or_variant = law_type:law_industry_banned
+					}
+				}
+			}
+			add = 75
+		}
+
+		# will not happen if land reform is essentially done
+		if = {
+			limit = {
+				owner = {
+					NOT = { has_law_or_variant = law_type:law_land_based_taxation }
+					OR = {
+						has_law_or_variant = law_type:law_peasant_proprietorship
+						has_law_or_variant = law_type:law_collectivized_agriculture
+					}
+				}
+			}
+			multiply = 0.01
+		}
+	}
+
+	non_interest_group_leader_weight = {
+		value = 100
+	}
+}

@@ -1,0 +1,116 @@
+﻿# Ideology: Communist
+ideology_communist = {
+	icon = "gfx/interface/icons/ideology_icons/ideology_leader/ideology_leader_communist.dds"
+
+	character_ideology = yes
+
+	lawgroup_labor_rights = {
+		law_worker_protections = strongly_approve
+		law_regulatory_bodies = approve
+		law_no_workers_rights = neutral
+	}
+
+	lawgroup_governance_principles = {
+		law_monarchy = strongly_disapprove
+		law_presidential_republic = disapprove
+		law_parliamentary_republic = disapprove
+		law_theocracy = strongly_disapprove
+		law_council_republic = strongly_approve
+	}
+
+	lawgroup_economic_system = {
+		law_command_economy = strongly_approve
+		law_cooperative_ownership = strongly_approve
+		law_interventionism = neutral
+		law_agrarianism = disapprove
+		law_traditionalism = disapprove
+		law_laissez_faire = strongly_disapprove
+		law_industry_banned = strongly_disapprove
+		law_extraction_economy = strongly_disapprove
+	}
+
+	lawgroup_church_and_state = {
+		law_state_religion = strongly_disapprove
+		law_freedom_of_conscience = disapprove
+		law_total_separation = neutral
+		law_state_atheism = approve
+	}
+
+	lawgroup_land_reform = {
+		law_serfdom = strongly_disapprove
+		law_commercialized_agriculture = disapprove
+		law_tenant_farmers = disapprove
+		law_peasant_proprietorship = neutral
+		law_collectivized_agriculture = approve
+	}
+
+	country_trigger = {}
+
+	interest_group_leader_trigger = {
+		ideology_communist_valid_trigger = yes
+	}
+
+	non_interest_group_leader_trigger = {
+		# Agitator ideologies should disapprove of a current law
+		NAND = {
+			has_role_of_type = agitator
+			owner = {
+				has_law_or_variant = law_type:law_collectivized_agriculture
+				has_law_or_variant = law_type:law_state_atheism
+				has_law_or_variant = law_type:law_council_republic
+				has_law_or_variant = law_type:law_worker_protections
+			}
+		}
+
+		# Monarchs cannot be republicans
+		NAND = {
+			owner = { has_law_or_variant = law_type:law_monarchy }
+			OR = {
+				is_ruler_of_own_country = yes
+				is_heir_of_own_country = yes
+			}
+		}
+
+		interest_group = {
+			ideology_communist_valid_trigger = yes
+		}
+	}
+
+	interest_group_leader_weight = {
+		value = 100
+
+		# More likely for angry IG's outside of council republic
+		if = {
+			limit = {
+				owner = { NOT = { has_law_or_variant = law_type:law_council_republic } }
+				NOT = { is_interest_group_type = ig_armed_forces }
+				ig_approval <= -5
+			}
+			add = 100
+		}
+
+		# More likely when SoL is low outside of council republic
+		if = {
+			limit = {
+				owner = {
+					NOT = { has_law_or_variant = law_type:law_council_republic }
+					average_sol <= 10
+				}
+			}
+			add = 50
+		}
+
+		# Armed Forces should not become communist too often outside CRs.
+		if = { 
+			limit = { 
+				owner = { NOT = { has_law_or_variant = law_type:law_council_republic } }
+				is_interest_group_type = ig_armed_forces
+			}
+			multiply = 0.3
+		}
+	}
+
+	non_interest_group_leader_weight = {
+		value = 100
+	}
+}
