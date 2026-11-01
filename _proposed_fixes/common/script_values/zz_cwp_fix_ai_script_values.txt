@@ -1,0 +1,576 @@
+﻿# CWP fix patch for vanilla common/script_values/ai_script_values.txt
+# Generated: top-level blocks below are faithful copies of the vanilla blocks with only the invalid references changed.
+# Every block uses REPLACE: so the vanilla definition is overridden; this file loads after the vanilla one (zz_ prefix).
+
+REPLACE:base_impose_law_weight= {
+	value = 0.01
+
+	# Impose law is a fairly hostile act, AIs should use it mostly when angry at a subject
+	if = {
+		limit = {
+			has_attitude = {
+				who = scope:target_country
+				attitude = domineering
+			}
+		}
+		multiply = 0.5
+	}
+
+	# Non ideological unions make less use of this
+	if = {
+		limit = {
+			NOT = { power_bloc ?= { has_identity = identity:identity_ideological_union } }
+		}
+		multiply = 0.5
+	}
+
+	# Less likely to do this to subjects unless LD is low
+	if = {
+		limit = {
+			scope:target_country = {
+				is_subject = yes
+				liberty_desire > 25
+			}
+		}
+		multiply = 0.5
+	}
+
+	# Shouldn't care much about meddling in really tiny countries
+	if = {
+		limit = {
+			scope:target_country = {
+				gdp < 100000
+			}
+		}
+		multiply = 0.25
+	}
+	else_if = {
+		limit = {
+			scope:target_country = {
+				gdp < 250000
+			}
+		}
+		multiply = 0.5
+	}
+	else_if = {
+		limit = {
+			scope:target_country = {
+				gdp < 500000
+			}
+		}
+		multiply = 0.75
+	}
+
+	# Impact of AI strategies
+	if = {
+		limit = {
+			has_strategy = ai_strategy_international_socialism
+		}
+		multiply = 5
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_strategy = ai_strategy_anti_imperialism
+				has_strategy = ai_strategy_maintain_power_balance
+			}
+		}
+		multiply = 2
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_strategy = ai_strategy_armed_isolationism
+				has_strategy = ai_strategy_hardline_communist
+			}
+		}
+		multiply = 0.5
+	}
+
+	# Prevent AI from effectively abolishing the free state of krakow
+	# We should really do this in a systemic way in the future, maybe some kind of special subject interaction that guarantees them against legal meddling?
+	if = {
+		limit = {
+			exists = c:KRA
+			scope:target_country = { c:KRA ?= THIS }
+		}
+		multiply = 0.0
+	}
+}
+
+REPLACE:wanted_army_size_script_value = {
+	# How many levels of barracks should the AI have
+	# Using this value in other strategies will function additively
+	value = 0
+
+	# To increase base army size for small countries, capped at 1 million population
+	add = {
+		value = cached_ai_incorporated_population
+		divide = 250000 # 1 level of barracks per 250k incorporated population
+
+		max = 4
+	}
+
+	add = {
+		value = cached_ai_incorporated_population
+		divide = 250000 # 1 level of barracks per 250k incorporated population
+	}
+
+	add = {
+		value = cached_ai_unincorporated_population
+		divide = 1000000 # 1 level of barracks per 1 million unincorporated population
+	}
+
+	# Extra army size from rank
+	if = {
+		limit = { country_rank = rank_value:great_power }
+		add = 25
+	}
+	if = {
+		limit = { country_rank = rank_value:major_power }
+		add = 10
+	}
+
+	save_temporary_value_as = pre_overseas_empire_value
+
+	# Countries with a huge overseas subject population should focus more on navy
+	subtract = {
+		value = cached_ai_overseas_subject_population
+		divide = 50000000
+		max = {
+			value = scope:pre_overseas_empire_value
+			divide = 2
+		}
+	}
+
+	max = 200 # No more than 200 from population & rank
+
+	if = {
+		limit = {
+			cached_ai_incorporated_population > 0
+			cached_ai_incorporated_coastal_population > 0
+		}
+
+		add = {
+			value = fixed_income
+			multiply = {
+				value = 1
+				subtract = { # Coastal population reduces spending on army as that spending is needed for navy too
+					value = cached_ai_incorporated_coastal_population
+					divide = cached_ai_incorporated_population
+					divide = 4
+				}
+			}
+			divide = 2500 # 1 level of barracks per 2.5k income
+		}
+	}
+
+	# More advanced standing armies are expensive and should be smaller relative to population
+	if = {
+		limit = { has_technology_researched = divisional_organization }
+		multiply = 0.8
+	}
+
+	if = {
+		limit = { has_technology_researched = industrial_warfare }
+		multiply = 0.8
+	}
+
+	if = {
+		limit = { has_technology_researched = squad_specialist_weapons }
+		multiply = 0.8
+	}
+
+	if = {
+		limit = { has_technology_researched = armored_warfare }
+		multiply = 0.8
+	}
+	
+	# General multiplier for easy adjustment
+	multiply = 1.0
+
+	# Factor in strategies
+	if = {
+		limit = {
+			OR = {
+				has_strategy = ai_strategy_territorial_expansion
+				always = no
+				always = no
+				always = no
+			}
+		}
+		multiply = 1.25
+	}
+	else_if = {
+		limit = {
+			always = no
+		}
+		multiply = 2.0
+	}
+
+	if = {
+		limit = { has_law_or_variant = law_type:law_national_militia }
+		multiply = 0.33
+	}
+
+	if = {
+		limit = {
+			OR = {
+				has_journal_entry = je_prussia_of_the_balkans
+				always = no
+			}
+		}
+		multiply = 2.5
+	}
+
+
+	if = {
+		limit = {
+			capital ?= {
+				OR = {
+					is_in_geographic_region = geographic_region_england_old
+					is_in_geographic_region = geographic_region_north_sea_coast_old
+				}
+			}
+		}
+
+		multiply = 0.75
+	}
+
+	if = {
+		limit = {
+			has_journal_entry = je_lands_of_anarchy
+		}
+		multiply = 1.5 # More eager to enlarge army in general during the makhzen je
+	}
+	
+	# Multiply final value by diplomatic pact expenses ratio - countries paying a lot to pacts have lower spending ambitions
+	multiply = {
+		value = 1
+		subtract = diplomatic_pact_expense_ratio
+	}
+
+	min = {
+		value = 1
+
+		if = {
+			limit = {
+				has_journal_entry = je_sick_man_army
+			}
+			value = 125
+		}
+		if = { #if Mon is raiding, troops pay for themselves and are the countries main source of income
+			limit = {
+				has_journal_entry = je_montenegrin_raiding
+			}
+			value = 20
+		}
+		if = {
+			limit = {
+				has_journal_entry = je_prussia_of_the_balkans
+			}
+			value = 35
+		}
+
+		if = { #If accepted Negotiation quest, build barracks until JE ends
+			limit = {
+				has_journal_entry = je_negotiate_army_quest
+			}
+			add = {
+				every_interest_group = { #first get the desired app from the IG
+					limit = {
+						has_variable = desired_army_size
+					}
+					add = var:desired_army_size
+				}
+				divide = average_barracks_power_projection #divide by the amount of barracks this will need based on average barracks power projection
+				multiply = 1.10 #safety margin
+			}
+		}
+	}
+}
+
+REPLACE:wanted_marines_size_script_value = {
+	value = 0
+
+	# 1 marine per 1 mil coastal incorporated population
+	add = {
+		value = cached_ai_incorporated_coastal_population
+		divide = 1000000
+	}
+	# 1 marine per 5 million coastal unincorporated population
+	add = {
+		value = cached_ai_unincorporated_coastal_population
+		divide = 5000000
+	}
+	# 1 marine per 20 million population in direct overseas subjects
+	add = {
+		value = cached_ai_overseas_subject_population
+		divide = 20000000
+	}
+	max = 25 # No more than 25 from population
+	# 1 marine per 15k income, multiplied by relative incorporated coastal population to total incorporated population
+	if = {
+		limit = {
+			cached_ai_incorporated_population > 0
+			cached_ai_incorporated_coastal_population > 0
+		}
+		add = {
+			value = fixed_income
+			divide = cached_ai_incorporated_population
+			multiply = cached_ai_incorporated_coastal_population
+			divide = 15000
+		}
+	}
+	# Special logic for Great Britain - this should be reworked to be less specific later
+	if = {
+		limit = {
+			country_rank = rank_value:great_power
+			capital = {
+				OR = {
+					is_in_geographic_region = geographic_region_england_old
+					is_in_geographic_region = geographic_region_north_sea_coast_old
+				}
+			}
+		}
+		add = 10
+	}
+	else_if = { # GPs and MPs should want to maintain some marines
+		limit = { country_rank = rank_value:great_power }
+		add = 5
+	}
+	else_if = {
+		limit = { country_rank = rank_value:major_power }
+		add = 2
+	}
+	
+	# General multiplier for easy adjustment
+	multiply = 0.5
+	
+	# Less marines before we have steel ships
+	if = {
+		limit = { NOT = { has_technology_researched = naval_warfare } }
+		multiply = 0.5
+	}	
+
+	# Factor in strategies
+	if = {
+		limit = {
+			OR = {
+				has_strategy = ai_strategy_colonial_expansion
+				has_strategy = ai_strategy_economic_imperialism
+			}
+		}
+		multiply = 1.25
+	}
+	if = {
+		limit = { has_strategy = ai_strategy_armed_isolationism }
+		multiply = 0.5
+	}
+	if = {
+		limit = { 
+			OR = {
+				country_rank < rank_value:minor_power
+				is_country_type = unrecognized
+				always = no
+			}
+		}
+		multiply = 0
+	}
+	
+	# Multiply final value by diplomatic pact expenses ratio - countries paying a lot to pacts have lower spending ambitions
+	multiply = {
+		value = 1
+		subtract = diplomatic_pact_expense_ratio
+	}
+	
+	max = total_marine_capacity
+}
+
+REPLACE:wanted_navy_size_script_value = {
+	value = 0
+
+	# 1 ship per 500k coastal incorporated population
+	add = {
+		value = cached_ai_incorporated_coastal_population
+		divide = 500000
+	}
+	# 1 ship per 2 million coastal unincorporated population
+	add = {
+		value = cached_ai_unincorporated_coastal_population
+		divide = 2000000
+	}
+	# 1 ship per 10 million population in direct overseas subjects
+	add = {
+		value = cached_ai_overseas_subject_population
+		divide = 10000000
+	}
+	max = 100 # No more than 100 from population
+	# 1 ship per 5k income, multiplied by relative incorporated coastal population to total incorporated population
+	if = {
+		limit = {
+			cached_ai_incorporated_population > 0
+			cached_ai_incorporated_coastal_population > 0
+		}
+		add = {
+			value = fixed_income
+			divide = cached_ai_incorporated_population
+			multiply = cached_ai_incorporated_coastal_population
+			divide = 5000
+		}
+	}
+	# Special logic for Great Britain - this should be reworked to be less specific later
+	if = {
+		limit = {
+			country_rank = rank_value:great_power
+			capital = {
+				OR = {
+					is_in_geographic_region = geographic_region_england_old
+					is_in_geographic_region = geographic_region_north_sea_coast_old
+				}
+			}
+		}
+		add = 100
+	}
+	else_if = { # GPs and MPs should want to maintain a bit of a navy
+		limit = { country_rank = rank_value:great_power }
+		add = 25
+	}
+	else_if = {
+		limit = { country_rank = rank_value:major_power }
+		add = 10
+	}
+	
+	# General multiplier for easy adjustment
+	multiply = 0.75
+	
+	# More advanced ships require more crew
+	if = {
+		limit = { has_technology_researched = naval_warfare }
+		multiply = 1.15
+	}
+	if = {
+		limit = { has_technology_researched = screening_vessels }
+		multiply = 1.25
+	}
+	if = {
+		limit = { has_technology_researched = naval_aviation }
+		multiply = 1.25
+	}
+
+	# Journal related AI behaviours, choose this if you DONT care about the exact number of ships
+	if = {
+		limit = {
+			has_journal_entry = je_reconquista
+		}
+		multiply = 1.25
+	}
+
+	# Factor in strategies
+	if = {
+		limit = {
+			OR = {
+				has_strategy = ai_strategy_colonial_expansion
+				has_strategy = ai_strategy_economic_imperialism
+			}
+		}
+		multiply = 1.15
+	}
+	if = {
+		limit = { has_strategy = ai_strategy_armed_isolationism }
+		multiply = 0.75
+	}
+	if = {
+		limit = { country_rank < rank_value:major_power }
+		multiply = 0.5
+	}
+	if = {
+		limit = { is_country_type = unrecognized }
+		multiply = 0.5
+	}
+	if = {
+		limit = { always = no }
+		multiply = 0.25
+	}
+	
+	# Multiply final value by diplomatic pact expenses ratio - countries paying a lot to pacts have lower spending ambitions
+	multiply = {
+		value = 1
+		subtract = diplomatic_pact_expense_ratio
+	}	
+
+	# Journal related AI behaviours, choose this if you DO care about the exact number of ships
+	if = {
+		limit = {
+			has_journal_entry = je_hawaii
+		}
+		min = 25
+	}
+}
+
+REPLACE:flagship_score_for_ship = {
+	# More powerful ships should have higher scoring flagships
+	add = {
+		value = power_projection
+		divide = 10 # 1 point per 10 power projection
+	}
+
+	# Capital ships should have higher scoring flagships
+	if = {
+		limit = {
+			ship_group = ship_group:ship_group_surface_combatants
+		}
+		add = 20
+	}
+
+	# Stickyness factor to keep the same flagship for a while
+	if = {
+		limit = {
+			is_flagship = yes
+		}
+		multiply = 1.5
+	}
+}
+
+REPLACE:ship_mod_capital_doctrine = {
+	value = 1
+	if = {
+		limit = {
+			OR = {
+				always = no
+				has_strategy = ai_strategy_maintain_power_balance
+			}
+		}
+		multiply = ship_mod_doctrine_boost
+	}
+}
+
+REPLACE:ship_mod_jeune_ecole_doctrine = {
+	value = 1
+	if = {
+		limit = { always = no }
+		multiply = ship_mod_doctrine_boost
+	}
+}
+
+REPLACE:ship_mod_power_projection_doctrine = {
+	value = 1
+	if = {
+		limit = {
+			OR = {
+				always = no
+				has_strategy = ai_strategy_colonial_expansion
+				has_strategy = ai_strategy_economic_imperialism
+			}
+		}
+		multiply = ship_mod_doctrine_boost
+	}
+}
+
+REPLACE:ship_mod_merchant_navy_doctrine = {
+	value = 1
+	if = {
+		limit = { always = no }
+		multiply = ship_mod_doctrine_boost
+	}
+}

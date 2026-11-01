@@ -1,0 +1,902 @@
+﻿# CWP fix patch for vanilla common/script_values/00_diplomacy_values.txt
+# Generated: top-level blocks below are faithful copies of the vanilla blocks with only the invalid references changed.
+# Every block uses REPLACE: so the vanilla definition is overridden; this file loads after the vanilla one (zz_ prefix).
+
+REPLACE:liberty_desire_weekly_change = { #AKA liberty_desire_weekly_progress
+	add = {
+		value = 0.1
+		desc = "base_value"
+	}
+
+	if = {
+		limit = { root.second_country = { has_government_type = gov_chartered_company } }
+		add = {
+			value = -0.2
+			desc = "gov_chartered_company"
+		}
+	}
+
+	# Fervor and primary cultures
+	if = {
+		limit = {
+			root.second_country = {
+				NOT = {
+					has_law_or_variant = law_type:law_subjecthood
+				}
+			}
+			NOT = {
+				root.second_country = {
+					any_primary_culture = {
+						is_primary_culture_of = root.first_country
+					}
+				}
+			}
+		}
+		add = {
+			desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_CULTURAL_FERVOUR"
+			value = root.second_country.country_fervor_primary_culture #grabs culture with highest fervor
+			subtract = 25
+			divide = 150
+			min = -0.10
+			max = 0.5
+		}
+	}
+	else_if = { #if shares primary culture and no others
+		limit = {
+			root.second_country = {
+				any_primary_culture = {
+					percent = 1
+					is_primary_culture_of = root.first_country
+				}
+			}
+		}
+		add = { #extra for overlord culture's fervor. Note many overlord cultures do have high fervor because of literacy.
+			desc = "LIBERTY_DESIRE_SHARED_PRIMARY_CULTURE"
+			add = -0.05 #base for overlord having same culture
+			root.second_country = {
+				every_primary_culture = {
+					limit = {
+						is_primary_culture_of = root.first_country
+					}
+					add = culture_current_fervor
+					subtract = 25
+					divide = 150
+					divide = root.second_country.num_primary_cultures
+					multiply = -1
+					max = 0
+					min = -0.2
+				}
+			}
+		}
+	}
+	else_if = { #if shares primary culture and mix of others
+		limit = {
+			root.second_country = {
+				any_primary_culture = {
+					is_primary_culture_of = root.first_country
+				}
+			}
+		}
+		add = {
+			desc = "LIBERTY_DESIRE_SHARED_PRIMARY_CULTURE_MIX"
+			add = { #extra for overlord culture's fervor. Note many overlord cultures do have high fervor because of literacy.
+				root.second_country = {
+					every_primary_culture = {
+						limit = {
+							is_primary_culture_of = root.first_country
+						}
+						add = culture_current_fervor
+						subtract = 25
+						divide = 150
+						divide = root.second_country.num_primary_cultures
+						multiply = -1
+						max = 0
+						min = -0.25
+					}
+					if = {
+						limit = {
+							NOT = {
+								has_law_or_variant = law_type:law_subjecthood
+							}
+						}
+						every_primary_culture = {
+							limit = {
+								NOT = {
+									is_primary_culture_of = root.first_country
+								}
+							}
+							add = culture_current_fervor
+							subtract = 25
+							divide = 150
+							divide = root.second_country.num_primary_cultures
+							min = 0
+							max = 0.50
+						}
+					}
+				}
+			}
+		}
+	}
+
+	# Special - DEI collapses if independent
+	if = {
+		limit = {
+			root.first_country = { c:NET ?= this }
+			root.second_country = { c:IDS ?= this }
+		}
+		add = {
+			value = -0.2
+			desc = "DEI"
+		}
+	}
+
+	# Special - Pacify the Steppes
+	if = {
+		limit = {
+			root.first_country = { has_journal_entry = je_pacify_the_steppes }
+			root.second_country = { has_government_type = gov_chiefdom }
+		}
+		add = {
+			value = -0.2
+			desc = "pacify_the_steppe_modifier"
+		}
+	}
+
+	#If there is a slave revolt movement, overlords' armies are useful.
+	if = {
+		limit = {
+			root.second_country = {
+				any_political_movement = {
+					is_political_movement_type = movement_slave_revolt
+				}
+			}
+		}
+		add = {
+			desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_SLAVE_REVOLT"
+			add = { #value will be negative, overlords help put down revolts
+				root.second_country = {
+					every_political_movement = {
+						limit = {
+							is_political_movement_type = movement_slave_revolt
+						}
+						add = this.political_movement_radicalism
+						multiply = 0.10
+						add = {
+							add = this.political_movement_support
+							multiply = 0.20
+						}
+					}
+				}
+			}
+			multiply = -1
+			min = -0.10
+			if = { #special case in Cuban independence
+				limit = {
+					root.second_country = {
+						has_variable = slaves_work_with_independence_movement
+					}
+				}
+				multiply = -2 #turn value positive
+				max = 0.25
+			}
+		}
+	}
+
+	# Cuban Afro-Caribeno
+	if = {
+		limit = {
+			root.second_country = {
+				c:CUB ?= this
+				has_variable = slaves_work_with_independence_movement
+			}
+		}
+		root.second_country = {
+			cu:afro_caribeno = {
+				add = culture_current_fervor
+				subtract = 25
+				divide = 150
+				multiply = -1
+				max = 0
+				min = -0.2
+			}
+		}
+	}
+
+	#Any Sovereignists in government
+	if = {
+		limit = {
+			root.second_country = {
+				any_scope_character = {
+					has_ideology = ideology:ideology_sovereignist_leader
+					OR = {
+						is_ruler_of_own_country = yes
+						AND = {
+							is_interest_group_leader = yes
+							interest_group ?= {
+								is_in_government = yes
+							}
+						}
+					}
+				}
+			}
+		}
+		add = {
+			add = 0.07
+			desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_SOVEREIGNIST_IN_GOV"
+		}
+	}
+
+	#relations
+	add = {
+		if = {
+			limit = { "root.second_country.relations(root.first_country)" < relations_threshold:hostile }
+			add = {
+				add = 0.5
+				desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_RELATIONS_HOSTILE"
+			}
+		}
+		else_if = {
+			limit = { "root.second_country.relations(root.first_country)" < relations_threshold:cold }
+			add = {
+				add = 0.25
+				desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_RELATIONS_COLD"
+			}
+		}
+		else_if = {
+			limit = { "root.second_country.relations(root.first_country)" < relations_threshold:poor }
+			add = {
+				add = 0.10
+				desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_RELATIONS_POOR"
+			}
+		}
+		else_if = {
+			limit = { "root.second_country.relations(root.first_country)" < relations_threshold:cordial }
+			add = {
+				add = 0
+				desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_RELATIONS_NEUTRAL"
+			}
+		}
+		else_if = {
+			limit = { "root.second_country.relations(root.first_country)" >= relations_threshold:friendly }
+			add = {
+				add = -0.1
+				desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_RELATIONS_FRIENDLY"
+			}
+		}
+		else_if = {
+			limit = { "root.second_country.relations(root.first_country)" >= relations_threshold:amicable }
+			add = {
+				add = -0.05
+				desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_RELATIONS_AMICABLE"
+			}
+		}
+		else_if = {
+			limit = { "root.second_country.relations(root.first_country)" >= relations_threshold:cordial }
+			add = {
+				add = -0.025
+				desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_RELATIONS_CORDIAL"
+			}
+		}
+	}
+
+	#infamy
+	add = {
+		if = {
+			limit = { root.first_country.infamy >= infamy_threshold:pariah }
+			add = 2.0
+		}
+		else_if = {
+			limit = { root.first_country.infamy >= infamy_threshold:notorious }
+			add = 0.25
+		}
+		else_if = {
+			limit = { root.first_country.infamy >= infamy_threshold:infamous }
+			add = 0.1
+		}
+
+		desc = "concept_infamy"
+	}
+
+	#prestige
+	if = {
+		limit = { root.first_country.prestige < 1 }
+		add = {
+			add = 1
+			desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_NO_PRESTIGE_POSITIVE"
+		}
+	}
+	else_if = {
+		limit = { root.second_country.prestige < 1 }
+		add = {
+			add = -0.10
+			desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_NO_PRESTIGE_NEGATIVE"
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				is_diplomatic_action_type = protectorate
+				is_diplomatic_action_type = tributary
+			}
+		}
+		if = {
+			limit = {
+				root.first_country.prestige > {
+					add = root.second_country.prestige
+					# determines the multiple of prestige the overlord must have achieved in order for prestige advantage to have a negative impact on Liberty Desire rather than positive
+					multiply = 1.5
+				}
+			}
+			add = {
+				add = root.first_country.prestige
+				divide = root.second_country.prestige
+				divide = 150
+				min = 0.01
+				max = 0.05
+				multiply = -1
+				desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_PRESTIGE_DIFFERENCE_1_5_NEGATIVE"
+			}
+		}
+		else = {
+			add = {
+				add = root.second_country.prestige
+				multiply = 1.5
+				divide = root.first_country.prestige
+				divide = prestige_to_libery_desire_factor
+				max = 0.5
+				desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_PRESTIGE_DIFFERENCE_1_5_POSITIVE"
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				is_diplomatic_action_type = personal_union
+				is_diplomatic_action_type = dominion
+				is_diplomatic_action_type = chartered_company
+			}
+		}
+		if = {
+			limit = {
+				root.first_country.prestige > {
+					add = root.second_country.prestige
+					# determines the multiple of prestige the overlord must have achieved in order for prestige advantage to have a negative impact on Liberty Desire rather than positive
+					multiply = 2.0
+				}
+			}
+			add = {
+				add = root.first_country.prestige
+				divide = root.second_country.prestige
+				divide = 200
+				min = 0.01
+				max = 0.05
+				multiply = -1
+				desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_PRESTIGE_DIFFERENCE_2_0_NEGATIVE"
+			}
+		}
+		else = {
+			add = {
+				add = root.second_country.prestige
+				multiply = 2.0
+				divide = root.first_country.prestige
+				divide = prestige_to_libery_desire_factor
+				max = 0.5
+				desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_PRESTIGE_DIFFERENCE_2_0_POSITIVE"
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				is_diplomatic_action_type = puppet
+				is_diplomatic_action_type = vassal
+				is_diplomatic_action_type = colony
+				is_diplomatic_action_type = crown_land
+			}
+		}
+		if = {
+			limit = {
+				root.first_country.prestige > {
+					add = root.second_country.prestige
+					# determines the multiple of prestige the overlord must have achieved in order for prestige advantage to have a negative impact on Liberty Desire rather than positive
+					multiply = 3
+				}
+			}
+			add = {
+				add = root.first_country.prestige
+				divide = root.second_country.prestige
+				divide = 300
+				min = 0.01
+				max = 0.10
+				multiply = -1
+				desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_PRESTIGE_DIFFERENCE_3_0_NEGATIVE"
+			}
+		}
+		else = {
+			add = {
+				add = root.second_country.prestige
+				multiply = 3
+				divide = root.first_country.prestige
+				divide = prestige_to_libery_desire_factor
+				max = 0.5
+				desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_PRESTIGE_DIFFERENCE_3_0_POSITIVE"
+			}
+		}
+	}
+
+	#army projection power
+	if = {
+		limit = { root.first_country.army_power_projection < 1 }
+		add = {
+			add = 1
+			desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_NO_ARMY_POWER_PROJECTION_POSITIVE"
+		}
+	}
+	else_if = {
+		limit = { root.second_country.army_power_projection < 1 }
+		add = {
+			add = -0.25 #get an army
+			desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_NO_ARMY_POWER_PROJECTION_NEGATIVE"
+		}
+	}
+	else_if = { #special case for BIC, DEI and RAJ, whose armies are huge compared to overlord, and who are basically the colonial powers influence in the region.
+		limit = {
+			root.second_country = {
+				OR = {
+					c:BIC ?= this
+					c:RAJ ?= this
+					c:IDS ?= this
+				}
+			}
+		}
+		if = {
+			limit = {
+				root.first_country.army_power_projection > {
+					add = root.second_country.army_power_projection
+					# determines the multiple of army_power_projection the overlord must have achieved in order for army_power_projection advantage to have a negative impact on Liberty Desire rather than positive
+					multiply = 10
+				}
+			}
+			add = {
+				add = root.first_country.army_power_projection
+				divide = root.second_country.army_power_projection
+				divide = 250
+				min = 0.01
+				max = 0.10
+				multiply = -1
+				desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_ARMY_POWER_PROJECTION_BIC_NEGATIVE"
+			}
+		}
+		else = {
+			add = { # same army power or more as overlord will give special India value instead of normal max 0.50
+				add = root.second_country.army_power_projection
+				multiply = 10
+				divide = root.first_country.army_power_projection
+				divide = army_projection_to_libery_desire_factor
+				max = 0.25  #Special max for India
+				desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_ARMY_POWER_PROJECTION_BIC_POSITIVE"
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				is_diplomatic_action_type = protectorate
+				is_diplomatic_action_type = tributary
+			}
+		}
+		if = {
+			limit = {
+				root.first_country.army_power_projection > {
+					add = root.second_country.army_power_projection
+					# determines the multiple of army_power_projection the overlord must have achieved in order for army_power_projection advantage to have a negative impact on Liberty Desire rather than positive
+					multiply = 5
+				}
+			}
+			add = {
+				add = root.first_country.army_power_projection
+				divide = root.second_country.army_power_projection
+				divide = 100
+				min = 0.01
+				max = 0.10
+				multiply = -1
+				desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_ARMY_POWER_PROJECTION_DIFFERENCE_5_0_NEGATIVE"
+			}
+		}
+		else = {
+			add = { # same army power as overlord, will give +0.5, steps up towards that after having more than a fifth of overlords army power
+				add = root.second_country.army_power_projection
+				multiply = 5
+				divide = root.first_country.army_power_projection
+				divide = army_projection_to_libery_desire_factor
+				max = 0.5
+				desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_ARMY_POWER_PROJECTION_DIFFERENCE_5_0_POSITIVE"
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				is_diplomatic_action_type = dominion
+				is_diplomatic_action_type = personal_union
+				is_diplomatic_action_type = chartered_company
+			}
+		}
+		if = {
+			limit = {
+				root.first_country.army_power_projection > {
+					add = root.second_country.army_power_projection
+					multiply = 7.5
+				}
+			}
+			add = {
+				add = root.first_country.army_power_projection
+				divide = root.second_country.army_power_projection
+				divide = 175
+				min = 0.01
+				max = 0.10
+				multiply = -1
+				desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_ARMY_POWER_PROJECTION_DIFFERENCE_7_5_NEGATIVE"
+			}
+		}
+		else = {
+			add = {
+				add = root.second_country.army_power_projection
+				multiply = 7.5
+				divide = root.first_country.army_power_projection
+				divide = army_projection_to_libery_desire_factor
+				max = 0.5
+				desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_ARMY_POWER_PROJECTION_DIFFERENCE_7_5_POSITIVE"
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				is_diplomatic_action_type = puppet
+				is_diplomatic_action_type = vassal
+				is_diplomatic_action_type = colony
+				is_diplomatic_action_type = crown_land
+			}
+		}
+		if = {
+			limit = {
+				root.first_country.army_power_projection > {
+					add = root.second_country.army_power_projection
+					multiply = 10
+				}
+			}
+			add = {
+				add = root.first_country.army_power_projection
+				divide = root.second_country.army_power_projection
+				divide = 250
+				min = 0.01
+				max = 0.10
+				multiply = -1
+				desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_ARMY_POWER_PROJECTION_DIFFERENCE_10_0_NEGATIVE"
+			}
+		}
+		else = {
+			add = {
+				add = root.second_country.army_power_projection
+				multiply = 10
+				divide = root.first_country.army_power_projection
+				divide = army_projection_to_libery_desire_factor
+				max = 0.5
+				desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_ARMY_POWER_PROJECTION_DIFFERENCE_10_0_POSITIVE"
+			}
+		}
+	}
+
+	# overlord's overlord has a huge army, scales up to a great power alliance
+	if = {
+		limit = {
+			root.first_country = {
+				is_subject = yes
+			}
+			root.first_country.overlord.army_power_projection > 0
+			root.second_country.army_power_projection > 0
+		}
+		if = {
+			limit = {
+				root.first_country.overlord.army_power_projection > {
+					add = root.second_country.army_power_projection
+					multiply = 10
+				}
+			}
+			add = {
+				add = root.first_country.overlord.army_power_projection
+				divide = root.second_country.army_power_projection
+				divide = 250
+				min = 0.01
+				max = 0.10
+				multiply = -1
+				desc = "LIBERTY_DESIRE_OVERLORD_ARMY_POWER_PROJECTION_DIFFERENCE_10_0_NEGATIVE"
+			}
+		}
+	}
+
+	# alliances and defensive pacts of first country (partially counters support independence). Negative.
+	first_country = {
+		add = {
+			if = { #alliances
+				limit = {
+					any_scope_treaty = {
+						binds = root.first_country
+						any_scope_article = {
+							has_type = alliance
+						}
+					}
+				}
+				add = {
+					every_scope_ally = {
+						limit = {
+							country_rank >= rank_value:great_power
+						}
+						add = 0.10
+					}
+					every_scope_ally = {
+						limit = {
+							country_rank >= rank_value:major_power
+						}
+						add = 0.05
+					}
+					every_scope_ally = {
+						limit = {
+							country_rank >= rank_value:minor_power
+						}
+						add = 0.03
+					}
+				}
+			}
+			if = {  #defensive pacts, try more performative way
+				limit = {
+					root.first_country = {
+						any_scope_treaty = {
+							binds = root.first_country
+							any_scope_article = {
+								has_type = defensive_pact
+							}
+						}
+					}
+				}
+				every_country = {
+					limit = {
+						NOT = {
+							this = root.first_country
+						}
+						country_rank >= rank_value:great_power
+						any_scope_treaty = {
+							binds = root.first_country
+							any_scope_article = {
+								has_type = defensive_pact
+							}
+						}
+					}
+					add = 0.05
+				}
+				every_country = {
+					limit = {
+						NOT = {
+							this = root.first_country
+						}
+						country_rank < rank_value:great_power
+						country_rank >= rank_value:major_power
+						any_scope_treaty = {
+							binds = root.first_country
+							any_scope_article = {
+								has_type = defensive_pact
+							}
+						}
+					}
+					add = 0.03
+				}
+			}
+			desc = "LIBERTY_DESIRE_NEGATIVE_OVERLORD_ALLIANCES"
+			min = 0
+			max = 0.25
+			multiply = -1
+		}
+	}
+	#lobbies
+	second_country = {
+		add = {
+			every_interest_group = {
+				limit = {
+					is_member_of_lobby = lobby_type:lobby_pro_overlord
+					is_in_government = yes
+				}
+				subtract = ig_clout
+			}
+			divide = 2
+			desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_PRO_LOBBY_INTEREST_GROUP_IN_GOVERNMENT"
+		}
+		add = {
+			every_interest_group = {
+				limit = {
+					is_member_of_lobby = lobby_type:lobby_pro_overlord
+					is_in_government = no
+				}
+				subtract = ig_clout
+			}
+			divide = 4
+			desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_PRO_LOBBY_INTEREST_GROUP_IN_OPPOSITION"
+		}
+		add = {
+			every_interest_group = {
+				limit = {
+					is_member_of_lobby = lobby_type:lobby_anti_overlord
+					is_in_government = yes
+				}
+				add = ig_clout
+			}
+			divide = 2
+			desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_ANTI_LOBBY_INTEREST_GROUP_IN_GOVERNMENT"
+		}
+		add = {
+			every_interest_group = {
+				limit = {
+					is_member_of_lobby = lobby_type:lobby_anti_overlord
+					is_in_government = no
+				}
+				add = ig_clout
+			}
+			divide = 4
+			desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_ANTI_LOBBY_INTEREST_GROUP_IN_OPPOSITION"
+		}
+	}
+
+	#economic dependence
+	if = {
+		limit = { "root.second_country.economic_dependence(root.first_country)" > 0 }
+		add = {
+			value = 1
+			subtract = "root.second_country.economic_dependence(root.first_country)"
+			divide = 10
+			desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_ECONOMIC_DEPENDENCE"
+		}
+	}
+	else = {
+		add = {
+			value = 1
+			subtract = "root.second_country.economic_dependence(root.first_country)"
+			divide = 3
+			desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_ECONOMIC_DEPENDENCE"
+		}
+	}
+
+	#economic dependence if in different markets
+	if = {
+		limit = {
+			root.second_country.market = root.first_country.market
+			root.second_country.capital = { is_isolated_from_market = yes }
+		}
+		add = {
+			value = 1
+			desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_ISOLATED_FROM_MARKET"
+		}
+	}
+	else_if = {
+		limit = {
+			root.second_country.market = root.first_country.market
+			root.first_country.supply_network_strength < 1
+			root.second_country = { has_port_country = yes }
+			NOT = { root.second_country = { is_adjacent_to_country = root.first_country }}
+		}
+		add = {
+			value = 1
+			subtract = root.first_country.supply_network_strength
+			desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_LOW_SUPPLY_NETWORK_STRENGTH"
+		}
+	}
+
+	#power bloc sacred civics effect
+	if = {
+		limit = {
+			root.first_country = {
+				is_in_power_bloc = yes
+				power_bloc = {
+					OR = {
+						has_principle = principle:principle_sacred_civics_2
+						has_principle = principle:principle_sacred_civics_3
+					}
+				}
+				religion = root.second_country.religion
+			}
+		}
+		 add = {
+		 	value = -0.1 desc =
+		 	"LIBERTY_DESIRE_WEEKLY_CHANGE_SACRED_CIVICS"
+		 }
+	}
+
+	#support independence boost. See pact for values. Scales by rank
+	add = {
+		value = root.second_country.liberty_desire_weekly_progress_from_support_independence
+		desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_FROM_SUPPORTING_INDEPENDENCE"
+	}
+
+	#liberty desire modifiers on subject
+	add = {
+		value = root.second_country.modifier:country_liberty_desire_add
+		desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_DESC_ADDITIONAL_ADDS"
+	}
+
+	#liberty desire modifiers on overlord
+	add = {
+		value = root.first_country.modifier:country_liberty_desire_of_subjects_add
+		desc = "LIBERTY_SUBJECT_DESIRE_WEEKLY_CHANGE_DESC_ADDITIONAL_ADDS"
+	}
+
+	if = {
+		limit = {
+			ROOT.first_country = { has_law_or_variant = law_type:law_isolationism }
+		}
+		add = {
+            value = 0.2
+			desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_OVERLORD_ISOLATIONISM"
+		}
+	}
+
+	save_temporary_value_as = pre_scaling_value
+
+	#apply scaling
+	if = {
+		limit = {
+			scope:pre_scaling_value < 0
+			second_country = {
+				liberty_desire < 50
+			}
+		}
+		multiply = {
+			add = second_country.liberty_desire
+			divide = 50
+			desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_SCALING_LOW"
+		}
+		max = -0.01
+	}
+	else_if = {
+		limit = {
+			scope:pre_scaling_value > 0
+			second_country = {
+				liberty_desire > 50
+			}
+		}
+		multiply = {
+			add = 100
+			subtract = second_country.liberty_desire
+			divide = 50
+			desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_SCALING_HIGH"
+		}
+		min = 0.01
+	}
+
+	save_temporary_value_as = pre_mult_modifiers_value
+
+	multiply = {
+		value = 1
+		if = {
+			limit = { scope:pre_mult_modifiers_value > 0 }
+			add = root.second_country.modifier:country_liberty_desire_increase_mult
+		}
+		else_if = {
+			limit = { scope:pre_mult_modifiers_value < 0 }
+			add = root.second_country.modifier:country_liberty_desire_decrease_mult
+		}
+		min = 0
+		desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_DESC_ADDITIONAL_MULTS"
+	}
+
+	if = {
+		limit = {
+			root.second_country = {
+				has_truce_with = root.first_country
+				scope:pre_mult_modifiers_value > 0
+			}
+		}
+		multiply = {
+			value = 0.5
+			desc = "LIBERTY_DESIRE_WEEKLY_CHANGE_TRUCE"
+		}
+	}
+}

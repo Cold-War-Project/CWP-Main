@@ -1,0 +1,1443 @@
+﻿# CWP fix patch for vanilla common/scripted_effects/00_victoria_ep2_scripted_effects.txt
+# Each block below is a REPLACE: of the vanilla top-level block with dead 1836-era references mapped to CWP equivalents or removed.
+# See _proposed_fixes/_notes/04_scripted_effects.md
+
+REPLACE:country_ezo_generate_next_japanese_shogun = { # Used in the Ezo content - 
+	if = {
+		limit = {
+			always = no
+			NOT = {
+				always = no
+			}
+			game_date >= 1793.6.22
+		}
+	}
+	else_if = {
+		limit = {
+			always = no
+			NOT = {
+				always = no
+			}
+			game_date >= 1824.5.6
+		}
+	}
+	else_if = {
+		limit = {
+			always = no
+			NOT = {
+				always = no
+			}
+			game_date >= 1846.7.16
+		}
+	}
+	else_if = {
+		limit = {
+			always = no
+			NOT = {
+				always = no
+			}
+			game_date >= 1837.10.28
+		}
+	}
+	else_if = {
+		limit = {
+			always = no
+			NOT = {
+				always = no
+			}
+			game_date >= 1863.8.24
+		}
+	}
+	else_if = {
+		limit = {
+			c:JAP ?= {
+				any_scope_character = {
+					character_is_valid_for_events = yes
+					NOR = {
+						is_ruler_of_own_country = yes
+						is_heir_of_own_country = yes
+					}
+					has_variable = house_tokugawa
+				}
+			}
+		}
+		c:JAP ?= {
+			ordered_scope_character = {
+				limit = {
+					character_is_valid_for_events = yes
+					NOR = {
+						is_ruler_of_own_country = yes
+						is_heir_of_own_country = yes
+					}
+					has_variable = house_tokugawa
+				}
+				order_by = prominence
+				transfer_character = c:EZO
+				set_character_as_ruler = yes
+			}
+		}
+	}
+	else = {
+	}
+}
+
+REPLACE:country_ezo_setup = {
+	custom_tooltip = {
+		text = establish_ezo_republic_tt
+		every_scope_character = {
+			limit = {
+				has_variable = tokugawa_exile
+			}
+			transfer_character = c:EZO
+		}
+		s:STATE_HOKKAIDO ?= {
+			random_scope_state = {
+				limit = {
+					owner ?= scope:tokugawa_scope
+				}
+				set_state_owner = c:EZO
+			}
+		}
+		c:EZO ?= {
+			copy_laws = scope:tokugawa_scope
+			activate_law = law_type:law_presidential_republic
+			hidden_effect = { 
+			}
+			scope:tokugawa_exile_leader_scope ?= {
+				set_character_as_ruler = yes
+			}
+			generate_ezo_military = yes
+			hidden_effect = {
+				clear_ownership_transfer_fleet = yes
+			}
+		}
+	}
+	c:EZO ?= {
+		if = {
+			limit = {
+				NOT = {
+					has_law = law_type:law_landed_voting
+				}
+			}
+			activate_law = law_type:law_landed_voting
+		}
+		call_election = {
+			months = 1
+		}
+		remove_primary_culture = cu:ainu
+		set_state_religion = c:JAP.religion
+		set_variable = ezo_republic_var
+		set_social_hierarchy = edo_system
+		capital ?= {
+			STATE_HOKKAIDO_state_name_assign = yes
+		}
+	}
+}
+
+REPLACE:JAP_character_generate_kishu_daimyo = { # Owner = country, ROOT = predecessor
+	owner = {
+		if = {
+			limit = {
+				s:STATE_KANSAI ?= {
+					var:daimyo_chain_id = 0
+				}
+				game_date >= 1820.6.8
+			}
+		}
+		else_if = {
+			limit = {
+				s:STATE_KANSAI ?= {
+					var:daimyo_chain_id = 1
+				}
+			}
+			if = {
+				limit = {
+					game_date >= 1846.7.16
+					NOT = {
+						any_scope_character = {
+							always = no
+						}
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					game_date >= 1844.3.1
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				s:STATE_KANSAI ?= {
+					var:daimyo_chain_id = 2
+				}
+				game_date >= 1844.3.1
+				NOT = {
+					any_scope_character = {
+						always = no
+					}
+				}
+			}
+		}
+		else = { # Kishu people were typically Landowners
+			create_character = {
+				last_name = Tokugawa
+				noble = yes
+				culture = cu:japanese
+				role = character_role_magnate
+				role = character_role_politician
+				home_region = STATE_KANSAI
+				interest_group = ig_landowners
+				on_created = {
+					set_variable = house_tokugawa
+					if = {
+						limit = {
+							NOT = {
+								has_global_variable = japan_daimyo_abolished
+							}
+						}
+						set_variable = { name = daimyo_var value = s:STATE_KANSAI }
+					}
+					designate_as_shinpan_daimyo = yes
+				}
+			}
+		}
+		s:STATE_KANSAI ?= {
+			change_variable = { name = daimyo_chain_id add = 1 }
+		}
+	}
+}
+
+REPLACE:iwakura_character_change_ideology_with_world_politics = {
+	random_list = {
+		1 = {
+			set_ideology = ideology:ideology_modernizer_leader
+		}
+		1 = { # Land Reformer
+			trigger = {
+				owner = { has_variable = iwakura_world_political_progressiveness }
+				owner.var:iwakura_world_political_progressiveness >= 20 # Note - Land Reformer's average progressiveness is 43.75
+				ideology_land_reformer_valid_trigger = yes
+				owner ?= {
+					any_in_list = {
+						variable = iwakura_mission_law_learnings
+						OR = {
+							law_type:law_peasant_proprietorship ?= this.type
+							law_type:law_homesteading ?= this.type
+						}
+					}
+				}
+			}
+			modifier = {
+				owner ?= {
+					every_in_list = {
+						variable = iwakura_mission_law_learnings
+						limit = {
+							OR = {
+								law_type:law_peasant_proprietorship ?= this.type
+								law_type:law_homesteading ?= this.type
+							}
+						}
+						add = 1
+					}
+				}
+			}
+			custom_tooltip_no_bullet = land_reform_laws_in_foreign_countries_tt
+			set_ideology = ideology:ideology_land_reformer
+		}
+		1 = { # Utopian
+			trigger = {
+				owner = { has_variable = iwakura_world_political_progressiveness }
+				owner.var:iwakura_world_political_progressiveness >= 75 # Note - Utopian's average progressiveness is 101.38
+				ideology_utopian_valid_trigger = yes
+				owner ?= {
+					any_in_list = {
+						variable = iwakura_mission_law_learnings
+						OR = { # Various laws Utopians like
+							law_type:law_peasant_proprietorship ?= this.type
+							law_type:law_homesteading ?= this.type
+							law_type:law_collectivized_agriculture ?= this.type
+							law_type:law_cooperative_ownership ?= this.type
+							law_type:law_council_republic ?= this.type
+							law_type:law_worker_protections ?= this.type
+						}
+					}
+				}
+			}
+			modifier = {
+				owner ?= {
+					every_in_list = {
+						variable = iwakura_mission_law_learnings
+						limit = {
+							OR = { # Various laws Utopians like
+								law_type:law_peasant_proprietorship ?= this.type
+								law_type:law_homesteading ?= this.type
+								law_type:law_collectivized_agriculture ?= this.type
+								law_type:law_cooperative_ownership ?= this.type
+								law_type:law_council_republic ?= this.type
+								law_type:law_worker_protections ?= this.type
+							}
+						}
+						add = 1
+					}
+				}
+			}
+			custom_tooltip_no_bullet = socialist_laws_in_foreign_countries_tt
+			set_ideology = ideology:ideology_utopian
+		}
+		1 = { # Market Liberal
+			trigger = {
+				owner = { has_variable = iwakura_world_political_progressiveness }
+				owner.var:iwakura_world_political_progressiveness >= 12.5 # Note - Market Liberal's average progressiveness is 12.5
+				ideology_market_liberal_valid_trigger = yes
+				owner ?= {
+					any_in_list = {
+						variable = iwakura_mission_law_learnings
+						OR = { # Various laws Market Liberals like
+							law_type:law_laissez_faire ?= this.type
+							law_type:law_free_trade ?= this.type
+							law_type:law_commercialized_agriculture ?= this.type
+							law_type:law_combination_acts ?= this.type
+						}
+					}
+				}
+			}
+			modifier = {
+				owner ?= {
+					every_in_list = {
+						variable = iwakura_mission_law_learnings
+						limit = {
+							OR = { # Various laws Market Liberals like
+								law_type:law_laissez_faire ?= this.type
+								law_type:law_free_trade ?= this.type
+								law_type:law_commercialized_agriculture ?= this.type
+								law_type:law_combination_acts ?= this.type
+							}
+						}
+						add = 1
+					}
+				}
+			}
+			custom_tooltip_no_bullet = market_liberal_laws_in_foreign_countries_tt
+			set_ideology = ideology:ideology_market_liberal
+		}
+		1 = { # Protectionist
+			trigger = {
+				owner = { has_variable = iwakura_world_political_progressiveness }
+				owner.var:iwakura_world_political_progressiveness >= 10 # Note - Protectionist's average progressiveness is 37.5
+				ideology_protectionist_valid_trigger = yes
+				owner ?= {
+					any_in_list = {
+						variable = iwakura_mission_law_learnings
+						OR = { # Various laws Protectionists like.type
+							law_type:law_protectionism ?= this.type
+							law_type:law_interventionism ?= this.type
+						}
+					}
+				}
+			}
+			modifier = {
+				owner ?= {
+					every_in_list = {
+						variable = iwakura_mission_law_learnings
+						limit = {
+							OR = { # Various laws Protectionists like.type
+								law_type:law_protectionism ?= this.type
+								law_type:law_interventionism ?= this.type
+							}
+						}
+						add = 1
+					}
+				}
+			}
+			custom_tooltip_no_bullet = protectionist_laws_in_foreign_countries_tt
+			set_ideology = ideology:ideology_protectionist
+		}
+		1 = { # Liberal
+			trigger = {
+				owner = { has_variable = iwakura_world_political_progressiveness }
+				owner.var:iwakura_world_political_progressiveness >= 25 # Note - Liberal's average progressiveness is 64.06
+				ideology_liberal_leader_valid_trigger = yes
+				owner ?= {
+					any_in_list = {
+						variable = iwakura_mission_law_learnings
+						OR = { # Various laws Liberals like
+							law_type:law_universal_suffrage ?= this.type
+							law_type:law_census_voting ?= this.type
+							law_type:law_wealth_voting ?= this.type
+							law_type:law_elected_bureaucrats ?= this.type
+							law_type:law_national_guard ?= this.type
+							law_type:law_national_guard ?= this.type
+							law_type:law_protected_speech ?= this.type
+							law_type:law_right_of_assembly ?= this.type
+						}
+					}
+				}
+			}
+			modifier = {
+				owner ?= {
+					every_in_list = {
+						variable = iwakura_mission_law_learnings
+						limit = {
+							OR = { # Various laws Liberals like
+								law_type:law_universal_suffrage ?= this.type
+								law_type:law_census_voting ?= this.type
+								law_type:law_wealth_voting ?= this.type
+								law_type:law_elected_bureaucrats ?= this.type
+								law_type:law_national_guard ?= this.type
+								law_type:law_national_guard ?= this.type
+								law_type:law_protected_speech ?= this.type
+								law_type:law_right_of_assembly ?= this.type
+							}
+						}
+						add = 1
+					}
+				}
+			}
+			custom_tooltip_no_bullet = liberal_laws_in_foreign_countries_tt
+			set_ideology = ideology:ideology_liberal_leader
+		}
+		1 = { # Positivist
+			trigger = {
+				owner = { has_variable = iwakura_world_political_progressiveness }
+				owner.var:iwakura_world_political_progressiveness >= 25 # Note - Positivist's average progressiveness is 37.5
+				ideology_positivist_valid_trigger = yes
+				owner ?= {
+					any_in_list = {
+						variable = iwakura_mission_law_learnings
+						OR = { # Various laws Positivists like
+							law_type:law_state_atheism ?= this.type
+							law_type:law_technocracy ?= this.type
+							law_type:law_appointed_bureaucrats ?= this.type
+							law_type:law_presidential_republic ?= this.type
+						}
+					}
+				}
+			}
+			modifier = {
+				owner ?= {
+					every_in_list = {
+						variable = iwakura_mission_law_learnings
+						limit = {
+							OR = { # Various laws Positivists like
+								law_type:law_state_atheism ?= this.type
+								law_type:law_technocracy ?= this.type
+								law_type:law_appointed_bureaucrats ?= this.type
+								law_type:law_presidential_republic ?= this.type
+							}
+						}
+						add = 1
+					}
+				}
+			}
+			custom_tooltip_no_bullet = positivist_laws_in_foreign_countries_tt
+			set_ideology = ideology:ideology_positivist
+		}
+		1 = { # Humanitarian
+			trigger = {
+				owner = { has_variable = iwakura_world_political_progressiveness }
+				owner.var:iwakura_world_political_progressiveness >= 50 # Note - Humanitarian's average progressiveness is 66.66
+				ideology_humanitarian_valid_trigger = yes
+				owner ?= {
+					any_in_list = {
+						variable = iwakura_mission_law_learnings
+						OR = { # Various laws Humanitarians like
+							law_type:law_multicultural ?= this.type
+							law_type:law_national_guard ?= this.type
+							law_type:law_protected_speech ?= this.type
+							law_type:law_womens_suffrage ?= this.type
+							law_type:law_compulsory_primary_school ?= this.type
+							law_type:law_no_migration_controls ?= this.type
+						}
+					}
+				}
+			}
+			modifier = {
+				owner ?= {
+					every_in_list = {
+						variable = iwakura_mission_law_learnings
+						limit = {
+							OR = { # Various laws Humanitarians like
+								law_type:law_multicultural ?= this.type
+								law_type:law_national_guard ?= this.type
+								law_type:law_protected_speech ?= this.type
+								law_type:law_womens_suffrage ?= this.type
+								law_type:law_compulsory_primary_school ?= this.type
+								law_type:law_no_migration_controls ?= this.type
+							}
+						}
+						add = 1
+					}
+				}
+			}
+			custom_tooltip_no_bullet = humanitarian_laws_in_foreign_countries_tt
+			set_ideology = ideology:ideology_humanitarian
+		}
+		1 = { # Social Democratic
+			trigger = {
+				owner = { has_variable = iwakura_world_political_progressiveness }
+				owner.var:iwakura_world_political_progressiveness >= 50 # Note - SocDem's average progressiveness is 67.85
+				ideology_social_democrat_valid_trigger = yes
+				owner ?= {
+					any_in_list = {
+						variable = iwakura_mission_law_learnings
+						OR = { # Various laws Social Democrats like
+							law_type:law_worker_protections ?= this.type
+							law_type:law_regulatory_bodies ?= this.type
+							law_type:law_universal_suffrage ?= this.type
+							law_type:law_graduated_taxation ?= this.type
+							law_type:law_old_age_pension ?= this.type
+							law_type:law_right_to_associate ?= this.type
+						}
+					}
+				}
+			}
+			modifier = {
+				owner ?= {
+					every_in_list = {
+						variable = iwakura_mission_law_learnings
+						limit = {
+							OR = { # Various laws Social Democrats like
+								law_type:law_worker_protections ?= this.type
+								law_type:law_regulatory_bodies ?= this.type
+								law_type:law_universal_suffrage ?= this.type
+								law_type:law_graduated_taxation ?= this.type
+								law_type:law_old_age_pension ?= this.type
+								law_type:law_right_to_associate ?= this.type
+							}
+						}
+						add = 1
+					}
+				}
+			}
+			custom_tooltip_no_bullet = social_democratic_laws_in_foreign_countries_tt
+			set_ideology = ideology:ideology_social_democrat
+		}
+		1 = { # Fascist
+			trigger = {
+				owner = { has_variable = iwakura_world_political_progressiveness }
+				owner.var:iwakura_world_political_progressiveness >= 4 # Note - Fascist's average progressiveness is 4
+				ideology_fascist_valid_trigger = yes
+				owner ?= {
+					any_in_list = {
+						variable = iwakura_mission_law_learnings
+						OR = { # Various laws Fascists like
+							law_type:law_single_party_state ?= this.type
+							law_type:law_ethnostate ?= this.type
+							law_type:law_mass_conscription ?= this.type
+							law_type:law_outlawed_dissent ?= this.type
+							law_type:law_corporatized_unions ?= this.type
+							law_type:law_corporatized_unions ?= this.type
+						}
+					}
+				}
+			}
+			modifier = {
+				owner ?= {
+					every_in_list = {
+						variable = iwakura_mission_law_learnings
+						limit = {
+							OR = { # Various laws Fascists like
+								law_type:law_single_party_state ?= this.type
+								law_type:law_ethnostate ?= this.type
+								law_type:law_mass_conscription ?= this.type
+								law_type:law_outlawed_dissent ?= this.type
+								law_type:law_corporatized_unions ?= this.type
+								law_type:law_corporatized_unions ?= this.type
+							}
+						}
+						add = 1
+					}
+				}
+			}
+			custom_tooltip_no_bullet = fascist_laws_in_foreign_countries_tt
+			set_ideology = ideology:ideology_fascist
+		}
+	}
+}
+
+REPLACE:designate_as_fudai_daimyo = {
+	if = {
+		limit = {
+			NOT = {
+				has_global_variable = japan_daimyo_abolished
+			}
+		}
+		if = {
+			limit = {
+				owner ?= {
+					OR = {
+						always = no
+						country_is_taikunate = yes
+					}
+				}
+			}
+			add_modifier = modifier_fudai_daimyo
+		}
+		else = {
+			add_modifier = modifier_fudai_daimyo_restoration
+		}
+	}
+	if = {
+		limit = {
+			has_role = character_role_politician
+		}
+		add_career_length = {
+			role = character_role_politician
+			years = 50
+			random_range = { 1.0 1.5 } # 50-65 years
+		}
+	}
+}
+
+REPLACE:designate_as_tozama_daimyo = {
+	if = {
+		limit = {
+			NOT = {
+				has_global_variable = japan_daimyo_abolished
+			}
+		}
+		if = {
+			limit = {
+				owner ?= {
+					OR = {
+						always = no
+						country_is_taikunate = yes
+					}
+				}
+			}
+			add_modifier = modifier_tozama_daimyo
+		}
+		else = {
+			add_modifier = modifier_tozama_daimyo_restoration
+		}
+	}
+	if = {
+		limit = {
+			has_role = character_role_politician
+		}
+		add_career_length = {
+			role = character_role_politician
+			years = 50
+			random_range = { 1.0 1.5 } # 50-65 years
+		}
+	}
+}
+
+REPLACE:designate_as_shinpan_daimyo = {
+	if = {
+		limit = {
+			NOT = {
+				has_global_variable = japan_daimyo_abolished
+			}
+		}
+		if = {
+			limit = {
+				owner ?= {
+					OR = {
+						always = no
+						country_is_taikunate = yes
+					}
+				}
+			}
+			add_modifier = modifier_shinpan_daimyo
+		}
+		else = {
+			add_modifier = modifier_shinpan_daimyo_restoration
+		}
+	}
+	if = {
+		limit = {
+			has_role = character_role_politician
+		}
+		add_career_length = {
+			role = character_role_politician
+			years = 50
+			random_range = { 1.0 1.5 } # 50-65 years
+		}
+	}
+}
+
+REPLACE:country_assess_daimyo_alignments = {
+	if = {
+		limit = {
+			OR = {
+				always = no
+				country_is_taikunate = yes
+			}
+		}
+		every_scope_character = {
+			limit = {
+				has_variable = daimyo_var
+			}
+			if = {
+				limit = {
+					has_modifier = modifier_fudai_daimyo_restoration
+				}
+				remove_modifier = modifier_fudai_daimyo_restoration
+				add_modifier = modifier_fudai_daimyo
+			}
+			if = {
+				limit = {
+					has_modifier = modifier_tozama_daimyo_restoration
+				}
+				remove_modifier = modifier_tozama_daimyo_restoration
+				add_modifier = modifier_tozama_daimyo
+			}
+			if = {
+				limit = {
+					has_modifier = modifier_shinpan_daimyo_restoration
+				}
+				remove_modifier = modifier_shinpan_daimyo_restoration
+				add_modifier = modifier_shinpan_daimyo
+			}
+		}
+	}
+	else = {
+		every_scope_character = {
+			limit = {
+				has_variable = daimyo_var
+			}
+			if = {
+				limit = {
+					has_modifier = modifier_fudai_daimyo
+				}
+				remove_modifier = modifier_fudai_daimyo
+				add_modifier = modifier_fudai_daimyo_restoration
+			}
+			if = {
+				limit = {
+					has_modifier = modifier_tozama_daimyo
+				}
+				remove_modifier = modifier_tozama_daimyo
+				add_modifier = modifier_tozama_daimyo_restoration
+			}
+			if = {
+				limit = {
+					has_modifier = modifier_shinpan_daimyo
+				}
+				remove_modifier = modifier_shinpan_daimyo
+				add_modifier = modifier_shinpan_daimyo_restoration
+			}
+		}
+	}
+}
+
+REPLACE:evaluate_matsumae_curse = {
+	if = {
+		limit = {
+			OR = {
+				AND = {
+					always = no
+					year >= 1839
+					is_immortal = no
+				}
+				AND = {
+					always = no
+					year >= 1849
+					is_immortal = no
+				}
+				AND = {
+					always = no
+					year >= 1866
+					is_immortal = no
+				}
+				AND = {
+					always = no
+					year >= 1905
+					is_immortal = no
+				}
+			}
+		}
+		random_list = {
+			1 = {
+				kill_character = yes
+			}
+			11 = {
+				
+			}
+		}
+	}
+}
+
+REPLACE:meiji_civil_war_effects = { # Executed from on_revolution_start
+	# Root = Country
+	# scope:target = Uprising country
+	if = {
+		limit = {
+			var:emperor_var ?= {
+				NOT = {
+					owner ?= ROOT
+				}
+			}
+		}
+		var:emperor_var ?= { # Get back here
+			transfer_character = ROOT
+		}
+	}
+	if = {
+		limit = {
+			has_variable_list = daimyos_list
+		}
+		every_in_list = {
+			limit = {
+				AND = { # Daimyo on the opposing side whose states did not defect
+					NOT = {
+						owner ?= ROOT
+					}
+					var:daimyo_var ?= { # Their state region
+						any_scope_state = {
+							owner ?= ROOT
+						}
+					}
+				}
+			}
+			variable = daimyos_list
+			transfer_character = ROOT # Get back here
+		}
+		every_in_list = {
+			limit = {
+				AND = { # Daimyo on this side whose states did defect
+					owner ?= ROOT
+					var:daimyo_var ?= { # Their state region
+						NOT = {
+							any_scope_state = {
+								owner ?= ROOT
+							}
+						}
+					}
+				}
+			}
+			variable = daimyos_list
+			transfer_character = scope:target # Get outta here
+		}
+	}
+	if = {
+		limit = {
+			scope:target ?= {
+				country_has_monarchy_law = yes
+			}
+		}
+		scope:target ?= {
+			every_scope_character = {
+				limit = {
+					has_variable = daimyo_var
+				}
+				add_character_role = character_role_magnate # Restore Daimyo status manually
+				if = {
+					limit = {
+						this.interest_group ?= {
+							leader ?= {
+								NOT = {
+									has_variable = daimyo_var
+								}
+							}
+						}
+					}
+					interest_group.leader ?= {
+						remove_character_role = character_role_ig_leader
+					}
+					set_as_interest_group_leader = yes
+					add_character_role = character_role_ig_leader
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			scope:target ?= {
+				has_law = law_type:law_monarchy
+				var:civil_war_type_var ?= movement_type:movement_meiji_restorationist
+			}
+		}
+		if = { # Sets up ruler of the restorationist coalition
+			limit = {
+				scope:target ?= {
+					ruler ?= {
+						is_historical = no # A historical non-daimyo is totally fine
+						NOT = {
+							has_variable = daimyo_var
+						}
+					}
+				}
+			}
+			ordered_in_list = {
+				limit = {
+					scope:target ?= owner
+				}
+				variable = daimyos_list
+				order_by = prominence
+				position = 0
+				add_character_role = character_role_ruler
+			}
+		}
+		scope:target ?= {
+			if = {
+				limit = {
+					has_law = law_type:law_isolationism
+				}
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					always = no
+					country_has_former_shogun_in_government = yes
+					country_is_taikunate = yes
+					sonnojoi_have_shojoi_ideology = yes
+				}
+			}
+			trigger_event = { id = ep2_meiji.41 popup = yes }
+		}
+		if = {
+			limit = {
+				NOR = {
+					always = no
+					country_is_taikunate = yes
+				}
+			}
+			scope:target ?= {
+				set_variable = sonnojoi_contrast_color # So that the Sonnojoi use a different colour than the Empire
+			}
+		}
+	}
+	if = {
+		limit = {
+			scope:target ?= {
+				has_law = law_type:law_monarchy
+				var:civil_war_type_var ?= movement_type:movement_tokugawa_loyalist
+			}
+		}
+		scope:target ?= {
+			if = {
+				limit = {
+					has_law = law_type:law_peasant_levies
+				}
+			}
+		}
+		if = {
+			limit = {
+				country_is_abolishing_bakufu = yes
+			}
+			currently_enacting_law = {
+				ROOT = {
+					activate_law = currently_enacting_law.type
+				}
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					always = no
+				}
+			}
+			if = {
+				limit = {
+					any_character = { # This is a sin, but necessary
+						has_variable = former_shogun_var # designates Taikun
+					}
+				}
+				random_character = {
+					limit = {
+						has_variable = former_shogun_var # designates Taikun
+					}
+					if = {
+						limit = {
+							NOT = {
+								scope:target ?= owner
+							}
+						}
+						transfer_character = scope:target
+					}
+					set_character_as_ruler = yes
+				}
+			}
+			trigger_event = { id = ep2_meiji.4 popup = yes }
+		}
+	}
+	# AI Ezochi always sides with the Matsumae
+	if = {
+		limit = {
+			exists = c:EZO
+			c:EZO ?= { is_player = no }
+		}
+		if = {
+			limit = {
+				p:x40BDB8.state ?= {
+					owner ?= scope:target
+				}
+				c:EZO ?= { top_overlord ?= ROOT }
+			}
+			scope:target ?= {
+				transfer_subject = c:EZO
+			}
+			random_diplomatic_play = {
+				limit = {
+					is_diplomatic_play_type = dp_revolution
+					initiator ?= {
+						scope:target ?= this
+					}
+				}
+				if = {
+					limit = {
+						initiator ?= {
+							scope:target ?= this
+						}
+					}
+					add_initiator_backers = { c:EZO }
+				}
+				add_war_goal = {
+					holder = ROOT
+					target_country = c:EZO
+					type = annex_country
+					primary_demand = yes
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				p:x40BDB8.state ?= {
+					owner ?= ROOT
+				}
+				c:EZO ?= { top_overlord ?= scope:target }
+			}
+			ROOT ?= {
+				transfer_subject = c:EZO
+			}
+			random_diplomatic_play = {
+				limit = {
+					is_diplomatic_play_type = dp_revolution
+					initiator ?= {
+						scope:target ?= this
+					}
+				}
+				if = {
+					limit = {
+						initiator ?= {
+							scope:target ?= this
+						}
+					}
+					add_target_backers = { c:EZO }
+				}
+				add_war_goal = {
+					holder = scope:target
+					target_country = c:EZO
+					type = annex_country
+					primary_demand = yes
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				c:EZO ?= {
+					is_subject = yes
+					OR = {
+						c:EZO ?= { top_overlord ?= ROOT }
+						c:EZO ?= { top_overlord ?= scope:target }
+					}
+				}
+			}
+			random_diplomatic_play = {
+				limit = {
+					is_diplomatic_play_type = dp_revolution
+					initiator ?= {
+						scope:target ?= this
+					}
+				}
+				if = {
+					limit = {
+						c:EZO ?= { top_overlord ?= scope:target }
+					}
+					add_war_goal = {
+						holder = ROOT
+						target_country = c:EZO
+						type = annex_country
+						primary_demand = yes
+					}
+				}
+				if = {
+					limit = {
+						c:EZO ?= { top_overlord ?= ROOT }
+					}
+					add_war_goal = {
+						holder = scope:target
+						target_country = c:EZO
+						type = annex_country
+						primary_demand = yes
+					}
+				}
+			}
+		}
+	}
+}
+
+REPLACE:japan_reconcile_revolutionary_daimyos = { # Fired from on_wargoal_enforced
+	scope:target ?= {
+		if = {
+			limit = {
+				exists = var:emperor_var
+			}
+			var:emperor_var ?= {
+				transfer_character = ROOT
+			}
+			if = {
+				limit = {
+					ROOT = {
+						country_has_monarchy_law = yes
+						NOT = {
+							always = no
+						}
+					}
+				}
+				var:emperor_var ?= {
+					set_character_as_ruler = yes
+				}
+			}
+		}
+	}
+	japan_replace_missing_daimyo = yes
+	je_meiji_restoration_update_daimyos = yes
+}
+
+REPLACE:japan_display_add_meiji_reforms = {
+	if = {
+		limit = {
+			NAND = {
+				in_default = no
+				any_scope_state = {
+					filter = {
+						is_incorporated = yes
+					}
+					any_scope_building = {
+						is_building_type = building_urban_center
+						level >= 5
+					}
+					has_building = building_railway
+					percent > 0.7
+				}
+			}
+		}
+		add_journal_entry = {
+			type = je_meiji_economy
+		}
+	}
+	if = {
+		limit = {
+			NAND = {
+				NOT = { has_law_or_variant = law_type:law_serfdom }
+				ig:ig_armed_forces ?= {
+					is_powerful = no
+					is_in_government = no
+				}
+				has_technology_researched = industrial_warfare
+				NOT = {
+					any_scope_building = {
+						is_building_type = building_barrack
+						OR = {
+							always = no
+							# has_active_production_method = pm_no_artillery
+							# has_active_production_method = pm_cannon_artillery
+						}
+					}
+				}
+			}
+		}
+		add_journal_entry = {
+			type = je_meiji_army
+		}
+	}
+	if = {
+		limit = {
+			NOT = {
+				has_dlc_feature = ep2_content
+			}
+			NAND = {
+				NOT = { has_variable = completed_je_meiji_diplomacy }
+				NOT = { is_country_type = unrecognized }
+				NOT = { has_law_or_variant = law_type:law_isolationism }
+			}
+		}
+		add_journal_entry = {
+			type = je_meiji_diplomacy
+		}
+	}
+}
+
+REPLACE:transition_off_of_monarchy_law_effects = {
+	if = {
+		limit = {
+			c:JAP ?= this
+			any_scope_character = {
+				has_trait = special_character_japanese_emperor
+			}
+		}
+		every_scope_character = {
+			limit = {
+				has_trait = special_character_japanese_emperor
+			}
+			remove_trait = special_character_japanese_emperor
+			add_character_role = character_role_politician
+			if = {
+				limit = {
+					has_role = character_role_emperor_of_japan
+				}
+				remove_character_role = character_role_emperor_of_japan
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					has_journal_entry = je_meiji_restoration
+				}
+			}
+			remove_variable = emperor_var
+		}
+	}
+	if = {
+		limit = {
+			has_law = law_type:law_neo_absolutism
+		}
+		show_as_tooltip = {
+			deactivate_law = law_type:law_neo_absolutism
+		}
+		activate_law = law_type:law_autocracy
+	}
+	if = {
+		limit = {
+			always = no
+		}
+		show_as_tooltip = {
+		}
+		activate_law = law_type:law_autocracy
+	}
+}
+
+REPLACE:transition_off_of_monarchy_effects = {
+	crown_land_republic_effect = yes
+	transition_off_of_monarchy_law_effects = yes
+	if = {
+		limit = {
+			any_interest_group = {
+				has_ideology = ideology:ideology_liberal
+			}
+		}
+		every_interest_group = {
+			limit = {
+				has_ideology = ideology:ideology_liberal
+			}
+			remove_ideology = ideology_liberal
+			add_ideology = ideology_republican
+		}
+	}
+	if = {
+		limit = {
+			NOR = {
+				has_journal_entry = je_abolish_monarchy
+				has_variable = monarchy_stamped_out_var
+			}
+		}
+		set_variable = {
+			name = abolishing_monarchy_var
+			value = 0
+		}
+		add_journal_entry = { type = je_abolish_monarchy }
+	}
+}
+
+REPLACE:country_switch_sonnojoi_ideology = {
+	if = {
+		limit = {
+			any_political_movement = {
+				is_political_movement_type = movement_meiji_restorationist
+				has_core_ideology = ideology:ideology_traditionalist_movement
+			}
+		}
+		random_political_movement = {
+			limit = {
+				is_political_movement_type = movement_meiji_restorationist
+				has_core_ideology = ideology:ideology_traditionalist_movement
+			}
+			set_core_ideology = ideology_traditionalist_movement
+			add_character_ideology = ideology_modernizer_leader
+		}
+	}
+}
+
+REPLACE:generate_ezo_military = {
+	if = {
+		limit = {
+			c:JAP ?= {
+				has_technology_researched = divisional_organization
+			}
+		}
+		create_military_formation = {
+			type = army
+			hq_region = sr:region_northeast_asia
+			name = shogunate_army
+
+			combat_unit = {
+				type = unit_type:combat_unit_type_infantry_brigade
+				state_region = s:STATE_HOKKAIDO
+				count = 3
+			}
+
+			combat_unit = {
+				type = unit_type:combat_unit_type_self_propelled_guns
+				state_region = s:STATE_HOKKAIDO
+				count = 1
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			c:JAP ?= {
+				has_technology_researched = industrial_warfare
+			}
+		}
+		create_military_formation = {
+			type = army
+			hq_region = sr:region_northeast_asia
+			name = shogunate_army
+
+			combat_unit = {
+				type = unit_type:combat_unit_type_infantry_brigade
+				state_region = s:STATE_HOKKAIDO
+				count = 3
+			}
+
+			combat_unit = {
+				type = unit_type:combat_unit_type_wartime_artillery
+				state_region = s:STATE_HOKKAIDO
+				count = 1
+			}
+		}
+	}
+	else = {
+		create_military_formation = {
+			type = army
+			hq_region = sr:region_northeast_asia
+			name = shogunate_army
+
+			combat_unit = {
+				type = unit_type:combat_unit_type_infantry_brigade
+				state_region = s:STATE_HOKKAIDO
+				count = 3
+			}
+
+			combat_unit = {
+				type = unit_type:combat_unit_type_wartime_artillery
+				state_region = s:STATE_HOKKAIDO
+				count = 1
+			}
+		}
+	}
+}
+
+REPLACE:on_remove_ruler_effects = {
+	if = {
+		limit = {
+			has_trait = special_character_japanese_emperor
+		}
+		remove_trait = special_character_japanese_emperor
+	}
+	if = {
+		limit = {
+			always = no
+		}
+		owner = {
+			if = {
+				limit = {
+					has_dlc_feature = ep2_content
+				}
+				trigger_event = { id = japan_monarchy.1 }
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			always = no
+			game_date >= 1852.11.3
+		}
+		owner = {
+			if = {
+				limit = {
+					has_dlc_feature = ep2_content
+				}
+				trigger_event = { id = japan_monarchy.2 }
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			always = no
+			game_date >= 1879.8.31
+		}
+		owner = {
+			if = {
+				limit = {
+					has_dlc_feature = ep2_content
+				}
+				trigger_event = { id = japan_monarchy.3 }
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			always = no
+			game_date >= 1901.4.29
+		}
+		owner = {
+			if = {
+				limit = {
+					has_dlc_feature = ep2_content
+				}
+				trigger_event = { id = japan_monarchy.4 }
+			}
+		}
+	}
+}
+
+REPLACE:on_new_ruler_japan_effect = {
+	if = {
+		limit = {
+			has_variable = house_yamato
+		}
+		save_temporary_scope_as = emperor_to_be_scope
+		c:JAP ?= {
+			set_variable = { name = emperor_var value = scope:emperor_to_be_scope }
+		}
+		if = {
+			limit = {
+				NOT = {
+					has_trait = special_character_japanese_emperor
+				}
+			}
+			add_trait = special_character_japanese_emperor
+		}
+		if = {
+			limit = {
+				owner ?= {
+					always = no  #If a member of the Imperial Family somehow heads the Bakufu, end it instantly
+				}
+			}
+			owner ?= {
+				activate_law = law_type:law_oligarchy
+			}
+		}
+	}
+	if = { # Sitting Emperors don't need this role
+		limit = {
+			has_role = character_role_emperor_of_japan
+		}
+		remove_character_role = character_role_emperor_of_japan
+	}
+	if = { # Marks the Shogun as the Shogun
+		limit = {
+			owner ?= {
+				always = no
+				has_gov_regency = no
+			}
+		}
+		set_variable = shogun_var
+	}
+}

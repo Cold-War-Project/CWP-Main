@@ -1,0 +1,153 @@
+﻿# CWP fix patch for vanilla common/scripted_buttons/turtle_island_buttons.txt
+# Each block below is a faithful copy of the vanilla top-level block with dead 1836-era references repaired (see _proposed_fixes/_notes/06_on_actions_decisions.md).
+
+REPLACE:je_unite_the_nations_proclaim_turtle_island_button = {
+	name = "je_unite_the_nations_proclaim_turtle_island_button"
+	desc = "je_unite_the_nations_proclaim_turtle_island_button_desc"
+
+	visible = {
+		always = no
+	}
+
+	possible = {
+		has_technology_researched = nationalism
+		any_decentralized_country = {
+			is_in_geographic_region = geographic_region_north_america
+			is_adjacent_to_country = root
+		}
+	}
+
+	effect = {
+	}
+}
+
+REPLACE:je_unite_the_nations_organize_the_tribes_button = {
+	name = "je_unite_the_nations_organize_the_tribes_button"
+	desc = "je_unite_the_nations_organize_the_tribes_button_desc"
+
+	visible = {
+		always = no
+		always = no
+	}
+
+	possible = {
+		any_decentralized_country = {
+			is_in_geographic_region = geographic_region_north_america
+			is_adjacent_to_country = root
+			any_primary_culture = {
+				shares_heritage_trait_group_with_any_primary_culture = root
+			}
+			}
+		bureaucracy > 150
+	}
+
+	effect = {
+		ordered_decentralized_country = {
+			limit = {
+				is_in_geographic_region = geographic_region_north_america
+				is_adjacent_to_country = root
+				any_primary_culture = {
+					shares_heritage_trait_group_with_any_primary_culture = root
+				}
+			}
+			order_by = gdp
+			position = 0
+			check_range_bounds = no
+			save_temporary_scope_as = decentralised_neighbouring_territory
+		}
+
+		if = { #This is here to display the effects tooltip when the button is disabled and scope doesn't exist
+			limit = { NOT = { exists = scope:decentralised_neighbouring_territory } }
+			custom_tooltip = { text = je_unite_the_nations_organize_the_tribes_tt }
+		}
+
+		if = {
+			limit = { exists = scope:decentralised_neighbouring_territory }
+			scope:decentralised_neighbouring_territory = {
+				set_country_type = unrecognized
+				hidden_effect = {
+					effect_starting_technology_tier_4_tech = yes
+					effect_starting_politics_traditional = yes
+				}
+			}
+		}
+
+		add_modifier = {
+			name = supporting_reform_efforts_among_brothers # -150 bureaucracy
+			months = 12
+		}
+	}
+}
+
+REPLACE:je_unite_the_nations_offer_confederation_button = {
+	name = "je_unite_the_nations_offer_confederation_button"
+	desc = "je_unite_the_nations_offer_confederation_button_desc"
+
+	visible = {
+		always = no
+	}
+
+	possible = {
+		any_country = {
+			is_in_geographic_region = geographic_region_north_america
+			is_adjacent_to_country = root
+			relations:root >= 25
+			any_primary_culture = {
+				shares_heritage_trait_group_with_any_primary_culture = ROOT
+			}
+		}
+	}
+
+	effect = {
+		ordered_country = {
+			limit = {
+				is_in_geographic_region = geographic_region_north_america
+				any_primary_culture = {
+					shares_heritage_trait_group_with_any_primary_culture = root
+				}
+				NOT = {
+					this = root
+				}
+				relations:root >= 25
+			}
+			order_by = gdp
+			position = 0
+			check_range_bounds = no
+			save_temporary_scope_as = to_be_annexed
+			if = {
+				limit = {
+					scope:to_be_annexed = {
+						any_primary_culture = {
+							NOT = {
+								is_primary_culture_of = ROOT
+							}
+						}
+					}
+				}
+				scope:to_be_annexed = {
+					random_primary_culture = {
+						limit = {
+							NOT = {
+								is_primary_culture_of = ROOT
+							}
+						}
+						save_temporary_scope_as = to_be_annexed_culture
+					}
+				}
+			}
+		}
+
+		if = { #This is here to display the effects tooltip when the button is disabled and scope doesn't exist
+			limit = { NOT = { exists = scope:to_be_annexed } }
+			custom_tooltip = { text = je_unite_the_nations_offer_confederation_tt }
+		}
+		if = {
+			limit = { exists = scope:to_be_annexed }
+			annex = scope:to_be_annexed
+		}
+		if = {
+			limit = { exists = scope:to_be_annexed_culture }
+			add_primary_culture = scope:to_be_annexed_culture
+		}
+	}
+}

@@ -1,0 +1,236 @@
+﻿namespace = acceptance_events
+
+acceptance_events.1 = { #Heir falls in love with unbecomingly unacceptable pop. The horror!
+	type = country_event
+	placement = ROOT
+
+	title = acceptance_events.1.t
+	desc = acceptance_events.1.d
+	flavor = acceptance_events.1.f
+
+	duration = 3
+
+	gui_window = event_window_1char_tabloid
+
+	left_icon = scope:romeo
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	on_opened_soundeffect = "event:/SFX/Events/misc/2Characters"
+
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+
+	cooldown = { days = never_fire_again_modifier_time }
+
+	trigger = {
+		has_law = law_type:law_monarchy
+		any_scope_character = {
+			is_busy = no
+			is_heir_of_own_country = yes
+			character_acceptance = {
+				target = root
+				value > 80
+			}
+			is_adult = yes
+			age < 25
+			OR = {
+				has_trait = romantic
+				has_trait = charismatic
+				has_trait = reckless
+			}
+			NOR = {
+				has_ideology = ideology:ideology_traditionalist
+				has_ideology = ideology:ideology_ethno_nationalist
+				has_ideology = ideology:ideology_fascist
+				has_ideology = ideology:ideology_theocrat
+				has_ideology = ideology:ideology_slaver
+			}
+		}
+		any_scope_pop = {
+			pop_has_primary_culture = no
+			pop_acceptance <= acceptance_status_2
+		}
+		NOT = {
+			has_variable = acceptance_events_1_happened
+		}
+	}
+
+	immediate = {
+		heir ?= {
+			save_scope_as = romeo
+		}
+		random_scope_pop = {
+			limit = {
+				pop_has_primary_culture = no
+				pop_acceptance <= acceptance_status_2
+			}
+			culture = {
+				save_scope_as = juliet
+			}
+		}
+		set_variable = acceptance_events_1_happened
+	}
+
+	cancellation_trigger = {
+		scope:romeo = {
+			is_character_alive = no
+		}
+	}
+
+	option = {
+		default_option = yes
+		name = acceptance_events.1.a
+		ai_chance = {
+			base = 10
+		}
+		ig:ig_landowners = {
+			add_modifier = {
+				name = modifier_royal_customs_respected
+				days = long_modifier_time
+				is_decaying = yes
+			}
+		}
+		root = {
+			add_loyalists = {
+				value = large_radicals
+				pop_type = aristocrats
+				culture = scope:romeo.culture
+			}
+		}
+		scope:romeo = {
+			add_trait = wrathful
+			add_modifier = {
+				name = modifier_withdrawn_from_the_public
+				days = stupidly_long_modifier_time
+			}
+ 		}
+	}
+
+	option = {
+		name = acceptance_events.1.b
+		ai_chance = {
+			base = 10
+		}
+		trigger = {
+			NOT = {
+				has_law_or_variant = law_type:law_guaranteed_liberties
+			}
+		}
+		root = {
+			add_radicals = {
+				value = very_large_radicals
+				culture = scope:juliet
+			}
+		}
+		scope:romeo = {
+			add_modifier = {
+				name = modifier_well_known_tragedy
+				days = stupidly_long_modifier_time
+			}
+		}
+	}
+
+	option = {
+		name = acceptance_events.1.c
+		ai_chance = {
+			base = 10
+			modifier = {
+				trigger = {
+					any_political_movement = {
+						is_political_movement_type = movement_cultural_majority
+						political_movement_radicalism >= 0.50
+					}
+				}
+				add = -5
+			}
+			modifier = {
+				trigger = {
+					any_political_movement = {
+						is_political_movement_type = movement_cultural_majority
+						political_movement_radicalism >= 0.25
+					}
+				}
+				add = -3
+			}
+		}
+		random_scope_state = {
+	 		limit = {
+	 			any_scope_pop = {
+	 				culture = scope:juliet
+					pop_has_primary_culture = no
+					pop_acceptance <= acceptance_status_2
+	 			}
+	 		}
+	 		if = {
+	 			limit = {
+	 				any_scope_pop = {
+	 					culture = scope:juliet
+						pop_has_primary_culture = no
+						pop_acceptance <= acceptance_status_1
+	 				}
+	 			}
+	 			ROOT = {
+	 				add_culture_acceptance_modifier = {
+						culture = scope:juliet
+						multiplier = 40
+					}
+				}
+	 		}
+	 		else_if = {
+	 			limit = {
+	 				any_scope_pop = {
+	 					culture = scope:juliet
+						pop_has_primary_culture = no
+						pop_acceptance <= acceptance_status_2
+	 				}
+	 			}
+	 			ROOT = {
+		 			add_culture_acceptance_modifier = {
+						culture = scope:juliet
+						multiplier = 20
+					}
+				}
+	 		}
+		}
+		if = {
+			limit = {
+				any_political_movement = {
+					is_political_movement_type = movement_cultural_majority
+				}
+			}
+			random_political_movement = {
+				limit = {
+					is_political_movement_type = movement_cultural_majority
+				}
+				add_modifier = {
+					name = modifier_xenophobic_backlash
+					days = long_modifier_time
+					is_decaying = yes
+				}
+			}
+		}
+		root = {
+			add_radicals = {
+				value = very_large_radicals
+				pop_type = aristocrats
+				culture = scope:romeo.culture
+			}
+		}
+		scope:romeo = {
+			add_modifier = {
+				name = modifier_scandalous_lover
+				days = stupidly_long_modifier_time
+			}
+			if = {
+				limit = {
+					root = {
+						has_technology_researched = international_relations_theory
+					}
+				}
+				set_ideology = ideology:ideology_humanitarian_royalist
+			}
+			else = {
+				set_ideology = ideology:ideology_reformer
+			}
+		}
+	}
+}

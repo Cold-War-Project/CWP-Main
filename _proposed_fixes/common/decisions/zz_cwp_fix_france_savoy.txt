@@ -1,0 +1,159 @@
+﻿# CWP fix patch for vanilla common/decisions/france_savoy.txt
+# Each block below is a faithful copy of the vanilla top-level block with dead 1836-era references repaired (see _proposed_fixes/_notes/06_on_actions_decisions.md).
+
+REPLACE:france_annex_savoy = {
+	is_shown = {
+		has_dlc_feature = voice_of_the_people_content
+		exists = c:FRA
+		c:FRA = ROOT
+		NOT = { has_global_variable = fra_annexed_savoy }
+		is_subject = no
+		NOT = { owns_entire_state_region = STATE_SAVOY }
+		s:STATE_SAVOY = {
+			any_scope_state = {
+				NOT = { owner ?= ROOT }
+				is_split_state = no
+				is_capital = no
+				owner ?= {
+					is_player = no
+				}
+			}
+		}
+	}
+
+	possible = {
+		has_technology_researched = nationalism
+		sr:region_southern_europe = {
+			any_scope_country = {
+				custom_tooltip = {
+					text = at_peace_nocontext_tt
+					is_at_war = no
+				}
+				any_scope_state = {
+					state_region = s:STATE_SAVOY
+					is_split_state = no
+					is_capital = no
+				}
+				custom_tooltip = {
+					text = relations_amicable_nocontext_tt
+					relations:root >= relations_threshold:amicable
+				}
+				is_revolutionary = no
+				OR = {
+					is_subject = no
+					is_subject_of = ROOT
+				}
+				trigger_if = {
+					limit = {
+						is_subject = no
+					}
+					owes_obligation_to = ROOT
+				}
+			}
+		}
+	}
+
+	when_taken = {
+		set_global_variable = fra_annexed_savoy
+		custom_tooltip = obligation_for_savoy_tt
+		trigger_event = { id = natural_borders.3 popup = yes }
+		show_as_tooltip = {
+			s:STATE_SAVOY = {
+				remove_homeland = cu:italian
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 1
+	}
+}
+
+REPLACE:sell_savoy = {
+	is_shown = {
+		exists = c:FRA
+		NOT = { has_global_variable = fra_annexed_savoy }
+		any_scope_state = {
+			state_region = s:STATE_SAVOY
+			is_split_state = no
+			is_capital = no
+		}
+		is_subject = no
+	}
+
+	possible = {
+		has_technology_researched = nationalism
+		is_at_war = no
+		c:FRA ?= {
+			is_at_war = no
+			owns_entire_state_region = STATE_RHONE
+			is_subject = no
+			NOT = { owes_obligation_to = ROOT }
+			relations:root >= relations_threshold:cordial
+		}
+	}
+
+	when_taken = {
+		set_global_variable = fra_annexed_savoy
+		set_global_variable = fra_savoy_sardinia
+		c:FRA ?= {
+			set_owes_obligation_to = {
+				country = ROOT
+				setting = yes
+			}
+		}
+		show_as_tooltip = {
+			random_scope_state = {
+				limit = {
+					state_region = s:STATE_SAVOY
+				}
+				set_state_owner = c:FRA
+			}
+			if = {
+				limit = {
+					any_scope_state = {
+						state_region = s:STATE_PROVENCE
+					}
+				}
+				random_scope_state = {
+					limit = {
+						state_region = s:STATE_PROVENCE
+					}
+					set_state_owner = c:FRA
+				}
+			}
+		}
+		c:FRA ?= { trigger_event = { id = natural_borders.3 popup = yes } }
+		show_as_tooltip = {
+			s:STATE_SAVOY = {
+				remove_homeland = cu:italian
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				c:FRA ?= {
+					relations:root >= relations_threshold:amicable
+				}
+				OR = {
+					any_scope_treaty = {
+						binds = c:FRA
+						any_scope_article = {
+							has_type = defensive_pact
+						}
+					}
+					any_scope_treaty = {
+						binds = c:FRA
+						any_scope_article = {
+							has_type = alliance
+						}
+					}
+				}
+			}
+			add = 1
+		}
+	}
+}

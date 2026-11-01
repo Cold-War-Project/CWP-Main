@@ -1,0 +1,84 @@
+﻿# CWP fix patch for vanilla common/script_values/negotiation_values.txt
+# Generated: top-level blocks below are faithful copies of the vanilla blocks with only the invalid references changed.
+# Every block uses REPLACE: so the vanilla definition is overridden; this file loads after the vanilla one (zz_ prefix).
+
+REPLACE:building_group_levels_to_increase_value = { #requires scope:ig, building group saved as variable ontop of it. Building groups must match exactly
+	save_temporary_scope_as = ig_for_calc
+	if = {
+		limit = {
+			exists = var:promised_building_group
+		}
+		add = { #minimum expected to build
+			if = { #things that cost 800
+				limit = {
+					var:promised_building_group = {
+						OR = {
+							this = bg:bg_heavy_industry
+							this = bg:bg_private_infrastructure
+							this = bg:bg_infrastructure
+						}
+					}
+				}
+				add = 1
+			}
+			else_if = { #things that cost 600
+				limit = {
+					var:promised_building_group = {
+						OR = {
+							this = bg:bg_light_industry
+						}
+					}
+				}
+				add = 1.35
+			}
+			else_if = { #things that cost 400
+				limit = {
+					var:promised_building_group = {
+						OR = {
+							this = bg:bg_technology
+							this = bg:bg_arts
+						}
+					}
+				}
+				add = 2
+			}
+			else_if = { #things that cost 200
+				limit = {
+					var:promised_building_group = {
+						OR = {
+							this = bg:bg_agriculture
+							this = bg:bg_plantations
+							this = bg:bg_fishing
+							always = no
+							always = no
+							this = bg:bg_logging
+						}
+					}
+				}
+				add = 4
+			}
+			else_if = { #things that cost 100
+				limit = {
+					var:promised_building_group = {
+						OR = {
+							this = bg:bg_trade
+							this = bg:bg_bureaucracy
+						}
+					}
+				}
+				add = 8
+			}
+			else = { #backup
+				add = 3
+			}
+		}
+		multiply = building_scaler
+		min = 1
+		multiply = scope:ig_for_calc.var:promise_quest_degree
+		round = 1
+		add = "owner.country_has_building_group_levels(scope:ig_for_calc.var:promised_building_group)"
+	}
+	else = { #if you see this number we know exactly where the bug is
+		value = 88888888
+	}
+}

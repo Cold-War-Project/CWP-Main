@@ -1,0 +1,342 @@
+﻿# CWP fix patch for vanilla common/decisions/india_decisions.txt
+# Each block below is a faithful copy of the vanilla top-level block with dead 1836-era references repaired (see _proposed_fixes/_notes/06_on_actions_decisions.md).
+
+REPLACE:make_delhi_capital = {
+	is_shown = {
+		c:BIC ?= this
+		NOT = {
+			has_variable = made_delhi_capital_var
+		}
+		p:xE0EFA0.state.owner = root
+	}
+
+	possible = {
+		any_scope_state = {
+			state_region = s:STATE_DELHI
+			is_incorporated = yes
+			any_scope_building = {
+				is_building_type = building_urban_center
+				level >= 5
+			}
+		}
+		OR = {
+		    any_political_movement = {
+		        is_political_movement_type = movement_muslim_nationalist
+		        political_movement_radicalism >= 0.1
+		    }
+		    any_political_movement = {
+		        is_political_movement_type = movement_hindu_nationalist
+		        political_movement_radicalism >= 0.1
+		    }
+		    has_technology_researched = academia
+		}
+	}
+
+	when_taken = {
+		if = {
+			limit = {
+				NOT = {
+					capital = {
+						state_region = s:STATE_DELHI
+					}
+				}
+			}
+			set_capital = STATE_DELHI
+		}
+		set_variable = made_delhi_capital_var
+		random_scope_state = {
+			limit = {
+				state_region = s:STATE_DELHI
+			}
+			add_modifier = {
+				name = new_delhi_modifier
+			}
+		}
+		add_modifier = {
+			name = new_delhi_cost_modifier
+			days = normal_modifier_time
+			multiplier = money_amount_multiplier_small
+		}
+		if = {
+			limit = {
+				any_political_movement = {
+					OR = {
+						is_political_movement_type = movement_muslim_nationalist
+						is_political_movement_type = movement_hindu_nationalist
+					}
+				}
+			}
+			every_political_movement = {
+				limit = {
+					OR = {
+						is_political_movement_type = movement_muslim_nationalist
+						is_political_movement_type = movement_hindu_nationalist
+					}
+				}
+				add_modifier = {
+					name = delhi_made_capital_modifier
+					days = normal_modifier_time
+				}
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				has_strategy = ai_strategy_armed_isolationism
+			}
+			multiply = 0
+		}
+	}
+}
+
+REPLACE:bic_end_company_rule = {
+	is_shown = {
+		c:BIC ?= this
+		is_subject_type = subject_type_chartered_company
+		has_variable = company_rule_enduring
+	}
+
+	possible = {
+		always = no
+	}
+
+	when_taken = {
+		top_overlord = {
+			trigger_event = { id = raj.1 }
+		}
+		custom_tooltip = activate_british_raj
+		show_as_tooltip = {
+			if = {
+				limit = {
+					has_diplomatic_pact = {
+						who = c:BIC
+						type = chartered_company
+					}
+				}
+				c:BIC ?= {
+					decrease_autonomy = yes
+				}
+			}
+			c:BIC ?= {
+				set_variable = doctrine_of_lapse_ended
+				custom_tooltip = doctrine_of_lapse_disabled
+				if = {
+					limit = {
+						has_modifier = modifier_india_company_rule
+					}
+					custom_tooltip = {
+						text = remove_modifier_india_company_rule_tt
+						remove_modifier = modifier_india_company_rule
+					}
+				}
+				if = { # Should never happen, but just in case
+					limit = {
+						has_modifier = modifier_india_company_rule_upgraded
+					}
+					custom_tooltip = {
+						text = remove_modifier_india_company_rule_upgraded_tt
+						remove_modifier = modifier_india_company_rule_upgraded
+					}
+				}
+				custom_tooltip = {
+					text = add_modifier_india_crown_rule_tt
+					add_modifier = modifier_india_crown_rule
+				}
+				if = {
+					limit = {
+						NOT = {
+							has_law_or_variant = law_type:law_appointed_bureaucrats
+						}
+					}
+					activate_law = law_type:law_appointed_bureaucrats
+				}
+				if = {
+					limit = {
+						NOT = {
+							has_law_or_variant = law_type:law_autocracy
+						}
+					}
+					activate_law = law_type:law_autocracy
+				}
+				if = {
+					limit = {
+						NOR = {
+							has_law_or_variant = law_type:law_hindu_caste_enforced
+							has_law_or_variant = law_type:law_hindu_caste_codified
+						}
+					}
+					activate_law = law_type:law_hindu_caste_codified
+				}
+				ig:ig_industrialists ?= {
+					set_interest_group_name = ig_government_of_india
+				}
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				is_at_war = yes
+			}
+			add = -5
+		}
+		if = {
+			limit = {
+				loyalist_fraction = {
+					value > 0.05
+				}
+			}
+			add = -1
+		}
+		if = {
+			limit = {
+				loyalist_fraction = {
+					value > 0.10
+				}
+			}
+			add = -2
+		}
+		if = {
+			limit = {
+				any_political_movement = {
+					movement_is_plausibly_indian_nationalist = yes
+					political_movement_radicalism < 0.1
+				}
+			}
+			add = -1
+		}
+		if = {
+			limit = {
+				any_political_movement = {
+					movement_is_plausibly_indian_nationalist = yes
+					political_movement_radicalism >= 0.1
+				}
+			}
+			add = 1
+		}
+		if = {
+			limit = {
+				any_political_movement = {
+					movement_is_plausibly_indian_nationalist = yes
+					political_movement_radicalism >= 0.2
+				}
+			}
+			add = 2
+		}
+		if = {
+			limit = {
+				any_political_movement = {
+					movement_is_plausibly_indian_nationalist = yes
+					political_movement_radicalism >= 0.3
+				}
+			}
+			add = 3
+		}
+		if = {
+			limit = {
+				any_political_movement = {
+					movement_is_plausibly_indian_nationalist = yes
+					political_movement_radicalism >= 0.4
+				}
+			}
+			add = 4
+		}
+		if = {
+			limit = {
+				any_political_movement = {
+					movement_is_plausibly_indian_nationalist = yes
+					political_movement_radicalism >= 0.5
+				}
+			}
+			add = 5
+		}
+		if = {
+			limit = {
+				game_date > 1900.1.1
+			}
+			add = 1
+		}
+		if = {
+			limit = {
+				has_ruling_interest_group = ig_industrialists
+			}
+			add = -1
+		}
+	}
+}
+
+REPLACE:bht_end_privy_purse_payments = {
+	is_shown = {
+		c:HND ?= this
+		has_modifier = modifier_privy_purse_payments
+	}
+
+	possible = {
+		ig:ig_landowners ?= {
+			is_in_government = no
+		}
+		trigger_if = {
+			limit = {
+				is_subject = yes
+			}
+			custom_tooltip = {
+				text = no_federation_je_tt
+				NOT = {
+					has_journal_entry = je_federation_of_india
+				}
+			}
+		}
+		trigger_else = {
+			custom_tooltip = {
+				text = no_union_je_tt
+				NOT = {
+					has_journal_entry = je_federation_of_india
+				}
+			}
+		}
+	}
+
+	when_taken = {
+		remove_modifier = modifier_privy_purse_payments
+		add_radicals = {
+			value = large_radicals
+			pop_type = aristocrats
+		}
+		ig:ig_landowners ?= {
+			add_modifier = {
+				name = modifier_ended_privy_purse_payments
+				days = normal_modifier_time
+			}
+		}
+	}
+
+	ai_chance = {
+		value = -10
+		if = {
+			limit = {
+				taking_loans = yes
+			}
+			add = 5
+		}
+		if = {
+			limit = {
+				is_at_war = yes
+			}
+			add = 3
+		}
+		if = {
+			limit = {
+				scaled_debt >= 0
+			}
+			add = {
+				value = scaled_debt
+				multiply = 10
+			}
+		}
+	}
+}

@@ -1,0 +1,433 @@
+﻿# CWP fix patch for vanilla common/scripted_effects/04_negotiation_scripted_effects.txt
+# Each block below is a REPLACE: of the vanilla top-level block with dead 1836-era references mapped to CWP equivalents or removed.
+# See _proposed_fixes/_notes/04_scripted_effects.md
+
+REPLACE:set_promised_building_group = { #Note: ig_scope
+	# First perform arable land check and set variable for staple crops. This system can be expanded to check for other resources.
+	scope:ig = {
+		set_variable = {
+			name = promised_building_group
+			value = bg:bg_agriculture
+		}
+	}
+	if = {
+		limit = {
+			has_enough_arable_land = yes
+		}
+		set_variable = arable_land_true
+		remove_variable = promised_building_group
+	}
+	else = {
+		remove_variable = promised_building_group
+	}
+
+	#now set the desired building group
+  	if = {##Landowners and rural folk want farms.
+    	limit = {
+			is_interest_group_type = ig_landowners
+        }
+        random_list = {
+        	50 = {
+        		trigger = {
+    				has_variable = arable_land_true
+    				bg:bg_agriculture = {
+	        			building_group_can_be_promised = yes
+        			}
+        		}
+        		set_variable = {
+	    			name = promised_building_group
+	    			value = bg:bg_agriculture
+    			}
+        	}
+        }
+    }
+   	else_if = {##Landowners and rural folk want farms.
+    	limit = {
+			is_interest_group_type = ig_rural_folk
+        }
+        random_list = {
+        	95 = {
+        		trigger = { #arable land checked later
+    				has_variable = arable_land_true
+    				bg:bg_agriculture = {
+	        			building_group_can_be_promised = yes
+        			}
+        		}
+        		set_variable = {
+	    			name = promised_building_group
+	    			value = bg:bg_agriculture
+    			}
+        	}
+        }
+    }
+    else_if = {##PB want light industry
+    	limit = {
+			is_interest_group_type = ig_petty_bourgeoisie
+        }
+        random_list = {
+        	50 = {
+        		trigger = { #arable land checked later
+    				bg:bg_light_industry = {
+	        			building_group_can_be_promised = yes
+        			}
+        		}
+        		set_variable = {
+	    			name = promised_building_group
+	    			value = bg:bg_light_industry
+    			}
+        	}
+        }
+    }
+
+    else_if = {##Industrialist want Heavy industry
+    	limit = {
+			is_interest_group_type = ig_industrialists
+        }
+        random_list = {
+        	30 = {
+        		trigger = { #arable land checked later
+    				bg:bg_heavy_industry = {
+	        			building_group_can_be_promised = yes
+        			}
+        		}
+        		set_variable = {
+	    			name = promised_building_group
+	    			value = bg:bg_heavy_industry
+    			}
+        	}
+        }
+    }
+    else_if = {##trade unions want jobs.
+    	limit = {
+			is_interest_group_type = ig_trade_unions
+        }
+        random_list = {
+        	30 = {
+        		trigger = { #arable land checked later
+    				bg:bg_heavy_industry = {
+	        			building_group_can_be_promised = yes
+        			}
+        		}
+        		set_variable = {
+	    			name = promised_building_group
+	    			value = bg:bg_heavy_industry
+    			}
+        	}
+        	50 = {
+        		trigger = { #arable land checked later
+    				bg:bg_light_industry = {
+	        			building_group_can_be_promised = yes
+        			}
+        		}
+        		set_variable = {
+	    			name = promised_building_group
+	    			value = bg:bg_light_industry
+    			}
+        	}
+        }
+    }
+}
+
+REPLACE:set_promised_building_type = { #uses ig scope. Runs in immediate of event to power the option 5 trigger (which checks if this worked). Making this a scripted trigger in case for future uses. This will power the building_levels_to_increase_value script value.
+    if = {##Industrialists
+    	limit = {
+    		is_interest_group_type = ig_industrialists
+    		amenability_level <= 2
+        }
+        random_list = {
+        	30 = { #railways
+        		trigger = {
+        			bt:building_railway = {
+						building_can_be_promised = yes
+        			}
+        		}
+        		set_variable = {
+        			name = promised_building_type
+        			value = bt:building_railway
+        		}
+        	}
+        	5 = { #heavy_industry
+        		trigger = {
+        			owner = {
+        				any_scope_building = {
+    						is_building_group = bg_heavy_industry
+	        				type = {
+	        					building_can_be_promised = yes
+	        				}
+        				}
+        			}
+        		}
+    		    owner = {
+    				random_scope_building = {
+    					limit = {
+							is_building_group = bg_heavy_industry
+							type = {
+								building_can_be_promised = yes
+							}
+    					}
+    					type = {
+    						save_temporary_scope_as = potential_building_type
+    					}
+    				}
+    			}
+        		set_variable = {
+	    			name = promised_building_type
+	    			value = scope:potential_building_type
+    			}
+        	}
+        	40 = { #powerplants
+        		trigger = {
+        			bt:building_combustion_plant = {
+        				building_can_be_promised = yes
+        			}
+        		}
+        		set_variable = {
+	    			name = promised_building_type
+	    			value = bt:building_combustion_plant
+    			}
+        	}
+        }
+    }
+
+    else_if = {##Intelligentsia want uni and arts
+    	limit = {
+    		is_interest_group_type = ig_intelligentsia
+        }
+        random_list = {
+        	50 = {
+        		trigger = {
+        			bt:building_university = {
+						building_can_be_promised = yes
+        			}
+        		}
+        		set_variable = {
+        			name = promised_building_type
+        			value = bt:building_university
+        		}
+        	}
+        	30 = {
+        		trigger = {
+        			amenability_level != 4 # Balance is off to ask for too many
+        			always = no
+        		}
+        	}
+        	5 = {
+        		trigger = {
+        			bt:building_government_administration = {
+        				building_can_be_promised = yes
+        			}
+        		}
+        		modifier = {
+        			if = {
+        				limit = {
+        					owner = {
+        						bureaucracy < slight_bureaucracy_amount
+        					}
+        				}
+        				add = 10
+        			}
+        			else_if = {
+        				limit = {
+        					owner = {
+        						bureaucracy < 0
+        					}
+        				}
+        				add = 30
+        			}
+        		}
+        		set_variable = {
+	    			name = promised_building_type
+	    			value = bt:building_government_administration
+    			}
+        	}
+        }
+    }
+
+    else_if = {##PB don't mind gov admin, light industry.
+    	limit = {
+    		is_interest_group_type = ig_petty_bourgeoisie
+    		amenability_level <= 2
+        }
+        random_list = {
+        	30 = {
+        		trigger = {
+        			bt:building_government_administration = {
+        				building_can_be_promised = yes
+        			}
+        		}
+        		modifier = {
+        			if = {
+        				limit = {
+        					owner = {
+        						bureaucracy < slight_bureaucracy_amount
+        					}
+        				}
+        				add = 10
+        			}
+        			else_if = {
+        				limit = {
+        					owner = {
+        						bureaucracy < 0
+        					}
+        				}
+        				add = 30
+        			}
+        		}
+        		set_variable = {
+	    			name = promised_building_type
+	    			value = bt:building_government_administration
+    			}
+        	}
+        	40 = { #light_industry
+        		trigger = {
+        			amenability_level = 1 # Balance is off to ask for too many
+        			owner = {
+        				any_scope_building = {
+    						is_building_group = bg_light_industry
+        				}
+        			}
+        		}
+    		    owner = {
+    				random_scope_building = {
+    					limit = {
+							is_building_group = bg_light_industry
+	        				type = {
+	        					building_can_be_promised = yes
+	        				}
+    					}
+    					type = {
+    						save_temporary_scope_as = potential_building_type
+    					}
+    				}
+    			}
+        		set_variable = {
+	    			name = promised_building_type
+	    			value = scope:potential_building_type
+    			}
+        	}
+        	20 = {
+        		trigger = {
+        			amenability_level != 4
+					owner ?= {
+						NOT = { has_law_or_variant = law_type:law_isolationism } # Can cause impossible requests
+					}
+        			bt:building_trade_center = {
+						building_can_be_promised = yes
+        			}
+        		}
+        		set_variable = {
+        			name = promised_building_type
+        			value = bt:building_trade_center
+        		}
+        	}
+        }
+    }
+
+    else_if = {##Armed_forces want for military factories
+    	limit = {
+			is_interest_group_type = ig_armed_forces
+			amenability_level <= 2
+        }
+        random_list = {
+        	50 = {
+        		trigger = {
+        			bt:building_shipyard = {
+						building_can_be_promised = yes
+        			}
+        		}
+        		set_variable = {
+        			name = promised_building_type
+        			value = bt:building_shipyard
+        		}
+        	}
+        	20 = {
+        		trigger = {
+        			bt:building_small_arms_manufactories = {
+						building_can_be_promised = yes
+        			}
+        		}
+        		set_variable = {
+        			name = promised_building_type
+        			value = bt:building_small_arms_manufactories
+        		}
+        	}
+        	20 = {
+        		trigger = {
+        			bt:building_munitions_plants = {
+						building_can_be_promised = yes
+        			}
+        		}
+        		set_variable = {
+        			name = promised_building_type
+        			value = bt:building_munitions_plants
+        		}
+        	}
+        	20 = {
+        		trigger = {
+        			bt:building_small_arms_manufactories = {
+						building_can_be_promised = yes
+        			}
+        		}
+        		set_variable = {
+        			name = promised_building_type
+        			value = bt:building_small_arms_manufactories
+        		}
+        	}
+        }
+    }
+
+    else_if = {##Devout want uni and admin if state religion is active
+    	limit = {
+			is_interest_group_type = ig_devout
+			amenability_level <= 2
+        }
+        random_list = {
+        	50 = { #if State Religion, go nuts.
+        		trigger = {
+        			owner = {
+        				has_law = law_type:law_state_religion
+        			}
+        			bt:building_university = {
+						building_can_be_promised = yes
+        			}
+        		}
+        		set_variable = {
+        			name = promised_building_type
+        			value = bt:building_university
+        		}
+        	}
+        	35 = {
+        		trigger = {
+        			owner = {
+        				has_law = law_type:law_state_religion
+        			}
+        			bt:building_government_administration = {
+        				building_can_be_promised = yes
+        			}
+        		}
+        		modifier = {
+        			if = {
+        				limit = {
+        					owner = {
+        						bureaucracy < slight_bureaucracy_amount
+        					}
+        				}
+        				add = 20
+        			}
+        			else_if = {
+        				limit = {
+        					owner = {
+        						bureaucracy < 0
+        					}
+        				}
+        				add = 80
+        			}
+        		}
+        		set_variable = {
+	    			name = promised_building_type
+	    			value = bt:building_government_administration
+    			}
+        	}
+        }
+    }
+}

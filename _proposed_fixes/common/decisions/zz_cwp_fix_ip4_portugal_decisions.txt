@@ -1,0 +1,163 @@
+﻿# CWP fix patch for vanilla common/decisions/ip4_portugal_decisions.txt
+# Each block below is a faithful copy of the vanilla top-level block with dead 1836-era references repaired (see _proposed_fixes/_notes/06_on_actions_decisions.md).
+
+REPLACE:decision_revoke_banishment_law = {
+	is_shown = {
+		has_dlc_feature = ip4_content
+		c:POR ?= ROOT
+		any_character_in_void = {
+			always = no
+		}
+	}
+
+	possible = {
+		any_interest_group = {
+			leader = {
+				character_has_miguelist_ideology = yes
+			}
+			is_in_government = yes
+		}
+	}
+
+	when_taken = {
+		every_interest_group = {
+			limit = {
+				NOT = { leader = { character_has_miguelist_ideology = yes } }
+				OR = {
+					is_interest_group_type = ig_industrialists
+					is_interest_group_type = ig_petty_bourgeoisie
+					is_interest_group_type = ig_intelligentsia
+					is_interest_group_type = ig_trade_unions
+				}
+			}
+			add_modifier = {
+				name = modifier_banishment_law_repealed
+				days = normal_modifier_time
+			}
+		}
+		add_loyalists = {
+			pop_type = aristocrats
+			value = medium_radicals
+		}
+		custom_tooltip = {
+			text = miguel_invited_back_tt
+			random_character_in_void = {
+				limit = {
+					always = no
+				}
+				replace_character_roles = { add = { agitator } remove_all = yes }
+				free_character_from_void = yes
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 10
+	}
+}
+
+REPLACE:decision_depose_ruling_dynasty = {
+	is_shown = {
+		OR = {
+			has_dlc_feature = voice_of_the_people_content
+			has_dlc_feature = ip4_content
+		}
+		OR = {
+			country_has_primary_culture = cu:french
+			country_has_primary_culture = cu:spanish
+			country_has_primary_culture = cu:portuguese
+			country_has_primary_culture = cu:spanish
+		}
+		country_has_monarchy_law = yes
+		is_revolutionary = no
+		is_secessionist = no
+	}
+
+	possible = {
+		NOR = {
+			hidden_trigger = { has_variable = coup_event_active }
+			has_journal_entry = je_ip4_coup
+			is_involved_in_journal_entry = je_the_first_carlist_war
+		}
+		any_scope_character = {
+			OR = {
+				has_role_of_type = general
+				has_role_of_type = admiral
+			}
+			hidden_trigger = {
+				has_variable = monthly_cached_commander_coup_strength
+			}
+			character_has_ideology_conflicting_with_ruling_dynasty = yes
+			NOT = { # You cannot hire a communist to install the Orleanists on the throne
+				law_stance = {
+					law = law_type:law_monarchy
+					value <= disapprove
+				}
+			}
+			loyalty < define:NCharacters|LOYALTY_UNCERTAIN_THRESHOLD
+			trigger_if = {
+				limit = {
+					has_variable = monthly_cached_commander_coup_strength
+				}
+				custom_tooltip = {
+					text = coup_strength_greater_than_coup_resistance_tt
+					var:monthly_cached_commander_coup_strength >= root.country_coup_resistance
+				}
+			}
+		}
+	}
+
+	when_taken = {
+		ordered_scope_character = {
+			limit = {
+				OR = {
+					has_role_of_type = general
+					has_role_of_type = admiral
+				}
+				has_variable = monthly_cached_commander_coup_strength
+				character_has_ideology_conflicting_with_ruling_dynasty = yes
+				NOT = { # You cannot hire a communist to install the Orleanists on the throne
+					law_stance = {
+						law = law_type:law_monarchy
+						value <= disapprove
+					}
+				}
+				var:monthly_cached_commander_coup_strength >= root.country_coup_resistance
+				loyalty < define:NCharacters|LOYALTY_UNCERTAIN_THRESHOLD
+			}
+			order_by = popularity
+			position = 0
+			save_scope_as = temp_golpista
+		}
+		if = {
+			limit = {
+				exists = scope:temp_golpista
+			}
+			custom_tooltip = {
+				text = begin_dynastic_coup_tt
+			}
+			scope:temp_golpista ?= {
+				set_variable = commander_doing_coup_on_player_behalf
+				add_modifier = {
+					name = modifier_dynastic_coup
+					days = short_modifier_time
+				}
+			}
+			if = {
+				limit = {
+					exists = scope:temp_golpista
+				}
+				create_coup_from_character = {
+					CHARACTER = scope:temp_golpista
+				}
+			}
+		}
+		else = {
+			custom_tooltip = begin_dynastic_coup_scopeless_tt
+		}
+	}
+
+	ai_chance = {
+		value = 10
+	}
+}

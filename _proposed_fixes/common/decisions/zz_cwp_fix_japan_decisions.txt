@@ -1,0 +1,150 @@
+﻿# CWP fix patch for vanilla common/decisions/japan_decisions.txt
+# Each block below is a faithful copy of the vanilla top-level block with dead 1836-era references repaired (see _proposed_fixes/_notes/06_on_actions_decisions.md).
+
+REPLACE:jap_abolish_edo_system = {
+	is_shown = {
+		country_has_primary_culture = cu:japanese
+		OR = {
+			has_variable = meiji_reforms_complete_var
+			has_variable = meiji_reforms_failed_var
+			has_technology_researched = international_relations_theory # For Kobu Gattai
+		}
+		has_social_hierarchy = edo_system
+	}
+
+	possible = {
+		always = no
+		legitimacy >= 50
+		NOT = {
+			has_law_or_variant = law_type:law_subjecthood
+		}
+		# No one in government would prefer a stricter enforcement of the Edo System
+		NOT = {
+			any_interest_group = {
+				is_in_government = yes
+				custom_tooltip = {
+					text = edo_system_not_support_enforcement_tt
+					NOR = {
+		                law_enactment_stance = {
+		                    always = no
+		                    value <= neutral
+		                }
+		                law_enactment_stance = {
+		                    always = no
+		                    value <= neutral
+		                }
+					}
+				}
+			}
+		}
+	}
+
+	when_taken = {
+		every_interest_group = {
+			limit = {
+				law_stance = {
+					always = no
+					value > neutral
+				}
+			}
+			add_modifier = {
+				name = modifier_abolished_edo_system_positive
+				days = normal_modifier_time
+				is_decaying = yes
+			}
+		}
+		every_interest_group = {
+			limit = {
+				OR = {
+					law_enactment_stance = {
+						always = no
+						value > neutral
+					}
+					law_enactment_stance = {
+						always = no
+						value > neutral
+					}
+				}
+			}
+			add_modifier = {
+				name = modifier_abolished_edo_system_negative
+				days = normal_modifier_time
+				is_decaying = yes
+			}
+		}
+		custom_tooltip = {
+			text = edo_system_ends_tt
+			trigger_event = { id = set_hierarchy_event.3 }
+		}
+	}
+
+	ai_chance = {
+		value = 10
+	}
+}
+
+REPLACE:jap_upgrade_the_shinsengumi = {
+	is_shown = {
+		exists = c:JAP
+		c:JAP = THIS
+		always = no
+	}
+
+	possible = {
+		always = no
+		has_technology_researched = academia
+		any_interest_group = { # Anyone in government loves to Arrange Accidents
+			is_in_government = yes
+			law_stance = {
+				law = law_type:law_secret_police
+				value > neutral
+			}
+		}
+		bureaucracy >= 0
+		approaching_bureaucracy_shortage = no
+	}
+
+	when_taken = {
+		every_interest_group = {
+			limit = {
+				law_stance = {
+					law = law_type:law_secret_police
+					value > neutral
+				}
+			}
+			add_modifier = {
+				name = modifier_expanded_shinsengumi_positive
+				days = normal_modifier_time
+				is_decaying = yes
+			}
+		}
+		every_interest_group = {
+			limit = {
+				law_enactment_stance = {
+					law = law_type:law_secret_police
+					value < neutral
+				}
+			}
+			add_modifier = {
+				name = modifier_expanded_shinsengumi_negative
+				days = normal_modifier_time
+				is_decaying = yes
+			}
+		}
+		set_variable = japan_reformed_shinsengumi_var
+		activate_law = law_type:law_secret_police
+		random_law = {
+			limit = {
+				type = law_type:law_secret_police
+			}
+			add_amendment = {
+				type = amendment_reformed_shinsengumi
+				sponsor = PREV.ig:ig_armed_forces
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 10
+	}
+}

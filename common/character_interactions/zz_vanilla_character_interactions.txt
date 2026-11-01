@@ -1,0 +1,971 @@
+﻿# Base game character interactions that needed fixing for the mod
+REPLACE:arrange_accident = {
+	clicksound = "event:/SFX/DLC/1.3_ip1/UI/exile_character"
+
+	potential = {
+		is_in_exile_pool = no
+		is_in_void = no
+		is_ruler_of_own_country = no
+		is_immortal = no
+	}
+
+	show_requirements = yes
+
+	possible = {
+		owner ?= { has_law_or_variant = law_type:law_secret_police }
+		interest_group ?= { ig_counts_as_marginal = no }
+		custom_tooltip = {
+			text = pending_coup_event_tt
+			NOT = { owner = { has_variable = coup_event_active } }
+		}
+		trigger_if = {
+			limit = {
+				OR = {
+					has_dlc_feature = voice_of_the_people_content
+					has_dlc_feature = ip4_content
+				}
+			}
+			custom_tooltip = {
+				text = doing_coup_for_player_tt
+				NOT = { has_variable = commander_doing_coup_on_player_behalf }
+			}
+		}
+	}
+
+	effect = {
+		this.interest_group ?= { save_scope_as = relevant_ig }
+		this = { save_scope_as = assassinated_scope }
+		if = {
+			limit = { exists = owner.institution:institution_home_affairs }
+			random_list = {
+				40 = {
+					modifier = {
+						if = {
+							limit = { owner.institution:institution_home_affairs.investment >= 2 }
+							add = 25
+						}
+						if = {
+							limit = { owner.institution:institution_home_affairs.investment >= 3 }
+							add = 25
+						}
+						if = {
+							limit = { owner.institution:institution_home_affairs.investment >= 4 }
+							add = 25
+						}
+						if = {
+							limit = { owner.institution:institution_home_affairs.investment >= 5 }
+							add = 25
+						}
+					}
+					hidden_effect = {
+						if = {
+							limit = {
+								has_dlc_feature = ip3_content
+								scope:assassinated_scope ?= {
+									always = no
+									is_immortal = yes
+								}
+							}
+							set_character_immortal = no
+						}
+					}
+					kill_character = yes
+				}
+				40 = {
+					owner ?= { post_notification = arranged_accident_failed }
+					custom_tooltip = assassination_attempt_failed_tt
+				}
+				20 = {
+					modifier = {
+						if = {
+							limit = { owner.institution:institution_home_affairs.investment >= 2 }
+							subtract = 5
+						}
+						if = {
+							limit = { owner.institution:institution_home_affairs.investment >= 3 }
+							subtract = 5
+						}
+						if = {
+							limit = { owner.institution:institution_home_affairs.investment >= 4 }
+							subtract = 5
+						}
+						if = {
+							limit = { owner.institution:institution_home_affairs.investment >= 5 }
+							subtract = 5
+						}
+					}
+					custom_tooltip = assassination_attempt_failed_loud_tt
+					owner ?= {
+						add_radicals = {
+							value = very_large_radicals
+							interest_group = scope:relevant_ig
+						}
+					}
+					if = {
+						limit = {
+							owner = { has_journal_entry = je_ip4_coup }
+							root = { has_variable = golpista_var }
+						}
+						owner = { character_execute_immediate_coup = yes }
+					}
+					if = {
+						limit = { character_supports_political_movement = yes }
+						this.political_movement = {
+							add_modifier = {
+								name = modifier_government_accident_attempt
+								days = long_modifier_time
+							}
+						}
+					}
+					else_if = {
+						limit = {
+							has_role_of_type = politician
+							THIS.interest_group ?= { interest_group_supports_political_movement = yes }
+						}
+						owner ?= {
+							random_political_movement = {
+								limit = { any_influenced_interest_group = { this = scope:relevant_ig } }
+								add_modifier = {
+									name = modifier_government_accident_attempt
+									days = long_modifier_time
+								}
+							}
+						}
+					}
+					owner ?= { post_notification = arranged_accident_failed_incrimination }
+				}
+			}
+		}
+		else = { # Exists purely to generate a tooltip when inactive
+			random_list = {
+				40 = {
+					kill_character = yes
+				}
+				40 = {
+					custom_tooltip = assassination_attempt_failed_tt
+				}
+				20 = {
+					custom_tooltip = assassination_attempt_failed_loud_tt
+					owner ?= {
+						add_radicals = {
+							value = very_large_radicals
+							interest_group = scope:relevant_ig
+						}
+					}
+					if = {
+						limit = {
+							owner = { has_journal_entry = je_ip4_coup }
+							root = { has_variable = golpista_var }
+						}
+						owner = { character_execute_immediate_coup = yes }
+					}
+					if = {
+						limit = { character_supports_political_movement = yes }
+						this.political_movement = {
+							add_modifier = {
+								name = modifier_government_accident_attempt
+								days = long_modifier_time
+							}
+						}
+					}
+					else_if = {
+						limit = {
+							has_role_of_type = politician
+							THIS.interest_group ?= { interest_group_supports_political_movement = yes }
+						}
+						owner ?= {
+							random_political_movement = {
+								limit = { any_influenced_interest_group = { this = scope:relevant_ig } }
+								add_modifier = {
+									name = modifier_government_accident_attempt
+									days = long_modifier_time
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	cooldown = { days = normal_modifier_time }
+	show_confirmation_box = yes
+	
+	should_ai_evaluate = {
+		country_rank >= rank_value:minor_power # Don't burn performance on tiny AI countries messing around with character interactions
+	}
+	
+	ai_will_do = {
+		is_heir_of_own_country = no # The AI won't kill its own heirs
+	}
+
+	ai_chance = {
+		value = -50
+		if = {
+			limit = { interest_group ?= { ig_approval <= -5 } }
+			add = 25
+		}
+		if = {
+			limit = { interest_group ?= { ig_approval <= -10 } }
+			add = 30
+		}
+		if = {
+			limit = {
+				scope:actor ?= {
+					NOR = {
+						has_law_or_variant = law_type:law_autocracy
+						has_law_or_variant = law_type:law_oligarchy
+						has_law_or_variant = law_type:law_single_party_state
+					}
+				}
+			}
+			add = -25
+		}
+		if = {
+			limit = { scope:actor ?= { has_law_or_variant = law_type:law_outlawed_dissent } }
+			add = 30
+		}
+		if = {
+			limit = { scope:actor ?= { has_law_or_variant = law_type:law_censorship } }
+			add = 10
+		}
+		if = {
+			limit = { scope:actor ?= { has_law_or_variant = law_type:law_right_of_assembly } }
+			add = -10
+		}
+		if = {
+			limit = { scope:actor ?= { has_law_or_variant = law_type:law_protected_speech } }
+			add = -20
+		}
+		if = {
+			limit = { scope:actor ?= { any_interest_group = { is_revolutionary = yes } } }
+			add = 25
+		}
+		if = {
+			limit = { scope:actor ?= { ruler = { has_trait = cruel } } }
+			add = 15
+		}
+		if = {
+			limit = { scope:actor ?= { ruler = { has_trait = imperious } } }
+			add = 10
+		}
+		if = { # Dangerous agitators have a greater chance of getting booted
+			limit = {
+				has_role_of_type = agitator
+				OR = {
+					has_trait = ambitious
+					has_trait = wrathful
+					has_trait = ruthless
+					has_trait = bandit
+					has_trait = social_bandit
+					has_trait = special_character_luxemburg_in_exile
+				}
+			}
+			multiply = 1.5
+		}
+	}
+}
+
+REPLACE:exile_character = {
+	clicksound = "event:/SFX/DLC/1.3_ip1/UI/exile_character"
+
+	should_ai_evaluate = {
+		OR = {
+			has_law_or_variant = law_type:law_autocracy
+			has_law_or_variant = law_type:law_oligarchy
+			has_law_or_variant = law_type:law_single_party_state
+			has_law_or_variant = law_type:law_secret_police
+			has_law_or_variant = law_type:law_outlawed_dissent
+		}
+	}
+
+	potential = {
+		is_in_exile_pool = no
+		is_in_void = no
+		is_ruler_of_own_country = no
+		is_heir_of_own_country = no
+		# Cannot exile pure commanders, we have the retire interaction for that
+		OR = {
+			has_role_of_type = executive
+			has_role_of_type = magnate
+			has_role_of_type = politician
+			has_role_of_type = agitator
+		}
+	}
+
+	show_requirements = yes
+
+	possible = {
+		owner ?= {
+			NOR = {
+				has_law_or_variant = law_type:law_protected_speech
+				has_law_or_variant = law_type:law_national_guard
+			}
+		}
+		is_busy = no
+		trigger_if = {
+			limit = { has_role_of_type = agitator }
+			political_movement ?= { is_insurrectionary = no }
+		}
+		trigger_else = {
+			interest_group ?= {
+				is_in_government = no
+				is_insurrectionary = no
+				ig_counts_as_marginal = no
+			}
+		}
+		custom_tooltip = {
+			text = ideology_not_too_close_tt
+			NOT = {
+				OR = {
+					AND = {
+						owner.ruler = { has_socialist_ideology = yes }
+						has_socialist_ideology = yes
+					}
+					AND = {
+						owner.ruler = { has_progressive_ideology = yes }
+						has_progressive_ideology = yes
+					}
+					AND = {
+						owner.ruler = { has_liberal_ideology = yes }
+						has_liberal_ideology = yes
+					}
+					AND = {
+						owner.ruler = { has_reactionary_ideology = yes }
+						has_reactionary_ideology = yes
+					}
+					AND = {
+						owner.ruler = { has_conservative_ideology = yes }
+						has_conservative_ideology = yes
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			text = pending_coup_event_tt
+			NOT = { owner = { has_variable = coup_event_active } }
+		}
+		trigger_if = {
+			limit = {
+				OR = {
+					has_dlc_feature = voice_of_the_people_content
+					has_dlc_feature = ip4_content
+				}
+			}
+			custom_tooltip = {
+				text = doing_coup_for_player_tt
+				NOT = { has_variable = commander_doing_coup_on_player_behalf }
+			}
+		}
+	}
+
+	effect = {
+		this.interest_group ?= { save_scope_as = relevant_ig }
+		this = { save_scope_as = exile_scope }
+		owner ?= { save_scope_as = exiling_country_scope }
+		if = {
+			limit = {
+				owner = { has_journal_entry = je_ip4_coup }
+				root = { has_variable = golpista_var }
+			}
+			owner = {
+				set_variable = exile_golpista_var
+				character_execute_immediate_coup = yes
+			}
+		}
+		else = {
+			if = {
+				limit = { has_role_of_type = politician }
+				owner ?= {
+					scope:relevant_ig = {
+						add_modifier = {
+							name = modifier_exiled_leader
+							days = normal_modifier_time
+							is_decaying = yes
+						}
+					}
+				}
+			}
+			owner ?= { custom_tooltip = exiling_dissident_radicals_factors }
+			# Extra radical from exiling a popular character
+			if = {
+				limit = { popularity >= 50 }
+				owner ?= {
+					add_radicals = {
+						value = small_radicals
+						interest_group = scope:relevant_ig
+					}
+				}
+			}
+			# Standard radicals from having Right of Assembly
+			if = {
+				limit = { owner ?= { has_law_or_variant = law_type:law_right_of_assembly } }
+				owner ?= {
+					add_radicals = {
+						value = medium_radicals
+						interest_group = scope:relevant_ig
+					}
+				}
+			}
+			# Fewer radicals from Censorship
+			else_if = {
+				limit = { owner ?= { has_law_or_variant = law_type:law_censorship } }
+				owner ?= {
+					add_radicals = {
+						value = small_radicals
+						interest_group = scope:relevant_ig
+					}
+				}
+			}
+			# Boring characters should be made interesting when being exiled
+			if = {
+				limit = {
+					OR = {
+						has_ideology = ideology:ideology_moderate
+						has_ideology = ideology:ideology_pacifist
+					}
+				}
+				adopt_random_antigovernment_ideology = yes
+			}
+			hidden_effect = {
+				if = {
+					limit = { popularity > 15 }
+					add_modifier = { name = in_exile_modifier }
+					every_country = {
+						limit = { has_diplomatic_relevance = scope:exiling_country_scope }
+						post_notification = exile_notification
+					}
+				}
+				else = {
+					add_modifier = {
+						name = in_exile_modifier
+						multiplier = 3
+					}
+				}
+			}
+			custom_tooltip = {
+				text = exile_dissident_tt
+				exile_character_with_martyrdom = yes
+			}
+		}
+	}
+
+	cooldown = { days = normal_modifier_time }
+	show_confirmation_box = yes
+
+	ai_chance = {
+		value = 0
+
+		if = {
+			limit = {
+				OR = {
+					interest_group ?= { ig_approval < 0 }
+					political_movement ?= { is_being_suppressed = yes }
+				}
+			}
+
+			add = {
+				value = popularity
+				multiply = 0.2
+			}
+
+			if = { # Dangerous agitators have a greater chance of getting booted
+				limit = {
+					has_role_of_type = agitator
+					OR = {
+						has_trait = ambitious
+						has_trait = wrathful
+						has_trait = ruthless
+						has_trait = bandit
+						has_trait = social_bandit
+						has_trait = special_character_luxemburg_in_exile
+					}
+				}
+				multiply = 1.5
+			}
+
+			if = {
+				limit = { scope:actor ?= { has_law_or_variant = law_type:law_outlawed_dissent } }
+				multiply = 1.5
+			}
+			else_if = {
+				limit = { scope:actor ?= { has_law_or_variant = law_type:law_censorship } }
+				multiply = 1.25
+			}
+			else_if = {
+				limit = { scope:actor ?= { has_law_or_variant = law_type:law_right_of_assembly } }
+				multiply = 0.75
+			}
+
+			if = {
+				limit = { scope:actor ?= { has_law_or_variant = law_type:law_secret_police } }
+				multiply = 1.5
+			}
+			else_if = {
+				limit = { scope:actor ?= { has_law_or_variant = law_type:law_national_guard } }
+				multiply = 1.25
+			}
+			else_if = {
+				limit = { scope:actor ?= { has_law_or_variant = law_type:law_no_home_affairs } }
+				multiply = 0.5
+			}
+
+			if = {
+				limit = { interest_group ?= { ig_approval <= -5 } }
+				multiply = 1.25
+			}
+			else_if = {
+				limit = { interest_group ?= { ig_approval <= -10 } }
+				multiply = 1.5
+			}
+
+			if = { # If we are Conservative dont immediately hang any Liberal politician and so on
+				limit = {
+					scope:actor ?= { has_strategy = ai_strategy_conservative_agenda }
+					has_liberal_ideology = yes
+				}
+				multiply = 0.5
+			}
+			else_if = {
+				limit = {
+					scope:actor ?= { has_strategy = ai_strategy_progressive_agenda }
+					OR = {
+						has_liberal_ideology = yes
+						has_progressive_ideology = yes
+					}
+				}
+				multiply = 0.5
+			}
+			else_if = {
+				limit = {
+					scope:actor ?= {
+						has_strategy = ai_strategy_egalitarian_agenda
+						NOT = { has_law_or_variant = law_type:law_council_republic }
+					}
+					OR = {
+						has_liberal_ideology = yes
+						has_progressive_ideology = yes
+						has_socialist_ideology = yes
+					}
+				}
+				multiply = 0.5
+			}
+			else_if = {
+				limit = {
+					scope:actor ?= { has_strategy = ai_strategy_egalitarian_agenda }
+					OR = {
+						has_progressive_ideology = yes
+						has_socialist_ideology = yes
+					}
+				}
+				multiply = 0.5
+			}
+
+			if = { # Be less inclined to toss out politicians
+				limit = { NOT = { has_role_of_type = agitator } }
+				multiply = 0.25
+			}
+		}
+	}
+}
+
+REPLACE:marry_ruler_or_heir = {
+	icon = "gfx/interface/icons/ideology_icons/ideology_leader/ideology_leader_royalist.dds"
+	clicksound = "event:/SFX/UI/Military/command_grant"
+
+	potential = {
+		owner ?= scope:actor
+		OR = {
+			is_ruler_of_own_country = yes
+			is_heir_of_own_country = yes
+		}
+		scope:actor ?= {
+			country_has_monarchy_law = yes
+			NOT = { always = no }
+			has_gov_regency = no
+			religion = { has_discrimination_trait = heritage_christian }
+		}
+		is_adult = yes
+		NOT = { has_variable = spouse_seeker }
+		NOT = { has_variable = is_married }
+	}
+
+	possible = {
+		owner ?= {
+			any_diplomatically_relevant_country = {
+				NOT = { THIS = scope:actor }
+				NOT = { is_subject_type = subject_type_personal_union }
+				country_has_monarchy_law = yes
+				religion = scope:actor.religion
+				ruler = {
+					age > 36
+					hidden_trigger = { NOT = { has_variable = marriage_target } }
+				}
+			}
+		}
+	}
+	effect = {
+		set_variable = spouse_seeker
+		owner ?= { trigger_event = { id = wedding.2 popup = yes } }
+	}
+	cooldown = { days = normal_modifier_time }
+
+	ai_chance = {
+		value = 25
+	}
+}
+
+REPLACE:retire_daimyo = {
+	clicksound = "event:/SFX/DLC/1.3_ip1/UI/exile_character"
+
+	potential = {
+		scope:actor ?= { c:JAP ?= this }
+		has_variable = daimyo_var
+		is_in_exile_pool = no
+		is_in_void = no
+		is_ruler_of_own_country = no
+		is_heir_of_own_country = no
+		is_immortal = no
+	}
+
+	show_requirements = yes
+
+	possible = {
+		owner ?= { authority >= ROOT.retire_daimyo_authority_cost }
+		loyalty < define:NCharacters|LOYALTY_NEUTRAL_THRESHOLD
+		owner ?= { always = no }
+	}
+
+	effect = {
+		owner ?= { add_modifier = { name = modifier_retired_daimyo days = normal_modifier_time } }
+		var:daimyo_var ?= {
+			random_scope_state = {
+				limit = { scope:actor ?= owner }
+				add_radicals_in_state = { value = large_radicals }
+			}
+		}
+		retire_character = yes
+	}
+
+	cooldown = { days = normal_modifier_time }
+	show_confirmation_box = yes
+	
+	ai_will_do = {
+		is_heir_of_own_country = no # The AI won't kill its own heirs
+	}
+
+	ai_chance = {
+		value = -50
+		if = {
+			limit = { loyalty >= define:NCharacters|LOYALTY_UNCERTAIN_THRESHOLD }
+			add = 25
+		}
+		else_if = {
+			limit = { loyalty < define:NCharacters|LOYALTY_UNCERTAIN_THRESHOLD }
+			add = 35
+		}
+
+		if = {
+			limit = { scope:actor ?= { has_law_or_variant = law_type:law_outlawed_dissent } }
+			add = 30
+		}
+		if = {
+			limit = { scope:actor ?= { has_law_or_variant = law_type:law_censorship } }
+			add = 10
+		}
+		if = {
+			limit = { scope:actor ?= { has_law_or_variant = law_type:law_right_of_assembly } }
+			add = -10
+		}
+		if = {
+			limit = { scope:actor ?= { has_law_or_variant = law_type:law_protected_speech } }
+			add = -20
+		}
+		if = {
+			limit = { scope:actor ?= { any_interest_group = { is_insurrectionary = yes } } }
+			add = 25
+		}
+		if = {
+			limit = { scope:actor ?= { ruler = { has_trait = imperious } } }
+			add = 10
+		}
+	}
+}
+
+REPLACE:send_to_jail = {
+	clicksound = "event:/SFX/DLC/1.3_ip1/UI/exile_character"
+
+	potential = {
+		is_in_exile_pool = no
+		is_in_void = no
+		is_ruler_of_own_country = no
+		is_heir_of_own_country = no
+		has_role_of_type = agitator
+		is_immortal = no
+		has_dlc_feature = ip2_content
+	}
+
+	show_requirements = yes
+
+	possible = {
+		owner ?= { NOT = { has_law_or_variant = law_type:law_national_guard } }
+		custom_tooltip = {
+			text = pending_coup_event_tt
+			NOT = { owner = { has_variable = coup_event_active } }
+		}
+		trigger_if = {
+			limit = {
+				OR = {
+					has_dlc_feature = voice_of_the_people_content
+					has_dlc_feature = ip4_content
+				}
+			}
+			custom_tooltip = {
+				text = doing_coup_for_player_tt
+				NOT = { has_variable = commander_doing_coup_on_player_behalf }
+			}
+		}
+	}
+
+	effect = {
+		this = { save_scope_as = prisoner_scope }
+		trigger_event = { id = jail.1 popup = yes }
+	}
+
+	cooldown = { days = short_modifier_time }
+
+	should_ai_evaluate = {
+		country_rank >= rank_value:minor_power # Don't burn performance on tiny AI countries messing around with character interactions
+	}
+
+	ai_chance = {
+		value = -50
+		if = {
+			limit = { interest_group ?= { ig_approval <= -5 } }
+			add = 25
+		}
+		if = {
+			limit = { interest_group ?= { ig_approval <= -10 } }
+			add = 30
+		}
+		if = {
+			limit = {
+				scope:actor ?= {
+					NOR = {
+						has_law_or_variant = law_type:law_autocracy
+						has_law_or_variant = law_type:law_oligarchy
+						has_law_or_variant = law_type:law_single_party_state
+					}
+				}
+			}
+			add = -25
+		}
+		if = {
+			limit = { scope:actor ?= { has_law_or_variant = law_type:law_outlawed_dissent } }
+			add = 30
+		}
+		if = {
+			limit = { scope:actor ?= { has_law_or_variant = law_type:law_censorship } }
+			add = 10
+		}
+		if = {
+			limit = { scope:actor ?= { has_law_or_variant = law_type:law_right_of_assembly } }
+			add = -10
+		}
+		if = {
+			limit = { scope:actor ?= { has_law_or_variant = law_type:law_protected_speech } }
+			add = -20
+		}
+		if = {
+			limit = { scope:actor ?= { any_interest_group = { is_revolutionary = yes } } }
+			add = 25
+		}
+		if = {
+			limit = { scope:actor ?= { ruler = { has_trait = cruel } } }
+			add = 15
+		}
+		if = {
+			limit = { scope:actor ?= { ruler = { has_trait = imperious } } }
+			add = 10
+		}
+	}
+}
+
+REPLACE:sway_to_bonapartism = {
+	icon = "gfx/interface/icons/ideology_icons/ideology_leader/ideology_leader_bonapartist.dds"
+	potential = {
+		owner ?= scope:actor
+		owner ?= {
+			has_journal_entry = je_divided_monarchists
+			has_variable = supporting_bonapartist_var
+		}
+		is_ruler_of_own_country = no
+		is_heir_of_own_country = no
+		always = no # target ideology does not exist in CWP: interaction disabled
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = sway_to_bonapartism_correct_ig_in_government_tt
+			interest_group ?= {
+				is_in_government = yes
+				OR = {
+					is_interest_group_type = ig_rural_folk
+					is_interest_group_type = ig_petty_bourgeoisie
+					is_interest_group_type = ig_industrialists
+					is_interest_group_type = ig_armed_forces
+				}
+			}
+		}
+		custom_tooltip = {
+			text = sway_to_bonapartism_compatible_ideology_tt
+			NOR = {
+				has_ideology = ideology:ideology_nihilist
+				has_ideology = ideology:ideology_republican_leader
+				has_ideology = ideology:ideology_radical
+				has_ideology = ideology:ideology_social_democrat
+				has_ideology = ideology:ideology_communist
+				has_ideology = ideology:ideology_vanguardist
+				has_ideology = ideology:ideology_anarchist
+				has_ideology = ideology:ideology_humanitarian
+				has_ideology = ideology:ideology_humanitarian_royalist
+			}
+		}
+	}
+
+	effect = {
+		owner ?= {
+			add_modifier = { # country_opposition_ig_approval_add
+				name = swayed_to_french_monarchist
+				months = 60
+			}
+		}
+	}
+
+	cooldown = { months = 24 }
+	show_confirmation_box = yes
+
+	ai_chance = {
+		value = 1
+	}
+}
+
+REPLACE:sway_to_legitimism = {
+	icon = "gfx/interface/icons/ideology_icons/ideology_leader/ideology_leader_legitimist.dds"
+	potential = {
+		owner ?= scope:actor
+		owner ?= {
+			has_journal_entry = je_divided_monarchists
+		}
+		is_ruler_of_own_country = no
+		is_heir_of_own_country = no
+		always = no # target ideology does not exist in CWP: interaction disabled
+		owner ?= { has_variable = supporting_legitimist_var }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = sway_to_legitimism_correct_ig_in_government_tt
+			interest_group ?= {
+				is_in_government = yes
+				OR = {
+					is_interest_group_type = ig_devout
+					is_interest_group_type = ig_rural_folk
+					is_interest_group_type = ig_petty_bourgeoisie
+					is_interest_group_type = ig_landowners
+				}
+			}
+		}
+		custom_tooltip = {
+			text = sway_to_legitimism_compatible_ideology_tt
+			NOR = {
+				has_ideology = ideology:ideology_nihilist
+				has_ideology = ideology:ideology_republican_leader
+				has_ideology = ideology:ideology_radical
+				has_ideology = ideology:ideology_social_democrat
+				has_ideology = ideology:ideology_communist
+				has_ideology = ideology:ideology_vanguardist
+				has_ideology = ideology:ideology_anarchist
+				has_ideology = ideology:ideology_humanitarian
+				has_ideology = ideology:ideology_humanitarian_royalist
+				has_ideology = ideology:ideology_populist
+			}
+		}
+	}
+
+	effect = {
+		owner ?= {
+			add_modifier = { # country_opposition_ig_approval_add
+				name = swayed_to_french_monarchist
+				months = 60
+			}
+		}
+	}
+
+	cooldown = { months = 24 }
+	show_confirmation_box = yes
+
+	ai_chance = {
+		value = 1
+	}
+}
+
+REPLACE:sway_to_orleanism = {
+	icon = "gfx/interface/icons/ideology_icons/ideology_leader/ideology_leader_orleanist.dds"
+	potential = {
+		owner ?= scope:actor
+		owner ?= {
+			has_journal_entry = je_divided_monarchists
+		}
+		is_ruler_of_own_country = no
+		is_heir_of_own_country = no
+		always = no # target ideology does not exist in CWP: interaction disabled
+		owner ?= { has_variable = supporting_orleanist_var }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = sway_to_orleanism_correct_ig_in_government_tt
+			interest_group ?= {
+				is_in_government = yes
+				OR = {
+					is_interest_group_type = ig_industrialists
+					is_interest_group_type = ig_petty_bourgeoisie
+					is_interest_group_type = ig_intelligentsia
+					is_interest_group_type = ig_armed_forces
+				}
+			}
+		}
+		custom_tooltip = {
+			text = sway_to_orleanism_compatible_ideology_tt
+			NOR = {
+				has_ideology = ideology:ideology_nihilist
+				has_ideology = ideology:ideology_republican_leader
+				has_ideology = ideology:ideology_radical
+				has_ideology = ideology:ideology_social_democrat
+				has_ideology = ideology:ideology_communist
+				has_ideology = ideology:ideology_vanguardist
+				has_ideology = ideology:ideology_anarchist
+				has_ideology = ideology:ideology_humanitarian
+				has_ideology = ideology:ideology_humanitarian_royalist
+				has_ideology = ideology:ideology_populist
+			}
+		}
+	}
+
+	effect = {
+		owner ?= {
+			add_modifier = { # country_opposition_ig_approval_add
+				name = swayed_to_french_monarchist
+				months = 60
+			}
+		}
+	}
+
+	cooldown = { months = 24 }
+	show_confirmation_box = yes
+
+	ai_chance = {
+		value = 1
+	}
+}

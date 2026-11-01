@@ -1,0 +1,102 @@
+﻿# CWP fix patch for vanilla common/scripted_effects/00_scripted_effects.txt
+# Each block below is a REPLACE: of the vanilla top-level block with dead 1836-era references mapped to CWP equivalents or removed.
+# See _proposed_fixes/_notes/04_scripted_effects.md
+
+REPLACE:save_industrialized_pm_building_and_state = {
+	random_scope_building = {
+		limit = {
+			# CWP: the vanilla "industrialized" production methods (mechanized looms, watertube boiler, rotary valve engine,
+			# assembly lines, ...) and the vanilla building types they belonged to do not exist in this mod, so no building
+			# can qualify. The effect is kept (callers still resolve) but never saves a building/state scope.
+			always = no
+		}
+
+		save_scope_as = industrialized_pm_building
+		state = {
+			save_scope_as = industrialized_pm_state
+		}
+	}
+}
+
+REPLACE:warlord_setup_effect = {
+	activate_law = law_type:law_autocracy
+	activate_law = law_type:law_presidential_republic
+	activate_law = law_type:law_peasant_levies
+	if = {
+		limit = {
+			NOR = {
+				c:MGL ?= this
+				c:TUV ?= this
+				always = no
+			}
+		}
+		save_scope_as = transfer_scope
+		c:CHI ?= {
+			if = {
+				limit = {
+					any_scope_character = {
+						OR = {
+							has_role_of_type = general
+							AND = {
+								PREV = {
+									any_scope_state = {
+										has_building = building_naval_administration
+									}
+								}
+								has_role_of_type = admiral
+							}
+						}
+					}
+				}
+				random_scope_character = {
+					limit = {
+						OR = {
+							has_role_of_type = general
+							AND = {
+								PREV = {
+									any_scope_state = {
+										has_building = building_naval_administration
+									}
+								}
+								has_role_of_type = admiral
+							}
+						}
+					}
+					transfer_character = scope:transfer_scope
+					set_character_as_ruler = yes
+				}
+			}
+		}
+		if = {
+			limit = {
+				NOR = {
+					country_has_primary_culture = cu:han
+					country_has_primary_culture = cu:manchu
+				}
+			}
+			add_primary_culture = cu:han
+			if = {
+				limit = {
+					OR = {
+						has_law_or_variant = law_type:law_ethnostate
+						has_law_or_variant = law_type:law_national_supremacy
+					}
+				}
+				remove_primary_culture = cu:uighur
+				remove_primary_culture = cu:tibetan
+				remove_primary_culture = cu:mongol
+			}
+		}
+	}
+
+	every_scope_character = {
+		random_list = {
+			80 =  {
+			}
+
+			20 = {
+				add_trait = bandit
+			}
+		}
+	}
+}

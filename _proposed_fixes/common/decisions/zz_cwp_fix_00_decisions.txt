@@ -1,0 +1,188 @@
+﻿# CWP fix patch for vanilla common/decisions/00_decisions.txt
+# Each block below is a faithful copy of the vanilla top-level block with dead 1836-era references repaired (see _proposed_fixes/_notes/06_on_actions_decisions.md).
+
+REPLACE:revive_olympic_games_decision = {
+	is_shown = {
+		exists = c:GRE
+		c:GRE ?= THIS
+	}
+
+	possible = {
+		c:GRE ?= THIS
+		has_technology_researched = modern_urbanism
+		hidden_trigger = {
+			NOT = { has_variable = revive_olympics_decision_taken }
+		}
+	}
+
+	when_taken = {
+		set_variable = {
+			name = revive_olympics_decision_taken
+			value = yes
+		}
+		add_modifier = {
+			name = modifier_olympic_games
+		}
+		add_modifier = {
+			name = modifier_olympic_games_bureaucracy
+			days = short_modifier_time
+		}
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = { bureaucracy > 0 }
+			add = 5
+		}
+		if = {
+			limit = {
+				OR = {
+					is_diplomatic_play_committed_participant = yes
+					is_at_war = yes
+				}
+			}
+			multiply = 0
+		}
+	}
+}
+
+REPLACE:lowlands_land_reclamation = {
+	is_shown = {
+		owns_entire_state_region = STATE_FRIESLAND
+		owns_entire_state_region = STATE_HOLLAND
+		OR = {
+			NOT = { exists = global_var:land_reclamation_global }
+			AND = {
+				exists = global_var:land_reclamation_global
+				global_var:land_reclamation_global >= 10
+			}
+		}
+		NOT = { has_variable = dutch_land_reclaimer }
+	}
+
+	possible = {
+		has_technology_researched = industrial_revolution
+		bureaucracy >= 200
+	}
+
+	when_taken = {
+		if = {
+			limit = {
+				NOT = { has_global_variable = land_reclamation_global }
+			}
+			set_global_variable = {
+				name = land_reclamation_global
+				value = 0
+			}
+		}
+		add_modifier = {
+			name = modifier_reclaiming_land
+			days = -1 # permanent until removed
+		}
+		add_journal_entry = { type = je_land_reclamation }
+		set_variable = dutch_land_reclaimer
+		if = {
+			limit = {
+				NOT = { has_technology_researched = gantry_cranes }
+			}
+			custom_tooltip = land_reclamation_no_tech
+		}
+		else = {
+			custom_tooltip = land_reclamation_tech
+		}
+	}
+
+	ai_chance = {
+		value = 5
+		if = {
+			limit = {
+				OR = {
+					is_diplomatic_play_committed_participant = yes
+					is_at_war = yes
+				}
+			}
+			multiply = 0
+		}
+	}
+}
+
+REPLACE:abolish_tangena_ordeal = {
+	is_shown = {
+		exists = c:MGS
+		c:MGS ?= ROOT
+		has_modifier = modifier_tangena_ordeal
+	}
+
+	possible = {
+		exists = c:MGS
+		c:MGS ?= ROOT
+		has_modifier = modifier_tangena_ordeal
+		custom_tooltip = {
+			text = ranavalona_tt
+			NOT = {
+				ruler = {
+					has_variable = ranavalona
+				}
+			}
+		}
+	}
+
+	when_taken = {
+		remove_modifier = modifier_tangena_ordeal
+	}
+
+	ai_chance = {
+		value = 100
+	}
+}
+
+REPLACE:establish_pact_with_nafusis = {
+	is_shown = {
+		always = no
+		year < 1837
+		NOT = {
+			country_has_state_religion = rel:ibadi
+		}
+	}
+
+	possible = {
+		is_at_war = yes
+	}
+
+	when_taken = {
+		set_state_religion = rel:ibadi
+		ruler ?= {
+			change_character_religion = rel:ibadi
+		}
+		heir ?= {
+			change_character_religion = rel:ibadi
+		}
+		ig:ig_devout ?= {
+			set_interest_group_name = ig_ibadi_madrasahs
+			remove_ideology = ideology_moralist
+			remove_ideology = ideology_patriarchal
+			add_ideology = ideology_theocrat
+			add_ideology = ideology_theocrat
+			hidden_effect = {
+				leader ?= {
+					change_character_religion = rel:ibadi
+				}
+			}
+		}
+		every_scope_state = {
+			convert_population = {
+				target = rel:ibadi
+				value = 0.15
+			}
+		}
+		add_modifier = {
+			name = fzn_mountain_tribes_mobilized
+			days = very_short_modifier_time
+		}
+	}
+
+	ai_chance = {
+		value = 10
+	}
+}

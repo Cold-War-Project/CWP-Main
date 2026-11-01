@@ -1,0 +1,92 @@
+﻿# CWP fix patch for vanilla common/decisions/tibet_expedition_decision.txt
+# Each block below is a faithful copy of the vanilla top-level block with dead 1836-era references repaired (see _proposed_fixes/_notes/06_on_actions_decisions.md).
+
+REPLACE:tibet_expedition = {
+	is_shown = {
+		NOT = { c:TIB ?= this }
+		exists = c:TIB
+		c:TIB ?= {
+			is_country_type = unrecognized
+			NOT = { country_rank >= rank_value:great_power }
+		}
+		OR = {
+			is_country_type = recognized
+			country_is_colonial_or_company = yes
+		}
+		NOT = { has_variable = on_expedition }
+		always = no
+		NOT = { has_global_variable = tibet_expedition_completed }
+		NOT = { has_variable = tibet_expedition_var }
+		OR = {
+			is_ai = no
+			NOT = { has_variable = ai_expedition_cooldown }
+		}
+	}
+
+	possible = {
+		is_at_war = no
+		NOT = {
+			c:TIB ?= {
+				OR = {
+					is_subject_of = ROOT
+					top_overlord ?= {
+						OR = {
+							country_rank >= rank_value:great_power
+							NOT = { is_country_type = unrecognized }
+						}
+					}
+				}
+			}
+		}
+		NOT = { has_modifier = tibetan_fiasco }
+		country_rank >= rank_value:great_power
+		has_interest_marker_in_region = sr:region_himalayas
+		any_scope_character = {
+			OR = {
+				has_role_of_type = general
+				has_role_of_type = admiral
+			}
+			count >= 3
+		}
+		always = no
+	}
+
+	when_taken = {
+		trigger_event = { id = tibet_expedition_events.1 popup = yes }
+		set_variable = on_expedition
+		hidden_effect = {
+			set_variable = {
+				name = ai_expedition_cooldown
+				value = yes
+				days = 1825
+			}
+			set_variable = tibet_expedition_var
+		}
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				net_fixed_income > money_amount_multiplier_medium
+				gold_reserves > 0
+			}
+			add = 1
+		}
+		if = {
+			limit = {
+				has_strategy = ai_strategy_armed_isolationism
+			}
+			multiply = 0
+		}
+		if = {
+			limit = {
+				OR = {
+					is_diplomatic_play_committed_participant = yes
+					is_at_war = yes
+				}
+			}
+			multiply = 0
+		}
+	}
+}

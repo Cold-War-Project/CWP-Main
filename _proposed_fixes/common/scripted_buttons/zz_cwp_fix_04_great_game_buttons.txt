@@ -1,0 +1,318 @@
+﻿# CWP fix patch for vanilla common/scripted_buttons/04_great_game_buttons.txt
+# Each block below is a faithful copy of the vanilla top-level block with dead 1836-era references repaired (see _proposed_fixes/_notes/06_on_actions_decisions.md).
+
+REPLACE:je_afghan_unification_appeal_to_russia_button = {
+	name = "je_afghan_unification_appeal_to_russia_button"
+	desc = "je_afghan_unification_appeal_to_russia_button_desc"
+
+	selected = {
+		has_variable = AFG_appealed_to_RUS
+	}
+
+	visible = {
+		exists = c:RUS
+		NOT = {
+			exists = c:AFG
+		}
+	}
+
+	cooldown = { days = long_modifier_time }
+
+	possible = {
+		has_technology_researched = industrial_warfare
+		NOR = {
+			custom_tooltip = {
+				text = opposes_rus_in_diplo_play_tt
+				OR = {
+					has_war_with = c:RUS
+					is_diplomatic_play_enemy_of = c:RUS
+				}
+			}
+			has_diplomatic_pact = {
+				who = c:RUS
+				type = rivalry
+			}
+		}
+		any_scope_treaty = {
+			count < 1
+			OR = {
+				binds = c:GBR
+				binds = c:RUS
+			}
+			any_scope_article = {
+				has_type = military_assistance
+			}
+		}
+		c:RUS ?= {
+			OR = {
+				has_interest_marker_in_region = sr:region_greater_persia
+				any_subject_or_below = {
+					has_interest_marker_in_region = sr:region_greater_persia
+				}
+			}
+		}
+		custom_tooltip = {
+			text = AFG_no_other_afghan_nation_appealing_rus_tt
+			NOT = {
+				any_diplomatically_relevant_country = {
+					has_journal_entry = je_unify_afghanistan
+					NOT = {
+						THIS = ROOT
+					}
+					OR = {
+						has_variable = AFG_appealed_to_RUS
+						AND = {
+							has_variable = pending_aid_request
+							var:pending_aid_request = c:RUS
+						}
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			text = "can_create_treaty_MILITARY_ASSISTANCE"
+			c:RUS ?= {
+				can_create_treaty = {
+					first_country = c:RUS
+					second_country = ROOT
+
+					is_draft = no
+					binding_period = { years = 2 }
+
+					articles_to_create = {
+						{
+							article = military_assistance
+							source_country = c:RUS
+							target_country = ROOT
+						}
+					}
+				}
+			}
+		}
+	}
+
+	effect = {
+		set_variable = { name = pending_aid_request value = c:RUS }
+		save_scope_as = afghan_nation_scope
+		c:RUS ?= {
+			save_scope_as = relevant_country
+			trigger_event = { id = gg_afghanistan.3 days = 7 popup = yes }
+		}
+		custom_tooltip = if_they_accept_tt
+		custom_tooltip = AFG_appeal_accept_tt
+		show_as_tooltip = {
+			c:RUS ?= {
+				create_treaty = {
+					first_country = c:RUS
+					second_country = ROOT
+
+					is_draft = no
+					binding_period = { years = 2 }
+
+					articles_to_create = {
+						{
+							article = military_assistance
+							source_country = c:RUS
+							target_country = ROOT
+						}
+					}
+				}
+			}
+			create_diplomatic_catalyst = {
+				type = catalyst_event_positive
+				target = scope:relevant_country
+			}
+			create_diplomatic_catalyst = {
+				type = catalyst_event_negative
+				target = c:GBR
+			}
+			scope:relevant_country.power_bloc = {
+				add_leverage = { target = ROOT value = 25 }
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 0
+
+		if = {
+			limit = {
+				c:RUS ?= {
+					relations:root >= relations_threshold:cordial
+				}
+			}
+			add = 15
+		}
+
+		if = {
+			limit = {
+				is_diplomatic_play_committed_participant = yes
+			}
+			add = 10
+		}
+
+		if = {
+			limit = {
+				has_variable = player_RUS_denied_aid_request
+			}
+			add = -1000
+		}
+	}
+}
+
+REPLACE:je_afghan_unification_appeal_to_britain_button = {
+	name = "je_afghan_unification_appeal_to_britain_button"
+	desc = "je_afghan_unification_appeal_to_britain_button_desc"
+
+	selected = {
+		has_variable = AFG_appealed_to_GBR
+	}
+
+	visible = {
+		exists = c:GBR
+		NOT = {
+			exists = c:AFG
+		}
+	}
+
+	cooldown = { days = long_modifier_time }
+
+	possible = {
+		has_technology_researched = industrial_warfare
+		NOR = {
+			custom_tooltip = {
+				text = opposes_gbr_in_diplo_play_tt
+				OR = {
+					has_war_with = c:GBR
+					is_diplomatic_play_enemy_of = c:GBR
+				}
+			}
+			has_diplomatic_pact = {
+				who = c:GBR
+				type = rivalry
+			}
+		}
+		any_scope_treaty = {
+			count < 1
+			OR = {
+				binds = c:GBR
+				binds = c:RUS
+			}
+			any_scope_article = {
+				has_type = military_assistance
+			}
+		}
+		c:GBR ?= {
+			OR = {
+				has_interest_marker_in_region = sr:region_greater_persia
+				any_subject_or_below = {
+					has_interest_marker_in_region = sr:region_greater_persia
+				}
+			}
+		}
+		custom_tooltip = {
+			text = AFG_no_other_afghan_nation_appealing_gbr_tt
+			NOT = {
+				any_diplomatically_relevant_country = {
+					has_journal_entry = je_unify_afghanistan
+					NOT = {
+						THIS = ROOT
+					}
+					OR = {
+						has_variable = AFG_appealed_to_GBR
+						AND = {
+							has_variable = pending_aid_request
+							var:pending_aid_request = c:GBR
+						}
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			text = "can_create_treaty_MILITARY_ASSISTANCE"
+			c:GBR ?= {
+				can_create_treaty = {
+					first_country = c:GBR
+					second_country = ROOT
+					is_draft = no
+					binding_period = { years = 2 }
+					articles_to_create = {
+						{
+							article = military_assistance
+							source_country = c:GBR
+							target_country = ROOT
+						}
+					}
+				}
+			}
+		}
+	}
+
+	effect = {
+		set_variable = { name = pending_aid_request value = c:GBR }
+		save_scope_as = afghan_nation_scope
+		c:GBR ?= {
+			save_scope_as = relevant_country
+			trigger_event = { id = gg_afghanistan.3 days = 7 popup = yes }
+		}
+		custom_tooltip = if_they_accept_tt
+		custom_tooltip = AFG_appeal_accept_tt
+		show_as_tooltip = {
+			c:GBR ?= {
+				create_treaty = {
+					first_country = c:GBR
+					second_country = ROOT
+
+					is_draft = no
+					binding_period = { years = 2 }
+
+					articles_to_create = {
+						{
+							article = military_assistance
+							source_country = c:GBR
+							target_country = ROOT
+						}
+					}
+				}
+			}
+			create_diplomatic_catalyst = {
+				type = catalyst_event_positive
+				target = scope:relevant_country
+			}
+			create_diplomatic_catalyst = {
+				type = catalyst_event_negative
+				target = c:RUS
+			}
+			scope:relevant_country.power_bloc = {
+				add_leverage = { target = ROOT value = 25 }
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 0
+
+		if = {
+			limit = {
+				c:GBR ?= {
+					relations:root >= relations_threshold:cordial
+				}
+			}
+			add = 15
+		}
+
+		if = {
+			limit = {
+				is_diplomatic_play_committed_participant = yes
+			}
+			add = 10
+		}
+
+		if = {
+			limit = {
+				has_variable = player_GBR_denied_aid_request
+			}
+			add = -1000
+		}
+	}
+}

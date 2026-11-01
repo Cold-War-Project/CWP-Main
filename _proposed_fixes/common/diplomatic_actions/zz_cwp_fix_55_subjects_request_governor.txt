@@ -1,0 +1,126 @@
+﻿# CWP proposed fix: patch for vanilla common/diplomatic_actions/55_subjects_request_governor.txt
+# Each block below is a copy of the vanilla top-level block with the removed/invalid 1836-era references repaired.
+# REPLACE: swaps the vanilla block of the same name (this file loads last because of the zz_ prefix).
+
+REPLACE:da_request_colonial_governor = {
+	groups= { subject }
+
+	requires_approval = no
+	should_notify_third_parties = yes
+	show_effect_in_tooltip = yes
+
+	texture = "gfx/interface/icons/diplomatic_action_icons/da_appoint_colonial_governor.dds" # Same as appoint governor (intentional)
+	confirmation_sound = "event:/SFX/UI/MapInteraction/SubjectInteractions/diplomatic_action_subjects_04_appoint_governor_benign" # Same as appoint governor (intentional)
+	selectable = {
+		has_dlc_feature = subject_and_bloc_actions
+	}
+
+	potential = {
+		NOT = { has_variable = gubernatorial_candidate }
+		scope:target_country = {
+			NOT = { is_diplomatic_play_enemy_of = root }
+		}
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = "APPOINT_COLONIAL_GOVERNOR_ON_COOLDOWN"
+			NOR = {
+				has_variable = gubernatorial_candidate
+				has_variable = gubernatorial_candidate_timed
+			}
+		}
+		is_revolutionary = no
+		has_law = law_type:law_colonial_administration
+		is_country_type = colonial
+		scope:target_country = {
+			is_revolutionary = no
+		}
+		OR = {
+			AND = {
+				OR = {
+					is_country_type = unrecognized
+				}
+				scope:target_country = {
+					is_country_type = recognized
+					country_is_colonial_or_company = yes
+				}
+			}
+			AND = {
+				OR = {
+					is_country_type = recognized
+					is_country_type = colonial
+				}
+				OR = {
+					is_subject_type = subject_type_colony
+					is_subject_type = subject_type_puppet
+					is_subject_type = subject_type_dominion
+					is_subject_type = subject_type_vassal
+					is_subject_type = subject_type_crown_land
+				}
+				scope:target_country = {
+					OR = {
+						is_country_type = recognized
+						country_is_colonial_or_company = yes
+					}
+				}
+			}
+			AND = {
+				is_country_type = unrecognized
+				OR = {
+					is_subject_type = subject_type_colony
+					is_subject_type = subject_type_puppet
+					is_subject_type = subject_type_dominion
+					is_subject_type = subject_type_vassal
+					is_subject_type = subject_type_crown_land
+				}
+				scope:target_country = {
+					is_country_type = unrecognized
+				}
+			}
+		}
+	}
+
+	accept_effect = {
+		set_variable = gubernatorial_candidate
+		set_variable = {
+			name = gubernatorial_candidate_timed
+			days = normal_modifier_time
+		}
+		trigger_event = { id = subject_interactions.3 popup = yes }
+		add_modifier = {
+			name = modifier_requested_colonial_governor
+			days = normal_modifier_time
+		}
+		save_scope_as = source_country
+		scope:target_country = {
+			post_notification = requested_new_governor_notification
+		}
+	}
+
+	ai = {
+		evaluation_chance = {
+			value = 0.25
+		}
+
+		propose_score = {
+			value = 10
+		}
+
+		will_propose = {
+			"ai_ideological_opinion(scope:target_country)" <= -25
+			OR = {
+				scope:target_country = { liberty_desire < define:NDiplomacy|WAR_GOAL_INFAMY_LOW_LIBERTY_DESIRE_THRESHOLD }
+				has_attitude = {
+					who = scope:target_country
+					attitude = domineering
+				}
+			}
+			OR = {
+				has_strategy = ai_strategy_maintain_power_balance
+				has_strategy = ai_strategy_anti_imperialism
+				has_strategy = ai_strategy_international_socialism
+			}
+		}
+	}
+}

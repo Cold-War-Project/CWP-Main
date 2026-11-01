@@ -1,0 +1,74 @@
+﻿# CWP fix patch for vanilla common/decisions/congo_expedition_decision.txt
+# Each block below is a faithful copy of the vanilla top-level block with dead 1836-era references repaired (see _proposed_fixes/_notes/06_on_actions_decisions.md).
+
+REPLACE:congo_river_expedition = {
+	is_shown = {
+		NOT = { has_variable = on_expedition }
+		always = no
+		NOT = { has_global_variable = congo_river_explored }
+		OR = {
+			is_ai = no
+			NOT = { has_variable = ai_expedition_cooldown }
+		}
+	}
+
+	possible = {
+		is_at_war = no
+		has_interest_marker_in_region = sr:region_equatorial_africa
+		any_scope_character = {
+			OR = {
+				has_role_of_type = general
+				has_role_of_type = admiral
+			}
+			count >= 3
+		}
+		has_technology_researched = antibiotics
+	}
+
+	when_taken = {
+		if = {
+			limit = {
+				is_player = yes
+			}
+			trigger_event = { id = expedition_events.601 popup = yes }
+			set_variable = on_expedition
+		}
+		else = {
+			set_variable = AI_EXPEDITION_CONGO
+			ai_expedition_simulator_start = yes
+		}
+		hidden_effect = {
+			set_variable = {
+				name = ai_expedition_cooldown
+				value = yes
+				days = 1825
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				net_fixed_income > money_amount_multiplier_medium
+				gold_reserves > 0
+			}
+			add = 1
+		}
+		if = {
+			limit = {
+				has_strategy = ai_strategy_armed_isolationism
+			}
+			multiply = 0
+		}
+		if = {
+			limit = {
+				OR = {
+					is_diplomatic_play_committed_participant = yes
+					is_at_war = yes
+				}
+			}
+			multiply = 0
+		}
+	}
+}

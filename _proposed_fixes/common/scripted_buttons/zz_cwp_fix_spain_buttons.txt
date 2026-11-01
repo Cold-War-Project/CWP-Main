@@ -1,0 +1,155 @@
+﻿# CWP fix patch for vanilla common/scripted_buttons/spain_buttons.txt
+# Each block below is a faithful copy of the vanilla top-level block with dead 1836-era references repaired (see _proposed_fixes/_notes/06_on_actions_decisions.md).
+
+REPLACE:je_the_first_carlist_war_royal_expedition_button = {
+	name = "je_the_first_carlist_war_royal_expedition"
+	desc = "je_the_first_carlist_war_royal_expedition_desc"
+
+	visible = {
+		always = no
+	}
+
+	possible = {
+		always = no
+		hidden_trigger = {
+			NOT = { has_global_variable = carlist_expedition }
+		}
+		OR = {
+			custom_tooltip = {
+				text = "CARLIST_WAR_ROYAL_EXPEDITION_MINIMUM_SCORE"
+
+				global_var:spc_carlist_war_score >= carlist_war_royal_expedition_min_score
+			}
+			year >= 1839.1.1
+		}
+	}
+
+	selected = {
+		has_global_variable = carlist_expedition
+	}
+
+	effect = {
+		je:je_the_first_carlist_war ?= {
+			remove_modifier = carlist_war_guerilla_warfare
+		}
+		set_global_variable = carlist_expedition
+		remove_global_variable = carlist_war_skirmish_phase
+		trigger_event = { id = carlist_war.1 popup = yes }
+		hidden_effect = { c:SPA ?= { trigger_event = { id = carlist_war.1 popup = yes } } }
+
+		add_modifier = {
+			name = the_last_stand
+			multiplier = {
+				value = global_var:spc_carlist_war_score
+				min = 1
+			}
+			years = 1
+			is_decaying = yes
+		}
+		c:SPA ?= {
+			add_modifier = {
+				name = galvanized_forces
+				multiplier = {
+					value = global_var:spa_carlist_war_score
+					min = 1
+				}
+				years = 2
+				is_decaying = yes
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 0
+
+		if = {
+			limit = {
+				global_var:spc_carlist_war_score >= 10
+			}
+			add = 10
+		}
+		if = {
+			limit = {
+				global_var:spc_carlist_war_score >= 15
+			}
+			add = 10
+		}
+		if = {
+			limit = {
+				global_var:spc_carlist_war_score >= 20
+			}
+			add = 10
+		}
+		if = {
+			limit = {
+				global_var:spa_carlist_war_score >= 25
+			}
+			add = 10
+		}
+		if = {
+			limit = {
+				game_date > 1839.1.1
+			}
+			add = 10000
+		}
+	}
+}
+
+REPLACE:je_the_first_carlist_flush_them_out_button = {
+	name = "je_the_first_carlist_flush_them_out"
+	desc = "je_the_first_carlist_flush_them_out_desc"
+
+	visible = {
+		c:SPA ?= this
+	}
+
+	possible = {
+		c:SPA ?= THIS
+		hidden_trigger = {
+			NOT = { has_global_variable = carlist_expedition }
+		}
+		OR = {
+			custom_tooltip = {
+				text = "CARLIST_WAR_ROYAL_EXPEDITION_MINIMUM_SCORE"
+
+				global_var:spa_carlist_war_score >= carlist_war_royal_expedition_min_score
+			}
+			year >= 1839.1.1
+		}
+	}
+
+	selected = {
+		has_global_variable = carlist_expedition
+	}
+
+	effect = {
+		je:je_the_first_carlist_war ?= {
+			remove_modifier = carlist_war_guerilla_warfare
+		}
+		set_global_variable = carlist_expedition
+		remove_global_variable = carlist_war_skirmish_phase
+		hidden_effect = {  }
+		trigger_event = { id = carlist_war.1 popup = yes }
+
+		add_modifier = {
+			name = galvanized_forces
+			multiplier = {
+				value = global_var:spa_carlist_war_score
+				min = 1
+			}
+			years = 2
+			is_decaying = yes
+		}
+	}
+
+	ai_chance = {
+		value = 100 # Always push it we are beating the Carlists
+
+		if = {
+			limit = {
+				always = no
+			}
+			multiply = 0
+		}
+	}
+}

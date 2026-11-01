@@ -1,0 +1,163 @@
+﻿# CWP proposed fix: patch for vanilla common/diplomatic_catalysts/00_diplomatic_catalysts.txt
+# Each block below is a copy of the vanilla top-level block with the removed/invalid 1836-era references repaired.
+# REPLACE: swaps the vanilla block of the same name (this file loads last because of the zz_ prefix).
+
+REPLACE:catalyst_gained_land_border = {
+	category = cc_diplomatic_relevance
+
+	ai_country_goal_recalculation = {
+		type = only_hostile
+		trigger = {
+			NOT = { is_country_type = unrecognized }
+			scope:target_country = { is_country_type = unrecognized }
+			"relations(scope:target_country)" < relations_threshold:amicable
+			country_rank >= rank_value:major_power
+		}
+		chance = {
+			value = 0.25
+
+			if = {
+				limit = { country_rank >= rank_value:great_power }
+				multiply = 2
+			}
+
+			if = {
+				limit = { "relations(scope:target_country)" >= relations_threshold:cordial }
+				multiply = 0.5
+			}
+
+			if = {
+				limit = { is_in_same_power_bloc = scope:target_country }
+				multiply = 0.1
+			}
+		}
+	}
+}
+
+REPLACE:catalyst_lost_land_border = {
+	category = cc_diplomatic_relevance
+
+	ai_country_goal_recalculation = {
+		type = more_friendly
+		trigger = {
+			NOT = { is_country_type = unrecognized }
+			scope:target_country = { is_country_type = unrecognized }
+			"relations(scope:target_country)" > relations_threshold:poor
+		}
+		chance = {
+			value = 0.25
+
+			if = {
+				limit = { "relations(scope:target_country)" >= relations_threshold:amicable }
+				multiply = 4.0
+			}
+			else_if = {
+				limit = { "relations(scope:target_country)" >= relations_threshold:cordial }
+				multiply = 2.0
+			}
+		}
+	}
+}
+
+REPLACE:catalyst_diplomatic_strategy_changed = {
+	category = cc_ai_strategy_change
+
+	ai_country_goal_recalculation = {
+		trigger = {
+			NOT = { has_friendly_diplomatic_pact = { TARGET = scope:target_country } }
+		}
+
+		type = all
+		chance = {
+			value = 0.05
+
+			if = {
+				limit = {
+					is_subject_of = scope:target_country
+				}
+				add = 100.0 # Guaranteed
+			}
+
+			if = {
+				limit = {
+					always = no
+					scope:target_country = {
+						OR = {
+							country_has_primary_culture = cu:north_german
+							country_has_primary_culture = cu:south_german
+						}
+					}
+				}
+				add = 100.0 # Guaranteed
+			}
+
+
+			if = {
+				limit = {
+					always = no
+					scope:target_country = {
+						OR = {
+							country_has_primary_culture = cu:italian
+						}
+					}
+				}
+				add = 100.0 # Guaranteed
+			}
+
+			if = {
+				limit = {
+					always = no
+					scope:target_country = {
+						scope:target_country = { can_form_nation = ETH }
+					}
+				}
+				add = 100.0 # Guaranteed
+			}
+
+			if = {
+				limit = {
+					always = no
+					scope:target_country = {
+						scope:target_country = { can_form_nation = CHI }
+					}
+				}
+				add = 100.0 # Guaranteed
+			}
+
+			if = {
+				limit = {
+					OR = {
+						has_strategy = ai_strategy_hardline_communist
+						has_strategy = ai_strategy_international_socialism
+						has_strategy = ai_strategy_anti_imperialism
+					}
+				}
+				multiply = 10
+			}
+
+			if = {
+				limit = {
+					OR = {
+						has_strategy = ai_strategy_colonial_expansion
+						has_strategy = ai_strategy_economic_imperialism
+					}
+					scope:target_country = { is_country_type = unrecognized }
+				}
+				multiply = 5
+			}
+
+			if = {
+				limit = {
+					NOT = { has_strategic_adjacency = scope:target_country }
+				}
+				multiply = 0.5
+			}
+			else_if = {
+				limit = {
+					has_strategy = ai_strategy_territorial_expansion
+				}
+				multiply = 5
+			}
+		}
+	}
+}

@@ -1,0 +1,181 @@
+﻿# CWP fix patch for vanilla common/decisions/austria_decisions.txt
+# Each block below is a faithful copy of the vanilla top-level block with dead 1836-era references repaired (see _proposed_fixes/_notes/06_on_actions_decisions.md).
+
+REPLACE:aus_organise_trialism = {
+	is_shown = {
+		has_dlc_feature = ip3_content
+		has_technology_researched = pan-nationalism
+		c:AUS ?= this
+		any_subject_or_below = {
+			NOT = {
+				country_has_primary_culture = cu:croat
+			}
+			any_scope_state = {
+				state_region = s:STATE_CROATIA
+			}
+		}
+		country_has_monarchy_law = yes
+		NOT = {
+			has_variable = aus_organised_trialism
+		}
+	}
+	possible = {
+		has_government_type = gov_constitutional_kingdom
+		any_subject_or_below = {
+			NOT = {
+				country_has_primary_culture = cu:croat
+			}
+			any_scope_state = {
+				state_region = s:STATE_CROATIA
+			}
+			OR = {
+				relations:root <= 0
+				liberty_desire >= 50
+				has_attitude = {
+					who = ROOT
+					attitude = rebellious
+				}
+			}
+		}
+		is_at_war = no
+		is_diplomatic_play_committed_participant = no
+	}
+	when_taken = {
+		set_variable = aus_organised_trialism
+		random_subject_or_below = {
+			limit = {
+				NOT = {
+					country_has_primary_culture = cu:croat
+				}
+				any_scope_state = {
+					state_region = s:STATE_CROATIA
+				}
+			}
+			custom_tooltip = {
+				text = austria_trialism.1.t_display_tt
+				trigger_event = { id = austria_trialism.1 }
+			}
+		}
+	}
+	ai_chance = {
+		value = -100
+		if = {
+			limit = {
+				any_subject_or_below = {
+					NOT = {
+						country_has_primary_culture = cu:croat
+					}
+					any_scope_state = {
+						state_region = s:STATE_CROATIA
+					}
+					save_temporary_scope_as = hungary_scope
+				}
+			}
+			every_subject_or_below = {
+				limit = {
+					NOT = {
+						country_has_primary_culture = cu:croat
+					}
+					any_scope_state = {
+						state_region = s:STATE_CROATIA
+					}
+				}
+				add = scope:hungary_scope.liberty_desire
+			}
+			if = {
+				limit = {
+					scope:hungary_scope = {
+						has_attitude = {
+							who = ROOT
+							attitude = rebellious
+						}
+					}
+				}
+				add = 25
+			}
+			subtract = { # -50 at 100 relations, +50 at -100
+				value = "relations(scope:hungary_scope)"
+				multiply = 0.5
+			}
+		}
+	}
+}
+
+REPLACE:aus_revisit_federation_proposal = {
+	is_shown = {
+		has_dlc_feature = ip3_content
+		has_technology_researched = pan-nationalism
+		has_variable = received_federation_proposal
+		NOT = {
+			has_journal_entry = je_danubian_federation
+		}
+		NOT = {
+			has_variable = danubian_federation_done_with
+		}
+	}
+	possible = {
+		custom_tooltip = {
+			text = shelved_too_soon_ago_tt
+			NOT = {
+				has_variable = shelved_federation_proposal
+			}
+		}
+	}
+	when_taken = {
+		add_journal_entry = { type = je_danubian_federation }
+		every_subject_or_below = {
+			limit = {
+				capital = {
+					OR = {
+						is_in_geographic_region = geographic_region_danubia_old
+						is_in_geographic_region = geographic_region_poland_old
+						is_in_geographic_region = geographic_region_balkans_old
+						is_in_geographic_region = geographic_region_south_germany_old
+					}
+				}
+			}
+			trigger_event = { id = austria_federation.13 popup = yes }
+		}
+	}
+	ai_chance = {
+		value = -10
+		if = {
+			limit = {
+				ruler = {
+					is_interest_group_type = ig_armed_forces
+				}
+			}
+			add = 25
+		}
+		if = {
+			limit = {
+				ruler ?= {
+					NOT = {
+						culture = cu:south_german
+					}
+				}
+			}
+			add = 100
+		}
+		if = {
+			limit = {
+				any_subject_or_below = {
+					OR = {
+						is_subject_type = subject_type_crown_land
+						is_subject_type = subject_type_personal_union
+					}
+					relations:root <= relations_threshold:poor
+				}
+			}
+			add = 15
+		}
+		if = {
+			limit = {
+				ruler = {
+					always = no
+				}
+			}
+			add = -10
+		}
+	}
+}

@@ -1,0 +1,76 @@
+﻿# CWP fix patch for vanilla common/scripted_effects/00_sgui_effects.txt
+# Each block below is a REPLACE: of the vanilla top-level block with dead 1836-era references mapped to CWP equivalents or removed.
+# See _proposed_fixes/_notes/04_scripted_effects.md
+
+REPLACE:je_meiji_restoration_update_japanese_emperor = {
+    if = {
+        limit = {
+            has_variable = emperor_var
+        }
+        remove_variable = emperor_var
+    }
+    if = {
+        limit = {
+            any_scope_character = {
+                has_trait = special_character_japanese_emperor
+            }
+        }
+        random_scope_character = {
+            limit = {
+                has_trait = special_character_japanese_emperor
+            }
+            save_temporary_scope_as = emperor_var_scope
+        }
+        set_variable = {
+            name = emperor_var
+            value = scope:emperor_var_scope
+        }
+    }
+    else_if = {
+        limit = {
+            is_revolutionary = yes
+            country_definition = c:JAP.country_definition
+            c:JAP ?= {
+                any_scope_character = {
+                    has_trait = special_character_japanese_emperor
+                }
+            }
+        }
+        c:JAP ?= {
+            random_scope_character = {
+                limit = {
+                    has_trait = special_character_japanese_emperor
+                }
+                save_temporary_scope_as = emperor_var_scope
+            }
+        }
+        set_variable = {
+            name = emperor_var
+            value = scope:emperor_var_scope
+        }
+    }
+    else_if = { # Something has gone very wrong. We need a new Emperor, stat.
+        limit = {
+            has_law_or_variant = law_type:law_monarchy
+            NOT = {
+                any_scope_character = {
+                    has_trait = special_character_japanese_emperor
+                }
+            }
+        }
+        if = {
+            limit = {
+                NOT = {
+                    always = no
+                }
+            }
+            scope:emperor_var_scope ?= {
+                set_character_as_ruler = yes
+            }
+        }
+        set_variable = {
+            name = emperor_var
+            value = scope:emperor_var_scope
+        }
+    }
+}

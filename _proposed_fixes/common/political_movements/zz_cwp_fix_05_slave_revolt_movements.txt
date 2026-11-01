@@ -1,0 +1,516 @@
+﻿# CWP proposed fix: patch for vanilla common/political_movements/05_slave_revolt_movements.txt
+# Each block below is a copy of the vanilla top-level block with the removed/invalid 1836-era references repaired.
+# REPLACE: swaps the vanilla block of the same name (this file loads last because of the zz_ prefix).
+
+REPLACE:movement_slave_revolt = {
+	category = movement_category_cultural # Sort of
+	can_have_slave_supporters = yes
+
+	active_law_radicalism_multiplier = 1
+
+	ideology = ideology_radical_movement
+	character_ideologies = {
+		ideology_abolitionist
+		ideology_humanitarian
+		ideology_radical
+	}
+
+	disband_trigger = {
+		has_law_or_variant = law_type:law_slavery_banned
+	}
+	on_disbanded = {}
+
+	creation_trigger = {
+		NOT = { has_law_or_variant = law_type:law_slavery_banned }
+		OR = {
+			pop_type_percent_country = {
+				pop_type = slaves
+				percent >= 0.15
+			}
+			any_scope_state = {
+				pop_type_percent_state = {
+					target = pop_type:slaves
+					value >= 0.55 # So South Carolina doesn't count immediately
+				}
+			}
+		}
+	}
+	creation_weight = {
+		value = 100
+		if = {
+			limit = {
+				owner ?= { # If a movement of this type exists in a neighbouring country, make it more likely to spawn here as well
+					any_neighbouring_state = {
+						owner = {
+							prestige > ROOT.owner.prestige
+							any_political_movement = {
+								is_political_movement_type = movement_slave_revolt
+							}
+						}
+					}
+				}
+			}
+			multiply = {
+				value = 2
+			}
+		}
+	}
+
+	culture_selection_trigger = {
+		scope:country = {
+			OR = {
+				any_scope_state = {
+					state_region = {
+						is_homeland = root
+					}
+					culture_percent_state = {
+						target = root
+						value >= 0.2
+					}
+					any_scope_pop = {
+						culture = root
+						is_pop_type = slaves
+						total_size >= 10000
+					}
+				}
+				AND = {
+					culture_percent_country = {
+						target = root
+						value >= 0.1
+					}
+					cultural_acceptance_base = { target = root value <= acceptance_status_3 }
+					any_scope_pop = {
+						culture = root
+						is_pop_type = slaves
+						total_size >= 10000
+					}
+				}
+			}
+		}
+	}
+	culture_selection_weight = {
+		value = 1
+
+		if = {
+			limit = {
+				scope:country = {
+					any_scope_diplomatic_pact = {
+						is_diplomatic_action_type = support_separatism
+						second_country = prev
+						"diplomatic_pact_other_country(scope:country)" = {
+							country_has_primary_culture = root
+						}
+					}
+				}
+			}
+			add = 50
+		}
+		if = {
+			limit = {
+				culture_is_intuitive_slave_revolt_culture = {
+					COUNTRY = scope:country
+					CULTURE = root
+				}
+			}
+			add = 1000
+		}
+	}
+
+	on_created = {
+
+	}
+
+	character_support_trigger = {
+		OR = {
+			has_ideology = ideology:ideology_abolitionist
+			has_ideology = ideology:ideology_radical
+			has_ideology = ideology:ideology_humanitarian
+			has_ideology = ideology:ideology_humanitarian_royalist
+			OR = {
+				interest_group ?= {
+					has_ideology = ideology:ideology_abolitionist
+				}
+			}
+		}
+	}
+	character_support_weight = {
+		value = 200
+		if = {
+			limit = {
+				OR = {
+					has_ideology = ideology:ideology_abolitionist
+					has_ideology = ideology:ideology_radical
+					has_ideology = ideology:ideology_humanitarian
+					has_ideology = ideology:ideology_humanitarian_royalist
+				}
+			}
+			multiply = {
+				value = 5
+			}
+		}
+	}
+
+	pop_support_trigger = {
+		OR = {
+			culture = scope:culture
+			pop_acceptance <= acceptance_status_3 # Tailored for Afro-Caribeños in Cuba
+			is_pop_type = slaves
+		}
+	}
+
+	pop_support_factors = {
+		movement_support_national_awakening
+		movement_support_cultural_fervor
+		movement_support_radicalization
+		movement_support_cultural_discrimination
+		movement_support_clergymen
+		movement_support_shopkeepers
+		movement_support_slaves
+		movement_support_peasants
+	}
+
+	pop_support_weight = {
+		if = {
+			limit = {
+				exists = scope:political_movement
+				scope:political_movement ?= {
+						OR = {
+							is_being_suppressed = yes
+							is_being_bolstered = yes
+						}
+					}
+				}
+			if = {
+				limit = {
+					scope:political_movement = {
+						is_being_suppressed = yes
+					}
+				}
+				add = {
+					value = suppression_base_value
+					multiply = {
+						value = -0.5
+						add = owner.modifier:country_suppression_attraction_factor
+					}
+					desc = "concept_suppressed"
+				}
+			}
+			else = {
+				add = {
+					value = bolstering_base_value
+					multiply = {
+						value = 0.5
+						add = owner.modifier:country_bolster_attraction_factor
+					}
+					desc = "concept_bolstered"
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				strata = middle
+			}
+			if = {
+				limit = {
+					is_pop_type = clergymen
+				}
+				add = {
+					value = 35
+					desc = "POP_CLERGYMEN"
+				}
+			}
+			else_if = {
+				limit = {
+					is_pop_type = shopkeepers
+				}
+				add = {
+					value = 25
+					desc = "POP_SHOPKEEPERS"
+				}
+			}
+			else = {
+				add = {
+					value = 10
+					desc = "MIDDLE_NO_ICON"
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				strata = lower
+			}
+			if = {
+				limit = {
+					is_pop_type = peasants
+				}
+				add = {
+					value = 25
+					desc = "POP_PEASANTS"
+				}
+			}
+			else_if = {
+				limit = {
+					is_pop_type = slaves
+				}
+				add = {
+					value = 100
+					desc = "POP_SLAVES"
+				}
+			}
+			else = {
+				add = {
+					value = 10
+					desc = "LOWER_NO_ICON"
+				}
+			}
+		}
+
+		multiply = { # Illiterate pops participate at 1/2 the rate of fully literate pops, up from standard 1/4
+			desc = "POP_LITERACY"
+			value = literacy_rate
+			add = 0.50
+			max = 1.1 # Needs a less high literacy rate to get started, but caps out the same as other movements
+		}
+
+		multiply = { # Multiplied by 2x max
+			desc = "POP_RADICALS"
+			value = pop_radical_fraction
+			multiply = 2
+			add = 1
+		}
+
+		multiply = { # Range from x0.775 to 2.275
+			desc = "POP_CULTURE_FERVOR"
+			value = culture.culture_current_fervor
+			subtract = 15
+			multiply = 0.015
+			add = 1
+		}
+
+		if = {
+			limit = {
+				culture ?= {
+					culture_has_national_awakening = yes
+				}
+			}
+			multiply = {
+				value = 1.5
+				desc = "POP_ACTIVE_NATIONAL_AWAKENING"
+			}
+		}
+
+		if = {
+			limit = {
+				owner ?= {
+					has_law_commitment = law_type:law_slavery_banned
+				}
+			}
+			multiply = {
+				desc = "law_commitment"
+				value = 2.0
+			}
+		}
+	}
+
+	revolution = {
+		possible = {
+			OR = {
+				political_movement_support >= 0.05
+				political_movement_identity_support >= 0.10
+			}
+		}
+
+		weight = { # If this is possible, then it should always happen
+			value = 1000
+		}
+
+		state_weight = {
+			value = 0
+			if = {
+				limit = {
+					pop_type_percent_state = {
+						target = pop_type:slaves
+						value >= 0.01
+					}
+				}
+				add = { # 
+					value = -1
+					add = {
+						value = "this.pop_type_percent_state(pop_type:slaves)"
+						multiply = 4
+					}
+					add = {
+						value = this.turmoil
+					}
+					multiply = 100
+				}
+			}
+		}
+	}
+
+	secession = {
+		possible = {
+			OR = {
+				political_movement_support >= 0.05
+				political_movement_identity_support >= 0.10
+			}
+			scope:clout <= 0
+		}
+
+		weight = {
+			value = 50
+		}
+
+		state_weight = {
+			value = 0
+			if = {
+				limit = {
+					pop_type_percent_state = {
+						target = pop_type:slaves
+						value >= 0.01
+					}
+				}
+				add = { 
+					value = -1
+					add = {
+						value = "this.pop_type_percent_state(pop_type:slaves)"
+						multiply = 4
+					}
+					add = {
+						value = this.turmoil
+					}
+					multiply = 100
+				}
+			}
+		}
+	}
+
+	additional_radicalism_factors = {
+		if = {
+			limit = {
+				owner.ruler ?= {
+					OR = {
+						has_ideology = ideology:ideology_populist
+						AND = {
+							NOR = {
+								has_ideology = ideology:ideology_abolitionist
+								has_ideology = ideology:ideology_utilitarian_leader
+								has_ideology = ideology:ideology_utopian
+							}
+							interest_group ?= {
+								OR = {
+									always = no
+								}
+							}
+						}
+					}
+				}
+			}
+
+			add = {
+				value = 0.1
+				desc = "RULER_IS_PRO_SLAVERY"
+			}
+		}
+
+		if = {
+			limit = {
+				owner ?= {
+					pop_type_percent_country = {
+						pop_type = slaves
+						percent > 0
+					}
+				}
+			}
+			add = {
+				value = 10
+				subtract = "owner.average_sol_for_slaves"
+				multiply = 0.075
+				max = 0.3
+				min = -0.25
+				desc = "STANDARD_OF_LIVING_FOR_SLAVES"
+			}
+		}
+
+		if = {
+			limit = {
+				owner = {
+					any_neighbouring_state = {
+						owner = {
+							NOT = { THIS = ROOT.owner }
+							any_political_movement = {
+								OR = {
+									is_political_movement_type = movement_anti_slavery
+									is_political_movement_type = movement_slave_revolt
+								}
+								is_insurrectionary = yes
+							}
+						}
+					}
+				}
+			}
+			add = {
+				desc = "NEIGHBOURING_COUNTRY_WITH_REVOLUTION"
+				value = 0.15
+			}
+		}
+
+		if = {
+			limit = {
+				game_date > 1836.1.1
+				owner = {
+					country_is_colonial_or_company = yes
+				}
+			}
+			if = {
+				limit = {
+					owner.army_power_projection > 0
+				}
+				add = {
+					desc = "ARMY_POWER_PROJECTION_TO_SLAVES_RATIO"
+					value = owner.country_slave_culture_population
+					multiply = 0.0002
+					subtract = {
+						value = 1
+						add = owner.army_power_projection
+						add = {
+							if = {
+								limit = {
+									exists = owner.overlord
+									owner.overlord.army_power_projection > 0
+								}
+								add = {
+									add = owner.overlord.army_power_projection
+									multiply = 0.25
+								}
+							}
+						}
+					}
+					divide = 3500
+					min = -0.50
+					max = 0.75
+				}
+			}
+			else = {
+				add = {
+					desc = "ARMY_POWER_PROJECTION_TO_SLAVES_RATIO"
+					value = 0.75
+				}
+			}
+		}
+		if = {
+			limit = {
+				this.days_since_movement_defeated <= very_long_modifier_time
+			}
+			add = { # (x-y)/y - ([1, 7300]-7300)/7300
+				desc = "movement_suppressed_after_civil_war"
+				value = this.days_since_movement_defeated
+				subtract = very_long_modifier_time
+				divide = {
+					value = very_long_modifier_time
+				}
+			}
+		}
+	}
+}

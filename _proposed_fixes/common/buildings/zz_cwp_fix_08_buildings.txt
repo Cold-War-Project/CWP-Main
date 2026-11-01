@@ -1,0 +1,155 @@
+﻿# zz_cwp_fix_08_buildings.txt
+# Proposed patch for the mod-owned common/buildings/06_urban.txt and 08_monuments.txt (REPLACE: works across files of the same replace_path folder, zz_ loads last).
+# 1) building_nuclear_power_plant: can_build_government referenced modifier civilian_nuclear_capable which does not exist anywhere (vanilla or CWP) -> gate removed (always = yes);
+#    the building stays gated by its unlocking technology civil_nuclear_power. Re-add a gate here if CWP is meant to grant that modifier.
+# 2) building with has_journal_entry = je_interstate_highway_system (no such journal entry in CWP) -> that clause becomes always = no (the +50000 / +25000 ai_value branches never apply).
+
+REPLACE:building_nuclear_power_plant = {
+	ownership_type = self
+	background = "gfx/interface/icons/building_icons/backgrounds/building_panel_bg_light_industry.dds"
+	building_group = bg_nuclear_power
+	icon ="gfx/interface/icons/building_icons/nuclear_power_plant.dds"
+	levels_per_mesh = 50
+	unlocking_technologies = {
+		civil_nuclear_power
+	}
+	production_method_groups = {
+		pmg_base_nuclear_power_plants
+	}
+	required_construction = construction_cost_monument
+	can_build_government = {
+		always = yes # was: owner = { has_modifier = civilian_nuclear_capable } (modifier does not exist)
+	}
+	can_build_private = {
+		always = no
+	}
+	possible = {
+		owner = {
+			not = {
+				has_law_or_variant = law_type:law_industry_banned
+			}
+		}
+	}
+}
+
+REPLACE:building_interstate_highway_system = {
+
+	building_group = bg_monuments
+
+	city_type = city
+
+	levels_per_mesh = 1
+
+	expandable = no
+
+	production_method_groups = {
+		pmg_base_building_interstate_highway_system
+	}
+
+	icon = "gfx/interface/icons/building_icons/automobile_industry.dds"
+
+	required_construction = construction_cost_monument
+
+	unlocking_technologies = {
+		controlled_access_highway
+	}
+
+	can_build_government = {
+		always = yes
+	}
+
+	can_build_private = {
+		always = no
+	}
+
+	potential = {
+		owner ?= {
+			has_variable = cwp_interstate_highway_system_eligible
+			has_technology_researched = controlled_access_highway
+		}
+	}
+
+	ai_value = {
+		value = 0
+
+		if = {
+			limit = {
+				is_incorporated = yes
+				state_population >= 250000
+			}
+
+			add = {
+				value = state_population
+				divide = 2000
+				max = 7500
+			}
+		}
+
+		if = {
+			limit = {
+				is_incorporated = yes
+				state_population >= 500000
+				any_scope_building = {
+					is_building_type = building_urban_center
+					level >= 5
+				}
+			}
+
+			add = {
+				value = state_population
+				divide = 1000
+				max = 12000
+			}
+		}
+
+		if = {
+			limit = {
+				is_incorporated = yes
+				state_population >= 1000000
+				any_scope_building = {
+					is_building_type = building_urban_center
+					level >= 10
+				}
+			}
+
+			add = 15000
+		}
+
+		if = {
+			limit = {
+				is_incorporated = yes
+				state_population >= 1000000
+				NOT = { has_building = building_interstate_highway_system }
+				owner ?= {
+					always = no # was: has_journal_entry = je_interstate_highway_system (no such journal entry in CWP)
+				}
+			}
+
+			add = 50000
+		}
+
+		if = {
+			limit = {
+				is_incorporated = yes
+				state_population >= 1000000
+				NOT = { has_building = building_interstate_highway_system }
+				any_scope_building = {
+					is_building_type = building_urban_center
+					level >= 10
+				}
+				owner ?= {
+					always = no # was: has_journal_entry = je_interstate_highway_system (no such journal entry in CWP)
+				}
+			}
+
+			add = 25000
+		}
+
+		if = {
+			limit = { is_capital = yes }
+			add = 2500
+		}
+	}
+
+	background = "gfx/interface/icons/building_icons/backgrounds/building_panel_bg_railways.dds"
+}

@@ -1,0 +1,275 @@
+﻿# CWP fix patch for vanilla common/scripted_buttons/00_cuba_scripted_buttons.txt
+# Each block below is a faithful copy of the vanilla top-level block with dead 1836-era references repaired (see _proposed_fixes/_notes/06_on_actions_decisions.md).
+
+REPLACE:je_cuba_promise_freedom = {
+	name = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { 
+					NOT = { has_law_or_variant = law_type:law_slavery_banned }
+				}
+				desc = je_cuba_promise_freedom_button
+			}
+			triggered_desc = {
+				trigger = { 
+					has_law_or_variant = law_type:law_slavery_banned
+				}
+				desc = je_cuba_promise_equality_button
+			}
+		}
+	}
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				trigger = { 
+					NOT = { has_law_or_variant = law_type:law_slavery_banned }
+				}
+				desc = je_cuba_promise_freedom_button_desc
+			}
+			triggered_desc = {
+				trigger = { 
+					has_law_or_variant = law_type:law_slavery_banned
+				}
+				desc = je_cuba_promise_equality_button_desc
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				game_date > 1870.12.30 
+			}
+			add = 100
+		}
+	}
+
+	visible = {
+		OR = {
+			exists = c:USA
+			exists = c:CSA
+		}
+		OR = {
+			exists = c:CUB
+			AND = {
+				always = no
+				always = no
+			}
+		}
+	}
+
+	possible = {
+		ig:ig_intelligentsia ?= {
+			ig_clout >= 0.10
+		}
+		custom_tooltip = {
+			text = not_already_used_this_interaction_tt
+			hidden_trigger = {
+				NOT =  {
+					has_variable = slaves_work_with_independence_movement
+				}
+			}
+		}
+	}
+
+	selected = {
+		has_variable = slaves_work_with_independence_movement
+	}
+
+	effect = {
+		if = {
+			limit = {
+				NOT = { has_law_or_variant = law_type:law_slavery_banned }
+			}
+			custom_tooltip = slave_revolt_adds_ld_tt
+			custom_tooltip = slaves_will_be_freed_after_war_tt
+		}
+		if = { 
+			limit = {
+				c:USA ?= {
+					has_slavery = yes
+				}
+				OR = {
+					c:CUB ?= {
+						has_slavery = yes
+					}
+					always = no
+				}
+			}
+			custom_tooltip = afro_caribeno_fervor_factor_increase_tt
+		}
+		set_variable = slaves_work_with_independence_movement
+		custom_tooltip = afro_caribeno_future_equality
+		if = {
+			limit = {
+				NOT = { has_law_or_variant = law_type:law_slavery_banned }
+			}
+			random_political_movement = {
+				limit = {
+					is_political_movement_type = movement_slave_revolt
+				}
+				add_modifier = {
+					name = slave_revolt_inspired
+					days = very_long_modifier_time
+				}
+			}
+		}
+	}
+}
+
+REPLACE:je_cuba_ask_usa_to_buy = {
+	name = "je_cuba_ask_usa_to_buy"
+	desc = "je_cuba_ask_usa_to_buy_desc"
+
+	visible = {
+		OR = {
+			exists = c:USA
+			exists = c:CSA
+		}
+		OR = {
+			exists = c:CUB
+			AND = {
+				always = no
+				always = no
+			}
+		}
+	}
+
+	cooldown = { days = 1095 }
+
+	ai_chance = {
+		value = 0
+	}
+
+	possible = {
+		root = {
+			custom_tooltip = {
+				text = cuba_must_want_to_join_usa_tt
+				var:independencia_current < je_cuba_low_bracket
+			}
+			liberty_desire_weekly_progress > 0
+			liberty_desire >= 75
+		}
+
+		custom_tooltip = {
+			text = have_not_attempted_failed_negotiations_3_yrs_tt
+			NOT = { has_variable = cuban_offer_on_cooldown }
+		}
+		custom_tooltip = {
+			text = american_florida_nextdoor_tt
+			s:STATE_FLORIDA = {
+				any_scope_state = {
+					owner = {
+						OR = {
+							c:USA ?= this
+							c:CSA ?= this
+						}
+					}
+				}
+			}
+		}
+	}
+
+	effect = {
+		trigger_event = cuba_independencia.2
+
+		show_as_tooltip = {
+			if = {
+				limit = {
+					c:CSA ?= {
+						any_scope_state = {
+							state_region = s:STATE_FLORIDA
+						}
+					}
+				}
+				custom_tooltip = if_spain_accepts_purchase_tt
+				c:CSA ?= {
+					add_modifier = {
+						name = cuban_purchase
+						days = long_modifier_time
+						is_decaying = yes
+						multiplier = je_cuba_join_usa_price
+					}
+					annex = ROOT
+				}
+				if = {
+					limit = {
+						c:CSA ?= { is_player = no }
+					}
+					show_as_tooltip = {
+						play_as = c:CSA
+					}
+				}
+			}
+			else = {
+				custom_tooltip = if_spain_accepts_purchase_tt
+				c:USA ?= {
+					add_modifier = {
+						name = cuban_purchase
+						days = long_modifier_time
+						is_decaying = yes
+						multiplier = je_cuba_join_usa_price
+					}
+					annex = ROOT
+				}
+				if = {
+					limit = {
+						c:USA ?= { is_player = no }
+					}
+					show_as_tooltip = {
+						play_as = c:USA
+					}
+				}
+			}
+		}
+	}
+}
+
+REPLACE:je_cuba_independence_war = {
+	name = "je_cuba_independence_war"
+	desc = "je_cuba_independence_war_desc"
+
+	visible = {
+		exists = c:USA
+		OR = {
+			exists = c:CUB
+			AND = {
+				always = no
+				always = no
+			}
+		}
+	}
+
+	cooldown = { days = normal_modifier_time }
+
+	ai_chance = {
+		value = 100
+	}
+
+	possible = {
+		root = {
+			custom_tooltip = {
+				text = cuba_must_want_to_fight_tt
+				var:independencia_current > je_cuba_high_bracket
+			}
+			liberty_desire_weekly_progress > 0
+			liberty_desire >= 75
+
+			# Can prepare for war while in a diplomatic play for independence, but not if actually at war
+			NOT = {
+				war_participant_has_war_goal_of_type_against = {
+					type = independence
+					target = overlord
+				}
+			}
+		}
+	}
+
+	effect = {
+		add_modifier = {
+			name = cuba_prepare_for_war
+			days = normal_modifier_time
+		}
+	}
+}

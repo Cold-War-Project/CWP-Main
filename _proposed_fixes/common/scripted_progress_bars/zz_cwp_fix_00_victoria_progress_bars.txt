@@ -1,0 +1,422 @@
+﻿# CWP fix patch for vanilla common/scripted_progress_bars/00_victoria_progress_bars.txt
+# Each block below is a faithful copy of the vanilla top-level block with dead 1836-era references repaired (see _proposed_fixes/_notes/06_on_actions_decisions.md).
+
+ REPLACE:matter_of_slavery_progress_bar = {
+	name = "matter_of_slavery_progress_bar"
+	desc = "matter_of_slavery_progress_bar_desc"
+
+	default_green = yes
+
+	monthly_progress = {
+		if = {
+			limit = {
+				NOT = {
+					is_enacting_law = law_type:law_slavery_banned
+				}
+			}
+			 # Towards Slaveowner Domination
+			if = {
+				limit = {
+					ig:ig_landowners ?= {
+						is_in_government = yes
+					}
+				}
+				subtract = {
+					desc = "slavery_progress_from_landowners_in_gov_tt"
+					value = 1
+				}
+			}
+			if = {
+				limit = {
+					ig:ig_landowners ?= {
+						is_powerful = yes
+					}
+				}
+				subtract = {
+					desc = "slavery_progress_from_landowners_powerful_tt"
+					value = 1
+				}
+			}
+			if = {
+				limit = {
+					any_political_movement = {
+						is_political_movement_type = movement_pro_slavery
+					}
+				}
+				subtract = {
+					desc = "slavery_progress_from_pro_slavery_movement_tt"
+					every_political_movement = {
+						limit = {
+							is_political_movement_type = movement_pro_slavery
+						}
+						value = this.political_movement_support
+						multiply = 10
+					}
+				}
+			}
+			if = {
+				limit = {
+					has_gov_regency = yes
+				}
+				subtract = {
+					desc = "slavery_progress_from_regency_tt"
+					value = 1
+				}
+			}
+			if = {
+				limit = {
+					ruler ?= {
+						OR = {
+							interest_group ?= {
+								is_interest_group_type = ig_landowners
+							}
+							always = no
+						}
+					}
+				}
+				subtract = {
+					desc = "slavery_progress_from_slaver_ruler_tt"
+					value = 1
+				}
+			}
+			if = {
+				limit = {
+					any_scope_character = {
+						filter = {
+							OR = {
+								has_role_of_type = admiral
+								has_role_of_type = general
+							}
+						}
+						OR = {
+							always = no
+							interest_group ?= {
+								is_interest_group_type = ig_landowners
+							}
+						}
+						percent >= 0.5
+					}
+				}
+				subtract = {
+					desc = "slavery_progress_from_slavers_tt"
+					value = 1
+				}
+			}
+			# Away from slaveowner Domination
+			if = {
+				limit = {
+					has_variable = var_slave_trade_suppression_var
+				}
+				add = {
+					desc = "slavery_progress_from_suppression_tt"
+					value = 1
+				}
+			}
+			if = {
+				limit = {
+					any_political_movement = {
+						is_political_movement_type = movement_anti_slavery
+					}
+				}
+				add = {
+					desc = "slavery_progress_from_abolitionist_movement_tt"
+					every_political_movement = {
+						limit = {
+							is_political_movement_type = movement_anti_slavery
+						}
+						value = this.political_movement_support
+						multiply = 10
+					}
+				}
+			}
+			if = {
+				limit = {
+					ig:ig_landowners ?= {
+						ig_counts_as_marginal = yes
+					}
+				}
+				add = {
+					desc = "slavery_progress_from_marginal_landowners_tt"
+					value = 1
+				}
+			}
+			if = {
+				limit = {
+					ig:ig_intelligentsia ?= {
+						is_in_government = yes
+					}
+				}
+				add = {
+					desc = "slavery_progress_from_intelligentsia_tt"
+					value = 1
+				}
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_law_or_variant = law_type:law_slave_trade
+					}
+				}
+				add = {
+					desc = "slavery_progress_from_abolished_slave_trade_tt"
+					value = 1
+				}
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_gov_regency = yes
+					}
+				}
+				add = {
+					desc = "slavery_progress_from_ended_regency_tt"
+					value = 1
+				}
+			}
+			if = {
+				limit = {
+					has_variable = isabel_confirmed_heir_var
+				}
+				add = {
+					desc = "slavery_progress_from_isabel_tt"
+					value = 1
+				}
+			}
+		}
+	}
+
+	start_value = 180
+	min_value = 0
+	max_value = 360
+ }
+
+REPLACE:sikh_empire_intrigue_bar = {
+	name = "sikh_empire_intrigue_bar"
+	desc = "sikh_empire_intrigue_bar_desc"
+
+	default_bad = yes
+	is_inverted = yes
+
+	monthly_progress = { # To advance progress bar
+		if = {
+			limit = {
+				ruler = {
+					always = no
+				}
+			}
+			add = {
+				desc = "intrigue_from_ranjit_singh_tt"
+				value = -5
+			}
+		}
+		if = {
+			limit = {
+				ruler = {
+					has_trait = reckless
+				}
+			}
+			add = {
+				desc = "intrigue_from_reckless_tt"
+				value = 2
+			}
+		}
+		if = {
+			limit = {
+				ruler = {
+					popularity <= 0
+				}
+			}
+			add = {
+				desc = "intrigue_from_low_popularity_tt"
+				value = ruler.popularity
+				multiply = -1
+				divide = 50
+			}
+		}
+		if = {
+			limit = {
+				any_interest_group = {
+					ig_approval < 0
+					ig_counts_as_marginal = no
+					leader ?= {
+						has_trait = ruthless
+					}
+					is_in_government = yes
+				}
+			}
+			add = {
+				desc = "intrigue_from_upset_government_ruthless_igs_tt"
+				every_interest_group = {
+					limit = {
+						ig_approval < 0
+						ig_counts_as_marginal = no
+						leader ?= {
+							has_trait = ruthless
+						}
+						is_in_government = yes
+					}
+					add = 2
+				}
+			}
+		}
+		if = {
+			limit = {
+				any_interest_group = {
+					ig_approval < 0
+					ig_counts_as_marginal = no
+					leader ?= {
+						has_trait = ruthless
+					}
+					is_in_government = no
+				}
+			}
+			add = {
+				desc = "intrigue_from_upset_opposition_ruthless_igs_tt"
+				every_interest_group = {
+					limit = {
+						ig_approval < 0
+						ig_counts_as_marginal = no
+						leader ?= {
+							has_trait = ruthless
+						}
+						is_in_government = no
+					}
+					add = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				any_interest_group = {
+					ig_approval < 0
+					ig_counts_as_marginal = no
+					leader ?= {
+						has_trait = ambitious
+					}
+					is_in_government = yes
+				}
+			}
+			add = {
+				desc = "intrigue_from_upset_government_ambitious_igs_tt"
+				every_interest_group = {
+					limit = {
+						ig_approval < 0
+						ig_counts_as_marginal = no
+						leader ?= {
+							has_trait = ambitious
+						}
+						is_in_government = yes
+					}
+					add = 2
+				}
+			}
+		}
+		if = {
+			limit = {
+				any_interest_group = {
+					ig_approval < 0
+					ig_counts_as_marginal = no
+					leader ?= {
+						has_trait = ambitious
+					}
+					is_in_government = no
+				}
+			}
+			add = {
+				desc = "intrigue_from_upset_opposition_ambitious_igs_tt"
+				every_interest_group = {
+					limit = {
+						ig_approval < 0
+						ig_counts_as_marginal = no
+						leader ?= {
+							has_trait = ambitious
+						}
+						is_in_government = no
+					}
+					add = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				any_interest_group = {
+					ig_approval >= 5
+					ig_counts_as_marginal = no
+					leader ?= {
+						has_trait = ruthless
+					}
+					is_in_government = yes
+				}
+			}
+			subtract = {
+				desc = "intrigue_from_happy_government_ruthless_igs_tt"
+				every_interest_group = {
+					limit = {
+						ig_approval >= 5
+						ig_counts_as_marginal = no
+						leader ?= {
+							has_trait = ruthless
+						}
+						is_in_government = yes
+					}
+					add = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				any_interest_group = {
+					leader ?= {
+						has_trait = compliant
+					}
+					is_in_government = yes
+				}
+			}
+			subtract = {
+				desc = "intrigue_from_compliant_igs_tt"
+				every_interest_group = {
+					limit = {
+						leader ?= {
+							has_trait = compliant
+						}
+						is_in_government = yes
+					}
+					add = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				ruler.interest_group ?= {
+					is_powerful = yes
+				}
+			}
+			subtract = {
+				desc = "ruler_interest_group_powerful_tt"
+				value = 1
+			}
+		}
+		else_if = {
+			limit = {
+				ruler.interest_group ?= {
+					ig_counts_as_marginal = yes
+				}
+			}
+			add = {
+				desc = "ruler_interest_group_marginal_tt"
+				value = 1
+			}
+		}
+		add = {
+			desc = "intrigue_legitimacy_tt"
+			value = 50
+			subtract = legitimacy
+			divide = 25
+		}
+	}
+
+	start_value = 1
+	min_value = 0
+	max_value = 60
+
+}

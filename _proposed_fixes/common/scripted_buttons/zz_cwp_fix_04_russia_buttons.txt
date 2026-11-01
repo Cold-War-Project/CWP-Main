@@ -1,0 +1,193 @@
+﻿# CWP fix patch for vanilla common/scripted_buttons/04_russia_buttons.txt
+# Each block below is a faithful copy of the vanilla top-level block with dead 1836-era references repaired (see _proposed_fixes/_notes/06_on_actions_decisions.md).
+
+REPLACE:russia_escalate_caucasian_war = {
+	name = "russia_escalate_caucasian_war"
+	desc = "russia_escalate_caucasian_war_desc"
+	visible = {
+		is_subject = no
+		NOT = {
+			owns_entire_state_region = STATE_KUBAN
+			owns_entire_state_region = STATE_NORTH_CAUCASUS
+			owns_entire_state_region = STATE_DAGESTAN
+		}
+		AND = {
+			any_scope_state = {
+				state_region = s:STATE_KUBAN
+			}
+			any_scope_state = {
+				state_region = s:STATE_NORTH_CAUCASUS
+			}
+			any_scope_state = {
+				state_region = s:STATE_DAGESTAN
+			}
+		}
+		OR = {
+			AND = {
+				exists = c:CHC
+				has_truce_with = c:CHC
+			}
+			AND = {
+				exists = c:CIR
+				has_truce_with = c:CIR
+			}
+		}
+        NOT = {
+        	has_variable = escalated_caucasian_war
+        }
+	}
+
+	possible = {
+		c:RUS ?= {
+			country_rank >= rank_value:great_power
+		}
+			OR = {
+			s:STATE_KUBAN = {
+				any_scope_state = {
+					OR = {
+						AND = {
+							exists = c:CIR
+							owner = c:CIR
+			}
+						AND = {
+							exists = c:CHC
+							owner = c:CHC
+						}
+					}
+				}
+			}
+			s:STATE_DAGESTAN = {
+				any_scope_state = {
+			OR = {
+						AND = {
+							exists = c:CIR
+				owner = c:CIR
+						}
+						AND = {
+							exists = c:CHC
+				owner = c:CHC
+			}
+		}
+				}
+			}
+			s:STATE_NORTH_CAUCASUS = {
+				any_scope_state = {
+					OR = {
+						AND = {
+							exists = c:CIR
+							owner = c:CIR
+						}
+						AND = {
+							exists = c:CHC
+							owner = c:CHC
+						}
+					}
+				}
+			}
+		}
+		has_technology_researched = industrial_warfare
+		has_technology_researched = divisional_organization
+	}
+
+	effect = {
+		set_variable = escalated_caucasian_war
+		end_truce = c:CHC
+		end_truce = c:CIR
+	}
+
+	ai_chance = {
+		value = 15
+	}
+}
+
+REPLACE:je_conquest_of_central_asia_turkmen_button = {
+	name = "je_conquest_of_central_asia_turkmen_button"
+	desc = "je_conquest_of_central_asia_turkmen_button_desc"
+
+	visible = {
+		NOT = {
+			has_variable = russian_turkmenia_var
+		}
+		any_neighbouring_state = {
+			OR = {
+				state_region = s:STATE_MERZ
+				state_region = s:STATE_TURKMENIA
+				state_region = s:STATE_URALSK
+			}
+			owner = {
+				is_country_type = decentralized
+			}
+		}
+	}
+
+	possible = {
+		trigger_if = {
+			limit = {
+				is_ai = no
+			}
+			any_scope_state = {
+				region = sr:region_central_asia
+				any_scope_building = {
+					is_building_type = building_barrack
+					level >= 10
+				}
+			}
+		}
+		always = no
+	}
+
+	effect = {
+		trigger_event = { id = russian_central_asia.3 popup = yes }
+		set_variable = russian_turkmenia_var
+		show_as_tooltip = {
+			if = {
+				limit = {
+					NOT = {
+						has_law = law_type:law_frontier_colonization
+					}
+				}
+				activate_law = law_type:law_frontier_colonization
+				add_modifier = {
+					name = modifier_turkmen_subjugation
+					days = normal_modifier_time
+				}
+			}
+			else = {
+				add_modifier = {
+					name = modifier_turkmen_subjugation
+					days = normal_modifier_time
+					multiplier = 2
+				}
+			}
+			add_modifier = {
+				name = modifier_turkmen_logistics
+				days = normal_modifier_time
+				multiplier = money_amount_multiplier_very_large
+			}
+			add_radicals = {
+				culture = cu:turkmen
+				value = medium_radicals
+			}
+			every_scope_state = {
+				limit = { region = sr:region_central_asia }
+				add_loyalists_in_state = {
+					culture = cu:russian
+					value = small_radicals
+				}
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 20
+		if = {
+			limit = {
+				OR = {
+					is_at_war = yes
+					in_default = yes
+				}
+			}
+			add = -100
+		}
+	}
+}

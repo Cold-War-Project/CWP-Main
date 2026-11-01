@@ -1,0 +1,550 @@
+﻿# CWP fix patch for vanilla common/script_values/01_power_bloc_values.txt
+# Generated: top-level blocks below are faithful copies of the vanilla blocks with only the invalid references changed.
+# Every block uses REPLACE: so the vanilla definition is overridden; this file loads after the vanilla one (zz_ prefix).
+
+REPLACE:ai_power_bloc_identity_score = {
+	### Trade League
+	if = {
+		limit = {
+			scope:actor.power_bloc ?= {
+				has_identity = identity:identity_trade_league
+			}
+		}
+		### Isolationism
+		if = {
+			limit = {
+				modifier:country_disallow_trade_bool = yes
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_DISALLOWED_TRADE"
+				value = -200
+			}
+		}
+		### Trade: increase with mutual trade value
+		if = {
+			limit = {
+				"mutual_trade_value_with_country(scope:actor)" > 0
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_MUTUAL_TRADE_VALUE"
+				value = "mutual_trade_value_with_country(scope:actor)"
+				multiply = 50000
+				divide = { # We modulate this value by GDP, clamped to a range to ensure it remains relevant for very small/very large economies
+					value = gdp
+					max = scope:actor.gdp # We use whichever GDP is smaller
+					min = 1000000
+				}
+				max = 50
+			}
+		}
+		### Economic Dependence: increase if high, decrease if low
+		if = {
+			limit = {
+				"economic_dependence(scope:actor)" > 1
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_HIGH_ECONOMIC_DEPENDENCE"
+				value = "economic_dependence(scope:actor)"
+				subtract = 1
+				multiply = 25
+				max = 50
+			}
+		}
+		else_if = {
+			limit = {
+				"economic_dependence(scope:actor)" < 1
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_LOW_ECONOMIC_DEPENDENCE"
+				value = "economic_dependence(scope:actor)"
+				subtract = 1
+				multiply = 50
+				min = -50
+			}
+		}
+	}
+	### Sovereign Empire
+	else_if = {
+		limit = {
+			scope:actor.power_bloc ?= {
+				has_identity = identity:identity_sovereign_empire
+			}
+		}
+
+		### Anti-Imperialism
+		if = {
+			limit = {
+				has_strategy = ai_strategy_anti_imperialism
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_ANTI_IMPERIALISM"
+				value = -200
+			}
+		}
+		### Doesn't need the protection
+		if = {
+			limit = {
+				has_powerful_protectors = {
+					ACTOR_SCOPE = scope:actor
+				}
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_POWERFUL_PROTECTORS_THEM"
+				value = -50
+			}
+		}
+	}
+	### Ideological Union
+	else_if = {
+		limit = {
+			scope:actor.power_bloc ?= {
+				has_identity = identity:identity_ideological_union
+			}
+		}
+		### Strong weight for ideological opinion
+		if = {
+			limit = {
+				"ai_ideological_opinion(scope:actor)" > 0
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_IDEOLOGICAL_OPINION"
+				value = "ai_ideological_opinion(scope:actor)"
+				multiply = 0.5
+				max = 50
+			}
+		}
+		else_if = {
+			limit = {
+				"ai_ideological_opinion(scope:actor)" < 0
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_IDEOLOGICAL_OPINION_NEGATIVE"
+				value = "ai_ideological_opinion(scope:actor)"
+				multiply = 0.5
+				min = -50
+			}
+		}
+		### Bonus for ai strategy 'maintain balance of power'
+		if = {
+			limit = {
+				has_strategy = ai_strategy_maintain_power_balance
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_MAINTAIN_POWER_BALANCE"
+				value = 50
+			}
+		}
+		### Bonus for ai strategy 'world revolution'
+		if = {
+			limit = {
+				has_strategy = ai_strategy_international_socialism
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_WORLD_REVOLUTION"
+				value = 50
+			}
+		}
+	}
+	### Military Treaty
+	else_if = {
+		limit = {
+			scope:actor.power_bloc ?= {
+				has_identity = identity:identity_military_treaty_organization
+			}
+		}
+		### Big penalty for national militia law
+		if = {
+			limit = {
+				has_law_or_variant = law_type:law_national_militia
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_NATIONAL_MILITIA"
+				value = -100
+			}
+		}
+		### Bonus for territorial expansion strategy
+		if = {
+			limit = {
+				has_strategy = ai_strategy_territorial_expansion
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_TERRITORIAL_EXPANSION"
+				value = 50
+			}
+		}
+		### Military spending
+		if = {
+			limit = {
+				OR = {
+					military_expenses_share < 0.25
+					military_expenses < 2000
+				}
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_MILITARY_SPENDING"
+				value = military_expenses_share
+				subtract = 0.25
+				multiply = 200
+				min = -50
+			}
+		}
+		else_if = {
+			limit = {
+				military_expenses_share > 0.3
+				military_expenses > 5000
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_MILITARY_SPENDING"
+				value = military_expenses_share
+				subtract = 0.3
+				multiply = 100
+				max = 50
+			}
+		}
+	}
+	### Religious homogeneity
+	else_if = {
+		limit = {
+			scope:actor.power_bloc ?= {
+				has_identity = identity:identity_religious
+			}
+		}
+		### Same religion
+		if = {
+			limit = {
+				religion = scope:actor.religion
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_SAME_RELIGION"
+				value = 50
+			}
+		}
+		else = {
+			### If you share a religious discrimination trait
+			if = {
+				limit = {
+					religion = {
+						shares_heritage_trait_with_state_religion = scope:actor
+					}
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_DIFFERENT_RELIGION_BUT_SAME_TRAIT"
+					value = -25
+				}
+			}
+			### Different religion
+			else = {
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_DIFFERENT_RELIGION"
+					value = -50
+				}
+			}
+		}
+	}
+	### Cultural homogeneity
+	else_if = {
+		limit = {
+			scope:actor.power_bloc ?= {
+				has_identity = identity:identity_cultural
+			}
+		}
+		### Same religion
+		if = {
+			limit = {
+				any_primary_culture = {
+					is_primary_culture_of = scope:actor
+				}
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_SAME_CULTURE"
+				value = 50
+			}
+		}
+		else_if = {
+			### If you share a cultural discrimination trait
+			limit = {
+				any_primary_culture = {
+					shares_language_trait_with_any_primary_culture = ROOT
+				}
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_CULTURAL_ACCEPTANCE"
+				value = 50
+			}
+		}
+		else_if = {
+			### If you share a cultural discrimination trait
+			limit = {
+				any_primary_culture = {
+					shares_language_trait_group_with_any_primary_culture = ROOT
+				}
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_CULTURAL_ACCEPTANCE"
+				value = 0
+			}
+		}
+		else_if = {
+			### If you share a cultural discrimination trait
+			limit = {
+				any_primary_culture = {
+					scope:actor = {
+						"cultural_acceptance_base(prev)" >= 40
+					}
+				}
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_DIFFERENT_CULTURE"
+				value = -50
+			}
+		}
+		### Different culture
+		else = {
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_DIFFERENT_CULTURE"
+				value = -100
+			}
+		}
+	}
+}
+
+REPLACE:ai_power_bloc_identity_score_treaties = {
+	### Trade League
+	if = {
+		limit = {
+			scope:target_country.power_bloc ?= {
+				has_identity = identity:identity_trade_league
+			}
+		}
+		### Isolationism
+		if = {
+			limit = {
+				modifier:country_disallow_trade_bool = yes
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_DISALLOWED_TRADE"
+				value = -200
+			}
+		}
+		### Trade: increase with mutual trade value
+		if = {
+			limit = {
+				"mutual_trade_value_with_country(scope:target_country)" > 0
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_MUTUAL_TRADE_VALUE"
+				value = "mutual_trade_value_with_country(scope:target_country)"
+				multiply = 50000
+				divide = { # We modulate this value by GDP, clamped to a range to ensure it remains relevant for very small/very large economies
+					value = gdp
+					max = scope:target_country.gdp # We use whichever GDP is smaller
+					min = 1000000
+				}
+				max = 10
+			}
+		}
+		### Economic Dependence: increase if high, decrease if low
+		if = {
+			limit = {
+				"economic_dependence(scope:target_country)" > 1
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_HIGH_ECONOMIC_DEPENDENCE"
+				value = "economic_dependence(scope:target_country)"
+				subtract = 1
+				multiply = 25
+				max = 10
+			}
+		}
+		else_if = {
+			limit = {
+				"economic_dependence(scope:target_country)" < 1
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_LOW_ECONOMIC_DEPENDENCE"
+				value = "economic_dependence(scope:target_country)"
+				subtract = 1
+				multiply = 50
+				min = -25
+			}
+		}
+	}
+	### Sovereign Empire
+	else_if = {
+		limit = {
+			scope:target_country.power_bloc ?= {
+				has_identity = identity:identity_sovereign_empire
+			}
+		}
+
+		### Anti-Imperialism
+		if = {
+			limit = {
+				has_strategy = ai_strategy_anti_imperialism
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_ANTI_IMPERIALISM"
+				value = -200
+			}
+		}
+		### Doesn't need the protection
+		if = {
+			limit = {
+				has_powerful_protectors = {
+					ACTOR_SCOPE = scope:target_country
+				}
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_POWERFUL_PROTECTORS_THEM"
+				value = -50
+			}
+		}
+	}
+	### Ideological Union
+	else_if = {
+		limit = {
+			scope:target_country.power_bloc ?= {
+				has_identity = identity:identity_ideological_union
+			}
+		}
+		### Strong weight for ideological opinion
+		if = {
+			limit = {
+				"ai_ideological_opinion(scope:target_country)" > 0
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_IDEOLOGICAL_OPINION"
+				value = "ai_ideological_opinion(scope:target_country)"
+				multiply = 0.5
+				max = 25
+			}
+		}
+		else_if = {
+			limit = {
+				"ai_ideological_opinion(scope:target_country)" < 0
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_IDEOLOGICAL_OPINION_NEGATIVE"
+				value = "ai_ideological_opinion(scope:target_country)"
+				multiply = 0.5
+				min = -25
+			}
+		}
+		### Bonus for ai strategy 'maintain balance of power'
+		if = {
+			limit = {
+				has_strategy = ai_strategy_maintain_power_balance
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_MAINTAIN_POWER_BALANCE"
+				value = 25
+			}
+		}
+		### Bonus for ai strategy 'world revolution'
+		if = {
+			limit = {
+				has_strategy = ai_strategy_international_socialism
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_WORLD_REVOLUTION"
+				value = 25
+			}
+		}
+	}
+	### Military Treaty
+	else_if = {
+		limit = {
+			scope:target_country.power_bloc ?= {
+				has_identity = identity:identity_military_treaty_organization
+			}
+		}
+		### Big penalty for national militia law
+		if = {
+			limit = {
+				has_law_or_variant = law_type:law_national_militia
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_NATIONAL_MILITIA"
+				value = -100
+			}
+		}
+		### Bonus for territorial expansion strategy
+		if = {
+			limit = {
+				has_strategy = ai_strategy_territorial_expansion
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_TERRITORIAL_EXPANSION"
+				value = 25
+			}
+		}
+		### Military spending
+		if = {
+			limit = {
+				OR = {
+					military_expenses_share < 0.25
+					military_expenses < 2000
+				}
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_MILITARY_SPENDING"
+				value = military_expenses_share
+				subtract = 0.25
+				multiply = 200
+				min = -25
+			}
+		}
+		else_if = {
+			limit = {
+				military_expenses_share > 0.3
+				military_expenses > 5000
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_MILITARY_SPENDING"
+				value = military_expenses_share
+				subtract = 0.3
+				multiply = 100
+				max = 25
+			}
+		}
+	}
+	### Religious homogeneity
+	else_if = {
+		limit = {
+			scope:target_country.power_bloc ?= {
+				has_identity = identity:identity_religious
+			}
+		}
+		### Same religion
+		if = {
+			limit = {
+				religion = scope:target_country.religion
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_SAME_RELIGION"
+				value = 25
+			}
+		}
+		else = {
+			### If you share a religious discrimination trait
+			if = {
+				limit = {
+					religion = {
+						shares_heritage_trait_with_state_religion = scope:target_country
+					}
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_DIFFERENT_RELIGION_BUT_SAME_TRAIT"
+					value = -10
+				}
+			}
+			### Different religion
+			else = {
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_DIFFERENT_RELIGION"
+					value = -25
+				}
+			}
+		}
+	}
+}
