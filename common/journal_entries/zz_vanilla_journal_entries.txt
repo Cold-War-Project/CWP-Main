@@ -1,0 +1,736 @@
+﻿# Base game journal entries that needed fixing for the mod
+REPLACE:je_assassination = {
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+
+	group = je_group_crises
+
+	immediate = {
+		random_interest_group = {
+			limit = {
+				is_powerful = yes
+				ig_approval <= -10
+			}
+			save_scope_as = enemy_ig
+			set_variable = enemy_ig_var
+		}
+		ruler = {
+			save_scope_as = assassination_ruler_scope
+			set_variable = assassination_ruler_var
+		}
+		set_variable = {
+			name = je_assassination_var #their progress
+			value = 0
+		}
+		set_variable = {
+			name = je_assassination_progress #your progress
+			value = 0
+		}
+		set_variable = ongoing_assassination_je #so you don't get the serial killer JE at the same time
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			if = {
+				limit = {
+					has_variable = killing_own_ruler
+				}
+				change_variable = {
+					name = je_assassination_var
+					add = 1
+				}
+			}
+			if = {
+				limit = {
+					has_variable = has_scotland_yard_var
+				}
+				random_list = {
+					70 = { #you stall the plot
+					}
+					30 = {
+						change_variable = {
+							name = je_assassination_var
+							add = 1
+						}
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					institution_investment_level = {
+						institution = institution_police
+						value >= 4
+					}
+				}
+				random_list = {
+					60 = { #you stall the plot
+					}
+					40 = {
+						change_variable = {
+							name = je_assassination_var
+							add = 1
+						}
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					OR = {
+						has_law_or_variant = law_type:law_dedicated_police
+						has_law_or_variant = law_type:law_secret_police
+					}
+				}
+				random_list = {
+					40 = { #you stall the plot
+					}
+					60 = {
+						change_variable = {
+							name = je_assassination_var
+							add = 1
+						}
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					OR = {
+						has_technology_researched = digitalized_identification
+						has_technology_researched = digitalized_identification
+					}
+				}
+				random_list = {
+					25 = { #you stall the plot
+					}
+					75 = {
+						change_variable = {
+							name = je_assassination_var
+							add = 1
+						}
+					}
+				}
+			}
+			else = {
+				change_variable = {
+					name = je_assassination_var
+					add = 1
+				}
+			}
+		}
+		random_events = {
+			12 = 0
+			1 = assassination_events.2
+			1 = assassination_events.3
+			1 = assassination_events.4
+		}
+	}
+
+	complete = {
+		custom_tooltip = {
+			text = je_assassination_caught_em_tt
+			var:je_assassination_progress >= 4
+		}
+	}
+
+	on_complete = {
+		custom_tooltip = {
+			text = assassination_completion_tt
+			trigger_event = { id = assassination_events.7 }
+		}
+		remove_variable = ongoing_assassination_je
+	}
+
+	fail = {
+		custom_tooltip = {
+			text = je_assassination_timeout_tt
+			scope:journal_entry = {
+				is_goal_complete = yes
+			}
+		}
+	}
+
+	on_fail = {
+		trigger_event = { id = assassination_events.5 }
+		remove_variable = ongoing_assassination_je
+	}
+
+	invalid = {
+		custom_tooltip = {
+			text = je_assassination_tt
+			OR = {
+				any_scope_character = {
+					has_variable = assassination_ruler_var
+					is_ruler_of_own_country = no
+				}
+				NOT = {
+					any_scope_character = {
+						has_variable = assassination_ruler_var
+					}
+				}
+			}
+		}
+	}
+
+	on_invalid = {
+		if = { #they're not the ruler anymore (small event to account for all cases)
+			limit = {
+				scope:assassination_ruler_scope = {
+					is_ruler_of_own_country = no
+					is_character_alive = yes
+				}
+			}
+			trigger_event = { id = assassination_events.6 }
+		}
+		else_if = { #they died of other causes / another small event
+			limit = {
+				NOT = {
+					any_scope_character = {
+						has_variable = assassination_ruler_var
+					}
+				}
+			}
+			trigger_event = { id = assassination_events.8 }
+		}
+		remove_variable = ongoing_assassination_je
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_assassination_low
+				trigger = {
+					var:je_assassination_progress < 2
+				}
+			}
+			triggered_desc = {
+				desc = je_assassination_middle
+				trigger = {
+					var:je_assassination_progress = 2
+				}
+			}
+			triggered_desc = {
+				desc = je_assassination_high
+				trigger = {
+					var:je_assassination_progress > 2
+				}
+			}
+		}
+	}
+
+	current_value = {
+		value = root.var:je_assassination_var
+	}
+
+	goal_add_value = {
+		add = 24
+	}
+
+	progressbar = yes
+
+	weight = 100
+}
+
+REPLACE:je_communism_1 = {
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+
+	group = je_group_internal_affairs
+
+	is_shown_when_inactive = {
+		NOT = { has_variable = communism_1_done }
+		OR = {
+			has_technology_researched = academia
+			has_technology_researched = academia
+		}
+	}
+
+	scripted_progress_bar = communism_1_progress_bar
+
+	possible = {
+		any_political_movement = {
+			OR = {
+				is_political_movement_type = movement_socialist
+				is_political_movement_type = movement_anarchist
+				is_political_movement_type = movement_communist
+			}
+		}
+	}
+
+	immediate = {
+		root = {
+			save_scope_as = root_country
+		}
+		set_communism_vars = yes
+		trigger_event = { id = communism.10 days = 1 popup = yes }
+	}
+
+	on_weekly_pulse = {
+		effect = {
+			calculate_communism_progress = yes
+		}
+	}
+
+	on_monthly_pulse = {
+		random_events = {
+			200 = 0
+			5 = communism.7
+		}
+		effect = {
+			calculate_communism_progress = yes
+		}
+	}
+
+	fail = {
+		OR = {
+			custom_tooltip = {
+				text = communism_progress_bar_at_full_tt
+				scope:journal_entry = {
+					"scripted_bar_progress(communism_1_progress_bar)" >= 100
+				}
+			}
+			has_law_or_variant = law_type:law_council_republic
+		}
+	}
+
+	on_fail = {
+		set_variable = communism_1_done
+		if = {
+			limit = {
+				NOT = {
+					has_law_or_variant = law_type:law_council_republic
+				}
+			}
+			trigger_event = { id = communism.1 popup = yes }
+		}
+		else = { # Mirrors effects of communism.1, skips je_communism_2
+			if = {
+				limit = {
+					any_interest_group = {
+						law_stance = {
+							law = law_type:law_council_republic
+							value > neutral
+						}
+					}
+				}
+				random_interest_group = {
+					limit = {
+						law_stance = {
+							law = law_type:law_council_republic
+							value > neutral
+						}
+					}
+					set_variable = communist_ig_var
+				}
+			}
+			else = {
+				ig:ig_trade_unions ?= {
+					set_variable = communist_ig_var
+				}
+			}
+			trigger_event = { id = communism.2 popup = yes }
+		}
+		custom_tooltip = communism_je_1_fail_tt
+	}
+
+	timeout = 1095
+
+	on_timeout = {
+		trigger_event = { id = communism.11 popup = yes }
+		custom_tooltip = communism_je_1_complete_tt
+	}
+
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
+
+REPLACE:je_fascism_1 = {
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+
+	group = je_group_internal_affairs
+
+	scripted_progress_bar = fascism_progress_bar
+
+	timeout = 1095
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = blank_tt
+				trigger = {
+					NOT = {
+						has_journal_entry = je_fascism_1
+					}
+				}
+			}
+			triggered_desc = {
+				desc = fascists_in_government_tt
+				trigger = {
+					any_interest_group = {
+						is_in_government = yes
+						leader = {
+							OR = {
+								has_ideology = ideology:ideology_fascist
+								has_ideology = ideology:ideology_integralist
+							}
+						}
+					}
+				}
+			}
+			triggered_desc = {
+				desc = fascists_out_of_government_tt
+				trigger = {
+					NOT = {
+						any_interest_group = {
+							is_in_government = yes
+							leader = {
+								OR = {
+									has_ideology = ideology:ideology_fascist
+									has_ideology = ideology:ideology_integralist
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	is_shown_when_inactive = {
+		NOT = { has_variable = completed_fascism_1_var }
+		has_technology_researched = academia
+		NOT = { is_country_type = decentralized }
+	}
+
+	possible = {
+		has_technology_researched = terrestrial_broadcasting
+		OR = {
+			any_interest_group = {
+				OR = {
+					is_powerful = yes
+					is_in_government = yes
+					is_insurrectionary = yes
+				}
+				OR = {
+					has_ideology = ideology:ideology_socialist
+					custom_tooltip = {
+						text = has_socialist_ideology_tt
+						leader = {
+							has_socialist_ideology = yes
+						}
+					}
+				}
+			}
+			custom_tooltip = {
+				text = red_scare_unlock_tt
+				any_in_global_list = {
+					variable = aes_country_list
+					has_diplomatic_relevance = root
+					has_law_or_variant = law_type:law_council_republic
+				}
+			}
+		}
+		radical_fraction = {
+			value >= 0.1
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				NOT = {
+					any_scope_character = {
+						OR = {
+							has_ideology = ideology:ideology_fascist
+							has_ideology = ideology:ideology_integralist
+						}
+					}
+				}
+			}
+			generate_fascist_agitator = yes
+		}
+		if = {
+			limit = {
+				NOT = {
+					any_political_movement = {
+						is_political_movement_type = movement_fascist
+					}
+				}
+			}
+			create_political_movement = { type = movement_fascist }
+		}
+		every_scope_character = {
+			limit = {
+				OR = {
+					AND = {
+						prominence >= define:NCharacters|PROMINENCE_IMPORTANT_THRESHOLD
+						has_role_of_type = politician
+					}
+					has_role_of_type = agitator
+				}
+				OR = {
+					has_ideology = ideology:ideology_fascist
+					has_ideology = ideology:ideology_integralist
+				}
+			}
+			set_variable = var_fascism_1_char_checked
+		}
+	}
+
+	complete = {
+		custom_tooltip = {
+			text = je_fascism_1_complete_condition_tt
+			scope:journal_entry = {
+				"scripted_bar_progress(fascism_progress_bar)" >= 100
+			}
+		}
+		custom_tooltip = {
+			text = existent_fascist_character_tt
+			any_scope_character = {
+				OR = {
+					has_ideology = ideology:ideology_fascist
+					has_ideology = ideology:ideology_integralist
+				}
+			}
+		}
+    }
+
+	on_complete = {
+		set_variable = {
+			name = completed_fascism_1_var
+		}
+		if = {
+			limit = {
+				NOT = {
+					any_interest_group  = {
+						leader = {
+							OR = {
+								has_ideology = ideology:ideology_fascist
+								has_ideology = ideology:ideology_integralist
+							}
+						}
+					}
+				}
+				any_scope_character = {
+					OR = {
+						has_ideology = ideology:ideology_fascist
+						has_ideology = ideology:ideology_integralist
+					}
+				}
+			}
+			ordered_interest_group = {
+				limit = {
+					any_scope_character = {
+						OR = {
+							has_ideology = ideology:ideology_fascist
+							has_ideology = ideology:ideology_integralist
+						}
+					}
+				}
+				order_by = ig_clout
+				position = 0
+				check_range_bounds = no
+				save_scope_as = fascist_ig
+				random_scope_character = {
+					limit = {
+						OR = {
+							has_ideology = ideology:ideology_fascist
+							has_ideology = ideology:ideology_integralist
+						}
+					}
+					save_scope_as = fascist_leader
+				}
+			}
+			custom_tooltip = {
+				text = fascist_leader_seizes_control_tt
+				scope:fascist_leader = {
+					set_as_interest_group_leader = yes
+				}
+			}
+		}
+		trigger_event = { id = fascism_events.11 }
+		custom_tooltip = {
+			text = fascist_characters_stays_increased_tt
+		}
+	}
+
+	fail = {
+		custom_tooltip = {
+			text = je_fascism_1_fail_condition_tt
+			scope:journal_entry = {
+				"scripted_bar_progress(fascism_progress_bar)" <= 0
+			}
+		}
+	}
+
+	on_fail = {
+		trigger_event = { id = fascism_events.10 }
+		custom_tooltip = {
+			text = fascist_characters_return_to_normal_tt
+		}
+	}
+
+	on_timeout = {
+		trigger_event = { id = fascism_events.10 }
+		custom_tooltip = {
+			text = fascist_characters_return_to_normal_tt
+		}
+	}
+
+	on_weekly_pulse = {
+        effect = {
+            if = {
+                limit = {
+					any_interest_group = {
+						is_in_government = yes
+						leader = {
+							OR = {
+								has_ideology = ideology:ideology_fascist
+								has_ideology = ideology:ideology_integralist
+							}
+							NOT = {
+								has_variable = var_fascism_1_char_checked
+							}
+						}
+					}
+                }
+				trigger_event = { id = fascism_events.9 popup = yes }
+            }
+			every_interest_group = {
+				limit = {
+					is_in_government = no
+				}
+				leader = {
+					set_variable = var_fascism_1_char_checked
+				}
+			}
+        }
+    }
+
+	on_monthly_pulse = {
+		random_events = {
+			100 = 0
+			10 = fascism_events.2
+		}
+	}
+
+	invalid = {
+		# pelly_says = no
+	}
+
+	weight = 10000
+	can_deactivate = no
+		
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
+
+REPLACE:je_liberalism_1 = {
+	icon = "gfx/interface/icons/event_icons/event_election.dds"
+
+   group = je_group_internal_affairs
+
+	is_shown_when_inactive = {
+		NOT = { has_variable = liberalism_1_done }
+		has_technology_researched = international_relations_theory
+		has_technology_researched = international_monetary_policy
+	}
+
+	possible = {
+		any_interest_group = {
+			is_in_government = yes
+			OR = {
+				trigger_if = {
+					limit = {
+						owner = {
+							has_technology_researched = international_relations_theory
+						}
+					}
+					has_ideology = ideology:ideology_liberal
+				}
+				trigger_else = {
+					has_ideology = ideology:ideology_liberal
+				}
+				any_scope_character = {
+					OR = {
+						AND = {
+							prominence >= define:NCharacters|PROMINENCE_IMPORTANT_THRESHOLD
+							has_role_of_type = politician
+						}
+						has_role_of_type = agitator
+					}
+					OR = {
+						has_ideology = ideology:ideology_radical
+						has_ideology = ideology:ideology_market_liberal
+						has_ideology = ideology:ideology_humanitarian
+						has_ideology = ideology:ideology_humanitarian_royalist
+						has_ideology = ideology:ideology_feminist
+					}
+				}
+			}
+		}
+	}
+
+	complete = {
+		OR = {
+			has_law_or_variant = law_type:law_census_voting
+			has_law_or_variant = law_type:law_universal_suffrage
+		}
+
+		government_legitimacy >= 50
+		any_interest_group = {
+			is_in_government = yes
+			OR = {
+				custom_tooltip = {
+					text = has_ideology_liberal_tt
+					OR = {
+						has_ideology = ideology:ideology_liberal
+						has_ideology = ideology:ideology_liberal
+					}
+				}
+				leader = { has_ideology = ideology:ideology_radical }
+				leader = { has_ideology = ideology:ideology_market_liberal }
+			}
+		}
+		is_at_war = no
+		NOT = {
+			any_interest_group = {
+				is_insurrectionary = yes
+			}
+		}
+	}
+
+	on_complete = {
+		set_variable = liberalism_1_done
+		trigger_event = { id = liberalism.1 }
+	}
+
+	weight = 10000
+}
+
+REPLACE:je_liberalism_3 = {
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+
+	group = je_group_internal_affairs
+
+	complete = {
+		OR = {
+			has_law_or_variant = law_type:law_right_of_assembly
+			has_law_or_variant = law_type:law_protected_speech
+		}
+		OR = {
+			has_law_or_variant = law_type:law_freedom_of_conscience
+			has_law_or_variant = law_type:law_total_separation
+		}
+		any_scope_building = {
+			is_building_type = building_university
+			level >= 3
+			occupancy > 0.9
+		}
+		any_scope_building = {
+			always = no
+			level >= 3
+			occupancy > 0.9
+		}
+	}
+
+	on_complete = {
+		trigger_event = { id = liberalism.3 }
+	}
+
+	weight = 5000
+}
