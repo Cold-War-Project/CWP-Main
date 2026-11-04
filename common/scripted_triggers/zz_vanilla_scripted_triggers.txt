@@ -1,0 +1,804 @@
+﻿# Base game scripted triggers that needed fixing for the mod
+REPLACE:ai_desires_target_state = {
+	OR = {
+		ai_strongly_desires_target_state = yes
+		scope:target_state = { is_homeland_of_country_cultures = root } # AI is interested in homelands
+		AND = { # AI wants to unify split states
+			scope:target_state = {
+				is_split_state = yes
+				state_region = {
+					any_scope_state = {
+						owner = root
+						is_treaty_port = no
+					}
+				}
+			}
+		}
+		AND = { # Aggressive AI wants nearby land
+			OR = {
+				has_strategy = ai_strategy_international_socialism
+				has_strategy = ai_strategy_territorial_expansion
+			}
+			OR = {
+				has_strategic_land_adjacency = scope:target_state # Will limit its ambitions to land borders
+				AND = {
+					scope:target_state.region ?= capital.region # Will try to annex states in its capital region regardless of whether they border it or not
+					can_reach_target_state = yes
+				}
+			}
+		}
+		AND = { # Colonialist AI wants colonies
+			OR = {
+				has_strategy = ai_strategy_economic_imperialism
+				has_strategy = ai_strategy_colonial_expansion
+			}
+			scope:target_state.owner = { is_country_type = unrecognized }
+			can_reach_target_state = yes  # Willing to go overseas to acquire territories
+		}
+		AND = { # AI wants nearby states if gifted them by overlord
+			has_strategic_adjacency = scope:target_state
+			any_overlord_or_above = { this = scope:target_country }
+		}
+	}
+}
+
+REPLACE:bonapartist_coup_trigger = {
+	always = no
+}
+
+REPLACE:character_has_carlist_ideology = {
+	always = no
+}
+
+REPLACE:character_has_ideology_conflicting_with_ruling_dynasty = {
+	# used in character scope
+	# owner = country
+	always = no
+}
+
+REPLACE:character_has_miguelist_ideology = {
+	always = no
+}
+
+REPLACE:coa_corporate_state_trigger = {
+	has_law_or_variant = law_type:law_corporatized_unions
+}
+
+REPLACE:coa_def_kalmar_flag_trigger = {
+	always = no
+}
+
+REPLACE:coa_def_prussian_ensign_trigger = {
+	always = no
+}
+
+REPLACE:coa_fascist_social_monarchy_trigger = {
+	has_law = law_type:law_monarchy
+	OR = {
+		has_law_or_variant = law_type:law_autocracy
+		has_law_or_variant = law_type:law_oligarchy
+		has_law_or_variant = law_type:law_single_party_state
+	}
+}
+
+REPLACE:coa_fascist_trigger = {
+	# A fascist can lead a monarchy or a theocracy without the government changing form. The Papal State should retain the same flag even if the Pope's a fascist, for example.
+	# A fascist can also lead a democracy without the democracy immediately becoming fascist. If the fascist successfully implements his wildest dreams and becomes a dictatorship, then sure the government will become Fascist, but while there's still voting the government shouldn't count as (fully) fascist yet.
+	OR = {
+		coa_oligarchy_trigger = yes
+		coa_dictatorship_trigger = yes
+		coa_fascist_social_monarchy_trigger = yes
+	}
+	OR = {
+		has_law_or_variant = law_type:law_corporatized_unions
+		has_law_or_variant = law_type:law_monarchy
+		ruler ?= {
+			OR = {
+				has_ideology = ideology:ideology_fascist
+				has_ideology = ideology:ideology_integralist
+			}
+		}
+	}
+}
+
+REPLACE:coa_military_trigger = {
+	has_government_type = gov_presidential_oligarchy
+}
+
+REPLACE:coa_monarchy_trigger = {
+	OR = {
+		has_law_or_variant = law_type:law_chiefdom
+		has_law = law_type:law_monarchy
+	}
+}
+
+REPLACE:coa_nihilist_trigger = {
+	has_law_or_variant = law_type:law_state_atheism
+	NOR = {
+		has_law_or_variant = law_type:law_theocracy
+		has_law = law_type:law_monarchy
+		has_law_or_variant = law_type:law_council_republic
+	}
+	ruler ?= { has_ideology = ideology:ideology_nihilist }
+}
+
+REPLACE:coa_republic_trigger = {
+	OR = {
+		has_law_or_variant = law_type:law_corporatized_unions
+		has_law_or_variant = law_type:law_presidential_republic
+		has_law_or_variant = law_type:law_parliamentary_republic
+		has_law_or_variant = law_type:law_council_republic
+	}
+}
+
+REPLACE:company_is_zaibatsu = {
+	always = no
+}
+
+REPLACE:country_has_emperor_in_power = {
+	always = no
+}
+
+REPLACE:country_has_isolationism_or_sakoku = {
+	has_law = law_type:law_isolationism
+}
+
+REPLACE:country_has_laws_in_need_of_critical_modernization = {
+	OR = {
+		has_law_or_variant = law_type:law_isolationism
+		OR = { # For readability
+			has_law_or_variant = law_type:law_extraction_economy
+			has_law_or_variant = law_type:law_traditionalism
+			has_law_or_variant = law_type:law_industry_banned
+		}
+		has_law_or_variant = law_type:law_serfdom
+		has_law_or_variant = law_type:law_peasant_levies
+		OR = {
+			has_law_or_variant = law_type:law_consumption_based_taxation
+			has_law_or_variant = law_type:law_land_based_taxation
+		}
+		has_law_or_variant = law_type:law_combination_acts
+	}
+}
+
+REPLACE:country_has_laws_in_need_of_modernization = {
+	OR = {
+		has_law_or_variant = law_type:law_isolationism
+		OR = { # For readability
+			has_law_or_variant = law_type:law_extraction_economy
+			has_law_or_variant = law_type:law_traditionalism
+			has_law_or_variant = law_type:law_industry_banned
+		}
+		has_law_or_variant = law_type:law_serfdom
+		has_law_or_variant = law_type:law_peasant_levies
+		OR = {
+			has_law_or_variant = law_type:law_consumption_based_taxation
+			has_law_or_variant = law_type:law_land_based_taxation
+		}
+		has_law_or_variant = law_type:law_combination_acts
+		has_law_or_variant = law_type:law_no_schools
+	}
+}
+
+REPLACE:country_has_monarchy_law = {
+	has_law = law_type:law_monarchy
+}
+
+REPLACE:country_has_non_monarchy_law = {
+	OR = {
+		has_law = law_type:law_chiefdom
+		has_law = law_type:law_colonial_administration
+		has_law = law_type:law_parliamentary_republic
+		has_law = law_type:law_theocracy
+		has_law = law_type:law_council_republic
+		has_law = law_type:law_presidential_republic
+	}
+}
+
+REPLACE:country_has_tokugawa_in_power = {
+	always = no
+}
+
+REPLACE:country_is_abolishing_bakufu = {
+	AND = {
+		has_law = law_type:law_autocracy
+		OR = {
+			is_enacting_law = law_type:law_technocracy
+			is_enacting_law = law_type:law_oligarchy
+			is_enacting_law = law_type:law_landed_voting
+			is_enacting_law = law_type:law_wealth_voting
+			is_enacting_law = law_type:law_census_voting
+			is_enacting_law = law_type:law_universal_suffrage
+			is_enacting_law = law_type:law_anarchy
+			is_enacting_law = law_type:law_single_party_state
+		}
+	}
+}
+
+REPLACE:country_is_abolishing_factory_councils = {
+	OR = {
+		is_enacting_law = law_type:law_corporatized_unions
+		is_enacting_law = law_type:law_right_to_associate
+		is_enacting_law = law_type:law_anti_strike_laws
+		is_enacting_law = law_type:law_combination_acts
+	}
+}
+
+REPLACE:country_is_canadian = { # Used for Change Langugae of Administration
+	c:CAN ?= this
+}
+
+REPLACE:culture_is_intuitive_slave_revolt_culture = {
+}
+
+REPLACE:enacting_more_permissive_labour_associations_law = {
+	OR = {
+		AND = {
+			OR = {
+				has_law_or_variant = law_type:law_combination_acts
+				has_law_or_variant = law_type:law_combination_acts
+			}
+			OR = {
+				is_enacting_law = law_type:law_anti_strike_laws
+				is_enacting_law = law_type:law_right_to_associate
+			}
+		}
+		AND = {
+			OR = {
+				has_law_or_variant = law_type:law_anti_strike_laws
+				has_law_or_variant = law_type:law_corporatized_unions
+			}
+			is_enacting_law = law_type:law_right_to_associate
+		}
+	}
+}
+
+REPLACE:goods_is_agricultural = {
+	OR = {
+		this = g:grain
+		this = g:fabric
+		this = g:wood
+		this = g:fruit
+		this = g:sugar
+		this = g:tobacco
+	}
+}
+
+REPLACE:goods_is_artisanal = {
+	OR = {
+		this = g:liquor
+		this = g:wine
+		this = g:meat
+		this = g:tea
+		this = g:coffee
+	}
+}
+
+REPLACE:goods_is_industrial = {
+	OR = {
+		this = g:ammunition
+		this = g:small_arms
+		this = g:artillery
+		this = g:groceries
+		this = g:clothes
+		this = g:furniture
+		this = g:paper
+		this = g:services
+		this = g:transportation
+		this = g:electricity
+		this = g:merchant_marine
+		this = g:coal
+		this = g:iron
+		this = g:lead
+		this = g:oil
+		this = g:steel
+		this = g:glass
+		this = g:tools
+		this = g:explosives
+		this = g:automobiles
+		this = g:gold
+		this = g:tanks
+		this = g:military_aircraft
+		this = g:missiles
+		this = g:submarines
+		this = g:aircraft_carriers
+		this = g:chemical_weapon
+		this = g:biological_weapon
+		this = g:nuclear_weapon
+		this = g:sulfur
+		this = g:engines
+		this = g:cargo_ships
+		this = g:refined_fuel
+		this = g:rare_earth_elements
+		this = g:natural_gas
+		this = g:copper
+		this = g:bauxite
+		this = g:cement
+		this = g:aluminum
+		this = g:electronics
+		this = g:semiconductors
+		this = g:commercial_aircraft
+		this = g:uranium
+		this = g:telecommunications
+		this = g:professional_services
+		this = g:plastics
+		this = g:consumer_electronics
+		this = g:pharmaceuticals
+		this = g:financial_services
+		this = g:bonds
+		this = g:media
+		this = g:computers
+		this = g:deposits
+	}
+}
+
+REPLACE:has_conservative_ideology = {
+	custom_tooltip = {
+		text = has_conservative_ideology_tt
+		OR = {
+			has_ideology = ideology:ideology_traditionalist
+			has_ideology = ideology:ideology_traditionalist_minoritarian
+			has_ideology = ideology:ideology_royalist
+			has_ideology = ideology:ideology_theocrat
+			has_ideology = ideology:ideology_corporatist_leader
+			has_ideology = ideology:ideology_authoritarian
+			has_ideology = ideology:ideology_jingoist_leader
+		}
+	}
+}
+
+REPLACE:has_distillery = {
+	has_building = building_beverage_industries
+}
+
+REPLACE:has_heavy_industry_building = {
+	OR = {
+		has_building = building_aircraft_manufactories
+		has_building = building_aluminum_refinery
+		has_building = building_automobile_manufactories
+		has_building = building_cement_plants
+		has_building = building_chemical_plants
+		has_building = building_computer_manufactories
+		has_building = building_consumer_electronics_manufactories
+		has_building = building_shipyard
+		has_building = building_electronic_components_manufactories
+		has_building = building_motor_industry
+		has_building = building_pharmaceutical_industry
+		has_building = building_plastic_refineries
+		has_building = building_semiconductor_fabs
+		has_building = building_steelworks
+		has_building = building_synthetics_plant
+		has_building = building_tank_factory
+	}
+}
+
+REPLACE:has_hierarchic_ideology = {
+	has_ideology = ideology:ideology_hierarchic
+}
+
+REPLACE:has_indian_primary_culture = { # Necessary to define princely states without resorting to any loops in government type definitions
+	OR = {
+		country_has_primary_culture = cu:pashtun
+		country_has_primary_culture = cu:assamese
+		country_has_primary_culture = cu:bengali
+		country_has_primary_culture = cu:bihari
+		country_has_primary_culture = cu:manipuri
+		country_has_primary_culture = cu:oriya
+		country_has_primary_culture = cu:sinhala
+		country_has_primary_culture = cu:awadhi
+		country_has_primary_culture = cu:punjabi
+		country_has_primary_culture = cu:kashmiri
+		country_has_primary_culture = cu:gujarati
+		country_has_primary_culture = cu:marathi
+		country_has_primary_culture = cu:sindhi
+		country_has_primary_culture = cu:rajput
+		country_has_primary_culture = cu:kannada
+		country_has_primary_culture = cu:malayalam
+		country_has_primary_culture = cu:tamil
+		country_has_primary_culture = cu:telegu
+		country_has_primary_culture = cu:kannauji
+	}
+}
+
+REPLACE:has_industry_building = {
+	OR = {
+		has_building = building_biofuel_refineries
+		has_building = building_beverage_industries
+		has_building = building_explosives_industry
+		has_building = building_food_industry
+		has_building = building_oil_refineries
+		has_building = building_furniture_manufactories
+		has_building = building_glassworks
+		has_building = building_munitions_plants
+		has_building = building_paper_manufactories
+		has_building = building_small_arms_manufactories
+		has_building = building_textile_manufactories
+		has_building = building_tool_manufactories
+	}
+}
+
+REPLACE:has_je_befriend_reason = {
+	can_reach_target_country = yes
+	country_rank <= $TARGET$.country_rank
+	always = no
+}
+
+REPLACE:has_je_conquest_reason = {
+	can_reach_target_country = ye
+	always = no
+}
+
+REPLACE:has_je_protect_reason = {
+	can_reach_target_country = yes
+	country_rank > $TARGET$.country_rank
+	always = no
+}
+
+REPLACE:has_monarchist_ideology = {
+	has_ideology = ideology:ideology_royalist
+}
+
+REPLACE:has_paternalist_ideology = {
+	OR = {
+		has_ideology = ideology:ideology_paternalistic
+		has_ideology = ideology:ideology_oligarchic
+		has_ideology = ideology:ideology_moderate
+	}
+}
+
+REPLACE:has_reactionary_ideology = {
+	custom_tooltip = {
+		text = has_reactionary_ideology_tt
+		OR = {
+			has_ideology = ideology:ideology_traditionalist
+			has_ideology = ideology:ideology_fascist
+			has_ideology = ideology:ideology_integralist
+			has_ideology = ideology:ideology_ethno_nationalist
+			has_ideology = ideology:ideology_theocrat
+			has_ideology = ideology:ideology_royalist
+			has_ideology = ideology:ideology_luddite
+			has_ideology = ideology:ideology_corporatist_leader
+			character_has_carlist_ideology = yes
+			character_has_miguelist_ideology = yes
+		}
+	}
+}
+
+REPLACE:ideology_authoritarian_valid_trigger = {
+	# trade unions should always go vanguardist instead if available
+	NAND = {
+		owner = { has_technology_researched = academia }
+		is_interest_group_type = ig_trade_unions
+	}
+	# PB should always go fascist instead if available
+	NAND = {
+		is_interest_group_type = ig_petty_bourgeoisie
+		owner = { has_technology_researched = terrestrial_broadcasting }
+	}
+}
+
+REPLACE:ig_has_carlist_ideology = {
+	always = no
+}
+
+REPLACE:ig_is_reactionary = {
+	OR = {
+		has_ideology = ideology:ideology_reactionary
+		leader = {
+			OR = {
+				has_ideology = ideology:ideology_fascist
+				has_ideology = ideology:ideology_integralist
+				has_ideology = ideology:ideology_royalist
+				has_ideology = ideology:ideology_theocrat
+			}
+		}
+		AND = {
+			law_stance = {
+				law = law_type:law_autocracy
+				value >= neutral
+			}
+			law_stance = {
+				law = law_type:law_council_republic
+				value < neutral
+			}
+		}
+	}
+}
+
+REPLACE:is_afghan_nation = {
+	OR = {
+		c:AFG ?= this
+		c:KAB ?= this
+		c:AFH ?= this
+	}
+}
+
+REPLACE:is_danubian_culture = {
+	OR = {
+		cu:czech ?= this
+		cu:polish ?= this
+		cu:slovak ?= this
+		cu:hungarian ?= this
+		cu:slovene ?= this
+		cu:croat ?= this
+		cu:romanian ?= this
+		cu:italian ?= this
+		cu:serb ?= this
+		cu:ukrainian ?= this
+	}
+}
+
+REPLACE:is_distillery = {
+	is_building_type = building_beverage_industries
+}
+
+REPLACE:is_heavy_industry_building = {
+	OR = {
+		is_building_type = building_aircraft_manufactories
+		is_building_type = building_aluminum_refinery
+		is_building_type = building_automobile_manufactories
+		is_building_type = building_cement_plants
+		is_building_type = building_chemical_plants
+		is_building_type = building_computer_manufactories
+		is_building_type = building_consumer_electronics_manufactories
+		is_building_type = building_shipyard
+		is_building_type = building_electronic_components_manufactories
+		is_building_type = building_motor_industry
+		is_building_type = building_pharmaceutical_industry
+		is_building_type = building_plastic_refineries
+		is_building_type = building_semiconductor_fabs
+		is_building_type = building_steelworks
+		is_building_type = building_synthetics_plant
+		is_building_type = building_tank_factory
+	}
+}
+
+REPLACE:is_industry_building = {
+	OR = {
+		is_building_type = building_biofuel_refineries
+		is_building_type = building_beverage_industries
+		is_building_type = building_explosives_industry
+		is_building_type = building_food_industry
+		is_building_type = building_oil_refineries
+		is_building_type = building_furniture_manufactories
+		is_building_type = building_glassworks
+		is_building_type = building_munitions_plants
+		is_building_type = building_paper_manufactories
+		is_building_type = building_small_arms_manufactories
+		is_building_type = building_textile_manufactories
+		is_building_type = building_tool_manufactories
+	}
+}
+
+REPLACE:is_major_unifier = {
+	OR = {
+		AND = {
+			exists = c:GER # Germany
+			c:GER ?= THIS
+		}
+		AND = {
+			exists = c:ITA # Italy
+			c:ITA ?= THIS
+		}
+		AND = {
+			exists = c:ETH # Ethiopia
+			c:ETH ?= THIS
+		}
+		AND = {
+			exists = c:SCA # Scandinavia
+			c:SCA ?= THIS
+		}
+		AND = {
+			exists = c:ARA # Arabia
+			c:ARA ?= THIS
+		}
+		AND = {
+			exists = c:YUG # Yugoslavia
+			c:YUG ?= THIS
+		}
+		AND = {
+			exists = c:TRH # Turkestan
+			c:TRH ?= THIS
+		}
+		AND = {
+			exists = c:IDS # Indonesia
+			c:IDS ?= THIS
+		}
+		AND = {
+			exists = c:HND # India
+			c:HND ?= THIS
+		}
+	}
+}
+
+REPLACE:is_princely_state = {
+	always = no
+}
+
+REPLACE:is_raw_industries_building = {
+	or = {
+		is_building_type = building_bauxite_mine
+		is_building_type = building_coal_mine
+		is_building_type = building_copper_mine
+		is_building_type = building_gold_mine
+		is_building_type = building_iron_mine
+		is_building_type = building_lead_mine
+		is_building_type = building_sulfur_mine
+		is_building_type = building_rare_earth_elements_mine
+		is_building_type = building_uranium_mine
+		is_building_type = building_fishing_wharf
+		is_building_type = building_natural_gas_well
+		is_building_type = building_oil_platform
+		is_building_type = building_oil_rig
+	}
+}
+
+REPLACE:is_special_civil_war_tag = {
+	country_definition = cd:CHI
+}
+
+REPLACE:japanese_character_is_marked_for_death_chance = {
+	always = no
+}
+
+REPLACE:je_danubian_federation_north_italian_button_possible = {
+	always = no
+}
+
+REPLACE:je_danubian_federation_north_italian_button_visible = {
+	always = no
+}
+
+REPLACE:law_is_governance_principles_law = { # law scope
+	OR = {
+		type ?= law_type:law_monarchy
+		type ?= law_type:law_theocracy
+		type ?= law_type:law_colonial_administration
+		type ?= law_type:law_chiefdom
+		type ?= law_type:law_presidential_republic
+		type ?= law_type:law_parliamentary_republic
+		type ?= law_type:law_council_republic
+	}
+}
+
+REPLACE:legitimist_coup_trigger = {
+	always = no
+}
+
+REPLACE:orleanist_coup_trigger = {
+	always = no
+}
+
+REPLACE:relevant_law_is_critical_to_modernization = { # Takes scope:law
+	OR = {
+		AND = {
+			ROOT = { has_law_or_variant = law_type:law_serfdom }
+			OR = {
+				scope:law.type = law_type:law_tenant_farmers
+				scope:law.type = law_type:law_commercialized_agriculture
+			}
+		}
+		AND = {
+			ROOT = { has_law_or_variant = law_type:law_isolationism }
+			OR = {
+				scope:law.type = law_type:law_protectionism
+				scope:law.type = law_type:law_free_trade
+			}
+		}
+		AND = {
+			ROOT = { has_law_or_variant = law_type:law_combination_acts }
+			OR = {
+				scope:law.type = law_type:law_combination_acts
+				scope:law.type = law_type:law_anti_strike_laws
+				scope:law.type = law_type:law_corporatized_unions
+				scope:law.type = law_type:law_right_to_associate
+			}
+		}
+		AND = {
+			ROOT = {
+				OR = {
+					has_law_or_variant = law_type:law_traditionalism
+					has_law_or_variant = law_type:law_industry_banned
+				}
+			}
+			OR = {
+				scope:law.type = law_type:law_interventionism
+				scope:law.type = law_type:law_laissez_faire
+			}
+		}
+		AND = {
+			ROOT = { has_law_or_variant = law_type:law_peasant_levies }
+			OR = {
+				scope:law.type = law_type:law_professional_army
+				scope:law.type = law_type:law_mass_conscription
+			}
+		}
+		AND = {
+			ROOT = {
+				OR = {
+					has_law_or_variant = law_type:law_land_based_taxation
+					has_law_or_variant = law_type:law_consumption_based_taxation
+				}
+			}
+			OR = {
+				scope:law.type = law_type:law_per_capita_based_taxation
+				scope:law.type = law_type:law_proportional_taxation
+				scope:law.type = law_type:law_graduated_taxation
+			}
+		}
+	}
+}
+
+REPLACE:researched_mass_politics = {
+	AND = {
+		has_technology_researched = nationalism
+		has_technology_researched = international_relations_theory
+		has_technology_researched = academia
+	}
+}
+
+REPLACE:sonnojoi_have_shojoi_ideology = {
+	always = no
+}
+
+REPLACE:state_is_homeland_of_german_cultures = {
+	state_region = {
+		OR = {
+			is_homeland = cu:north_german
+			is_homeland = cu:south_german
+			is_homeland = cu:swiss
+			is_homeland = cu:east_german
+		}
+	}
+}
+
+REPLACE:state_is_homeland_of_indian_cultures = {
+	state_region = {
+		OR = {
+			is_homeland = cu:pashtun
+			is_homeland = cu:assamese
+			is_homeland = cu:bengali
+			is_homeland = cu:bihari
+			is_homeland = cu:manipuri
+			is_homeland = cu:nepali
+			is_homeland = cu:oriya
+			is_homeland = cu:sinhala
+			is_homeland = cu:awadhi
+			is_homeland = cu:punjabi
+			is_homeland = cu:kashmiri
+			is_homeland = cu:gujarati
+			is_homeland = cu:marathi
+			is_homeland = cu:sindhi
+			is_homeland = cu:rajput
+			is_homeland = cu:kannada
+			is_homeland = cu:malayalam
+			is_homeland = cu:tamil
+			is_homeland = cu:telegu
+			is_homeland = cu:kannauji
+		}
+	}
+}
+
+REPLACE:state_is_homeland_of_italian_cultures = {
+	state_region = { is_homeland = cu:italian }
+}
+
+REPLACE:trade_center_construction_allowed = {
+	NOT = { owner = { has_law = law_type:law_isolationism } }
+	trigger_if = {
+		limit = { owner != scope:investor_country }
+		NOT = { scope:investor_country = { has_law = law_type:law_isolationism } }
+	}
+}
+
+REPLACE:us_american_buildings_trigger = {
+	is_in_geographic_region = geographic_region_north_america
+	any_scope_state = {
+		owner = {
+			OR = {
+				country_has_primary_culture = cu:american
+				country_has_primary_culture = cu:afro_american
+			}
+		}
+	}
+}
