@@ -3,14 +3,14 @@
 # REPLACE: swaps the vanilla block of the same name (this file loads last because of the zz_ prefix).
 
 REPLACE:law_commitment = {
-    kind = directed
-    cost = 25
+	kind = directed
+	cost = 25
 
 	icon = "gfx/interface/icons/diplomatic_treaties_articles_icons/law_commitment_treaties.dds"
 
 	flags = {
-        is_law_commitment
-        can_be_enforced
+		is_law_commitment
+		can_be_enforced
 		ai_consider_threaten_naval_hostilities
 	}
 
@@ -18,232 +18,218 @@ REPLACE:law_commitment = {
 
 	maintenance_paid_by = target_country
 
-    required_inputs = {
-        law_type
-    }
-
-    unlocked_by_technologies = {
-        international_relations_theory
-    }
-
-	visible = {
-
+	required_inputs = {
+		law_type
 	}
+
+	unlocked_by_technologies = {
+		international_relations_theory
+	}
+
+	visible = {}
 
 	possible = {
-        NOT = { is_subject_of = scope:other_country }
-        save_temporary_scope_as = target_country
-        scope:other_country = {
-            save_temporary_scope_as = actor
-        }
-        custom_tooltip = {
-            text = "EQUAL_OR_BETTER_RANK_THAN_TARGET"
-            country_rank <= scope:other_country.country_rank
-        }
+		NOT = { is_subject_of = scope:other_country }
+		save_temporary_scope_as = target_country
+		scope:other_country = { save_temporary_scope_as = actor }
+		custom_tooltip = {
+			text = "EQUAL_OR_BETTER_RANK_THAN_TARGET"
+			country_rank <= scope:other_country.country_rank
+		}
 	}
 
-    non_fulfillment = {
-        consequences = freeze
+	non_fulfillment = {
+		consequences = freeze
 
-        max_consecutive_contraventions = 6
-        conditions = {
-            monthly = {
-                scope:article = {
-                    source_country = {
-                        NOR = {
+		max_consecutive_contraventions = 6
+		conditions = {
+			monthly = {
+				scope:article = {
+					source_country = {
+						NOR = {
 							has_law = scope:article.input_law
 							is_enacting_law = scope:article.input_law
 						}
-                    }
-                }
-            }
-        }
-    }
+					}
+				}
+			}
+		}
+	}
 
-    can_ratify = {
-        scope:source_country = {
-            OR = {
-                is_subject = no
-                NOT = { is_subject_of = scope:target_country }
-            }
-        }
-        custom_tooltip = {
-            text = DUPLICATE_ARTICLE_SAME_INPUTS_TREATY
-            trigger_if = {
-                limit = {
-                    exists = root.input_law
-                }
+	can_ratify = {
+		scope:source_country = {
+			OR = {
+				is_subject = no
+				NOT = { is_subject_of = scope:target_country }
+			}
+		}
+
+		custom_tooltip = {
+			text = DUPLICATE_ARTICLE_SAME_INPUTS_TREATY
+			trigger_if = {
+				limit = { exists = root.input_law }
 				NOT = {
 					scope:source_country = {
 						any_scope_treaty = {
-                            hidden_trigger = {
-							    OR = {
-								    scope:treaty = {
-								    	is_renegotiation = no
-								    }
-								    scope:treaty.amended_treaty != this
-							    }
-						    }
+							hidden_trigger = {
+								OR = {
+									scope:treaty = { is_renegotiation = no }
+									scope:treaty.amended_treaty != this
+								}
+							}
 							any_scope_article = {
 								has_type = law_commitment
 								input_law = root.input_law
-                                source_country = scope:source_country
+								source_country = scope:source_country
 							}
 						}
 					}
 				}
-            }
-        }
-        custom_tooltip = {
-            text = DUPLICATE_ARTICLE_SAME_INPUTS
-            scope:treaty ?= {
-                NOT = {
-                    any_scope_article_option = {
-                        count > 1
-                        has_type = law_commitment
-                        source_country = scope:source_country
-                        input_law = root.input_law
-                    }
-                }
-            }
-        }
-    }
+			}
+		}
+		
+		custom_tooltip = {
+			text = DUPLICATE_ARTICLE_SAME_INPUTS
+			scope:treaty ?= {
+				NOT = {
+					any_scope_article_option = {
+						count > 1
+						has_type = law_commitment
+						source_country = scope:source_country
+						input_law = root.input_law
+					}
+				}
+			}
+		}
+	}
 
-    law_type_valid_trigger = {
-        any_law = {
-            law_is_available = yes
-            type = scope:input
-        }
-        scope:other_country = {
-            OR = {
-                has_law = scope:input
-                any_interest_group = {
-                    is_in_government = yes
-                    law_stance = {
-                        law = scope:input
-                        value > neutral
-                    }
-                }
-            }
-        }
-        scope:input = {
-            NOT = { this = law_type:law_traditionalism }
-        }
-    }
+	law_type_valid_trigger = {
+		any_law = {
+			law_is_available = yes
+			type = scope:input
+		}
+		scope:other_country = {
+			OR = {
+				has_law = scope:input
+				any_interest_group = {
+					is_in_government = yes
+					law_stance = {
+						law = scope:input
+						value > neutral
+					}
+				}
+			}
+		}
+		scope:input = { NOT = { this = law_type:law_traditionalism } }
+	}
 
-    on_entry_into_force = {
-        scope:article_options.source_country = {
-            every_interest_group = {
-                limit = {
-                    law_enactment_stance = {
-                        law = scope:article_options.input_law
-                        value < neutral
-                    }
-                    NOT = {
-                        has_modifier = modifier_opposes_committed_law_ig
-                    }
-                }
-                if = {
-                    limit = {
-                        scope:treaty_options.binding_period >= 5
-                        scope:treaty_options.binding_period < 10
-                    }
-                    add_modifier = {
-                        name = modifier_opposes_committed_law_ig
-                        days = normal_modifier_time
-                        is_decaying = yes
-                    }
-                }
-                else_if = {
-                    limit = {
-                        scope:treaty_options.binding_period >= 10
-                        scope:treaty_options.binding_period < 20
-                    }
-                    add_modifier = {
-                        name = modifier_opposes_committed_law_ig
-                        days = long_modifier_time
-                        is_decaying = yes
-                    }
-                }
-                else_if = {
-                    limit = {
-                        scope:treaty_options.binding_period >= 20
-                    }
-                    add_modifier = {
-                        name = modifier_opposes_committed_law_ig
-                        days = very_long_modifier_time
-                        is_decaying = yes
-                    }
-                }
-            }
-        }
-    }
-    on_enforced = {
-        scope:article_options.source_country = {
-            every_interest_group = {
-                limit = {
-                    law_enactment_stance = {
-                        law = scope:article_options.input_law
-                        value < neutral
-                    }
-                    NOT = {
-                        has_modifier = modifier_opposes_enforced_law_ig
-                    }
-                }
-                if = {
-                    limit = {
-                        has_modifier = modifier_opposes_committed_law_ig
-                    }
-                    remove_modifier = modifier_opposes_committed_law_ig
-                }
-                if = {
-                    limit = {
-                        scope:treaty_options.binding_period >= 5
-                        scope:treaty_options.binding_period < 10
-                    }
-                    add_modifier = {
-                        name = modifier_opposes_enforced_law_ig
-                        days = normal_modifier_time
-                        is_decaying = yes
-                    }
-                }
-                else_if = {
-                    limit = {
-                        scope:treaty_options.binding_period >= 10
-                        scope:treaty_options.binding_period < 20
-                    }
-                    add_modifier = {
-                        name = modifier_opposes_enforced_law_ig
-                        days = long_modifier_time
-                        is_decaying = yes
-                    }
-                }
-                else_if = {
-                    limit = {
-                        scope:treaty_options.binding_period >= 20
-                    }
-                    add_modifier = {
-                        name = modifier_opposes_enforced_law_ig
-                        days = very_long_modifier_time
-                        is_decaying = yes
-                    }
-                }
-            }
-        }
-    }
+	on_entry_into_force = {
+		scope:article_options.source_country = {
+			every_interest_group = {
+				limit = {
+					law_enactment_stance = {
+						law = scope:article_options.input_law
+						value < neutral
+					}
+					NOT = { has_modifier = modifier_opposes_committed_law_ig }
+				}
+				if = {
+					limit = {
+						scope:treaty_options.binding_period >= 5
+						scope:treaty_options.binding_period < 10
+					}
+					add_modifier = {
+						name = modifier_opposes_committed_law_ig
+						days = normal_modifier_time
+						is_decaying = yes
+					}
+				}
+				else_if = {
+					limit = {
+						scope:treaty_options.binding_period >= 10
+						scope:treaty_options.binding_period < 20
+					}
+					add_modifier = {
+						name = modifier_opposes_committed_law_ig
+						days = long_modifier_time
+						is_decaying = yes
+					}
+				}
+				else_if = {
+					limit = { scope:treaty_options.binding_period >= 20 }
+					add_modifier = {
+						name = modifier_opposes_committed_law_ig
+						days = very_long_modifier_time
+						is_decaying = yes
+					}
+				}
+			}
+		}
+	}
+
+	on_enforced = {
+		scope:article_options.source_country = {
+			every_interest_group = {
+				limit = {
+					law_enactment_stance = {
+						law = scope:article_options.input_law
+						value < neutral
+					}
+					NOT = { has_modifier = modifier_opposes_enforced_law_ig }
+				}
+				if = {
+					limit = { has_modifier = modifier_opposes_committed_law_ig }
+					remove_modifier = modifier_opposes_committed_law_ig
+				}
+				if = {
+					limit = {
+						scope:treaty_options.binding_period >= 5
+						scope:treaty_options.binding_period < 10
+					}
+					add_modifier = {
+						name = modifier_opposes_enforced_law_ig
+						days = normal_modifier_time
+						is_decaying = yes
+					}
+				}
+				else_if = {
+					limit = {
+						scope:treaty_options.binding_period >= 10
+						scope:treaty_options.binding_period < 20
+					}
+					add_modifier = {
+						name = modifier_opposes_enforced_law_ig
+						days = long_modifier_time
+						is_decaying = yes
+					}
+				}
+				else_if = {
+					limit = { scope:treaty_options.binding_period >= 20 }
+					add_modifier = {
+						name = modifier_opposes_enforced_law_ig
+						days = very_long_modifier_time
+						is_decaying = yes
+					}
+				}
+			}
+		}
+	}
 
 	on_withdrawal = {}
+
 	on_break = {
 		scope:withdrawing_country = {
 			change_relations = {
 				country = scope:non_withdrawing_country
 					value = {
 						add = -10
+						
 						multiply = {
 							value = scope:treaty_options.remaining_binding_period
 							min = 365
 							divide = 365
 						}
+						
 						max = -10
 						min = -50
 					}
@@ -251,11 +237,13 @@ REPLACE:law_commitment = {
 			change_infamy = {
 				value = {
 					add = 2
+					
 					multiply = {
 						value = scope:treaty_options.remaining_binding_period
 						min = 365
 						divide = 365
 					}
+					
 					max = 20
 					min = 5
 				}
@@ -264,137 +252,113 @@ REPLACE:law_commitment = {
 	}
 
 	ai = {
-
-        treaty_categories = {
-            ideology
+		treaty_categories = {
+			ideology
 		}
 
-        law_type_input_filter = {
-            has_law = scope:input
-        }
+		law_type_input_filter = {
+			has_law = scope:input
+		}
 
 		evaluation_chance = {
 			value = 0
 
 			if = {
-				limit = {
-					country_rank >= rank_value:major_power
-				}
+				limit = { country_rank >= rank_value:major_power }
 				add = 0.1
 
-                if = {
-                    limit = {
-                        OR = {
-                            has_strategy = ai_strategy_economic_imperialism
-                            has_strategy = ai_strategy_egalitarian_agenda
-                            has_strategy = ai_strategy_progressive_agenda
-                        }
-                    }
-                    add = 0.1
-                }
+				if = {
+					limit = {
+						OR = {
+							has_strategy = ai_strategy_economic_imperialism
+							has_strategy = ai_strategy_egalitarian_agenda
+							has_strategy = ai_strategy_progressive_agenda
+						}
+					}
+					add = 0.1
+				}
 
-                if = {
-                    limit = {
-                        has_strategy = ai_strategy_international_socialism
-                    }
-                    add = 0.2
-                }
+				if = {
+					limit = { has_strategy = ai_strategy_international_socialism }
+					add = 0.2
+				}
 			}
 		}
 
-        article_ai_usage = {
-            request
-        }
+		article_ai_usage = {
+			request
+		}
 
 		inherent_accept_score = {
 			value = 0
 
-            scope:article.input_law = {
-                save_temporary_scope_as = input
-            }
+			scope:article.input_law = { save_temporary_scope_as = input }
 
-            if = {
-                limit = {
-                    scope:source_country ?= this
-                    any_interest_group = {
-                        is_in_government = yes
-                        law_stance = {
-                            law = scope:article.input_law
-                            value >= neutral
-                        }
-                    }
-                }
-
-				scope:source_country = {
-					save_temporary_scope_as = target
+			if = {
+				limit = {
+					scope:source_country ?= this
+					any_interest_group = {
+						is_in_government = yes
+						law_stance = {
+							law = scope:article.input_law
+							value >= neutral
+						}
+					}
 				}
-				scope:target_country = {
-					save_temporary_scope_as = actor
+				scope:source_country = { save_temporary_scope_as = target }
+				scope:target_country = { save_temporary_scope_as = actor }
+
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_BASE_ADDITIONAL"
+					value = -100
+
+					if = {
+						limit = {
+							NOT = { exists = scope:is_treaty_active }
+							any_scope_treaty = {
+								any_scope_article = {
+									has_type = law_commitment
+									source_country = scope:source_country
+								}
+							}
+						}
+						add = { value = -300 }
+					}
+
+					if = { # Governance Principles
+						limit = { scope:article.input_law = { is_same_law_group_as = law_type:law_monarchy } }
+						add = -100
+					}
+
+					if = { # Distribution of Power
+						limit = { scope:article.input_law = { is_same_law_group_as = law_type:law_autocracy } }
+						add = -50
+					}
+
+					if = {
+						limit = {
+							scope:article.input_law = {
+								OR = {
+									this = law_type:law_traditionalism
+									this = law_type:law_peasant_levies
+									this = law_type:law_extraction_economy
+									this = law_type:law_no_schools
+									this = law_type:law_no_health_system
+									this = law_type:law_no_home_affairs
+									this = law_type:law_serfdom
+									this = law_type:law_no_police
+									this = law_type:law_debt_slavery
+									this = law_type:law_consumption_based_taxation
+									this = law_type:law_no_social_security
+								}
+							}
+						}
+						value = -1000
+					}
 				}
-
-                add = {
-                    desc = "DIPLOMATIC_ACCEPTANCE_BASE_ADDITIONAL"
-                    value = -100
-
-                    if = {
-                        limit = {
-                            NOT = { exists = scope:is_treaty_active }
-                            any_scope_treaty = {
-                                any_scope_article = {
-                                    has_type = law_commitment
-                                    source_country = scope:source_country
-                                }
-                            }
-                        }
-                        add = {
-                            value = -300
-                        }
-                    }
-
-                    if = { # Governance Principles
-                        limit = {
-                            scope:article.input_law = {
-                                is_same_law_group_as = law_type:law_monarchy
-                            }
-                        }
-                        add = -100
-                    }
-
-                    if = { # Distribution of Power
-                        limit = {
-                            scope:article.input_law = {
-                                is_same_law_group_as = law_type:law_autocracy
-                            }
-                        }
-                        add = -50
-                    }
-
-                    if = {
-                        limit = {
-                            scope:article.input_law = {
-                                OR = {
-                                    this = law_type:law_traditionalism
-                                    this = law_type:law_peasant_levies
-                                    this = law_type:law_extraction_economy
-                                    this = law_type:law_no_schools
-                                    this = law_type:law_no_health_system
-                                    this = law_type:law_no_home_affairs
-                                    this = law_type:law_serfdom
-                                    this = law_type:law_no_police
-                                    this = law_type:law_debt_slavery
-                                    this = law_type:law_consumption_based_taxation
-                                    this = law_type:law_no_social_security
-                                }
-                            }
-                        }
-                        value = -1000
-                    }
-                }
 
 				if = {
-					limit = {
-						has_law_or_variant = law_type:law_isolationism
-					}
+					limit = { has_law_or_variant = law_type:law_isolationism }
 					add = {
 						desc = "law_isolationism"
 						add = -100
@@ -402,10 +366,7 @@ REPLACE:law_commitment = {
 				}
 
 				if = {
-					limit = {
-						country_rank >= scope:target_country.country_rank
-					}
-
+					limit = { country_rank >= scope:target_country.country_rank }
 					add = {
 						desc = "DIPLOMATIC_ACCEPTANCE_RANK"
 						value = -300
@@ -422,187 +383,113 @@ REPLACE:law_commitment = {
 					}
 				}
 
-                add = {
-                    desc = "DIPLOMATIC_ACCEPTANCE_LIKES_LAW"
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_LIKES_LAW"
+					if = {
+						limit = { has_law = scope:article.input_law }
+						add = 5
+					}
+				}
 
-                    if = {
-                        limit = {
-                            has_law = scope:article.input_law
-                        }
-                        add = 5
-                    }
-                }
-
-                if = {
-                    limit = {
-                        scope:article.input_law = law_type:law_slavery_banned
-                        OR = {
-                            has_strategy = ai_strategy_egalitarian_agenda
-                            has_strategy = ai_strategy_progressive_agenda
-                        }
-                    }
-                    add = {
-                        desc = "DIPLOMATIC_ACCEPTANCE_ANTI_SLAVERY"
-                        value = 25
-                    }
-                }
-
-                if = {
-                    limit = {
-                        scope:article.input_law = law_type:law_council_republic
-                        has_law = law_type:law_council_republic
-                    }
-                    add = {
-                        desc = "communist_solidarity"
-                        value = 25
-                    }
-                }
 				if = {
 					limit = {
-						c:JAP ?= scope:source_country
-						scope:source_country ?= {
-							has_journal_entry = je_meiji_imperial_marriage
+						scope:article.input_law = law_type:law_council_republic
+						has_law = law_type:law_council_republic
+					}
+					add = {
+						desc = "communist_solidarity"
+						value = 25
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					scope:target_country ?= this
+					any_interest_group = {
+						is_in_government = yes
+						law_stance = {
+							law = scope:article.input_law
+							value >= neutral
+						}
+					}
+				}
+				scope:source_country = { save_temporary_scope_as = actor }
+				scope:target_country = { save_temporary_scope_as = target }
+
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_BASE_ADDITIONAL"
+					value = -30
+				}
+
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_LIKES_LAW"
+					if = {
+						limit = { has_law = scope:article.input_law }
+						add = 5
+					}
+				}
+
+				if = {
+					limit = {
+						scope:article.input_law = law_type:law_free_trade
+						has_strategy = ai_strategy_economic_imperialism
+					}
+					add = {
+						desc = "DIPLOMATIC_ACCEPTANCE_ECONOMIC_IMPERIALISM"
+						value = 25
+					}
+				}
+
+				if = {
+					limit = {
+						scope:article.input_law = law_type:law_council_republic
+						has_law = law_type:law_council_republic
+					}
+					add = {
+						desc = "communist_solidarity"
+						value = 25
+					}
+				}
+
+				if = {
+					limit = {
+						scope:article.input_law = law_type:law_monarchy
+						has_law = law_type:law_monarchy
+						country_rank >= rank_value:great_power
+						OR = {
+							has_strategy = ai_strategy_reactionary_agenda
+							has_strategy = ai_strategy_conservative_agenda
 						}
 					}
 					add = {
-						desc = "je_meiji_imperial_marriage"
-						value = -500
+						desc = "ai_strategy_conservative_agenda"
+						value = 15
 					}
 				}
-            }
-            else_if = {
-                limit = {
-                    scope:target_country ?= this
-                    any_interest_group = {
-                        is_in_government = yes
-                        law_stance = {
-                            law = scope:article.input_law
-                            value >= neutral
-                        }
-                    }
-                }
 
-				scope:source_country = {
-					save_temporary_scope_as = actor
-				}
-				scope:target_country = {
-					save_temporary_scope_as = target
-				}
-
-                add = {
-                    desc = "DIPLOMATIC_ACCEPTANCE_BASE_ADDITIONAL"
-                    value = -30
-                }
-
-                add = {
-                    desc = "DIPLOMATIC_ACCEPTANCE_LIKES_LAW"
-
-                    if = {
-                        limit = {
-                            has_law = scope:article.input_law
-                        }
-                        add = 5
-                    }
-                }
-
-                if = {
-                    limit = {
-                        scope:article.input_law = law_type:law_slavery_banned
-                        OR = {
-                            has_strategy = ai_strategy_egalitarian_agenda
-                            has_strategy = ai_strategy_progressive_agenda
-							AND = {
-								has_journal_entry = je_aberdeen_act
-								scope:source_country = {
-									c:BRZ ?= this
-								}
+				if = {
+					limit = {
+						# We want to support them irrespective of which law we have and they wish to enact
+						OR = {
+							scope:article.input_law = law_type:law_presidential_republic
+							scope:article.input_law = law_type:law_parliamentary_republic
+						}
+						OR = {
+							has_law = law_type:law_presidential_republic
+							has_law = law_type:law_parliamentary_republic
+						}
+						OR = {
+							has_strategy = ai_strategy_progressive_agenda
+							ruler ?= { has_ideology = ideology:ideology_radical }
+							any_interest_group = {
+								is_in_government = yes
+								leader ?= { has_ideology = ideology:ideology_radical }
 							}
-                        }
-                    }
-                    add = {
-                        desc = "DIPLOMATIC_ACCEPTANCE_ANTI_SLAVERY"
-                        value = 25
-                    }
-                }
-
-                if = {
-                    limit = {
-                        scope:article.input_law = law_type:law_free_trade
-                        has_strategy = ai_strategy_economic_imperialism
-                    }
-                    add = {
-                        desc = "DIPLOMATIC_ACCEPTANCE_ECONOMIC_IMPERIALISM"
-                        value = 25
-                    }
-                }
-
-                if = {
-                    limit = {
-                        scope:article.input_law = law_type:law_council_republic
-                        has_law = law_type:law_council_republic
-                    }
-                    add = {
-                        desc = "communist_solidarity"
-                        value = 25
-                    }
-                }
-
-                if = {
-                    limit = {
-                        scope:article.input_law = law_type:law_monarchy
-                        has_law = law_type:law_monarchy
-                        country_rank >= rank_value:great_power
-                        OR = {
-                            has_strategy = ai_strategy_reactionary_agenda
-                            has_strategy = ai_strategy_conservative_agenda
-                        }
-                    }
-                    add = {
-                        desc = "ai_strategy_conservative_agenda"
-                        value = 15
-                    }
-                }
-
-                if = {
-                    limit = {
-                        # We want to support them irrespective of which law we have and they wish to enact
-                        OR = {
-                            scope:article.input_law = law_type:law_presidential_republic
-                            scope:article.input_law = law_type:law_parliamentary_republic
-                        }
-                        OR = {
-                            has_law = law_type:law_presidential_republic
-                            has_law = law_type:law_parliamentary_republic
-                        }
-                        OR = {
-                            has_strategy = ai_strategy_progressive_agenda
-                            ruler ?= {
-                                has_ideology = ideology:ideology_radical
-                            }
-                            any_interest_group = {
-                                is_in_government = yes
-                                leader ?= { has_ideology = ideology:ideology_radical }
-                            }
-                        }
-                    }
-                    add = {
-                        desc = "from_republic"
-                        value = 15
-                    }
-                }
-
-				if = {
-					limit = {
-						scope:source_country ?= {
-							c:JAP ?= this
-							has_journal_entry = je_iwakura_mission
-							has_variable = current_expedition_location_var
-							var:current_expedition_location_var ?= ROOT
 						}
 					}
 					add = {
-						desc = "HOSTING_DIPLOMATIC_MISSION"
-						value = -50
+						desc = "from_republic"
+						value = 15
 					}
 				}
 
@@ -610,27 +497,27 @@ REPLACE:law_commitment = {
 					desc = "DIPLOMATIC_ACCEPTANCE_ATTITUDE"
 					if = {
 						limit = {
-                            OR = {
-                                has_attitude = {
-                                    who = scope:source_country
-                                    attitude = disinterested
-                                }
-                                has_attitude = {
-                                    who = scope:source_country
-                                    attitude = wary
-                                }
-                            }
+							OR = {
+								has_attitude = {
+									who = scope:source_country
+									attitude = disinterested
+								}
+								has_attitude = {
+									who = scope:source_country
+									attitude = wary
+								}
+							}
 						}
 						value = -300
 					}
-                }
-            }
-            else = {
-                add = {
-                    desc = "DIPLOMATIC_ACCEPTANCE_DOES_NOT_WANT_ARTICLE"
-                    value = -300
-                }
-            }
+				}
+			}
+			else = {
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_DOES_NOT_WANT_ARTICLE"
+					value = -300
+				}
+			}
 
 			if = {
 				limit = {
@@ -653,36 +540,6 @@ REPLACE:law_commitment = {
 
 		wargoal_score_multiplier = {
 			value = 1
-
-			if = {
-				limit = {
-					scope:article.input_law ?= law_type:law_slavery_banned
-				}
-
-				# Britain will prioritize ending slavery in Brazil if they have the Aberdeen Act JE
-				if = {
-					limit = {
-						has_journal_entry = je_aberdeen_act
-						scope:source_country = {
-							c:BRZ ?= this
-						}
-					}
-					add = 0.5
-				}
-				# Great Powers with slavery banned will prioritize ending slavery in Brazil if that country failed its slavery JE
-				if = {
-					limit = {
-						has_law_or_variant = law_type:law_slavery_banned
-						country_rank >= rank_value:great_power
-						scope:source_country = {
-							c:BRZ ?= this
-							has_modifier = brazil_slaving_pariah_modifier
-							has_law_or_variant = law_type:law_slave_trade
-						}
-					}
-					add = 0.25
-				}
-			}
 		}
 	}
 
@@ -704,7 +561,7 @@ REPLACE:law_commitment = {
 					value = total_population
 					divide = define:NDiplomacy|SWAY_OFFER_WARGOAL_MANEUVERS_COST_POPULATION_SCALING_FACTOR
 					multiply = define:NDiplomacy|SWAY_OFFER_WARGOAL_MANEUVERS_COST_POPULATION_SCALING_MULTIPLIER
-                    max = define:NDiplomacy|SWAY_OFFER_WARGOAL_MANEUVERS_COST_POPULATION_SCALING_MULTIPLIER_MAX_TOTAL
+					max = define:NDiplomacy|SWAY_OFFER_WARGOAL_MANEUVERS_COST_POPULATION_SCALING_MULTIPLIER_MAX_TOTAL
 				}
 			}
 		}
@@ -744,7 +601,7 @@ REPLACE:law_commitment = {
 				}
 			}
 
-            min = 0.5
+			min = 0.5
 		}
 	}
 }
