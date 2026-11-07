@@ -36,6 +36,11 @@ STATE_NAME = {
     traits = { "state_trait_key" ... }               # State trait keys
     naval_exit_id = 3000                             # ID of the sea state region used as the naval exit (required for coastal land)
 
+    # How much the region suffers from cold
+    # Valid on both land and sea
+    min_cold_effect = 0.1                            # Optional: cold effect in the middle of summer for this hemisphere
+    max_cold_effect = 0.8                            # Optional: cold effect in the middle of winter for this hemisphere, must be at least min_cold_effect
+
     impassable = { "xRRGGBB" ... }                   # Optional: provinces within this region that are impassable
     prime_land = { "xRRGGBB" ... }                   # Optional: provinces that are considered prime land
     center_province = "xRRGGBB"                      # Optional: override for the visual center point of the region

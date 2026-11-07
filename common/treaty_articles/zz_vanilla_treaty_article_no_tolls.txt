@@ -30,12 +30,12 @@ REPLACE:no_tolls = {
     }
 
 	visible = {
-		has_any_strait_province = scope:source_country
+		has_any_strait_province_in_hierarchy = yes
 	}
 
 	possible = {
-		has_any_strait_province = scope:source_country
-		has_any_strait_control = scope:source_country
+		has_any_strait_province_in_hierarchy = yes
+		has_any_strait_control = yes
 	}
 
     can_ratify = {
@@ -81,6 +81,7 @@ REPLACE:no_tolls = {
 	}
 
 	ai = {
+
 		treaty_categories = {
 			economy
 		}
@@ -89,10 +90,21 @@ REPLACE:no_tolls = {
 			value = 0
 
 			if = {
-				limit = { country_rank >= rank_value:unrecognized_major_power }
+				limit = {
+					country_rank >= rank_value:unrecognized_major_power
+				}
 				add = {
 					value = country_rank
 					multiply = 0.025
+				}
+			}
+
+			# Any country a strait controller is hurting looks for relief, whatever its rank
+			if = {
+				limit = { has_law_or_variant = law_type:law_free_trade }
+				add = {
+					value = worst_strait_toll_grievance
+					multiply = 0.005
 				}
 			}
 		}
@@ -101,14 +113,39 @@ REPLACE:no_tolls = {
 			request
 		}
 
+		proposal_weight = {
+			value = 1
+
+			# Pursued harder the more the strait controller is hurting us
+			add = {
+				value = "strait_toll_grievance_against(scope:source_country)"
+				multiply = 0.04
+			}
+
+			if = {
+				limit = {
+					root = scope:target_country
+					NOT = { has_law_or_variant = law_type:law_free_trade } # Everyone else asks for a toll exemption for themselves instead
+				}
+				value = 0
+			}
+		}
+
 		inherent_accept_score = {
 			value = 0
 
 			if = {
-				limit = { scope:source_country ?= this }
+				limit = {
+					scope:source_country ?= this
+				}
+
 				# We are doing this to be able to reuse loc across treaties and diplomatic actions
-				scope:source_country = { save_temporary_scope_as = target }
-				scope:target_country = { save_temporary_scope_as = actor }
+				scope:source_country = {
+					save_temporary_scope_as = target
+				}
+				scope:target_country = {
+					save_temporary_scope_as = actor
+				}
 
 				add = {
 					desc = "DIPLOMATIC_ACCEPTANCE_BASE_ADDITIONAL"
@@ -117,28 +154,61 @@ REPLACE:no_tolls = {
 
 				add = {
 					desc = "concept_tolls"
-					value = { scope:target_country = { add = "strait_trade_importance_by(scope:source_country)" } }
-					divide = gdp
-					multiply = { scope:target_country = { add = "strait_trade_importance_by(scope:source_country)" } }
-					multiply = -1
+					value = {
+						scope:target_country = {
+							add = "strait_trade_dependence_by(scope:source_country)"
+						}
+					}
+					multiply = -0.5
 					min = -50
 				}
 			}
 			else = {
-				scope:source_country = { save_temporary_scope_as = actor }
-				scope:target_country = { save_temporary_scope_as = target }
-
-				add = {
-					desc = "DIPLOMATIC_ACCEPTANCE_BASE_ADDITIONAL"
-					value = -10
+				scope:source_country = {
+					save_temporary_scope_as = actor
+				}
+				scope:target_country = {
+					save_temporary_scope_as = target
 				}
 
+				if = {
+					limit = {
+						scope:target_country = {
+							"strait_trade_dependence_by(scope:source_country)" < define:NDiplomacy|STRAIT_GRIEVANCE_MIN_DEPENDENCE
+						}
+					}
+
+					add = {
+						desc = "DIPLOMATIC_ACCEPTANCE_NO_STRAIT_DEPENDENCE"
+						value = -10
+					}
+				}
+				else = {
+					add = {
+						desc = "DIPLOMATIC_ACCEPTANCE_STRAIT_DEPENDENCE"
+						value = {
+							scope:target_country = {
+								add = "strait_trade_dependence_by(scope:source_country)"
+							}
+						}
+						multiply = 0.15
+						max = 15
+					}
+				}
+			}
+		}
+
+		wargoal_score_multiplier = {
+			value = 0
+			if = {
+				limit = {
+					has_law_or_variant = law_type:law_free_trade # Everyone else demands a toll exemption for themselves instead
+					"strait_toll_grievance_against(scope:source_country)" > 0
+				}
+				value = 1
 				add = {
-					desc = "concept_tolls"
-					value = { scope:target_country = { add = "strait_trade_importance_by(scope:source_country)" } }
-					divide = gdp
-					multiply = { scope:target_country = { add = "strait_trade_importance_by(scope:source_country)" } }
-					max = 50
+					value = "strait_toll_grievance_against(scope:source_country)"
+					multiply = 0.15
 				}
 			}
 		}
@@ -170,21 +240,6 @@ REPLACE:no_tolls = {
 
 		infamy = {
 			value = 0
-
-			add = {
-				desc = "INFAMY_BASE_VALUE"
-				value = 0.25
-			}
-
-			scope:target_country = {
-				multiply = {
-					desc = "INFAMY_TARGET_COUNTRY_POPULATION_FACTOR"
-					value = total_population
-					divide = define:NDiplomacy|WAR_GOAL_INFAMY_POPULATION_SCALING_FACTOR
-					multiply = define:NDiplomacy|WAR_GOAL_INFAMY_POPULATION_SCALING_MULTIPLIER
-                    max = define:NDiplomacy|WAR_GOAL_INFAMY_POPULATION_SCALING_MULTIPLIER_MAX_TOTAL
-				}
-			}
 		}
 	}
 }
