@@ -2454,3 +2454,207 @@ REPLACE:rivalry = {
 		}
 	}
 }
+
+# ---- generated error-cleanup overrides (Victorian content neutralised / remapped to mod content) ----
+
+# 45_seek_royal_marriage.txt (FIX 1 edits)
+REPLACE:seek_royal_marriage = {
+	groups = {
+		general
+	}
+
+	requires_approval = yes
+	show_confirmation_box = yes
+	show_effect_in_tooltip = yes
+
+	texture = "gfx/interface/icons/diplomatic_action_icons/seek_royal_marriage.dds"
+
+	selectable = {
+		NOT = { is_country_type = decentralized }
+		is_revolutionary = no
+		country_has_monarchy_law = yes
+		NOT = { has_law = law_type:law_autocracy }
+		NOT = { has_gov_regency = yes }
+		religion = {
+			has_discrimination_trait = heritage_christian
+		}
+		any_scope_character = {
+			OR = {
+				is_ruler_of_own_country = yes
+				is_heir_of_own_country = yes
+			}
+			is_adult = yes
+			NOT = { has_variable = is_married }
+		}
+	}
+
+	potential = {
+		scope:target_country = {
+			NOT = { is_country_type = decentralized }
+			is_revolutionary = no
+			country_has_monarchy_law = yes
+			NOT = { has_gov_regency = yes }
+			religion = {
+				has_discrimination_trait = heritage_christian
+			}
+			NAND = {
+				c:POL ?= this
+				has_journal_entry = je_congress_poland
+			}
+		}
+	}
+
+	possible = {
+		NOT = { has_war_with = scope:target_country }
+		scope:target_country = {
+			NOT = { is_subject_type = subject_type_personal_union }
+			country_has_monarchy_law = yes
+			hidden_trigger = {
+				NOT = { has_gov_regency = yes }
+			}
+			OR = {
+				ruler = {
+					is_adult = yes
+					custom_tooltip = {
+						text = ruler_already_married_tt
+						NOT = {
+							has_variable = is_married
+						}
+						hidden_trigger = {
+							NOT = { has_variable = marriage_target }
+						}
+					}
+				}
+				heir ?= {
+					is_adult = yes
+					custom_tooltip = {
+						text = heir_already_married_tt
+						NOT = {
+							has_variable = is_married
+						}
+						hidden_trigger = {
+							NOT = { has_variable = marriage_target }
+						}
+					}
+				}
+			}
+		}
+		has_diplomatic_relevance = scope:target_country
+	}
+
+	accept_effect = {
+		root = {
+			ordered_scope_character = {
+				limit = {
+					OR = {
+						is_ruler_of_own_country = yes
+						is_heir_of_own_country = yes
+					}
+					is_adult = yes
+					NOT = { has_variable = is_married }
+				}
+				position = 0
+				order_by = prominence
+				save_scope_as = royal_marriage_character
+			}
+		}
+		scope:target_country ?= {
+			ruler = {
+				set_variable = marriage_target
+				save_scope_as = foreign_ruler
+			}
+			save_scope_as = marriage_country
+			change_relations = {
+				country = root
+				value = 20
+			}
+		}
+		root = {
+			trigger_event = { id = wedding.1 popup = yes }
+		}
+	}
+
+	ai = {
+		evaluation_chance = {
+			value = 0.25
+		}
+
+		accept_score = {
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_BASE"
+				value = -10
+			}
+			add = {
+				desc = "DIPLOMATIC_ACCEPTANCE_RELATIONS"
+				if = {
+					limit = {
+						scope:actor.relations:root >= relations_threshold:friendly
+					}
+					value = 40
+				}
+				else_if = {
+					limit = {
+						scope:actor.relations:root >= relations_threshold:amicable
+					}
+					value = 20
+				}
+				else_if = {
+					limit = {
+						scope:actor.relations:root <= relations_threshold:hostile
+					}
+					value = -80
+				}
+				else_if = {
+					limit = {
+						scope:actor.relations:root <= relations_threshold:cold
+					}
+					value = -40
+				}
+				else_if = {
+					limit = {
+						scope:actor.relations:root <= relations_threshold:poor
+					}
+					value = -20
+				}
+			}
+			if = {
+				limit = {
+					scope:actor.religion != ROOT.religion
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_DIFFERENT_RELIGION"
+					value = -20
+				}
+			}
+			if = { # 0.10(x-y)
+				limit = {
+					ROOT.prestige > 0
+					scope:actor.prestige > 0
+				}
+				add = {
+					desc = "DIPLOMATIC_ACCEPTANCE_PRESTIGE_DIFFERENCE"
+					add = {
+						value = scope:actor.prestige
+						subtract = ROOT.prestige
+					}
+					divide = 10
+					min = -50
+					max = 50
+				}
+			}
+		}
+
+		propose_score = {
+			value = 15
+			add = {
+				value = scope:target_country.country_rank
+				multiply = 3
+			}
+		}
+
+		will_propose = {
+			scope:target_country.relations:root >= relations_threshold:cordial
+		}
+	}
+}
+

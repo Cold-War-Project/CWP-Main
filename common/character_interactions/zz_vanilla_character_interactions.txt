@@ -922,3 +922,951 @@ REPLACE:sway_to_orleanism = {
 		value = 1
 	}
 }
+
+# ---- generated error-cleanup overrides (Victorian content neutralised / remapped to mod content) ----
+
+# 00_character_interactions.txt (FIX 2 edits)
+REPLACE:grant_command_to_agitator = {
+	icon = "gfx/interface/character_panel/grant_command.dds"
+	clicksound = "event:/SFX/UI/Military/command_grant"
+
+	potential = {
+		has_dlc_feature = agitators
+		has_role_of_type = agitator
+		NOT = { has_role_of_type = general }
+		NOT = { has_role_of_type = admiral }
+		owner ?= scope:actor
+	}
+
+	possible = {
+		is_adult = yes
+		OR = {
+			is_female = no
+			owner ?= {
+				has_law_or_variant = law_type:law_womens_suffrage
+			}
+		}
+		exists = owner.capital.land_hq
+		trigger_if = {
+    		limit = {
+        		always = no
+			}
+    		NOT = {
+        		always = no
+    		}
+		}
+	}
+
+	effect = {
+		add_character_role = general
+	}
+
+	cooldown = { days = normal_modifier_time }
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				has_commander_traits = yes
+			}
+			add = 50
+		}
+		if = {
+			limit = {
+				is_interest_group_type = ig_armed_forces
+			}
+			add = 25
+		}
+		if = {
+			limit = {
+				NOT = {
+					owner ?= {
+						any_scope_general = {
+							exists = this
+						}
+					}
+				}
+			}
+			add = 25
+		}
+		if = {
+			limit = {
+				owner ?= {
+					any_scope_war = {
+						any_scope_front = {
+							is_vulnerable_front = root.owner
+						}
+					}
+				}
+			}
+			add = 100
+		}
+		if = {
+			limit = {
+				character_matches_divided_monarchists_ai_path = yes
+				has_commander_traits = yes
+			}
+			add = 50
+		}
+	}
+}
+
+# 00_character_interactions.txt (FIX 4 edits)
+REPLACE:invite_exile = {
+	# icon = ""
+	clicksound = "event:/SFX/DLC/1.3_ip1/UI/character_invite"
+
+	# Checks against actor country scope and skips the interaction completely if false, before even looking at any characters
+	should_ai_evaluate = {
+		empty_agitator_slots >= 1
+	}
+
+	potential = {
+		is_in_exile_pool = yes
+	}
+
+	show_requirements = yes
+
+	# required for AI to evaluate if interaction is possible on characters in exile pool
+	ai_considers_exiles = yes
+
+	actor_capacity = {
+		empty_agitator_slots >= 1
+	}
+
+	possible = {
+		# Devout exiles must have country religion
+		trigger_if = {
+			limit = {
+				is_interest_group_type = ig_devout
+			}
+		    custom_tooltip = {
+		        text = invite_exile_devout_tt
+		        religion = scope:actor.religion
+		    }
+		}
+		# If you have state religion, exiles must have your religion
+		trigger_if = {
+			limit = {
+				NOT = { is_interest_group_type = ig_devout }
+				scope:actor ?= {
+					has_law = law_type:law_state_religion # Millet System should just rely on average acceptance
+				}
+			}
+			custom_tooltip = {
+				text = invite_exile_state_religion_tt
+				religion = scope:actor.religion
+			}
+		}
+		# cannot invite culturally discriminated exiles
+		character_acceptance = { target = scope:actor value >= acceptance_status_3 }
+		# Cannot invite exiles if you have Closed Borders
+		scope:actor ?= {
+			NOT = { has_law_or_variant = law_type:law_closed_borders }
+		}
+		# Agitator must be able to start or join a movement
+		can_agitate = scope:actor
+	}
+
+	effect = {
+		transfer_character = scope:actor
+		set_variable = exile_to_ruler_var
+		add_career_length = {
+			role = agitator
+			months = 60
+			random_range = { 1.0 1.5 } # 60-90 months
+		}
+		custom_tooltip = invite_exile_start_join_movement_effect
+		hidden_effect = {
+			free_from_exile_effect = yes
+		}
+		hidden_effect = {
+			if = {
+				limit = {
+					has_variable = mazzini_var
+					has_dlc_feature = voice_of_the_people_content
+				}
+				scope:actor ?= {
+					trigger_event = { id = historical_agitators.7 days = 3 }
+				}
+			}
+			if = {
+				limit = {
+					always = no
+				}
+				scope:actor ?= {
+					trigger_event = { id = historical_agitators.23 days = 3 }
+				}
+			}
+			if = {
+				limit = {
+					has_variable = garibaldi_var
+					has_dlc_feature = voice_of_the_people_content
+				}
+				set_variable = {
+					name = garibaldi_cooldown_var
+					days = short_modifier_time
+				}
+			}
+			if = {
+				limit = {
+					exists = root.home_country
+					NOT = { root.home_country = scope:actor }
+				}
+				if = {
+					limit = {
+						root.home_country = {
+							any_interest_group = {
+								is_in_government = yes
+								OR = {
+									this.type = root.interest_group_type
+									this.leader.ideology = root.ideology
+								}
+							}
+						}
+					}
+					root.home_country = {
+						create_diplomatic_catalyst = {
+							type = catalyst_invited_exile_positive
+							target = scope:actor
+						}
+					}
+				}
+				else = {
+					root.home_country = {
+						create_diplomatic_catalyst = {
+							type = catalyst_invited_exile_negative
+							target = scope:actor
+						}
+					}
+				}
+			}
+		}
+	}
+
+	cooldown = { days = normal_modifier_time }
+
+	ai_chance = {
+		value = -85
+		if = {
+			limit = {
+				popularity >= 75
+			}
+			add = 25
+		}
+		if = {
+			limit = {
+				popularity >= 50
+			}
+			add = 25
+		}
+		if = {
+			limit = {
+				culture = {
+					is_primary_culture_of = root.owner
+				}
+			}
+			add = 50
+		}
+		if = {
+			limit = {
+				scope:actor ?= {
+					any_interest_group = {
+						is_in_government = yes
+						save_temporary_scope_as = ex_ig
+					}
+				}
+				ig_type_matches_former = yes
+			}
+			add = 50
+		}
+		if = {
+			limit = {
+				scope:actor ?= { has_law_or_variant = law_type:law_closed_borders }
+			}
+			add = -200
+		}
+		if = {
+			limit = {
+				scope:actor ?= { has_law_or_variant = law_type:law_no_migration_controls }
+			}
+			add = 15
+		}
+		if = {
+			limit = {
+				scope:actor ?= { has_law_or_variant = law_type:law_multicultural }
+			}
+			add = 15
+		}
+		if = {
+			limit = {
+				OR = {
+					AND = {
+						scope:actor ?= {
+							divided_monarchists_ai_backs_orleanist = yes
+						}
+						has_ideology = ideology:ideology_humanitarian_royalist
+					}
+					AND = {
+						scope:actor ?= {
+							divided_monarchists_ai_backs_legitimist = yes
+						}
+						has_ideology = ideology:ideology_royalist
+					}
+					AND = {
+						scope:actor ?= {
+							divided_monarchists_ai_backs_bonapartist = yes
+						}
+						has_ideology = ideology:ideology_authoritarian
+					}
+					AND = {
+						scope:actor ?= {
+							ai_wants_radicals = yes
+						}
+						OR = {
+							has_ideology = ideology:ideology_republican_leader
+							has_ideology = ideology:ideology_radical
+							has_ideology = ideology:ideology_positivist
+						}
+					}
+				}
+			}
+			add = 150
+		}
+		if = {
+			limit = {
+				scope:actor ?= {
+					country_rank < rank_value:major_power
+				}
+			}
+			multiply = 0
+		}
+	}
+}
+
+# 00_character_interactions.txt (FIX 1 edits)
+REPLACE:retire_commander = {
+	# icon = ""
+	clicksound = "event:/SFX/UI/Military/commander_retire"
+
+	potential = {
+		owner ?= scope:actor
+		is_commander = yes
+		is_ruler_of_own_country = no
+	}
+
+	possible = {
+		is_ruler_of_own_country = no
+		interest_group ?= {
+			is_insurrectionary = no
+		}
+		commander_is_available = yes
+		years_of_service >= 1
+		custom_tooltip = {
+			text = pending_coup_event_tt
+			NOT = {
+				owner = {
+					has_variable = coup_event_active
+				}
+			}
+		}
+		custom_tooltip = {
+			text = pending_coup_event_tt
+			NOT = {
+				owner = {
+					has_variable = coup_event_active
+				}
+			}
+		}
+		trigger_if = {
+			limit = {
+				OR = {
+					has_dlc_feature = voice_of_the_people_content
+					has_dlc_feature = ip4_content
+				}
+			}
+			custom_tooltip = {
+				text = doing_coup_for_player_tt
+				NOT = {
+					has_variable = commander_doing_coup_on_player_behalf
+				}
+			}
+		}
+	}
+
+	effect = {
+		if = {
+			limit = {
+				owner = {
+					has_journal_entry = je_ip4_coup
+				}
+				root = {
+					has_variable = golpista_var
+				}
+			}
+			owner = {
+				set_variable = retire_golpista_var
+				character_execute_immediate_coup = yes
+			}
+		}
+		else_if = {
+			limit = {
+				rlit_pushkin_needed_for_golden_age = yes
+			}
+			rlit_pushkin_force_duel_effect = yes
+		}
+		else = {
+			hidden_effect = {
+				replace_character_roles = { remove = { general admiral } }
+				retired_commander_becomes_politician_roll_effect = { CHANCE_MULT = define:NCharacters|RETIRED_COMMANDER_POLITICIAN_FORCED_CHANCE_MULT }
+				retire_character_if_should_be_culled = yes
+			}
+
+			interest_group ?= {
+				add_modifier = {
+					name = retired_commander_interest_group_impact
+					multiplier = {
+						value = root.popularity
+						divide = 100
+						add = 1
+						min = 1
+						multiply = root.commander_rank
+						round = yes
+					}
+					years = 5
+					is_decaying = yes
+				}
+			}
+		}
+	}
+
+	show_confirmation_box = yes
+
+	ai_chance = {
+		value = -50
+		if = {
+			limit = {
+				popularity <= -50
+			}
+			add = 25
+		}
+		if = {
+			limit = {
+				popularity <= -75
+			}
+			add = 25
+		}
+		if = {
+			limit = {
+				age >= 75
+			}
+			add = 50
+		}
+		if = {
+			limit = {
+				OR = {
+					has_trait = psychological_affliction
+					has_trait = syphilis
+					has_trait = wounded
+					has_trait = kidney_stones
+				}
+			}
+			add = 25
+		}
+		if = {
+			limit = {
+				OR = {
+					has_trait = alcoholic
+					has_trait = cocaine_addiction
+					has_trait = opium_addiction
+				}
+			}
+			add = 25
+		}
+		if = {
+			limit = {
+				has_trait = shellshocked
+			}
+			add = 25
+		}
+		if = {
+			limit = {
+				OR = {
+					has_trait = trench_rat
+					has_trait = stalwart_defender
+					has_trait = defense_in_depth_specialist
+				}
+			}
+			add = -100
+		}
+		if = {
+			limit = {
+				OR = {
+					has_trait = expert_convoy_raider
+					has_trait = expert_artillery_commander
+					has_trait = expert_offensive_planner
+					has_trait = expert_defensive_strategist
+					has_trait = expert_naval_commander
+				}
+			}
+			add = -75
+		}
+		if = {
+			limit = {
+				OR = {
+					has_trait = experienced_convoy_raider
+					has_trait = experienced_artillery_commander
+					has_trait = experienced_offensive_planner
+					has_trait = experienced_defensive_strategist
+					has_trait = experienced_naval_commander
+				}
+			}
+			add = -50
+		}
+		if = {
+			limit = {
+				owner ?= {
+					OR = {
+						is_diplomatic_play_committed_participant = yes
+						is_at_war = yes
+					}
+				}
+			}
+			add = -50
+		}
+		if = {
+			limit = {
+				owner ?= {
+					any_scope_war = {
+						any_scope_front = {
+							is_vulnerable_front = root.owner
+						}
+					}
+				}
+			}
+			add = -150
+		}
+		if = {
+			limit = {
+				save_temporary_scope_as = tp_retire_candidate_scope
+				owner ?= {
+					has_journal_entry = je_tp_fav_bootlicker
+					is_at_war = no
+					OR = {
+						var:tp_bootlicker_rival_1 ?= scope:tp_retire_candidate_scope
+						var:tp_bootlicker_rival_2 ?= scope:tp_retire_candidate_scope
+						var:tp_bootlicker_rival_3 ?= scope:tp_retire_candidate_scope
+					}
+				}
+			}
+			add = 100
+		}
+		if = {
+			limit = {
+				character_is_rival_french_house = yes
+				owner ?= {
+					is_at_war = no
+				}
+			}
+			add = 50
+		}
+		if = {
+			limit = {
+				always = no
+			}
+			multiply = 0
+		}
+		if = {
+			limit = {
+				character_matches_divided_monarchists_ai_path = yes
+			}
+			multiply = 0
+		}
+	}
+}
+
+# 02_favorite_interactions.txt (FIX 5 edits)
+REPLACE:appoint_favorite = {
+	icon = "gfx/interface/icons/character_role_icons/favorite.dds"
+	clicksound = "event:/SFX/UI/Military/command_grant"
+
+	potential = {
+		has_dlc_feature = ip5_content
+		owner ?= scope:actor
+		is_ruler_of_own_country = no
+		is_heir_of_own_country = no
+		NOT = { has_role = character_role_favorite }
+	}
+
+	show_requirements = yes
+
+	possible = {
+		owner ?= {
+			can_have_favorites = yes
+		}
+		trigger_if = { # cannot appoint or rescind favorites while the rasputin.1 event is active
+    		limit = {
+    			owner ?= {
+    				has_variable = rasputin1_active_var
+    			}
+			}
+			custom_tooltip = {
+				text = rasputin1_active_tt
+				NOT = {
+	        		owner ?= {
+	    				has_variable = rasputin1_active_var
+	    			}
+	    		}
+			}
+		}
+	}
+
+	effect = {
+		owner ?= {
+			random_scope_character = {
+				limit = {
+					has_role = character_role_favorite
+				}
+				revoke_favorite_effect = yes
+			}
+		}
+		if = {
+			limit = {
+				owner ?= {
+					any_interest_group = {
+						favorite_appointment_ig_penalty >= 1
+					}
+				}
+			}
+			custom_tooltip = appoint_favorite_controversy_tt
+			owner ?= {
+				every_interest_group = {
+					limit = {
+						favorite_appointment_ig_penalty >= 1
+					}
+					add_modifier = {
+						name = modifier_controversial_favorite
+						days = normal_modifier_time
+						is_decaying = yes
+						multiplier = favorite_appointment_ig_penalty
+					}
+				}
+				every_interest_group = {
+					limit = {
+						favorite_appointment_ig_penalty >= 1
+						favorite_appointment_ig_radicals >= 0.01
+					}
+					save_temporary_scope_as = controversial_favorite_ig
+					owner = {
+						add_radicals = {
+							value = scope:controversial_favorite_ig.favorite_appointment_ig_radicals
+							interest_group = scope:controversial_favorite_ig
+						}
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			text = appoint_favorite_effect_tt
+			add_character_role = favorite
+		}
+		if = {
+			limit = {
+				has_modifier = revoked_favorite
+			}
+			remove_modifier = revoked_favorite
+		}
+		owner ?= {
+			if = {
+				limit = {
+					has_journal_entry = je_tsarpoints_master
+				}
+				trigger_event = {
+					id = tsarpoints_events.6
+					popup = yes
+				}
+			}
+		}
+		if = { # When Rasputin is the Favorite, he provides faith healing for Alexei
+			limit = {
+				always = no
+				owner ?= { # has not completed je_tp_fav_rasputin
+					NOT = { has_variable = je_tp_fav_rasputin_complete_var }
+				}
+			}
+			owner ?= {
+				random_scope_character = {
+					limit = {
+						always = no
+						NOT = { has_modifier = modifier_faith_healing }
+					}
+					add_modifier = { name = modifier_faith_healing }
+				}
+			}
+		}
+	}
+
+	cooldown = { days = normal_modifier_time }
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				owner ?= {
+					NOT = {
+						any_scope_character = {
+							has_role = character_role_favorite
+						}
+					}
+				}
+				interest_group ?= {
+					is_insurrectionary = no
+				}
+			}
+			add = 5
+			if = {
+				limit = {
+					owner ?= {
+						has_journal_entry = je_tsarpoints_master
+					}
+				}
+				add = 10
+			}
+			if = {
+				limit = {
+					interest_group ?= {
+						OR = {
+							is_powerful = yes
+							is_in_government = yes
+						}
+					}
+				}
+				add = 25
+			}
+			if = {
+				limit = {
+					OR = {
+						is_interest_group_leader = yes
+						has_role = character_role_general
+						has_role = character_role_admiral
+					}
+				}
+				add = 10
+			}
+			if = {
+				limit = {
+					always = no
+				}
+				add = 60
+			}
+			if = {
+				limit = {
+					owner ?= {
+						OR = {
+							has_strategy = ai_strategy_reactionary_agenda
+							has_strategy = ai_strategy_conservative_agenda
+						}
+					}
+					OR = {
+						is_interest_group_type = ig_landowners
+						is_interest_group_type = ig_devout
+						is_interest_group_type = ig_armed_forces
+						has_ideology = ideology:ideology_traditionalist
+						has_ideology = ideology:ideology_royalist
+					}
+				}
+				add = 20
+			}
+			if = {
+				limit = {
+					owner ?= {
+						OR = {
+							has_strategy = ai_strategy_progressive_agenda
+							has_strategy = ai_strategy_progressive_agenda
+						}
+					}
+					OR = {
+						is_interest_group_type = ig_intelligentsia
+						is_interest_group_type = ig_industrialists
+						is_interest_group_type = ig_petty_bourgeoisie
+					}
+				}
+				add = 20
+			}
+			if = {
+				limit = {
+					has_ideology = ideology:ideology_modernizer_leader
+				}
+				add = 20
+			}
+			if = {
+				limit = {
+					always = no
+				}
+				add = 80
+			}
+			if = {
+				limit = {
+					owner ?= {
+						has_journal_entry = je_tp_pool_decrease_landowner_influence
+					}
+					is_interest_group_type = ig_landowners
+				}
+				add = -100
+			}
+			if = {
+				limit = {
+					owner ?= {
+						has_journal_entry = je_tp_tsar_crown_of_perfection
+						NOT = { has_variable = je_tp_tsar_crown_of_perfection_button_1_complete }
+					}
+					is_interest_group_type = ig_intelligentsia
+				}
+				add = 50
+			}
+			if = {
+				limit = {
+					owner ?= {
+						OR = {
+							c:RUS ?= this
+							has_journal_entry = je_tsarpoints_master
+						}
+					}
+					OR = {
+						is_interest_group_type = ig_armed_forces
+						has_role = character_role_general
+						has_role = character_role_admiral
+						has_ideology = ideology:ideology_jingoist_leader
+					}
+				}
+				multiply = 0.25
+			}
+			subtract = {
+				value = favorite_appointment_controversy
+				multiply = 5
+			}
+		}
+	}
+}
+
+# 02_favorite_interactions.txt (FIX 2 edits)
+REPLACE:revoke_favorite = {
+	icon = "gfx/interface/icons/character_role_icons/favorite.dds"
+	clicksound = "event:/SFX/UI/Military/commander_retire"
+
+	potential = {
+		has_dlc_feature = ip5_content
+		owner ?= scope:actor
+		has_role = character_role_favorite
+	}
+
+	show_requirements = yes
+
+	possible = {
+		current_career_length = {
+			role = character_role_favorite
+			months = 12
+		}
+		trigger_if = { # cannot appoint or rescind favorites while the rasputin.1 event is active
+    		limit = {
+    			owner ?= {
+    				has_variable = rasputin1_active_var
+    			}
+			}
+			custom_tooltip = {
+				text = rasputin1_active_tt
+				NOT = {
+	        		owner ?= {
+	    				has_variable = rasputin1_active_var
+	    			}
+	    		}
+			}
+		}
+	}
+
+	effect = {
+		revoke_favorite_effect = yes
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				interest_group ?= {
+					is_insurrectionary = yes
+				}
+			}
+			add = 80
+		}
+		if = {
+			limit = {
+				owner ?= {
+					OR = {
+						has_strategy = ai_strategy_reactionary_agenda
+						has_strategy = ai_strategy_conservative_agenda
+					}
+				}
+				OR = {
+					has_socialist_ideology = yes
+					has_progressive_ideology = yes
+					has_liberal_ideology = yes
+					is_interest_group_type = ig_trade_unions
+				}
+			}
+			add = 15
+		}
+		if = {
+			limit = {
+				owner ?= {
+					OR = {
+						has_strategy = ai_strategy_progressive_agenda
+						has_strategy = ai_strategy_egalitarian_agenda
+						has_strategy = ai_strategy_progressive_agenda
+					}
+				}
+				OR = {
+					has_reactionary_ideology = yes
+					has_ideology = ideology:ideology_traditionalist
+					has_ideology = ideology:ideology_royalist
+				}
+			}
+			add = 15
+		}
+		if = {
+			limit = {
+				interest_group ?= {
+					ig_approval <= -10
+				}
+			}
+			add = 5
+		}
+		if = {
+			limit = {
+				owner ?= {
+					has_journal_entry = je_tp_pool_decrease_landowner_influence
+				}
+				is_interest_group_type = ig_landowners
+			}
+			add = 100
+		}
+		if = {
+			limit = {
+				owner ?= {
+					has_journal_entry = je_tp_tsar_crown_of_perfection
+					NOT = { has_variable = je_tp_tsar_crown_of_perfection_button_1_complete }
+				}
+				NOT = {
+					is_interest_group_type = ig_intelligentsia
+				}
+			}
+			add = 100
+		}
+		if = {
+			limit = {
+				always = no
+			}
+			multiply = 0.01
+		}
+	}
+}
+
