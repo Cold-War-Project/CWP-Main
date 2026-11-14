@@ -1,0 +1,356 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+je_great_eastern_crisis = {
+	group = je_group_global_international_situations
+	dlc = dlc014
+
+	activation_description = {
+		always = yes
+	}
+
+	icon = "gfx/interface/icons/event_icons/event_skull.dds"
+
+	scripted_progress_bar = control_eastern_crisis_bar
+
+	should_be_involved = {
+		OR = {
+			c:TUR ?= this
+			any_subject_or_below = {
+				is_in_geographic_region = geographic_region_balkans_old
+			}
+			is_in_geographic_region = geographic_region_balkans_old
+			AND = {
+				c:RUS ?= this
+				has_interest_marker_in_region = sr:region_balkans
+			}
+		}
+	}
+
+	should_show_when_not_involved = {
+		OR = {
+			is_in_geographic_region = geographic_region_balkans_old
+			is_in_geographic_region = geographic_region_megali_greece # Proxy for Anatolia
+			country_has_interest_marker_in_great_eastern_crisis_region = yes
+            top_overlord ?= {
+                capital = {
+					OR = {
+						is_in_geographic_region = geographic_region_balkans_old
+						is_in_geographic_region = geographic_region_megali_greece
+					}
+                }
+            }
+		}
+	}
+
+	is_shown_in_lobby = {
+		has_dlc_feature = ip3_content #National Awakening
+		c:TUR ?= this
+	}
+
+	is_shown_when_inactive = { #Now failure effect of sick man, and separatism tanzimat, so should be visible at game start.
+		has_dlc_feature = ip3_content
+		NOT = {
+			has_global_variable = eastern_crisis_happened
+		}
+	}
+
+	possible = {
+		c:TUR ?= {
+			OR = {
+				AND = {
+					has_technology_researched = nationalism
+					highest_secession_progress >= 0.50
+				}
+				custom_tooltip = {
+					text = failed_sick_man_main_tt
+					OR = {
+						always = no
+						always = no
+					}
+				}
+			}
+		}
+	}
+
+	modifiers_while_active = {
+	}
+
+	immediate = {
+		set_global_variable = eastern_crisis_happened
+		c:TUR ?= {
+			save_scope_as = ottoman_scope
+			add_modifier = negative_crisis_influence
+			custom_tooltip = {
+				text = crisis_modifier_if_activated_tt
+				if = {
+					limit = {
+						any_political_movement = {
+							OR = {
+								is_political_movement_type = movement_religious_majority
+								is_political_movement_type = movement_religious_minority
+								is_political_movement_type = movement_cultural_majority
+								is_political_movement_type = movement_cultural_minority
+							}
+						}
+					}
+					every_political_movement = {
+						limit = {
+							OR = {
+								is_political_movement_type = movement_religious_majority
+								is_political_movement_type = movement_religious_minority
+								is_political_movement_type = movement_cultural_majority
+								is_political_movement_type = movement_cultural_minority
+							}
+						}
+						set_variable = political_movement_has_modifiers_var
+						add_modifier = {
+							name = eastern_crisis_movement_attraction
+						}
+					}
+				}
+			}
+		}
+	}
+
+	immediate_all_involved = {
+		trigger_event = { id = eastern_crisis.1 popup = yes }
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			c:TUR ?= {
+				if = { #add modifier to any new movements.
+					limit = {
+						any_political_movement = {
+							OR = {
+								is_political_movement_type = movement_religious_majority
+								is_political_movement_type = movement_religious_minority
+								is_political_movement_type = movement_cultural_majority
+								is_political_movement_type = movement_cultural_minority
+							}
+							NOR = {
+								has_variable = political_movement_has_modifiers_var
+								has_modifier = eastern_crisis_movement_attraction
+							}
+						}
+					}
+					every_political_movement = {
+						limit = {
+							OR = {
+								is_political_movement_type = movement_religious_majority
+								is_political_movement_type = movement_religious_minority
+								is_political_movement_type = movement_cultural_majority
+								is_political_movement_type = movement_cultural_minority
+							}
+							NOR = {
+								has_variable = political_movement_has_modifiers_var
+								has_modifier = eastern_crisis_movement_attraction
+							}
+						}
+						set_variable = political_movement_has_modifiers_var
+						add_modifier = {
+							name = eastern_crisis_movement_attraction
+						}
+					}
+				}
+			}
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			custom_tooltip = {
+				text = eastern_crisis_complete_tt
+				scope:journal_entry = {
+					"scripted_bar_progress(control_eastern_crisis_bar)" >= control_eastern_crisis_upper_bound
+				}
+			}
+			c:TUR ?= {
+				has_any_secessionists_broken_out = no
+				has_any_secessionists_growing = no
+				is_at_war = no
+			}
+		}
+		effect = {
+			c:TUR ?= {
+				custom_tooltip = {
+					text = crisis_modifier_when_done_tt
+					if = {
+						limit = {
+							any_political_movement = {
+								OR = {
+									has_variable = political_movement_has_modifiers_var
+									has_modifier = eastern_crisis_movement_attraction
+								}
+							}
+						}
+						every_political_movement = {
+							limit = {
+								OR = {
+									has_variable = political_movement_has_modifiers_var
+									has_modifier = eastern_crisis_movement_attraction
+								}
+							}
+							if = {
+								limit = {
+									has_variable = political_movement_has_modifiers_var
+								}
+								remove_variable = political_movement_has_modifiers_var
+							}
+							if = {
+								limit = {
+									has_modifier = eastern_crisis_movement_attraction
+								}
+								remove_modifier = eastern_crisis_movement_attraction
+							}
+						}
+					}
+				}
+			}
+			je_great_eastern_crisis_cleanup = yes
+		}
+		effect_all_involved = {
+			trigger_event = { id = eastern_crisis.2 popup = yes }
+		}
+		event_outcome_desc = {
+			first_valid = {
+				triggered_desc = {
+					desc = event_effects_eastern_crisis.2_tt
+				}
+			}
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			NOT = {
+				exists = c:TUR
+			}
+		}
+		effect = {
+			je_great_eastern_crisis_cleanup = yes
+		}
+		effect_all_involved = {
+			custom_tooltip = {
+				text = crisis_modifier_when_done_tt
+				if = {
+					limit = {
+						any_political_movement = {
+							OR = {
+								has_variable = political_movement_has_modifiers_var
+								has_modifier = eastern_crisis_movement_attraction
+							}
+						}
+					}
+					every_political_movement = {
+						limit = {
+							OR = {
+								has_variable = political_movement_has_modifiers_var
+								has_modifier = eastern_crisis_movement_attraction
+							}
+						}
+						if = {
+							limit = {
+								has_variable = political_movement_has_modifiers_var
+							}
+							remove_variable = political_movement_has_modifiers_var
+						}
+						if = {
+							limit = {
+								has_modifier = eastern_crisis_movement_attraction
+							}
+							remove_modifier = eastern_crisis_movement_attraction
+						}
+					}
+				}
+			}
+			if = {
+				limit = {
+					has_modifier = positive_crisis_influence
+				}
+				remove_modifier = positive_crisis_influence
+			}
+			if = {
+				limit = {
+					has_modifier = negative_crisis_influence
+				}
+				remove_modifier = negative_crisis_influence
+			}
+			if = {
+				limit = {
+					has_modifier = eastern_crisis_balkan_nations
+				}
+				remove_modifier = eastern_crisis_balkan_nations
+			}
+		}
+	}
+
+	outcome = {
+		header = JOURNAL_ENTRY_TIMEOUT
+		effect_header = JOURNAL_ENTRY_ON_TIMEOUT
+		flags = { timeout }
+		conclusion_desc = JOURNAL_ENTRY_TIMEOUT_CONCLUSION_DESC
+		effect = {
+			c:TUR ?= {
+				custom_tooltip = {
+					text = crisis_modifier_when_done_tt
+					if = {
+						limit = {
+							any_political_movement = {
+								OR = {
+									has_variable = political_movement_has_modifiers_var
+									has_modifier = eastern_crisis_movement_attraction
+								}
+							}
+						}
+						every_political_movement = {
+							limit = {
+								OR = {
+									has_variable = political_movement_has_modifiers_var
+									has_modifier = eastern_crisis_movement_attraction
+								}
+							}
+							if = {
+								limit = {
+									has_variable = political_movement_has_modifiers_var
+								}
+								remove_variable = political_movement_has_modifiers_var
+							}
+							if = {
+								limit = {
+									has_modifier = eastern_crisis_movement_attraction
+								}
+								remove_modifier = eastern_crisis_movement_attraction
+							}
+						}
+					}
+				}
+			}
+			je_great_eastern_crisis_cleanup = yes
+		}
+		effect_all_involved = {
+			trigger_event = { id = eastern_crisis.3 popup = yes }
+		}
+		event_outcome_desc = {
+			first_valid = {
+				triggered_desc = {
+					desc = event_effects_eastern_crisis.3_tt
+				}
+			}
+		}
+	}
+
+	timeout = 3650 # 10 years
+
+	should_be_pinned_by_default_involved = yes
+	should_be_pinned_by_default_uninvolved_or_context = no
+	
+	weight = 1000
+	transferable = no
+	can_revolution_inherit = yes
+}

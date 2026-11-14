@@ -1,0 +1,776 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+has_gov_regency = {
+    OR = {
+        has_modifier = modifier_regency
+        has_modifier = modifier_regency_landowners
+        has_modifier = modifier_regency_devout
+        has_modifier = modifier_regency_petty_bourgeoisie
+        has_modifier = modifier_regency_industrialists
+        has_modifier = modifier_regency_trade_unions
+        has_modifier = modifier_regency_intelligentsia
+        has_modifier = modifier_regency_armed_forces
+        has_modifier = modifier_regency_rural_folk
+    }
+}
+
+country_is_canadian = { # Used for Change Langugae of Administration
+    OR = {
+        c:ORG ?= this
+        c:HBC ?= this
+        c:ONT ?= this
+        c:QUE ?= this
+        c:NBS ?= this
+        c:NVS ?= this
+        c:ALK ?= this
+    }
+}
+
+country_is_abolishing_factory_councils = {
+    OR = {
+        is_enacting_law = law_type:law_corporatized_unions
+        is_enacting_law = law_type:law_right_to_associate
+        is_enacting_law = law_type:law_anti_strike_laws
+        is_enacting_law = law_type:law_combination_acts
+        is_enacting_law = law_type:law_guild_system
+    }
+}
+
+country_federation_of_the_americas_trigger = {
+    any_scope_state = {
+        is_incorporated = yes
+        OR = {
+            is_in_geographic_region = geographic_region_north_america
+            AND = {
+                is_in_geographic_region = geographic_region_central_america_old
+                NOT = {
+                    state_region = s:STATE_PANAMA # Panama doesn't count
+                }
+            }
+        }
+        count > 1
+    }
+}
+
+country_is_not_dual_or_triple_monarchy_subject = {
+    NAND = {
+        is_subject_type = subject_type_personal_union
+        any_overlord_or_above = {
+            always = no
+        }
+        OR = {
+            always = no
+            always = no
+        }
+    }
+}
+
+country_is_not_united_kingdom_subject = {
+    NAND = {
+        is_subject_type = subject_type_personal_union
+        any_overlord_or_above = {
+            OR = {
+                c:POR ?= this
+                c:IBE ?= this
+            }
+            any_subject_or_below = {
+                is_subject_type = subject_type_personal_union
+                OR = {
+                    c:SPA ?= this
+                    c:BRZ ?= this
+                }
+            }
+        }
+    }
+}
+
+country_is_not_united_kingdom_overlord = {
+    NAND = {
+        OR = {
+            c:POR ?= this
+            c:IBE ?= this
+        }
+        any_subject_or_below = {
+            is_subject_type = subject_type_personal_union
+            OR = {
+                c:SPA ?= this
+                c:BRZ ?= this
+            }
+        }
+    }
+}
+
+culture_is_intuitive_slave_revolt_culture = {
+    AND = {
+        $COUNTRY$ ?= {
+            OR = {
+                country_has_primary_culture = cu:yankee
+                country_has_primary_culture = cu:dixie
+            }
+        }
+        $CULTURE$ ?= cu:afro_american
+    }
+    AND = {
+        $COUNTRY$ ?= {
+            country_has_primary_culture = cu:brazilian
+        }
+        $CULTURE$ ?= cu:afro_brazilian
+    }
+    AND = {
+        $COUNTRY$ ?= {
+            any_primary_culture = {
+                has_discrimination_trait = language_francophone
+            }
+        }
+        $CULTURE$ ?= cu:afro_antillean
+    }
+    AND = {
+        $COUNTRY$ ?= {
+            any_primary_culture = {
+                has_discrimination_trait = language_hispanophone
+            }
+        }
+        $CULTURE$ ?= cu:afro_caribeno
+    }
+    AND = {
+        $COUNTRY$ ?= {
+            country_has_primary_culture = cu:uzbek
+        }
+        $CULTURE$ ?= cu:persian
+    }
+}
+
+glorious_revolution_coup_trigger = { # To mirror the conditions of Isabella II's dethroning
+    AND = {
+        has_dlc_feature = ip4_content
+        has_journal_entry = je_the_two_spains
+        has_law = law_type:law_monarchy
+        var:two_spains_tension_current_var >= 50
+        ruler ?= { popularity <= define:NCharacters|POPULARITY_LIKED_THRESHOLD }
+        has_gov_regency = no
+    }
+}
+
+dynastic_coup_trigger = {
+    scope:golpista_general ?= {
+        NOT = {  # Not a republican's main priority
+            law_stance = {
+                law = law_type:law_monarchy
+                value <= disapprove
+            }
+        }
+    }
+    OR = {
+        carlist_coup_trigger = yes
+        isabelline_coup_trigger = yes
+        miguelist_coup_trigger = yes
+        constitutional_portugal_coup_trigger = yes
+        orleanist_coup_trigger = yes
+        bonapartist_coup_trigger = yes
+        legitimist_coup_trigger = yes
+    }
+}
+
+carlist_coup_trigger = {
+    AND = {
+        OR = {
+            c:SPA ?= ROOT
+            ROOT = { was_formed_from = SPA }
+        }
+        has_law = law_type:law_monarchy
+        scope:golpista_general ?= {
+            character_has_carlist_ideology = yes
+        }
+        ROOT.ruler ?= {
+            NOT = {
+                character_has_carlist_ideology = yes
+            }
+        }
+    }
+}
+
+isabelline_coup_trigger = {
+    AND = {
+        OR = {
+            c:SPA ?= ROOT
+            ROOT = { was_formed_from = SPA }
+        }
+        has_law = law_type:law_monarchy
+        scope:golpista_general ?= {
+            OR = {
+                has_liberal_ideology = yes
+                has_progressive_ideology = yes
+            }
+        }
+        ROOT.ruler ?= {
+            character_has_carlist_ideology = yes
+        }
+    }
+}
+
+miguelist_coup_trigger = {
+    AND = {
+        OR = {
+            c:POR ?= ROOT
+            ROOT = { was_formed_from = POR }
+        }
+        has_law = law_type:law_monarchy
+        scope:golpista_general ?= {
+            character_has_miguelist_ideology = yes
+        }
+        ROOT.ruler ?= {
+            NOT = {
+                character_has_miguelist_ideology = yes
+            }
+        }
+    }
+}
+
+constitutional_portugal_coup_trigger = {
+    AND = {
+        OR = {
+            c:POR ?= ROOT
+            ROOT = { was_formed_from = POR }
+        }
+        has_law = law_type:law_monarchy
+        scope:golpista_general ?= {
+            OR = {
+                has_liberal_ideology = yes
+                has_progressive_ideology = yes
+            }
+        }
+        ROOT.ruler ?= {
+            character_has_miguelist_ideology = yes
+        }
+    }
+}
+
+orleanist_coup_trigger = {
+    AND = {
+        c:FRA ?= ROOT
+        has_dlc_feature = voice_of_the_people_content
+        has_law = law_type:law_monarchy
+        scope:golpista_general ?= {
+            has_ideology = ideology:ideology_orleanist
+        }
+        ROOT.ruler ?= {
+            NOT = {
+                has_ideology = ideology:ideology_orleanist
+            }
+        }
+    }
+}
+
+bonapartist_coup_trigger = {
+    AND = {
+        c:FRA ?= ROOT
+        has_dlc_feature = voice_of_the_people_content
+        has_law = law_type:law_monarchy
+        scope:golpista_general ?= {
+            has_ideology = ideology:ideology_bonapartist
+        }
+        ROOT.ruler ?= {
+            NOT = {
+                has_ideology = ideology:ideology_bonapartist
+            }
+        }
+    }
+}
+
+legitimist_coup_trigger = {
+    AND = {
+        c:FRA ?= ROOT
+        has_dlc_feature = voice_of_the_people_content
+        has_law = law_type:law_monarchy
+        scope:golpista_general ?= {
+            has_ideology = ideology:ideology_legitimist
+        }
+        ROOT.ruler ?= {
+            NOT = {
+                has_ideology = ideology:ideology_legitimist
+            }
+        }
+    }
+}
+
+country_is_great_power = {
+    custom_tooltip = {
+        text = is_great_power_tt
+        country_rank >= rank_value:great_power
+    }
+}
+
+country_has_laws_in_need_of_modernization = {
+    OR = {
+        has_law_or_variant = law_type:law_isolationism
+        OR = { # For readability
+            has_law_or_variant = law_type:law_extraction_economy
+            has_law_or_variant = law_type:law_traditionalism
+            has_law_or_variant = law_type:law_industry_banned
+        }
+        has_law_or_variant = law_type:law_serfdom
+        has_law_or_variant = law_type:law_peasant_levies
+        OR = {
+            has_law_or_variant = law_type:law_consumption_based_taxation
+            has_law_or_variant = law_type:law_land_based_taxation
+        }
+        has_law_or_variant = law_type:law_guild_system
+        has_law_or_variant = law_type:law_no_schools
+    }
+}
+
+country_has_laws_in_need_of_critical_modernization = {
+    OR = {
+        has_law_or_variant = law_type:law_isolationism
+        OR = { # For readability
+            has_law_or_variant = law_type:law_extraction_economy
+            has_law_or_variant = law_type:law_traditionalism
+            has_law_or_variant = law_type:law_industry_banned
+        }
+        has_law_or_variant = law_type:law_serfdom
+        has_law_or_variant = law_type:law_peasant_levies
+        OR = {
+            has_law_or_variant = law_type:law_consumption_based_taxation
+            has_law_or_variant = law_type:law_land_based_taxation
+        }
+        has_law_or_variant = law_type:law_guild_system
+    }
+}
+
+country_should_exclusively_focus_on_modernization = {
+    NOT = {
+        c:SPA ?= this # The Carlists winning the Carlist Wars should not wipe out Spanish liberalism
+    }
+    OR = {
+        has_law_or_variant = law_type:law_isolationism
+        has_law_or_variant = law_type:law_traditionalism
+        has_law_or_variant = law_type:law_peasant_levies
+        AND = {
+            has_law_or_variant = law_type:law_serfdom # Minus Manorialism
+            NOT = { has_law = law_type:law_manorialism }
+        }
+    }
+}
+
+relevant_law_is_critical_to_modernization = { # Takes scope:law
+    OR = {
+        AND = {
+            ROOT = {
+                has_law_or_variant = law_type:law_serfdom
+            }
+            OR = {
+                scope:law.type = law_type:law_tenant_farmers
+                scope:law.type = law_type:law_commercialized_agriculture
+            }
+        }
+        AND = {
+            ROOT = {
+                has_law_or_variant = law_type:law_isolationism
+            }
+            OR = {
+                scope:law.type = law_type:law_protectionism
+                scope:law.type = law_type:law_free_trade
+            }
+        }
+        AND = {
+            ROOT = {
+                has_law_or_variant = law_type:law_guild_system
+            }
+            OR = {
+                scope:law.type = law_type:law_combination_acts
+                scope:law.type = law_type:law_anti_strike_laws
+                scope:law.type = law_type:law_corporatized_unions
+                scope:law.type = law_type:law_right_to_associate
+            }
+        }
+        AND = {
+            ROOT = {
+                OR = {
+                    has_law_or_variant = law_type:law_traditionalism
+                    has_law_or_variant = law_type:law_industry_banned
+                }
+            }
+            OR = {
+                scope:law.type = law_type:law_interventionism
+                scope:law.type = law_type:law_laissez_faire
+            }
+        }
+        AND = {
+            ROOT = {
+                has_law_or_variant = law_type:law_peasant_levies
+            }
+            OR = {
+                scope:law.type = law_type:law_professional_army
+                scope:law.type = law_type:law_mass_conscription
+            }
+        }
+        AND = {
+            ROOT = {
+                OR = {
+                    has_law_or_variant = law_type:law_land_based_taxation
+                    has_law_or_variant = law_type:law_consumption_based_taxation
+                }
+            }
+            OR = {
+                scope:law.type = law_type:law_per_capita_based_taxation
+                scope:law.type = law_type:law_proportional_taxation
+                scope:law.type = law_type:law_graduated_taxation
+            }
+        }
+    }
+}
+
+country_is_colonial_or_company = {
+    OR = {
+        is_country_type = company
+        is_country_type = colonial
+    }
+}
+
+character_has_ideology_conflicting_with_ruling_dynasty = {
+    # used in character scope
+    # owner = country
+    trigger_if = {
+        limit = {
+            owner = {
+                country_has_primary_culture = cu:french
+            }
+        }
+        OR = {
+            trigger_if = {
+                limit = {
+                    owner.ruler = {
+                        always = no
+                    }
+                }
+                AND = {
+                    OR = {
+                        has_ideology = ideology:ideology_legitimist
+                        has_ideology = ideology:ideology_orleanist
+                    }
+                    custom_tooltip = {
+                        text = ruler_is_bonapartist_claimant_tt
+                        owner.ruler = {
+                            always = no
+                        }
+                    }
+                }
+            }
+            trigger_if = {
+                limit = {
+                    owner.ruler = {
+                        always = no
+                    }
+                }
+                AND = {
+                    OR = {
+                        has_ideology = ideology:ideology_bonapartist
+                        has_ideology = ideology:ideology_orleanist
+                    }
+                    custom_tooltip = {
+                        text = ruler_is_legitimist_claimant_tt
+                        owner.ruler = {
+                            always = no
+                        }
+                    }
+                }
+            }
+            trigger_if = {
+                limit = {
+                    owner.ruler = {
+                        always = no
+                    }
+                }
+                AND = {
+                    OR = {
+                        has_ideology = ideology:ideology_legitimist
+                        has_ideology = ideology:ideology_bonapartist
+                    }
+                    custom_tooltip = {
+                        text = ruler_is_orleanist_claimant_tt
+                        owner.ruler = {
+                            always = no
+                        }
+                    }
+                }
+            }
+        }
+    }
+    trigger_if = {
+        limit = {
+            owner = {
+                OR = {
+                    country_has_primary_culture = cu:spanish
+                    country_has_primary_culture = cu:iberian
+                }
+            }
+        }
+        OR = {
+            trigger_if = {
+                limit = {
+                    owner.ruler = {
+                        always = no
+                        character_has_carlist_ideology = yes
+                    }
+                }
+                AND = {
+                    OR = {
+                        has_liberal_ideology = yes
+                        has_progressive_ideology = yes
+                    }
+                    custom_tooltip = {
+                        text = ruler_is_carlist_claimant_tt
+                        owner.ruler = {
+                            always = no
+                            character_has_carlist_ideology = yes
+                        }
+                    }
+                }
+            }
+            trigger_if = {
+                limit = {
+                    owner.ruler = {
+                        always = no
+                        NOT = {
+                            character_has_carlist_ideology = yes
+                        }
+                    }
+                }
+                AND = {
+                    character_has_carlist_ideology = yes
+                    custom_tooltip = {
+                        text = ruler_is_isabellist_claimant_tt
+                        owner.ruler = {
+                            always = no
+                            NOT = {
+                                character_has_carlist_ideology = yes
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    trigger_if = {
+        limit = {
+            owner = {
+                OR = {
+                    country_has_primary_culture = cu:portuguese
+                    country_has_primary_culture = cu:iberian
+                }
+            }
+        }
+        OR = {
+            trigger_if = {
+                limit = {
+                    owner.ruler = {
+                        always = no
+                        character_has_miguelist_ideology = yes
+                    }
+                }
+                AND = {
+                    OR = {
+                        has_liberal_ideology = yes
+                        has_progressive_ideology = yes
+                    }
+                    custom_tooltip = {
+                        text = ruler_is_miguelist_claimant_tt
+                        owner.ruler = {
+                            always = no
+                            character_has_miguelist_ideology = yes
+                        }
+                    }
+                }
+            }
+            trigger_if = {
+                limit = {
+                    owner.ruler = {
+                        always = no
+                        NOT = {
+                            character_has_miguelist_ideology = yes
+                        }
+                    }
+                }
+                AND = {
+                    character_has_miguelist_ideology = yes
+                    custom_tooltip = {
+                        text = ruler_is_constitutionalist_claimant_tt
+                        owner.ruler = {
+                            always = no
+                            NOT = {
+                                character_has_miguelist_ideology = yes
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+is_personal_union_junior_partner = {
+    exists = overlord
+    is_subject_type = subject_type_personal_union
+}
+
+can_generate_scripted_heirs = {
+    has_law = law_type:law_monarchy
+    NAND = { # Has a historical heir
+        exists = heir
+        heir = {
+            is_historical = yes
+        }
+    }
+    NAND = { # Austrian personal unions can cause some strange edge cases
+        exists = overlord
+        is_subject_type = subject_type_personal_union
+        any_primary_culture = {
+            is_primary_culture_of = overlord
+        }
+    }
+}
+
+interest_group_is_not_less_tolerant_than_current_citizenship_law = {
+    OR = {
+        AND = {
+            ROOT.owner = { has_law_or_variant = law_type:law_national_supremacy }
+            NOT = {
+                interest_group ?= {
+                    law_stance = {
+                        law = law_type:law_ethnostate
+                        value >= approve
+                    }
+                }
+            }
+        }
+        AND = {
+            ROOT.owner = { has_law_or_variant = law_type:law_racial_segregation }
+            NOT = {
+                interest_group ?= {
+                    law_stance = {
+                        law = law_type:law_national_supremacy
+                        value >= approve
+                    }
+                }
+            }
+        }
+        AND = {
+            ROOT.owner = { has_law_or_variant = law_type:law_subjecthood }
+            NOT = {
+                interest_group ?= {
+                    law_stance = {
+                        law = law_type:law_national_supremacy
+                        value >= approve
+                    }
+                }
+            }
+        }
+        AND = {
+            ROOT.owner = { has_law_or_variant = law_type:law_cultural_exclusion }
+            NOT = {
+                interest_group ?= {
+                    law_stance = {
+                        law = law_type:law_racial_segregation
+                        value >= approve
+                    }
+                }
+            }
+        }
+        AND = {
+            ROOT.owner = { has_law_or_variant = law_type:law_multicultural }
+            NOT = {
+                interest_group ?= {
+                    law_stance = {
+                        law = law_type:law_cultural_exclusion
+                        value >= approve
+                    }
+                }
+            }
+        }
+    }
+}
+
+country_has_interest_marker_in_europe = {
+    OR = {
+        has_interest_marker_in_region = sr:region_central_europe
+        has_interest_marker_in_region = sr:region_northern_europe
+        has_interest_marker_in_region = sr:region_western_europe
+        has_interest_marker_in_region = sr:region_southern_europe
+        has_interest_marker_in_region = sr:region_eastern_europe
+        has_interest_marker_in_region = sr:region_balkans
+        has_interest_marker_in_region = sr:region_russia
+    }
+}
+
+country_has_interest_marker_in_great_eastern_crisis_region = {
+    OR = {
+        has_interest_marker_in_region = sr:region_balkans
+		has_interest_marker_in_region = sr:region_near_east
+    }
+}
+
+ig_counts_as_marginal = {
+    trigger_if = {
+        limit = {
+            owner ?= {
+                country_has_voting_franchise = yes
+            }
+        }
+        ig_clout < define:NPolitics|MARGINAL_IG_THRESHOLD
+    }
+    trigger_else = {
+        is_marginal = yes
+    }
+}
+
+party_has_members = {
+    any_member = {
+        count >= 1
+    }
+}
+
+amendment_banned_from_enactment = {
+    OR = {
+        this = amendment_type:amendment_economic_regeneration_1
+        this = amendment_type:amendment_economic_regeneration_2
+        this = amendment_type:amendment_factory_councils
+        AND = {
+            owner ?= { authority < political_concession_level_1_auth }
+            this = amendment_type:amendment_generic_sponsor_polstr_increase_negotiation_1
+        }
+        AND = {
+            owner ?= { authority < political_concession_level_2_auth }
+            this = amendment_type:amendment_generic_sponsor_polstr_increase_negotiation_2
+        }
+        AND = {
+            owner ?= { authority < political_concession_level_3_auth }
+            this = amendment_type:amendment_generic_sponsor_polstr_increase_negotiation_3
+        }
+    }
+}
+
+character_has_carlist_ideology = {
+    OR = {
+        has_ideology = ideology:ideology_carlist
+        hidden_trigger = {
+            has_ideology = ideology:ideology_carlist_2
+        }
+    }
+}
+
+ig_has_carlist_ideology = {
+    OR = {
+        has_ideology = ideology:ideology_carlist_ig
+        hidden_trigger = {
+            has_ideology = ideology:ideology_carlist_ig_2
+        }
+    }
+}
+
+character_has_miguelist_ideology = {
+    OR = {
+        has_ideology = ideology:ideology_miguelist
+        hidden_trigger = {
+            has_ideology = ideology:ideology_miguelist_2
+        }
+    }
+}

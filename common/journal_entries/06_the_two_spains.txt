@@ -1,0 +1,184 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+je_the_two_spains = { # I am in Spain, without the A.
+	icon = "gfx/interface/icons/event_icons/event_scales.dds"
+
+	group = je_group_historical_content
+	dlc = dlc016
+
+	activation_description = {
+		always = yes
+	}
+
+    is_shown_in_lobby = {
+        OR = {
+            c:SPA ?= this
+            c:SPC ?= this
+        }
+        has_dlc_feature = ip4_content
+    }
+
+    is_shown_when_inactive = {
+        OR = {
+            c:SPA ?= this
+            was_formed_from = SPA
+        }
+        has_dlc_feature = ip4_content
+        is_revolutionary = no
+        is_secessionist = no
+        NOT = {
+            has_law_or_variant = law_type:law_council_republic
+        }
+	}
+
+	possible = {
+        OR = {
+            c:SPA ?= this
+            was_formed_from = SPA
+        }
+        custom_tooltip = {
+            text = not_has_carlist_war_tt
+            NOT = { is_involved_in_journal_entry = je_the_first_carlist_war }
+            always = no
+        }
+	}
+
+	scripted_progress_bar = je_two_spains_progress_bar
+	scripted_progress_bar = je_two_spains_tension_bar
+
+	immediate = {
+        set_variable = { name = two_spains_pivot_var value = 50 } # Keeps track of what the pivot point is
+        set_variable = { name = two_spains_current_var value = 50 } # Keeps track of what the current value is
+        set_variable = { name = two_spains_tension_current_var value = 50 } # Keeps track of what the current tension is
+		trigger_event = { id = two_spains.1 popup = yes }
+        scope:journal_entry ?= {
+            if= {
+                limit = {
+                    exists = root.var:two_spains_tension_current_var
+                }
+                add_modifier = {
+                    name = modifier_spain_political_tensions
+                    multiplier = {
+                        value = root.var:two_spains_tension_current_var
+                        subtract = 25
+                    }
+                }
+            }
+        }
+        ig:ig_devout = {
+            save_scope_as = church_ig
+        }
+        ig:ig_landowners ?= {
+            save_scope_as = landowners_ig
+        }
+	}
+
+	on_monthly_pulse = {
+        effect = {
+            set_variable = { name = two_spains_current_var value = "scope:journal_entry.scripted_bar_progress(je_two_spains_progress_bar)" }
+            set_variable = { name = two_spains_tension_current_var value = "scope:journal_entry.scripted_bar_progress(je_two_spains_tension_bar)" }
+            set_variable = {
+                name = two_spains_pivot_var
+                value = 100
+            }
+            change_variable = {
+                name = two_spains_pivot_var
+                multiply = ROOT.two_spains_liberal_display
+            }
+            scope:journal_entry = {
+                remove_modifier = modifier_spain_political_tensions
+                add_modifier = {
+                    name = modifier_spain_political_tensions
+                    multiplier = { # From -12.5 to +37.5
+                        value = root.var:two_spains_tension_current_var
+                        subtract = 25
+                        divide = 2
+                    }
+                }
+            }
+        }
+        random_events = {
+            chance_to_happen = 20
+			33 = 0
+			33 = carlist_war.3 # Basque Fueros
+			33 = carlist_war.4 # All that is Holy
+        }
+	}
+
+	outcome = {
+		header = je_the_two_spains_liberal_header
+		effect_header = je_the_two_spains_on_liberal_victory_header
+		color = "gold_positive"
+		conclusion_desc = je_the_two_spains_liberal_conclusion_desc
+		trigger = {
+        custom_tooltip = {
+            text = spain_liberal_victory_values_tt
+            scope:journal_entry = {
+                "scripted_bar_progress(je_two_spains_progress_bar)" >= 80
+            }
+        }
+        ig:ig_devout ?= {
+            ig_counts_as_marginal = yes
+        }
+        ig:ig_landowners ?= {
+            ig_counts_as_marginal = yes
+        }
+		}
+		effect = {
+			trigger_event = { id = two_spains.2 popup = yes }
+		}
+		event_outcome_desc = {
+			first_valid = {
+				triggered_desc = {
+					desc = event_effects_two_spains.2_tt
+				}
+			}
+		}
+	}
+
+	outcome = {
+		header = je_the_two_spains_conservative_header
+		effect_header = je_the_two_spains_on_conservative_victory_header
+		color = "blue_negative"
+		conclusion_desc = je_the_two_spains_conservative_conclusion_desc
+		trigger = {
+        custom_tooltip = {
+            text = spain_conservative_victory_values_tt
+            scope:journal_entry = {
+                "scripted_bar_progress(je_two_spains_progress_bar)" <= 20
+            }
+        }
+        ig:ig_trade_unions ?= {
+            ig_counts_as_marginal = yes
+        }
+        ig:ig_intelligentsia ?= {
+            ig_counts_as_marginal = yes
+        }
+		}
+		effect = {
+			trigger_event = { id = two_spains.3 popup = yes }
+		}
+		event_outcome_desc = {
+			first_valid = {
+				triggered_desc = {
+					desc = event_effects_two_spains.3_tt
+				}
+			}
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+        has_law_or_variant = law_type:law_council_republic
+		}
+		effect = {
+			je_the_two_spains_cleanup = yes
+		}
+	}
+
+	weight = 5000
+
+    	
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}

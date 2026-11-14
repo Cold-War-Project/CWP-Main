@@ -1,0 +1,889 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+je_montenegrin_raiding = {
+	icon = "gfx/interface/icons/event_icons/event_raiding.dds"
+
+	group = je_group_historical_content
+	dlc = dlc014
+
+	activation_description = {
+		always = yes
+	}
+
+	scripted_progress_bar = montenegrin_raiding_progress_bar
+
+	is_shown_in_lobby = {
+		has_dlc_feature = ip3_content #National Awakening
+		c:MON ?= this
+	}
+
+	immediate = {
+		every_scope_state = { #adjusted weekly below
+			add_modifier = { #undoes unemployment popgrowth modifier
+				name = unemployement_birth_rate_countermodifier
+				multiplier = 0.54
+				days = normal_modifier_time
+			}
+		}
+		set_variable = {
+			name = raiding_intensity
+			value = 50
+		}
+		c:RUS ?= {
+			save_scope_as = russia
+		}
+		c:TUR ?= {
+			save_scope_as = ottoman
+		}
+		create_diplomatic_pact = {#help player not forget
+			country = c:RUS
+			type = increase_relations
+		}
+		set_variable = {
+			name = last_week_raiding_income
+			value = 1500 #raiding_income script value doesn't work during initialization.
+		}
+		create_diplomatic_pact = {
+			country = c:TUR
+			type = raiding_pact
+		}
+		create_diplomatic_pact = {
+			country = c:RUS
+			type = disapproval_pact
+		}
+		add_modifier = {
+			name = modifier_montenegrin_raiding
+			multiplier = 1500 #raiding_income script value doesn't work during initialization.
+		}
+		add_modifier = {
+				name = modifier_montenegrin_disobedience
+				multiplier = var:raiding_intensity
+		}
+		random_neighbouring_state = {
+			limit = {
+				owner ?= c:TUR
+			}
+			save_scope_as = raid_target
+			add_modifier = {
+				name = raid_target
+				multiplier = 2
+				days = short_modifier_time
+			}
+		}
+		set_global_variable = {
+			name = mon_raid_state
+			value = scope:raid_target
+		}
+		c:TUR ?= {
+			add_journal_entry = {
+				type = je_tur_raided
+			}
+		}
+	}
+
+	scripted_button = je_montenegrin_raiding_decrease_button
+	scripted_button = je_montenegrin_raiding_increase_button
+
+
+	on_yearly_pulse = { #potentially change raiding target each year 
+		effect = {
+			reapply_raiding_state_modifier = yes
+		}
+	}
+
+	on_weekly_pulse = {
+		effect = {
+			if = { #AI sucks at playing Montenegro, help them
+				limit = {
+					is_ai = yes
+					NOT = {
+						has_modifier = modifier_montenegrin_aid_plus
+					}
+				}
+				add_modifier = {
+					name = modifier_montenegrin_aid_plus
+					days = short_modifier_time
+					multiplier = 0.8
+				}
+			}
+			else_if = { #stop tricky players from swapping to country
+				limit = {
+					is_player = yes
+					has_modifier = modifier_montenegrin_aid_plus
+					NOT = {
+						always = no
+					}
+				}
+				remove_modifier = modifier_montenegrin_aid_plus
+			}
+			#counter-modifier for unemployment birth rate modifier
+			every_scope_state = {
+				limit = {
+					has_modifier = unemployement_birth_rate_countermodifier
+				}
+				remove_modifier = unemployement_birth_rate_countermodifier
+			}
+			every_scope_state = {
+				add_modifier = {
+					name = unemployement_birth_rate_countermodifier
+					multiplier = mon_unemployment_estimate
+					days = short_modifier_time
+				}
+			}
+			###remove raid target modifier if state raid_target is no longer owned by c:TUR, and find a different target instead. 
+			if = {
+				limit = {
+					any_neighbouring_state = {
+						has_modifier = raid_target
+						owner != c:TUR
+					}
+				}
+				reapply_raiding_state_modifier = yes
+			}
+
+			#If Raiding_income has changed, remove and reapply the modifiers with the new values. This is necessary because we do not have support for dynamic modifiers.
+			if = {
+				limit = {
+				var:last_week_raiding_income != raiding_income
+				}
+				remove_modifier = modifier_montenegrin_raiding
+				add_modifier = {
+					name = modifier_montenegrin_raiding
+					multiplier = raiding_income
+				}
+				remove_modifier = modifier_montenegrin_disobedience
+				add_modifier = {
+					name = modifier_montenegrin_disobedience
+					multiplier = var:raiding_intensity
+				}
+				scope:journal_entry = {
+					set_bar_progress = {
+					value = root.var:raiding_intensity
+					name = montenegrin_raiding_progress_bar
+					}
+				}
+				set_variable = {
+					name = last_week_raiding_income
+					value = raiding_income
+				}
+				#Raiding state modifier will increase on yearly pulse
+			}
+			#Higher odds of ottoman Retribution Depending on Raiding Income.
+			#Note that montenegrin_raiding.1 can only fire once, after which montenegrin_raiding.2 fires from then on.
+			if = { #playing Russian Roulette each week
+				limit = {
+					raiding_level > 2 #must be raiding more than 1000
+					NAND = { #If TUR is a player and MON isn't, this is handled by a special button rather than chance.
+						c:TUR ?= {
+							is_player = yes
+						}
+						c:MON ?= {
+							is_player = no
+						}
+					}
+				}
+				if = {
+					limit = {
+						NOT = {
+							always = no
+						}
+					}
+					random = {
+						chance = {
+							add = 2
+							multiply = raiding_level
+							subtract = 3
+							multiply = 0.15 #more likely
+						}
+						trigger_event = {
+							id = montenegrin_raiding.1
+							popup = yes
+						}
+					}
+				}
+				else = {
+					random = {
+						chance = {
+							add = 2
+							multiply = raiding_level
+							subtract = 3
+							multiply = 0.1
+						}
+						trigger_event = {
+							id = montenegrin_raiding.2
+							popup = yes
+						}
+					}
+				}
+			}
+		}
+	}
+
+	status_desc = {
+	desc = je_montenegrin_raiding_amount
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			NOT = {
+				c:TUR ?= {
+					is_country_alive = yes
+				}
+			}
+			NOT = { war_may_restore_country = TUR }
+		}
+		effect = {
+			#This is unlikely to happen, more like a stretch goal for youtubers.
+			add_modifier = {
+				name = modifier_montenegrin_victory
+			}
+			end_raiding_cleanup = yes
+			je_montenegrin_raiding_cleanup = yes
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			exists = c:TUR
+			c:MON ?= {
+				is_subject_of = c:TUR
+				NOT = { has_war_with = c:TUR }
+			}
+		}
+		effect = {
+			#Should have an event here.
+			add_modifier = {
+				name = modifier_montenegrin_defeat
+				days = stupidly_long_modifier_time
+			}
+			end_raiding_cleanup = yes
+			if = { #trigger subjugated event if other JEs aren't already
+				limit = {
+					NOR = {
+						has_journal_entry = je_mon_state_formation
+						has_journal_entry = je_mon_austria_alliance
+					}
+				}
+				trigger_event = {
+					ID = mon_state_formation.17
+				}
+			}
+			je_montenegrin_raiding_cleanup = yes
+		}
+		event_outcome_desc = {
+			first_valid = {
+				triggered_desc = {
+					trigger = {
+						NOR = {
+							has_journal_entry = je_mon_state_formation
+							has_journal_entry = je_mon_austria_alliance
+						}
+					}
+					desc = event_effects_mon_state_formation.17_tt
+				}
+			}
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = { #This is normally ended by deal with Russia, but there is also an odd edgecase where c:TUR no longer borders c:MON
+			OR = {
+				always = no #normal way to end JE
+				NOR = {
+					exists = c:TUR
+					exists = c:MON
+					c:MON = this #can't become Yugoslavia or Serbia
+				}
+				NOT = {
+					hidden_trigger = { #kills errors
+						any_neighbouring_state = { # Turkey must be neighbor, unless it's fighting a civil war.
+							OR = {
+								c:TUR ?= owner
+								AND = {
+									exists = owner.civil_war_origin_country
+									c:TUR ?= owner.civil_war_origin_country
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		effect = {
+			end_raiding_cleanup = yes
+			if = {
+				limit = {
+					NOT = {
+						always = no
+					}
+				}
+				post_notification = je_montenegrin_raiding_fail
+			}
+			je_montenegrin_raiding_cleanup = yes
+		}
+	}
+
+	weight = 100
+	can_revolution_inherit = yes
+	transferable = no
+		
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
+
+je_mon_state_formation = {
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+
+	group = je_group_historical_content
+	dlc = dlc014
+
+	activation_description = {
+		always = yes
+	}
+
+	is_shown_in_lobby = {
+		has_dlc_feature = ip3_content #National Awakening
+		c:MON ?= this
+	}
+
+	immediate = {
+		set_variable = {
+			name = rus_relations
+			value = c:RUS.relations:ROOT
+		}
+		add_modifier = {
+			name = modifier_montenegrin_aid
+			multiplier = russian_aid_income
+		}
+		c:RUS ?= {
+			save_scope_as = russia
+		}
+		c:TUR ?= {
+			save_scope_as = ottoman
+		}
+	}
+
+	scripted_button = je_montenegrin_visit_moscow
+	scripted_button = je_montenegrin_make_saint
+
+	on_weekly_pulse = {
+		effect = {
+			if = {
+				limit = {
+					var:rus_relations != c:RUS.relations:ROOT
+				}
+				set_variable = {
+					name = rus_relations
+					value = c:RUS.relations:ROOT
+				}
+				remove_modifier = modifier_montenegrin_aid
+				add_modifier = {
+					name = modifier_montenegrin_aid
+					multiplier = russian_aid_income
+				}
+			}
+		}
+	}
+
+	status_desc = {
+	desc = je_montenegrin_russian_aid_income
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			custom_tooltip = {
+				text = has_taxation_law_tt
+				NOT = {
+					has_law_or_variant = law_type:law_consumption_based_taxation
+				}
+			}
+			custom_tooltip = {
+				text = has_police_law_tt
+				NOT = {
+					has_law_or_variant = law_type:law_no_police
+				}
+			}
+			has_law = law_type:law_monarchy
+			government_legitimacy > 50
+			custom_tooltip = {
+				text = biljarda_built_tt
+				has_variable = biljarda_built
+			}
+		}
+		effect = {
+			add_modifier = {
+				name = modifier_montenegrin_recognition
+			}
+			custom_tooltip = {
+				text = montenegrin_compromise_tt
+				trigger_event = {
+					id = mon_state_formation.1
+					days = 0
+					popup = yes
+				}
+			}
+			hidden_effect = {
+				add_journal_entry = { type = je_mon_austria_alliance }
+			}
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			OR = {
+				is_subject_of = c:TUR
+				any_diplomatic_play = {
+					initiator_is = root
+				}
+				c:RUS ?= {
+					relations:root < relations_threshold:cold
+				}
+			}
+		}
+		effect = {
+			russia_breaks_independence_pact = yes
+			custom_tooltip = {
+				text = mon_rus_aid_stop_tt
+				remove_modifier = modifier_montenegrin_aid
+			}
+			mon_failure_events = yes
+			je_mon_state_formation_cleanup = yes
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			NOT = {
+				exists = c:TUR
+			}
+		}
+		effect = {
+			je_mon_state_formation_cleanup = yes
+		}
+	}
+
+
+	weight = 100
+	can_revolution_inherit = yes
+	transferable = no
+
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
+
+
+je_mon_austria_alliance = {
+	icon = "gfx/interface/icons/event_icons/event_scales.dds"
+
+	group = je_group_historical_content
+	dlc = dlc014
+
+	activation_description = {
+		always = yes
+	}
+
+	#scripted_button = je_mon_state_formation_visit_russia
+	#scripted_button = je_mon_state_formation_make_saint
+
+	immediate = {
+		c:RUS ?= {
+			save_scope_as = russia
+		}
+		c:TUR ?= {
+			save_scope_as = ottoman
+		}
+		c:AUS ?= {
+			save_scope_as = austria
+		}
+	}
+
+	on_weekly_pulse = {
+	}
+
+	status_desc = {
+		desc = je_mon_austria_status_desc
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			government_legitimacy > 50
+			c:RUS ?= {
+				relations:root <= relations_threshold:poor
+			}
+			c:AUS ?= {
+				relations:root >= relations_threshold:amicable
+			}
+			trigger_if = {
+				limit = {
+					has_journal_entry = je_montenegrin_raiding
+				}
+				custom_tooltip = {
+					text = raiding_income_greater_tt
+					raiding_income < 700
+				}
+			}
+		}
+		effect = {
+			s:STATE_MONTENEGRO = {
+				every_scope_state = {
+					limit = {
+						owner = c:AUS
+					}
+					set_state_owner = c:MON
+				}
+			}
+			trigger_event = {
+				ID = mon_state_formation.4
+				popup = yes
+			}
+		}
+		event_outcome_desc = {
+			first_valid = {
+				triggered_desc = {
+					desc = event_effects_mon_state_formation.4_tt
+				}
+			}
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			OR = {
+				is_in_same_power_bloc = c:RUS
+				is_subject_of = c:RUS
+				is_subject_of = c:TUR
+				has_war_with = c:AUS
+				any_diplomatic_play = {
+					initiator_is = root
+				}
+			}
+		}
+		effect = { #use same barbarian event.
+			mon_failure_events = yes
+			c:AUS ?= {
+				change_relations = {
+					country = root
+					value = -30
+				}
+				create_diplomatic_catalyst = {
+					type = catalyst_event_negative
+					target = root
+				}
+			}
+			je_mon_austria_alliance_cleanup = yes
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = { #p:x90A0E0.state.owner might work better
+			exists = c:AUS
+			c:AUS ?= {
+				NOT = { has_or_is_contesting_state_in_state_region = STATE_MONTENEGRO }
+			}
+		}
+		effect = {
+			je_mon_austria_alliance_cleanup = yes
+		}
+	}
+
+	weight = 100
+	can_revolution_inherit = yes
+	transferable = no
+
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
+
+
+je_mon_serb_unity = {
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+
+	group = je_group_historical_content
+	dlc = dlc014
+
+	activation_description = {
+		always = yes
+	}
+
+	is_shown_in_lobby = {
+		has_dlc_feature = ip3_content #National Awakening
+		OR = {
+			c:MON ?= this
+			c:SER ?= this
+		}
+	}
+
+	immediate = {
+		c:RUS ?= {
+			save_scope_as = russia
+		}
+		c:TUR ?= {
+			save_scope_as = ottoman
+		}
+		c:MON ?= {
+			save_scope_as = montenegro
+		}
+		c:SER ?= {
+			save_scope_as = serbia
+		}
+	}
+
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			c:MON ?= {
+				any_neighbouring_state = { owner = c:SER }
+				is_independent_and_not_being_subjugated = yes
+			}
+			c:SER ?= {
+				is_independent_and_not_being_subjugated = yes
+			}
+		}
+		effect = {
+			custom_tooltip = {
+				text = mon_serb_unite_tt
+				trigger_event = { ID = mon_state_formation.5 popup = yes}
+			}
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			c:SER ?= {
+				is_independent_and_not_being_subjugated = yes
+				has_war_with = c:MON
+			}
+		}
+		effect = {
+			c:MON ?= {
+				create_diplomatic_catalyst = {
+					type = catalyst_event_negative
+					target = c:SER
+				}
+			}
+			c:SER ?= {
+				create_diplomatic_catalyst = {
+					type = catalyst_event_negative
+					target = c:MON
+				}
+			}
+			je_mon_serb_unity_cleanup = yes
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			OR = {
+				c:MON ?= {
+					is_country_alive = no
+				}
+				c:SER ?= {
+					is_country_alive = no
+				}
+				AND = { # only SER will have this JE if MON is AI
+						c:MON ?= ROOT
+						is_player = no
+				}
+				AND = { # only MON will have this if they are a player
+						c:SER ?= ROOT
+						c:MON ?= {
+							is_player = yes
+						}
+				}
+				AND = { # no one will have this if both players
+						c:MON ?= {
+							is_player = yes
+						}
+						c:SER ?= {
+							is_player = yes
+						}
+				}
+			}
+		}
+		effect = {
+			je_mon_serb_unity_cleanup = yes
+		}
+	}
+
+	weight = 100
+	can_revolution_inherit = yes
+	transferable = no
+	should_be_pinned_by_default_involved = no
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
+
+
+je_tur_raided = {
+	icon = "gfx/interface/icons/event_icons/event_skull.dds"
+
+	group = je_group_historical_content
+	dlc = dlc014
+
+	activation_description = {
+		always = yes
+	}
+
+	is_shown_in_lobby = {
+		has_dlc_feature = ip3_content #National Awakening
+		c:TUR ?= this
+	}
+
+	scripted_button = je_montenegrin_tur_raid_back
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_tur_raided_target
+				trigger = {
+					c:MON ?= {
+						is_country_alive = yes
+					}
+					raiding_level >= 2 #correspond to above
+					any_scope_state = {
+						has_modifier = raid_target
+					}
+				}
+			}
+			triggered_desc = {
+				desc = je_tur_raided_no_target
+				trigger = {
+					c:MON ?= {
+						is_country_alive = yes
+					}
+					raiding_level <= 2
+				}
+			}
+			triggered_desc = {
+				desc = je_tur_raided_no_target
+				trigger = {
+					always = yes
+				}
+			}
+		}
+	}
+
+
+	immediate = {
+		c:RUS ?= {
+			save_scope_as = russia
+		}
+		c:TUR ?= {
+			save_scope_as = ottoman
+		}
+		c:MON ?= {
+			save_scope_as = montenegro
+		}
+		c:SER ?= {
+			save_scope_as = serbia
+		}
+		cu:serb = {
+			save_scope_as = serbian
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			OR = {
+				AND = {
+					NOT = { exists = c:MON }
+					NOT = { war_may_restore_country = MON }
+				}
+				c:MON ?= {
+					OR = {
+						is_country_alive = no
+						is_subject_of = ROOT
+					 }
+					NOT = { has_war_with = root }
+				}
+			}
+		}
+		effect = {
+			add_modifier = {
+				name = put_down_rebels_modifier
+				days = very_long_modifier_time
+				is_decaying = yes
+			}
+			add_fervor_target_modifier = {
+				culture = cu:serb
+				days = stupidly_long_modifier_time
+				multiplier = -20
+			}
+			trigger_event = {
+				ID = mon_state_formation.14
+				popup = yes
+			}
+			hidden_effect = { # Clear Montenegrin raiding if that hasn't happened already
+				if = {
+					limit = {
+						NOT = {
+							has_global_variable = montenegro_defeat_var
+						}
+					}
+					c:TUR ?= {
+						every_scope_state = {
+							limit = {
+								has_modifier = raid_target
+							}
+							remove_modifier = raid_target
+						}
+						remove_global_variable = mon_raid_state
+					}
+					set_global_variable = montenegro_defeat_var
+				}
+			}
+		}
+		event_outcome_desc = {
+			first_valid = {
+				triggered_desc = {
+					desc = event_effects_mon_state_formation.14_tt
+				}
+			}
+		}
+	}
+
+	weight = 100
+	can_revolution_inherit = yes
+	transferable = no
+
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}

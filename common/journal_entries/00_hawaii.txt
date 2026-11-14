@@ -1,0 +1,201 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+je_hawaii = { #JE for Hawaii to stave off annxation
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+
+	group = je_group_historical_content
+
+	activation_description = {
+		always = yes
+	}
+
+	is_shown_when_inactive = {
+		c:HAW ?= this
+	}
+
+	possible = {
+		hidden_trigger = {
+			has_variable = death_of_kamehameha
+		}
+	}
+
+	immediate = {
+		trigger_event = hawaii_events.1
+	}
+
+	is_shown_in_lobby = {
+		c:HAW = THIS
+	}
+
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			OR = {
+				is_country_type = recognized
+				AND = {
+					GDP >= 1000000
+					navy_size >= 25
+					literacy_rate >= 0.8
+					NOT = { has_law = law_type:law_traditionalism }
+					NOT = { has_law = law_type:law_no_police }
+					NOT = { has_law = law_type:law_land_based_taxation }
+					NOT = { has_law = law_type:law_peasant_levies }
+					NOT = { has_law = law_type:law_no_home_affairs }
+				}
+			}
+		}
+		effect = {
+			trigger_event = {
+				id = hawaii_events.2
+			}
+			if = {
+				limit = {
+					NOT = {
+						is_country_type = recognized
+					}
+				}
+				set_country_type = recognized
+			}
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			is_subject = yes
+			NOT = { is_at_war_with_overlord = yes }
+		}
+		effect = {
+			trigger_event = {
+				id = hawaii_events.3
+			}
+		}
+	}
+
+	outcome = {
+		header = JOURNAL_ENTRY_TIMEOUT
+		effect_header = JOURNAL_ENTRY_ON_TIMEOUT
+		flags = { timeout }
+		conclusion_desc = JOURNAL_ENTRY_TIMEOUT_CONCLUSION_DESC
+		effect = {
+			trigger_event = {
+				id = hawaii_events.3
+			}
+		}
+	}
+
+	timeout = very_long_modifier_time
+
+		
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
+
+je_hawaiian_interest = { #JE for GPs so that they can see the situation is ongoing
+	icon = "gfx/interface/icons/event_icons/event_trade.dds"
+
+	group = je_group_historical_content
+
+	activation_description = {
+		always = yes
+	}
+
+	scripted_button = interest_in_hawaii_button
+
+	is_shown_when_inactive = {
+		always = no
+		country_rank = rank_value:great_power
+	}
+
+	possible = {
+		has_interest_marker_in_region = sr:region_oceania
+		country_rank = rank_value:great_power
+	}
+
+	is_progressing = {
+		custom_tooltip = {
+			text = influence_hawaii_tt
+			has_modifier = influence_over_hawaii
+		}
+	}
+
+	immediate = {
+		c:HAW ?= {
+			save_scope_as = hawaii_scope
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			OR = {
+				c:HAW ?= {
+					is_subject_of = ROOT
+				}
+				owns_entire_state_region = STATE_HAWAIIAN_ISLANDS
+			}
+		}
+		effect = {
+			je_hawaiian_interest_cleanup = yes
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			OR = {
+				custom_tooltip = {
+					text = hawaii_coup_happened_tt
+					NOT = { always = no }
+					always = no
+				}
+				custom_tooltip = {
+					text = hawaii_government_secured_tt
+					NOT = { always = no }
+					always = no
+				}
+			}
+		}
+		effect = {
+			je_hawaiian_interest_cleanup = yes
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			c:HAW ?= {
+				is_country_alive = no
+			}
+		}
+		effect = {
+			je_hawaiian_interest_cleanup = yes
+		}
+	}
+
+	outcome = {
+		header = JOURNAL_ENTRY_TIMEOUT
+		effect_header = JOURNAL_ENTRY_ON_TIMEOUT
+		flags = { timeout }
+		conclusion_desc = JOURNAL_ENTRY_TIMEOUT_CONCLUSION_DESC
+		effect = {
+			je_hawaiian_interest_cleanup = yes
+		}
+	}
+
+	should_be_pinned_by_default_uninvolved_or_context = yes
+
+	timeout = very_long_modifier_time
+}

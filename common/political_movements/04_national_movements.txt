@@ -1,0 +1,592 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+movement_hindu_nationalist = {
+	category = movement_category_religious
+
+	ideology = ideology_traditionalist_minoritarian_movement
+	character_ideologies = {
+		ideology_fascist
+		ideology_theocrat
+	}
+
+	creation_trigger = {
+		OR = {
+			AND = {
+				c:BIC ?= this
+				has_technology_researched = pan-nationalism
+				any_scope_state = {
+					state_is_homeland_of_indian_cultures = yes
+					any_scope_pop = {
+						religion = rel:hindu
+					}
+				}
+			}
+			AND = {
+				c:MUG ?= this
+				has_technology_researched = pan-nationalism
+				any_scope_state = {
+					state_is_homeland_of_indian_cultures = yes
+					any_scope_pop = {
+						religion = rel:hindu
+					}
+					count >= 5
+				}
+			}
+		}
+	}
+
+	can_cause_obstinance = yes
+
+	creation_weight = {
+		value = 100
+	}
+	on_created = {}
+
+	religion_selection_trigger = {
+		this = rel:hindu
+	}
+	religion_selection_weight = {
+		value = 100
+	}
+
+	character_support_trigger = {
+		culture = {
+			has_discrimination_trait_group = heritage_group_south_asian
+		}
+		religion = rel:hindu
+	}
+	character_support_weight = {
+		value = 100
+		if = {
+			limit = {
+				OR = {
+					has_ideology = ideology:ideology_traditionalist_minoritarian
+					has_ideology = ideology:ideology_fascist
+					has_ideology = ideology:ideology_theocrat
+				}
+			}
+			multiply = {
+				value = 5
+			}
+		}
+	}
+
+	pop_support_trigger = {
+		culture = {
+			has_discrimination_trait_group = heritage_group_south_asian
+		}
+		religion = rel:hindu
+	}
+
+	pop_support_factors = {
+		movement_support_hindu_religion
+		movement_support_low_literacy
+		movement_support_academics
+		movement_support_clergymen
+		movement_support_bureaucrats
+		movement_support_clerks
+		movement_support_corporatism_tech
+		movement_support_je_communal_divides
+	}
+
+	pop_support_weight = {
+		if = {
+			limit = {
+				exists = scope:political_movement
+				scope:political_movement ?= {
+					OR = {
+						is_being_suppressed = yes
+						is_being_bolstered = yes
+					}
+				}
+			}
+			if = {
+				limit = {
+					scope:political_movement = {
+						is_being_suppressed = yes
+					}
+				}
+				add = {
+					value = suppression_base_value
+					multiply = {
+						value = -0.5
+						add = owner.modifier:country_suppression_attraction_factor
+					}
+					desc = "concept_suppressed"
+				}
+			}
+			else = {
+				add = {
+					value = bolstering_base_value
+					multiply = {
+						value = 0.5
+						add = owner.modifier:country_bolster_attraction_factor
+					}
+					desc = "concept_bolstered"
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				religion = rel:hindu
+			}
+			add = {
+				value = 9
+				desc = "POP_HINDU"
+			}
+			if = {
+				limit = {
+					is_pop_type = academics
+				}
+				add = {
+					value = 12
+					desc = "POP_ACADEMICS"
+				}
+			}
+			if = {
+				limit = {
+					is_pop_type = clergymen
+				}
+				add = {
+					value = 25
+					desc = "POP_CLERGYMEN"
+				}
+			}
+			if = {
+				limit = {
+					is_pop_type = bureaucrats
+				}
+				add = {
+					value = 9
+					desc = "POP_BUREAUCRATS"
+				}
+			}
+			if = {
+				limit = {
+					is_pop_type = clerks
+				}
+				add = {
+					value = 12
+					desc = "POP_CLERKS"
+				}
+			}
+			if = {
+				limit = {
+					owner ?= {
+						has_modifier = modifier_hightened_intercommunal_tension
+					}
+				}
+				add = {
+					value = 25
+					desc = "from_communal_divides_je"
+				}
+			}
+			if = {
+				limit = {
+					owner ?= {
+						always = no
+					}
+				}
+				add = {
+					value = -75
+					desc = "from_communal_divides_completed_je"
+				}
+			}
+			add = { # Weakened by increasing literacy rates
+				desc = "POP_LITERACY"
+				this = {
+					value = literacy_rate
+					multiply = -2
+				}
+			}
+			if = {
+				limit = {
+					owner ?= {
+						has_technology_researched = corporatism
+					}
+				}
+				multiply = {
+					value = 1.5
+					desc = "CORPORATISM_TECH"
+				}
+			}
+		}
+	}
+	revolution = {
+		possible = {
+			political_movement_support >= 0.05
+		}
+
+		weight = {
+			value = 100
+		}
+
+		interest_group_can_join = {
+			OR = {
+				is_interest_group_type = ig_devout
+				leader = { religion = scope:political_movement.religion } # Muslims should never join this
+			}
+		}
+
+		state_weight = {
+			value = 1
+			if = {
+			   limit = {
+					NOT = {
+						state_is_homeland_of_indian_cultures = yes
+					}
+				}
+				multiply = 0
+			}
+		}
+		forced_tags = {
+		}
+	}
+
+	secession = {
+		can_secede_during_revolution = yes
+
+		possible = {
+			scope:clout <= 0
+		}
+
+		weight = {
+			value = 1000
+		}
+
+		interest_group_can_join = {
+			OR = {
+				is_interest_group_type = ig_devout
+				leader = { religion = scope:political_movement.religion } # Muslims should never join this
+			}
+		}
+
+		state_weight = {
+			value = 1
+			if = {
+			   limit = {
+					NOT = {
+						state_is_homeland_of_indian_cultures = yes
+					}
+				}
+				multiply = 0
+			}
+		}
+		forced_tags = {
+		}
+	}
+
+	additional_radicalism_factors = {
+		add = movement_radicalism_india_subject
+		add = movement_radicalism_india_liberty_desire
+		if = {
+			limit = {
+				neighboring_country_has_insurrectionary_movement_trigger = { TYPE = movement_hindu_nationalist }
+			}
+			add = {
+				desc = "NEIGHBOURING_COUNTRY_WITH_REVOLUTION"
+				value = 0.15
+			}
+		}
+		add = movement_radicalism_suppressed_after_civil_war
+	}
+}
+
+movement_muslim_nationalist = {
+	category = movement_category_religious
+
+	ideology = ideology_traditionalist_minoritarian_movement
+	character_ideologies = {
+		ideology_theocrat
+	}
+
+	creation_trigger = {
+		NOT = {
+			any_political_movement = { # Can only ever spawn once
+				is_political_movement_type = movement_muslim_nationalist
+			}
+		}
+		OR = {
+			AND = {
+				c:BIC ?= this
+				has_technology_researched = pan-nationalism
+				any_scope_state = {
+					state_is_homeland_of_indian_cultures = yes
+					any_scope_pop = {
+						OR = {
+							religion = rel:sunni
+							religion = rel:shiite
+							religion = rel:ibadi
+						}
+					}
+					count >= 5
+				}
+			}
+			AND = {
+				c:MHR ?= this
+				has_technology_researched = pan-nationalism
+				any_scope_state = {
+					state_is_homeland_of_indian_cultures = yes
+					any_scope_pop = {
+						OR = {
+							religion = rel:sunni
+							religion = rel:shiite
+							religion = rel:ibadi
+						}
+					}
+					count >= 5
+				}
+			}
+		}
+	}
+	creation_weight = {
+		value = 100
+	}
+
+	can_cause_obstinance = yes
+
+	on_created = {}
+
+	religion_selection_trigger = {
+		OR = {
+			this = rel:sunni
+			this = rel:shiite
+		}
+	}
+	religion_selection_weight = {
+		value = 100
+	}
+
+	character_support_trigger = {
+		culture = {
+			has_discrimination_trait_group = heritage_group_south_asian
+		}
+		OR = {
+			religion = rel:sunni
+			religion = rel:shiite
+			religion = rel:ibadi
+		}
+	}
+	character_support_weight = {
+		value = 100
+		if = {
+			limit = {
+				OR = {
+					has_ideology = ideology:ideology_traditionalist_minoritarian
+					has_ideology = ideology:ideology_state_socialist
+					has_ideology = ideology:ideology_theocrat
+				}
+			}
+			multiply = {
+				value = 5
+			}
+		}
+		if = {
+			limit = {
+				has_template = BIC_muhammad_ali_jinnah
+			}
+			multiply = {
+				value = 10
+			}
+		}
+	}
+
+	pop_support_trigger = {
+		culture = {
+			has_discrimination_trait_group = heritage_group_south_asian
+		}
+		OR = {
+			religion = rel:sunni
+			religion = rel:shiite
+			religion = rel:ibadi
+		}
+	}
+
+	pop_support_factors = {
+		movement_support_muslim_religion
+		movement_support_low_literacy
+		movement_support_academics
+		movement_support_clergymen
+		movement_support_bureaucrats
+		movement_support_clerks
+		movement_support_corporatism_tech
+		movement_support_je_communal_divides
+	}
+
+	pop_support_weight = {
+		if = {
+			limit = {
+				exists = scope:political_movement
+				scope:political_movement ?= {
+					OR = {
+						is_being_suppressed = yes
+						is_being_bolstered = yes
+					}
+				}
+			}
+			if = {
+				limit = {
+					scope:political_movement = {
+						is_being_suppressed = yes
+					}
+				}
+				add = {
+					value = suppression_base_value
+					multiply = {
+						value = -0.5
+						add = owner.modifier:country_suppression_attraction_factor
+					}
+					desc = "concept_suppressed"
+				}
+			}
+			else = {
+				add = {
+					value = bolstering_base_value
+					multiply = {
+						value = 0.5
+						add = owner.modifier:country_bolster_attraction_factor
+					}
+					desc = "concept_bolstered"
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				OR = {
+					religion = rel:sunni
+					religion = rel:shiite
+					religion = rel:ibadi
+				}
+			}
+			add = { # Base acceptance values higher due to being a minority
+				value = 25
+				desc = "POP_MUSLIM"
+			}
+			if = {
+				limit = {
+					is_pop_type = academics
+				}
+				add = {
+					value = 20
+					desc = "POP_ACADEMICS"
+				}
+			}
+			if = {
+				limit = {
+					is_pop_type = clergymen
+				}
+				add = {
+					value = 40
+					desc = "POP_ACADEMICS"
+				}
+			}
+			if = {
+				limit = {
+					is_pop_type = bureaucrats
+				}
+				add = {
+					value = 20
+					desc = "POP_BUREAUCRATS"
+				}
+			}
+			if = {
+				limit = {
+					is_pop_type = clerks
+				}
+				add = {
+					value = 20
+					desc = "POP_CLERKS"
+				}
+			}
+			if = {
+				limit = {
+					owner ?= {
+						has_modifier = modifier_hightened_intercommunal_tension
+					}
+				}
+				add = {
+					value = 50
+					desc = "from_communal_divides_je"
+				}
+			}
+			if = {
+				limit = {
+					owner ?= {
+						always = no
+					}
+				}
+				add = {
+					value = -75
+					desc = "from_communal_divides_completed_je"
+				}
+			}
+			add = { # Weakened by increasing literacy rates
+				desc = "POP_LITERACY"
+				this = {
+					value = literacy_rate
+					multiply = -2
+				}
+			}
+			if = {
+				limit = {
+					owner ?= {
+						has_technology_researched = corporatism
+					}
+				}
+				multiply = {
+					value = 1.5
+					desc = "CORPORATISM_TECH"
+				}
+			}
+		}
+	}
+	secession = {
+		can_secede_during_revolution = yes
+
+		weight = {
+			value = 1000
+		}
+
+		interest_group_can_join = {
+			leader = { religion = scope:political_movement.religion } # Hindus should never join this
+		}
+
+		state_weight = {
+			value = 1
+			if = {
+			   limit = {
+					NOT = {
+						state_is_homeland_of_indian_cultures = yes
+					}
+				}
+				multiply = 0
+			}
+		}
+
+		forced_tags = {
+			PAK = {
+				trigger = {
+					always = yes
+				}
+				weight = 1000
+			}
+		}
+	}
+	additional_radicalism_factors = {
+		add = movement_radicalism_india_subject
+		add = movement_radicalism_india_liberty_desire
+		if = {
+			limit = {
+				neighboring_country_has_insurrectionary_movement_trigger = { TYPE = movement_muslim_nationalist }
+			}
+			add = {
+				desc = "NEIGHBOURING_COUNTRY_WITH_REVOLUTION"
+				value = 0.15
+			}
+		}
+
+		add = movement_radicalism_simultaneous_insurrections
+		add = movement_radicalism_suppressed_after_civil_war
+	}
+}

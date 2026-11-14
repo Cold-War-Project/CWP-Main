@@ -1,0 +1,379 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+# Reds and Whites
+je_congress_poland = {
+	icon = "gfx/interface/icons/event_icons/event_imperial_eagle.dds"
+
+	group = je_group_global_international_situations
+	dlc = dlc019
+
+	activation_description = {
+		always = yes
+	}
+
+	is_shown_in_lobby = {
+		c:POL ?= THIS
+		has_dlc_feature = ip5_content
+	}
+
+	# Poland and Russia are involved
+	should_be_involved = {
+		OR = {
+			c:POL ?= this
+			c:RUS ?= this
+		}
+	}
+
+	should_show_when_not_involved = {
+		country_has_primary_culture = cu:polish
+	}
+
+	immediate = {
+		c:POL ?= {
+			save_scope_as = congress_poland_scope
+			ig:ig_landowners = {
+				save_scope_as = poland_landowners
+			}
+			ig:ig_industrialists = {
+				save_scope_as = poland_industrialists
+			}
+			ig:ig_intelligentsia = {
+				save_scope_as = poland_intelligentsia
+			}
+			ig:ig_rural_folk = {
+				save_scope_as = poland_rural_folk
+			}
+			congress_poland_ai_approach_roll = yes
+		}
+		c:RUS ?= {
+			save_scope_as = russia_poland_scope
+		}
+		s:STATE_GREATER_POLAND ?= {
+			random_scope_state = {
+				limit = {
+					owner ?= c:POL
+				}
+				save_scope_as = warsaw_state_scope
+			}
+		}
+	}
+
+	immediate_all_involved = {
+		if = {
+			limit = {
+				c:POL ?= this
+			}
+			trigger_event = {
+				id = congress_poland.5
+				popup = yes
+			}
+		}
+		else = {
+			trigger_event = {
+				id = congress_poland.5
+				popup = yes
+				days = 7
+			}
+		}
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = poland_has_pu
+				trigger = {
+					scope:congress_poland_scope ?= {
+						is_subject_type = subject_type_personal_union
+					}
+				}
+			}
+			triggered_desc = {
+				desc = poland_has_conciliatory_viceroy
+				trigger = {
+					scope:congress_poland_scope ?= {
+						ruler = {
+							NOT = { always = no }
+						}
+					}
+				}
+			}
+			triggered_desc = {
+				desc = poland_has_repressive_viceroy
+				trigger = {
+					scope:congress_poland_scope ?= {
+						ruler = {
+							always = no
+						}
+					}
+				}
+			}
+		}
+	}
+
+	scripted_progress_bar = je_congress_poland_progress_bar
+
+	scripted_button = je_congress_poland_viceroy_button
+	scripted_button = je_congress_poland_university_button
+	scripted_button = je_congress_poland_expand_button
+	scripted_button = je_congress_poland_army_button
+	scripted_button = je_congress_sejm_button
+
+	on_monthly_pulse = {
+		effect = {
+			scope:congress_poland_scope ?= {
+				if = {
+					limit = {
+						any_scope_state = {
+							any_scope_building = {
+								is_building_type = building_university
+								level >= 3
+							}
+						}
+					}
+					set_variable = poland_university_requirement_met_var
+				}
+				else = {
+					remove_variable = poland_university_requirement_met_var
+				}
+			}
+			if = {
+				limit = {
+					scope:congress_poland_scope = {
+						ruler = {
+							NOR = {
+								always = no
+								always = no
+							}
+						}
+					}
+				}
+				scope:russia_poland_scope = {
+					trigger_event = {
+						id = congress_poland.1
+						days = 0
+						popup = yes
+					}
+				}
+			}
+		}
+	}
+
+	outcome = {
+		header = je_congress_poland_white_victory
+		effect_header = je_congress_poland_white_victory_effect_header
+		color = "white_outcome"
+		conclusion_desc = je_congress_poland_white_victory_conclusion_desc
+		trigger = {
+			scope:congress_poland_scope ?= {
+				NOT = { has_modifier = congress_poland_laws }
+				any_scope_state = {
+					any_scope_building = {
+						is_building_type = building_university
+						level >= 3
+					}
+				}
+				custom_tooltip = {
+					text = poland_army_tt
+					any_military_formation = {
+						is_army = yes
+					}
+				}
+				custom_tooltip = {
+					text = poland_whites_victory_bar
+					je:je_congress_poland = {
+						scripted_bar_progress ={
+							name = je_congress_poland_progress_bar
+							value <= -240
+						}
+					}
+				}
+			}
+		}
+		effect = {
+			set_global_variable = poland_je_complete
+			scope:russia_poland_scope = {
+				if = {
+					limit = {
+						always = no
+					}
+					je_tsarpoints_subtract_very_high = yes
+				}
+			}
+			scope:congress_poland_scope = {
+				change_subject_type = subject_type_personal_union
+				add_modifier = {
+					name = congress_poland_white_guarantee
+					days = long_modifier_time
+				}
+				remove_primary_culture = cu:russian
+				if = {
+					limit = {
+						OR = {
+							has_law_or_variant = law_type:law_autocracy
+							has_law_or_variant = law_type:law_oligarchy
+						}
+					}
+					activate_law = law_type:law_landed_voting
+				}
+				hidden_effect = { congress_poland_je_cleanup_effect = yes }
+			}
+		}
+		effect_all_involved = {
+			trigger_event = {
+				id = congress_poland.3
+				days = 0
+				popup = yes
+			}
+		}
+	}
+
+	outcome = {
+		header = je_congress_poland_red_victory
+		effect_header = je_congress_poland_red_victory_effect_header
+		color = "red_outcome"
+		conclusion_desc = je_congress_poland_red_victory_conclusion_desc
+		flags = { historical }
+		trigger = {
+			scope:congress_poland_scope = {
+				can_start_play_against_overlord = yes
+				custom_tooltip = {
+					text = poland_reds_victory_bar
+					je:je_congress_poland = {
+						scripted_bar_progress ={
+							name = je_congress_poland_progress_bar
+							value >= 240
+						}
+					}
+				}
+			}
+		}
+		effect = {
+			set_global_variable = poland_je_complete
+			set_global_variable = poland_je_red_victory # For je_belarus_cultural_renaissance
+			scope:congress_poland_scope ?= {
+				leave_plays_supporting = scope:russia_poland_scope
+			}
+			scope:russia_poland_scope ?= {
+				create_diplomatic_play = {
+					name = polish_uprising
+					type = dp_polish_uprising
+					target_state = scope:congress_poland_scope.capital
+					add_war_goal = {
+						holder = scope:congress_poland_scope
+						type = independence
+						target_country = scope:russia_poland_scope
+						primary_demand = yes
+					}
+				}
+			}
+			scope:congress_poland_scope ?= {
+				remove_primary_culture = cu:russian
+				add_modifier = {
+					name = congress_poland_red_conscription
+					days = short_modifier_time
+				}
+				if = {
+					limit = {
+						OR = {
+							has_law_or_variant = law_type:law_autocracy
+							has_law_or_variant = law_type:law_oligarchy
+						}
+					}
+					activate_law = law_type:law_landed_voting
+				}
+				if = {
+					limit = {
+						has_law_or_variant = law_type:law_monarchy
+					}
+					activate_law = law_type:law_parliamentary_republic
+				}
+				if = {
+					limit = {
+						ig:ig_intelligentsia = {
+							is_powerful = yes
+							any_scope_character = {
+								has_culture = cu:polish
+							}
+						}
+					}
+					ig:ig_intelligentsia = {
+						random_scope_character = {
+							limit = {
+								has_culture = cu:polish
+							}
+							set_character_as_ruler = yes
+						}
+					}
+				}
+				else_if = {
+					limit = {
+						ig:ig_rural_folk = {
+							is_powerful = yes
+							any_scope_character = {
+								has_culture = cu:polish
+							}
+						}
+					}
+					ig:ig_rural_folk = {
+						random_scope_character = {
+							limit = {
+								has_culture = cu:polish
+							}
+							set_character_as_ruler = yes
+						}
+					}
+				}
+				else = {
+					create_character = {
+						culture = cu:polish
+						religion = rel:catholic
+						interest_group = ig_intelligentsia
+						noble = yes
+						on_created = {
+							set_character_as_ruler = yes
+						}
+					}
+				}
+				hidden_effect = { congress_poland_je_cleanup_effect = yes }
+			}
+		}
+		effect_all_involved = {
+			trigger_event = {
+				id = congress_poland.4
+				days = 0
+				popup = yes
+			}
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			OR = {
+				NOT = { exists = scope:congress_poland_scope }
+				NOT = { exists = scope:russia_poland_scope }
+				scope:congress_poland_scope ?= {
+					NOT = { is_subject_of = scope:russia_poland_scope }
+				}
+			}
+		}
+		effect = {
+			set_global_variable = poland_je_complete
+			random_country ?= {
+				limit = {
+					country_has_primary_culture = cu:polish
+					country_has_primary_culture = cu:russian
+				}
+				remove_primary_culture = cu:russian
+				hidden_effect = { congress_poland_je_cleanup_effect = yes }
+			}
+		}
+	}
+
+	weight = 10000
+
+	should_be_pinned_by_default_involved = yes
+	should_be_pinned_by_default_uninvolved_or_context = no
+
+	can_revolution_inherit = yes
+}

@@ -1,0 +1,700 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+### on_revolution_start ###
+# Root = Country
+# scope:target = Uprising country
+
+on_revolution_start_set_civil_war_variables_effect = {
+	ROOT = {
+		random_civil_war = {
+			limit = {
+				is_civil_war_type = revolution
+				civil_war_progress >= 1
+			}
+			political_movement = {
+				set_variable = { name = spawned_civil_war_var years = 5 }
+			}
+			scope:target ?= {
+				set_variable = { name = civil_war_target_var value = ROOT }
+				set_variable = { name = civil_war_type_var value = prev.political_movement.type }
+			}
+		}
+	}
+}
+
+on_revolution_start_handle_target_revolution_effect = {
+	scope:target ?= {
+		if = {
+			limit = {
+				has_law_or_variant = law_type:law_single_party_state
+			}
+			handle_revolutionary_sps = yes
+		}
+		if = {
+			limit = {
+				has_law = law_type:law_colonial_administration
+			}
+			trigger_event = { id = independence.1 days = 7 popup = yes }
+		}
+	}
+}
+
+on_revolution_start_paris_commune_effect = {
+	c:FRA ?= {
+		trigger_event = { id = paris_commune.4 popup = yes }
+	}
+	random_scope_state = {
+		limit = {
+			state_region = s:STATE_ILE_DE_FRANCE
+		}
+		set_state_owner = c:PRC
+	}
+	c:PRC ?= {
+		annex = scope:target
+		create_diplomatic_play = {
+			type = dp_revolution
+			target_state = c:FRA.capital
+			annex_as_civil_war = yes
+		}
+	}
+}
+
+on_revolution_start_french_monarchist_restoration_effect = {
+	if = {
+		limit = {
+			scope:target ?= {
+				is_secessionist = no
+				has_law = law_type:law_monarchy
+				var:civil_war_type_var ?= movement_type:movement_orleanist
+			}
+		}
+		scope:target ?= {
+			if = {
+				limit = {
+					always = no
+				}
+			}
+			if = {
+				limit = {
+					always = no
+				}
+			}
+			if = {
+				limit = {
+					ROOT.ruler = {
+						has_ideology = ideology:ideology_orleanist
+					}
+				}
+				create_character = {
+					template = dynamic_orleanist_ruler_template
+				}
+			}
+			else = {
+				generate_french_monarch = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			scope:target ?= {
+				is_secessionist = no
+				has_law = law_type:law_monarchy
+				var:civil_war_type_var ?= movement_type:movement_legitimist
+			}
+		}
+		scope:target ?= {
+			if = {
+				limit = {
+					always = no
+				}
+			}
+			if = {
+				limit = {
+					always = no
+				}
+			}
+			if = {
+				limit = {
+					ROOT.ruler = {
+						has_ideology = ideology:ideology_legitimist
+					}
+				}
+				create_character = {
+					template = dynamic_legitimist_ruler_template
+				}
+			}
+			else = {
+				generate_french_monarch = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			scope:target ?= {
+				is_secessionist = no
+				has_law = law_type:law_monarchy
+				var:civil_war_type_var ?= movement_type:movement_bonapartist
+			}
+		}
+		scope:target ?= {
+			if = {
+				limit = {
+					always = no
+				}
+			}
+			if = {
+				limit = {
+					always = no
+				}
+			}
+			if = {
+				limit = {
+					ROOT.ruler = {
+						has_ideology = ideology:ideology_bonapartist
+					}
+				}
+				create_character = {
+					template = dynamic_bonapartist_ruler_template
+				}
+			}
+			else = {
+				generate_french_monarch = yes
+			}
+		}
+	}
+}
+
+on_revolution_start_korean_rebellion_effect = {
+	add_contextless_journal_entry = je_korean_rebellion
+	c:JAP ?= {
+		trigger_event = { id = gg_korea.7 popup = yes }
+	}
+	c:KOR.overlord ?= {
+		trigger_event = { id = gg_korea.7 popup = yes }
+	}
+}
+
+on_revolution_start_indian_revolution_effect = {
+	scope:target ?= {
+		change_tag = BHT
+		every_primary_culture = {
+			save_temporary_scope_as = primary_culture_to_remove
+			PREV ?= { # scope:target
+				remove_primary_culture = scope:primary_culture_to_remove
+				every_scope_character = {
+					limit = {
+						scope:primary_culture_to_remove ?= culture
+					}
+					retire_character = yes
+				}
+			}
+		}
+		grant_indian_cultures = yes
+		if = {
+			limit = {
+				NOT = {
+					has_law_or_variant = law_type:law_state_atheism
+				}
+			}
+			if = {
+				limit = {
+					religion_percent_country = {
+						target = rel:hindu
+						value >= 0.5
+					}
+				}
+				set_state_religion = rel:hindu
+			}
+			else_if = {
+				limit = {
+					religion_percent_country = {
+						target = rel:sunni
+						value >= 0.5
+					}
+				}
+				set_state_religion = rel:sunni
+			}
+			else = {
+				set_state_religion = rel:hindu
+			}
+		}
+		india_independence_ig_effects = yes
+		if = {
+			limit = {
+				has_modifier = modifier_india_crown_rule
+			}
+			remove_modifier = modifier_india_crown_rule
+		}
+		if = {
+			limit = {
+				has_modifier = modifier_india_company_rule
+			}
+			remove_modifier = modifier_india_company_rule
+		}
+		if = {
+			limit = {
+				has_modifier = modifier_india_company_rule_upgraded
+			}
+			remove_modifier = modifier_india_company_rule_upgraded
+		}
+		if = {
+			limit = {
+				has_modifier = modifier_indian_imperial_police
+			}
+			remove_modifier = modifier_indian_imperial_police
+		}
+		recalculate_pop_ig_support = yes
+	}
+}
+
+on_revolution_start_carlist_miguelist_ruler_effect = {
+	scope:target ?= {
+		if = {
+			limit = {
+				var:civil_war_type_var ?= movement_type:movement_carlist
+			}
+			country_generate_carlist_spain_ruler = yes
+		}
+		if = {
+			limit = {
+				var:civil_war_type_var ?= movement_type:movement_miguelist
+			}
+			country_generate_miguelist_portugal_ruler = yes
+		}
+	}
+}
+
+### on_secession_start ###
+# Root = Country
+# scope:target = Uprising country
+
+on_secession_start_set_civil_war_variables_effect = {
+	ROOT = {
+		random_civil_war = {
+			limit = {
+				is_civil_war_type = secession
+				civil_war_progress >= 1
+				NOT = {
+					political_movement ?= {
+						has_variable = spawned_civil_war_var
+					}
+				}
+			}
+			political_movement = {
+				set_variable = { name = spawned_civil_war_var years = 5 }
+			}
+			scope:target ?= {
+				set_variable = { name = civil_war_target_var value = ROOT }
+				set_variable = { name = civil_war_type_var value = prev.political_movement.type }
+			}
+		}
+	}
+}
+
+on_secession_start_handle_target_secession_effect = {
+	scope:target ?= {
+		if = {
+			limit = {
+				has_law_or_variant = law_type:law_single_party_state
+			}
+			handle_revolutionary_sps = yes
+		}
+		if = {
+			limit = {
+				has_law = law_type:law_colonial_administration
+			}
+			trigger_event = { id = independence.1 days = 7 popup = yes }
+		}
+	}
+}
+
+on_secession_start_polish_rebellion_effect = {
+	scope:target ?= {
+	}
+	every_country_in_poland_old = {
+		limit = {
+			country_has_primary_culture = cu:polish
+			NOT = {
+				scope:target ?= this
+			}
+		}
+		trigger_event = { id = poland_events.5 days = 7 popup = yes }
+	}
+}
+
+on_secession_start_indian_secession_effect = {
+	scope:target ?= {
+		every_primary_culture = {
+			save_temporary_scope_as = primary_culture_to_remove
+			PREV ?= { # scope:target
+				remove_primary_culture = scope:primary_culture_to_remove
+				every_scope_character = {
+					limit = {
+						scope:primary_culture_to_remove ?= culture
+					}
+					retire_character = yes
+				}
+			}
+		}
+		grant_indian_regional_cultures = yes
+		if = {
+			limit = {
+				NOT = {
+					has_law_or_variant = law_type:law_state_atheism
+				}
+			}
+			if = {
+				limit = {
+					religion_percent_country = {
+						target = rel:hindu
+						value >= 0.5
+					}
+				}
+				set_state_religion = rel:hindu
+			}
+			else_if = {
+				limit = {
+					religion_percent_country = {
+						target = rel:sunni
+						value >= 0.5
+					}
+				}
+				set_state_religion = rel:sunni
+			}
+			else = {
+				set_state_religion = rel:hindu
+			}
+		}
+		india_independence_ig_effects = yes
+		if = {
+			limit = {
+				has_modifier = modifier_india_crown_rule
+			}
+			remove_modifier = modifier_india_crown_rule
+		}
+		if = {
+			limit = {
+				has_modifier = modifier_india_company_rule
+			}
+			remove_modifier = modifier_india_company_rule
+		}
+		if = {
+			limit = {
+				has_modifier = modifier_india_company_rule_upgraded
+			}
+			remove_modifier = modifier_india_company_rule_upgraded
+		}
+		if = {
+			limit = {
+				has_modifier = modifier_indian_imperial_police
+			}
+			remove_modifier = modifier_indian_imperial_police
+		}
+		recalculate_pop_ig_support = yes
+	}
+}
+
+### on_civil_war_won ###
+# Root = Country
+# This action is triggered after `on_revolution_end`
+
+on_civil_war_won_abolish_monarchy_effect = {
+	if = {
+		limit = {
+			NOT = {
+				has_law = law_type:law_monarchy
+			}
+		}
+		country_launch_abolish_monarchy_effect = yes # launch je_abolish_monarchy
+	}
+	remove_variable = anti_monarchist_revolution
+}
+
+on_civil_war_won_french_dynasty_restoration_effect = {
+	if = {
+		limit = {
+			is_player = no
+		}
+		if = {
+			limit = {
+				has_variable = supporting_bonapartist_var
+			}
+			remove_variable = supporting_bonapartist_var
+		}
+		if = {
+			limit = {
+				has_variable = supporting_legitimist_var
+			}
+			remove_variable = supporting_legitimist_var
+		}
+		if = {
+			limit = {
+				has_variable = supporting_orleanist_var
+			}
+			remove_variable = supporting_orleanist_var
+		}
+	}
+	if = {
+		limit = {
+			any_interest_group = {
+				is_in_government = yes
+				is_strongest_ig_in_government = yes
+				leader = {
+					has_ideology = ideology:ideology_orleanist
+				}
+			}
+		}
+
+		### Reset AI to support Orleanists. Players can continue to support any dynasty they like ###
+		if = {
+			limit = {
+				is_player = no
+			}
+			set_variable = supporting_orleanist_var
+		}
+
+		# Generate an Orleanist monarch if somehow there's not an Orleanist in charge and it's either the AI, or the player has set a restoration variable and something's just gotten buggy.
+		# If France is controlled by a player and a dynasty other than the Orleanists has been restored to the throne, nothing in this section applies.
+		if = {
+			limit = {
+				ruler ?= {
+					NOT = { always = no }
+				}
+				OR = {
+					is_player = no
+					AND = {
+						is_player = yes
+						always = no
+					}
+				}
+			}
+			generate_french_monarch = yes
+			if = {
+				limit = {
+					always = no
+				}
+			}
+			if = {
+				limit = {
+					always = no
+				}
+			}
+			if = {
+				limit = {
+					NOT = { always = no }
+				}
+			}
+		}
+		###
+	}
+
+	### Bonapartists
+	else_if = {
+		limit = {
+			any_interest_group = {
+				is_in_government = yes
+				is_strongest_ig_in_government = yes
+				leader = {
+					has_ideology = ideology:ideology_bonapartist
+				}
+			}
+		}
+
+		### Reset AI to support Bonapartists. Players can continue to support any dynasty they like ###
+		if = {
+			limit = {
+				is_player = no
+				has_variable = supporting_orleanist_var
+			}
+			remove_variable = supporting_orleanist_var
+		}
+		if = {
+			limit = {
+				is_player = no
+				has_variable = supporting_legitimist_var
+			}
+			remove_variable = supporting_legitimist_var
+		}
+		if = {
+			limit = {
+				is_player = no
+				NOT = { has_variable = supporting_bonapartist_var }
+			}
+			set_variable = {
+				name = supporting_bonapartist_var
+			}
+		}
+
+		# Generate a Bonapartist monarch if somehow there's not an Bonapartist in charge and it's either the AI, or the player has set a restoration variable and something's just gotten buggy.
+		# If France is controlled by a player and a dynasty other than the glorious house of Bonaparte has been restored to the throne, nothing in this section applies.
+		if = {
+			limit = {
+				ruler ?= {
+					NOT = { always = no }
+				}
+				OR = {
+					is_player = no
+					AND = {
+						is_player = yes
+						always = no
+					}
+				}
+			}
+			generate_french_monarch = yes
+			if = {
+				limit = {
+					always = no
+				}
+			}
+			if = {
+				limit = {
+					always = no
+				}
+			}
+			if = {
+				limit = {
+					NOT = { always = no }
+				}
+			}
+		}
+	}
+
+	### Legitimists
+	else_if = {
+		limit = {
+			any_interest_group = {
+				is_in_government = yes
+				is_strongest_ig_in_government = yes
+				leader = {
+					has_ideology = ideology:ideology_legitimist
+				}
+			}
+		}
+
+		### Reset AI to support Legitimists. Players can continue to support any dynasty they like ###
+		if = {
+			limit = {
+				is_player = no
+				has_variable = supporting_bonapartist_var
+			}
+			remove_variable = supporting_bonapartist_var
+		}
+		if = {
+			limit = {
+				is_player = no
+				has_variable = supporting_orleanist_var
+			}
+			remove_variable = supporting_orleanist_var
+		}
+		if = {
+			limit = {
+				is_player = no
+				NOT = { has_variable = supporting_legitimist_var }
+			}
+			set_variable = {
+				name = supporting_legitimist_var
+			}
+		}
+
+		# Generate a Legitimist monarch if somehow there's not an Legitimist in charge and it's either the AI, or the player has set a restoration variable and something's just gotten buggy.
+		# If France is controlled by a player and a dynasty other than the house of Bourbon has been restored to the throne, nothing in this section applies.
+		if = {
+			limit = {
+				ruler ?= {
+					NOT = { always = no }
+				}
+				OR = {
+					is_player = no
+					AND = {
+						is_player = yes
+						always = no
+					}
+				}
+			}
+			generate_french_monarch = yes
+			if = {
+				limit = {
+					always = no
+				}
+			}
+			if = {
+				limit = {
+					always = no
+				}
+			}
+			if = {
+				limit = {
+					NOT = { always = no }
+				}
+			}
+		}
+	}
+	# If France somehow doesn't have the monarchist JEs, it (re)gains them
+	if = {
+		limit = {
+			has_dlc_feature = voice_of_the_people_content
+			NOT = { always = no }
+		}
+		if = {
+			limit = {
+				has_variable = fra_divided_monarchists_freeze
+			}
+			remove_variable = fra_divided_monarchists_freeze
+		}
+	}
+
+	if = {
+		limit = {
+			has_dlc_feature = voice_of_the_people_content
+			OR = {
+				AND = {
+					always = no
+					ruler ?= { always = no }
+				}
+				AND = {
+					always = no
+					ruler ?= { always = no }
+				}
+				AND = {
+					always = no
+					ruler ?= { always = no }
+				}
+			}
+			NOT = { always = no }
+		}
+	}
+}
+
+on_civil_war_won_springtime_resolution_effect = {
+	if = {
+		limit = {
+			NOT = {
+				is_involved_in_journal_entry = je_springtime_of_the_peoples
+			}
+		}
+		je:je_springtime_of_the_peoples ?= {
+			add_involved_country = ROOT
+		}
+	}
+	if = {
+		limit = {
+			var:civil_war_type_var ?= {
+				OR = {
+					movement_type_is_liberal = yes
+					movement_type_is_socialist = yes
+				}
+			}
+		}
+		reset_springtime_variables = yes
+		set_variable = had_springtime_revolution
+		trigger_event = { id = peoples_springtime.10 }
+	}
+	else_if = {
+		limit = {
+			var:civil_war_type_var ?= {
+				movement_type_is_conservative = yes
+			}
+		}
+		reset_springtime_variables = yes
+		set_variable = peoples_springtime_conservative_victory
+	}
+}

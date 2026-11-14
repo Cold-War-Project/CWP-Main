@@ -1,0 +1,741 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+#            | existing country | releasing a country | country formation |
+# |==========|==================|=====================|===================|
+# |root      | definition       | definition          | definition        |
+# |----------|------------------|---------------------|-------------------|
+# |target    | country          | N/A                 | N/A               |
+# |----------|------------------|---------------------|-------------------|
+# |initiator | N/A              | player              | player            |
+# |----------|------------------|---------------------|-------------------|
+# |actor     | country          | player              | player            |
+# |----------|------------------|---------------------|-------------------|
+# |          | country's        |                     | player's          |
+# |overlord  | direct overlord  | player              | direct overlord   |
+# |          | if it exists     |                     | if it exists      |
+# |----------|------------------|---------------------|-------------------|
+
+### scope is COUNTRY ###
+
+coa_monarchy_trigger = {
+	OR = {
+		has_law_or_variant = law_type:law_chiefdom
+		has_law = law_type:law_monarchy
+		has_law = law_type:law_social_monarchy
+	}
+}
+
+coa_absolute_monarchy_trigger = {
+	coa_monarchy_trigger = yes
+	coa_autocracy_trigger = yes
+}
+
+coa_undemocratic_monarchy_trigger = {
+	coa_monarchy_trigger = yes
+	OR = {
+		has_law_or_variant = law_type:law_autocracy
+		has_law_or_variant = law_type:law_elder_council
+		has_law_or_variant = law_type:law_oligarchy
+	}
+}
+
+coa_republic_trigger = {
+	OR = {
+		has_law_or_variant = law_type:law_corporate_state
+		has_law_or_variant = law_type:law_presidential_republic
+		has_law_or_variant = law_type:law_parliamentary_republic
+		has_law_or_variant = law_type:law_council_republic
+	}
+}
+
+coa_corporate_state_trigger = {
+	has_law_or_variant = law_type:law_corporate_state
+}
+
+coa_dictatorship_trigger = {
+	coa_republic_trigger = yes
+	OR = {
+		coa_autocracy_trigger = yes
+		coa_single_party_state_trigger = yes
+	}
+}
+
+coa_fascist_social_monarchy_trigger = {
+	has_law = law_type:law_social_monarchy
+	OR = {
+		has_law_or_variant = law_type:law_autocracy
+		has_law_or_variant = law_type:law_oligarchy
+		has_law_or_variant = law_type:law_single_party_state
+	}
+}
+
+coa_oligarchy_trigger = {
+	coa_republic_trigger = yes
+	has_law_or_variant = law_type:law_oligarchy
+}
+
+coa_theocracy_trigger = {
+	has_law_or_variant = law_type:law_theocracy
+}
+
+coa_multicultural_trigger = {
+	has_law_or_variant = law_type:law_multicultural
+}
+
+coa_autocracy_trigger = {
+	has_law_or_variant = law_type:law_autocracy
+}
+
+coa_single_party_state_trigger = {
+	has_law_or_variant = law_type:law_single_party_state
+}
+
+coa_anarchy_trigger = {
+	has_law_or_variant = law_type:law_anarchy
+}
+
+coa_communist_trigger = {
+	has_law_or_variant = law_type:law_council_republic
+	#OR = {
+	#	ig:ig_trade_unions ?= {
+	#		is_in_government = yes
+	#	}
+	#	any_interest_group = {
+	#		is_in_government = yes
+	#		has_ideology = ideology:ideology_proletarian
+	#	}
+	#}
+}
+
+coa_swr_trigger = {
+	has_variable = sozialistische_weltrepublik_var
+	coa_communist_trigger = yes
+}
+
+coa_military_trigger = {
+	OR = {
+		has_government_type = gov_military_dictatorship
+		has_government_type = gov_junta
+	}
+}
+
+coa_controls_part_of_ireland = {
+	any_scope_state = {
+		state_region = {
+			is_homeland = irish
+		}
+	}
+}
+
+coa_controls_part_of_france = {
+	any_scope_state = {
+		state_region = {
+			is_homeland = french
+		}
+	}
+}
+
+coa_fascist_trigger = {
+	# A fascist can lead a monarchy or a theocracy without the government changing form. The Papal State should retain the same flag even if the Pope's a fascist, for example.
+	# A fascist can also lead a democracy without the democracy immediately becoming fascist. If the fascist successfully implements his wildest dreams and becomes a dictatorship, then sure the government will become Fascist, but while there's still voting the government shouldn't count as (fully) fascist yet.
+	OR = {
+		coa_oligarchy_trigger = yes
+		coa_dictatorship_trigger = yes
+		coa_fascist_social_monarchy_trigger = yes
+	}
+	OR = {
+		has_law_or_variant = law_type:law_corporate_state
+		has_law_or_variant = law_type:law_social_monarchy
+		ruler ?= {
+			OR = {
+				has_ideology = ideology:ideology_fascist
+				has_ideology = ideology:ideology_integralist
+			}
+		}
+	}
+}
+
+coa_technocracy_trigger = {
+	has_law_or_variant = law_type:law_technocracy
+}
+
+coa_nihilist_trigger = {
+	has_law_or_variant = law_type:law_state_atheism
+	NOR = {
+		has_law_or_variant = law_type:law_theocracy
+		has_law = law_type:law_monarchy
+		has_law = law_type:law_social_monarchy
+		has_law_or_variant = law_type:law_council_republic
+	}
+	ruler ?= {
+		has_ideology = ideology:ideology_nihilist
+    }
+}
+
+coa_secessionist_or_revolutionary_trigger = {
+	OR = {
+		is_secessionist = yes
+		is_revolutionary = yes
+	}
+}
+
+coa_chartered_company_trigger = {
+	is_subject_type = subject_type_chartered_company
+}
+
+
+### scope is COUNTRY DEFINITION ###
+
+coa_def_independent_trigger = {
+	exists = scope:actor
+	scope:actor ?= { is_subject = no }
+}
+
+coa_def_subject_trigger = {
+	NOT = { has_game_rule = no_subject_flags }
+	exists = scope:actor
+	scope:actor ?= { is_subject = yes }
+}
+
+coa_def_lesser_subject_trigger = {
+	NOT = { has_game_rule = no_subject_flags }
+	OR = {
+		NOT = { exists = scope:actor }
+		AND = {
+			exists = scope:actor
+			scope:actor ?= {
+				OR = {
+					is_subject_type = subject_type_colony
+					is_subject_type = subject_type_puppet
+					is_subject_type = subject_type_vassal
+				}
+			}
+		}
+	}
+}
+
+coa_def_independence_war_trigger = { #checks if subject is in Independence diplomatic play/war
+	exists = scope:actor
+	scope:actor ?= {
+		is_subject = yes
+		OR = {
+			play_participant_has_war_goal_of_type_against = {
+				type = independence
+				target = overlord
+			}
+			war_participant_has_war_goal_of_type_against = {
+				type = independence
+				target = overlord
+			}
+		}
+	}
+}
+
+# Government
+
+coa_def_monarchy_flag_trigger = {
+	exists = scope:actor
+	scope:actor ?= { coa_monarchy_trigger = yes }
+}
+
+coa_def_absolute_monarchy_flag_trigger = {
+	exists = scope:actor
+	scope:actor ?= { coa_absolute_monarchy_trigger = yes }
+}
+
+coa_def_undemocratic_monarchy_flag_trigger = {
+	exists = scope:actor
+	scope:actor ?= { coa_undemocratic_monarchy_trigger = yes }
+}
+
+coa_def_republic_flag_trigger = {
+	exists = scope:actor
+	scope:actor ?= { coa_republic_trigger = yes }
+}
+
+coa_def_corporate_state_flag_trigger = {
+	exists = scope:actor
+	scope:actor ?= { coa_corporate_state_trigger = yes }
+}
+
+coa_def_theocracy_flag_trigger = {
+	exists = scope:actor
+	scope:actor ?= { coa_theocracy_trigger = yes }
+}
+
+coa_def_multicultural_trigger = {
+	exists = scope:actor
+	scope:actor ?= { coa_multicultural_trigger = yes }
+}
+
+coa_def_autocracy_flag_trigger = {
+	exists = scope:actor
+	scope:actor ?= { coa_autocracy_trigger = yes }
+}
+
+coa_def_communist_flag_trigger = {
+	exists = scope:actor
+	scope:actor ?= { coa_communist_trigger = yes }
+}
+
+coa_def_ssr_flag_trigger = {
+	coa_def_communist_flag_trigger = yes
+	coa_def_russian_ensign_trigger = yes
+}
+
+coa_def_swr_flag_trigger = {
+	exists = scope:actor
+	scope:actor ?= { coa_swr_trigger = yes }
+}
+
+coa_def_anarchy_flag_trigger = {
+	exists = scope:actor
+	scope:actor ?= { coa_anarchy_trigger = yes }
+}
+
+coa_def_dictatorship_flag_trigger = {
+	exists = scope:actor
+	scope:actor ?= { coa_dictatorship_trigger = yes }
+}
+
+coa_def_oligarchy_flag_trigger = {
+	exists = scope:actor
+	scope:actor ?= { coa_oligarchy_trigger = yes }
+}
+
+coa_def_state_religion_flag_trigger = {
+	exists = scope:actor
+	scope:actor ?= { has_law_or_variant = law_type:law_state_religion }
+}
+
+coa_def_egalitarian_flag_trigger = {
+	exists = scope:actor
+	scope:actor ?= { has_law_or_variant = law_type:law_multicultural }
+}
+
+coa_def_military_junta_flag_trigger = {
+	exists = scope:actor
+	scope:actor ?= { coa_military_trigger = yes }
+}
+
+coa_def_fascist_flag_trigger = {
+	exists = scope:actor
+	scope:actor ?= { coa_fascist_trigger = yes }
+}
+
+coa_def_nihilist_flag_trigger = {
+	exists = scope:actor
+	scope:actor ?= { coa_nihilist_trigger = yes }
+}
+
+coa_def_chartered_company_trigger = {
+	scope:actor ?= {
+		coa_chartered_company_trigger = yes
+	}
+}
+
+coa_def_technocracy_flag_trigger = {
+	exists = scope:actor
+	scope:actor ?= { coa_technocracy_trigger = yes }
+}
+
+# Overlord
+
+coa_def_ensign_trigger = {
+	NOT = { has_game_rule = no_subject_flags }
+	exists = scope:overlord
+	scope:overlord ?= {
+		OR = {
+			this = scope:custom_overlord
+			any_overlord_or_above ?= {
+				this = scope:custom_overlord
+			}
+		}
+	}
+}
+
+coa_def_american_ensign_trigger = {
+	exists = c:USA
+	c:USA ?= { save_temporary_scope_as = custom_overlord }
+	coa_def_ensign_trigger = yes
+}
+
+coa_def_british_ensign_trigger = {
+	OR = {
+		AND = {
+			exists = c:GBR
+			c:GBR ?= { save_temporary_scope_as = custom_overlord }
+			coa_def_ensign_trigger = yes
+		}
+		AND = {
+			exists = c:ENG
+			c:ENG ?= { save_temporary_scope_as = custom_overlord }
+			coa_def_ensign_trigger = yes
+		}
+	}
+}
+
+coa_def_british_india_trigger = {
+	exists = c:BIC
+	c:BIC ?= { save_temporary_scope_as = custom_overlord }
+	coa_def_ensign_trigger = yes
+}
+
+coa_def_finnish_ensign_trigger = {
+	exists = c:FIN
+	c:FIN ?= { save_temporary_scope_as = custom_overlord }
+	coa_def_ensign_trigger = yes
+}
+
+coa_def_french_ensign_trigger = {
+	exists = c:FRA
+	c:FRA ?= { save_temporary_scope_as = custom_overlord }
+	coa_def_ensign_trigger = yes
+}
+
+coa_def_german_ensign_trigger = {
+	exists = c:GER
+	c:GER ?= { save_temporary_scope_as = custom_overlord }
+	coa_def_ensign_trigger = yes
+}
+
+coa_def_prussian_ensign_trigger = {
+	exists = c:PRU
+	c:PRU ?= { save_temporary_scope_as = custom_overlord }
+	coa_def_ensign_trigger = yes
+}
+
+coa_def_spanish_ensign_trigger = {
+	exists = c:SPA
+	c:SPA ?= { save_temporary_scope_as = custom_overlord }
+	coa_def_ensign_trigger = yes
+}
+
+coa_def_mexican_ensign_trigger = {
+	exists = c:MEX
+	c:MEX ?= { save_temporary_scope_as = custom_overlord }
+	coa_def_ensign_trigger = yes
+}
+
+coa_def_swedish_ensign_trigger = {
+	exists = c:SWE
+	c:SWE ?= { save_temporary_scope_as = custom_overlord }
+	coa_def_ensign_trigger = yes
+}
+
+coa_def_danish_ensign_trigger = {
+	exists = c:DEN
+	c:DEN ?= { save_temporary_scope_as = custom_overlord }
+	coa_def_ensign_trigger = yes
+}
+
+coa_def_dominant_scotland_trigger = {
+	OR = {
+		AND = {
+			exists = scope:actor
+			scope:actor ?= {
+				capital ?= {
+					state_region = {
+						OR = {
+							this = s:STATE_LOWLANDS
+							this = s:STATE_HIGHLANDS
+						}
+					}
+				}
+			}
+		}
+		AND = {
+			exists = c:SCO
+			c:SCO ?= { save_temporary_scope_as = custom_overlord }
+			coa_def_ensign_trigger = yes
+		}
+	}
+}
+
+coa_def_turkish_ensign_trigger = {
+	exists = c:TUR
+	c:TUR ?= { save_temporary_scope_as = custom_overlord }
+	coa_def_ensign_trigger = yes
+}
+
+coa_def_chinese_ensign_trigger = {
+	exists = c:CHI
+	c:CHI ?= { save_temporary_scope_as = custom_overlord }
+	coa_def_ensign_trigger = yes
+}
+
+coa_def_siam_ensign_trigger = {
+	exists = c:SIA
+	c:SIA ?= { save_temporary_scope_as = custom_overlord }
+	coa_def_ensign_trigger = yes
+}
+
+coa_def_russian_ensign_trigger = {
+	exists = c:RUS
+	c:RUS ?= { save_temporary_scope_as = custom_overlord }
+	coa_def_ensign_trigger = yes
+}
+
+coa_def_austrian_ensign_trigger = {
+	exists = c:AUS
+	c:AUS ?= { save_temporary_scope_as = custom_overlord }
+	coa_def_ensign_trigger = yes
+}
+
+coa_def_brazilian_ensign_trigger = {
+	exists = c:BRZ
+	c:BRZ ?= { save_temporary_scope_as = custom_overlord }
+	coa_def_ensign_trigger = yes
+}
+
+coa_def_netherlands_ensign_trigger = {
+	exists = c:NET
+	c:NET ?= { save_temporary_scope_as = custom_overlord }
+	coa_def_ensign_trigger = yes
+}
+
+coa_def_colonial_ensign_trigger = {
+	NOT = { has_game_rule = no_subject_flags }
+	scope:actor ?= {
+		exists = scope:overlord
+		NOT = {
+			is_country_type = recognized
+		}
+		any_overlord_or_above = {
+			is_country_type = recognized
+		}
+	}
+}
+
+# Cultural
+
+coa_def_african_trigger = {
+    any_primary_culture = {
+        has_discrimination_trait_group = heritage_group_african
+    }
+}
+
+coa_def_west_african_trigger = {
+    any_primary_culture = {
+        has_discrimination_trait_group = heritage_group_african
+        has_discrimination_trait = heritage_guinean
+    }
+}
+
+coa_def_native_american_trigger = {
+    any_primary_culture = {
+        has_discrimination_trait_group = heritage_group_indigenous_american
+    }
+}
+
+coa_def_cross_trigger = {
+    religion ?= {
+    	has_discrimination_trait = heritage_christian
+    }
+}
+
+coa_def_crescent_trigger = {
+    religion ?= {
+		has_discrimination_trait = heritage_islamic
+    }
+}
+
+coa_def_buddhist_trigger = {
+    religion ?= {
+        has_discrimination_trait = heritage_dharmic
+    }
+}
+
+coa_def_nordic_cross_trigger = {
+    any_primary_culture = {
+        has_discrimination_trait = heritage_nordic
+    }
+	coa_def_cross_trigger = yes
+}
+
+coa_def_oceanic_trigger = {
+    any_primary_culture = {
+        has_discrimination_trait_group = heritage_group_indigenous_oceanic
+    }
+}
+
+coa_def_german_trigger = {
+    any_primary_culture = {
+        has_discrimination_trait = heritage_germanic
+        has_discrimination_trait_group = heritage_group_european
+    }
+}
+
+coa_def_italian_trigger = {
+    any_primary_culture = {
+        has_discrimination_trait = heritage_italic
+        has_discrimination_trait_group = heritage_group_european
+    }
+}
+
+coa_def_iberian_trigger = {
+    any_primary_culture = {
+        has_discrimination_trait = heritage_iberian
+        has_discrimination_trait_group = heritage_group_european
+    }
+}
+
+coa_def_turkic_trigger = {
+    any_primary_culture = {
+        has_discrimination_trait_group = language_group_turkic
+    }
+}
+
+coa_def_hispanic_american_trigger = {
+    any_primary_culture = {
+    	has_discrimination_trait = language_hispanophone
+    	has_discrimination_trait_group = heritage_group_european
+	    NOT = {
+	    	has_discrimination_trait = heritage_iberian
+	    }
+    }
+}
+
+coa_SWE_use_norway_canton_trigger = {
+	exists = c:NOR
+	c:NOR ?= {
+		is_subject_of = scope:target
+	}
+}
+
+coa_SWE_use_union_mark_flag_trigger = {
+	NOT = { exists = c:NOR }
+	scope:actor ?= {
+		any_scope_state = {
+			state_region = {
+				is_homeland = norwegian
+			}
+		}
+	}
+}
+
+coa_SWE_use_union_mark_canton_trigger = {
+	coa_SWE_karl_johan_is_king_trigger = yes
+}
+
+coa_SWE_karl_johan_is_king_trigger = {
+	exists = c:SWE
+	c:SWE ?= {
+		NOT = {
+			# hacky way to see if King Karl Johan has been succeeded
+			ruler = {
+				is_monarch = yes
+				has_culture = cu:french
+			}
+		}
+	}
+}
+
+coa_def_controls_part_of_ireland = {
+	exists = scope:actor
+	scope:actor ?= {
+		OR = {
+			coa_controls_part_of_ireland = yes
+			any_subject_or_below = {
+				coa_controls_part_of_ireland = yes
+			}
+		}
+	}
+}
+
+coa_def_controls_part_of_france = {
+	exists = scope:actor
+	scope:actor ?= {
+		OR = {
+			coa_controls_part_of_france = yes
+			any_subject_or_below = {
+				coa_controls_part_of_france = yes
+			}
+		}
+	}
+}
+
+coa_def_war_trigger = {
+	exists = scope:actor
+	scope:actor ?= {
+		is_at_war = yes
+	}
+}
+coa_def_secessionist_or_revolutionary_trigger = {
+	exists = scope:target
+	scope:target ?= {
+		coa_secessionist_or_revolutionary_trigger = yes
+	}
+}
+
+coa_def_secessionist_country_trigger = {
+	exists = scope:target
+	scope:target ?= {
+		is_secessionist = yes
+	}
+}
+
+coa_def_catholic_trigger = {
+	exists = scope:target
+	scope:target ?= {
+		country_has_state_religion = rel:catholic
+	}
+}
+
+coa_def_kalmar_flag_trigger = {
+	exists = scope:actor
+	scope:actor ?= {
+		OR = {
+			has_law = law_type:law_monarchy
+			has_law = law_type:law_social_monarchy
+		}
+		was_formed_from = DEN
+	}
+}
+
+coa_def_hohenzollern_trigger = {
+	scope:actor ?= {
+		ruler ?= {
+			always = no
+		}
+	}
+}
+
+coa_def_braganca_trigger = {
+	scope:actor ?= {
+		ruler ?= {
+			always = no
+		}
+	}
+}
+
+coa_def_espartero_trigger = {
+	scope:actor ?= {
+		ruler ?= {
+			always = no
+		}
+	}
+}
+
+coa_def_bourbon_trigger = {
+	scope:actor ?= {
+		ruler ?= {
+			always = no
+		}
+	}
+}
+
+coa_def_bonaparte_trigger = {
+	scope:actor ?= {
+		ruler ?= {
+			always = no
+		}
+	}
+}
+
+coa_def_savoy_trigger = {
+	scope:actor ?= {
+		ruler ?= {
+			always = no
+		}
+	}
+}

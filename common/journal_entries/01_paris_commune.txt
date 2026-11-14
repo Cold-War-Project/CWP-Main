@@ -1,0 +1,335 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+je_the_paris_commune_display = {
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+
+	group = je_group_historical_content
+	dlc = dlc004
+
+	activation_description = {
+		always = yes
+	}
+
+	is_shown_when_inactive = {
+		has_dlc_feature = voice_of_the_people_content
+		NOT = { always = no }
+		c:FRA ?= this
+		has_technology_researched = socialism
+		has_technology_researched = anarchism
+		NOT = { has_law_or_variant = law_type:law_council_republic }
+	}
+
+	possible = {
+		hidden_trigger = {
+			NOT = { always = no }
+		}
+		c:FRA ?= this
+		any_scope_state = {
+			state_region = s:STATE_ILE_DE_FRANCE
+			turmoil >= 0.2
+		}
+		OR = {
+			custom_tooltip = {
+				text = lost_war_tt
+				OR = {
+					has_variable = recently_lost_war
+					AND = {
+						has_variable = recently_had_war
+						NOT = {
+							has_variable = recently_won_war
+						}
+					}
+				}
+			}
+			custom_tooltip = {
+				text = lacks_homeland_tt
+				any_state_in_france = {
+					NOT = { owner = ROOT }
+				}
+			}
+		}
+        OR = {
+        	socialist_revolution_ongoing = yes
+        	liberal_revolution_ongoing = yes
+        }
+	}
+
+	immediate = {
+		trigger_event = { id = paris_commune.1 popup = yes }
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			custom_tooltip = {
+				text = je_the_paris_commune_france_spawned
+				always = no
+			}
+		}
+		effect = {
+			je_paris_commune_cleanup = yes
+		}
+	}
+
+	outcome = {
+		header = JOURNAL_ENTRY_TIMEOUT
+		effect_header = JOURNAL_ENTRY_ON_TIMEOUT
+		flags = { timeout }
+		conclusion_desc = JOURNAL_ENTRY_TIMEOUT_CONCLUSION_DESC
+		effect = {
+			je_paris_commune_cleanup = yes
+		}
+	}
+
+	on_monthly_pulse = {
+
+	}
+
+	should_be_pinned_by_default_involved = no	
+	should_be_pinned_by_default_uninvolved_or_context = yes
+
+	weight = 8000
+}
+
+je_paris_commune = {
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+
+	group = je_group_global_international_situations
+	dlc = dlc004
+	scripted_progress_bar = je_paris_commune_progress_bar
+
+	activation_description = {
+		always = yes
+	}
+
+	is_shown_in_lobby = {
+		has_dlc_feature = voice_of_the_people_content #France DLC
+		c:FRA = THIS
+	}
+
+	should_be_pinned_by_default_uninvolved_or_context = no
+	should_be_pinned_by_default_involved = yes
+
+	can_revolution_inherit = yes
+
+	should_be_involved = {
+		OR = {
+			c:FRA ?= this
+			c:PRC ?= this
+			civil_war_origin_country ?= c:FRA
+		}
+	}
+
+	should_show_when_not_involved = {
+		OR = {
+			has_strategic_region_interest_tier = {
+				strategic_region = sr:region_western_europe
+				value >= 3
+			}
+			capital ?= {
+				is_in_geographic_region = geographic_region_western_europe
+			}
+		}
+	}
+
+	scripted_button = je_the_paris_commune_france_button_a
+	scripted_button = je_the_paris_commune_france_button_b
+
+	immediate = {
+		c:FRA ?= {
+			save_scope_as = france_scope
+			set_variable = { name = PRC_money_transfer value = money_amount_multiplier_very_large }
+			add_modifier = {
+				name = fra_paris_commune_drain
+				multiplier = money_amount_multiplier_more_large
+			}
+		}
+		c:PRC ?= {
+			save_scope_as = commune_scope
+			add_modifier = {
+				name = fra_paris_commune_drain_proceeds
+				multiplier = c:FRA.var:PRC_money_transfer
+			}
+		}
+		if = {
+			limit = {
+				NOT = { has_global_variable_map = first_proletarian_revolution }
+			}
+			add_to_global_variable_map = { name = first_proletarian_revolution key = scope:commune_scope.capital.state_region value = year }
+			every_country = {
+				limit = {
+					OR = {
+						has_technology_researched = socialism
+						can_research = socialism
+					}
+				}
+				trigger_event = { id = factory_councils.2 months = 3 }
+			}
+		}
+	}
+
+	outcome = {
+		header = je_paris_commune_government_victory
+		effect_header = je_paris_commune_on_government_victory
+		color = "gold_positive"
+		conclusion_desc = je_paris_commune_government_victory_conclusion_desc
+		trigger = {
+			custom_tooltip = {
+				text = je_the_paris_commune_france_complete
+				scope:journal_entry = {
+					"scripted_bar_progress(je_paris_commune_progress_bar)" <= 0
+				}
+			}
+		}
+		effect = {
+			scope:france_scope ?= {
+				trigger_event = { id = paris_commune.2 popup = yes }
+			}
+			scope:france_scope ?= {
+				je_paris_commune_cleanup = yes
+			}
+			scope:commune_scope ?= {
+				je_paris_commune_cleanup = yes
+			}
+		}
+	}
+
+	outcome = {
+		header = je_paris_commune_commune_victory
+		effect_header = je_paris_commune_on_commune_victory
+		color = "blue_negative"
+		conclusion_desc = je_paris_commune_commune_victory_conclusion_desc
+		trigger = {
+			custom_tooltip = {
+				text = je_the_paris_commune_communard_complete
+				scope:journal_entry = {
+					"scripted_bar_progress(je_paris_commune_progress_bar)" >= 100
+				}
+			}
+		}
+		effect = {
+			scope:france_scope ?= {
+				trigger_event = { id = paris_commune.3 popup = yes }
+			}
+			scope:france_scope ?= {
+				je_paris_commune_cleanup = yes
+			}
+			scope:commune_scope ?= {
+				je_paris_commune_cleanup = yes
+			}
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			OR = {
+				scope:france_scope ?= {
+					NOT = {
+						any_scope_state = {
+							state_region = s:STATE_ILE_DE_FRANCE
+						}
+					}
+				}
+				scope:france_scope ?= { has_war_with = c:PRC }
+				NOT = { exists = c:PRC }
+				NOT = { exists = c:FRA }
+				always = no
+			}
+		}
+		effect = {
+			hidden_effect = {
+				scope:france_scope ?= {
+					je_paris_commune_cleanup = yes
+				}
+				scope:commune_scope ?= {
+					je_paris_commune_cleanup = yes
+				}
+			}
+		}
+	}
+
+	outcome = {
+		header = JOURNAL_ENTRY_TIMEOUT
+		effect_header = JOURNAL_ENTRY_ON_TIMEOUT
+		flags = { timeout }
+		conclusion_desc = JOURNAL_ENTRY_TIMEOUT_CONCLUSION_DESC
+		effect = {
+			scope:france_scope ?= {
+				trigger_event = { id = paris_commune.2 popup = yes }
+			}
+			scope:france_scope ?= {
+				je_paris_commune_cleanup = yes
+			}
+			scope:commune_scope ?= {
+				je_paris_commune_cleanup = yes
+			}
+		}
+	}
+
+	modifiers_while_active = {
+
+	}
+
+	on_weekly_pulse = {
+		effect = {
+			scope:france_scope ?= {
+				if = { #Adversarial system - if you side with France, the automated adversary fires Commune events, if not, it fires Versailles events.
+					limit = {
+						always = no
+					}
+					random_list = {
+						50 = {
+							paris_commune_automated_opposition_paris = yes
+						}
+						50 = {
+
+						}
+					}
+				}
+				else_if = {
+					limit = {
+						always = no
+					}
+					random_list = {
+						50 = {
+							paris_commune_automated_opposition_versailles = yes
+						}
+						50 = {
+
+						}
+					}
+				}
+				random_list = {
+					10 = { trigger_event = { id = paris_commune_pulse_events.1 } } # Seizing Church and State
+					10 = { trigger_event = { id = paris_commune_pulse_events.2 } } # Forty Warning Shots
+					10 = { trigger_event = { id = paris_commune_pulse_events.3 } } # For Want of a Nail
+					10 = { trigger_event = { id = paris_commune_pulse_events.4 } } # Petrol Maidens
+					10 = { trigger_event = { id = paris_commune_pulse_events.5 } } # Enemy Combatants
+					10 = { trigger_event = { id = paris_commune_pulse_events.6 } } # A Priest for Your Captain
+					10 = { trigger_event = { id = paris_commune_pulse_events.7 } } # Clapped With Irons
+					10 = { trigger_event = { id = paris_commune_pulse_events.8 } } # Four-Hundred Gun Salute
+					10 = { trigger_event = { id = paris_commune_pulse_events.9 } } # Our Bodies, Our Rules
+					10 = { trigger_event = { id = paris_commune_pulse_events.10 } } # A Fortress Falls
+					10 = { trigger_event = { id = paris_commune_pulse_events.11 } } # Working Co-op
+					10 = { trigger_event = { id = paris_commune_pulse_events.12 } } # Off to School
+					10 = { trigger_event = { id = paris_commune_pulse_events.13 } } # Capital Punishments
+					10 = { trigger_event = { id = paris_commune_pulse_events.14 } } # First In, Best Dressed
+					10 = { trigger_event = { id = paris_commune_pulse_events.15 } } # Recusing the Republicans
+					10 = { trigger_event = { id = paris_commune_pulse_events.16 } } # Go and Fight!
+				}
+			}
+			scope:journal_entry ?= {
+				journal_entry_update_paris_commune_variables = yes
+			}
+		}
+	}
+
+
+	weight = 8000
+
+	timeout = 730
+}

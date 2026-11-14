@@ -1,0 +1,507 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+je_the_balkan_league_invite_vassals_button = {
+	name = "je_the_balkan_league_invite_vassals_button"
+	desc = "je_the_balkan_league_invite_vassals_button_desc"
+
+	ai_chance = {
+		value = 10
+	}
+
+	visible = {
+		exists = c:TUR
+		has_journal_entry = je_the_balkan_league
+		NOT = {
+			has_global_variable = first_balkan_war_happened
+		}
+	}
+
+	possible = {
+		ottoman_subjects_we_support = yes
+		custom_tooltip = {
+			text = balkan_league_invite_vassals_button_cooldown_tt
+			NOT = {
+				has_variable = je_the_balkan_league_started
+				has_variable = je_the_balkan_league_started_cooldown
+			}
+		}
+	}
+
+	effect = {
+		set_global_variable = { #used for invite button cooldown
+			name = je_the_balkan_league_started
+			days = 90
+		}
+		set_variable = { #used for invite button cooldown locally, which refreshes faster.
+			name = je_the_balkan_league_started_cooldown
+			days = 90
+		}
+		if = {
+			limit = {
+				ottoman_subjects_we_support = yes
+			}
+			c:TUR ?= {
+				every_subject_or_below = {
+					limit = {
+						NOT = {
+							has_journal_entry = je_the_balkan_league
+						}
+						any_scope_treaty = {
+							binds = root
+							any_scope_article = {
+								OR = {
+									has_type = defensive_pact
+									has_type = alliance
+									has_type = support_independence
+								}
+							}
+						}
+					}
+					set_variable = invited_to_balkan_league
+					add_journal_entry = {
+						type = je_the_balkan_league
+					}
+				}
+			}
+			every_country = {
+				limit = {
+					has_journal_entry = je_the_balkan_league
+				}
+				post_notification = new_balkan_league_members
+			}
+		}
+		else = { #displays tooltip when the above is not avai
+			custom_tooltip = {
+				text = balkan_league_expanded_tt
+			}
+		}
+	}
+}
+
+# Boost Military Research start button
+je_the_balkan_league_research_mil_tech_start_button = {
+	name = "je_the_balkan_league_research_mil_tech_start_button"
+	desc = "je_the_balkan_league_research_mil_tech_start_button_desc"
+
+	ai_chance = {
+		value = 10
+	}
+
+	visible = {
+		NOT = {
+			has_modifier = balkan_wars_military_tech_boost_mod
+		}
+		exists = c:TUR
+		has_journal_entry = je_the_balkan_league
+	}
+
+	possible = {
+		NOT = {
+			has_modifier = balkan_wars_military_tech_boost_mod
+		}
+		any_country = {
+			NOT = {
+				c:TUR ?= THIS
+			}
+			country_rank = rank_value:great_power
+			custom_tooltip = {
+				text = hates_turkey_tt
+				c:TUR ?= {
+					relations:prev <= relations_threshold:poor
+				}
+			}
+			relations:root >= relations_threshold:cordial
+		}
+        hidden_trigger = {
+        	always = no
+        	NOT = {
+        		has_variable = resign_button_pressed
+        	}
+        	has_journal_entry = je_the_balkan_league
+        }
+	}
+
+	effect = {
+		if = {
+			limit = {
+				has_variable = balkan_got_tech
+			}
+			add_modifier = {
+				name = balkan_wars_military_tech_boost_mod
+			}
+		}
+		else = {
+			balkan_war_even_tech = yes
+			set_variable = {
+				name = balkan_got_tech
+			}
+			add_modifier = {
+				name = balkan_wars_military_tech_boost_mod
+			}
+		}
+	}
+}
+
+# Boost Military Research stop button
+je_the_balkan_league_research_mil_tech_stop_button = {
+	name = "je_the_balkan_league_research_mil_tech_stop_button"
+
+	ai_chance = {
+		value = 0
+	}
+
+	visible = {
+		has_modifier = balkan_wars_military_tech_boost_mod
+	}
+
+	possible = {
+		has_modifier = balkan_wars_military_tech_boost_mod
+        hidden_trigger = {
+        	always = no
+        	NOT = {
+        		has_variable = resign_button_pressed
+        	}
+        	has_journal_entry = je_the_balkan_league
+        }
+        custom_tooltip = {
+        	text = balkan_got_tech_cooldown_tt
+        	NOT = {
+        		always = no
+        	}
+        }
+	}
+	effect = {
+		remove_modifier = balkan_wars_military_tech_boost_mod
+	}
+}
+
+# Overwork Arms Industries start button
+je_the_balkan_league_overwork_arms_industries_start_button = {
+	name = "je_the_balkan_league_overwork_arms_industries_start_button"
+	desc = "je_the_balkan_league_overwork_arms_industries_start_button_desc"
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				any_scope_building = {
+					OR = {
+						is_building_type = building_arms_industry
+						is_building_type = building_artillery_foundry
+						is_building_type = building_munition_plant
+					}
+					levels_owned_by_country = {
+						target = root
+						value  > 1
+					}
+				}
+			}
+			add = 10
+		}
+	}
+
+	visible = {
+		NOT = {
+			has_modifier = balkan_wars_military_industry_overworked_mod
+		}
+		has_journal_entry = je_the_balkan_league
+	}
+
+	possible = {
+		NOT = {
+			has_modifier = balkan_wars_military_industry_overworked_mod
+		}
+		OR = {
+			has_building = building_arms_industry
+			has_building = building_artillery_foundry
+			has_building = building_munition_plant
+		}
+        hidden_trigger = {
+        	always = no
+        	NOT = {
+        		has_variable = resign_button_pressed
+        	}
+        	has_journal_entry = je_the_balkan_league
+        }
+	}
+	effect = {
+		add_modifier = {
+			name = balkan_wars_military_industry_overworked_mod
+		}
+	}
+}
+
+# Overwork Arms Industries stop button
+je_the_balkan_league_overwork_arms_industries_stop_button = {
+	name = "je_the_balkan_league_overwork_arms_industries_stop_button"
+
+	ai_chance = {
+		value = 0
+	}
+
+	visible = {
+		has_modifier = balkan_wars_military_industry_overworked_mod
+	}
+
+	possible = {
+		has_modifier = balkan_wars_military_industry_overworked_mod
+        hidden_trigger = {
+        	always = no
+        	NOT = {
+        		has_variable = resign_button_pressed
+        	}
+        	has_journal_entry = je_the_balkan_league
+        }
+	}
+
+	effect = {
+		remove_modifier = balkan_wars_military_industry_overworked_mod
+	}
+}
+
+# Muster conscripts button
+je_the_balkan_league_muster_button = {
+	name = "je_the_balkan_league_muster_button"
+	desc = "je_the_balkan_league_muster_button_desc"
+
+	ai_chance = {
+		value = 10
+	}
+
+	visible = {
+		exists = c:TUR
+		has_journal_entry = je_the_balkan_league
+	}
+
+	possible = {
+		is_diplomatic_play_committed_participant = yes
+		scope:journal_entry = {
+			not = {
+				custom_tooltip = {
+					text = je_the_balkan_league_muster_button_cooldown_tt
+					has_variable = je_the_balkan_league_muster_button_cooldown
+				}
+			}
+		}
+        hidden_trigger = {
+        	always = no
+        	NOT = {
+        		has_variable = resign_button_pressed
+        	}
+        	has_journal_entry = je_the_balkan_league
+        }
+	}
+
+	effect = {
+		scope:journal_entry = {
+			set_variable = { name = je_the_balkan_league_muster_button_cooldown months = 72 }
+		}
+		trigger_event = {
+    		id = balkan_wars.7
+    		popup = yes
+		}
+     	custom_tooltip = choose_one_of_tt
+     	show_as_tooltip = {
+     		add_modifier = {
+     			name = balkan_wars_muster_conscripts_low_mod
+     			days = 1825
+     		}
+     		add_modifier = {
+     			name = balkan_wars_muster_conscripts_high_mod
+     			days = 1825
+     		}
+     	}
+	}
+}
+
+# Resign button
+je_the_balkan_league_resign_button = {
+	name = "je_the_balkan_league_resign_button"
+	desc = "je_the_balkan_league_resign_button_desc"
+
+	ai_chance = {
+		value = 0
+	}
+
+	visible = {
+		NOT = {
+			has_war_with = c:TUR
+		}
+        hidden_trigger = {
+            NOT = {
+                has_global_variable = first_balkan_war_happened
+            }
+        }
+		exists = c:TUR
+		has_journal_entry = je_the_balkan_league
+	}
+
+	possible = {
+		NOT = {
+			has_war_with = c:TUR
+		}
+        hidden_trigger = {
+            NOT = {
+                has_global_variable = first_balkan_war_happened
+            }
+        }
+        hidden_trigger = {
+        	always = no
+        	NOT = {
+        		has_variable = resign_button_pressed
+        	}
+        	has_journal_entry = je_the_balkan_league
+        }
+	}
+
+	effect = {
+		custom_tooltip = "je_the_balkan_wars_resign_button_tt"
+		custom_tooltip = "je_the_balkan_wars_resign_button_tt3"
+		custom_tooltip = "je_the_balkan_wars_resign_button_tt2"
+		every_country = {
+			limit = {
+				NOT = { this = root }
+				has_journal_entry = je_the_balkan_league
+			}
+			custom_tooltip = "je_the_balkan_wars_resign_button_tt2_bl_members_list"
+		}
+	   	trigger_event = {
+           	id = balkan_wars.5
+           	days = 0
+           	popup = yes
+    	}
+		set_variable = resign_button_pressed
+	}
+}
+
+# Start the War button
+je_the_balkan_league_start_war = {
+	name = "je_the_balkan_league_start_war"
+	desc = "je_the_balkan_league_start_war_desc"
+
+	visible = {
+		exists = c:TUR
+		NOT = {
+			any_diplomatic_play = {
+				is_diplomatic_play_type = dp_balkan_war
+			}
+		}
+        hidden_trigger = {
+            NOT = {
+                has_global_variable = first_balkan_war_happened
+            }
+        }
+		has_journal_entry = je_the_balkan_league
+	}
+
+	possible = {
+        exists = c:TUR
+        custom_tooltip = {
+        	text = aggresive_diplomatic_plays_permitted_tt
+    		aggressive_diplomatic_plays_permitted = yes
+        }
+        NOT = {
+            has_truce_with = c:TUR
+        }
+        hidden_trigger = {
+            NOT = {
+                has_global_variable = first_balkan_war_happened
+            }
+        }
+        hidden_trigger = {
+        	always = no
+        	NOT = {
+        		has_variable = resign_button_pressed
+        	}
+        	has_journal_entry = je_the_balkan_league
+        }
+        OR = {
+    		custom_tooltip = {
+    			text = balkan_war_pp_comparison
+    			balkan_league_power_projection >= {
+    				value = ottoman_power_projection
+    				multiply = 0.5
+    			}
+    		}
+    		c:TUR ?= {
+    			is_at_war = yes
+    		}
+        }
+	}
+
+	effect = {
+        create_diplomatic_play = {
+	        name = balkan_war
+	        type = dp_balkan_war
+	        target_country = c:TUR
+	    }
+	    set_global_variable = first_balkan_war_happened
+	    hidden_effect = {
+	        random_diplomatic_play = {
+	            limit = {
+	                is_diplomatic_play_type = dp_balkan_war
+	            }
+	            save_scope_as = balkan_war_scope
+	            c:TUR ?= {
+	                every_scope_state = {
+	                    limit = {
+	                        region = sr:region_balkans
+	                        has_claim_by = root
+	                    }
+	                    scope:balkan_war_scope = {
+	                        add_war_goal = {
+	                            holder = root
+	                            type = return_state
+	                            target_state = prev
+	                            primary_demand = yes
+	                        }
+	                    }
+	                }
+	            }
+	        }
+	        c:TUR ?= {
+	        	trigger_event = balkan_wars.11
+	        }
+	        every_in_global_list = {
+				variable = balkan_league_side_list
+            	trigger_event = balkan_wars.12
+            }
+	    }
+	    #Tooltip hack to show list of countries that would join the diplo play
+	    custom_tooltip = balkan_league_members_start_the_war_header_tt
+		every_in_global_list = {
+			variable = balkan_league_side_list
+			custom_tooltip = balkan_league_members_start_the_war_tt
+		}
+	}
+
+    ai_chance = {
+		value = 0
+		if = { #If no player, start at 75%
+			limit = {
+				NOT = {
+					any_country = {
+						is_player = yes
+						has_journal_entry = je_the_balkan_league
+					}
+				}
+				balkan_league_power_projection >= {
+    				value = ottoman_power_projection
+    				multiply = 0.75
+    			}
+			}
+			add = 10
+		}
+		else_if = { #if player blocked by truce, start at 100%
+			limit = {
+				exists = c:TUR
+				any_country = {
+					is_player = yes
+					has_journal_entry = je_the_balkan_league
+					has_truce_with = c:TUR
+				}
+				balkan_league_power_projection > ottoman_power_projection
+			}
+			add = 100
+		}
+	}
+}

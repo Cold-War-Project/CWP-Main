@@ -1,0 +1,1075 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+je_tsarpoints_can_afford_cost_regular = { # Decrees are more expensive when issued by a constitutional monarchy
+    trigger_if = {
+        limit = {
+            country_has_voting_franchise = no
+        }
+        trigger_if = {
+            limit = {
+                NOT = { always = no }
+            }
+            custom_tooltip = {
+                text = je_tsarpoints_can_afford_low_tt
+                always = no
+            }
+        }
+    }
+    trigger_else = {
+        trigger_if = {
+            limit = {
+                NOT = { always = no }
+            }
+            custom_tooltip = {
+                text = je_tsarpoints_can_afford_med_tt
+                always = no
+            }
+        }
+    }
+}
+
+je_tsarpoints_can_afford_cost_large = { # Decrees are more expensive when issued by a constitutional monarchy
+    trigger_if = {
+        limit = {
+            country_has_voting_franchise = no
+        }
+        trigger_if = {
+            limit = {
+                NOT = { always = no }
+            }
+            custom_tooltip = {
+                text = je_tsarpoints_can_afford_med_tt
+                always = no
+            }
+        }
+    }
+    trigger_else = {
+        trigger_if = {
+            limit = {
+                NOT = { always = no }
+            }
+            custom_tooltip = {
+                text = je_tsarpoints_can_afford_very_high_tt
+                always = no
+            }
+        }
+    }
+}
+
+je_tsarpoints_ruler_check = {
+    custom_tooltip = {
+        text = je_tsarpoints_ruler_not_tsar_tt
+        trigger_if = {
+            limit = {
+                exists = var:je_tsarpoints_tsar_var
+                exists = scope:journal_entry.var:je_tsarpoints_goal_fail_var
+            }
+            NOT = {
+                var:je_tsarpoints_tsar_var = scope:journal_entry.var:je_tsarpoints_goal_fail_var
+            }
+        }
+        trigger_else = {
+            always = no
+        }
+    }
+}
+
+je_tsarpoints_favourite_check = {
+    custom_tooltip = {
+        text = je_tsarpoints_favourite_not_active_tt
+        trigger_if = {
+            limit = {
+                exists = scope:journal_entry.var:je_fav_character_var
+            }
+            scope:journal_entry.var:je_fav_character_var = {
+                NOT = {
+                    AND = {
+                        is_character_alive = yes
+                        has_role = character_role_favorite
+                    }
+                }
+            }
+        }
+        trigger_else = {
+            always = yes
+        }
+    }
+}
+
+je_tsarpoints_citizenship_law_improved = {
+    trigger_if = {
+        limit = {
+            always = no
+        }
+        custom_tooltip = {
+            text = je_tsarpoints_subjecthood_abolished_tt
+            NOT = {
+                has_law_or_variant = law_type:law_subjecthood
+            }
+        }
+    }
+    trigger_else = {
+        custom_tooltip = {
+            text = je_tsarpoints_citizenship_law_improved_tt
+            NOT = {
+                has_law_or_variant = law_type:law_subjecthood
+            }
+            always = no
+        }
+    }
+}
+
+je_tsarpoints_is_privatisable_building = {
+    NOR = {
+        is_building_group = bg_government
+        is_building_group = bg_construction
+        is_building_group = bg_military
+        is_building_group = bg_urban_facilities
+        is_building_group = bg_canals
+        is_building_group = bg_monuments_hidden
+        is_building_group = bg_service
+        is_building_group = bg_owner_buildings
+        has_active_production_method = pm_anchorage
+    }
+    level > 0
+}
+
+je_tsarpoints_can_suppress_culture = { # $CULTURE$ = culture scope, $CULTURE_KEY$ = bare culture key
+    custom_tooltip = {
+        text = je_tsarpoints_culture_not_suppressed_tt
+        NOT = {
+            has_variable = tp_culture_suppressed_$CULTURE_KEY$
+        }
+    }
+    OR = {
+        any_scope_state = {
+            state_region ?= {
+                is_homeland = $CULTURE$
+            }
+        }
+        any_subject_or_below = {
+            any_scope_state = {
+                state_region ?= {
+                    is_homeland = $CULTURE$
+                }
+            }
+        }
+    }
+}
+
+je_tsarpoints_can_suppress_any_slavic_culture = {
+    custom_tooltip = {
+        text = je_tsarpoints_can_suppress_any_slavic_culture_tt
+        OR = {
+            je_tsarpoints_can_suppress_culture = { CULTURE = cu:ukrainian CULTURE_KEY = ukrainian }
+            je_tsarpoints_can_suppress_culture = { CULTURE = cu:byelorussian CULTURE_KEY = byelorussian }
+            je_tsarpoints_can_suppress_culture = { CULTURE = cu:polish CULTURE_KEY = polish }
+            je_tsarpoints_can_suppress_culture = { CULTURE = cu:czech CULTURE_KEY = czech }
+            je_tsarpoints_can_suppress_culture = { CULTURE = cu:slovak CULTURE_KEY = slovak }
+            je_tsarpoints_can_suppress_culture = { CULTURE = cu:sorb CULTURE_KEY = sorb }
+        }
+    }
+}
+
+je_tsarpoints_is_prominent_character = {
+    OR = {
+        is_interest_group_leader = yes
+        has_role = character_role_general
+        has_role = character_role_admiral
+    }
+}
+
+je_tsarpoints_rival_removed = {
+    OR = {
+        was_exiled = yes
+        is_character_alive = no
+        NOT = {
+            je_tsarpoints_is_prominent_character = yes
+        }
+    }
+}
+
+je_tsarpoints_is_war_target = {
+    NOT = {
+        ROOT ?= this
+    }
+    is_subject = no
+    relations:ROOT <= relations_threshold:neutral
+    OR = {
+        country_rank >= rank_value:major_power
+        any_scope_state = {
+            has_claim_by = ROOT
+        }
+    }
+}
+
+je_tsarpoints_ship_is_most_advanced_type = { # Ship scope, ROOT = country; same tech ladder as tsarpoints_flagship_average_power_projection_value
+    trigger_if = {
+        limit = {
+            ROOT ?= { has_technology_researched = battleship_tech }
+        }
+        is_ship_type = ship_type:ship_type_super_dreadnought
+    }
+    trigger_else_if = {
+        limit = {
+            ROOT ?= { has_technology_researched = dreadnought_tech }
+        }
+        is_ship_type = ship_type:ship_type_dreadnought
+    }
+    trigger_else_if = {
+        limit = {
+            ROOT ?= { has_technology_researched = pre_dreadnought_tech }
+        }
+        is_ship_type = ship_type:ship_type_pre_dreadnought
+    }
+    trigger_else_if = {
+        limit = {
+            ROOT ?= { has_technology_researched = monitor_tech }
+        }
+        is_ship_type = ship_type:ship_type_modern_ironclad
+    }
+    trigger_else_if = {
+        limit = {
+            ROOT ?= { has_technology_researched = ironclad_tech }
+        }
+        is_ship_type = ship_type:ship_type_early_ironclad
+    }
+    trigger_else_if = {
+        limit = {
+            ROOT ?= { has_technology_researched = sea_lane_strategies }
+        }
+        is_ship_type = ship_type:ship_type_protected_cruiser
+    }
+    trigger_else_if = {
+        limit = {
+            ROOT ?= { has_technology_researched = drydocks }
+        }
+        is_ship_type = ship_type:ship_type_ship_of_the_line
+    }
+    trigger_else = {
+        is_ship_type = ship_type:ship_type_frigate
+    }
+}
+
+je_tsarpoints_barracks_has_most_advanced_training_method = { # Building scope; same tech ladder as pmg_training
+    trigger_if = {
+        limit = {
+            owner ?= { has_technology_researched = mobile_armor }
+        }
+        has_active_production_method = pm_mobile_warfare_tactics
+    }
+    trigger_else_if = {
+        limit = {
+            owner ?= { has_technology_researched = nco_training }
+        }
+        has_active_production_method = pm_nco_incorporation
+    }
+    trigger_else_if = {
+        limit = {
+            owner ?= { has_technology_researched = wargaming }
+        }
+        has_active_production_method = pm_training_streamlining
+    }
+    trigger_else_if = {
+        limit = {
+            owner ?= { has_technology_researched = military_statistics }
+        }
+        has_active_production_method = pm_advanced_tactics_training
+    }
+    trigger_else_if = {
+        limit = {
+            owner ?= { has_technology_researched = general_staff }
+        }
+        has_active_production_method = pm_general_training
+    }
+    trigger_else = {
+        has_active_production_method = pm_no_organization
+    }
+}
+
+je_tsarpoints_peasant_reform_completed = {
+    AND = {
+        NOR = {
+            has_law_or_variant = law_type:law_serfdom
+            has_law_or_variant = law_type:law_tenant_farmers
+            ROOT.active_law:lawgroup_land_reform ?= {
+                OR = {
+                    has_amendment = amendment_type:amendment_redemption_payments
+                    has_amendment = amendment_type:amendment_individual_redemption_payments
+                }
+            }
+        }
+    }
+}
+
+je_tsarpoints_military_reform_completed = {
+    AND = {
+        has_technology_researched = rifling
+        OR = {
+            has_law_or_variant = law_type:law_professional_army
+            has_law_or_variant = law_type:law_mass_conscription
+        }
+        any_scope_building = {
+            filter = {
+                is_building_type = building_barrack
+            }
+            NOR = {
+                building_has_goods_shortage = yes
+                has_active_production_method = pm_no_organization
+            }
+            percent = 1
+        }
+    }
+}
+
+je_tsarpoints_military_reform_perfected = {
+    AND = {
+        has_technology_researched = military_statistics
+        any_scope_building = {
+            filter = {
+                is_building_type = building_barrack
+            }
+            NOT = {
+                building_has_goods_shortage = yes
+            }
+            OR = {
+                has_active_production_method = pm_advanced_tactics_training
+                has_active_production_method = pm_training_streamlining
+                has_active_production_method = pm_nco_incorporation
+                has_active_production_method = pm_mobile_warfare_tactics
+            }
+            percent = 1
+        }
+    }
+}
+
+je_tsarpoints_bureaucratic_reform_completed = {
+    AND = {
+        NOT = { has_law_or_variant = law_type:law_hereditary_bureaucrats }
+        NOT = { has_law = law_type:law_third_section }
+        OR = {
+            has_law_or_variant = law_type:law_per_capita_based_taxation
+            has_law_or_variant = law_type:law_proportional_taxation
+            has_law_or_variant = law_type:law_graduated_taxation
+        }
+        bureaucracy >= 0
+        approaching_bureaucracy_shortage = no
+    }
+}
+
+je_tsarpoints_bureaucratic_reform_perfected = {
+    AND = {
+        has_technology_researched = central_planning
+        NOT = {
+            any_scope_state = {
+                is_incorporated = yes
+                tax_capacity < tax_capacity_usage
+            }
+        }
+        bureaucracy >= 0
+        approaching_bureaucracy_shortage = no
+    }
+}
+
+je_tsarpoints_local_reform_completed = {
+    AND = {
+        has_law_or_variant = law_type:law_elected_bureaucrats
+    }
+}
+
+je_tsarpoints_local_reform_perfected = {
+    AND = {
+        any_scope_state = {
+            filter = {
+                is_incorporated = yes
+            }
+            any_scope_building = {
+                is_building_type = building_urban_center
+                level >= tsarpoints_urban_center_level_target_value
+            }
+            percent >= 0.75
+        }
+        any_scope_building = {
+            filter = {
+                is_building_type = building_urban_center
+                state = { is_incorporated = yes }
+            }
+            has_active_production_method = pm_public_trams
+            percent >= 0.75
+        }
+        NOT = {
+            any_scope_state = {
+                market_access < 1
+            }
+        }
+    }
+}
+
+je_tsarpoints_ruler_is_reformer = {
+    ruler ?= {
+        OR = {
+            has_ideology = ideology:ideology_reformer
+            has_ideology = ideology:ideology_radical
+            has_ideology = ideology:ideology_liberal_leader
+            has_ideology = ideology:ideology_market_liberal
+            has_ideology = ideology:ideology_state_socialist
+            has_ideology = ideology:ideology_republican_leader
+            has_ideology = ideology:ideology_land_reformer
+            has_ideology = ideology:ideology_feminist
+            has_ideology = ideology:ideology_abolitionist
+            has_ideology = ideology:ideology_humanitarian
+            has_ideology = ideology:ideology_humanitarian_royalist
+            has_ideology = ideology:ideology_jacksonian_democrat
+            has_ideology = ideology:ideology_positivist
+            has_ideology = ideology:ideology_modernizer_leader
+            has_ideology = ideology:ideology_anarchist
+            has_ideology = ideology:ideology_communist_leader
+            has_ideology = ideology:ideology_vanguardist
+            has_ideology = ideology:ideology_utopian
+            has_ideology = ideology:ideology_utilitarian_leader
+            has_ideology = ideology:ideology_nihilist
+        }
+    }
+}
+
+je_tsarpoints_has_upgradable_decree = {
+	OR = {
+		NOT = { always = no }
+		AND = {
+			NOT = { always = no }
+			has_technology_researched = nationalism
+		}
+		AND = {
+			NOT = { always = no }
+			has_technology_researched = manufacturies
+		}
+		AND = {
+			NOT = { always = no }
+			has_technology_researched = enclosure
+		}
+		AND = {
+			NOT = { always = no }
+			has_technology_researched = shaft_mining
+		}
+		AND = {
+			NOT = { always = no }
+			has_technology_researched = romanticism
+		}
+		AND = {
+			NOT = { always = no }
+			has_technology_researched = mandatory_service
+		}
+	}
+}
+
+je_tsarpoints_has_upgraded_decree = {
+	OR = {
+        always = no
+        always = no
+        always = no
+        always = no
+        always = no
+        always = no
+        always = no
+	}
+}
+
+je_tp_crown_of_perfection_state_has_developed_urban_center = {
+	any_scope_building = {
+		is_building_type = building_urban_center
+		level >= tsarpoints_urban_center_level_target_value
+	}
+}
+
+je_tp_crown_of_perfection_state_is_in_forbidden_zone = {
+	owner ?= {
+        OR = {
+            is_in_geographic_region = geographic_region_caucasus_old
+            is_in_geographic_region = geographic_region_central_asia
+        }
+        is_country_type = unrecognized
+		is_subject_of = c:RUS
+	}
+}
+
+je_tp_crown_of_perfection_state_owned_by_crownland = {
+	owner ?= {
+		is_subject_of = c:RUS
+        is_subject_type = subject_type_crown_land
+	}
+}
+
+je_tp_heir_of_alexander_state_owned_by_russia_or_subject = {
+	owner ?= {
+		OR = {
+			THIS = c:RUS
+			is_subject_of = c:RUS
+		}
+	}
+}
+
+je_tp_heir_of_alexander_state_has_railway = {
+	has_building = building_railway
+}
+
+je_tp_heir_of_alexander_state_has_affordable_transportation = {
+	NOT = {
+		sg:transportation = {
+			state_goods_pricier > tsarpoints_market_pricier_max_value
+		}
+	}
+}
+
+je_tp_heir_of_alexander_state_is_far_east_annexation_target = {
+	OR = {
+		state_region = s:STATE_SAKHALIN
+		state_region = s:STATE_TUVA
+	}
+}
+
+je_tp_heir_of_alexander_state_owned_by_chinese_country = {
+	owner ?= {
+		OR = {
+			country_has_primary_culture = cu:manchu
+			country_has_primary_culture = cu:han
+		}
+	}
+}
+
+je_tp_heir_of_alexander_state_has_russian_railway = {
+	any_scope_building = {
+		is_building_type = building_railway
+		levels_owned_by_country = {
+			target = c:RUS
+			value >= 1
+		}
+	}
+}
+
+je_tp_heir_of_alexander_state_has_developed_urban_center = {
+	any_scope_building = {
+		is_building_type = building_urban_center
+		level >= tsarpoints_outer_manchuria_urban_center_level_target_value
+	}
+}
+
+je_tp_gendarme_of_europe_state_owned_by_revolutionary_country = {
+    owner ?= {
+        country_counts_as_springtime_revolutionary_government = yes
+    }
+}
+
+country_counts_as_holy_alliance_member = {
+    country_rank >= rank_value:great_power
+    has_law = law_type:law_monarchy # Social Monarchy is too modernist
+    any_scope_treaty = {
+        binds = c:RUS
+        any_scope_article = {
+            OR = {
+                has_type = alliance
+                has_type = defensive_pact
+            }
+        }
+    }
+}
+
+je_tp_gendarme_of_europe_state_owned_by_allied_monarchy = {
+    owner ?= {
+        NOT ?= {
+            this = c:RUS
+        }
+        country_counts_as_holy_alliance_member = yes
+    }
+}
+
+je_tp_gendarme_of_europe_state_owned_by_great_power_monarchy = {
+    owner ?= {
+        NOT ?= {
+            this = c:RUS
+        }
+        country_rank >= rank_value:great_power
+        has_law = law_type:law_monarchy
+    }
+}
+
+je_tp_gendarme_of_europe_state_is_sufficiently_orthodox = {
+    religion_percent_state = {
+        target = rel:orthodox
+        value >= 0.75
+    }
+}
+
+je_tsarpoints_ai_can_spare_regular = {
+	always = no
+}
+
+je_tsarpoints_ai_can_spare_large = {
+	always = no
+}
+
+je_tsarpoints_landowner_ideology_close_enough = { # this = character, compared against their country's ruler
+	OR = {
+		AND = {
+			owner.ruler ?= {
+				has_socialist_ideology = yes
+			}
+			has_socialist_ideology = yes
+		}
+		AND = {
+			owner.ruler ?= {
+				has_progressive_ideology = yes
+			}
+			has_progressive_ideology = yes
+		}
+		AND = {
+			owner.ruler ?= {
+				has_liberal_ideology = yes
+			}
+			has_liberal_ideology = yes
+		}
+		AND = {
+			owner.ruler ?= {
+				has_reactionary_ideology = yes
+			}
+			has_reactionary_ideology = yes
+		}
+		AND = {
+			owner.ruler ?= {
+				has_conservative_ideology = yes
+			}
+			has_conservative_ideology = yes
+		}
+		this.ideology ?= owner.ruler.ideology
+	}
+}
+
+je_tsarpoints_has_law_agenda = {
+	OR = {
+		always = no
+		always = no
+		AND = {
+			always = no
+			OR = {
+				NOT = { has_variable = je_tp_tsar_unshakable_autocracy_button_1_complete }
+				NOT = { has_variable = je_tp_tsar_unshakable_autocracy_button_2_complete }
+			}
+		}
+		AND = {
+			always = no
+			NOT = { has_variable = je_tp_tsar_heir_of_alexander_button_4_complete }
+			OR = {
+				has_law_or_variant = law_type:law_serfdom
+				has_law_or_variant = law_type:law_tenant_farmers
+			}
+		}
+		always = no
+		always = no
+		AND = {
+			always = no
+			trigger_if = {
+				limit = {
+					has_technology_researched = human_rights
+				}
+				OR = {
+					NOT = { has_law_or_variant = law_type:law_public_schools }
+					NOT = { has_law_or_variant = law_type:law_compulsory_primary_school }
+				}
+			}
+			trigger_else = {
+				NOT = { has_law_or_variant = law_type:law_public_schools }
+			}
+		}
+		always = no
+		AND = {
+			always = no
+			NOR = {
+				has_law_or_variant = law_type:law_commercialized_agriculture
+				has_law_or_variant = law_type:law_peasant_proprietorship
+			}
+		}
+		AND = {
+			always = no
+			OR = {
+				NOT = { has_law_or_variant = law_type:law_secret_police }
+				has_law = law_type:law_third_section
+			}
+		}
+		AND = {
+			always = no
+			NOT = { has_law_or_variant = law_type:law_internal_colonization }
+		}
+		always = no
+		AND = {
+			always = no
+			always = no
+		}
+		AND = {
+			always = no
+			always = no
+		}
+	}
+}
+
+je_tsarpoints_ai_wants_to_evangelize = {
+	always = no
+	NOT = { has_variable = je_tp_tsar_gendarme_of_europe_button_3_complete }
+	scope:target_country ?= { c:ALK ?= this }
+}
+
+je_tsarpoints_ai_wants_law = { # ROOT = AI country, scope:law = the law being scored (see 00_ai_triggers.txt)
+	scope:law ?= {
+		law_is_available = yes
+	}
+	OR = {
+		AND = {
+			always = no
+			OR = {
+				scope:law.type ?= law_type:law_autocracy
+				scope:law.type ?= law_type:law_state_religion
+				scope:law.type ?= law_type:law_caesaropapism
+				AND = {
+					NOT = { has_variable = je_tp_tsar_gendarme_of_europe_button_2_complete }
+					scope:law.type ?= law_type:law_no_schools
+				}
+			}
+		}
+		AND = {
+			always = no
+			OR = {
+				AND = {
+					NOT = { has_variable = je_great_reforms_serfdom_complete }
+					OR = {
+						scope:law.type ?= law_type:law_tenant_farmers
+						scope:law.type ?= law_type:law_commercialized_agriculture
+						AND = {
+							has_law_or_variant = law_type:law_traditionalism
+							OR = {
+								scope:law.type ?= law_type:law_interventionism
+								scope:law.type ?= law_type:law_laissez_faire
+							}
+						}
+					}
+				}
+				AND = {
+					NOT = { has_variable = je_great_reforms_military_complete }
+					OR = {
+						scope:law.type ?= law_type:law_professional_army
+						scope:law.type ?= law_type:law_mass_conscription
+					}
+				}
+				AND = {
+					NOT = { has_variable = je_great_reforms_bureaucratic_complete }
+					OR = {
+						scope:law.type ?= law_type:law_per_capita_based_taxation
+						scope:law.type ?= law_type:law_proportional_taxation
+						scope:law.type ?= law_type:law_graduated_taxation
+						AND = {
+							has_law_or_variant = law_type:law_military_bureaucrats
+							OR = {
+								scope:law.type ?= law_type:law_appointed_bureaucrats
+								scope:law.type ?= law_type:law_elected_bureaucrats
+							}
+						}
+						AND = {
+							has_law = law_type:law_third_section
+							OR = {
+								scope:law.type ?= law_type:law_okhrana
+								scope:law.type ?= law_type:law_national_guard
+							}
+						}
+					}
+				}
+				AND = {
+					NOT = { has_variable = je_tp_great_reform_zemstvos_button_complete }
+					scope:law.type ?= law_type:law_elected_bureaucrats
+				}
+			}
+		}
+		AND = {
+			always = no
+			OR = {
+				AND = {
+					NOT = { has_variable = je_tp_tsar_crown_of_perfection_button_2_complete }
+					OR = {
+						AND = {
+							OR = {
+								has_law_or_variant = law_type:law_serfdom
+								has_law_or_variant = law_type:law_tenant_farmers
+							}
+							OR = {
+								scope:law.type ?= law_type:law_commercialized_agriculture
+								scope:law.type ?= law_type:law_homesteading
+								scope:law.type ?= law_type:law_peasant_proprietorship
+							}
+						}
+						AND = {
+							has_law_or_variant = law_type:law_peasant_levies
+							OR = {
+								scope:law.type ?= law_type:law_professional_army
+								scope:law.type ?= law_type:law_mass_conscription
+								scope:law.type ?= law_type:law_national_militia
+							}
+						}
+						AND = {
+							has_law_or_variant = law_type:law_land_based_taxation
+							OR = {
+								scope:law.type ?= law_type:law_per_capita_based_taxation
+								scope:law.type ?= law_type:law_proportional_taxation
+								scope:law.type ?= law_type:law_graduated_taxation
+							}
+						}
+					}
+				}
+				AND = {
+					NOT = { has_variable = je_tp_tsar_crown_of_perfection_button_3_complete }
+					OR = {
+						scope:law.type ?= law_type:law_elected_bureaucrats
+						scope:law.type ?= law_type:law_national_guard
+						AND = {
+							OR = {
+								has_law_or_variant = law_type:law_outlawed_dissent
+								has_law_or_variant = law_type:law_censorship
+							}
+							OR = {
+								scope:law.type ?= law_type:law_right_of_assembly
+								scope:law.type ?= law_type:law_protected_speech
+							}
+						}
+					}
+				}
+				AND = {
+					NOT = { has_variable = je_tp_tsar_crown_of_perfection_button_4_complete }
+					OR = {
+						AND = {
+							has_law_or_variant = law_type:law_subjecthood
+							OR = {
+								scope:law.type ?= law_type:law_national_supremacy
+								scope:law.type ?= law_type:law_racial_segregation
+								scope:law.type ?= law_type:law_cultural_exclusion
+								scope:law.type ?= law_type:law_multicultural
+							}
+						}
+						AND = {
+							has_law_or_variant = law_type:law_guild_system
+							scope:law.type ?= law_type:law_right_to_associate
+						}
+						AND = {
+							has_law_or_variant = law_type:law_traditionalism
+							OR = {
+								scope:law.type ?= law_type:law_interventionism
+								scope:law.type ?= law_type:law_agrarianism
+								scope:law.type ?= law_type:law_laissez_faire
+							}
+						}
+					}
+				}
+			}
+		}
+		AND = {
+			always = no
+			OR = {
+				AND = {
+					NOT = { has_variable = je_tp_tsar_unshakable_autocracy_button_1_complete }
+					OR = {
+						scope:law.type ?= law_type:law_autocracy
+						scope:law.type ?= law_type:law_censorship
+						scope:law.type ?= law_type:law_outlawed_dissent
+						scope:law.type ?= law_type:law_okhrana
+						AND = {
+							has_law_or_variant = law_type:law_no_police
+							OR = {
+								scope:law.type ?= law_type:law_local_police
+								scope:law.type ?= law_type:law_dedicated_police
+								scope:law.type ?= law_type:law_militarized_police
+							}
+						}
+					}
+				}
+				AND = {
+					NOT = { has_variable = je_tp_tsar_unshakable_autocracy_button_2_complete }
+					OR = {
+						scope:law.type ?= law_type:law_state_religion
+						scope:law.type ?= law_type:law_caesaropapism
+						scope:law.type ?= law_type:law_official_nationality
+						scope:law.type ?= law_type:law_national_supremacy
+					}
+				}
+			}
+		}
+		AND = {
+			always = no
+			NOT = { has_variable = je_tp_tsar_heir_of_alexander_button_4_complete }
+			OR = {
+				has_law_or_variant = law_type:law_serfdom
+				has_law_or_variant = law_type:law_tenant_farmers
+			}
+			OR = {
+				scope:law.type ?= law_type:law_commercialized_agriculture
+				scope:law.type ?= law_type:law_homesteading
+				scope:law.type ?= law_type:law_peasant_proprietorship
+			}
+		}
+		AND = {
+			always = no
+			OR = {
+				scope:law.type ?= law_type:law_landed_voting
+				scope:law.type ?= law_type:law_wealth_voting
+				scope:law.type ?= law_type:law_census_voting
+			}
+		}
+		AND = {
+			always = no
+			OR = {
+				scope:law.type ?= law_type:law_autocracy
+				scope:law.type ?= law_type:law_oligarchy
+			}
+		}
+		AND = {
+			always = no
+			OR = {
+				scope:law.type ?= law_type:law_public_schools
+				scope:law.type ?= law_type:law_compulsory_primary_school
+			}
+		}
+		AND = {
+			always = no
+			OR = {
+				scope:law.type ?= law_type:law_commercialized_agriculture
+				trigger_if = {
+					limit = {
+						ruler ?= { has_template = RUS_alexander_ii }
+					}
+					has_law_or_variant = law_type:law_serfdom
+					scope:law.type ?= law_type:law_tenant_farmers
+				}
+				trigger_else = {
+					scope:law.type ?= law_type:law_peasant_proprietorship
+				}
+			}
+		}
+		AND = {
+			always = no
+			OR = {
+				scope:law.type ?= law_type:law_national_supremacy
+				scope:law.type ?= law_type:law_racial_segregation
+				scope:law.type ?= law_type:law_cultural_exclusion
+				scope:law.type ?= law_type:law_multicultural
+			}
+			trigger_if = {
+				limit = {
+					NOT = { always = no }
+					always = no
+				}
+				always = no
+			}
+		}
+		AND = {
+			always = no
+			OR = {
+				scope:law.type ?= law_type:law_subjecthood
+				scope:law.type ?= law_type:law_official_nationality
+				scope:law.type ?= law_type:law_national_supremacy
+				scope:law.type ?= law_type:law_racial_segregation
+				scope:law.type ?= law_type:law_cultural_exclusion
+			}
+			scope:law.type.progressiveness < active_law:lawgroup_citizenship.type.progressiveness
+		}
+		AND = {
+			always = no
+			OR = {
+				AND = {
+					NOT = { has_law_or_variant = law_type:law_secret_police }
+					OR = {
+						scope:law.type ?= law_type:law_secret_police
+						scope:law.type ?= law_type:law_okhrana
+					}
+				}
+				AND = {
+					has_law = law_type:law_third_section
+					scope:law.type ?= law_type:law_okhrana
+				}
+			}
+		}
+		AND = {
+			always = no
+			NOT = { has_law_or_variant = law_type:law_internal_colonization }
+			scope:law.type ?= law_type:law_internal_colonization
+		}
+		AND = {
+			always = no
+			OR = {
+				scope:law.type ?= law_type:law_free_trade
+				scope:law.type ?= law_type:law_laissez_faire
+				scope:law.type ?= law_type:law_per_capita_based_taxation
+			}
+		}
+		AND = {
+			always = no
+			OR = {
+				AND = {
+					always = no
+					always = no
+				}
+				AND = {
+					always = no
+					always = no
+				}
+			}
+		}
+		AND = {
+			always = no
+			OR = {
+				AND = {
+					always = no
+					always = no
+				}
+				AND = {
+					always = no
+					always = no
+				}
+			}
+		}
+	}
+}
+
+je_tsarpoints_bootlicker_law_is_enactable = {
+	law_is_available = yes
+	owner = {
+		NOT = {
+			has_law = prev.type
+		}
+	}
+}
+
+je_tsarpoints_tsar_has_preferred_law = {
+	any_law = {
+		je_tsarpoints_bootlicker_law_is_enactable = yes
+		owner.ruler ?= {
+			law_stance = {
+				law = prev.type
+				value > neutral
+			}
+		}
+	}
+}
+
+je_tsarpoints_ig_has_compatible_preferred_law = {
+	ruler ?= {
+		interest_group ?= {
+			any_preferred_law = {
+				je_tsarpoints_bootlicker_law_is_enactable = yes
+				prev = {
+					law_stance = {
+						law = prev.type
+						value > neutral
+					}
+				}
+				owner.ruler ?= {
+					law_stance = {
+						law = prev.type
+						value >= neutral
+					}
+				}
+			}
+		}
+	}
+}

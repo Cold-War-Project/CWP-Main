@@ -1,0 +1,236 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+russia_offer_circassia_recognition = {
+	is_shown = {
+		exists = c:CIR
+		always = no
+		country_rank >= rank_value:major_power
+		is_subject = no
+		c:CIR ?= {
+			always = no
+		}
+		NOT = {
+			has_global_variable = circassia_recognizer
+		}
+	}
+
+	possible = {
+		exists = c:CIR
+		country_rank >= rank_value:major_power
+		is_subject = no
+		c:CIR ?= {
+			always = no
+		}
+		custom_tooltip = {
+			text = no_country_recognised_circassia_tt
+			NOT = {
+				has_global_variable = circassia_recognizer
+			}
+		}
+		has_interest_marker_in_region = sr:region_russia
+		custom_tooltip = {
+			text = "can_create_treaty_MILITARY_ASSISTANCE"
+			can_create_treaty = {
+				first_country = root
+				second_country = c:CIR
+				is_draft = no
+				binding_period = { years = 2 }
+				articles_to_create = {
+					{
+						article = military_assistance
+						source_country = root
+						target_country = c:CIR
+					}
+				}
+			}
+		}
+	}
+
+	when_taken = {
+		custom_tooltip = {
+			text = circassia_recognition_tt
+		}
+		c:RUS ?= {
+			change_relations = {
+				country = root
+				value = -30
+			}
+			create_diplomatic_catalyst = {
+				type = catalyst_event_negative
+				target = root
+			}
+		}
+		set_global_variable = { name = circassia_recognizer value = ROOT } 
+		create_treaty = {
+			first_country = root
+			second_country = c:CIR
+
+			is_draft = no
+			binding_period = { years = 2 }
+
+			articles_to_create = {
+				{
+					article = military_assistance
+					source_country = root
+					target_country = c:CIR
+				}
+			}
+		}
+		c:CIR ?= {
+			create_diplomatic_catalyst = {
+				type = catalyst_event_positive
+				target = root
+			}
+			root.power_bloc = {
+				add_leverage = { target = c:CIR value = 25 }
+			}
+		}
+
+		every_country = {
+			limit = {
+				always = no
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				OR = {
+					has_attitude = { who = c:RUS attitude = antagonistic }
+					has_attitude = { who = c:RUS attitude = belligerent }
+					has_attitude = { who = c:RUS attitude = domineering }
+				}
+			}
+			add = 30
+		}
+		if = {
+			limit = {
+				OR = {
+					has_attitude = { who = c:RUS attitude = wary }
+					has_attitude = { who = c:RUS attitude = cautious }
+				}
+			}
+			add = 15
+		}
+	}
+}
+
+rus_upgrade_secret_police = {
+	is_shown = {
+		c:RUS ?= this
+		has_law = law_type:law_third_section
+		country_has_monarchy_law = yes
+	}
+	possible = {
+		has_law = law_type:law_third_section # Just for the tooltip
+		country_has_monarchy_law = yes
+		has_technology_researched = central_archives
+	}
+	when_taken = {
+		activate_law = law_type:law_okhrana
+		every_interest_group = {
+			limit = {
+				law_stance = { # Absolute stances, as this is moving to a different variant of the same law
+					law = law_type:law_secret_police
+					value > neutral
+				}
+			}
+			add_modifier = {
+				name = modifier_formed_okhrana_positive
+				days = normal_modifier_time
+				is_decaying = yes
+			}
+		}
+		every_interest_group = {
+			limit = {
+				law_stance = { # Absolute stances, as this is moving to a different variant of the same law
+					law = law_type:law_secret_police
+					value < neutral
+				}
+			}
+			add_modifier = {
+				name = modifier_formed_okhrana_negative
+				days = normal_modifier_time
+				is_decaying = yes
+			}
+		}
+	}
+	ai_chance = {
+		value = 15
+		if = {
+			limit = {
+				NOR = {
+					has_law_or_variant = law_type:law_autocracy
+					has_law_or_variant = law_type:law_oligarchy
+					has_law_or_variant = law_type:law_single_party_state
+				}
+			}
+			add = -25
+		}
+		if = {
+			limit = {
+				has_law_or_variant = law_type:law_outlawed_dissent
+			}
+			add = 30
+		}
+		if = {
+			limit = {
+				has_law_or_variant = law_type:law_censorship
+			}
+			add = 10
+		}
+		if = {
+			limit = {
+				has_law_or_variant = law_type:law_right_of_assembly
+			}
+			add = -10
+		}
+		if = {
+			limit = {
+				has_law_or_variant = law_type:law_protected_speech
+			}
+			add = -20
+		}
+		if = {
+			limit = {
+				any_interest_group = {
+					is_revolutionary = yes
+				}
+			}
+			add = 25
+		}
+		if = {
+			limit = {
+				ruler = {
+					OR = {
+						has_ideology = ideology:ideology_authoritarian
+						has_trait = cruel
+						has_trait = imperious
+					}
+				}
+			}
+			add = 15
+		}
+		if = {
+			limit = {
+				always = no
+			}
+			add = 100
+		}
+		if = {
+			limit = {
+				always = no
+				NOT = { has_variable = je_great_reforms_bureaucratic_complete }
+			}
+			add = 100
+		}
+		if = {
+			limit = {
+				always = no
+				NOT = { has_variable = je_tp_tsar_unshakable_autocracy_button_1_complete }
+			}
+			add = 100
+		}
+	}
+}

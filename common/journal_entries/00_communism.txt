@@ -1,0 +1,1239 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+je_communism_1 = {
+	icon = "gfx/interface/icons/event_icons/event_revolutionary_flag.dds"
+
+	group = je_group_socialism
+
+	activation_description = {
+		always = yes
+	}
+
+	is_shown_when_inactive = {
+		NOT = { has_variable = communism_1_done }
+		has_technology_researched = socialism
+	}
+
+	scripted_progress_bar = communism_1_progress_bar
+
+	possible = {
+		ig:ig_trade_unions ?= {
+			is_marginal = no
+		}
+		OR = {
+			ig:ig_trade_unions ?= {
+				ig_approval <= define:NPolitics|APPROVAL_THRESHOLD_UNHAPPY
+				law_stance = {
+					law = law_type:law_factory_councils
+					value > neutral
+				}
+			}
+			any_political_movement = {
+				OR = {
+					AND = {
+						is_political_movement_type = movement_labor
+						this.political_movement_radicalism >= define:NPolitics|RADICALISM_AGITATING_THRESHOLD
+					}
+					is_political_movement_type = movement_socialist
+				}
+			}
+		}
+	}
+
+	immediate = {
+		save_scope_as = root_country
+		set_communism_vars = yes
+		show_as_tooltip = {
+			if = {
+				limit = {
+					country_has_laws_in_need_of_critical_modernization = no
+					NOT = {
+						any_political_movement = {
+							is_political_movement_type = movement_socialist
+						}
+					}
+				}
+				create_political_movement = { type = movement_socialist }
+			}
+		}
+		trigger_event = { id = communism.10 days = 1 popup = yes }
+	}
+
+	on_weekly_pulse = {
+		effect = {
+			calculate_communism_progress = yes
+		}
+	}
+
+	on_monthly_pulse = {
+		random_events = {
+			29 = 0
+			1 = communism.7
+		}
+		effect = {
+			calculate_communism_progress = yes
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			OR = {
+				custom_tooltip = {
+					text = communism_progress_bar_at_full_tt
+					scope:journal_entry = {
+						"scripted_bar_progress(communism_1_progress_bar)" >= 100
+					}
+				}
+				has_law_or_variant = law_type:law_council_republic
+			}
+		}
+		effect = {
+			set_variable = communism_1_done
+			if = {
+				limit = {
+					NOT = {
+						has_law_or_variant = law_type:law_council_republic
+					}
+				}
+				trigger_event = { id = communism.1 popup = yes }
+			}
+			else = { # Mirrors effects of communism.1, skips je_communism_2
+				if = {
+					limit = {
+						any_interest_group = {
+							law_stance = {
+								law = law_type:law_council_republic
+								value > neutral
+							}
+						}
+					}
+					random_interest_group = {
+						limit = {
+							law_stance = {
+								law = law_type:law_council_republic
+								value > neutral
+							}
+						}
+					}
+				}
+				else = {
+					ig:ig_trade_unions ?= {
+					}
+				}
+				if = {
+					limit = {
+						NOT = {
+							has_journal_entry = je_state_and_revolution
+						}
+					}
+					trigger_event = { id = communism.2 popup = yes }
+				}
+			}
+			custom_tooltip = communism_je_1_fail_tt
+			je_communism_1_cleanup = yes
+		}
+		event_outcome_effect_desc = {
+			effect = {
+				add_journal_entry = { type = je_communism_2 }
+			}
+		}
+		event_outcome_effect_desc = {
+			header = communism.1.a
+			effect = {
+				activate_law = law_type:law_wage_subsidies
+			}
+		}
+		event_outcome_effect_desc = {
+			header = communism.1.b
+			effect = {
+				activate_law = law_type:law_slavery_banned
+			}
+		}
+		event_outcome_effect_desc = {
+			header = communism.1.c
+			effect = {
+				activate_law = law_type:law_regulatory_bodies
+			}
+		}
+		event_outcome_effect_desc = {
+			header = communism.1.d
+			effect = {
+				every_interest_group = {
+					limit = {
+						leader = {
+							OR = {
+								has_ideology = ideology:ideology_vanguardist
+								has_ideology = ideology:ideology_communist_leader
+								has_ideology = ideology:ideology_anarchist
+							}
+						}
+					}
+					add_modifier = {
+						name = communist_government_modifier
+						days = normal_modifier_time
+					}
+				}
+				add_loyalists = {
+					value = medium_radicals
+					strata = upper
+				}
+			}
+		}
+	}
+
+	outcome = {
+		header = JOURNAL_ENTRY_TIMEOUT
+		effect_header = JOURNAL_ENTRY_ON_TIMEOUT
+		flags = { timeout }
+		conclusion_desc = JOURNAL_ENTRY_TIMEOUT_CONCLUSION_DESC
+		effect = {
+			trigger_event = { id = communism.11 popup = yes }
+			custom_tooltip = communism_je_1_complete_tt
+		}
+		event_outcome_effect_desc = {
+			header = communism.11.a
+			effect = {
+				add_modifier = {
+					name = modifier_defeated_initial_socialist_movement
+					days = normal_modifier_time
+				}
+				add_loyalists = {
+					value = small_radicals
+					strata = upper
+				}
+				add_loyalists = {
+					value = small_radicals
+					strata = middle
+				}
+			}
+		}
+		event_outcome_effect_desc = {
+			header = communism.11.b
+			effect = {
+				add_modifier = {
+					name = modifier_defeated_initial_socialist_movement_worries
+					days = normal_modifier_time
+				}
+				add_loyalists = {
+					value = medium_radicals
+					strata = upper
+				}
+				add_loyalists = {
+					value = medium_radicals
+					strata = middle
+				}
+			}
+		}
+	}
+
+	timeout = 1825
+
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
+
+je_communism_2 = {
+	icon = "gfx/interface/icons/event_icons/event_revolutionary_flag.dds"
+
+	group = je_group_socialism
+
+	activation_description = {
+		always = yes
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_communism_2_factory_councils
+				trigger = {
+					has_factory_councils_law_or_amendment = yes
+				}
+			}
+			triggered_desc = {
+				desc = je_communism_2_revolution_progressing
+				trigger = {
+					country_at_risk_of_factory_councils = yes
+				}
+			}
+			desc = je_communism_2_no_revolution
+		}
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			# Nothing
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			AND = {
+				has_law_or_variant = law_type:law_council_republic
+				has_law_or_variant = law_type:law_factory_councils
+			}
+		}
+		effect = {
+			if = {
+				limit = {
+					NOT = {
+						has_journal_entry = je_state_and_revolution
+					}
+				}
+				trigger_event = { id = communism.2 popup = yes }
+			}
+		}
+		event_outcome_effect_desc = {
+			effect = {
+				add_journal_entry = { type = je_state_and_revolution }
+				add_journal_entry = { type = je_social_revolution }
+				custom_tooltip = form_white_movement_tt
+			}
+		}
+		event_outcome_effect_desc = {
+			header = communism.2.a
+			effect = {
+				custom_tooltip = chose_vanguardism.tt
+				ig:ig_trade_unions.leader ?= {
+					set_ideology = ideology:ideology_vanguardist
+				}
+				add_modifier = {
+					name = path_to_vanguardism
+					days = normal_modifier_time
+				}
+			}
+		}
+		event_outcome_effect_desc = {
+			header = communism.2.b
+			effect = {
+				custom_tooltip = chose_communism.tt
+				ig:ig_trade_unions.leader ?= {
+					set_ideology = ideology:ideology_communist_leader
+				}
+				add_modifier = {
+					name = path_to_communism
+					days = normal_modifier_time
+				}
+			}
+		}
+		event_outcome_effect_desc = {
+			header = communism.2.c
+			effect = {
+				custom_tooltip = chose_anarchism.tt
+				ig:ig_trade_unions.leader ?= {
+					set_ideology = ideology:ideology_anarchist
+				}
+				add_modifier = {
+					name = path_to_anarchy
+					days = normal_modifier_time
+				}
+			}
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			#NOT = {
+			#	any_political_movement = {
+			#		law_stance = {
+			#			law = law_type:law_factory_councils
+			#			value > neutral
+			#		}
+			#	}
+			#}
+			NOT = {
+				any_political_movement = {
+					OR = {
+						is_political_movement_type = movement_labor
+						is_political_movement_type = movement_socialist
+						is_political_movement_type = movement_communist
+						is_political_movement_type = movement_anarchist
+					}
+				}
+			}
+		}
+	}
+
+	can_revolution_inherit = yes
+}
+
+je_state_and_revolution = {
+	icon = "gfx/interface/icons/event_icons/event_revolutionary_flag.dds"
+
+	group = je_group_socialism
+
+	activation_description = {
+		always = yes
+	}
+
+	scripted_progress_bar = je_state_and_revolution_political_bar
+	scripted_progress_bar = je_state_and_revolution_economic_bar
+
+	scripted_button = je_state_and_revolution_industrialisation_plan_button
+	scripted_button = je_state_and_revolution_bourgeois_specialists_button
+
+	immediate = {
+		assemble_aes_country_list_effect = yes
+		set_variable = { name = state_and_revolution_economic_pivot_var value = 50 }
+		set_variable = { name = state_and_revolution_economic_current_var value = 75 }
+		set_variable = { name = state_and_revolution_political_pivot_var value = 50 }
+		set_variable = { name = state_and_revolution_political_current_var value = 75 }
+		set_variable = { name = state_and_revolution_lower_strata_loyalist_fraction_var value = state_and_revolution_lower_strata_loyalist_fraction }
+		set_variable = { name = state_and_revolution_lower_strata_below_expected_sol_var value = state_and_revolution_lower_strata_below_expected_sol_fraction }
+		set_strategy = ai_strategy_confrontation_agenda
+	}
+
+	scaling_modifiers_while_active = {
+		modifier = modifier_state_and_revolution_political_confrontation
+		value = {
+			value = "scope:journal_entry.scripted_bar_progress(je_state_and_revolution_political_bar)"
+		}
+	}
+	scaling_modifiers_while_active = {
+		modifier = modifier_state_and_revolution_economic_confrontation
+		value = {
+			value = "scope:journal_entry.scripted_bar_progress(je_state_and_revolution_economic_bar)"
+		}
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			set_variable = { name = state_and_revolution_lower_strata_loyalist_fraction_var value = state_and_revolution_lower_strata_loyalist_fraction }
+			set_variable = { name = state_and_revolution_lower_strata_below_expected_sol_var value = state_and_revolution_lower_strata_below_expected_sol_fraction }
+			set_variable = { name = state_and_revolution_economic_current_var value = "scope:journal_entry.scripted_bar_progress(je_state_and_revolution_economic_bar)" }
+			set_variable = { name = state_and_revolution_political_current_var value = "scope:journal_entry.scripted_bar_progress(je_state_and_revolution_political_bar)" }
+			set_variable = {
+				name = state_and_revolution_economic_pivot_var
+				value = 100
+			}
+			change_variable = {
+				name = state_and_revolution_economic_pivot_var
+				multiply = ROOT.state_and_revolution_economic_confrontation_display
+			}
+			set_variable = {
+				name = state_and_revolution_political_pivot_var
+				value = 100
+			}
+			change_variable = {
+				name = state_and_revolution_political_pivot_var
+				multiply = ROOT.state_and_revolution_political_confrontation_display
+			}
+		}
+	}
+
+	outcome = {
+		header = je_state_and_revolution_confrontation_header
+		effect_header = je_state_and_revolution_on_confrontation_victory_header
+		color = "red_outcome"
+		conclusion_desc = je_state_and_revolution_confrontation_conclusion_desc
+		trigger = {
+			has_all_revolutionary_laws = yes
+			custom_tooltip = {
+				text = revolutionary_bloc_controls_half_of_global_gdp_tt
+				revolutionary_bloc_gdp >= revolutionary_bloc_gdp_target
+			}
+		}
+		effect = {
+			custom_tooltip_no_bullet = best_communist_country_gets_tt
+			ordered_in_global_list = {
+				limit = {
+					has_law_or_variant = law_type:law_council_republic
+				}
+				variable = aes_country_list
+				order_by = prestige
+				position = 0
+				if = {
+					limit = {
+						NOT = {
+							has_modifier = modifier_state_and_revolution_home_of_the_revolution
+						}
+					}
+					add_modifier = {
+						name = modifier_state_and_revolution_home_of_the_revolution
+						days = very_long_modifier_time
+					}
+					if = {
+						limit = {
+							market ?= {
+								owner ?= prev
+								gdp >= {
+									value = global_gdp
+									multiply = state_and_revolution_swr_gdp_target
+								}
+							}
+						}
+						set_variable = sozialistische_weltrepublik_var
+						custom_tooltip = socialist_world_republic_tt
+					}
+					else = {
+						show_as_tooltip = {
+							custom_tooltip_no_bullet = if_quarter_of_world_gdp_swr_tt
+							set_variable = sozialistische_weltrepublik_var
+							custom_tooltip = socialist_world_republic_tt
+						}
+					}
+				}
+			}
+			je_state_and_revolution_cleanup = yes
+		}
+	}
+
+	outcome = {
+		header = je_state_and_revolution_consolidation_header
+		effect_header = je_state_and_revolution_on_consolidation_victory_header
+		color = "gold_positive"
+		conclusion_desc = je_state_and_revolution_consolidation_conclusion_desc
+		trigger = {
+			custom_tooltip = {
+				text = state_and_revolution_economic_consolidation_victory_values_tt
+				scope:journal_entry = {
+					"scripted_bar_progress(je_state_and_revolution_economic_bar)" <= state_and_revolution_consolidation_victory_bar_threshold
+				}
+			}
+			custom_tooltip = {
+				text = state_and_revolution_political_consolidation_victory_values_tt
+				scope:journal_entry = {
+					"scripted_bar_progress(je_state_and_revolution_political_bar)" <= state_and_revolution_consolidation_victory_bar_threshold
+				}
+			}
+			custom_tooltip = {
+				text = state_and_revolution_not_in_liberation_war_tt
+				NOT = {
+					pressing_liberation_wargoal_against_adjacent_country = yes
+				}
+			}
+		}
+		effect = {
+			custom_tooltip = no_more_maluses_with_non_communist_countries_tt
+			add_modifier = {
+				name = modifier_state_and_revolution_conciliation
+				days = very_long_modifier_time
+			}
+			je_state_and_revolution_cleanup = yes
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			NOT = { has_law_or_variant = law_type:law_council_republic }
+		}
+		effect = {
+			je_state_and_revolution_cleanup = yes
+		}
+	}
+
+	can_revolution_inherit = yes
+
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
+
+
+je_anarchy = {
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+
+	group = je_group_socialism
+
+	is_shown_when_inactive = {
+		has_technology_researched = anarchism
+	}
+
+	possible = {
+		has_law_or_variant = law_type:law_anarchy
+	}
+
+	activation_description = {
+		always = yes
+	}
+
+	immediate = {
+		root = {
+			set_variable = { name = anarchy_starting_sol_var value = average_sol }
+		}
+	}
+
+	on_weekly_pulse = {
+		effect = {
+			if = {
+				limit = {
+					NOT = {
+						any_scope_pop = {
+							standard_of_living < 10
+						}
+					}
+				}
+				set_variable = anarchy_no_pop_below_sol_var
+			}
+			else = {
+				remove_variable = anarchy_no_pop_below_sol_var
+			}
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			has_law_or_variant = law_type:law_anarchy
+			has_law_or_variant = law_type:law_cooperative_ownership
+			average_sol >= je_anarchy_sol_target # if you change this, also change event option in communism.2
+			custom_tooltip = {
+				text = je_anarchy_no_pop_below_sol_tt
+				has_variable = anarchy_no_pop_below_sol_var
+			}
+		}
+		effect = {
+			trigger_event = {
+				id = communism.4
+				popup = yes
+			}
+		}
+		event_outcome_effect_desc = {
+			effect = {
+				add_modifier = {
+					name = anarchist_utopia
+					days = normal_modifier_time
+				}
+			}
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			NOT = { has_law_or_variant = law_type:law_anarchy }
+		}
+		effect = {
+			je_anarchy_cleanup = yes
+		}
+	}
+
+	current_value = {
+		value = root.average_sol
+	}
+
+	goal_add_value = {
+		add = je_anarchy_sol_goal_increase
+	}
+
+	progressbar = yes
+}
+
+je_extraordinary_commission = {
+	icon = "gfx/interface/icons/law_icons/extraordinary_commission.dds"
+
+	group = je_group_socialism
+
+	is_shown_when_inactive = {
+		has_law_or_variant = law_type:law_council_republic
+	}
+
+	possible = {
+		has_law_or_variant = law_type:law_extraordinary_commission
+	}
+
+	activation_description = {
+		always = yes
+	}
+
+	immediate = {
+		set_variable = { name = anti_communist_suppression_var value = 0 }
+		random_political_movement = {
+			limit = {
+				is_political_movement_type = movement_anti_communist
+			}
+			save_scope_as = white_movement_scope
+		}
+		ig:ig_trade_unions ?= {
+			save_scope_as = proletariat_ig
+		}
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			if = {
+				limit = {
+					OR = {
+						NOT = {
+							any_political_movement = {
+								is_political_movement_type = movement_anti_communist
+							}
+						}
+						any_political_movement = {
+							is_political_movement_type = movement_anti_communist
+							political_movement_support < 0.05
+						}
+					}
+				}
+				change_variable = { name = anti_communist_suppression_var add = 1 }
+			}
+			else = {
+				set_variable = { name = anti_communist_suppression_var value = 0 }
+			}
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			custom_tooltip = {
+				text = vanguard_custom_tooltip
+				NOT = {
+					any_interest_group = {
+						OR = {
+							is_powerful = yes
+							is_in_government = yes
+						}
+						law_stance = {
+							law = law_type:law_council_republic
+							value < neutral
+						}
+					}
+				}
+			}
+			legitimacy >= 75
+			custom_tooltip = {
+				text = no_reactionary_conservative_liberal_agitators_tt
+				NOT = {
+					any_scope_character = {
+						OR = {
+							has_reactionary_ideology = yes
+							has_conservative_ideology = yes
+							has_liberal_ideology = yes
+						}
+						has_role_of_type = agitator
+					}
+				}
+			}
+			custom_tooltip = {
+				text = has_suppressed_white_movement_for_some_years_tt
+				var:anti_communist_suppression_var >= 24
+				OR = {
+					NOT = {
+						any_political_movement = {
+							is_political_movement_type = movement_anti_communist
+						}
+					}
+					any_political_movement = {
+						is_political_movement_type = movement_anti_communist
+						political_movement_support < 0.05
+					}
+				}
+			}
+			custom_tooltip = {
+				text = is_not_in_civil_war_tt
+				any_civil_war = {
+					count = 0
+				}
+			}
+		}
+		effect = {
+			trigger_event = { id = communism.5 popup = yes }
+		}
+		event_outcome_effect_desc = {
+			effect = {
+				add_modifier = {
+					name = great_purge_modifier
+					days = normal_modifier_time
+				}
+			}
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			NOT = { has_law_or_variant = law_type:law_council_republic }
+		}
+		effect = {
+			je_extraordinary_commission_cleanup = yes
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			NOT = {
+				has_law_or_variant = law_type:law_extraordinary_commission
+			}
+		}
+		effect = {
+			je_extraordinary_commission_cleanup = yes
+		}
+	}
+
+	on_weekly_pulse = {
+		events = {
+			communism.3
+		}
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = vanguard_instruction_status
+				trigger = {
+					always = yes
+				}
+			}
+		}
+	}
+
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
+
+je_social_revolution = {
+	icon = "gfx/interface/icons/generic_icons/golden_rose.dds"
+
+	group = je_group_socialism
+
+	activation_description = {
+		always = yes
+	}
+
+	immediate = {
+		ig:ig_trade_unions ?= {
+			save_scope_as = proletariat_ig
+		}
+		set_variable = { name = communist_welfare_low_consolidation_months_var value = 0 }
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			if = {
+				limit = {
+					has_journal_entry = je_state_and_revolution
+				}
+				if = {
+					limit = {
+						AND = {
+							"je:je_state_and_revolution.scripted_bar_progress(je_state_and_revolution_political_bar)" < 50
+							"je:je_state_and_revolution.scripted_bar_progress(je_state_and_revolution_economic_bar)" < 50
+						}
+					}
+					change_variable = { name = communist_welfare_low_consolidation_months_var add = 1 }
+				}
+				else_if = {
+					limit = {
+						var:communist_welfare_low_consolidation_months_var > 0
+					}
+					change_variable = { name = communist_welfare_low_consolidation_months_var subtract = 1 }
+				}
+			}
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			has_law_or_variant = law_type:law_multicultural
+			has_law_or_variant = law_type:law_womens_suffrage
+			has_law_or_variant = law_type:law_no_colonial_affairs
+			AND = {
+				has_law_or_variant = law_type:law_public_schools
+				institution_investment_level = {
+					institution = institution_schools
+					value = 5
+				}
+			}
+			AND = {
+				has_law_or_variant = law_type:law_public_health_insurance
+				institution_investment_level = {
+					institution = institution_health_system
+					value = 5
+				}
+			}
+			AND = {
+				has_law_or_variant = law_type:law_old_age_pension
+				institution_investment_level = {
+					institution = institution_social_security
+					value = 5
+				}
+			}
+			AND = {
+				has_law_or_variant = law_type:law_worker_protections
+				institution_investment_level = {
+					institution = institution_workplace_safety
+					value = 5
+				}
+			}
+			approaching_bureaucracy_shortage = no
+		}
+		effect = {
+			trigger_event = {
+				id = communism.6
+				popup = yes
+			}
+		}
+		event_outcome_effect_desc = {
+			effect = {
+				add_modifier = {
+					name = modifier_social_revolution
+					days = very_long_modifier_time
+				}
+			}
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			OR = {
+				NOT = { has_law_or_variant = law_type:law_council_republic }
+				custom_tooltip = {
+					text = je_social_revolution_low_consolidation_tt
+					var:communist_welfare_low_consolidation_months_var >= 120
+				}
+				custom_tooltip = {
+					text = je_social_revolution_concluded_consolidation_tt
+					has_modifier = modifier_state_and_revolution_conciliation
+				}
+			}
+		}
+		effect = {
+			ig:ig_armed_forces ?= {
+				if = {
+					limit = {
+						has_ideology = ideology:ideology_internationalist
+					}
+					add_ideology = ideology_defensist
+				}
+			}
+			every_interest_group = {
+				limit = {
+					has_ideology = ideology:ideology_internationalist
+				}
+				remove_ideology = ideology_internationalist
+			}
+			je_social_revolution_cleanup = yes
+		}
+	}
+
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
+
+je_five_year_plan = {
+	icon = "gfx/interface/icons/invention_icons/central_planning.dds"
+
+	group = je_group_socialism
+
+	activation_description = {
+		always = yes
+	}
+
+	scripted_button = je_five_year_plan_heavy_industry_button
+	scripted_button = je_five_year_plan_light_industry_button
+	scripted_button = je_five_year_plan_transportation_button
+	scripted_button = je_five_year_plan_agriculture_button
+	scripted_button = je_five_year_plan_electrification_button
+	scripted_button = je_five_year_plan_conclude_button
+	scripted_button = je_five_year_plan_reduce_objectives_button
+	scripted_button = je_five_year_plan_cheat_button
+	scripted_button = je_five_year_plan_forced_labor_button
+
+	immediate = {
+		root = {
+			save_scope_as = five_year_plan_country
+			set_variable = { name = five_year_plan_drafting_var value = 6 months = 6 }
+			set_variable = { name = five_year_plan_ai_early_plan_var months = 48 }
+		}
+		scope:journal_entry ?= {
+			set_variable = {
+				name = five_year_plan_heavy_industry_initial_var
+				value = "root.country_has_building_group_levels(bg_heavy_industry)"
+			}
+			set_variable = {
+				name = five_year_plan_heavy_industry_target_var
+				value = {
+					value = var:five_year_plan_heavy_industry_initial_var
+					multiply = 0.25
+					min = 10
+					add = var:five_year_plan_heavy_industry_initial_var
+					round = yes
+				}
+			}
+			set_variable = {
+				name = five_year_plan_light_industry_initial_var
+				value = "root.country_has_building_group_levels(bg_light_industry)"
+			}
+			set_variable = {
+				name = five_year_plan_light_industry_target_var
+				value = {
+					value = var:five_year_plan_light_industry_initial_var
+					multiply = 0.25
+					min = 10
+					add = var:five_year_plan_light_industry_initial_var
+					round = yes
+				}
+			}
+			set_variable = {
+				name = five_year_plan_transportation_initial_var
+				value = {
+					value = 0
+					root = {
+						add = five_year_plan_transportation_buy_orders_value
+					}
+				}
+			}
+			set_variable = {
+				name = five_year_plan_transportation_target_var
+				value = {
+					value = var:five_year_plan_transportation_initial_var
+					multiply = 1.25
+					round = yes
+					min = 50
+				}
+			}
+			set_variable = {
+				name = five_year_plan_electrification_initial_var
+				value = {
+					value = 0
+					root = {
+						add = five_year_plan_electricity_buy_orders_value
+					}
+				}
+			}
+			set_variable = {
+				name = five_year_plan_electrification_target_var
+				value = {
+					value = var:five_year_plan_electrification_initial_var
+					multiply = 1.25
+					round = yes
+					min = 50
+				}
+			}
+			set_variable = {
+				name = five_year_plan_agriculture_initial_var
+				value = {
+					value = 0
+					root = {
+						add = state_and_revolution_peasant_fraction
+					}
+				}
+			}
+			set_variable = {
+				name = five_year_plan_agriculture_target_var
+				value = {
+					value = var:five_year_plan_agriculture_initial_var
+					subtract = 0.1
+					min = 0.05
+				}
+			}
+			set_variable = {
+				name = five_year_plan_gdp_per_capita_initial_var
+				value = root.country_gdp_per_capita
+			}
+			set_variable = {
+				name = five_year_plan_gdp_per_capita_target_var
+				value = {
+					value = var:five_year_plan_gdp_per_capita_initial_var
+					multiply = 1.25
+				}
+			}
+			set_variable = {
+				name = five_year_plan_urbanization_initial_var
+				value = "root.country_has_building_type_levels(bt:building_urban_center)"
+			}
+			set_variable = {
+				name = five_year_plan_urbanization_target_var
+				value = {
+					value = var:five_year_plan_urbanization_initial_var
+					multiply = 1.25
+					round = yes
+				}
+			}
+			set_variable = { name = five_year_plan_reward_var value = 1 }
+			set_variable = {
+				name = five_year_plan_fraud_detection_peak_var
+				value = {
+					value = 0
+					root = {
+						add = five_year_plan_fraud_detection_current_chance_value
+					}
+				}
+			}
+		}
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			if = {
+				limit = {
+					var:five_year_plan_drafting_var > 0
+				}
+				change_variable = {
+					name = five_year_plan_drafting_var
+					subtract = 1
+				}
+			}
+			je:je_five_year_plan ?= {
+				if = {
+					limit = {
+						root.five_year_plan_fraud_detection_current_chance_value > var:five_year_plan_fraud_detection_peak_var
+					}
+					set_variable = {
+						name = five_year_plan_fraud_detection_peak_var
+						value = {
+							value = 0
+							root = {
+								add = five_year_plan_fraud_detection_current_chance_value
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_five_year_plan_drafting_status
+				trigger = {
+					has_variable = five_year_plan_drafting_var
+				}
+			}
+			desc = je_five_year_plan_in_progress_status
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			has_law_or_variant = law_type:law_command_economy
+			hidden_trigger = {
+				NOT = { has_variable = five_year_plan_drafting_var }
+			}
+			custom_tooltip = {
+				text = five_year_plan_gdp_per_capita_goal_tt
+				scope:journal_entry.var:five_year_plan_gdp_per_capita_target_var <= five_year_plan_gdp_per_capita_value
+			}
+			custom_tooltip = {
+				text = five_year_plan_urbanization_goal_tt
+				scope:journal_entry.var:five_year_plan_urbanization_target_var <= five_year_plan_urban_centre_levels_value
+			}
+			trigger_if = {
+				limit = {
+					scope:journal_entry = {
+						has_variable = five_year_plan_heavy_industry_var
+					}
+				}
+				five_year_plan_heavy_industry_goal_met = yes
+			}
+			trigger_if = {
+				limit = {
+					scope:journal_entry = {
+						has_variable = five_year_plan_light_industry_var
+					}
+				}
+				five_year_plan_light_industry_goal_met = yes
+			}
+			trigger_if = {
+				limit = {
+					scope:journal_entry = {
+						has_variable = five_year_plan_transportation_var
+					}
+				}
+				five_year_plan_transportation_goal_met = yes
+			}
+			trigger_if = {
+				limit = {
+					scope:journal_entry = {
+						has_variable = five_year_plan_agriculture_var
+					}
+				}
+				five_year_plan_agriculture_goal_met = yes
+			}
+			trigger_if = {
+				limit = {
+					scope:journal_entry = {
+						has_variable = five_year_plan_electrification_var
+					}
+				}
+				five_year_plan_electrification_goal_met = yes
+			}
+			in_default = no
+		}
+		effect = {
+			add_modifier = {
+				name = five_year_plan_welfare_mod
+				days = normal_modifier_time
+				multiplier = five_year_plan_success_reward_value
+			}
+			je_five_year_plan_cleanup = yes
+			custom_tooltip = {
+				text = next_five_year_plan_tt
+				trigger_event = { id = communism.13 days = 1 }
+			}
+		}
+	}
+
+	outcome = {
+		header = JOURNAL_ENTRY_TIMEOUT
+		effect_header = JOURNAL_ENTRY_ON_TIMEOUT
+		flags = { timeout }
+		color = "blue_negative"
+		conclusion_desc = JOURNAL_ENTRY_TIMEOUT_CONCLUSION_DESC
+		effect = {
+			add_modifier = {
+				name = five_year_plan_failure_mod
+				days = normal_modifier_time
+				multiplier = scope:journal_entry.var:five_year_plan_reward_var
+			}
+			je_five_year_plan_cleanup = yes
+			custom_tooltip = {
+				text = next_five_year_plan_tt
+				trigger_event = { id = communism.13 days = 1 }
+			}
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			NAND = {
+				has_law_or_variant = law_type:law_council_republic
+				has_law_or_variant = law_type:law_command_economy
+			}
+		}
+		effect = {
+			je_five_year_plan_cleanup = yes
+		}
+	}
+
+	timeout = 1825
+
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}

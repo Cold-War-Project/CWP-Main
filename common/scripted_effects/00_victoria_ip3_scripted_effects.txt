@@ -1,0 +1,1407 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+springtime_save_conservative_laws = {
+	if = {
+		limit = {
+			NOT = {
+				has_variable = conservative_distribution_of_power_law
+			}
+		}
+		active_law:lawgroup_distribution_of_power ?= {
+			save_scope_as = current_distribution_of_power_law
+		}
+		set_variable = { name = conservative_distribution_of_power_law value = scope:current_distribution_of_power_law.type }
+	}
+	if = {
+		limit = {
+			NOT = {
+				has_variable = conservative_free_speech_law
+			}
+		}
+		active_law:lawgroup_free_speech ?= {
+			save_scope_as = current_free_speech_law
+		}
+		set_variable = { name = conservative_free_speech_law value = scope:current_free_speech_law.type }
+	}
+	if = {
+		limit = {
+			NOT = {
+				has_variable = conservative_internal_security_law
+			}
+		}
+		active_law:lawgroup_internal_security ?= {
+			save_scope_as = current_internal_security_law
+		}
+		set_variable = { name = conservative_internal_security_law value = scope:current_internal_security_law.type }
+	}
+}
+
+serbian_throne_modifier_cleanser = {
+	if = {
+		limit = {
+			has_modifier = serbia_permitted_hajduks_armed_bonus
+		}
+		remove_modifier = serbia_permitted_hajduks_armed_bonus
+	}
+	if = {
+		limit = {
+			has_modifier = serbia_stopped_hajduks_armed_penalty
+		}
+		remove_modifier = serbia_stopped_hajduks_armed_penalty
+	}
+	if = {
+		limit = {
+			has_modifier = serbia_pamphlet_money_mod
+		}
+		remove_modifier = serbia_pamphlet_money_mod
+	}
+	if = {
+		limit = {
+			has_modifier = serbia_pamphlet_auth_mod
+		}
+		remove_modifier = serbia_pamphlet_auth_mod
+	}
+	if = {
+		limit = {
+			has_modifier = serbia_exposing_hypocrite_mod
+		}
+		remove_modifier = serbia_exposing_hypocrite_mod
+	}
+	if = {
+		limit = {
+			has_modifier = serbia_campaign_auth_fund_mod
+		}
+		remove_modifier = serbia_campaign_auth_fund_mod
+	}
+	if = {
+		limit = {
+			has_modifier = serbia_campaign_med_fund_mod
+		}
+		remove_modifier = serbia_campaign_med_fund_mod
+	}
+	if = {
+		limit = {
+			has_modifier = serbia_campaign_high_fund_mod
+		}
+		remove_modifier = serbia_campaign_high_fund_mod
+	}
+}
+
+serbian_throne_variable_cleanser = {
+	if = {
+		limit = {
+			always = no
+		}
+	}
+	if = {
+		limit = {
+			has_variable = campaign_button_pressed
+		}
+		remove_variable = campaign_button_pressed
+	}
+	if = {
+		limit = {
+			je:je_serbian_throne ?= {
+				has_variable = je_tot_slander_button_cooldown
+			}
+		}
+		je:je_serbian_throne ?= {
+			remove_variable = je_tot_slander_button_cooldown
+		}
+	}
+}
+
+danubian_federation_integrate_culture = {
+	$CULTURE$ = { # Saves relevant culture, for localisation purposes
+		save_scope_as = relevant_culture_scope
+	}
+	if = {
+		limit = {
+			NOT = { country_has_primary_culture = $CULTURE$ }
+		}
+		if = {
+			limit = {
+				NOT = {
+					always = no
+				}
+			}
+			change_variable = { name = count_integrated_cultures add = 1 }
+
+			every_subject_or_below = {
+				limit = {
+					OR = {
+						is_subject_type = subject_type_personal_union
+						is_subject_type = subject_type_crown_land
+						is_subject_type = subject_type_puppet
+					}
+					country_has_primary_culture = $CULTURE$
+				}
+				post_notification = danubian_federation_culture_integrated
+			}
+		}
+		if = { # Note - should never happen, but just in case it does.
+			limit = {
+				always = no
+			}
+			change_variable = { name = count_disqualified_cultures subtract = 1 }
+		}
+		custom_tooltip = {
+			text = successful_integration_tt
+			add_primary_culture = $CULTURE$
+		}
+	}
+}
+
+danubian_federation_disqualify_culture = {
+	$CULTURE$ = { # Saves relevant culture, for localisation purposes
+		save_scope_as = relevant_culture_scope
+	}
+
+	if = { # Removes primary culture, in the case that it's already integrated
+		limit = {
+			country_has_primary_culture = $CULTURE$
+		}
+		remove_primary_culture = $CULTURE$
+		if = {
+			limit = {
+				always = no
+			}
+			change_variable = { name = count_integrated_cultures subtract = 1 }
+		}
+	}
+
+	custom_tooltip = { # Disqualifies the culture from future integration
+		text = disqualify_culture_tt
+		if = {
+			limit = {
+				NOT = {
+					always = no
+				}
+			}
+			change_variable = { name = count_disqualified_cultures add = 1 }
+
+			every_subject_or_below = {
+				limit = {
+					OR = {
+						is_subject_type = subject_type_personal_union
+						is_subject_type = subject_type_crown_land
+						is_subject_type = subject_type_puppet
+					}
+					country_has_primary_culture = $CULTURE$
+				}
+				post_notification = danubian_federation_culture_disqualified
+			}
+		}
+	}
+
+	if = { # Appplies penalties for going back on whatever you did to integrate the culture, if it was integrated
+		limit = {
+			always = no
+		}
+		if = {
+			limit = {
+				any_subject_or_below = {
+					OR = {
+						is_subject_type = subject_type_personal_union
+						is_subject_type = subject_type_crown_land
+						is_subject_type = subject_type_puppet
+					}
+					country_has_primary_culture = $CULTURE$
+				}
+			}
+			custom_tooltip = {
+				text = extra_culture_anger_separatism_tt
+				every_subject_or_below = {
+					limit = {
+						OR = {
+							is_subject_type = subject_type_personal_union
+							is_subject_type = subject_type_crown_land
+							is_subject_type = subject_type_puppet
+						}
+						country_has_primary_culture = $CULTURE$
+					}
+					change_relations = { country = ROOT value = -30 }
+					add_liberty_desire = 25
+				}
+			}
+		}
+		else = {
+			custom_tooltip = {
+				text = extra_culture_anger_radicals_tt
+				add_radicals = {
+					value = large_radicals
+					culture = $CULTURE$
+				}
+			}
+		}
+	}
+}
+
+danubian_federation_anger_culture = {
+	$CULTURE$ = { # Saves relevant culture, for localisation purposes
+		save_scope_as = relevant_culture_scope
+	}
+	if = {
+		limit = {
+			$DEGREE$ = small_radicals
+		}
+		custom_tooltip = small_radicals_in_subjects_and_country_tt
+	}
+	else_if = {
+		limit = {
+			$DEGREE$ = medium_radicals
+		}
+		custom_tooltip = medium_radicals_in_subjects_and_country_tt
+	}
+	else_if = {
+		limit = {
+			$DEGREE$ = large_radicals
+		}
+		custom_tooltip = large_radicals_in_subjects_and_country_tt
+	}
+	else_if = {
+		limit = {
+			$DEGREE$ = very_large_radicals
+		}
+		custom_tooltip = very_large_radicals_in_subjects_and_country_tt
+	}
+	hidden_effect = {
+		add_radicals = {
+			value = $DEGREE$
+			culture = $CULTURE$
+		}
+		every_subject_or_below = {
+			limit = {
+				NOT = {
+					country_has_primary_culture = $CULTURE$
+				}
+				OR = {
+					is_subject_type = subject_type_personal_union
+					is_subject_type = subject_type_crown_land
+					is_subject_type = subject_type_puppet
+				}
+			}
+			post_notification = danubian_federation_culture_angered
+			add_radicals = {
+				value = $DEGREE$
+				culture = $CULTURE$
+			}
+		}
+	}
+	if = {
+		limit = {
+			any_subject_or_below = {
+				country_has_primary_culture = $CULTURE$
+				OR = {
+					is_subject_type = subject_type_personal_union
+					is_subject_type = subject_type_crown_land
+					is_subject_type = subject_type_puppet
+				}
+			}
+		}
+		if = {
+			limit = {
+				$DEGREE$ = small_radicals
+			}
+			every_subject_or_below = {
+				limit = {
+					country_has_primary_culture = $CULTURE$
+					OR = {
+						is_subject_type = subject_type_personal_union
+						is_subject_type = subject_type_crown_land
+						is_subject_type = subject_type_puppet
+					}
+				}
+				post_notification = danubian_federation_culture_angered_primary
+				change_relations = { country = ROOT value = -10 }
+				add_liberty_desire = 5
+			}
+		}
+		else_if = {
+			limit = {
+				$DEGREE$ = medium_radicals
+			}
+			every_subject_or_below = {
+				limit = {
+					country_has_primary_culture = $CULTURE$
+					OR = {
+						is_subject_type = subject_type_personal_union
+						is_subject_type = subject_type_crown_land
+						is_subject_type = subject_type_puppet
+					}
+				}
+				post_notification = danubian_federation_culture_angered_primary
+				change_relations = { country = ROOT value = -20 }
+				add_liberty_desire = 15
+			}
+		}
+		else_if = {
+			limit = {
+				$DEGREE$ = large_radicals
+			}
+			every_subject_or_below = {
+				limit = {
+					country_has_primary_culture = $CULTURE$
+					OR = {
+						is_subject_type = subject_type_personal_union
+						is_subject_type = subject_type_crown_land
+						is_subject_type = subject_type_puppet
+					}
+				}
+				post_notification = danubian_federation_culture_angered_primary
+				change_relations = { country = ROOT value = -30 }
+				add_liberty_desire = 25
+			}
+		}
+		else_if = {
+			limit = {
+				$DEGREE$ = very_large_radicals
+			}
+			every_subject_or_below = {
+				limit = {
+					country_has_primary_culture = $CULTURE$
+					OR = {
+						is_subject_type = subject_type_personal_union
+						is_subject_type = subject_type_crown_land
+						is_subject_type = subject_type_puppet
+					}
+				}
+				post_notification = danubian_federation_culture_angered_primary
+				change_relations = { country = ROOT value = -40 }
+				add_liberty_desire = 35
+			}
+		}
+	}
+}
+
+danubian_federation_please_culture = {
+	$CULTURE$ = { # Saves relevant culture, for localisation purposes
+		save_scope_as = relevant_culture_scope
+	}
+	if = {
+		limit = {
+			$DEGREE$ = small_radicals
+		}
+		custom_tooltip = small_loyalists_in_subjects_and_country_tt
+	}
+	else_if = {
+		limit = {
+			$DEGREE$ = medium_radicals
+		}
+		custom_tooltip = medium_loyalists_in_subjects_and_country_tt
+	}
+	else_if = {
+		limit = {
+			$DEGREE$ = large_radicals
+		}
+		custom_tooltip = large_loyalists_in_subjects_and_country_tt
+	}
+	else_if = {
+		limit = {
+			$DEGREE$ = very_large_radicals
+		}
+		custom_tooltip = very_large_loyalists_in_subjects_and_country_tt
+	}
+	hidden_effect = {
+		add_loyalists = {
+			value = $DEGREE$
+			culture = $CULTURE$
+		}
+		every_subject_or_below = {
+			limit = {
+				NOT = {
+					country_has_primary_culture = $CULTURE$
+				}
+				OR = {
+					is_subject_type = subject_type_personal_union
+					is_subject_type = subject_type_crown_land
+					is_subject_type = subject_type_puppet
+				}
+			}
+			post_notification = danubian_federation_culture_pleased
+			add_loyalists = {
+				value = $DEGREE$
+				culture = $CULTURE$
+			}
+		}
+	}
+	if = {
+		limit = {
+			any_subject_or_below = {
+				country_has_primary_culture = $CULTURE$
+				OR = {
+					is_subject_type = subject_type_personal_union
+					is_subject_type = subject_type_crown_land
+					is_subject_type = subject_type_puppet
+				}
+			}
+		}
+		if = {
+			limit = {
+				$DEGREE$ = small_radicals
+			}
+			every_subject_or_below = {
+				limit = {
+					country_has_primary_culture = $CULTURE$
+					OR = {
+						is_subject_type = subject_type_personal_union
+						is_subject_type = subject_type_crown_land
+						is_subject_type = subject_type_puppet
+					}
+				}
+				post_notification = danubian_federation_culture_pleased_primary
+				change_relations = { country = ROOT value = 10 }
+				add_liberty_desire = -5
+			}
+		}
+		else_if = {
+			limit = {
+				$DEGREE$ = medium_radicals
+			}
+			every_subject_or_below = {
+				limit = {
+					country_has_primary_culture = $CULTURE$
+					OR = {
+						is_subject_type = subject_type_personal_union
+						is_subject_type = subject_type_crown_land
+						is_subject_type = subject_type_puppet
+					}
+				}
+				post_notification = danubian_federation_culture_pleased_primary
+				change_relations = { country = ROOT value = 20 }
+				add_liberty_desire = -15
+			}
+		}
+		else_if = {
+			limit = {
+				$DEGREE$ = large_radicals
+			}
+			every_subject_or_below = {
+				limit = {
+					country_has_primary_culture = $CULTURE$
+					OR = {
+						is_subject_type = subject_type_personal_union
+						is_subject_type = subject_type_crown_land
+						is_subject_type = subject_type_puppet
+					}
+				}
+				post_notification = danubian_federation_culture_pleased_primary
+				change_relations = { country = ROOT value = 30 }
+				add_liberty_desire = -25
+			}
+		}
+	}
+}
+
+release_hungarian_states = { # I would dearly like to make these a single scripted effect, but there are too many special rules. Very unfortunate.
+	cu:hungarian = {
+		save_temporary_scope_as = relevant_culture_scope
+	}
+	if = {
+		limit = {
+			any_scope_state = {
+				state_region = {
+					is_homeland = scope:relevant_culture_scope
+				}
+			}
+		}
+		if = {
+			limit = {
+				any_subject_or_below = {
+					country_has_primary_culture = scope:relevant_culture_scope
+				}
+			}
+			ordered_subject_or_below = {
+				limit = {
+					country_has_primary_culture = scope:relevant_culture_scope
+				}
+				order_by = country_rank
+				position = 0
+				check_range_bounds = no
+				save_temporary_scope_as = hungary_scope
+			}
+			custom_tooltip = {
+				text = transfer_relevant_culture_states_to_hungary_tt
+				every_scope_state = {
+					limit = {
+						state_region = {
+							is_homeland = scope:relevant_culture_scope
+						}
+					}
+					set_state_owner = scope:hungary_scope
+				}
+			}
+		}
+		else = {
+			custom_tooltip = {
+				text = release_relevant_culture_states_tt
+				random_scope_state = {
+					limit = {
+						state_region = {
+							is_homeland = scope:relevant_culture_scope
+						}
+					}
+					ROOT = {
+						create_country = {
+							origin = root
+							tag = HUN
+							state = PREV
+						}
+					}
+				}
+				c:HUN ?= {
+					save_temporary_scope_as = hungary_scope
+					ROOT = {
+						every_scope_state = {
+							limit = {
+								state_region = {
+									is_homeland = scope:relevant_culture_scope
+								}
+							}
+							set_state_owner = scope:hungary_scope
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+release_croat_states = {
+	cu:croat = {
+		save_temporary_scope_as = relevant_culture_scope
+	}
+	if = {
+		limit = {
+			any_scope_state = {
+				state_region = {
+					is_homeland = scope:relevant_culture_scope
+					NOT = {
+						s:STATE_ISTRIA ?= this
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				any_subject_or_below = {
+					country_has_primary_culture = scope:relevant_culture_scope
+				}
+			}
+			ordered_subject_or_below = {
+				limit = {
+					country_has_primary_culture = scope:relevant_culture_scope
+				}
+				order_by = country_rank
+				position = 0
+				check_range_bounds = no
+				save_temporary_scope_as = croatia_scope
+			}
+			custom_tooltip = {
+				text = transfer_relevant_culture_states_to_croatia_tt
+				every_scope_state = {
+					limit = {
+						state_region = {
+							is_homeland = scope:relevant_culture_scope
+							NOT = {
+								s:STATE_ISTRIA ?= this
+							}
+						}
+					}
+					set_state_owner = scope:croatia_scope
+				}
+			}
+		}
+		else = {
+			custom_tooltip = {
+				text = release_relevant_culture_states_tt
+				random_scope_state = {
+					limit = {
+						state_region = {
+							is_homeland = scope:relevant_culture_scope
+						}
+					}
+					ROOT = {
+						create_country = {
+							origin = root
+							tag = CRO
+							state = PREV
+						}
+					}
+				}
+				c:CRO ?= {
+					save_temporary_scope_as = croatia_scope
+					ROOT = {
+						every_scope_state = {
+							limit = {
+								state_region = {
+									is_homeland = scope:relevant_culture_scope
+									NOT = {
+										s:STATE_ISTRIA ?= this
+									}
+								}
+							}
+							set_state_owner = scope:croatia_scope
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+release_north_italian_states = {
+	cu:north_italian = {
+		save_temporary_scope_as = relevant_culture_scope
+	}
+	if = {
+		limit = {
+			any_scope_state = {
+				NOT = {
+					state_region = s:STATE_ISTRIA
+				}
+				state_region = {
+					is_homeland = scope:relevant_culture_scope
+					NOT = {
+						is_homeland = cu:south_german
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				any_subject_or_below = {
+					country_has_primary_culture = scope:relevant_culture_scope
+				}
+			}
+			ordered_subject_or_below = {
+				limit = {
+					country_has_primary_culture = scope:relevant_culture_scope
+				}
+				order_by = country_rank
+				position = 0
+				check_range_bounds = no
+			}
+			custom_tooltip = {
+				text = transfer_relevant_culture_states_to_lombardia_tt
+				every_scope_state = {
+					limit = {
+						NOT = {
+							state_region = s:STATE_ISTRIA
+						}
+						state_region = {
+							is_homeland = scope:relevant_culture_scope
+							NOT = {
+								is_homeland = cu:south_german
+							}
+						}
+					}
+				}
+			}
+		}
+		else = {
+			custom_tooltip = {
+				text = release_relevant_culture_states_tt
+				random_scope_state = {
+					limit = {
+						NOT = {
+							state_region = s:STATE_ISTRIA
+						}
+						state_region = {
+							is_homeland = scope:relevant_culture_scope
+							NOT = {
+								is_homeland = cu:south_german
+							}
+						}
+					}
+					ROOT = {
+						create_country = {
+							origin = root
+							tag = LOM
+							state = PREV
+						}
+					}
+				}
+				c:LOM ?= {
+					ROOT = {
+						every_scope_state = {
+							limit = {
+								NOT = {
+									state_region = s:STATE_ISTRIA
+								}
+								state_region = {
+									is_homeland = scope:relevant_culture_scope
+									NOT = {
+										is_homeland = cu:south_german
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+release_polish_states = {
+	cu:polish = {
+		save_temporary_scope_as = relevant_culture_scope
+	}
+	if = {
+		limit = {
+			any_scope_state = {
+				state_region = {
+					OR = {
+						is_homeland = scope:relevant_culture_scope
+						s:STATE_BUKOVINA ?= this
+					}
+					NOR = {
+						is_homeland = cu:south_german
+						is_homeland = cu:north_german
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				any_subject_or_below = {
+					country_has_primary_culture = scope:relevant_culture_scope
+				}
+			}
+			ordered_subject_or_below = {
+				limit = {
+					country_has_primary_culture = scope:relevant_culture_scope
+				}
+				order_by = country_rank
+				position = 0
+				check_range_bounds = no
+				save_temporary_scope_as = galicia_scope
+			}
+			custom_tooltip = {
+				text = transfer_relevant_culture_states_to_galicia_tt
+				every_scope_state = {
+					limit = {
+						state_region = {
+							OR = {
+								is_homeland = scope:relevant_culture_scope
+								s:STATE_BUKOVINA ?= this
+							}
+							NOR = {
+								is_homeland = cu:south_german
+								is_homeland = cu:north_german
+							}
+						}
+					}
+					set_state_owner = scope:galicia_scope
+				}
+			}
+		}
+		else = {
+			custom_tooltip = {
+				text = release_relevant_culture_states_tt
+				random_scope_state = {
+					limit = {
+						state_region = {
+							OR = {
+								is_homeland = scope:relevant_culture_scope
+								s:STATE_BUKOVINA ?= this
+							}
+							NOR = {
+								is_homeland = cu:south_german
+								is_homeland = cu:north_german
+							}
+						}
+					}
+					ROOT = {
+						create_country = {
+							origin = root
+							tag = GAL
+							state = PREV
+						}
+					}
+				}
+				c:GAL ?= {
+					save_temporary_scope_as = galicia_scope
+					ROOT = {
+						every_scope_state = {
+							limit = {
+								state_region = {
+									OR = {
+										is_homeland = scope:relevant_culture_scope
+										s:STATE_BUKOVINA ?= this
+									}
+									NOR = {
+										is_homeland = cu:south_german
+										is_homeland = cu:north_german
+									}
+								}
+							}
+							set_state_owner = scope:galicia_scope
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+release_hungarian_states_puppet = {
+	cu:hungarian = {
+		save_temporary_scope_as = relevant_culture_scope
+	}
+	custom_tooltip = {
+		text = release_relevant_culture_states_as_puppets_tt
+		release_hungarian_states = yes
+		if = {
+			limit = {
+				exists = scope:hungary_scope
+			}
+			create_diplomatic_pact = {
+				country = scope:hungary_scope
+				type = puppet
+			}
+		}
+	}
+}
+
+release_croat_states_puppet = {
+	cu:croat = {
+		save_temporary_scope_as = relevant_culture_scope
+	}
+	custom_tooltip = {
+		text = release_relevant_culture_states_as_puppets_tt
+		release_croat_states = yes
+		if = {
+			limit = {
+				exists = scope:croatia_scope
+			}
+			create_diplomatic_pact = {
+				country = scope:croatia_scope
+				type = puppet
+			}
+		}
+	}
+}
+
+release_north_italian_states_puppet = {
+	cu:north_italian = {
+		save_temporary_scope_as = relevant_culture_scope
+	}
+	custom_tooltip = {
+		text = release_relevant_culture_states_as_puppets_tt
+		release_north_italian_states = yes
+		if = {
+			limit = {
+				always = no
+			}
+		}
+	}
+}
+
+release_polish_states_puppet = {
+	cu:polish = {
+		save_temporary_scope_as = relevant_culture_scope
+	}
+	custom_tooltip = {
+		text = release_relevant_culture_states_as_puppets_tt
+		release_polish_states = yes
+		if = {
+			limit = {
+				exists = scope:galicia_scope
+			}
+			create_diplomatic_pact = {
+				country = scope:galicia_scope
+				type = puppet
+			}
+		}
+	}
+}
+
+release_greater_germany_nations = {
+	release_hungarian_states = yes
+	release_croat_states = yes
+	release_north_italian_states = yes
+	release_polish_states = yes
+	if = {
+		limit = {
+			exists = scope:hungary_scope
+		}
+		scope:hungary_scope ?= {
+			make_independent = yes
+		}
+	}
+	if = {
+		limit = {
+			exists = scope:croatia_scope
+		}
+		scope:croatia_scope ?= {
+			make_independent = yes
+		}
+	}
+	if = {
+		limit = {
+			always = no
+		}
+	}
+	if = {
+		limit = {
+			exists = scope:galicia_scope
+		}
+		scope:galicia_scope ?= {
+			make_independent = yes
+		}
+	}
+}
+
+release_greater_germany_puppets = {
+	release_hungarian_states_puppet = yes
+	release_croat_states_puppet = yes
+	release_north_italian_states_puppet = yes
+	release_polish_states_puppet = yes
+}
+
+generate_1_common_name = {
+	create_character = {
+		culture = $CULTURE_1$
+		on_created = {
+			place_character_in_void = 3
+		}
+		save_scope_as = name_a_scope
+	}
+}
+
+generate_2_common_name = {
+	create_character = {
+		culture = $CULTURE_1$
+		on_created = {
+			place_character_in_void = 3
+		}
+		save_scope_as = name_a_scope
+	}
+}
+
+generate_3_common_name = {
+	create_character = {
+		culture = $CULTURE_1$
+		on_created = {
+			place_character_in_void = 3
+		}
+		save_scope_as = name_a_scope
+	}
+}
+
+generate_1_noble_name = {
+	create_character = {
+		noble = yes
+		culture = $CULTURE_1$
+		on_created = {
+			place_character_in_void = 3
+		}
+		save_scope_as = name_a_scope
+	}
+}
+
+generate_2_noble_name = {
+	create_character = {
+		noble = yes
+		culture = $CULTURE_1$
+		on_created = {
+			place_character_in_void = 3
+		}
+		save_scope_as = name_a_scope
+	}
+}
+
+generate_3_noble_name = {
+	create_character = {
+		noble = yes
+		culture = $CULTURE_1$
+		on_created = {
+			place_character_in_void = 3
+		}
+		save_scope_as = name_a_scope
+	}
+}
+
+generate_1_common_female_name = {
+	create_character = {
+		female = yes
+		culture = $CULTURE_1$
+		on_created = {
+			place_character_in_void = 3
+		}
+		save_scope_as = name_a_scope
+	}
+}
+
+clear_generated_names = {
+	hidden_effect = {
+		if = {
+			limit = {
+				exists = scope:name_a_scope
+				scope:name_a_scope ?= {
+					is_character_alive = yes
+				}
+			}
+			scope:name_a_scope = {
+				kill_character = {
+					hidden = yes
+				}
+			}
+		}
+		if = {
+			limit = {
+				always = no
+				always = no
+			}
+		}
+		if = {
+			limit = {
+				always = no
+				always = no
+			}
+		}
+	}
+}
+
+danubian_federation_calculate_path_to_victory = { # "You needed worthy opponents", says Gavrilo Princip.
+	if = {
+		limit = {
+			je_danubian_federation_czech_button_visible = yes
+			NOT = {
+				always = no
+			}
+		}
+	}
+	if = {
+		limit = {
+			je_danubian_federation_slovak_button_visible = yes
+			NOT = {
+				always = no
+			}
+		}
+	}
+	if = {
+		limit = {
+			je_danubian_federation_polish_button_visible = yes
+			NOT = {
+				always = no
+			}
+		}
+	}
+	if = {
+		limit = {
+			je_danubian_federation_hungarian_button_visible = yes # Hungarians
+			NOT = {
+				always = no
+			}
+		}
+	}
+	if = {
+		limit = {
+			je_danubian_federation_hungarian_button_visible = yes # Szekely
+			NOT = {
+				always = no
+			}
+		}
+	}
+	if = {
+		limit = {
+			je_danubian_federation_slovene_button_visible = yes
+			NOT = {
+				always = no
+			}
+		}
+	}
+	if = {
+		limit = {
+			je_danubian_federation_croat_button_visible = yes
+			NOT = {
+				always = no
+			}
+		}
+	}
+	if = {
+		limit = {
+			je_danubian_federation_romanian_button_visible = yes
+			NOT = {
+				always = no
+			}
+		}
+	}
+	if = {
+		limit = {
+			je_danubian_federation_north_italian_button_visible = yes
+			NOT = {
+				always = no
+			}
+		}
+	}
+	if = {
+		limit = {
+			je_danubian_federation_serb_button_visible = yes
+			NOT = {
+				always = no
+			}
+		}
+	}
+	if = {
+		limit = {
+			je_danubian_federation_ukrainian_button_visible = yes
+			NOT = {
+				always = no
+			}
+		}
+	}
+}
+
+crown_land_republic_effect = {
+	if = {
+		limit = {
+			any_subject_or_below = {
+				is_subject_type = subject_type_crown_land
+				is_direct_subject_of = ROOT
+			}
+		}
+		every_subject_or_below = {
+			limit = {
+				is_subject_type = subject_type_crown_land
+				is_direct_subject_of = ROOT
+			}
+			change_subject_type = subject_type_puppet
+		}
+	}
+}
+
+ser_save_contender_of_rival_dynasty_as_scope = {
+	if = {
+		limit = {
+			ruler = {
+				always = no
+			}
+		}
+		random_scope_character = {
+			limit = {
+				always = no
+			}
+			save_scope_as = rival_dynasty_contender_scope
+		}
+	}
+	if = {
+		limit = {
+			ruler = {
+				always = no
+			}
+		}
+		random_scope_character = {
+			limit = {
+				always = no
+			}
+			save_scope_as = rival_dynasty_contender_scope
+		}
+	}
+}
+
+ser_generate_obrenovic_ruler = {
+	if = {
+		limit = {
+			game_date >= 1876.8.14
+		}
+		create_character = {
+			template = SER_alexander_obrenovic
+			on_created = {
+				set_character_as_ruler = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			game_date >= 1854.8.22
+		}
+		create_character = {
+			template = SER_milan_iv_obrenovic
+			on_created = {
+				set_character_as_ruler = yes
+			}
+		}
+	}
+	else = {
+		create_character = {
+			template = SER_mihailo_obrenovic
+			on_created = {
+				set_character_as_ruler = yes
+			}
+		}
+	}
+}
+
+ser_generate_karadordevic_ruler = {
+	if = {
+		limit = {
+			game_date >= 1923.9.6
+		}
+		create_character = {
+			template = SER_petar_ii_karadordevic
+			on_created = {
+				set_character_as_ruler = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			game_date >= 1888.12.16
+		}
+		create_character = {
+			template = SER_alexander_i_karadordevic
+			on_created = {
+				set_character_as_ruler = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			game_date >= 1887.9.8
+		}
+		create_character = {
+			template = SER_george_karadordevic
+			on_created = {
+				set_character_as_ruler = yes
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			game_date >= 1844.8.14
+		}
+		create_character = {
+			template = SER_petar_i_karadordevic
+			on_created = {
+				set_character_as_ruler = yes
+			}
+		}
+	}
+	else = {
+		create_character = {
+			template = SER_alexandar_karadordevic
+			on_created = {
+				set_character_as_ruler = yes
+			}
+		}
+	}
+}
+
+ser_generate_rival_dynasty_ruler = {
+	if = {
+		limit = {
+			ruler = {
+				always = no
+			}
+		}
+		ser_generate_karadordevic_ruler = yes
+		random_scope_character = {
+			limit = {
+				always = no
+			}
+			save_scope_as = rival_dynasty_contender_scope
+		}
+	}
+	else_if = {
+		limit = {
+			ruler = {
+				always = no
+			}
+		}
+		ser_generate_obrenovic_ruler = yes
+		random_scope_character = {
+			limit = {
+				always = no
+			}
+			save_scope_as = rival_dynasty_contender_scope
+		}
+	}
+}
+
+grunderzeit_variable_cleanup = {
+	if = {
+		limit = {
+			has_global_variable = grunderzeit_ongoing_global_var
+		}
+		remove_global_variable = grunderzeit_ongoing_global_var
+	}
+	if = {
+		limit = {
+			has_global_variable = grunderzeit_combined_gdp_global_var_baseline
+		}
+		remove_global_variable = grunderzeit_combined_gdp_global_var_baseline
+	}
+	if = {
+		limit = {
+			has_global_variable = grunderzeit_combined_gdp_global_var_goal
+		}
+		remove_global_variable = grunderzeit_combined_gdp_global_var_goal
+	}
+	if = {
+		limit = {
+			has_global_variable = grunderzeit_combined_gdp_global_var_actual
+		}
+		remove_global_variable = grunderzeit_combined_gdp_global_var_actual
+	}
+	if = {
+		limit = {
+			has_variable = grunderzeit_started_var
+		}
+		remove_variable = grunderzeit_started_var
+	}
+	if = {
+		limit = {
+			has_variable = grunderzeit_quarterly_count_1
+		}
+		remove_variable = grunderzeit_quarterly_count_1
+	}
+	if = {
+		limit = {
+			has_variable = grunderzeit_quarterly_count_2
+		}
+		remove_variable = grunderzeit_quarterly_count_2
+	}
+	if = {
+		limit = {
+			has_variable = grunderzeit_quarterly_count_3
+		}
+		remove_variable = grunderzeit_quarterly_count_3
+	}
+}
+
+clear_springtime_revolution_variables = {
+	if = {
+		limit = {
+			always = no
+		}
+	}
+	if = {
+		limit = {
+			always = no
+		}
+	}
+	if = {
+		limit = {
+			has_variable = had_springtime_revolution
+		}
+		remove_variable = had_springtime_revolution
+	}
+}
+
+reset_springtime_variables = {
+	if = {
+		limit = {
+			always = no
+		}
+	}
+	if = {
+		limit = {
+			has_variable = peoples_springtime_conservative_victory
+		}
+		remove_variable = peoples_springtime_conservative_victory
+	}
+	clear_springtime_revolution_variables = yes
+}

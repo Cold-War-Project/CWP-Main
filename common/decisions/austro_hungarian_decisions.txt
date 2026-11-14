@@ -1,0 +1,197 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+decision_found_budapest = {
+	is_shown = {
+		NOT = {
+			has_global_variable = budapest_founded_global_var
+		}
+		any_scope_state = {
+			state_region = s:STATE_CENTRAL_HUNGARY
+		}
+	}
+
+	possible = {
+		has_technology_researched = modern_sewerage
+		any_scope_state = {
+			state_region = s:STATE_CENTRAL_HUNGARY
+			is_capital = yes
+			any_scope_building = {
+				is_building_type = building_urban_center
+				level >= 3
+			}
+			any_scope_building = {
+				is_building_type = building_railway
+			}
+		}
+		trigger_if = {
+			limit = {
+				c:HUN ?= this
+			}
+			NOT = {
+				is_subject_type = subject_type_crown_land
+			}
+		}
+	}
+
+	when_taken = {
+		custom_tooltip = decision_found_budapest_tt
+		set_global_variable = budapest_founded_global_var
+		hidden_effect = { # To deal with tooltip wonkiness
+			trigger_event = { id = hungary_events.1 popup = yes }
+		}
+		random_scope_state = {
+			limit = {
+				state_region = s:STATE_CENTRAL_HUNGARY
+			}
+			STATE_CENTRAL_HUNGARY_state_name_assign = yes
+		}
+		custom_tooltip = choose_one_of_tt
+		show_as_tooltip = {
+			s:STATE_CENTRAL_HUNGARY.region_state:HUN = {
+				add_modifier = {
+					name = modifier_budapest_steam_mills
+					days = long_modifier_time
+				}
+			}
+			s:STATE_CENTRAL_HUNGARY.region_state:HUN = {
+				add_modifier = {
+					name = modifier_budapest_paris_of_the_east
+					days = long_modifier_time
+				}
+			}
+			trigger_event = { id = hungary_events.1 popup = yes }
+		}
+	}
+
+	ai_chance = {
+		value = 10
+	}
+}
+
+decision_move_capital_to_buda = {
+	is_shown = {
+		NOT = {
+			has_variable = budapest_made_capital_var
+		}
+		any_scope_state = {
+			state_region = s:STATE_CENTRAL_HUNGARY
+		}
+		c:HUN ?= this
+	}
+
+	possible = {
+		NOT = {
+			capital = {
+				state_region = s:STATE_CENTRAL_HUNGARY
+			}
+		}
+		NOT = {
+			is_subject_type = subject_type_crown_land
+		}
+	}
+
+	when_taken = {
+		set_capital = STATE_CENTRAL_HUNGARY
+		set_variable = budapest_made_capital_var
+		random_scope_state = {
+			limit = {
+				state_region = s:STATE_CENTRAL_HUNGARY
+			}
+			add_modifier = {
+				name = modifier_buda_made_capital
+				days = long_modifier_time
+			}
+		}
+		add_loyalists = {
+			culture = cu:hungarian
+			value = small_radicals
+		}
+	}
+
+	ai_chance = {
+		value = 10
+	}
+}
+
+decision_demand_hungary_revoke_laws = {
+	is_shown = {
+		c:AUS ?= this
+		NOT = {
+			always = no
+		}
+		has_journal_entry = je_matter_of_hungary
+		c:HUN ?= {
+			is_subject_of = root
+			NOT = {
+				is_subject_type = subject_type_personal_union
+			}
+			OR = {
+				has_variable = hungarian_revolution_twelve_points_var
+				has_variable = hungarian_revolution_annex_transylvania_button_var
+			}
+		}
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = decision_demand_hungary_revoke_laws_tt
+			always = no
+		}
+		NOT = {
+			c:HUN ?= {
+				is_diplomatic_play_ally_of = ROOT
+			}
+		}
+		NOT = {
+			any_interest_group = {
+				is_in_government = yes
+				is_powerful = yes
+				leader = {
+					OR = {
+						has_progressive_ideology = yes
+						has_liberal_ideology = yes
+						has_socialist_ideology = yes
+					}
+				}
+			}
+		}
+	}
+
+	when_taken = {
+		c:HUN ?= {
+			save_temporary_scope_as = hungary_country_scope
+		}
+ 		c:HUN ?= {
+ 			trigger_event = { id = hungary_events.6 popup = yes }
+ 		}
+ 		change_relations = { country = c:HUN value = -30 }
+ 		custom_tooltip = hungary_likely_lead_to_war_tt
+ 		create_diplomatic_catalyst = {
+ 			type = catalyst_event_negative
+ 			target = c:HUN
+ 		}
+ 		add_radicals = {
+ 			culture = cu:hungarian
+ 			value = medium_radicals
+ 		}
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				ruler = {
+					NOT = {
+						has_trait = compliant
+					}
+				}
+			}
+			add = 5
+		}
+		if = {
+			limit = {
+				is_at_war = no
+			}
+			add = 5
+		}
+	}
+}

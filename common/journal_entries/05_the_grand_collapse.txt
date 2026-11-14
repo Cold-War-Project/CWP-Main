@@ -1,0 +1,174 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+je_the_grand_collapse = {
+
+	group = je_group_historical_content
+
+	activation_description = {
+		always = yes
+	}
+
+	icon = "gfx/interface/icons/event_icons/event_skull.dds"
+
+	scripted_button = je_the_grand_collapse_bribe_politicians_button
+	scripted_button = je_the_grand_collapse_issue_khutbah_button
+	scripted_button = je_the_grand_collapse_law_speed_start_button
+	scripted_button = je_the_grand_collapse_law_speed_stop_button
+	scripted_button = je_the_grand_collapse_relation_speed_start_button
+	scripted_button = je_the_grand_collapse_relation_Speed_stop_button
+
+		
+	should_be_pinned_by_default_uninvolved_or_context = yes
+	weight = 10000
+
+	is_shown_when_inactive = {
+		c:TUR ?= this
+		NOT = {
+			always = no
+		}
+	}
+
+	on_monthly_pulse = {
+		random_events = {
+			200 = 0
+			20 = the_grand_collapse.2 #Any Port in a Storm
+		}
+	}
+
+	possible = {
+		c:TUR ?= this
+		custom_tooltip = {
+			NOT = {
+				always = no
+			}
+			text = the_grand_collapse_not_succeeded_tanzimat_tt
+		}
+		OR = {
+			NOR = {
+				has_law = law_type:law_monarchy
+				has_law_or_variant = law_type:law_theocracy
+			}
+			AND = {
+				is_country_type = unrecognized
+				any_civil_war = {
+					civil_war_progress >= 0.75
+					is_civil_war_type = revolution
+				}
+			}
+		}
+	}
+
+	immediate = {
+		custom_tooltip = ten_years_to_collapse_tt
+		trigger_event = the_grand_collapse.1
+		set_variable = grand_collapse_started
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			custom_tooltip = {
+				text = is_not_in_civil_war_tt
+				any_civil_war = {
+					count = 0
+				}
+			}
+			trigger_if = {
+				limit = {
+					is_player = yes
+				}
+				OR = {
+					has_law = law_type:law_monarchy
+					has_law_or_variant = law_type:law_theocracy
+				}
+				radical_fraction = {
+					value < 0.1
+				}
+				ig:ig_intelligentsia ?= {
+					is_in_government = no
+				}
+			}
+			government_legitimacy > 80
+			trigger_if =  {
+				limit = {
+					any_subject_or_below = {
+						count > 0
+					}
+				}
+				any_subject_or_below = {
+					relations:root >= relations_threshold:cordial
+				}
+			}
+			any_interest_group = {
+				ig_approval >= happy
+				count >= 3
+			}
+		}
+		effect = {
+			trigger_event = the_grand_collapse.4
+			hidden_effect = {
+				the_grand_collapse_mod_cleanser = yes
+			}
+		}
+		event_outcome_desc = {
+			first_valid = {
+				triggered_desc = {
+					desc = event_effects_the_grand_collapse.4_tt
+				}
+			}
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			is_at_war = no
+			any_scope_state = {
+				NOT = {
+					region = sr:region_near_east
+				}
+				count = 0
+			}
+		}
+		effect = {
+			je_the_grand_collapse_cleanup = yes
+			the_grand_collapse_mod_cleanser = yes
+		}
+	}
+
+	outcome = {
+		header = JOURNAL_ENTRY_TIMEOUT
+		effect_header = JOURNAL_ENTRY_ON_TIMEOUT
+		flags = { timeout }
+		conclusion_desc = JOURNAL_ENTRY_TIMEOUT_CONCLUSION_DESC
+		effect = {
+			trigger_event = the_grand_collapse.5
+			hidden_effect = {
+				the_grand_collapse_mod_cleanser = yes
+			}
+		}
+		event_outcome_desc = {
+			first_valid = {
+				triggered_desc = {
+					trigger = {
+						has_law = law_type:law_autocracy
+					}
+					desc = event_effects_the_grand_collapse.5_autocracy_tt
+				}
+				triggered_desc = {
+					trigger = {
+						NOT = {
+							has_law = law_type:law_autocracy
+						}
+					}
+					desc = event_effects_the_grand_collapse.5_tt
+				}
+			}
+		}
+	}
+
+	timeout = 3650
+}

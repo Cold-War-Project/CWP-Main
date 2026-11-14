@@ -1,0 +1,428 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+je_montenegrin_raiding_increase_button = {
+	name = "je_montenegrin_raiding_increase_button"
+	desc = "je_montenegrin_raiding_increase_button_desc"
+
+	ai_chance = {
+		value = -10
+		if = {
+			limit = {
+				exists = c:RUS
+			}
+			add = {
+				value = "c:RUS.relations(root)"
+			}
+		}
+		if = {
+			limit = {
+				ROOT.scaled_debt > 0
+			}
+			add = {
+				value = ROOT.scaled_debt
+				multiply = 100
+			}
+		}
+		subtract = {
+			value = var:raiding_intensity
+			divide = 4
+		}
+		if = { # Decreases chance to do this if it has just done less raiding
+			limit = {
+				has_variable = mon_less_raiding
+			}
+			add = -25
+		}
+	}
+
+	visible = {
+		has_journal_entry = je_montenegrin_raiding
+	}
+
+	cooldown = { months = 12 }
+
+	possible = {
+		hidden_trigger = {
+			var:raiding_intensity <= 75
+		}
+		NOT = {
+			custom_tooltip = {
+				text = mon_more_raiding_tt
+				has_variable = mon_more_raiding
+			}
+		}
+	}
+
+	effect = {
+		custom_tooltip = {
+			text = mon_more_heads_tt
+			change_variable = {
+				name = raiding_intensity
+				add = 25
+			}
+			remove_modifier = modifier_montenegrin_raiding
+			add_modifier = {
+				name = modifier_montenegrin_raiding
+				multiplier = raiding_income
+			}
+			remove_modifier = modifier_montenegrin_disobedience
+			add_modifier = {
+				name = modifier_montenegrin_disobedience
+				multiplier = var:raiding_intensity
+			}
+		}
+		c:RUS ?= {
+			change_relations = {
+				country = root
+				value = -10
+			}
+		}
+		c:TUR ?= {
+			change_relations = {
+				country = root
+				value = -20
+			}
+		}
+		set_variable = {
+			name = mon_more_raiding
+			months = 12
+		}
+		je:je_montenegrin_raiding = {
+			set_bar_progress = {
+				value = root.var:raiding_intensity
+				name = montenegrin_raiding_progress_bar
+			}
+		}
+	}
+}
+
+je_montenegrin_raiding_decrease_button = {
+	name = "je_montenegrin_raiding_decrease_button"
+	desc = "je_montenegrin_raiding_decrease_button_desc"
+
+	visible = {
+		has_journal_entry = je_montenegrin_raiding
+	}
+
+	ai_chance = {
+		value = -10
+		if = {
+			limit = {
+				exists = c:RUS
+			}
+			add = {
+				value = 0 # Chance increases as Russian relations decrease
+				subtract = "c:RUS.relations(root)"
+			}
+		}
+		if = {
+			limit = {
+				ROOT.scaled_debt = 0
+				net_fixed_income >= 0
+			}
+			add = 15
+		}
+		add = {
+			value = var:raiding_intensity
+			divide = 4
+		}
+		### Hard brake - if Russian relations get too low, will always use this
+		if = {
+			limit = {
+				c:RUS ?= {
+					relations:root < -25
+				}
+				ROOT.scaled_debt < 0.25
+			}
+			add = 200
+		}
+		else_if = {
+			limit = {
+				c:RUS ?= {
+					relations:root < -25
+				}
+				ROOT.scaled_debt < 0.5
+			}
+			add = 100
+		}
+		else_if = { # Will not do this if it has just increased raiding
+			limit = {
+				c:RUS ?= {
+					relations:root > 10
+				}
+				ROOT.gold_reserves > 0
+			}
+			multiply = 0
+		}
+		if = { # Decreases chance to do this if it has just done more raiding
+			limit = {
+				has_variable = mon_more_raiding
+			}
+			add = -25
+		}
+	}
+
+	cooldown = { months = 6 }
+
+	possible = {
+		hidden_trigger = {
+			var:raiding_intensity >= 25
+		}
+		NOT = {
+			custom_tooltip = {
+				text = mon_less_raiding_tt
+				has_variable = mon_less_raiding
+			}
+		}
+	}
+
+	effect = {
+		custom_tooltip = {
+			text = mon_discourage_raiding_tt
+			change_variable = {
+				name = raiding_intensity
+				add = -25
+			}
+			remove_modifier = modifier_montenegrin_raiding
+			add_modifier = {
+				name = modifier_montenegrin_raiding
+				multiplier = raiding_income
+			}
+			remove_modifier = modifier_montenegrin_disobedience
+			add_modifier = {
+				name = modifier_montenegrin_disobedience
+				multiplier = var:raiding_intensity
+			}
+		}
+		c:RUS ?= {
+			change_relations = {
+				country = root
+				value = 5
+			}
+		}
+		c:TUR ?= {
+			change_relations = {
+				country = root
+				value = 15
+			}
+		}
+		set_variable = {
+			name = mon_less_raiding
+			months = 6
+		}
+		je:je_montenegrin_raiding = {
+			set_bar_progress = {
+				value = root.var:raiding_intensity
+				name = montenegrin_raiding_progress_bar
+			}
+		}
+	}
+}
+
+je_montenegrin_visit_moscow = {
+	name = "je_montenegrin_visit_moscow"
+	desc = "je_montenegrin_visit_moscow_desc"
+
+	ai_chance = {
+		value = 2
+		if = { # Will always do this if relations with Russia get too low
+			limit = {
+				"c:RUS.relations(root)" < -10
+			}
+			add = 100
+		}
+		if = { # Will never do this if it has too many radicals
+			limit = {
+				radical_fraction = {
+					value <= 0.20
+				}
+			}
+			add = -100
+		}
+	}
+
+	visible = {
+		exists = c:RUS
+		has_journal_entry = je_mon_state_formation
+	}
+
+	cooldown = { months = 120 }
+
+	possible = {
+		custom_tooltip = {
+		text = mon_visiting_moscow_tt
+			ROOT.Ruler = {
+				NOT = {
+					is_busy = yes
+				}
+			}
+		}
+		custom_tooltip = {
+		text = mon_visited_moscow_tt
+			NOT = {
+				ROOT.Ruler = {
+					has_variable = mon_visited_moscow
+				}
+			}
+		}
+	}
+
+	effect = {
+		add_modifier = {
+			name = modifier_mon_no_passing_laws
+			months = 25
+		}
+		ROOT.Ruler = {
+			set_variable = {
+				name = mon_visited_moscow
+				months = 120
+			}
+		}
+		trigger_event = {
+			id = mon_state_formation.2
+			days = 730
+			popup = yes
+		}
+	}
+}
+
+
+je_montenegrin_make_saint = {
+	name = "je_montenegrin_make_saint"
+	desc = "je_montenegrin_make_saint_desc"
+
+	ai_chance = {
+		value = -3 # Token amount to make Montenegro wait a bit before doing this
+		add = {
+			value = gold_reserves
+			divide = 10000
+		}
+	}
+
+	visible = {
+		NOT = {
+			always = no
+		}
+		has_journal_entry = je_mon_state_formation
+		exists = ROOT.Ruler
+	}
+
+	possible = {
+		custom_tooltip = {
+		text = mon_visiting_moscow_tt
+			ROOT.Ruler = {
+				NOT = {
+					is_busy = yes
+				}
+			}
+		}
+		gold_reserves > 15000
+	}
+
+	effect = {
+		add_modifier = {
+			name = mon_saint_nephew
+			days = long_modifier_time
+			is_decaying = yes
+		}
+		add_treasury = -15000
+		ig:ig_devout ?= {
+			add_modifier = {
+				name = saints_are_nice
+				days = long_modifier_time
+				is_decaying = yes
+			}
+		}
+		trigger_event = {
+			id = mon_state_formation.3
+			days = 0
+			popup = yes
+		}
+	}
+}
+
+
+je_montenegrin_tur_raid_back = {
+	name = "je_montenegrin_tur_raid_back"
+	desc = "je_montenegrin_tur_raid_back_desc"
+
+	visible = {
+		is_player = yes
+		has_journal_entry = je_tur_raided
+		c:MON ?= {
+			is_country_alive = yes
+			is_player = no
+			is_subject = no
+		}
+	}
+
+	ai_chance = { #Mon event handles balance. This event is only for players.
+		value = 0
+	}
+
+	cooldown = { years = 3 }
+
+	possible = {
+		hidden_trigger = {
+			is_player = yes
+		}
+		NOR = {
+			custom_tooltip = {
+				text = counterraided_recently_tt
+				has_variable = counterraided_recently
+			}
+			is_at_war = yes
+			is_diplomatic_play_committed_participant = yes
+		}
+		c:MON ?= {
+			NOR = {
+				is_at_war = yes
+				is_diplomatic_play_committed_participant = yes
+				is_diplomatic_play_undecided_participant = yes
+				is_player = yes #if both are players, event handles balance.
+			}
+		}
+		custom_tooltip = {
+			text = je_montenegrin_tur_raid_back_condition_tt
+			c:MON ?= {
+				is_country_alive = yes
+				raiding_income > 0
+			}
+		}
+	}
+
+	effect = {
+		if = {
+			limit = {
+				exists = c:RUS
+			}
+			create_diplomatic_catalyst = {
+			type = catalyst_event_negative
+			target = c:RUS
+			}
+			change_relations = {
+				country = c:RUS
+				value = -30
+			}
+		}
+		change_infamy = 7
+		custom_tooltip = {
+			text = je_montenegrin_tur_raid_back_effects_tt
+			c:MON ?= {
+				destroy_barracks = yes
+			}
+		}
+		every_scope_state = {
+			limit = {
+				has_modifier = raid_target
+			}
+			remove_modifier = raid_target
+			remove_global_variable = mon_raid_state
+		}
+		hidden_effect = {
+			set_variable = {
+				name = counterraided_recently
+				years = 3
+			}
+		}
+	}
+}

@@ -1,0 +1,140 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+# triggered by on_law_enactment_started
+je_abolish_monarchy = {
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+
+	group = je_group_internal_affairs
+
+	activation_description = {
+		always = yes
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			if = {
+				limit = {
+					NOT = { country_has_monarchy_law = yes }
+					NOT = {
+						any_civil_war = {
+							civil_war_progress >= 0.75
+							is_civil_war_type = revolution
+						}
+					}
+					NOT = {
+						any_interest_group = {
+							law_stance = {
+								law = law_type:law_monarchy
+								value > neutral
+							}
+							is_powerful = yes
+						}
+					}
+				}
+				change_variable = {
+					name = abolishing_monarchy_var
+					add = 1
+				}
+			}
+		}
+	}
+
+	immediate = {
+		ig:ig_landowners ?= {
+			save_scope_as = landowners_ig
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			scope:journal_entry = {
+				is_goal_complete = yes
+			}
+			NOT = { country_has_monarchy_law = yes }
+			NOT = {
+				any_civil_war = {
+					civil_war_progress >= 0.75
+					is_civil_war_type = revolution
+				}
+			}
+			NOT = {
+				any_interest_group = {
+					law_stance = {
+						law = law_type:law_monarchy
+						value > neutral
+					}
+					is_powerful = yes
+				}
+			}
+		}
+		effect = {
+			ig:ig_intelligentsia ?= {
+				if = {
+					limit = {
+						has_ideology = ideology:ideology_autocratic
+					}
+					remove_ideology = ideology_autocratic
+					add_ideology = ideology_republican
+				}
+				if = {
+					limit = {
+						has_ideology = ideology:ideology_constitutionalist
+					}
+					remove_ideology = ideology_constitutionalist
+					add_ideology = ideology_republican
+				}
+			}
+			trigger_event = {
+				id = 1848.2
+			}
+			if = {
+				limit = { has_journal_entry = je_warlord_china }
+				chi_add_1_fragile_unity = yes
+				set_variable = china_warlord_abolished_monarchy
+			}
+		}
+		event_outcome_desc = {
+			first_valid = {
+				triggered_desc = {
+					desc = event_effects_1848.2_tt
+				}
+			}
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			NOR = {
+				is_enacting_law = law_type:law_presidential_republic
+				is_enacting_law = law_type:law_parliamentary_republic
+				is_enacting_law = law_type:law_council_republic
+				has_law_or_variant = law_type:law_presidential_republic
+				has_law_or_variant = law_type:law_parliamentary_republic
+				has_law_or_variant = law_type:law_council_republic
+			}
+		}
+		effect = {
+			je_abolish_monarchy_cleanup = yes
+		}
+	}
+
+	current_value = {
+		value = root.var:abolishing_monarchy_var
+	}
+
+	goal_add_value = {
+		add = 60
+	}
+
+	progressbar = yes
+
+	weight = 100
+		
+	should_be_pinned_by_default_uninvolved_or_context = no
+	
+}

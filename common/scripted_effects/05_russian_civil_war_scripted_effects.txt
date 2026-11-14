@@ -1,0 +1,3885 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+rcw_snapshot_effect = {
+	if = {
+		limit = {
+			any_political_movement = {
+				OR = {
+					is_political_movement_type = movement_royalist_absolutist
+					is_political_movement_type = movement_royalist_constitutional
+				}
+				has_core_ideology = ideology:ideology_tsarist_movement
+				political_movement_support >= rcw_monarchist_movement_support
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			always = no
+		}
+	}
+}
+
+rcw_set_camp = {
+	if = {
+		limit = {
+			NOT = { var:rcw_camp ?= flag:rcw_$CAMP$ }
+		}
+		set_variable = {
+			name = rcw_camp
+			value = flag:rcw_$CAMP$
+		}
+		rcw_pick_shade = yes
+	}
+	set_variable = {
+		name = rcw_axis
+		value = $AXIS$
+	}
+}
+
+rcw_pick_shade = {
+	save_temporary_scope_as = rcw_shade_picker
+	if = {
+		limit = {
+			NOT = { rcw_shade_taken_in_camp = { SHADE = 1 } }
+		}
+		set_variable = {
+			name = rcw_shade
+			value = 1
+		}
+	}
+	else_if = {
+		limit = {
+			NOT = { rcw_shade_taken_in_camp = { SHADE = 2 } }
+		}
+		set_variable = {
+			name = rcw_shade
+			value = 2
+		}
+	}
+	else_if = {
+		limit = {
+			NOT = { rcw_shade_taken_in_camp = { SHADE = 3 } }
+		}
+		set_variable = {
+			name = rcw_shade
+			value = 3
+		}
+	}
+	else_if = {
+		limit = {
+			NOT = { rcw_shade_taken_in_camp = { SHADE = 4 } }
+		}
+		set_variable = {
+			name = rcw_shade
+			value = 4
+		}
+	}
+	else_if = {
+		limit = {
+			NOT = { rcw_shade_taken_in_camp = { SHADE = 5 } }
+		}
+		set_variable = {
+			name = rcw_shade
+			value = 5
+		}
+	}
+	else = {
+		set_variable = {
+			name = rcw_shade
+			value = {
+				value = 0
+				every_in_global_list = {
+					variable = rcw_russian_factions
+					limit = {
+						NOT = { this = scope:rcw_shade_picker }
+						has_variable = russian_warlord_country
+						is_country_alive = yes
+						var:rcw_camp ?= scope:rcw_shade_picker.var:rcw_camp
+					}
+					add = 1
+				}
+				modulo = 5
+				add = 1
+			}
+		}
+	}
+}
+
+rcw_sync_camp_to_axis = {
+	if = {
+		limit = {
+			var:rcw_axis <= 0
+		}
+		rcw_set_camp = { CAMP = black AXIS = 0 }
+	}
+	else_if = {
+		limit = {
+			var:rcw_axis <= 1
+		}
+		rcw_set_camp = { CAMP = red AXIS = 1 }
+	}
+	else_if = {
+		limit = {
+			var:rcw_axis <= 2
+		}
+		rcw_set_camp = { CAMP = green AXIS = 2 }
+	}
+	else_if = {
+		limit = {
+			var:rcw_axis <= 3
+		}
+		rcw_set_camp = { CAMP = democratic AXIS = 3 }
+	}
+	else = {
+		rcw_set_camp = { CAMP = white AXIS = 4 }
+	}
+}
+
+rcw_set_camp_from_character_ideology = {
+	if = {
+		limit = {
+			$CHARACTER$ = { rcw_character_ideology_black = yes }
+		}
+		rcw_set_camp = { CAMP = black AXIS = 0 }
+	}
+	else_if = {
+		limit = {
+			$CHARACTER$ = { rcw_character_ideology_red = yes }
+		}
+		rcw_set_camp = { CAMP = red AXIS = 1 }
+	}
+	else_if = {
+		limit = {
+			$CHARACTER$ = { rcw_character_ideology_green = yes }
+		}
+		rcw_set_camp = { CAMP = green AXIS = 2 }
+	}
+	else_if = {
+		limit = {
+			$CHARACTER$ = { rcw_character_ideology_democratic = yes }
+		}
+		rcw_set_camp = { CAMP = democratic AXIS = 3 }
+	}
+	else_if = {
+		limit = {
+			$CHARACTER$ = { rcw_character_ideology_white = yes }
+		}
+		rcw_set_camp = { CAMP = white AXIS = 4 }
+	}
+}
+
+rcw_assign_russia_camp = {
+	if = {
+		limit = {
+			has_law = law_type:law_council_republic
+		}
+		rcw_set_camp = { CAMP = red AXIS = 1 }
+	}
+	else_if = {
+		limit = {
+			has_law = law_type:law_anarchy
+		}
+		rcw_set_camp = { CAMP = black AXIS = 0 }
+	}
+	else_if = {
+		limit = {
+			var:provisional_government_identity ?= flag:conservative
+		}
+		rcw_set_camp = { CAMP = white AXIS = 4 }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				var:provisional_government_identity ?= flag:liberal
+				var:provisional_government_identity ?= flag:socialist
+			}
+		}
+		rcw_set_camp = { CAMP = democratic AXIS = 3 }
+	}
+	else_if = {
+		limit = {
+			exists = ruler
+		}
+		rcw_set_camp_from_character_ideology = { CHARACTER = ruler }
+	}
+	if = {
+		limit = {
+			NOT = { has_variable = rcw_camp }
+		}
+		rcw_set_camp = { CAMP = white AXIS = 4 }
+	}
+}
+
+rcw_assign_revolution_camp = {
+	save_scope_as = rcw_camp_target
+	if = {
+		limit = {
+			exists = scope:rcw_revolution_movement
+		}
+		clear_saved_scope = rcw_revolution_movement
+	}
+	ROOT = {
+		random_civil_war = {
+			limit = {
+				is_civil_war_type = revolution
+			}
+			political_movement ?= {
+				save_scope_as = rcw_revolution_movement
+			}
+		}
+	}
+	scope:rcw_revolution_movement ?= {
+		if = {
+			limit = {
+				rcw_movement_is_black = yes
+			}
+			scope:rcw_camp_target = { rcw_set_camp = { CAMP = black AXIS = 0 } }
+		}
+		else_if = {
+			limit = {
+				rcw_movement_is_red = yes
+			}
+			scope:rcw_camp_target = { rcw_set_camp = { CAMP = red AXIS = 1 } }
+		}
+		else_if = {
+			limit = {
+				rcw_movement_is_green = yes
+			}
+			scope:rcw_camp_target = { rcw_set_camp = { CAMP = green AXIS = 2 } }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					is_political_movement_type = movement_liberal
+					is_political_movement_type = movement_positivist
+				}
+				ROOT.var:rcw_axis = 3
+			}
+			scope:rcw_camp_target = { rcw_set_camp = { CAMP = white AXIS = 4 } }
+		}
+		else_if = {
+			limit = {
+				rcw_movement_is_democratic = yes
+			}
+			scope:rcw_camp_target = { rcw_set_camp = { CAMP = democratic AXIS = 3 } }
+		}
+		else_if = {
+			limit = {
+				rcw_movement_is_white = yes
+			}
+			scope:rcw_camp_target = { rcw_set_camp = { CAMP = white AXIS = 4 } }
+		}
+		else_if = {
+			limit = {
+				is_political_movement_type = movement_socialist
+				ROOT.var:rcw_axis >= 2
+			}
+			scope:rcw_camp_target = { rcw_set_camp = { CAMP = red AXIS = 1 } }
+		}
+		else_if = {
+			limit = {
+				is_political_movement_type = movement_socialist
+			}
+			scope:rcw_camp_target = { rcw_set_camp = { CAMP = democratic AXIS = 3 } }
+		}
+	}
+	if = {
+		limit = {
+			NOT = { has_variable = rcw_camp }
+			exists = ruler
+		}
+		rcw_set_camp_from_character_ideology = { CHARACTER = ruler }
+	}
+	if = {
+		limit = {
+			NOT = { has_variable = rcw_camp }
+		}
+		rcw_set_camp = { CAMP = red AXIS = 1 }
+	}
+	if = {
+		limit = {
+			var:rcw_axis = ROOT.var:rcw_axis
+		}
+		if = {
+			limit = {
+				var:rcw_axis >= 2
+			}
+			change_variable = {
+				name = rcw_axis
+				subtract = 1
+			}
+		}
+		else = {
+			change_variable = {
+				name = rcw_axis
+				add = 1
+			}
+		}
+		rcw_sync_camp_to_axis = yes
+	}
+}
+
+rcw_rederive_war_leader_camp = {
+	if = {
+		limit = {
+			has_law = law_type:law_anarchy
+			NOT = { var:rcw_camp ?= flag:rcw_black }
+		}
+		rcw_set_camp = { CAMP = black AXIS = 0 }
+	}
+	else_if = {
+		limit = {
+			has_law = law_type:law_council_republic
+			NOT = { has_law = law_type:law_anarchy }
+			NOT = { var:rcw_camp ?= flag:rcw_red }
+		}
+		rcw_set_camp = { CAMP = red AXIS = 1 }
+	}
+}
+
+rcw_mark_partition_owners = {
+	set_variable = rcw_russian_faction
+	add_to_global_variable_list = {
+		name = rcw_russian_factions
+		target = this
+	}
+	every_diplomatic_play = {
+		limit = {
+			is_diplomatic_play_type = dp_revolution
+			target_is = ROOT
+		}
+		initiator = {
+			if = {
+				limit = {
+					NOT = { always = no }
+				}
+				set_variable = rcw_russian_faction
+				add_to_global_variable_list = {
+					name = rcw_russian_factions
+					target = this
+				}
+			}
+		}
+	}
+	ordered_country = {
+		limit = {
+			always = no
+			NOT = { this = ROOT }
+		}
+		order_by = rcw_faction_size
+		position = 0
+		check_range_bounds = no
+		if = {
+			limit = {
+				NOT = { exists = c:RSR }
+			}
+			change_tag = RSR
+		}
+	}
+	rcw_assign_russia_camp = yes
+	every_country = {
+		limit = {
+			always = no
+			NOT = { has_variable = rcw_camp }
+		}
+		rcw_assign_revolution_camp = yes
+	}
+	if = {
+		limit = {
+			NOT = { always = no }
+		}
+	}
+}
+
+rcw_build_leader_candidates_effect = {
+	if = {
+		limit = {
+			has_global_variable_list = rcw_leader_candidates
+		}
+		clear_global_variable_list = rcw_leader_candidates
+	}
+	every_character = {
+		limit = {
+			rcw_is_leader_candidate = yes
+		}
+		add_to_global_variable_list = {
+			name = rcw_leader_candidates
+			target = this
+		}
+		rcw_stamp_candidate_camp = yes
+	}
+}
+
+rcw_stamp_candidate_camp = {
+	if = {
+		limit = {
+			political_movement ?= { rcw_movement_is_black = yes }
+		}
+		set_variable = {
+			name = rcw_candidate_camp
+			value = flag:rcw_black
+		}
+	}
+	else_if = {
+		limit = {
+			political_movement ?= { rcw_movement_is_red = yes }
+		}
+		set_variable = {
+			name = rcw_candidate_camp
+			value = flag:rcw_red
+		}
+	}
+	else_if = {
+		limit = {
+			political_movement ?= { rcw_movement_is_green = yes }
+		}
+		set_variable = {
+			name = rcw_candidate_camp
+			value = flag:rcw_green
+		}
+	}
+	else_if = {
+		limit = {
+			political_movement ?= { rcw_movement_is_democratic = yes }
+		}
+		set_variable = {
+			name = rcw_candidate_camp
+			value = flag:rcw_democratic
+		}
+	}
+	else_if = {
+		limit = {
+			political_movement ?= { rcw_movement_is_white = yes }
+		}
+		set_variable = {
+			name = rcw_candidate_camp
+			value = flag:rcw_white
+		}
+	}
+	else_if = {
+		limit = {
+			rcw_character_ideology_black = yes
+		}
+		set_variable = {
+			name = rcw_candidate_camp
+			value = flag:rcw_black
+		}
+	}
+	else_if = {
+		limit = {
+			rcw_character_ideology_red = yes
+		}
+		set_variable = {
+			name = rcw_candidate_camp
+			value = flag:rcw_red
+		}
+	}
+	else_if = {
+		limit = {
+			rcw_character_ideology_green = yes
+		}
+		set_variable = {
+			name = rcw_candidate_camp
+			value = flag:rcw_green
+		}
+	}
+	else_if = {
+		limit = {
+			rcw_character_ideology_democratic = yes
+		}
+		set_variable = {
+			name = rcw_candidate_camp
+			value = flag:rcw_democratic
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				rcw_character_ideology_white = yes
+				has_role_of_type = general
+				has_role_of_type = admiral
+				is_interest_group_type = ig_armed_forces
+				is_interest_group_type = ig_landowners
+				is_interest_group_type = ig_devout
+				is_interest_group_type = ig_industrialists
+			}
+		}
+		set_variable = {
+			name = rcw_candidate_camp
+			value = flag:rcw_white
+		}
+	}
+	else_if = {
+		limit = {
+			is_interest_group_type = ig_trade_unions
+		}
+		set_variable = {
+			name = rcw_candidate_camp
+			value = flag:rcw_red
+		}
+	}
+	else_if = {
+		limit = {
+			is_interest_group_type = ig_rural_folk
+		}
+		set_variable = {
+			name = rcw_candidate_camp
+			value = flag:rcw_green
+		}
+	}
+	else = {
+		set_variable = {
+			name = rcw_candidate_camp
+			value = flag:rcw_democratic
+		}
+	}
+}
+
+rcw_reserve_black_heartland = {
+	if = {
+		limit = {
+			always = no
+		}
+		every_state = {
+			limit = {
+				owner ?= { always = no }
+				is_capital = no
+				OR = {
+					state_region = s:STATE_CHERSON
+					state_region = s:STATE_TAURIDA
+				}
+			}
+			add_to_temporary_list = rcw_black_heartland_states
+		}
+		if = {
+			limit = {
+				list_size = {
+					name = rcw_black_heartland_states
+					value >= rcw_min_faction_states
+				}
+			}
+			every_in_list = {
+				list = rcw_black_heartland_states
+				set_variable = rcw_reserved_black
+			}
+		}
+	}
+}
+
+rcw_drop_unviable_black_reservation = {
+	if = {
+		limit = {
+			NOT = {
+				any_state = {
+					has_variable = rcw_reserved_black
+					NOT = { rcw_state_theatre_retained = yes }
+					count >= rcw_min_faction_states
+				}
+			}
+		}
+		every_state = {
+			limit = {
+				has_variable = rcw_reserved_black
+			}
+			remove_variable = rcw_reserved_black
+		}
+	}
+}
+
+rcw_assign_switch_target = {
+	$TARGET$ = {
+		set_variable = rcw_switch_picked
+		save_temporary_scope_as = rcw_switch_candidate
+	}
+	if = {
+		limit = {
+			NOT = { always = no }
+		}
+	}
+	else_if = {
+		limit = {
+			NOT = { always = no }
+		}
+	}
+	else_if = {
+		limit = {
+			NOT = { always = no }
+		}
+	}
+}
+
+rcw_pick_switch_targets = {
+	c:RSR ?= {
+		if = {
+			limit = {
+				is_player = no
+			}
+		}
+	}
+	c:POL ?= {
+		if = {
+			limit = {
+				rcw_is_switch_candidate = yes
+			}
+			rcw_assign_switch_target = { TARGET = this }
+		}
+	}
+	c:UKR ?= {
+		if = {
+			limit = {
+				rcw_is_switch_candidate = yes
+			}
+			rcw_assign_switch_target = { TARGET = this }
+		}
+	}
+	random_country = {
+		limit = {
+			var:rcw_theatre_key ?= flag:rcw_free_territory
+			rcw_is_switch_candidate = yes
+		}
+		rcw_assign_switch_target = { TARGET = this }
+	}
+	while = {
+		limit = {
+			NOT = { always = no }
+			any_country = {
+				rcw_is_switch_candidate = yes
+			}
+		}
+		ordered_country = {
+			limit = {
+				rcw_is_switch_candidate = yes
+			}
+			order_by = rcw_interesting_value
+			position = 0
+			check_range_bounds = no
+			rcw_assign_switch_target = { TARGET = this }
+		}
+	}
+	every_country = {
+		limit = {
+			has_variable = rcw_switch_picked
+		}
+		remove_variable = rcw_switch_picked
+	}
+}
+
+rcw_release_elevated_ukraine = {
+	if = {
+		limit = {
+			rcw_ukraine_renaissance_elevated = yes
+			NOT = { exists = c:UKR }
+			any_state = {
+				rcw_is_elevated_ukraine_state = yes
+			}
+		}
+		ordered_state = {
+			limit = {
+				rcw_is_elevated_ukraine_state = yes
+			}
+			order_by = state_population
+			position = 0
+			check_range_bounds = no
+			set_variable = rcw_sep_seed_done
+			save_temporary_scope_as = russian_warlord_state
+		}
+		cu:ukrainian = {
+			save_temporary_scope_as = russian_warlord_state_culture
+		}
+		rcw_release_separatist = yes
+		scope:russian_warlord_state.owner ?= {
+			if = {
+				limit = {
+					NOT = { always = no }
+					country_has_primary_culture = cu:ukrainian
+				}
+				save_temporary_scope_as = rcw_elevated_ukraine
+				every_state = {
+					limit = {
+						rcw_is_elevated_ukraine_state = yes
+					}
+					set_state_owner = scope:rcw_elevated_ukraine
+				}
+			}
+		}
+	}
+}
+
+rcw_release_separatists = {
+	every_country = {
+		limit = {
+			always = no
+		}
+		while = {
+			limit = {
+				any_scope_state = {
+					rcw_is_separatist_seed = yes
+				}
+			}
+			ordered_scope_state = {
+				limit = {
+					rcw_is_separatist_seed = yes
+				}
+				order_by = state_population
+				position = 0
+				check_range_bounds = no
+				set_variable = rcw_sep_seed_done
+				save_temporary_scope_as = russian_warlord_state
+				ordered_scope_culture = {
+					limit = {
+						has_homeland = scope:russian_warlord_state
+						NOT = { this = cu:russian }
+					}
+					order_by = "scope:russian_warlord_state.culture_percent_state(this)"
+					position = 0
+					check_range_bounds = no
+					if = {
+						limit = {
+							culture_current_fervor >= 10
+						}
+						save_temporary_scope_as = russian_warlord_state_culture
+						save_temporary_scope_value_as = {
+							name = rcw_release_chance
+							value = rcw_culture_release_chance
+						}
+						random = {
+							chance = scope:rcw_release_chance
+							rcw_release_separatist = yes
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+rcw_release_separatist = {
+	if = {
+		limit = {
+			any_country = {
+				rcw_is_separatist_fold_target = yes
+			}
+		}
+		ordered_country = {
+			limit = {
+				rcw_is_separatist_fold_target = yes
+			}
+			order_by = total_population
+			position = 0
+			check_range_bounds = no
+			save_temporary_scope_as = rcw_fold_target
+		}
+		scope:russian_warlord_state = {
+			set_state_owner = scope:rcw_fold_target
+		}
+	}
+	else = {
+		rcw_create_separatist_country = yes
+	}
+}
+
+rcw_create_separatist_country = {
+	scope:russian_warlord_state = {
+		set_variable = rcw_cede
+	}
+	create_dynamic_country = {
+		origin = scope:russian_warlord_state.owner
+		tier = kingdom
+		culture = scope:russian_warlord_state_culture
+		religion = scope:russian_warlord_state_culture.religion
+		capital = scope:russian_warlord_state
+		color = list "rcw_breakaway_colors"
+		cede_state_trigger = {
+			has_variable = rcw_cede
+		}
+		on_created = {
+			every_scope_state = {
+				limit = {
+					has_variable = rcw_cede
+				}
+				remove_variable = rcw_cede
+			}
+		}
+	}
+	scope:russian_warlord_state ?= {
+		if = {
+			limit = {
+				has_variable = rcw_cede
+			}
+			remove_variable = rcw_cede
+		}
+		owner = {
+			if = {
+				limit = {
+					NOT = { always = no }
+					NOT = { has_variable = rcw_separatist }
+				}
+				save_scope_as = russian_warlord_country
+				activate_law = law_type:law_presidential_republic
+				activate_law = law_type:law_autocracy
+				if = {
+					limit = {
+						OR = {
+							has_law = law_type:law_right_of_assembly
+							has_law = law_type:law_protected_speech
+						}
+					}
+					activate_law = law_type:law_censorship
+				}
+				russian_separatist_country_setup = yes
+				rcw_register_separatist = yes
+				rcw_separatist_pick_leader = yes
+			}
+		}
+	}
+}
+
+rcw_register_separatist = {
+	set_variable = rcw_separatist
+	if = {
+		limit = {
+			NOT = {
+				is_target_in_global_variable_list = {
+					name = rcw_separatists
+					target = this
+				}
+			}
+		}
+		add_to_global_variable_list = {
+			name = rcw_separatists
+			target = this
+		}
+	}
+}
+
+rcw_hand_non_russian_states_to_separatists = {
+	while = {
+		limit = {
+			any_state = {
+				rcw_is_non_russian_leftover_state = yes
+			}
+		}
+		set_global_variable = rcw_handover_progress
+		while = {
+			limit = {
+				has_global_variable = rcw_handover_progress
+			}
+			remove_global_variable = rcw_handover_progress
+			every_state = {
+				limit = {
+					rcw_is_non_russian_leftover_state = yes
+				}
+				save_temporary_scope_as = rcw_handover_state
+				if = {
+					limit = {
+						any_neighbouring_state = {
+							owner ?= {
+								rcw_is_separatist_handover_taker = { STATE = scope:rcw_handover_state }
+							}
+						}
+					}
+					random_neighbouring_state = {
+						limit = {
+							owner ?= {
+								rcw_is_separatist_handover_taker = { STATE = scope:rcw_handover_state }
+							}
+						}
+						owner = {
+							save_temporary_scope_as = rcw_handover_taker
+						}
+					}
+					set_variable = rcw_sep_handover_done
+					set_state_owner = scope:rcw_handover_taker
+					set_global_variable = rcw_handover_progress
+				}
+			}
+		}
+		ordered_state = {
+			limit = {
+				rcw_is_non_russian_leftover_state = yes
+			}
+			order_by = state_population
+			position = 0
+			check_range_bounds = no
+			set_variable = rcw_sep_handover_done
+			save_temporary_scope_as = russian_warlord_state
+			ordered_scope_culture = {
+				limit = {
+					has_homeland = scope:russian_warlord_state
+					NOT = { this = cu:russian }
+				}
+				order_by = "scope:russian_warlord_state.culture_percent_state(this)"
+				position = 0
+				check_range_bounds = no
+				save_temporary_scope_as = russian_warlord_state_culture
+				rcw_release_separatist = yes
+			}
+		}
+	}
+	every_state = {
+		limit = {
+			has_variable = rcw_sep_handover_done
+		}
+		remove_variable = rcw_sep_handover_done
+	}
+}
+
+rcw_spin_off_aligned_separatists = {
+	every_country = {
+		limit = {
+			has_variable = rcw_separatist
+			NOT = { has_variable = rcw_camp }
+			any_scope_state = {
+				always = no
+			}
+		}
+		save_temporary_scope_as = rcw_parent_separatist
+		while = {
+			limit = {
+				any_state = {
+					rcw_is_separatist_spin_off_state = yes
+					any_neighbouring_state = {
+						rcw_is_separatist_spin_off_state = yes
+					}
+				}
+			}
+			ordered_state = {
+				limit = {
+					rcw_is_separatist_spin_off_state = yes
+					any_neighbouring_state = {
+						rcw_is_separatist_spin_off_state = yes
+					}
+				}
+				order_by = state_population
+				position = 0
+				check_range_bounds = no
+				save_temporary_scope_as = rcw_pocket_capital
+				set_variable = rcw_pocket_member
+			}
+			while = {
+				limit = {
+					any_state = {
+						rcw_is_separatist_spin_off_state = yes
+						NOT = { has_variable = rcw_pocket_member }
+						any_neighbouring_state = {
+							has_variable = rcw_pocket_member
+						}
+					}
+				}
+				every_state = {
+					limit = {
+						rcw_is_separatist_spin_off_state = yes
+						NOT = { has_variable = rcw_pocket_member }
+						any_neighbouring_state = {
+							has_variable = rcw_pocket_member
+						}
+					}
+					set_variable = rcw_pocket_member
+				}
+			}
+			scope:rcw_parent_separatist = {
+				random_primary_culture = {
+					save_temporary_scope_as = rcw_spin_off_culture
+				}
+			}
+			scope:rcw_pocket_capital = {
+				ordered_scope_culture = {
+					limit = {
+						scope:rcw_parent_separatist = {
+							country_has_primary_culture = prev
+						}
+					}
+					order_by = "scope:rcw_pocket_capital.culture_percent_state(this)"
+					position = 0
+					check_range_bounds = no
+					save_temporary_scope_as = rcw_spin_off_culture
+				}
+			}
+			create_dynamic_country = {
+				origin = scope:rcw_parent_separatist
+				tier = kingdom
+				culture = scope:rcw_spin_off_culture
+				religion = scope:rcw_spin_off_culture.religion
+				capital = scope:rcw_pocket_capital
+				color = list "rcw_breakaway_colors"
+				cede_state_trigger = {
+					has_variable = rcw_pocket_member
+				}
+			}
+			if = {
+				limit = {
+					scope:rcw_pocket_capital ?= {
+						owner ?= {
+							NOT = { this = scope:rcw_parent_separatist }
+							NOT = { always = no }
+							NOT = { has_variable = rcw_separatist }
+						}
+					}
+				}
+				scope:rcw_pocket_capital.owner = {
+					rcw_register_separatist = yes
+					set_variable = rcw_aligned_separatist
+					rcw_apply_camp_government = yes
+					rcw_aligned_separatist_pick_leader = yes
+				}
+			}
+			every_state = {
+				limit = {
+					has_variable = rcw_pocket_member
+				}
+				remove_variable = rcw_pocket_member
+				set_variable = rcw_pocket_done
+			}
+		}
+	}
+	every_state = {
+		limit = {
+			OR = {
+				always = no
+				has_variable = rcw_pocket_done
+			}
+		}
+		if = {
+			limit = {
+				always = no
+			}
+		}
+		if = {
+			limit = {
+				has_variable = rcw_pocket_done
+			}
+			remove_variable = rcw_pocket_done
+		}
+	}
+}
+
+rcw_aligned_separatist_pick_leader = {
+	save_scope_as = rcw_leader_faction
+	if = {
+		limit = {
+			exists = scope:rcw_chosen_leader
+		}
+		clear_saved_scope = rcw_chosen_leader
+	}
+	if = {
+		limit = {
+			has_global_variable_list = rcw_leader_candidates
+		}
+		ordered_in_global_list = {
+			variable = rcw_leader_candidates
+			limit = {
+				rcw_leader_available = yes
+				is_historical = yes
+				rcw_aligned_separatist_candidate_fits = yes
+			}
+			alternative_limit = {
+				rcw_leader_available = yes
+				rcw_aligned_separatist_candidate_fits = yes
+				prominence >= define:NCharacters|PROMINENCE_NOTEWORTHY_THRESHOLD
+			}
+			order_by = rcw_leader_score
+			position = 0
+			check_range_bounds = no
+			save_scope_as = rcw_chosen_leader
+		}
+	}
+	if = {
+		limit = {
+			NOT = { exists = scope:rcw_chosen_leader }
+		}
+		rcw_create_camp_leader = yes
+	}
+	scope:rcw_chosen_leader ?= {
+		rcw_install_leader = yes
+	}
+}
+
+rcw_mark_freed_separatists = {
+	every_country = {
+		limit = {
+			NOT = { has_variable = rcw_russian_faction }
+			NOT = { has_variable = rcw_separatist }
+			OR = {
+				always = no
+				has_variable = rcw_freed_russian_subject
+			}
+		}
+		rcw_register_separatist = yes
+	}
+}
+
+rcw_tag_state_theatre = {
+	if = {
+		limit = {
+			is_in_geographic_region = geographic_region_rcw_north
+		}
+		set_variable = {
+			name = rcw_theatre
+			value = flag:rcw_north
+		}
+	}
+	else_if = {
+		limit = {
+			is_in_geographic_region = geographic_region_rcw_petrograd
+		}
+		set_variable = {
+			name = rcw_theatre
+			value = flag:rcw_petrograd
+		}
+	}
+	else_if = {
+		limit = {
+			is_in_geographic_region = geographic_region_rcw_central
+		}
+		set_variable = {
+			name = rcw_theatre
+			value = flag:rcw_central
+		}
+	}
+	else_if = {
+		limit = {
+			is_in_geographic_region = geographic_region_rcw_volga
+		}
+		set_variable = {
+			name = rcw_theatre
+			value = flag:rcw_volga
+		}
+	}
+	else_if = {
+		limit = {
+			is_in_geographic_region = geographic_region_rcw_urals
+		}
+		set_variable = {
+			name = rcw_theatre
+			value = flag:rcw_urals
+		}
+	}
+	else_if = {
+		limit = {
+			is_in_geographic_region = geographic_region_rcw_south
+		}
+		set_variable = {
+			name = rcw_theatre
+			value = flag:rcw_south
+		}
+	}
+	else_if = {
+		limit = {
+			is_in_geographic_region = geographic_region_rcw_ukraine
+		}
+		set_variable = {
+			name = rcw_theatre
+			value = flag:rcw_ukraine
+		}
+	}
+	else_if = {
+		limit = {
+			is_in_geographic_region = geographic_region_rcw_west
+		}
+		set_variable = {
+			name = rcw_theatre
+			value = flag:rcw_west
+		}
+	}
+	else_if = {
+		limit = {
+			is_in_geographic_region = geographic_region_rcw_baltic
+		}
+		set_variable = {
+			name = rcw_theatre
+			value = flag:rcw_baltic
+		}
+	}
+	else_if = {
+		limit = {
+			is_in_geographic_region = geographic_region_rcw_west_siberia
+		}
+		set_variable = {
+			name = rcw_theatre
+			value = flag:rcw_west_siberia
+		}
+	}
+	else_if = {
+		limit = {
+			is_in_geographic_region = geographic_region_rcw_east_siberia
+		}
+		set_variable = {
+			name = rcw_theatre
+			value = flag:rcw_east_siberia
+		}
+	}
+	else_if = {
+		limit = {
+			is_in_geographic_region = geographic_region_rcw_far_east
+		}
+		set_variable = {
+			name = rcw_theatre
+			value = flag:rcw_far_east
+		}
+	}
+	else_if = {
+		limit = {
+			is_in_geographic_region = geographic_region_rcw_steppe
+		}
+		set_variable = {
+			name = rcw_theatre
+			value = flag:rcw_steppe
+		}
+	}
+	else_if = {
+		limit = {
+			is_in_geographic_region = geographic_region_rcw_turkestan
+		}
+		set_variable = {
+			name = rcw_theatre
+			value = flag:rcw_turkestan
+		}
+	}
+	else_if = {
+		limit = {
+			is_in_geographic_region = geographic_region_rcw_transcaucasia
+		}
+		set_variable = {
+			name = rcw_theatre
+			value = flag:rcw_transcaucasia
+		}
+	}
+}
+
+rcw_adopt_neighbour_theatre = {
+	every_state = {
+		limit = {
+			owner ?= { always = no }
+			NOT = { has_variable = rcw_theatre }
+			OR = {
+				is_in_geographic_region = geographic_region_europe
+				is_in_geographic_region = geographic_region_asia
+			}
+			any_neighbouring_state = {
+				owner ?= { always = no }
+				has_variable = rcw_theatre
+			}
+		}
+		random_neighbouring_state = {
+			limit = {
+				owner ?= { always = no }
+				has_variable = rcw_theatre
+			}
+			save_temporary_scope_as = rcw_theatre_source
+		}
+		set_variable = {
+			name = rcw_theatre
+			value = scope:rcw_theatre_source.var:rcw_theatre
+		}
+	}
+}
+
+rcw_tag_theatres = {
+	every_state = {
+		limit = {
+			owner ?= { always = no }
+		}
+		rcw_tag_state_theatre = yes
+	}
+	rcw_adopt_neighbour_theatre = yes
+	rcw_adopt_neighbour_theatre = yes
+}
+
+rcw_retain_core_theatre = {
+	if = {
+		limit = {
+			exists = scope:rcw_core_state
+		}
+		clear_saved_scope = rcw_core_state
+	}
+	if = {
+		limit = {
+			capital ?= { has_variable = rcw_theatre }
+		}
+		capital = {
+			save_temporary_scope_as = rcw_core_state
+		}
+	}
+	else = {
+		ordered_scope_state = {
+			limit = {
+				has_variable = rcw_theatre
+			}
+			order_by = state_population
+			position = 0
+			check_range_bounds = no
+			save_temporary_scope_as = rcw_core_state
+		}
+	}
+	if = {
+		limit = {
+			exists = scope:rcw_core_state
+		}
+		scope:rcw_core_state = {
+			if = {
+				limit = {
+					var:rcw_theatre = flag:rcw_north
+				}
+				rcw_retain_partner_theatre = yes
+			}
+			else_if = {
+				limit = {
+					var:rcw_theatre = flag:rcw_petrograd
+				}
+				rcw_retain_partner_theatre = yes
+			}
+			else_if = {
+				limit = {
+					var:rcw_theatre = flag:rcw_central
+				}
+				rcw_retain_partner_theatre = yes
+			}
+			else_if = {
+				limit = {
+					var:rcw_theatre = flag:rcw_volga
+				}
+				rcw_retain_partner_theatre = yes
+			}
+			else_if = {
+				limit = {
+					var:rcw_theatre = flag:rcw_urals
+				}
+				rcw_retain_partner_theatre = yes
+			}
+			else_if = {
+				limit = {
+					var:rcw_theatre = flag:rcw_south
+				}
+				rcw_retain_partner_theatre = yes
+			}
+			else_if = {
+				limit = {
+					var:rcw_theatre = flag:rcw_ukraine
+				}
+				rcw_retain_partner_theatre = yes
+			}
+			else_if = {
+				limit = {
+					var:rcw_theatre = flag:rcw_west
+				}
+				rcw_retain_partner_theatre = yes
+			}
+			else_if = {
+				limit = {
+					var:rcw_theatre = flag:rcw_baltic
+				}
+				rcw_retain_partner_theatre = yes
+			}
+			else_if = {
+				limit = {
+					var:rcw_theatre = flag:rcw_west_siberia
+				}
+				rcw_retain_partner_theatre = yes
+			}
+			else_if = {
+				limit = {
+					var:rcw_theatre = flag:rcw_east_siberia
+				}
+				rcw_retain_partner_theatre = yes
+			}
+			else_if = {
+				limit = {
+					var:rcw_theatre = flag:rcw_far_east
+				}
+				rcw_retain_partner_theatre = yes
+			}
+			else_if = {
+				limit = {
+					var:rcw_theatre = flag:rcw_steppe
+				}
+				rcw_retain_partner_theatre = yes
+			}
+			else_if = {
+				limit = {
+					var:rcw_theatre = flag:rcw_turkestan
+				}
+				rcw_retain_partner_theatre = yes
+			}
+			else_if = {
+				limit = {
+					var:rcw_theatre = flag:rcw_transcaucasia
+				}
+				rcw_retain_partner_theatre = yes
+			}
+		}
+	}
+}
+
+rcw_retain_partner_theatre = {}
+
+rcw_roll_theatre_merges = {
+	set_global_variable = {
+		name = rcw_key_north
+		value = flag:rcw_north
+	}
+	set_global_variable = {
+		name = rcw_key_petrograd
+		value = flag:rcw_petrograd
+	}
+	set_global_variable = {
+		name = rcw_key_central
+		value = flag:rcw_central
+	}
+	set_global_variable = {
+		name = rcw_key_volga
+		value = flag:rcw_volga
+	}
+	set_global_variable = {
+		name = rcw_key_urals
+		value = flag:rcw_urals
+	}
+	set_global_variable = {
+		name = rcw_key_south
+		value = flag:rcw_south
+	}
+	set_global_variable = {
+		name = rcw_key_ukraine
+		value = flag:rcw_ukraine
+	}
+	set_global_variable = {
+		name = rcw_key_west
+		value = flag:rcw_west
+	}
+	set_global_variable = {
+		name = rcw_key_baltic
+		value = flag:rcw_baltic
+	}
+	set_global_variable = {
+		name = rcw_key_west_siberia
+		value = flag:rcw_west_siberia
+	}
+	set_global_variable = {
+		name = rcw_key_east_siberia
+		value = flag:rcw_east_siberia
+	}
+	set_global_variable = {
+		name = rcw_key_far_east
+		value = flag:rcw_far_east
+	}
+	set_global_variable = {
+		name = rcw_key_steppe
+		value = flag:rcw_steppe
+	}
+	set_global_variable = {
+		name = rcw_key_turkestan
+		value = flag:rcw_turkestan
+	}
+	set_global_variable = {
+		name = rcw_key_transcaucasia
+		value = flag:rcw_transcaucasia
+	}
+	random_list = {
+		35 = {}
+		30 = {
+			trigger = {
+				NOR = {
+					always = no
+					always = no
+				}
+			}
+			set_global_variable = {
+				name = rcw_key_urals
+				value = flag:rcw_west_siberia
+			}
+		}
+		20 = {
+			trigger = {
+				NOR = {
+					always = no
+					always = no
+				}
+			}
+			set_global_variable = {
+				name = rcw_key_urals
+				value = flag:rcw_volga
+			}
+		}
+		15 = {
+			trigger = {
+				NOR = {
+					always = no
+					always = no
+					always = no
+				}
+			}
+			set_global_variable = {
+				name = rcw_key_urals
+				value = flag:rcw_west_siberia
+			}
+			set_global_variable = {
+				name = rcw_key_volga
+				value = flag:rcw_west_siberia
+			}
+		}
+	}
+	random_list = {
+		55 = {}
+		45 = {
+			trigger = {
+				NOR = {
+					always = no
+					always = no
+				}
+			}
+			set_global_variable = {
+				name = rcw_key_far_east
+				value = flag:rcw_east_siberia
+			}
+		}
+	}
+	random_list = {
+		70 = {}
+		30 = {
+			trigger = {
+				NOR = {
+					always = no
+					always = no
+				}
+			}
+			set_global_variable = {
+				name = rcw_key_north
+				value = flag:rcw_petrograd
+			}
+		}
+	}
+	random_list = {
+		65 = {}
+		35 = {
+			trigger = {
+				NOR = {
+					always = no
+					always = no
+				}
+				NOT = {
+					any_state = {
+						has_variable = rcw_reserved_black
+					}
+				}
+			}
+			set_global_variable = {
+				name = rcw_key_ukraine
+				value = flag:rcw_south
+			}
+		}
+	}
+	random_list = {
+		50 = {
+			trigger = {
+				NOR = {
+					always = no
+					always = no
+				}
+			}
+			set_global_variable = {
+				name = rcw_key_steppe
+				value = global_var:rcw_key_urals
+			}
+		}
+		30 = {
+			trigger = {
+				NOR = {
+					always = no
+					always = no
+				}
+			}
+			set_global_variable = {
+				name = rcw_key_steppe
+				value = global_var:rcw_key_turkestan
+			}
+		}
+		20 = {
+			trigger = {
+				NOR = {
+					always = no
+					always = no
+				}
+			}
+			set_global_variable = {
+				name = rcw_key_steppe
+				value = global_var:rcw_key_west_siberia
+			}
+		}
+	}
+}
+
+rcw_assign_state_faction_keys = {
+	every_state = {
+		limit = {
+			owner ?= { always = no }
+			has_variable = rcw_theatre
+			is_capital = no
+			NOT = { rcw_state_theatre_retained = yes }
+		}
+		if = {
+			limit = {
+				has_variable = rcw_reserved_black
+			}
+			set_variable = {
+				name = rcw_faction_key
+				value = flag:rcw_free_territory
+			}
+		}
+		else_if = {
+			limit = {
+				var:rcw_theatre = flag:rcw_north
+			}
+			set_variable = {
+				name = rcw_faction_key
+				value = global_var:rcw_key_north
+			}
+		}
+		else_if = {
+			limit = {
+				var:rcw_theatre = flag:rcw_petrograd
+			}
+			set_variable = {
+				name = rcw_faction_key
+				value = global_var:rcw_key_petrograd
+			}
+		}
+		else_if = {
+			limit = {
+				var:rcw_theatre = flag:rcw_central
+			}
+			set_variable = {
+				name = rcw_faction_key
+				value = global_var:rcw_key_central
+			}
+		}
+		else_if = {
+			limit = {
+				var:rcw_theatre = flag:rcw_volga
+			}
+			set_variable = {
+				name = rcw_faction_key
+				value = global_var:rcw_key_volga
+			}
+		}
+		else_if = {
+			limit = {
+				var:rcw_theatre = flag:rcw_urals
+			}
+			set_variable = {
+				name = rcw_faction_key
+				value = global_var:rcw_key_urals
+			}
+		}
+		else_if = {
+			limit = {
+				var:rcw_theatre = flag:rcw_south
+			}
+			set_variable = {
+				name = rcw_faction_key
+				value = global_var:rcw_key_south
+			}
+		}
+		else_if = {
+			limit = {
+				var:rcw_theatre = flag:rcw_ukraine
+			}
+			set_variable = {
+				name = rcw_faction_key
+				value = global_var:rcw_key_ukraine
+			}
+		}
+		else_if = {
+			limit = {
+				var:rcw_theatre = flag:rcw_west
+			}
+			set_variable = {
+				name = rcw_faction_key
+				value = global_var:rcw_key_west
+			}
+		}
+		else_if = {
+			limit = {
+				var:rcw_theatre = flag:rcw_baltic
+			}
+			set_variable = {
+				name = rcw_faction_key
+				value = global_var:rcw_key_baltic
+			}
+		}
+		else_if = {
+			limit = {
+				var:rcw_theatre = flag:rcw_west_siberia
+			}
+			set_variable = {
+				name = rcw_faction_key
+				value = global_var:rcw_key_west_siberia
+			}
+		}
+		else_if = {
+			limit = {
+				var:rcw_theatre = flag:rcw_east_siberia
+			}
+			set_variable = {
+				name = rcw_faction_key
+				value = global_var:rcw_key_east_siberia
+			}
+		}
+		else_if = {
+			limit = {
+				var:rcw_theatre = flag:rcw_far_east
+			}
+			set_variable = {
+				name = rcw_faction_key
+				value = global_var:rcw_key_far_east
+			}
+		}
+		else_if = {
+			limit = {
+				var:rcw_theatre = flag:rcw_steppe
+			}
+			set_variable = {
+				name = rcw_faction_key
+				value = global_var:rcw_key_steppe
+			}
+		}
+		else_if = {
+			limit = {
+				var:rcw_theatre = flag:rcw_turkestan
+			}
+			set_variable = {
+				name = rcw_faction_key
+				value = global_var:rcw_key_turkestan
+			}
+		}
+		else_if = {
+			limit = {
+				var:rcw_theatre = flag:rcw_transcaucasia
+			}
+			set_variable = {
+				name = rcw_faction_key
+				value = global_var:rcw_key_transcaucasia
+			}
+		}
+	}
+	every_state = {
+		limit = {
+			has_variable = rcw_faction_key
+			NOT = { has_variable = rcw_reserved_black }
+		}
+		random = {
+			chance = 15
+			save_temporary_scope_as = rcw_jitter_state
+			if = {
+				limit = {
+					NOT = { has_variable = rcw_jitter_locked }
+					any_neighbouring_state = {
+						has_variable = rcw_faction_key
+						NOT = { has_variable = rcw_reserved_black }
+						NOT = { var:rcw_faction_key = prev.var:rcw_faction_key }
+					}
+					NOT = {
+						any_neighbouring_state = {
+							var:rcw_faction_key ?= scope:rcw_jitter_state.var:rcw_faction_key
+							NOT = {
+								any_neighbouring_state = {
+									var:rcw_faction_key ?= scope:rcw_jitter_state.var:rcw_faction_key
+									NOT = { this = scope:rcw_jitter_state }
+								}
+							}
+						}
+					}
+				}
+				random_neighbouring_state = {
+					limit = {
+						has_variable = rcw_faction_key
+						NOT = { has_variable = rcw_reserved_black }
+						NOT = { var:rcw_faction_key = prev.var:rcw_faction_key }
+					}
+					save_temporary_scope_as = rcw_jitter_source
+					set_variable = rcw_jitter_locked
+				}
+				set_variable = {
+					name = rcw_faction_key
+					value = scope:rcw_jitter_source.var:rcw_faction_key
+				}
+				set_variable = rcw_jitter_locked
+			}
+		}
+	}
+	every_state = {
+		limit = {
+			has_variable = rcw_jitter_locked
+		}
+		remove_variable = rcw_jitter_locked
+	}
+}
+
+rcw_create_theatre_faction = {
+	every_state = {
+		limit = {
+			var:rcw_faction_key ?= flag:rcw_$THEATRE$
+			owner ?= { always = no }
+		}
+		add_to_temporary_list = rcw_faction_states_$THEATRE$
+	}
+	if = {
+		limit = {
+			list_size = {
+				name = rcw_faction_states_$THEATRE$
+				value >= rcw_min_faction_states
+			}
+		}
+		random_list = {
+			50 = {
+				set_global_variable = {
+					name = rcw_capital_rank
+					value = 0
+				}
+			}
+			30 = {
+				trigger = {
+					list_size = {
+						name = rcw_faction_states_$THEATRE$
+						value >= 2
+					}
+				}
+				set_global_variable = {
+					name = rcw_capital_rank
+					value = 1
+				}
+			}
+			20 = {
+				trigger = {
+					list_size = {
+						name = rcw_faction_states_$THEATRE$
+						value >= 3
+					}
+				}
+				set_global_variable = {
+					name = rcw_capital_rank
+					value = 2
+				}
+			}
+		}
+		if = {
+			limit = {
+				global_var:rcw_capital_rank = 2
+			}
+			ordered_in_list = {
+				list = rcw_faction_states_$THEATRE$
+				order_by = {
+					value = state_population
+					multiply = russian_culture_fraction
+				}
+				position = 2
+				save_temporary_scope_as = rcw_faction_capital_$THEATRE$
+			}
+		}
+		else_if = {
+			limit = {
+				global_var:rcw_capital_rank = 1
+			}
+			ordered_in_list = {
+				list = rcw_faction_states_$THEATRE$
+				order_by = {
+					value = state_population
+					multiply = russian_culture_fraction
+				}
+				position = 1
+				save_temporary_scope_as = rcw_faction_capital_$THEATRE$
+			}
+		}
+		else = {
+			ordered_in_list = {
+				list = rcw_faction_states_$THEATRE$
+				order_by = {
+					value = state_population
+					multiply = russian_culture_fraction
+				}
+				position = 0
+				save_temporary_scope_as = rcw_faction_capital_$THEATRE$
+			}
+		}
+		scope:rcw_faction_capital_$THEATRE$.owner = {
+			save_temporary_scope_as = rcw_faction_origin_$THEATRE$
+		}
+		every_in_list = {
+			list = rcw_faction_states_$THEATRE$
+			limit = {
+				owner = scope:rcw_faction_origin_$THEATRE$
+			}
+			set_variable = rcw_cede
+		}
+		create_dynamic_country = {
+			origin = scope:rcw_faction_origin_$THEATRE$
+			tier = kingdom
+			culture = cu:russian
+			religion = rel:orthodox
+			capital = scope:rcw_faction_capital_$THEATRE$
+			cede_state_trigger = {
+				has_variable = rcw_cede
+			}
+			on_created = {
+				every_scope_state = {
+					limit = {
+						has_variable = rcw_cede
+					}
+					remove_variable = rcw_cede
+				}
+			}
+		}
+		if = {
+			limit = {
+				scope:rcw_faction_capital_$THEATRE$ ?= {
+					owner ?= {
+						NOT = { always = no }
+						NOT = { has_variable = rcw_russian_faction }
+					}
+				}
+			}
+			scope:rcw_faction_capital_$THEATRE$.owner = {
+				save_temporary_scope_as = rcw_new_faction_$THEATRE$
+				set_variable = rcw_russian_faction
+				set_variable = russian_warlord_country
+				set_variable = {
+					name = rcw_theatre_key
+					value = flag:rcw_$THEATRE$
+				}
+				if = {
+					limit = {
+						NOT = { scope:rcw_faction_origin_$THEATRE$ = ROOT }
+					}
+					set_variable = rcw_from_revolution
+				}
+				add_to_global_variable_list = {
+					name = rcw_russian_factions
+					target = this
+				}
+			}
+			every_in_list = {
+				list = rcw_faction_states_$THEATRE$
+				limit = {
+					owner ?= { always = no }
+				}
+				set_state_owner = scope:rcw_new_faction_$THEATRE$
+			}
+		}
+		every_state = {
+			limit = {
+				has_variable = rcw_cede
+			}
+			remove_variable = rcw_cede
+		}
+	}
+}
+
+rcw_create_theatre_factions = {
+	rcw_create_theatre_faction = { THEATRE = free_territory }
+	rcw_create_theatre_faction = { THEATRE = north }
+	rcw_create_theatre_faction = { THEATRE = petrograd }
+	rcw_create_theatre_faction = { THEATRE = central }
+	rcw_create_theatre_faction = { THEATRE = volga }
+	rcw_create_theatre_faction = { THEATRE = urals }
+	rcw_create_theatre_faction = { THEATRE = south }
+	rcw_create_theatre_faction = { THEATRE = ukraine }
+	rcw_create_theatre_faction = { THEATRE = west }
+	rcw_create_theatre_faction = { THEATRE = baltic }
+	rcw_create_theatre_faction = { THEATRE = west_siberia }
+	rcw_create_theatre_faction = { THEATRE = east_siberia }
+	rcw_create_theatre_faction = { THEATRE = far_east }
+	rcw_create_theatre_faction = { THEATRE = steppe }
+	rcw_create_theatre_faction = { THEATRE = turkestan }
+	rcw_create_theatre_faction = { THEATRE = transcaucasia }
+}
+
+rcw_mark_revolution_connected = {
+	capital = {
+		set_variable = rcw_revolution_connected
+	}
+	while = {
+		limit = {
+			any_state = {
+				always = no
+				NOT = { has_variable = rcw_revolution_connected }
+				any_neighbouring_state = {
+					has_variable = rcw_revolution_connected
+				}
+			}
+		}
+		every_state = {
+			limit = {
+				always = no
+				NOT = { has_variable = rcw_revolution_connected }
+				any_neighbouring_state = {
+					has_variable = rcw_revolution_connected
+				}
+			}
+			set_variable = rcw_revolution_connected
+		}
+	}
+}
+
+rcw_mark_revolution_exclaves = {
+	every_state = {
+		limit = {
+			has_variable = rcw_revolution_connected
+		}
+		remove_variable = rcw_revolution_connected
+	}
+}
+
+rcw_release_revolution_pockets = {
+	every_state = {
+		limit = {
+			OR = {
+				has_variable = rcw_revolution_connected
+				has_variable = rcw_pocket_done
+			}
+		}
+		if = {
+			limit = {
+				has_variable = rcw_revolution_connected
+			}
+			remove_variable = rcw_revolution_connected
+		}
+		if = {
+			limit = {
+				has_variable = rcw_pocket_done
+			}
+			remove_variable = rcw_pocket_done
+		}
+	}
+}
+
+rcw_mark_faction_connected = {
+	capital = {
+		set_variable = rcw_faction_connected
+	}
+	while = {
+		limit = {
+			any_scope_state = {
+				NOT = { has_variable = rcw_faction_connected }
+				any_neighbouring_state = {
+					has_variable = rcw_faction_connected
+					owner = prev.owner
+				}
+			}
+		}
+		every_scope_state = {
+			limit = {
+				NOT = { has_variable = rcw_faction_connected }
+				any_neighbouring_state = {
+					has_variable = rcw_faction_connected
+					owner = prev.owner
+				}
+			}
+			set_variable = rcw_faction_connected
+		}
+	}
+}
+
+rcw_mark_factions_connected = {
+	every_state = {
+		limit = {
+			has_variable = rcw_faction_connected
+		}
+		remove_variable = rcw_faction_connected
+	}
+	every_country = {
+		limit = {
+			has_variable = rcw_russian_faction
+			exists = capital
+		}
+		rcw_mark_faction_connected = yes
+	}
+}
+
+rcw_resolve_exclave_state = {
+	if = {
+		limit = {
+			has_variable = rcw_faction_key
+			any_neighbouring_state = {
+				has_variable = rcw_faction_connected
+				owner ?= {
+					has_variable = russian_warlord_country
+					var:rcw_theatre_key ?= scope:rcw_exclave_state.var:rcw_faction_key
+				}
+			}
+		}
+		random_neighbouring_state = {
+			limit = {
+				has_variable = rcw_faction_connected
+				owner ?= {
+					has_variable = russian_warlord_country
+					var:rcw_theatre_key ?= scope:rcw_exclave_state.var:rcw_faction_key
+				}
+			}
+			owner = {
+				save_temporary_scope_as = rcw_exclave_taker
+			}
+		}
+		set_state_owner = scope:rcw_exclave_taker
+	}
+	else_if = {
+		limit = {
+			any_neighbouring_state = {
+				has_variable = rcw_faction_connected
+			}
+		}
+		random_neighbouring_state = {
+			limit = {
+				has_variable = rcw_faction_connected
+			}
+			owner = {
+				save_temporary_scope_as = rcw_exclave_taker
+			}
+		}
+		set_state_owner = scope:rcw_exclave_taker
+	}
+	else_if = {
+		limit = {
+			any_neighbouring_state = {
+				owner ?= {
+					NOT = { always = no }
+					NOT = { has_variable = rcw_russian_faction }
+					is_subject = no
+					OR = {
+						has_variable = rcw_separatist
+						always = no
+						has_variable = rcw_freed_russian_subject
+					}
+				}
+			}
+		}
+		random_neighbouring_state = {
+			limit = {
+				owner ?= {
+					NOT = { always = no }
+					NOT = { has_variable = rcw_russian_faction }
+					is_subject = no
+					OR = {
+						has_variable = rcw_separatist
+						always = no
+						has_variable = rcw_freed_russian_subject
+					}
+				}
+			}
+			owner = {
+				save_temporary_scope_as = rcw_exclave_taker
+			}
+		}
+		set_state_owner = scope:rcw_exclave_taker
+	}
+	else_if = {
+		limit = {
+			NOT = { always = $SPARE_PLAYER$ }
+			any_neighbouring_state = {
+				owner ?= {
+					NOT = { has_variable = rcw_russian_faction }
+					is_subject = no
+					any_primary_culture = {
+						has_homeland = scope:rcw_exclave_state
+					}
+				}
+			}
+		}
+		random_neighbouring_state = {
+			limit = {
+				owner ?= {
+					NOT = { has_variable = rcw_russian_faction }
+					is_subject = no
+					any_primary_culture = {
+						has_homeland = scope:rcw_exclave_state
+					}
+				}
+			}
+			owner = {
+				save_temporary_scope_as = rcw_exclave_taker
+			}
+		}
+		set_state_owner = scope:rcw_exclave_taker
+	}
+	else_if = {
+		limit = {
+			NOT = { has_variable = rcw_exclave_moved }
+			any_neighbouring_state = {
+				owner ?= {
+					has_variable = rcw_russian_faction
+					exists = capital
+					NOT = { this = scope:rcw_exclave_state.owner }
+				}
+			}
+		}
+		set_variable = rcw_exclave_moved
+		random_neighbouring_state = {
+			limit = {
+				owner ?= {
+					has_variable = rcw_russian_faction
+					exists = capital
+					NOT = { this = scope:rcw_exclave_state.owner }
+				}
+			}
+			owner = {
+				save_temporary_scope_as = rcw_exclave_taker
+			}
+		}
+		set_state_owner = scope:rcw_exclave_taker
+	}
+	else = {
+		save_temporary_scope_as = russian_warlord_state
+		if = {
+			limit = {
+				any_scope_culture = {
+					always = yes
+				}
+			}
+			ordered_scope_culture = {
+				order_by = "scope:russian_warlord_state.culture_percent_state(this)"
+				position = 0
+				check_range_bounds = no
+				save_temporary_scope_as = russian_warlord_state_culture
+			}
+			rcw_create_separatist_country = yes
+		}
+		if = {
+			limit = {
+				owner ?= {
+					has_variable = rcw_russian_faction
+				}
+			}
+			set_variable = rcw_exclave_skipped
+		}
+		else = {
+			je:je_russia_civil_war ?= {
+				add_involved_country = scope:russian_warlord_state.owner
+			}
+		}
+	}
+}
+
+rcw_exclave_pass = {
+	rcw_mark_factions_connected = yes
+	while = {
+		limit = {
+			any_state = {
+				rcw_is_faction_exclave_state = { SPARE_PLAYER = $SPARE_PLAYER$ }
+			}
+		}
+		if = {
+			limit = {
+				any_state = {
+					rcw_is_faction_exclave_state = { SPARE_PLAYER = $SPARE_PLAYER$ }
+					any_neighbouring_state = {
+						has_variable = rcw_faction_connected
+					}
+				}
+			}
+			ordered_state = {
+				limit = {
+					rcw_is_faction_exclave_state = { SPARE_PLAYER = $SPARE_PLAYER$ }
+					any_neighbouring_state = {
+						has_variable = rcw_faction_connected
+					}
+				}
+				order_by = state_population
+				position = 0
+				check_range_bounds = no
+				save_temporary_scope_as = rcw_exclave_state
+			}
+		}
+		else = {
+			ordered_state = {
+				limit = {
+					rcw_is_faction_exclave_state = { SPARE_PLAYER = $SPARE_PLAYER$ }
+				}
+				order_by = state_population
+				position = 0
+				check_range_bounds = no
+				save_temporary_scope_as = rcw_exclave_state
+			}
+		}
+		scope:rcw_exclave_state = {
+			rcw_resolve_exclave_state = { SPARE_PLAYER = $SPARE_PLAYER$ }
+		}
+		rcw_mark_factions_connected = yes
+	}
+	every_state = {
+		limit = {
+			OR = {
+				has_variable = rcw_faction_connected
+				has_variable = rcw_exclave_moved
+				has_variable = rcw_exclave_skipped
+			}
+		}
+		if = {
+			limit = {
+				has_variable = rcw_faction_connected
+			}
+			remove_variable = rcw_faction_connected
+		}
+		if = {
+			limit = {
+				has_variable = rcw_exclave_moved
+			}
+			remove_variable = rcw_exclave_moved
+		}
+		if = {
+			limit = {
+				has_variable = rcw_exclave_skipped
+			}
+			remove_variable = rcw_exclave_skipped
+		}
+	}
+}
+
+rcw_award_seat = {
+	change_global_variable = {
+		name = rcw_seats_$CAMP$
+		add = 1
+	}
+	change_global_variable = {
+		name = rcw_open_$CAMP$
+		add = 1
+	}
+	change_global_variable = {
+		name = rcw_seats_left
+		subtract = 1
+	}
+}
+
+rcw_allocate_seats = {
+	set_global_variable = {
+		name = rcw_seats_left
+		value = 0
+	}
+	every_in_global_list = {
+		variable = rcw_russian_factions
+		limit = {
+			has_variable = russian_warlord_country
+			NOT = { has_variable = rcw_camp }
+		}
+		change_global_variable = {
+			name = rcw_seats_left
+			add = 1
+		}
+	}
+	set_global_variable = {
+		name = rcw_seats_red
+		value = 0
+	}
+	set_global_variable = {
+		name = rcw_seats_black
+		value = 0
+	}
+	set_global_variable = {
+		name = rcw_seats_green
+		value = 0
+	}
+	set_global_variable = {
+		name = rcw_seats_democratic
+		value = 0
+	}
+	set_global_variable = {
+		name = rcw_seats_white
+		value = 0
+	}
+	set_global_variable = {
+		name = rcw_open_red
+		value = 0
+	}
+	set_global_variable = {
+		name = rcw_open_black
+		value = 0
+	}
+	set_global_variable = {
+		name = rcw_open_green
+		value = 0
+	}
+	set_global_variable = {
+		name = rcw_open_democratic
+		value = 0
+	}
+	set_global_variable = {
+		name = rcw_open_white
+		value = 0
+	}
+	every_in_global_list = {
+		variable = rcw_russian_factions
+		limit = {
+			has_variable = rcw_camp
+		}
+		if = {
+			limit = {
+				var:rcw_camp ?= flag:rcw_red
+			}
+			change_global_variable = {
+				name = rcw_seats_red
+				add = 1
+			}
+		}
+		else_if = {
+			limit = {
+				var:rcw_camp ?= flag:rcw_black
+			}
+			change_global_variable = {
+				name = rcw_seats_black
+				add = 1
+			}
+		}
+		else_if = {
+			limit = {
+				var:rcw_camp ?= flag:rcw_green
+			}
+			change_global_variable = {
+				name = rcw_seats_green
+				add = 1
+			}
+		}
+		else_if = {
+			limit = {
+				var:rcw_camp ?= flag:rcw_democratic
+			}
+			change_global_variable = {
+				name = rcw_seats_democratic
+				add = 1
+			}
+		}
+		else_if = {
+			limit = {
+				var:rcw_camp ?= flag:rcw_white
+			}
+			change_global_variable = {
+				name = rcw_seats_white
+				add = 1
+			}
+		}
+	}
+	if = {
+		limit = {
+			global_var:rcw_seats_left > 0
+			any_in_global_list = {
+				variable = rcw_russian_factions
+				var:rcw_theatre_key ?= flag:rcw_free_territory
+			}
+		}
+		rcw_award_seat = { CAMP = black }
+	}
+	while = {
+		limit = {
+			OR = {
+				rcw_floor_seat_candidate = { CAMP = red }
+				rcw_floor_seat_candidate = { CAMP = black }
+				rcw_floor_seat_candidate = { CAMP = green }
+				rcw_floor_seat_candidate = { CAMP = democratic }
+				rcw_floor_seat_candidate = { CAMP = white }
+			}
+		}
+		if = {
+			limit = {
+				rcw_floor_seat_candidate = { CAMP = white }
+				rcw_share_is_highest_floor_candidate = yes
+			}
+			rcw_award_seat = { CAMP = white }
+		}
+		else_if = {
+			limit = {
+				rcw_floor_seat_candidate = { CAMP = red }
+				rcw_share_is_highest_floor_candidate = yes
+			}
+			rcw_award_seat = { CAMP = red }
+		}
+		else_if = {
+			limit = {
+				rcw_floor_seat_candidate = { CAMP = democratic }
+				rcw_share_is_highest_floor_candidate = yes
+			}
+			rcw_award_seat = { CAMP = democratic }
+		}
+		else_if = {
+			limit = {
+				rcw_floor_seat_candidate = { CAMP = green }
+				rcw_share_is_highest_floor_candidate = yes
+			}
+			rcw_award_seat = { CAMP = green }
+		}
+		else = {
+			rcw_award_seat = { CAMP = black }
+		}
+	}
+	while = {
+		limit = {
+			global_var:rcw_seats_left > 0
+		}
+		rcw_store_dhondt_quotients = yes
+		if = {
+			limit = {
+				rcw_dhondt_quotient_is_highest = { CAMP = white }
+			}
+			rcw_award_seat = { CAMP = white }
+		}
+		else_if = {
+			limit = {
+				rcw_dhondt_quotient_is_highest = { CAMP = red }
+			}
+			rcw_award_seat = { CAMP = red }
+		}
+		else_if = {
+			limit = {
+				rcw_dhondt_quotient_is_highest = { CAMP = democratic }
+			}
+			rcw_award_seat = { CAMP = democratic }
+		}
+		else_if = {
+			limit = {
+				rcw_dhondt_quotient_is_highest = { CAMP = green }
+			}
+			rcw_award_seat = { CAMP = green }
+		}
+		else = {
+			rcw_award_seat = { CAMP = black }
+		}
+	}
+}
+
+rcw_store_dhondt_quotients = {
+	set_global_variable = {
+		name = rcw_q_red
+		value = rcw_dhondt_quotient_red
+	}
+	set_global_variable = {
+		name = rcw_q_black
+		value = rcw_dhondt_quotient_black
+	}
+	set_global_variable = {
+		name = rcw_q_green
+		value = rcw_dhondt_quotient_green
+	}
+	set_global_variable = {
+		name = rcw_q_democratic
+		value = rcw_dhondt_quotient_democratic
+	}
+	set_global_variable = {
+		name = rcw_q_white
+		value = rcw_dhondt_quotient_white
+	}
+}
+
+rcw_set_faction_camp = {
+	rcw_set_camp = { CAMP = $CAMP$ AXIS = $AXIS$ }
+	if = {
+		limit = {
+			global_var:rcw_open_$CAMP$ > 0
+		}
+		change_global_variable = {
+			name = rcw_open_$CAMP$
+			subtract = 1
+		}
+	}
+}
+
+rcw_place_factions = {
+	if = {
+		limit = {
+			global_var:rcw_open_black > 0
+		}
+		every_in_global_list = {
+			variable = rcw_russian_factions
+			limit = {
+				var:rcw_theatre_key ?= flag:rcw_free_territory
+				NOT = { has_variable = rcw_camp }
+			}
+			rcw_set_faction_camp = { CAMP = black AXIS = 0 }
+		}
+	}
+	while = {
+		limit = {
+			any_in_global_list = {
+				variable = rcw_russian_factions
+				has_variable = russian_warlord_country
+				NOT = { has_variable = rcw_camp }
+			}
+		}
+		ordered_in_global_list = {
+			variable = rcw_russian_factions
+			limit = {
+				has_variable = russian_warlord_country
+				NOT = { has_variable = rcw_camp }
+			}
+			order_by = rcw_faction_size
+			position = 0
+			check_range_bounds = no
+			random_list = {
+				0 = {
+					modifier = {
+						add = rcw_placement_weight_red
+					}
+					rcw_set_faction_camp = { CAMP = red AXIS = 1 }
+				}
+				0 = {
+					modifier = {
+						add = rcw_placement_weight_black
+					}
+					rcw_set_faction_camp = { CAMP = black AXIS = 0 }
+				}
+				0 = {
+					modifier = {
+						add = rcw_placement_weight_green
+					}
+					rcw_set_faction_camp = { CAMP = green AXIS = 2 }
+				}
+				0 = {
+					modifier = {
+						add = rcw_placement_weight_democratic
+					}
+					rcw_set_faction_camp = { CAMP = democratic AXIS = 3 }
+				}
+				0 = {
+					modifier = {
+						add = rcw_placement_weight_white
+					}
+					rcw_set_faction_camp = { CAMP = white AXIS = 4 }
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_variable = rcw_camp }
+				}
+				if = {
+					limit = {
+						global_var:rcw_open_white > 0
+					}
+					rcw_set_faction_camp = { CAMP = white AXIS = 4 }
+				}
+				else_if = {
+					limit = {
+						global_var:rcw_open_red > 0
+					}
+					rcw_set_faction_camp = { CAMP = red AXIS = 1 }
+				}
+				else_if = {
+					limit = {
+						global_var:rcw_open_democratic > 0
+					}
+					rcw_set_faction_camp = { CAMP = democratic AXIS = 3 }
+				}
+				else_if = {
+					limit = {
+						global_var:rcw_open_green > 0
+					}
+					rcw_set_faction_camp = { CAMP = green AXIS = 2 }
+				}
+				else_if = {
+					limit = {
+						global_var:rcw_open_black > 0
+					}
+					rcw_set_faction_camp = { CAMP = black AXIS = 0 }
+				}
+				else = {
+					rcw_set_faction_camp = { CAMP = white AXIS = 4 }
+				}
+			}
+		}
+	}
+}
+
+rcw_apply_faction_flavours = {
+	if = {
+		limit = {
+			var:rcw_camp = flag:rcw_white
+			any_scope_state = {
+				has_building = building_cossack_host
+			}
+		}
+		set_variable = rcw_cossack_host
+	}
+	if = {
+		limit = {
+			var:rcw_camp = flag:rcw_white
+			always = no
+			NOT = {
+				any_in_global_list = {
+					variable = rcw_russian_factions
+					has_variable = rcw_white_monarchist
+				}
+			}
+		}
+		set_variable = rcw_white_monarchist
+	}
+}
+
+rcw_ensure_law = {
+	if = {
+		limit = {
+			NOT = { has_law = law_type:$LAW$ }
+		}
+		activate_law = law_type:$LAW$
+	}
+}
+
+rcw_apply_camp_government = {
+	if = {
+		limit = {
+			var:rcw_camp = flag:rcw_red
+		}
+		rcw_ensure_law = { LAW = law_council_republic }
+		rcw_ensure_law = { LAW = law_autocracy }
+		rcw_ensure_law = { LAW = law_extraordinary_commission }
+		set_ruling_interest_groups = { ig_trade_unions }
+	}
+	else_if = {
+		limit = {
+			var:rcw_camp = flag:rcw_black
+		}
+		rcw_ensure_law = { LAW = law_council_republic }
+		rcw_ensure_law = { LAW = law_anarchy }
+		set_ruling_interest_groups = { ig_rural_folk ig_trade_unions }
+	}
+	else_if = {
+		limit = {
+			var:rcw_camp = flag:rcw_democratic
+		}
+		rcw_ensure_law = { LAW = law_parliamentary_republic }
+		rcw_ensure_law = { LAW = law_universal_suffrage }
+		set_ruling_interest_groups = { ig_rural_folk ig_intelligentsia }
+		update_party_support = yes
+		call_election = {
+			months = 12
+		}
+	}
+	else_if = {
+		limit = {
+			var:rcw_camp = flag:rcw_green
+		}
+		rcw_ensure_law = { LAW = law_presidential_republic }
+		rcw_ensure_law = { LAW = law_autocracy }
+		rcw_ensure_law = { LAW = law_peasant_proprietorship }
+		set_ruling_interest_groups = { ig_rural_folk }
+	}
+	else = {
+		rcw_ensure_law = { LAW = law_presidential_republic }
+		rcw_ensure_law = { LAW = law_autocracy }
+		if = {
+			limit = {
+				OR = {
+					has_law = law_type:law_right_of_assembly
+					has_law = law_type:law_protected_speech
+				}
+			}
+			activate_law = law_type:law_censorship
+		}
+		if = {
+			limit = {
+				has_variable = rcw_cossack_host
+			}
+			set_ruling_interest_groups = { ig_armed_forces ig_rural_folk }
+		}
+		else_if = {
+			limit = {
+				has_variable = rcw_white_monarchist
+			}
+			set_ruling_interest_groups = { ig_armed_forces ig_landowners ig_devout }
+		}
+		else_if = {
+			limit = {
+				always = no
+			}
+			set_ruling_interest_groups = { ig_armed_forces ig_landowners ig_industrialists }
+		}
+		else = {
+			set_ruling_interest_groups = { ig_armed_forces ig_landowners }
+		}
+		if = {
+			limit = {
+				has_variable = rcw_cossack_host
+				capital = {
+					state_region = s:STATE_ROSTOV
+				}
+				NOT = { exists = c:DON }
+			}
+			change_tag = DON
+		}
+	}
+}
+
+rcw_setup_factions = {
+	set_global_variable = {
+		name = rcw_setup_index
+		value = 0
+	}
+	while = {
+		limit = {
+			any_in_global_list = {
+				variable = rcw_russian_factions
+				has_variable = russian_warlord_country
+				NOT = { has_variable = rcw_setup_done }
+			}
+		}
+		ordered_in_global_list = {
+			variable = rcw_russian_factions
+			limit = {
+				has_variable = russian_warlord_country
+				NOT = { has_variable = rcw_setup_done }
+			}
+			order_by = rcw_faction_size
+			position = 0
+			check_range_bounds = no
+			set_variable = rcw_setup_done
+			change_global_variable = {
+				name = rcw_setup_index
+				add = 1
+			}
+			rcw_apply_faction_flavours = yes
+			rcw_apply_camp_government = yes
+			rcw_faction_pick_leader = yes
+			add_treasury = rcw_faction_starting_treasury
+			set_immune_to_revolutions = yes
+		}
+	}
+}
+
+rcw_faction_pick_leader = {
+	save_scope_as = rcw_leader_faction
+	if = {
+		limit = {
+			exists = scope:rcw_chosen_leader
+		}
+		clear_saved_scope = rcw_chosen_leader
+	}
+	ordered_in_global_list = {
+		variable = rcw_leader_candidates
+		limit = {
+			rcw_leader_available = yes
+			is_historical = yes
+			rcw_candidate_fits_faction = yes
+		}
+		alternative_limit = {
+			rcw_leader_available = yes
+			rcw_candidate_fits_faction = yes
+			prominence >= define:NCharacters|PROMINENCE_NOTEWORTHY_THRESHOLD
+		}
+		order_by = rcw_leader_score
+		position = 0
+		check_range_bounds = no
+		save_scope_as = rcw_chosen_leader
+	}
+	if = {
+		limit = {
+			NOT = { exists = scope:rcw_chosen_leader }
+			global_var:rcw_setup_index <= rcw_template_spawn_faction_limit
+		}
+		rcw_try_spawn_camp_template = yes
+	}
+	if = {
+		limit = {
+			NOT = { exists = scope:rcw_chosen_leader }
+		}
+		ordered_in_global_list = {
+			variable = rcw_leader_candidates
+			limit = {
+				rcw_leader_available = yes
+				rcw_candidate_fits_faction = yes
+			}
+			order_by = rcw_leader_score
+			position = 0
+			check_range_bounds = no
+			save_scope_as = rcw_chosen_leader
+		}
+	}
+	if = {
+		limit = {
+			NOT = { exists = scope:rcw_chosen_leader }
+		}
+		rcw_create_camp_leader = yes
+	}
+	scope:rcw_chosen_leader ?= {
+		rcw_install_leader = yes
+	}
+}
+
+rcw_spawn_template_leader = {
+	if = {
+		limit = {
+			NOT = { exists = scope:rcw_chosen_leader }
+			NOT = { is_template_used = $TEMPLATE$ }
+			game_date >= $START$
+			game_date < $END$
+		}
+		create_character = {
+			template = $TEMPLATE$
+			save_scope_as = rcw_chosen_leader
+		}
+	}
+}
+
+rcw_try_spawn_camp_template = {
+	if = {
+		limit = {
+			var:rcw_camp = flag:rcw_red
+		}
+		rcw_spawn_template_leader = { TEMPLATE = rus_lenin_character_template START = 1895.1.1 END = 1924.1.21 }
+		rcw_spawn_template_leader = { TEMPLATE = rus_leon_trotsky_character_template START = 1904.1.1 END = 1940.8.21 }
+		rcw_spawn_template_leader = { TEMPLATE = RUS_iosif_dzhugashvili START = 1903.1.1 END = 1936.1.1 }
+	}
+	else_if = {
+		limit = {
+			var:rcw_camp = flag:rcw_white
+		}
+		if = {
+			limit = {
+				has_variable = rcw_white_monarchist
+			}
+			rcw_spawn_template_leader = { TEMPLATE = rus_general_grand_duke_nicholas START = 1884.1.1 END = 1920.1.1 }
+			rcw_spawn_template_leader = { TEMPLATE = rus_grand_duke_dmitri_pavlovich START = 1909.1.1 END = 1935.1.1 }
+		}
+		if = {
+			limit = {
+				var:rcw_theatre_key ?= flag:rcw_west_siberia
+			}
+			rcw_spawn_template_leader = { TEMPLATE = RUS_alexander_kolchak START = 1899.1.1 END = 1920.2.7 }
+		}
+		if = {
+			limit = {
+				OR = {
+					var:rcw_theatre_key ?= flag:rcw_south
+					var:rcw_theatre_key ?= flag:rcw_ukraine
+				}
+			}
+			rcw_spawn_template_leader = { TEMPLATE = RUS_anton_denikin START = 1897.1.1 END = 1936.1.1 }
+			rcw_spawn_template_leader = { TEMPLATE = rus_general_wrangel START = 1903.1.1 END = 1928.4.25 }
+		}
+		rcw_spawn_template_leader = { TEMPLATE = RUS_alexander_kolchak START = 1899.1.1 END = 1920.2.7 }
+		rcw_spawn_template_leader = { TEMPLATE = RUS_anton_denikin START = 1897.1.1 END = 1936.1.1 }
+		rcw_spawn_template_leader = { TEMPLATE = rus_general_wrangel START = 1903.1.1 END = 1928.4.25 }
+	}
+	else_if = {
+		limit = {
+			var:rcw_camp = flag:rcw_democratic
+		}
+		rcw_spawn_template_leader = { TEMPLATE = RUS_viktor_mikhailovich_chernov START = 1898.1.1 END = 1936.1.1 }
+		rcw_spawn_template_leader = { TEMPLATE = RUS_alexander_fyodorovich_kerensky START = 1906.1.1 END = 1936.1.1 }
+	}
+	else_if = {
+		limit = {
+			var:rcw_camp = flag:rcw_green
+		}
+		rcw_spawn_template_leader = { TEMPLATE = RUS_maria_spiridonova START = 1906.1.1 END = 1936.1.1 }
+	}
+	else_if = {
+		limit = {
+			var:rcw_camp = flag:rcw_black
+		}
+		rcw_spawn_template_leader = { TEMPLATE = agitator_nestor_makhno START = 1910.1.1 END = 1934.7.25 }
+	}
+}
+
+rcw_create_camp_leader = {
+	random_primary_culture = {
+		save_temporary_scope_as = rcw_leader_culture
+	}
+	if = {
+		limit = {
+			var:rcw_camp = flag:rcw_red
+		}
+		create_character = {
+			ideology = ideology_vanguardist
+			interest_group = ig_trade_unions
+			culture = scope:rcw_leader_culture
+			save_scope_as = rcw_chosen_leader
+		}
+	}
+	else_if = {
+		limit = {
+			var:rcw_camp = flag:rcw_black
+		}
+		create_character = {
+			ideology = ideology_anarchist
+			interest_group = ig_rural_folk
+			culture = scope:rcw_leader_culture
+			save_scope_as = rcw_chosen_leader
+		}
+	}
+	else_if = {
+		limit = {
+			var:rcw_camp = flag:rcw_green
+		}
+		create_character = {
+			ideology = ideology_land_reformer
+			interest_group = ig_rural_folk
+			culture = scope:rcw_leader_culture
+			save_scope_as = rcw_chosen_leader
+		}
+	}
+	else_if = {
+		limit = {
+			var:rcw_camp = flag:rcw_democratic
+		}
+		create_character = {
+			ideology = ideology_radical
+			interest_group = ig_rural_folk
+			culture = scope:rcw_leader_culture
+			save_scope_as = rcw_chosen_leader
+		}
+	}
+	else = {
+		create_character = {
+			ideology = ideology_authoritarian
+			interest_group = ig_armed_forces
+			culture = scope:rcw_leader_culture
+			save_scope_as = rcw_chosen_leader
+		}
+	}
+}
+
+rcw_install_leader = {
+	scope:rcw_leader_faction = {
+		set_variable = {
+			name = keep_current_ruler_var
+			days = 7
+		}
+	}
+	if = {
+		limit = {
+			NOT = { owner ?= scope:rcw_leader_faction }
+		}
+		transfer_character = scope:rcw_leader_faction
+	}
+	if = {
+		limit = {
+			has_modifier = in_exile_modifier
+		}
+		hidden_effect = {
+			free_from_exile_effect = yes
+		}
+	}
+	siberian_exile_var_cleanup = yes
+	if = {
+		limit = {
+			scope:rcw_leader_faction = {
+				government_transfer_of_power = parliamentary_elective
+			}
+		}
+		if = {
+			limit = {
+				is_interest_group_leader = no
+			}
+			set_as_interest_group_leader = yes
+		}
+	}
+	if = {
+		limit = {
+			scope:rcw_leader_faction = {
+				OR = {
+					government_transfer_of_power = parliamentary_elective
+					has_variable = rcw_camp
+				}
+			}
+		}
+		interest_group ?= {
+			if = {
+				limit = {
+					is_in_government = no
+				}
+				add_ruling_interest_group = yes
+			}
+		}
+	}
+	set_character_as_ruler = yes
+	if = {
+		limit = {
+			scope:rcw_leader_faction = {
+				var:rcw_camp ?= flag:rcw_white
+			}
+			is_interest_group_type = ig_armed_forces
+			NOR = {
+				has_role_of_type = general
+				has_role_of_type = admiral
+			}
+			scope:rcw_leader_faction = {
+				ruler_can_have_command = yes
+			}
+		}
+		add_character_role = general
+	}
+	if = {
+		limit = {
+			scope:rcw_leader_faction = {
+				OR = {
+					var:rcw_camp ?= flag:rcw_democratic
+					var:rcw_camp ?= flag:rcw_black
+				}
+			}
+			is_interest_group_leader = no
+		}
+		set_as_interest_group_leader = yes
+	}
+	set_variable = rcw_leader_assigned
+}
+
+rcw_separatist_pick_leader = {
+	save_scope_as = rcw_leader_faction
+	if = {
+		limit = {
+			exists = scope:rcw_chosen_leader
+		}
+		clear_saved_scope = rcw_chosen_leader
+	}
+	if = {
+		limit = {
+			has_global_variable_list = rcw_leader_candidates
+		}
+		ordered_in_global_list = {
+			variable = rcw_leader_candidates
+			limit = {
+				rcw_leader_available = yes
+				is_historical = yes
+				rcw_separatist_candidate_fits = yes
+			}
+			alternative_limit = {
+				rcw_leader_available = yes
+				rcw_separatist_candidate_fits = yes
+				prominence >= define:NCharacters|PROMINENCE_NOTEWORTHY_THRESHOLD
+			}
+			order_by = rcw_leader_score
+			position = 0
+			check_range_bounds = no
+			save_scope_as = rcw_chosen_leader
+		}
+	}
+	if = {
+		limit = {
+			NOT = { exists = scope:rcw_chosen_leader }
+			exists = c:POL
+			this = c:POL
+		}
+		rcw_spawn_template_leader = { TEMPLATE = RUS_jozef_pilsudski START = 1892.1.1 END = 1935.5.12 }
+	}
+	if = {
+		limit = {
+			NOT = { exists = scope:rcw_chosen_leader }
+			exists = c:FIN
+			this = c:FIN
+		}
+		rcw_spawn_template_leader = { TEMPLATE = fin_general_mannerheim START = 1892.1.1 END = 1936.1.1 }
+	}
+	scope:rcw_chosen_leader ?= {
+		rcw_install_leader = yes
+	}
+}
+
+rcw_distribute_commanders = {
+	every_country = {
+		limit = {
+			always = no
+		}
+		save_temporary_scope_as = rcw_commander_origin
+		every_scope_character = {
+			limit = {
+				OR = {
+					has_role_of_type = general
+					has_role_of_type = admiral
+				}
+				NOR = {
+					is_ruler_of_own_country = yes
+					is_heir_of_own_country = yes
+				}
+				NOT = { has_variable = rcw_leader_assigned }
+				home_state ?= {
+					owner ?= {
+						has_variable = russian_warlord_country
+					}
+				}
+				trigger_if = {
+					limit = {
+						scope:rcw_commander_origin = { is_player = yes }
+					}
+					has_military_formation = no
+				}
+			}
+			home_state = {
+				owner = {
+					save_temporary_scope_as = rcw_commander_destination
+				}
+			}
+			transfer_character = scope:rcw_commander_destination
+		}
+	}
+}
+
+rcw_partition_cleanup = {
+	every_state = {
+		limit = {
+			OR = {
+				has_variable = rcw_theatre
+				has_variable = rcw_faction_key
+				has_variable = rcw_reserved_black
+				has_variable = rcw_sep_seed_done
+			}
+		}
+		if = {
+			limit = {
+				has_variable = rcw_theatre
+			}
+			remove_variable = rcw_theatre
+		}
+		if = {
+			limit = {
+				has_variable = rcw_faction_key
+			}
+			remove_variable = rcw_faction_key
+		}
+		if = {
+			limit = {
+				has_variable = rcw_reserved_black
+			}
+			remove_variable = rcw_reserved_black
+		}
+		if = {
+			limit = {
+				has_variable = rcw_sep_seed_done
+			}
+			remove_variable = rcw_sep_seed_done
+		}
+	}
+	every_country = {
+		limit = {
+			OR = {
+				always = no
+				has_variable = rcw_setup_done
+				has_variable = rcw_freed_russian_subject
+			}
+		}
+		if = {
+			limit = {
+				always = no
+			}
+		}
+		if = {
+			limit = {
+				has_variable = rcw_setup_done
+			}
+			remove_variable = rcw_setup_done
+		}
+		if = {
+			limit = {
+				has_variable = rcw_freed_russian_subject
+			}
+			remove_variable = rcw_freed_russian_subject
+		}
+	}
+	if = {
+		limit = {
+			has_global_variable_list = rcw_leader_candidates
+		}
+		every_in_global_list = {
+			variable = rcw_leader_candidates
+			limit = {
+				has_variable = rcw_candidate_camp
+			}
+			remove_variable = rcw_candidate_camp
+		}
+		clear_global_variable_list = rcw_leader_candidates
+	}
+	rcw_clear_partition_globals = { THEATRE = north }
+	rcw_clear_partition_globals = { THEATRE = petrograd }
+	rcw_clear_partition_globals = { THEATRE = central }
+	rcw_clear_partition_globals = { THEATRE = volga }
+	rcw_clear_partition_globals = { THEATRE = urals }
+	rcw_clear_partition_globals = { THEATRE = south }
+	rcw_clear_partition_globals = { THEATRE = ukraine }
+	rcw_clear_partition_globals = { THEATRE = west }
+	rcw_clear_partition_globals = { THEATRE = baltic }
+	rcw_clear_partition_globals = { THEATRE = west_siberia }
+	rcw_clear_partition_globals = { THEATRE = east_siberia }
+	rcw_clear_partition_globals = { THEATRE = far_east }
+	rcw_clear_partition_globals = { THEATRE = steppe }
+	rcw_clear_partition_globals = { THEATRE = turkestan }
+	rcw_clear_partition_globals = { THEATRE = transcaucasia }
+	rcw_clear_camp_globals = { CAMP = red }
+	rcw_clear_camp_globals = { CAMP = black }
+	rcw_clear_camp_globals = { CAMP = green }
+	rcw_clear_camp_globals = { CAMP = democratic }
+	rcw_clear_camp_globals = { CAMP = white }
+	remove_global_variable = rcw_seats_left
+	remove_global_variable = rcw_setup_index
+	if = {
+		limit = {
+			has_global_variable = rcw_capital_rank
+		}
+		remove_global_variable = rcw_capital_rank
+	}
+	if = {
+		limit = {
+			always = no
+		}
+	}
+}
+
+rcw_clear_partition_globals = {
+	if = {
+		limit = {
+			always = no
+		}
+	}
+	if = {
+		limit = {
+			has_global_variable = rcw_key_$THEATRE$
+		}
+		remove_global_variable = rcw_key_$THEATRE$
+	}
+}
+
+rcw_clear_camp_globals = {
+	if = {
+		limit = {
+			has_global_variable = rcw_seats_$CAMP$
+		}
+		remove_global_variable = rcw_seats_$CAMP$
+	}
+	if = {
+		limit = {
+			has_global_variable = rcw_open_$CAMP$
+		}
+		remove_global_variable = rcw_open_$CAMP$
+	}
+	if = {
+		limit = {
+			always = no
+		}
+	}
+	if = {
+		limit = {
+			has_global_variable = rcw_q_$CAMP$
+		}
+		remove_global_variable = rcw_q_$CAMP$
+	}
+}
+
+rcw_revolution_upgrade_leader = {
+	save_scope_as = rcw_leader_faction
+	if = {
+		limit = {
+			OR = {
+				NOT = { exists = ruler }
+				ruler ?= { is_historical = no }
+				ruler ?= {
+					NOT = { rcw_candidate_fits_faction = yes }
+				}
+			}
+		}
+		if = {
+			limit = {
+				exists = scope:rcw_chosen_leader
+			}
+			clear_saved_scope = rcw_chosen_leader
+		}
+		ordered_in_global_list = {
+			variable = rcw_leader_candidates
+			limit = {
+				rcw_leader_available = yes
+				is_historical = yes
+				rcw_candidate_fits_faction = yes
+			}
+			order_by = rcw_leader_score
+			position = 0
+			check_range_bounds = no
+			save_scope_as = rcw_chosen_leader
+		}
+		if = {
+			limit = {
+				NOT = { exists = scope:rcw_chosen_leader }
+			}
+			rcw_try_spawn_camp_template = yes
+		}
+		if = {
+			limit = {
+				NOT = { exists = scope:rcw_chosen_leader }
+				NOT = {
+					ruler ?= { rcw_candidate_fits_faction = yes }
+				}
+			}
+			ordered_in_global_list = {
+				variable = rcw_leader_candidates
+				limit = {
+					rcw_leader_available = yes
+					rcw_candidate_fits_faction = yes
+				}
+				order_by = rcw_leader_score
+				position = 0
+				check_range_bounds = no
+				save_scope_as = rcw_chosen_leader
+			}
+			if = {
+				limit = {
+					NOT = { exists = scope:rcw_chosen_leader }
+				}
+				rcw_create_camp_leader = yes
+			}
+		}
+		scope:rcw_chosen_leader ?= {
+			rcw_install_leader = yes
+		}
+	}
+}
+
+rcw_update_exhaustion_level = {
+	if = {
+		limit = {
+			scope:journal_entry = { journal_entry_age >= 1460 }
+		}
+		set_global_variable = {
+			name = rcw_exhaustion_level
+			value = 4
+		}
+	}
+	else_if = {
+		limit = {
+			scope:journal_entry = { journal_entry_age >= 1095 }
+		}
+		set_global_variable = {
+			name = rcw_exhaustion_level
+			value = 3
+		}
+	}
+	else_if = {
+		limit = {
+			scope:journal_entry = { journal_entry_age >= 730 }
+		}
+		set_global_variable = {
+			name = rcw_exhaustion_level
+			value = 2
+		}
+	}
+	else_if = {
+		limit = {
+			scope:journal_entry = { journal_entry_age >= 365 }
+		}
+		set_global_variable = {
+			name = rcw_exhaustion_level
+			value = 1
+		}
+	}
+	else = {
+		set_global_variable = {
+			name = rcw_exhaustion_level
+			value = 0
+		}
+	}
+}
+
+rcw_annul_faction_truces = {
+	every_in_global_list = {
+		variable = rcw_russian_factions
+		limit = {
+			rcw_is_active_russian_faction = yes
+			is_player = no
+		}
+		save_temporary_scope_as = rcw_truce_holder
+		every_in_global_list = {
+			variable = rcw_russian_factions
+			limit = {
+				rcw_is_active_russian_faction = yes
+				NOT = { this = scope:rcw_truce_holder }
+				has_truce_with = scope:rcw_truce_holder
+			}
+			if = {
+				limit = {
+					is_player = no
+				}
+				end_truce = scope:rcw_truce_holder
+			}
+			else_if = {
+				limit = {
+					NOT = { scope:rcw_truce_holder = { has_variable = rcw_player_truce_started } }
+				}
+				scope:rcw_truce_holder = {
+					set_variable = rcw_player_truce_started
+					set_variable = {
+						name = rcw_player_truce_grace
+						days = 365
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					NOT = { scope:rcw_truce_holder = { has_variable = rcw_player_truce_grace } }
+				}
+				end_truce = scope:rcw_truce_holder
+				scope:rcw_truce_holder = {
+					remove_variable = rcw_player_truce_started
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_variable = rcw_player_truce_started
+				NOT = {
+					any_in_global_list = {
+						variable = rcw_russian_factions
+						is_player = yes
+						has_truce_with = scope:rcw_truce_holder
+					}
+				}
+			}
+			remove_variable = rcw_player_truce_started
+		}
+	}
+}
+
+rcw_rederive_war_leader_camps = {
+	every_in_global_list = {
+		variable = rcw_russian_factions
+		limit = {
+			always = no
+			is_country_alive = yes
+		}
+		rcw_rederive_war_leader_camp = yes
+	}
+}
+
+rcw_collapse_check = {
+	every_in_global_list = {
+		variable = rcw_russian_factions
+		limit = {
+			rcw_is_active_russian_faction = yes
+			is_player = no
+			is_at_war = yes
+			NOT = {
+				AND = {
+					always = no
+					any_diplomatic_play = {
+						is_diplomatic_play_type = dp_revolution
+						OR = {
+							target_is = prev
+							initiator ?= prev
+						}
+					}
+				}
+			}
+			enemy_occupation >= 0.4
+			capital ?= {
+				controller ?= {
+					has_variable = rcw_russian_faction
+					NOT = { this = prev.owner }
+				}
+			}
+		}
+		save_temporary_scope_as = rcw_collapsing_faction
+		if = {
+			limit = {
+				has_variable = rcw_collapsing
+			}
+			capital = {
+				controller = {
+					save_temporary_scope_as = rcw_collapse_victor
+				}
+			}
+			every_scope_state = {
+				limit = {
+					is_capital = no
+					controller ?= {
+						has_variable = rcw_russian_faction
+						NOT = { this = scope:rcw_collapsing_faction }
+						NOT = { this = scope:rcw_collapse_victor }
+					}
+				}
+				controller = {
+					save_temporary_scope_as = rcw_collapse_state_taker
+				}
+				set_state_owner = scope:rcw_collapse_state_taker
+			}
+			scope:rcw_collapse_victor = {
+				annex_with_incorporation = scope:rcw_collapsing_faction
+			}
+		}
+		else = {
+			set_variable = {
+				name = rcw_collapsing
+				days = 45
+			}
+		}
+	}
+	if = {
+		limit = {
+			exists = scope:rcw_collapse_victor
+		}
+		rcw_exclave_pass = { SPARE_PLAYER = yes }
+	}
+}
+
+rcw_fallback_declarations = {
+	every_in_global_list = {
+		variable = rcw_russian_factions
+		limit = {
+			rcw_is_active_russian_faction = yes
+			is_player = no
+			is_insurrectionary = no
+			rcw_faction_is_free_to_act = yes
+			NOT = { has_variable = rcw_recent_war }
+		}
+		save_temporary_scope_as = rcw_declarer
+		if = {
+			limit = {
+				exists = scope:rcw_declaration_target
+			}
+			clear_saved_scope = rcw_declaration_target
+		}
+		ordered_in_global_list = {
+			variable = rcw_russian_factions
+			limit = {
+				rcw_is_active_russian_faction = yes
+				NOT = { this = scope:rcw_declarer }
+				is_insurrectionary = no
+				rcw_faction_is_free_to_act = yes
+				rcw_factions_are_hostile = { FACTION = scope:rcw_declarer OTHER_FACTION = this }
+				scope:rcw_declarer = {
+					has_strategic_land_adjacency = prev
+				}
+			}
+			order_by = rcw_fallback_target_score
+			position = 0
+			check_range_bounds = no
+			save_temporary_scope_as = rcw_declaration_target
+		}
+		if = {
+			limit = {
+				exists = scope:rcw_declaration_target
+			}
+			create_diplomatic_play = {
+				type = dp_unify_russia
+				target_country = scope:rcw_declaration_target
+				escalation = 50
+			}
+		}
+	}
+}
+
+rcw_resolve_victory = {
+	every_in_global_list = {
+		variable = rcw_russian_factions
+		limit = {
+			rcw_is_active_russian_faction = yes
+		}
+		set_variable = rcw_civil_war_victor
+		if = {
+			limit = {
+				NOT = { exists = c:RUS }
+			}
+			change_tag = RUS
+			if = {
+				limit = {
+					has_variable = russian_warlord_country
+				}
+				remove_variable = russian_warlord_country
+			}
+		}
+		if = {
+			limit = {
+				has_law = law_type:law_council_republic
+				NOR = {
+					has_journal_entry = je_communism_1
+					has_journal_entry = je_communism_2
+					has_journal_entry = je_state_and_revolution
+				}
+			}
+			trigger_event = {
+				id = communism.2
+				popup = yes
+			}
+		}
+	}
+}
+
+rcw_country_end_cleanup = {
+	set_immune_to_revolutions = no
+	if = {
+		limit = {
+			has_variable = rcw_russian_faction
+		}
+		remove_variable = rcw_russian_faction
+	}
+	if = {
+		limit = {
+			has_variable = rcw_separatist
+		}
+		remove_variable = rcw_separatist
+	}
+	if = {
+		limit = {
+			has_variable = rcw_aligned_separatist
+		}
+		remove_variable = rcw_aligned_separatist
+	}
+	if = {
+		limit = {
+			always = no
+		}
+	}
+	if = {
+		limit = {
+			has_variable = rcw_axis
+		}
+		remove_variable = rcw_axis
+	}
+	if = {
+		limit = {
+			has_variable = rcw_recent_war
+		}
+		remove_variable = rcw_recent_war
+	}
+	if = {
+		limit = {
+			has_variable = rcw_collapsing
+		}
+		remove_variable = rcw_collapsing
+	}
+	if = {
+		limit = {
+			has_variable = rcw_from_revolution
+		}
+		remove_variable = rcw_from_revolution
+	}
+	if = {
+		limit = {
+			has_variable = rcw_player_truce_started
+		}
+		remove_variable = rcw_player_truce_started
+	}
+	if = {
+		limit = {
+			has_variable = rcw_civil_war_victor
+		}
+		remove_variable = rcw_civil_war_victor
+	}
+}
+
+rcw_global_end_cleanup = {
+	if = {
+		limit = {
+			has_global_variable = rcw_separatist_claims_granted
+		}
+		remove_global_variable = rcw_separatist_claims_granted
+	}
+	if = {
+		limit = {
+			always = no
+		}
+	}
+	if = {
+		limit = {
+			always = no
+		}
+	}
+	rcw_clear_share_global = yes
+	rcw_clear_share_global = yes
+	rcw_clear_share_global = yes
+	rcw_clear_share_global = yes
+	rcw_clear_share_global = yes
+	if = {
+		limit = {
+			has_global_variable_list = rcw_russian_factions
+		}
+		clear_global_variable_list = rcw_russian_factions
+	}
+	if = {
+		limit = {
+			has_global_variable_list = rcw_separatists
+		}
+		clear_global_variable_list = rcw_separatists
+	}
+	if = {
+		limit = {
+			has_global_variable = rcw_exhaustion_level
+		}
+		remove_global_variable = rcw_exhaustion_level
+	}
+	if = {
+		limit = {
+			always = no
+		}
+	}
+	if = {
+		limit = {
+			has_global_variable = rcw_ai_reincorporation_pause
+		}
+		remove_global_variable = rcw_ai_reincorporation_pause
+	}
+}
+
+rcw_register_late_separatist = {
+	scope:target ?= {
+		rcw_register_separatist = yes
+		if = {
+			limit = {
+				NOT = { is_involved_in_journal_entry = je_russia_civil_war }
+			}
+			je:je_russia_civil_war ?= {
+				add_involved_country = prev
+			}
+		}
+	}
+}
+
+rcw_clear_share_global = {
+	if = {
+		limit = {
+			always = no
+		}
+	}
+}
+
+rcw_distribute_agitators = {
+	every_country = {
+		limit = {
+			always = no
+		}
+		every_scope_character = {
+			limit = {
+				has_role_of_type = agitator
+				is_interest_group_leader = no
+				NOR = {
+					is_ruler_of_own_country = yes
+					is_heir_of_own_country = yes
+				}
+				NOT = { has_variable = rcw_leader_assigned }
+				home_state ?= {
+					owner ?= {
+						has_variable = russian_warlord_country
+						has_variable = rcw_camp
+					}
+				}
+				var:rcw_candidate_camp ?= home_state.owner.var:rcw_camp
+			}
+			home_state = {
+				owner = {
+					save_temporary_scope_as = rcw_agitator_destination
+				}
+			}
+			transfer_character = scope:rcw_agitator_destination
+		}
+	}
+}
+
+rcw_grant_separatist_claims = {
+	if = {
+		limit = {
+			global_var:rcw_exhaustion_level >= 2
+			NOT = { has_global_variable = rcw_separatist_claims_granted }
+		}
+		set_global_variable = rcw_separatist_claims_granted
+		every_in_global_list = {
+			variable = rcw_russian_factions
+			limit = {
+				rcw_is_active_russian_faction = yes
+			}
+			save_temporary_scope_as = rcw_claimant
+			every_neighbouring_state = {
+				limit = {
+					owner ?= { has_variable = rcw_separatist }
+					state_region = { is_homeland = cu:russian }
+				}
+				state_region = {
+					add_claim = scope:rcw_claimant
+				}
+			}
+		}
+	}
+}

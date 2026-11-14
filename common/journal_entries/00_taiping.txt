@@ -1,0 +1,412 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+je_chinese_missions = {
+	icon = "gfx/interface/icons/religion_icons/protestant.dds"
+
+	group = je_group_qing
+
+	activation_description = {
+		always = yes
+	}
+
+	scripted_button = CHI_deport_missionaries_button
+
+	is_shown_when_inactive = {
+		exists = c:CHI
+		c:CHI ?= THIS
+	}
+
+	possible = {
+		OR = {
+			has_modifier = opium_wars_lost
+			NOT = {
+				has_law_or_variant = law_type:law_closed_borders
+			}
+		}
+		any_neighbouring_state = {
+			is_treaty_port = yes
+			custom_tooltip = {
+				text = owner_is_christian_tt
+				owner = {
+					religion = {
+						has_discrimination_trait = heritage_christian
+					}
+				}
+			}
+		}
+		OR = {
+			NOT = { has_law_or_variant = law_type:law_isolationism }
+			any_country = {
+				has_treaty_port_in_market = root.market
+			}
+		}
+	}
+
+	immediate = {
+		custom_tooltip = {
+			text = missionary_activities_begin_tt
+			trigger_event = {
+				id = heavenly.1
+			}
+		}
+		every_scope_state = {
+			limit = {
+				any_neighbouring_state = {
+					is_treaty_port = yes
+					owner = {
+						religion = {
+							has_discrimination_trait = heritage_christian
+						}
+					}
+				}
+			}
+			set_variable = open_to_missionaries_state
+		}
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			if = {
+				limit = {
+					has_law_or_variant = law_type:law_no_migration_controls
+					any_scope_state = {
+						NOT = {
+							has_variable = open_to_missionaries_state
+						}
+					}
+				}
+				every_scope_state = {
+					limit = {
+						NOT = {
+							has_variable = open_to_missionaries_state
+						}
+					}
+					set_variable = open_to_missionaries_state
+				}
+			}
+			else = {
+				every_scope_state = {
+					limit = {
+						any_neighbouring_state = {
+							is_treaty_port = yes
+							owner = {
+								religion = {
+									has_discrimination_trait = heritage_christian
+								}
+							}
+						}
+						NOT = {
+							has_variable = open_to_missionaries_state
+						}
+					}
+					set_variable = open_to_missionaries_state
+				}
+			}
+		}
+		random_events = {
+			500 = 0
+			10 = CHI_missionaries.1
+			10 = CHI_missionaries.2
+			10 = CHI_missionaries.3
+			10 = CHI_missionaries.4
+			10 = CHI_missionaries.5
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			custom_tooltip = {
+				text = missionary_ban_tt
+				has_variable = CHI_deported_missionaries
+			}
+			OR = {
+				is_country_type = recognized
+				has_law_or_variant = law_type:law_state_atheism
+				has_law_or_variant = law_type:law_isolationism
+				has_law_or_variant = law_type:law_closed_borders
+			}
+		}
+		effect = {
+			je_chinese_missions_cleanup = yes
+		}
+	}
+
+	weight = 10000
+		
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
+
+je_heavenly_kingdom_main = {
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+
+	group = je_group_qing
+
+	activation_description = {
+		always = yes
+	}
+
+	is_shown_when_inactive = {
+		exists = c:CHI
+		c:CHI ?= THIS
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = missionaries_enough_time_tt
+			OR = {
+				AND = {
+					always = no
+					always = no
+					game_date >= 1846
+				}
+				game_date >= 1856
+			}
+		}
+		is_subject = no
+		any_scope_state = {
+			is_incorporated = yes
+			religion_percent_state = {
+				target = rel:protestant
+				value >= 0.01
+			}
+			is_capital = no
+			state_region = {
+				OR = {
+					is_homeland = cu:han
+					is_homeland = cu:hakka
+				}
+			}
+			turmoil > 0.15
+		}
+	}
+
+	immediate = {
+		random_scope_state = {
+			limit = {
+				is_incorporated = yes
+				religion_percent_state = {
+					target = rel:protestant
+					value >= 0.01
+				}
+				is_capital = no
+				state_region = {
+					OR = {
+						is_homeland = cu:han
+						is_homeland = cu:hakka
+					}
+				}
+				turmoil > 0.15
+			}
+			add_modifier = {
+				name = god_worshippers
+				days = short_modifier_time
+			}
+		}
+		trigger_event = {
+			id = heavenly.2
+		}
+	}
+
+	on_monthly_pulse = {
+		random_events = {
+			5 = 0
+			1 = heavenly.3
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			NOT = {
+				any_scope_state = {
+					has_modifier = god_worshippers
+				}
+			}
+		}
+		effect = {
+			je_heavenly_kingdom_main_cleanup = yes
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			any_scope_state = {
+				has_modifier = god_worshippers
+				count >= 4
+			}
+			any_scope_state = {
+				AND = {
+					has_modifier = god_worshippers
+					religion_percent_state = {
+						target = rel:protestant
+						value >= 0.01
+					}
+					state_religious_acceptance = {
+		 				target = rel:protestant
+						value <= religious_acceptance_low
+					}
+					turmoil >= 0.15
+				}
+			}
+		}
+		effect = {
+			trigger_event = {
+				id = heavenly.4
+			}
+		}
+	}
+
+	weight = 10000
+		
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
+
+je_taiping = {
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+
+	group = je_group_qing
+
+	activation_description = {
+		always = yes
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			custom_tooltip = {
+				text = taiping_destroyed
+				NOT = {
+					exists = c:TPG
+				}
+			}
+		}
+		effect = {
+			trigger_event = { id = heavenly.5 days = 0 }
+			hidden_effect = {
+				remove_modifier = taiping_taiping_rebellion
+			}
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			exists = c:TPG
+			has_truce_with = c:TPG
+		}
+		effect = {
+			if = {
+				limit = { has_journal_entry = je_warlord_china }
+				chi_remove_1_fragile_unity = yes
+			}
+			hidden_effect = {
+				remove_modifier = taiping_taiping_rebellion
+				c:TPG ?= {
+					remove_modifier = taiping_taiping_rebellion
+				}
+			}
+			je_taiping_cleanup = yes
+		}
+	}
+
+	immediate = {
+		c:TPG ?= {
+			save_scope_as = taiping_scope
+		}
+	}
+
+	weight = 1000
+		
+	should_be_pinned_by_default_uninvolved_or_context = yes
+
+	transferable = no
+}
+
+je_taiping_revolution = {
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+
+	group = je_group_historical_content
+
+	activation_description = {
+		always = yes
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			OR = {
+				custom_tooltip = {
+					text = china_destroyed
+					NOT = {
+						exists = c:CHI
+					}
+				}
+				AND = {
+					exists = c:CHI
+					has_truce_with = c:CHI
+				}
+			}
+
+		}
+		effect = {
+			trigger_event = { id = heavenly.6 days = 0 }
+			custom_tooltip = {
+				text = rebellion_effects_remove
+				remove_modifier = taiping_taiping_rebellion
+				every_interest_group = {
+					limit = {
+						has_modifier = taiping_taiping_revolution
+					}
+					remove_modifier = taiping_taiping_revolution
+				}
+			}
+
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			NOT = {
+				exists = c:TPG
+			}
+		}
+		effect = {
+			je_taiping_revolution_cleanup = yes
+		}
+	}
+
+	immediate = {
+		c:CHI ?= {
+			save_scope_as = china_scope
+		}
+	}
+
+	weight = 1000
+
+	should_be_pinned_by_default_uninvolved_or_context = yes
+
+	transferable = no
+}

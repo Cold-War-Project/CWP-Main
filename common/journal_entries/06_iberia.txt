@@ -1,0 +1,314 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+je_iberia = {
+	icon = "gfx/interface/icons/invention_icons/nationalism.dds"
+
+	group = je_group_iberia
+	dlc = dlc016
+
+	activation_description = {
+		always = yes
+	}
+
+	scripted_button = je_iberia_union_button
+	scripted_button = je_iberia_preserve_union_button
+	scripted_button = je_iberia_adopt_esperanto_language
+	scripted_button = je_iberia_forsake_unification
+
+    is_shown_when_inactive = {
+        has_dlc_feature = ip4_content
+        any_country_in_iberia_old = {
+            has_technology_researched = nationalism
+        }
+	}
+
+	possible = {
+        any_country_in_iberia_old = {
+            has_technology_researched = pan-nationalism
+            custom_tooltip = {
+                text = pursued_iberian_unification_tt
+                always = no
+            }
+        }
+	}
+
+    should_be_involved = {
+		capital = {
+            is_in_geographic_region = geographic_region_iberia_old
+        }
+		OR = {
+			AND = {
+				is_subject = yes
+				overlord ?= {
+					always = no
+				}
+			}
+			always = no
+		}
+	}
+
+	should_show_when_not_involved = {
+        OR = {
+		    has_interest_marker_in_region = sr:region_southern_europe
+            top_overlord ?= {
+                capital = {
+                    is_in_geographic_region = geographic_region_iberia_old
+                }
+            }
+        }
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			iberia_calculate_shared_laws = yes
+		}
+	}
+
+	on_weekly_pulse = {
+		effect = {
+			every_country_in_iberia_old = {
+				if = {
+					limit = {
+						has_journal_entry = je_iberia
+						NOT = {
+							is_involved_in_journal_entry = je_iberia
+						}
+					}
+					if = {
+						limit = {
+							is_subject = yes
+							overlord ?= {
+								capital = {
+									is_in_geographic_region = geographic_region_iberia_old
+								}
+								is_involved_in_journal_entry = je_iberia
+							}
+						}
+						je:je_iberia ?= {
+							add_involved_country = PREV
+						}
+					}
+					else_if = {
+						limit = {
+							NOR = {
+								has_variable = against_iberian_unification
+								always = no
+							}
+						}
+						ordered_country_in_iberia_old = {
+							limit = {
+								is_involved_in_journal_entry = je_iberia
+							}
+							order_by = prestige
+							position = 0
+							save_scope_as = iberia_forming_country
+						}
+						trigger_event = { id = iberia.11 popup = yes }
+					}
+				}
+			}
+		}
+	}
+
+	immediate = {
+		every_country_in_iberia_old = {
+			limit = {
+                always = no
+				NOT = {
+					is_involved_in_journal_entry = je_iberia
+				}
+				capital = {
+					is_in_geographic_region = geographic_region_iberia_old
+				}
+			}
+			scope:journal_entry = {
+				add_involved_country = PREV
+			}
+			iberia_calculate_shared_laws = yes
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			OR = {
+				custom_tooltip = {
+					text = iberia_exists_tt
+					exists = c:IBE
+				}
+				trigger_if = {
+					limit = {
+						any_country_in_iberia_old = {
+							is_involved_in_journal_entry = je_iberia
+							is_subject_type = subject_type_personal_union
+							overlord ?= {
+								capital = {
+									is_in_geographic_region = geographic_region_iberia_old
+								}
+							}
+						}
+					}
+					custom_tooltip = {
+						text = retained_personal_union_tt
+						any_country_in_iberia_old = {
+							filter = {
+								is_involved_in_journal_entry = je_iberia
+							}
+							has_variable = iberia_permanent_personal_union
+							count = all
+						}
+					}
+				}
+			}
+		}
+		effect = {
+			show_as_tooltip = {
+				trigger_event = { id = iberia.2 popup = yes }
+				if = {
+					limit = {
+						scope:journal_entry = {
+							has_variable = esperanto_var
+						}
+					}
+					if = {
+						limit = {
+							scope:journal_entry.var:esperanto_var = 2
+						}
+						custom_tooltip = esperanto_mandatory_on_complete_tt
+						custom_tooltip = remove_all_non_esperanto_primaries_tt
+						custom_tooltip = 1_percent_of_pops_assimilate_esperanto_tt
+					}
+					else = {
+						custom_tooltip = esperanto_optional_on_complete_tt
+					}
+					custom_tooltip = all_iberian_states_become_esperanto_tt
+					custom_tooltip = 25_percent_of_bureaucrats_and_academics_assimilate_esperanto_tt
+				}
+			}
+			hidden_effect = {
+				c:IBE ?= {
+					if = {
+						limit = {
+							scope:journal_entry = {
+								has_variable = esperantia_var
+							}
+						}
+						set_variable = esperantia_var
+					}
+					trigger_event = { id = iberia.2 }
+					if = {
+						limit = {
+							scope:journal_entry = {
+								has_variable = esperanto_var
+							}
+						}
+						add_primary_culture = cu:iberian
+						custom_tooltip = {
+							text = all_iberian_states_become_esperanto_tt
+							every_state_in_iberia_old = {
+								state_region = {
+									add_homeland = cu:iberian
+								}
+							}
+						}
+						custom_tooltip = {
+							text = 25_percent_of_bureaucrats_and_academics_assimilate_esperanto_tt
+							every_scope_pop = {
+								limit = {
+									OR = {
+										is_pop_type = bureaucrats
+										is_pop_type = academics
+									}
+								}
+								change_pop_culture = {
+									target = cu:iberian
+									value = 0.25
+								}
+							}
+						}
+						ruler = {
+							change_character_culture = cu:iberian
+						}
+						ig:ig_intelligentsia.leader = {
+							change_character_culture = cu:iberian
+						}
+						if = {
+							limit = {
+								scope:journal_entry.var:esperanto_var = 2
+							}
+							custom_tooltip = {
+								text = remove_all_non_esperanto_primaries_tt
+								every_primary_culture = {
+									limit = {
+										NOT = {
+											cu:iberian ?= this
+										}
+									}
+									c:IBE ?= {
+										remove_primary_culture = prev
+									}
+								}
+							}
+							custom_tooltip = {
+								text = 1_percent_of_pops_assimilate_esperanto_tt
+								every_scope_pop = {
+									change_pop_culture = {
+										target = cu:iberian
+										value = 0.01
+									}
+								}
+							}
+							every_scope_state = {
+								evaluate_and_assign_state_hub_dynamic_names = yes # All dynamic naming is handled by this scripted effect
+							}
+						}
+					}
+				}
+			}
+			je_iberia_cleanup = yes
+		}
+		event_outcome_desc = {
+			first_valid = {
+				triggered_desc = {
+					#desc = event_effects_two_spains.2_tt
+				}
+			}
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			custom_tooltip = {
+				text = nobody_cares_about_iberia_tt
+				NOT = {
+					any_country_in_iberia_old = {
+						is_involved_in_journal_entry = je_iberia
+					}
+				}
+			}
+		}
+		effect = {
+			je_iberia_cleanup = yes
+		}
+		event_outcome_desc = {
+			first_valid = {
+				triggered_desc = {
+					#desc = event_effects_two_spains.3_tt
+				}
+			}
+		}
+	}
+
+	weight = 5000
+
+	should_be_pinned_by_default_involved = yes
+	should_be_pinned_by_default_uninvolved_or_context = no
+
+	can_revolution_inherit = yes
+}

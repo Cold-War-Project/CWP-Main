@@ -1,0 +1,395 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+country_is_subject_type_valid_for_caesaropapism = {
+	religion = rel:orthodox
+	OR = {
+		is_subject_type = subject_type_colony
+		is_subject_type = subject_type_dominion
+		is_subject_type = subject_type_chartered_company
+		is_subject_type = subject_type_crown_land
+		is_subject_type = subject_type_personal_union
+	}
+}
+
+country_has_german_national_movement = {
+	AND = {
+		OR = {
+			country_has_primary_culture = cu:north_german
+			country_has_primary_culture = cu:south_german
+		}
+		any_political_movement = {
+			is_political_movement_type = movement_german_national
+		}
+	}
+}
+
+country_has_italian_national_movement = {
+	AND = {
+		OR = {
+			country_has_primary_culture = cu:north_italian
+			country_has_primary_culture = cu:south_italian
+		}
+		any_political_movement = {
+			is_political_movement_type = movement_italian_national
+		}
+	}
+}
+
+country_has_yugoslav_national_movement = {
+	AND = {
+		OR = {
+			country_has_primary_culture = cu:croat
+			country_has_primary_culture = cu:serb
+			country_has_primary_culture = cu:bosniak
+			country_has_primary_culture = cu:slovene
+		}
+		any_political_movement = {
+			is_political_movement_type = movement_yugoslav_national
+		}
+	}
+}
+
+country_has_meiji_restoration_movement = {
+	AND = {
+		c:JAP ?= this
+		any_political_movement = {
+			is_political_movement_type = movement_meiji_restorationist
+		}
+	}
+}
+
+party_counts_as_socialist_party = {
+	OR = {
+		is_party_type = socialist_party
+		AND = {
+			is_party_type = revolutionary_party
+			any_member ?= { # Because a direct link doesn't exist
+				owner ?= {
+					is_insurrectionary = yes
+					var:civil_war_type_var ?= {
+						movement_type_is_socialist = yes
+					}
+				}
+			}
+		}
+	}
+}
+
+had_revolutionary_socialism_victory = {
+	has_global_variable = reform_or_revolution_conclusion
+	global_var:reform_or_revolution_conclusion ?= flag:revolution
+}
+
+had_reformist_socialism_victory = {
+	has_global_variable = reform_or_revolution_conclusion
+	global_var:reform_or_revolution_conclusion ?= flag:reform
+}
+
+has_council_republic_law = {
+	has_law_or_variant = law_type:law_council_republic
+}
+
+reform_or_revolution_variables_initialised = {
+	AND = {
+		always = no
+		always = no
+	}
+	AND = {
+		always = no
+		always = no
+	}
+}
+
+has_factory_councils_law_or_amendment = {
+	OR = {
+		has_law_or_variant = law_type:law_factory_councils
+		active_law:lawgroup_labour_associations ?= {
+			has_amendment = amendment_type:amendment_factory_councils
+		}
+	}
+}
+
+country_at_risk_of_factory_councils = {
+	NOT = { has_factory_councils_law_or_amendment = yes }
+	has_technology_researched = socialism
+	ig:ig_trade_unions ?= {
+		is_revolutionary = yes
+		save_temporary_scope_as = trade_unions_ig
+	}
+	any_civil_war = {
+		is_civil_war_type = revolution
+		political_movement = {
+			OR = {
+				political_movement_support >= 0.10
+				political_movement_radicalism >= 0.90
+			}
+			OR = {
+				law_stance = {
+					law = law_type:law_factory_councils
+					value > neutral
+				}
+				scope:trade_unions_ig ?= {
+					law_stance = {
+						law = law_type:law_factory_councils
+						value > neutral
+					}
+				}
+			}
+		}
+	}
+	any_scope_state = {
+		is_incorporated = yes
+		is_in_revolt = yes
+	}
+}
+
+character_marx_is_alive = {
+	always = no
+	always = no
+}
+
+five_year_plan_heavy_industry_goal_met = {
+	custom_tooltip = {
+		text = five_year_plan_heavy_industry_goal_tt
+		je:je_five_year_plan ?= {
+			has_variable = five_year_plan_heavy_industry_target_var
+		}
+		je:je_five_year_plan.var:five_year_plan_heavy_industry_target_var <= five_year_plan_heavy_industry_levels_value
+	}
+}
+
+five_year_plan_light_industry_goal_met = {
+	custom_tooltip = {
+		text = five_year_plan_light_industry_goal_tt
+		je:je_five_year_plan ?= {
+			has_variable = five_year_plan_light_industry_target_var
+		}
+		je:je_five_year_plan.var:five_year_plan_light_industry_target_var <= five_year_plan_light_industry_levels_value
+	}
+}
+
+five_year_plan_transportation_goal_met = {
+	custom_tooltip = {
+		text = five_year_plan_transportation_buy_orders_tt
+		je:je_five_year_plan ?= {
+			has_variable = five_year_plan_transportation_target_var
+		}
+		je:je_five_year_plan.var:five_year_plan_transportation_target_var <= five_year_plan_transportation_buy_orders_value
+	}
+	custom_tooltip = {
+		text = five_year_plan_transportation_price_tt
+		NOT = {
+			any_scope_state = {
+				is_incorporated = yes
+				sg:transportation ?= {
+					state_goods_pricier > 0.1
+				}
+			}
+		}
+	}
+}
+
+five_year_plan_agriculture_goal_met = {
+	custom_tooltip = {
+		text = five_year_plan_agriculture_collectivized_tt
+		has_law_or_variant = law_type:law_collectivized_agriculture
+	}
+	custom_tooltip = {
+		text = five_year_plan_agriculture_peasants_tt
+		je:je_five_year_plan ?= {
+			has_variable = five_year_plan_agriculture_target_var
+		}
+		je:je_five_year_plan.var:five_year_plan_agriculture_target_var >= five_year_plan_peasant_fraction_value
+	}
+	custom_tooltip = {
+		text = five_year_plan_agriculture_price_tt
+		market ?= {
+			NOT = {
+				mg:grain ?= {
+					market_goods_pricier > 0
+				}
+			}
+		}
+	}
+}
+
+five_year_plan_electrification_goal_met = {
+	custom_tooltip = {
+		text = five_year_plan_electrification_buy_orders_tt
+		je:je_five_year_plan ?= {
+			has_variable = five_year_plan_electrification_target_var
+		}
+		je:je_five_year_plan.var:five_year_plan_electrification_target_var <= five_year_plan_electricity_buy_orders_value
+	}
+	custom_tooltip = {
+		text = five_year_plan_electrification_price_tt
+		NOT = {
+			any_scope_state = {
+				is_incorporated = yes
+				sg:electricity ?= {
+					state_goods_pricier > 0.1
+				}
+			}
+		}
+	}
+}
+
+russian_character_is_marked_for_death_chance = {
+    OR = {
+        AND = { # Tsar Nicholas I must die
+            has_template = RUS_nicholas_i
+            game_date >= 1860.1.1
+        }
+        AND = { # Tsar Alexander III died young due to health issues
+            has_template = RUS_alexander_iii
+			has_role_of_type = ruler
+            game_date >= 1894.1.1
+        }
+        AND = { # Alexei needs Rasputin or else he will die, unless je_tp_fav_rasputin is completed
+        	has_template = RUS_alexei_ii
+        	game_date >= 1910.1.1
+        	NOR = {
+        		has_modifier = modifier_faith_healing
+        		has_modifier = modifier_holy_blessing
+        	}
+			owner = {
+			    NOT = { always = no }
+			    OR = {
+			        NOT = {
+			        	any_scope_character = {
+			        		has_template = RUS_grigoriy_rasputin
+			        	}
+			        }
+			        any_scope_character = {
+			            has_template = RUS_grigoriy_rasputin
+			            NOT = { has_role = character_role_favorite }
+			        }
+			    }
+			}
+        }
+    }
+}
+
+# Russfication
+je_russification_state_is_russian_incorporated = {
+	c:RUS ?= owner
+	is_incorporated = yes
+}
+
+je_russification_state_turmoil_is_low = {
+	turmoil < je_russification_state_turmoil_max
+}
+
+je_russification_state_is_russian_assimilated = {
+	culture_percent_state = {
+		target = cu:russian
+		value >= je_russification_state_russian_culture_min
+	}
+}
+
+je_russification_state_is_russified = {
+	je_russification_state_is_russian_incorporated = yes
+	je_russification_state_turmoil_is_low = yes
+	je_russification_state_is_russian_assimilated = yes
+}
+
+je_russification_state_is_in_target_region = {
+	is_in_geographic_region = geographic_region_russia_western_borderlands
+}
+
+cultural_renaissance_fervor_is_high = {
+	cu:$CULTURE$ ?= {
+		culture_current_fervor >= 25
+	}
+}
+
+country_is_valid_qing_treaty_partner = {
+	OR = {
+		country_has_primary_culture = cu:manchu
+		country_has_primary_culture = cu:han
+	}
+	is_country_type = unrecognized
+	hidden_trigger = {
+		is_player = no
+	}
+	OR = {
+		trigger_if = {
+			limit = {
+				has_journal_entry = je_warlord_china
+			}
+			custom_tooltip = {
+				text = china_explosion_point_2_tt
+				always = no
+			}
+		}
+		country_rank < rank_value:unrecognized_major_power
+	}
+	OR = {
+		is_subject = no
+		is_subject_of = ROOT
+	}
+	trigger_if = {
+		limit = {
+			country_rank >= rank_value:unrecognized_major_power
+		}
+		OR = {
+			custom_tooltip = {
+				text = war_with_china_not_russia_tt
+				any_enemy_in_war = {
+					NOT = {
+						c:RUS ?= this
+					}
+				}
+			}
+			custom_tooltip = {
+				text = owes_russia_obligation_tt
+				c:RUS ?= {
+					is_owed_obligation_by = PREV
+				}
+			}
+			army_power_projection <= { # Army is less than half Russia's
+				value = c:RUS.army_power_projection
+				multiply = 0.5
+			}
+		}
+	}
+}
+
+civil_war_is_valid_for_reforms_at_gunpoint = {
+	OR = {
+		civil_war_is_liberal_revolution = yes
+		civil_war_is_socialist_revolution = yes
+	}
+	civil_war_progress_high = yes
+	political_movement = {
+		exists = most_desired_law
+		most_desired_law ?= {
+			NOT = {
+				is_same_law_group_as = law_type:law_council_republic
+			}
+		}
+	}
+}
+
+circassian_expulsion_destination_available_trigger = { # for je_circassian_expulsions and caucasus_expulsions.1, checks that there is an available state not owned by Russia
+	any_state_region = {
+		any_scope_state = {
+			OR = {
+				state_region = s:STATE_EASTERN_THRACE
+				state_region = s:STATE_KASTAMONU
+				state_region = s:STATE_TRABZON
+			}
+			NOT = { owner = ROOT }
+		}
+	}
+}
+
+nihilist_successor_socialist = { # for dissolving nihilism
+	has_technology_researched = socialism
+	had_reformist_socialism_victory = no
+}
+
+nihilist_successor_anarchist = { # for dissolving nihilism
+	has_technology_researched = anarchism
+	NOT = { has_technology_researched = socialism }
+	had_reformist_socialism_victory = no
+}

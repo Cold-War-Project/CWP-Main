@@ -1,0 +1,511 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+demand_return_of_koh_i_noor = {
+	is_shown = {
+		has_dlc_feature = ip2_content
+		any_primary_culture = {
+			has_discrimination_trait_group = heritage_group_south_asian
+		}
+		is_independent_and_not_being_subjugated = yes
+		country_rank >= rank_value:unrecognized_major_power
+		any_country_in_europe = {
+			always = no
+		}
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = koh_i_noor_in_europe_tt
+			any_country_in_europe = {
+				always = no
+			}
+		}
+		custom_tooltip = {
+			text = not_at_war_with_koh_i_noor_owner_tt
+			NOT = {
+				any_country_in_europe = {
+					custom_tooltip = {
+						text = owns_koh_i_noor_tt
+						always = no
+					}
+					has_war_with = ROOT
+				}
+			}
+		}
+		custom_tooltip = {
+			text = koh_i_noor_return_requested_too_recently_tt
+			NOT = {
+				has_global_variable = koh_i_noor_decision_return_demanded
+			}
+		}
+	}
+
+	when_taken = {
+		set_global_variable = { name = koh_i_noor_decision_return_demanded years = 10 }
+		random_country_in_europe = {
+			limit = {
+				always = no
+			}
+			save_scope_as = diamond_country
+			custom_tooltip = {
+				text = demand_return_of_diamond_tt
+				trigger_event = { id = india_events.4 }
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				any_country_in_europe = {
+					always = no
+					relations:root <= relations_threshold:cordial
+				}
+			}
+			add = 10
+		}
+		if = {
+			limit = {
+				has_strategy = ai_strategy_armed_isolationism
+			}
+			multiply = 0
+		}
+	}
+}
+
+make_delhi_capital = {
+	is_shown = {
+		c:BIC ?= this
+		NOT = {
+			has_variable = made_delhi_capital_var
+		}
+		p:xE0EFA0.state.owner = root
+	}
+
+	possible = {
+		any_scope_state = {
+			state_region = s:STATE_DELHI
+			is_incorporated = yes
+			any_scope_building = {
+				is_building_type = building_urban_center
+				level >= 5
+			}
+		}
+		OR = {
+		    any_political_movement = {
+		        is_political_movement_type = movement_muslim_nationalist
+		        political_movement_radicalism >= 0.1
+		    }
+		    any_political_movement = {
+		        is_political_movement_type = movement_hindu_nationalist
+		        political_movement_radicalism >= 0.1
+		    }
+		    has_technology_researched = political_agitation
+		}
+	}
+
+	when_taken = {
+		if = {
+			limit = {
+				NOT = {
+					capital = {
+						state_region = s:STATE_DELHI
+					}
+				}
+			}
+			set_capital = STATE_DELHI
+		}
+		set_variable = made_delhi_capital_var
+		random_scope_state = {
+			limit = {
+				state_region = s:STATE_DELHI
+			}
+			add_modifier = {
+				name = new_delhi_modifier
+			}
+		}
+		add_modifier = {
+			name = new_delhi_cost_modifier
+			days = normal_modifier_time
+			multiplier = money_amount_multiplier_small
+		}
+		if = {
+			limit = {
+				any_political_movement = {
+					OR = {
+						is_political_movement_type = movement_muslim_nationalist
+						is_political_movement_type = movement_hindu_nationalist
+					}
+				}
+			}
+			every_political_movement = {
+				limit = {
+					OR = {
+						is_political_movement_type = movement_muslim_nationalist
+						is_political_movement_type = movement_hindu_nationalist
+					}
+				}
+				add_modifier = {
+					name = delhi_made_capital_modifier
+					days = normal_modifier_time
+				}
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				has_strategy = ai_strategy_armed_isolationism
+			}
+			multiply = 0
+		}
+	}
+}
+
+pressure_to_sell_berar_province = {
+	is_shown = {
+		c:BIC ?= this
+		is_at_war = no
+		NOT = {
+			has_variable = sold_berar_var
+		}
+		any_scope_state = {
+			state_region = s:STATE_CENTRAL_PROVINCES
+		}
+		any_neighbouring_state = {
+			state_region = s:STATE_CENTRAL_PROVINCES
+			owner = {
+				c:HYD ?= this
+				is_subject_of = root
+				is_at_war = no
+			}
+		}
+	}
+
+	possible = {
+		OR = {
+			c:HYD ?= {
+				any_scope_state = {
+					state_region = s:STATE_CENTRAL_PROVINCES
+					turmoil >= 0.2
+				}
+			}
+			AND = {
+				c:HYD ?= {
+					any_scope_state = {
+						state_region = s:STATE_CENTRAL_PROVINCES
+						is_incorporated = no
+					}
+				}
+				game_date > 1850.1.1
+			}
+			c:HYD ?= {
+				liberty_desire <= 10
+			}
+		}
+	}
+
+	when_taken = {
+		c:HYD ?= {
+			trigger_event = { id = india_events.18 }
+		}
+		custom_tooltip = if_they_accept_tt
+		custom_tooltip = lease_of_berar_decision_tt
+		custom_tooltip = lease_of_berar_decision_payment_tt
+		set_variable = sold_berar_var
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				game_date > 1850.1.1
+			}
+			add = 5
+		}
+		if = {
+			limit = {
+				game_date > 1860.1.1
+			}
+			add = 5
+		}
+		if = {
+			limit = {
+				any_scope_state = {
+					state_region = s:STATE_CENTRAL_PROVINCES
+					turmoil > 0.1
+				}
+			}
+			add = 10
+		}
+		if = {
+			limit = {
+				any_scope_state = {
+					state_region = s:STATE_CENTRAL_PROVINCES
+					turmoil > 0.2
+				}
+			}
+			add = 10
+		}
+		if = {
+			limit = {
+				any_scope_state = {
+					state_region = s:STATE_CENTRAL_PROVINCES
+					is_incorporated = no
+				}
+			}
+			add = 10
+		}
+	}
+}
+
+bic_end_company_rule = {
+	is_shown = {
+		c:BIC ?= this
+		is_subject_type = subject_type_chartered_company
+		has_variable = company_rule_enduring
+	}
+
+	possible = {
+		has_technology_researched = civilizing_mission
+	}
+
+	when_taken = {
+		top_overlord = {
+			trigger_event = { id = raj.1 }
+		}
+		custom_tooltip = activate_british_raj
+		show_as_tooltip = {
+			if = {
+				limit = {
+					has_diplomatic_pact = {
+						who = c:BIC
+						type = chartered_company
+					}
+				}
+				c:BIC ?= {
+					decrease_autonomy = yes
+				}
+			}
+			c:BIC ?= {
+				set_variable = doctrine_of_lapse_ended
+				custom_tooltip = doctrine_of_lapse_disabled
+				if = {
+					limit = {
+						has_modifier = modifier_india_company_rule
+					}
+					custom_tooltip = {
+						text = remove_modifier_india_company_rule_tt
+						remove_modifier = modifier_india_company_rule
+					}
+				}
+				if = { # Should never happen, but just in case
+					limit = {
+						has_modifier = modifier_india_company_rule_upgraded
+					}
+					custom_tooltip = {
+						text = remove_modifier_india_company_rule_upgraded_tt
+						remove_modifier = modifier_india_company_rule_upgraded
+					}
+				}
+				custom_tooltip = {
+					text = add_modifier_india_crown_rule_tt
+					add_modifier = modifier_india_crown_rule
+				}
+				if = {
+					limit = {
+						NOT = {
+							has_law_or_variant = law_type:law_appointed_bureaucrats
+						}
+					}
+					activate_law = law_type:law_appointed_bureaucrats
+				}
+				if = {
+					limit = {
+						NOT = {
+							has_law_or_variant = law_type:law_autocracy
+						}
+					}
+					activate_law = law_type:law_autocracy
+				}
+				if = {
+					limit = {
+						NOR = {
+							has_law_or_variant = law_type:law_hindu_caste_enforced
+							has_law_or_variant = law_type:law_hindu_caste_codified
+						}
+					}
+					activate_law = law_type:law_hindu_caste_codified
+				}
+				ig:ig_industrialists ?= {
+					set_interest_group_name = ig_government_of_india
+				}
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				is_at_war = yes
+			}
+			add = -5
+		}
+		if = {
+			limit = {
+				loyalist_fraction = {
+					value > 0.05
+				}
+			}
+			add = -1
+		}
+		if = {
+			limit = {
+				loyalist_fraction = {
+					value > 0.10
+				}
+			}
+			add = -2
+		}
+		if = {
+			limit = {
+				any_political_movement = {
+					movement_is_plausibly_indian_nationalist = yes
+					political_movement_radicalism < 0.1
+				}
+			}
+			add = -1
+		}
+		if = {
+			limit = {
+				any_political_movement = {
+					movement_is_plausibly_indian_nationalist = yes
+					political_movement_radicalism >= 0.1
+				}
+			}
+			add = 1
+		}
+		if = {
+			limit = {
+				any_political_movement = {
+					movement_is_plausibly_indian_nationalist = yes
+					political_movement_radicalism >= 0.2
+				}
+			}
+			add = 2
+		}
+		if = {
+			limit = {
+				any_political_movement = {
+					movement_is_plausibly_indian_nationalist = yes
+					political_movement_radicalism >= 0.3
+				}
+			}
+			add = 3
+		}
+		if = {
+			limit = {
+				any_political_movement = {
+					movement_is_plausibly_indian_nationalist = yes
+					political_movement_radicalism >= 0.4
+				}
+			}
+			add = 4
+		}
+		if = {
+			limit = {
+				any_political_movement = {
+					movement_is_plausibly_indian_nationalist = yes
+					political_movement_radicalism >= 0.5
+				}
+			}
+			add = 5
+		}
+		if = {
+			limit = {
+				game_date > 1900.1.1
+			}
+			add = 1
+		}
+		if = {
+			limit = {
+				has_ruling_interest_group = ig_industrialists
+			}
+			add = -1
+		}
+	}
+}
+
+bht_end_privy_purse_payments = {
+	is_shown = {
+		c:BHT ?= this
+		has_modifier = modifier_privy_purse_payments
+	}
+
+	possible = {
+		ig:ig_landowners ?= {
+			is_in_government = no
+		}
+		trigger_if = {
+			limit = {
+				is_subject = yes
+			}
+			custom_tooltip = {
+				text = no_federation_je_tt
+				NOT = {
+					has_journal_entry = je_federation_of_india
+				}
+			}
+		}
+		trigger_else = {
+			custom_tooltip = {
+				text = no_union_je_tt
+				NOT = {
+					has_journal_entry = je_federation_of_india
+				}
+			}
+		}
+	}
+
+	when_taken = {
+		remove_modifier = modifier_privy_purse_payments
+		add_radicals = {
+			value = large_radicals
+			pop_type = aristocrats
+		}
+		ig:ig_landowners ?= {
+			add_modifier = {
+				name = modifier_ended_privy_purse_payments
+				days = normal_modifier_time
+			}
+		}
+	}
+
+	ai_chance = {
+		value = -10
+		if = {
+			limit = {
+				taking_loans = yes
+			}
+			add = 5
+		}
+		if = {
+			limit = {
+				is_at_war = yes
+			}
+			add = 3
+		}
+		if = {
+			limit = {
+				scaled_debt >= 0
+			}
+			add = {
+				value = scaled_debt
+				multiply = 10
+			}
+		}
+	}
+}

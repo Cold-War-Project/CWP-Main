@@ -1,0 +1,403 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+je_donghak_movement = {
+		
+	should_be_pinned_by_default_uninvolved_or_context = yes
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+
+	group = je_group_historical_content
+	dlc = dlc010
+
+	activation_description = {
+		always = yes
+	}
+
+	is_shown_in_lobby = {
+		has_dlc_feature = ep1_content #Spheres of Influence
+        is_in_geographic_region = geographic_region_korea
+		country_has_primary_culture = cu:korean
+	}
+
+	modifiers_while_active = {
+		modifier_donghak_movement
+	}
+
+	is_shown_when_inactive = {
+		country_has_primary_culture = cu:korean
+        is_in_geographic_region = geographic_region_korea
+		has_technology_researched = egalitarianism
+		has_dlc_feature = ep1_content
+	}
+
+	possible = {
+		has_technology_researched = human_rights
+		NOT = {
+			has_law_or_variant = law_type:law_isolationism
+		}
+		any_power_bloc = {
+			power_bloc_leader = {
+				is_in_geographic_region = geographic_region_europe
+			}
+			leverage_advantage = { target = ROOT value > 0 }
+		}
+		radical_fraction = {
+			value >= 0.1
+		}
+	}
+
+	immediate = {
+		ig:ig_rural_folk ?= {
+			save_scope_as = donghak_ig
+		}
+		trigger_event = { id = gg_korea.1 popup = yes }
+	}
+
+	on_monthly_pulse = {
+		random_events = {
+			100 = 0
+			10 = gg_korea.4
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			OR = {
+				radical_fraction = {
+					value <= 0.05
+				}
+				custom_tooltip = {
+					text = donghak_petition_complete_tt
+					always = no
+				}
+			}
+		}
+		effect = {
+			show_as_tooltip = {
+				remove_modifier = modifier_donghak_movement
+			}
+			je_donghak_movement_cleanup = yes
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			any_political_movement = {
+				is_insurrectionary = yes
+				any_influenced_interest_group = {
+					is_interest_group_type = ig_rural_folk
+				}
+			}
+		}
+		effect = {
+			trigger_event = { id = gg_korea.2 popup = yes }
+		}
+		event_outcome_desc = {
+			first_valid = {
+				triggered_desc = {
+					desc = event_effects_gg_korea.2_tt
+				}
+			}
+		}
+	}
+
+	weight = 1000
+}
+
+je_gyojo_shinwon = {
+		
+	should_be_pinned_by_default_uninvolved_or_context = yes
+	icon = "gfx/interface/icons/event_icons/event_scales.dds"
+
+	group = je_group_crises
+	dlc = dlc010
+
+	activation_description = {
+		always = yes
+	}
+
+	# Added by event
+
+	timeout = 3650
+
+	modifiers_while_active = {
+		modifier_donghak_petition_accepted
+	}
+
+	immediate = {
+		ig:ig_rural_folk ?= {
+			save_scope_as = donghak_ig
+		}
+		ig:ig_landowners ?= {
+			save_scope_as = yangban_ig
+		}
+		random_law = {
+			limit = {
+				type = law_type:law_isolationism
+			}
+			save_scope_as = donghak_desired_law_1
+		}
+		random_law = {
+			limit = {
+				type = law_type:law_freedom_of_conscience
+			}
+			save_scope_as = donghak_desired_law_2
+		}
+		random_law = {
+			limit = {
+				type = law_type:law_total_separation
+			}
+			save_scope_as = donghak_desired_law_3
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			has_law_or_variant = law_type:law_isolationism
+			NOT = {
+				has_law_or_variant = law_type:law_state_religion
+			}
+			ig:ig_landowners ?= {
+				is_powerful = no
+				is_in_government = no
+			}
+		}
+		effect = {
+			trigger_event = { id = gg_korea.5 popup = yes }
+			hidden_effect = {
+			}
+		}
+		event_outcome_desc = {
+			first_valid = {
+				triggered_desc = {
+					desc = event_effects_gg_korea.5_tt
+				}
+			}
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			any_political_movement = {
+				is_insurrectionary = yes
+				any_influenced_interest_group = {
+					is_interest_group_type = ig_rural_folk
+				}
+			}
+		}
+		effect = {
+			je_gyojo_shinwon_cleanup = yes
+		}
+	}
+
+	outcome = {
+		header = JOURNAL_ENTRY_TIMEOUT
+		effect_header = JOURNAL_ENTRY_ON_TIMEOUT
+		flags = { timeout }
+		conclusion_desc = JOURNAL_ENTRY_TIMEOUT_CONCLUSION_DESC
+		effect = {
+			trigger_event = { id = gg_korea.6 popup = yes }
+		}
+		event_outcome_desc = {
+			first_valid = {
+				triggered_desc = {
+					desc = event_effects_gg_korea.6_tt
+				}
+			}
+		}
+	}
+
+	weight = 1000
+}
+
+je_korean_rebellion = {
+	should_be_pinned_by_default_uninvolved_or_context = no
+	should_be_pinned_by_default_involved = yes
+	icon = "gfx/interface/icons/event_icons/event_fire.dds"
+
+	group = je_group_global_international_situations
+	dlc = dlc010
+
+	activation_description = {
+		always = yes
+	}
+
+	should_be_involved = {
+		OR = {
+			c:KOR ?= this
+			civil_war_origin_country ?= c:KOR
+		}
+		# Japan and China are added by event
+	}
+
+	should_show_when_not_involved = {
+		OR = {
+			has_strategic_region_interest_tier = {
+				strategic_region = sr:region_northeast_asia
+				value >= 3
+			}
+			capital ?= {
+				is_in_geographic_region = geographic_region_northeast_asia
+			}
+		}
+	}
+
+	# Added by event
+
+	immediate = {
+		c:KOR ?= {
+			save_scope_as = korea_scope
+			ruler = {
+				save_scope_as = korea_ruler_scope
+			}
+			overlord = {
+				save_scope_as = china_scope
+			}
+		}
+		c:JAP ?= {
+			save_scope_as = japan_scope
+		}
+		random_country = {
+			limit = {
+				civil_war_origin_country = scope:korea_scope
+			}
+			save_scope_as = korea_rebellion_scope
+		}
+	}
+
+	outcome = {
+		header = je_korean_rebellion_government_victory
+		effect_header = je_korean_rebellion_on_government_victory
+		color = "gold_positive"
+		conclusion_desc = je_korean_rebellion_government_victory_conclusion_desc
+		trigger = {
+			scope:korea_scope ?= {
+				has_revolution = no
+				custom_tooltip = {
+					text = korean_ruler_retained_tt
+					scope:korea_ruler_scope = {
+						is_ruler_of_own_country = yes
+					}
+				}
+			}
+		}
+		effect = {
+			if = {
+				limit = {
+					scope:japan_scope ?= {
+						is_involved_in_journal_entry = je_korean_rebellion
+					}
+					c:KOR ?= {
+						is_subject = yes
+						scope:china_scope ?= overlord
+					}
+				}
+				custom_tooltip = {
+					text = japan_demands_korea_tt
+					scope:japan_scope ?= {
+						trigger_event = { id = gg_korea.8 days = 7 popup = yes}
+					}
+				}
+			}
+			scope:journal_entry ?= {
+				every_scope_je_involved = {
+					limit = {
+						OR = {
+							scope:china_scope ?= this
+							scope:japan_scope ?= this
+						}
+						always = no
+					}
+					add_modifier = {
+						name = modifier_victory_in_korean_intervention
+						days = long_modifier_time
+					}
+				}
+				every_scope_je_involved = {
+					limit = {
+						OR = {
+							scope:china_scope ?= this
+							scope:japan_scope ?= this
+						}
+						always = no
+					}
+					add_modifier = {
+						name = modifier_failed_korean_intervention
+						days = long_modifier_time
+					}
+				}
+			}
+			je_korean_rebellion_cleanup = yes
+		}
+	}
+
+	outcome = {
+		header = je_korean_rebellion_rebel_victory
+		effect_header = je_korean_rebellion_on_rebel_victory
+		color = "blue_negative"
+		conclusion_desc = je_korean_rebellion_rebel_victory_conclusion_desc
+		trigger = {
+			c:KOR ?= {
+				has_revolution = no
+				custom_tooltip = {
+					text = korean_ruler_deposed_tt
+					OR = {
+						NOT = { exists = scope:korea_ruler_scope }
+						scope:korea_ruler_scope ?= {
+							is_ruler_of_own_country = no
+						}
+					}
+				}
+			}
+		}
+		effect = {
+			scope:journal_entry ?= {
+				every_scope_je_involved = {
+					limit = {
+						OR = {
+							scope:china_scope ?= this
+							scope:japan_scope ?= this
+						}
+						always = no
+					}
+					add_modifier = {
+						name = modifier_victory_in_korean_intervention
+						days = long_modifier_time
+					}
+				}
+				every_scope_je_involved = {
+					limit = {
+						OR = {
+							scope:china_scope ?= this
+							scope:japan_scope ?= this
+						}
+						always = no
+					}
+					add_modifier = {
+						name = modifier_failed_korean_intervention
+						days = long_modifier_time
+					}
+				}
+			}
+			je_korean_rebellion_cleanup = yes
+		}
+	}
+
+	weight = 1000
+
+	can_revolution_inherit = yes
+}

@@ -1,0 +1,907 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+je_ukraine_cultural_renaissance = {
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+
+	group = je_group_global_international_situations
+	dlc = dlc019
+
+	is_shown_when_inactive = {
+		has_dlc_feature = ip5_content
+		cu:ukrainian = {
+			culture_current_fervor >= 5
+		}
+	}
+
+	activation_description = {
+		always = yes
+	}
+
+	possible = {
+		OR = {
+			cu:ukrainian = {
+				any_scope_homeland_state = {
+					owner = { is_involved_in_journal_entry = je_springtime_of_the_peoples }
+				}
+			}
+			cu:ukrainian = {
+				# Account for Fervor being increased by 5 by Synod of Polotsk
+				culture_current_fervor >= 15
+			}
+		}
+	}
+
+	should_be_involved = {
+		any_scope_state = {
+			state_region = { is_homeland = cu:ukrainian }
+		}
+	}
+
+	should_show_when_not_involved = {
+		culture_percent_country = {
+			target = cu:ukrainian
+			value > 0.01
+		}
+	}
+
+	immediate = {
+	}
+
+
+	immediate_all_involved = {
+		hidden_effect = {
+			cultural_renaissance_ai_approach_roll = {
+				NAME = ukraine
+				CULTURE = ukrainian
+			}
+		}
+		if = {
+			limit = { has_state_in_state_region = STATE_EAST_GALICIA }
+			trigger_event = { id = cultural_renaissances_events.1 popup = yes }
+		}
+		if = {
+			limit = { has_state_in_state_region = STATE_KIEV }
+			trigger_event = { id = cultural_renaissances_events.2 popup = yes }
+		}
+
+		if = {
+			limit = {
+				NOT = {
+					any_political_movement = {
+						is_political_movement_type = movement_cultural_minority
+						culture = cu:ukrainian
+					}
+				}
+			}
+			create_political_movement = {
+				type = movement_cultural_minority
+				culture = cu:ukrainian
+			}
+			custom_tooltip_no_bullet = ukraine_national_movement
+			show_as_tooltip = {
+				add_modifier = {
+					name = cultural_renaissance
+					days = very_long_modifier_time
+				}
+			}
+			hidden_effect = {
+				random_political_movement = {
+					limit = {
+						is_political_movement_type = movement_cultural_minority
+						culture = cu:ukrainian
+					}
+					add_modifier = {
+						name = cultural_renaissance
+						days = very_long_modifier_time
+					}
+				}
+			}
+		}
+		else = {
+			random_political_movement = {
+				limit = {
+					is_political_movement_type = movement_cultural_minority
+					culture = cu:ukrainian
+				}
+				add_modifier = {
+					name = cultural_renaissance
+					days = very_long_modifier_time
+				}
+			}
+		}
+	}
+
+	reason = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_ukraine_cultural_renaissance_reason
+				trigger = {
+					NOT = { always = no }
+					NOT = { always = no }
+				}
+			}
+			triggered_desc = {
+				desc = je_ukraine_cultural_renaissance_reason_hromada_permitted
+				trigger = { always = no }
+			}
+			triggered_desc = {
+				desc = je_ukraine_cultural_renaissance_reason_hromada_surveilled
+				trigger = { always = no }
+			}
+			triggered_desc = {
+				desc = je_ukraine_cultural_renaissance_reason_hromada_suppressed
+				trigger = { always = no }
+			}
+			triggered_desc = {
+				desc = je_ukraine_cultural_renaissance_reason_prosvita_state_funded
+				trigger = { always = no }
+			}
+			triggered_desc = {
+				desc = je_ukraine_cultural_renaissance_reason_prosvita_self_funded
+				trigger = { always = no }
+			}
+			triggered_desc = {
+				desc = je_ukraine_cultural_renaissance_reason_prosvita_suppressed
+				trigger = { always = no }
+			}
+		}
+	}
+
+	scripted_progress_bar = je_cultural_renaissance_ukraine_progress_bar
+
+	on_monthly_pulse = {
+		effect = {
+			scope:journal_entry = {
+				every_scope_je_involved = {
+					if = {
+						limit = {
+							is_player = no
+							NOR = {
+								has_variable = ai_ukraine_renaissance_repress
+								has_variable = ai_ukraine_renaissance_moderate
+								has_variable = ai_ukraine_renaissance_accelerate
+							}
+						}
+						cultural_renaissance_ai_approach_roll = {
+							NAME = ukraine
+							CULTURE = ukrainian
+						}
+					}
+					# For countries which have had cultural_renaissances_events.3 (Hromada)
+					# Trigger a Hromada with a 1% chance every month in every Ukrainian Homeland while JE is active
+					# Hromada modifier and duration is scaled with chosen event option in cultural_renaissances_events.3
+					if = {
+						limit = { always = no }
+						every_scope_state = {
+							limit = {
+								state_region = { is_homeland = cu:ukrainian }
+								NOT = { has_modifier = hromada }
+							}
+							random = {
+								chance = 1
+								if = {
+									limit = { always = no }
+									add_modifier = {
+										name = hromada
+										days = long_modifier_time
+									}
+									post_notification = hromada_appears_permitted
+								}
+								else_if = {
+									limit = { always = no }
+									add_modifier = {
+										name = hromada
+										days = normal_modifier_time
+										multiplier = 0.5
+									}
+									post_notification = hromada_appears_surveilled
+								}
+								else_if = {
+									limit = { always = no }
+									add_modifier = {
+										name = hromada
+										days = short_modifier_time
+										multiplier = 0.5
+									}
+									post_notification = hromada_appears_suppressed
+								}
+							}
+						}
+					}
+					# For countries which have had cultural_renaissances_events.4 (Prosvita)
+					# Trigger a Prosvita with a 1% chance every month in every Ukrainian Homeland while JE is active
+					# Prosvita modifier and duration is scaled with chosen event option in cultural_renaissances_events.4
+					# The final option creates radicals instead
+					if = {
+						limit = { always = no }
+						every_scope_state = {
+							limit = {
+								state_region = { is_homeland = cu:ukrainian }
+								NOR = {
+									has_modifier = government_funded_prosvita
+									has_modifier = self_funded_prosvita
+								}
+							}
+							random = {
+								chance = 1
+								if = {
+									limit = { always = no }
+									add_modifier = {
+										name = government_funded_prosvita
+										days = long_modifier_time
+									}
+									post_notification = prosvita_appears_state_funded
+								}
+								else_if = {
+									limit = { always = no }
+									add_modifier = {
+										name = self_funded_prosvita
+										days = normal_modifier_time
+									}
+									post_notification = prosvita_appears_self_funded
+								}
+								else_if = {
+									limit = { always = no }
+									add_radicals_in_state = {
+										value = small_radicals
+										culture = cu:ukrainian
+									}
+									post_notification = prosvita_appears_suppressed
+								}
+							}
+						}
+					}
+
+					### Event Pulse
+					random_list = {
+						100 = { }
+						10 = { trigger_event = cultural_renaissances_events.1 }
+						10 = { trigger_event = cultural_renaissances_events.2 }
+						10 = { trigger_event = cultural_renaissances_events.3 }
+						10 = { trigger_event = cultural_renaissances_events.4 }
+						10 = { trigger_event = cultural_renaissances_events.5 }
+					}
+				}
+			}
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			custom_tooltip = {
+				text = je_cultural_renaissance_bar_max
+				scope:journal_entry = {
+					scripted_bar_progress ={
+						name = je_cultural_renaissance_ukraine_progress_bar
+						value >= 100
+					}
+				}
+			}
+		}
+		effect_all_involved = {
+			if = {
+				limit = {
+					cu:ukrainian = { culture_has_national_awakening = no }
+				}
+				start_national_awakening = {
+					culture = cu:ukrainian
+					months = 240
+				}
+			}
+			random_political_movement = {
+				limit = {
+					is_political_movement_type = movement_cultural_minority
+					culture = cu:ukrainian
+				}
+				hidden_effect = {
+					remove_modifier = cultural_renaissance
+				}
+				custom_tooltip_no_bullet = ukraine_national_movement
+				add_modifier = {
+					name = cultural_renaissance
+					days = very_long_modifier_time
+					multiplier = 2
+				}
+			}
+			custom_tooltip_no_bullet = je_cultural_renaissance_ukraine_independent_modifier
+			show_as_tooltip = {
+				add_modifier = {
+					name = cultural_foundation
+					days = very_long_modifier_time
+				}
+			}
+			custom_tooltip = je_cultural_renaissance_ukraine_event_independence
+			set_global_variable = {
+				name = cultural_renaissance_ukraine_var
+				value = 100
+			}
+			# Cleanup
+			hidden_effect = {
+				if = {
+					limit = { has_variable = ai_ukraine_renaissance_repress }
+					remove_variable = ai_ukraine_renaissance_repress
+				}
+				if = {
+					limit = { has_variable = ai_ukraine_renaissance_moderate }
+					remove_variable = ai_ukraine_renaissance_moderate
+				}
+				if = {
+					limit = { has_variable = ai_ukraine_renaissance_accelerate }
+					remove_variable = ai_ukraine_renaissance_accelerate
+				}
+			}
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			custom_tooltip = {
+				text = je_cultural_renaissance_bar_min
+				scope:journal_entry = {
+					scripted_bar_progress ={
+						name = je_cultural_renaissance_ukraine_progress_bar
+						value <= -100
+					}
+				}
+			}
+		}
+		effect_all_involved = {
+			custom_tooltip_no_bullet = je_cultural_renaissance_ukraine_independent_modifier
+			show_as_tooltip = {
+				add_modifier = {
+					name = culture_suppressed
+					days = very_long_modifier_time
+				}
+			}
+			set_global_variable = {
+				name = cultural_renaissance_ukraine_var
+				value = -100
+			}
+			# Cleanup
+			hidden_effect = {
+				if = {
+					limit = { has_variable = ai_ukraine_renaissance_repress }
+					remove_variable = ai_ukraine_renaissance_repress
+				}
+				if = {
+					limit = { has_variable = ai_ukraine_renaissance_moderate }
+					remove_variable = ai_ukraine_renaissance_moderate
+				}
+				if = {
+					limit = { has_variable = ai_ukraine_renaissance_accelerate }
+					remove_variable = ai_ukraine_renaissance_accelerate
+				}
+			}
+		}
+	}
+
+	outcome = {
+		header = JOURNAL_ENTRY_TIMEOUT
+		effect_header = JOURNAL_ENTRY_ON_TIMEOUT
+		flags = { timeout }
+		conclusion_desc = JOURNAL_ENTRY_TIMEOUT_CONCLUSION_DESC
+		effect_all_involved = {
+			if = {
+				limit = {
+					scope:journal_entry = {
+						scripted_bar_progress ={
+							name = je_cultural_renaissance_ukraine_progress_bar
+							value > 0
+						}
+					}
+				}
+				custom_tooltip_no_bullet = je_cultural_renaissance_ukraine_independent_modifier
+				show_as_tooltip = {
+					add_modifier = {
+						name = cultural_foundation
+						days = very_long_modifier_time
+						multiplier = {
+							value = "scope:journal_entry.scripted_bar_progress(je_cultural_renaissance_ukraine_progress_bar)"
+							multiply = 0.01
+						}
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					scope:journal_entry = {
+						scripted_bar_progress ={
+							name = je_cultural_renaissance_ukraine_progress_bar
+							value < 0
+						}
+					}
+				}
+				custom_tooltip_no_bullet = je_cultural_renaissance_ukraine_independent_modifier
+				show_as_tooltip = {
+					add_modifier = {
+						name = culture_suppressed
+						days = very_long_modifier_time
+						multiplier = {
+							value = "scope:journal_entry.scripted_bar_progress(je_cultural_renaissance_ukraine_progress_bar)"
+							multiply = -0.01
+						}
+					}
+				}
+			}
+			custom_tooltip = modifier_scaled_by_progress_bar
+
+			hidden_effect = {
+				# Used to scale modifier in cultural_renaissances_modifier_setup
+				set_global_variable = {
+					name = cultural_renaissance_ukraine_var
+					value = "scope:journal_entry.scripted_bar_progress(je_cultural_renaissance_ukraine_progress_bar)"
+				}
+				# Cleanup
+				if = {
+					limit = { has_variable = ai_ukraine_renaissance_repress }
+					remove_variable = ai_ukraine_renaissance_repress
+				}
+				if = {
+					limit = { has_variable = ai_ukraine_renaissance_moderate }
+					remove_variable = ai_ukraine_renaissance_moderate
+				}
+				if = {
+					limit = { has_variable = ai_ukraine_renaissance_accelerate }
+					remove_variable = ai_ukraine_renaissance_accelerate
+				}
+			}
+		}
+	}
+
+	map_color = {
+		if = {
+			limit = {
+				"culture_percent_state(cu:ukrainian)" >= 0.05
+			}
+			lerp = {
+                min_color = "ukraine_palest_blue" # color
+                max_color = "ukraine_blue" # color
+				factor = "culture_percent_state(cu:ukrainian)"
+            }
+		}
+	}
+
+	map_color_second = {
+		if = {
+			limit = {
+				OR = {
+					has_modifier = hromada
+					has_modifier = government_funded_prosvita
+					has_modifier = self_funded_prosvita
+				}
+			}
+			value = "ukraine_yellow"
+		}
+	}
+
+	map_tooltip = {
+		owner ?= {
+			custom_tooltip_no_bullet = "je_ukraine_cultural_renaissance_map_fervor"
+		}
+		if = {
+			limit = {
+				"culture_percent_state(cu:ukrainian)" >= 0.05
+			}
+			save_temporary_scope_value_as = {
+				name = ukrainian_culture_percent
+				value = "culture_percent_state(cu:ukrainian)"
+			}
+			custom_tooltip_no_bullet = "je_ukraine_cultural_renaissance_map_culture_percent"
+		}
+		if = {
+			limit = {
+				state_region = { is_homeland = cu:ukrainian }
+			}
+			custom_tooltip_no_bullet = "je_ukraine_cultural_renaissance_map_homeland"
+		}
+		if = {
+			limit = {
+				has_modifier = hromada
+			}
+			custom_tooltip_no_bullet = je_ukraine_cultural_renaissance_map_hromada
+		}
+		if = {
+			limit = {
+				OR = {
+					has_modifier = government_funded_prosvita
+					has_modifier = self_funded_prosvita
+				}
+			}
+			custom_tooltip_no_bullet = je_ukraine_cultural_renaissance_map_prosvita
+		}
+	}
+
+	weight = 100
+
+	should_be_pinned_by_default_uninvolved_or_context = no
+	should_be_pinned_by_default_involved = yes
+
+	timeout = 7300
+}
+
+je_belarus_cultural_renaissance = {
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+
+	group = je_group_global_international_situations
+	dlc = dlc019
+
+	is_shown_when_inactive = {
+		has_dlc_feature = ip5_content
+		OR = {
+			# Poland JE has completed with Reds outcome (January Uprising)
+			has_global_variable = poland_je_red_victory
+			cu:byelorussian = {
+				culture_current_fervor >= 5
+			}
+		}
+	}
+
+	activation_description = {
+		always = yes
+	}
+
+	possible = {
+		OR = {
+			# Poland JE has completed with Reds outcome (January Uprising)
+			custom_tooltip = {
+				text = je_belarus_cultural_renaissance_trigger_poland
+				has_global_variable = poland_je_red_victory
+			}
+			cu:byelorussian = {
+				# Account for Fervor being increased by 10 by Synod of Polotsk
+				culture_current_fervor >= 20
+			}
+		}
+	}
+
+	should_be_involved = {
+		any_scope_state = {
+			state_region = { is_homeland = cu:byelorussian }
+		}
+	}
+
+	should_show_when_not_involved = {
+		culture_percent_country = {
+			target = cu:byelorussian
+			value > 0.01
+		}
+	}
+
+	immediate = {
+	}
+
+
+	immediate_all_involved = {
+		hidden_effect = {
+			cultural_renaissance_ai_approach_roll = {
+				NAME = belarus
+				CULTURE = byelorussian
+			}
+		}
+		if = {
+			limit = {
+				NOT = {
+					any_political_movement = {
+						is_political_movement_type = movement_cultural_minority
+						culture = cu:byelorussian
+					}
+				}
+			}
+			create_political_movement = {
+				type = movement_cultural_minority
+				culture = cu:byelorussian
+			}
+			custom_tooltip_no_bullet = belarus_national_movement
+			show_as_tooltip = {
+				add_modifier = {
+					name = cultural_renaissance
+					days = very_long_modifier_time
+				}
+			}
+			hidden_effect = {
+				random_political_movement = {
+					limit = {
+						is_political_movement_type = movement_cultural_minority
+						culture = cu:byelorussian
+					}
+					add_modifier = {
+						name = cultural_renaissance
+						days = very_long_modifier_time
+					}
+				}
+			}
+		}
+		else = {
+			random_political_movement = {
+				limit = {
+					is_political_movement_type = movement_cultural_minority
+					culture = cu:byelorussian
+				}
+				add_modifier = {
+					name = cultural_renaissance
+					days = very_long_modifier_time
+				}
+			}
+		}
+	}
+
+	scripted_progress_bar = je_cultural_renaissance_belarus_progress_bar
+
+	on_monthly_pulse = {
+		effect = {
+			scope:journal_entry = {
+				every_scope_je_involved = {
+					if = {
+						limit = {
+							is_player = no
+							NOR = {
+								has_variable = ai_belarus_renaissance_repress
+								has_variable = ai_belarus_renaissance_moderate
+								has_variable = ai_belarus_renaissance_accelerate
+							}
+						}
+						cultural_renaissance_ai_approach_roll = {
+							NAME = belarus
+							CULTURE = byelorussian
+						}
+					}
+					### Event Pulse
+					random_list = {
+						100 = { }
+						10 = { trigger_event = cultural_renaissances_events.6 }
+						10 = { trigger_event = cultural_renaissances_events.8 }
+						10 = { trigger_event = cultural_renaissances_events.9 }
+						10 = { trigger_event = cultural_renaissances_events.10 }
+					}
+				}
+			}
+
+			random_country = {
+				limit = {
+					has_state_in_state_region = STATE_BREST
+					game_date > 1856.1.1
+					NOT = { is_template_used = RUS_konstanty_kalinowski }
+				}
+				create_character = {
+					template = RUS_konstanty_kalinowski
+				}
+			}
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			custom_tooltip = {
+				text = je_cultural_renaissance_bar_max
+				scope:journal_entry = {
+					scripted_bar_progress ={
+						name = je_cultural_renaissance_belarus_progress_bar
+						value >= 100
+					}
+				}
+			}
+		}
+		effect_all_involved = {
+			if = {
+				limit = {
+					cu:byelorussian = { culture_has_national_awakening = no }
+				}
+				start_national_awakening = {
+					culture = cu:byelorussian
+					months = 240
+				}
+			}
+			random_political_movement = {
+				limit = {
+					is_political_movement_type = movement_cultural_minority
+					culture = cu:byelorussian
+				}
+				hidden_effect = {
+					remove_modifier = cultural_renaissance
+				}
+				custom_tooltip_no_bullet = belarus_national_movement
+				add_modifier = {
+					name = cultural_renaissance
+					days = very_long_modifier_time
+					multiplier = 2
+				}
+			}
+			custom_tooltip_no_bullet = je_cultural_renaissance_belarus_independent_modifier
+			show_as_tooltip = {
+				add_modifier = {
+					name = cultural_foundation
+					days = very_long_modifier_time
+				}
+			}
+			custom_tooltip = je_cultural_renaissance_belarus_event_independence
+			set_global_variable = {
+				name = cultural_renaissance_belarus_var
+				value = 100
+			}
+			hidden_effect = {
+				if = {
+					limit = { has_variable = ai_belarus_renaissance_repress }
+					remove_variable = ai_belarus_renaissance_repress
+				}
+				if = {
+					limit = { has_variable = ai_belarus_renaissance_moderate }
+					remove_variable = ai_belarus_renaissance_moderate
+				}
+				if = {
+					limit = { has_variable = ai_belarus_renaissance_accelerate }
+					remove_variable = ai_belarus_renaissance_accelerate
+				}
+			}
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			custom_tooltip = {
+				text = je_cultural_renaissance_bar_min
+				scope:journal_entry = {
+					scripted_bar_progress ={
+						name = je_cultural_renaissance_belarus_progress_bar
+						value <= -100
+					}
+				}
+			}
+		}
+		effect_all_involved = {
+			custom_tooltip_no_bullet = je_cultural_renaissance_belarus_independent_modifier
+			show_as_tooltip = {
+				add_modifier = {
+					name = culture_suppressed
+					days = very_long_modifier_time
+				}
+			}
+			set_global_variable = {
+				name = cultural_renaissance_belarus_var
+				value = -100
+			}
+			hidden_effect = {
+				if = {
+					limit = { has_variable = ai_belarus_renaissance_repress }
+					remove_variable = ai_belarus_renaissance_repress
+				}
+				if = {
+					limit = { has_variable = ai_belarus_renaissance_moderate }
+					remove_variable = ai_belarus_renaissance_moderate
+				}
+				if = {
+					limit = { has_variable = ai_belarus_renaissance_accelerate }
+					remove_variable = ai_belarus_renaissance_accelerate
+				}
+			}
+		}
+	}
+
+	outcome = {
+		header = JOURNAL_ENTRY_TIMEOUT
+		effect_header = JOURNAL_ENTRY_ON_TIMEOUT
+		flags = { timeout }
+		conclusion_desc = JOURNAL_ENTRY_TIMEOUT_CONCLUSION_DESC
+		effect_all_involved = {
+			if = {
+				limit = {
+					scope:journal_entry = {
+						scripted_bar_progress ={
+							name = je_cultural_renaissance_belarus_progress_bar
+							value > 0
+						}
+					}
+				}
+				custom_tooltip_no_bullet = je_cultural_renaissance_belarus_independent_modifier
+				show_as_tooltip = {
+					add_modifier = {
+						name = cultural_foundation
+						days = very_long_modifier_time
+						multiplier = {
+							value = "scope:journal_entry.scripted_bar_progress(je_cultural_renaissance_belarus_progress_bar)"
+							multiply = 0.01
+						}
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					scope:journal_entry = {
+						scripted_bar_progress ={
+							name = je_cultural_renaissance_belarus_progress_bar
+							value < 0
+						}
+					}
+				}
+				custom_tooltip_no_bullet = je_cultural_renaissance_belarus_independent_modifier
+				show_as_tooltip = {
+					add_modifier = {
+						name = culture_suppressed
+						days = very_long_modifier_time
+						multiplier = {
+							value = "scope:journal_entry.scripted_bar_progress(je_cultural_renaissance_belarus_progress_bar)"
+							multiply = -0.01
+						}
+					}
+				}
+			}
+			custom_tooltip = modifier_scaled_by_progress_bar
+
+			# Used to scale modifier in cultural_renaissances_modifier_setup
+			set_global_variable = {
+				name = cultural_renaissance_belarus_var
+				value = "scope:journal_entry.scripted_bar_progress(je_cultural_renaissance_belarus_progress_bar)"
+			}
+			hidden_effect = {
+				if = {
+					limit = { has_variable = ai_belarus_renaissance_repress }
+					remove_variable = ai_belarus_renaissance_repress
+				}
+				if = {
+					limit = { has_variable = ai_belarus_renaissance_moderate }
+					remove_variable = ai_belarus_renaissance_moderate
+				}
+				if = {
+					limit = { has_variable = ai_belarus_renaissance_accelerate }
+					remove_variable = ai_belarus_renaissance_accelerate
+				}
+			}
+		}
+	}
+
+	map_color = {
+		if = {
+			limit = {
+				"culture_percent_state(cu:byelorussian)" >= 0.05
+			}
+			lerp = {
+                min_color = "belarus_palest_red" # color
+                max_color = "belarus_red" # color
+				factor = "culture_percent_state(cu:byelorussian)"
+            }
+		}
+	}
+
+	map_tooltip = {
+		owner ?= {
+			custom_tooltip_no_bullet = "je_belarus_cultural_renaissance_map_fervor"
+		}
+		if = {
+			limit = {
+				"culture_percent_state(cu:byelorussian)" >= 0.05
+			}
+			save_temporary_scope_value_as = {
+				name = byelorussian_culture_percent
+				value = "culture_percent_state(cu:byelorussian)"
+			}
+			custom_tooltip_no_bullet = "je_belarus_cultural_renaissance_map_culture_percent"
+		}
+		if = {
+			limit = {
+				state_region = { is_homeland = cu:byelorussian }
+			}
+			custom_tooltip_no_bullet = "je_belarus_cultural_renaissance_map_homeland"
+		}
+	}
+
+	weight = 100
+
+	should_be_pinned_by_default_uninvolved_or_context = no
+	should_be_pinned_by_default_involved = yes
+
+	timeout = 7300
+}

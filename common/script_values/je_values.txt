@@ -1,0 +1,372 @@
+﻿# Cold War Project: same-name overwrite of the vanilla file. Only references to removed Victorian-era variables, journal entries and keys were stripped (2026-11-14 zero-error pass).
+#Montenegrin Raiding
+
+max_raiding_income = { # Used below and in raiding loc trigger.
+	value = 5000 #increased from 2500.
+}
+
+mon_unemployment_estimate = {
+	c:MON ?= {
+		every_scope_state = {
+			add = state_unemployment_rate
+		}
+		if = {
+			limit = {
+				num_states > 0
+			}
+			divide = num_states
+		}
+		multiply = 2 #for some reason the trigger is way off actual unemployment rate.
+	}
+}
+
+total_trade_value_loc = { 
+	value = root.total_trade_value
+}
+
+raiding_income = { # Used in raiding loc trigger.
+	if = {
+		limit = {
+			exists = c:MON
+			c:MON ?= {
+				has_variable = raiding_intensity
+			}
+		}
+		value = c:MON.army_power_projection
+		multiply = c:MON.var:raiding_intensity
+		multiply = 0.17 #moved up from 0.15. Sweet spot is around .165, 1.7-1.75 is easier.
+		round = yes
+		min = 0
+		max = max_raiding_income
+	}
+}
+
+raiding_level = { # 1-6
+	value = raiding_income
+	min = 1
+	add = 501 #stops divide by 0 errors, round up
+	divide = 1000
+	min = 1
+	round = yes
+	max = 6
+}
+
+at_strength_battalions = {
+	value = {
+		every_military_formation = {
+ 			limit = {
+ 				is_army = yes
+ 			}
+ 			every_combat_unit = {
+  				limit = {
+   					manpower >= 1000
+  				}
+  				add = 1
+ 			}
+		}
+	}
+}
+
+test_variable = {
+	value = 1
+}
+
+barracks_levels_to_leave_unburned = {
+	#value = country_has_building_type_levels(bt:building_barrack)
+	value = {
+		c:MON ?= {
+			every_scope_building = {
+		  		limit = {
+		   			is_building_type = building_barrack
+		  		}
+		  	add = this.level
+		 	}
+		}
+	 	multiply = 0.60
+	 	round = yes
+	}
+}
+
+barracks_burned = {
+	value = {
+		c:MON ?= {
+			every_scope_building = {
+		  		limit = {
+		   			is_building_type = building_barrack
+		  		}
+		  	add = this.level
+		 	}
+		}
+	 	multiply = 0.35
+	 	round = yes
+	}
+}
+
+russian_aid_income = {
+	if = {
+		limit = {
+			c:RUS ?= {
+				is_country_alive = yes
+			}
+		}
+		if = {
+			limit = { c:RUS.relations:ROOT >= relations_threshold:friendly }
+			value = 1000
+		}
+		else_if = {
+			limit = { c:RUS.relations:ROOT >= relations_threshold:amicable }
+			value = 700
+		}
+		else_if = {
+			limit = { c:RUS.relations:ROOT >= relations_threshold:cordial }
+			value = 400
+		}
+		else = {
+			value = 200
+		}
+	}
+}
+
+techs_researched_script = {
+	value = ROOT.techs_researched
+}
+
+metternich_tech_target = 52
+
+num_power_bloc_members_script = {
+	if = {
+		limit = {
+			exists = ROOT.power_bloc
+		}
+		value = ROOT.power_bloc.num_power_bloc_members
+	}
+	else = {
+		value = 0
+	}
+}
+
+power_bloc_cohesion_script = {
+	if = {
+		limit = {
+			exists = ROOT.power_bloc
+		}
+		value = ROOT.power_bloc.current_cohesion_number
+	}
+	else = {
+		value = 0
+	}
+}
+
+metternich_bloc_target = 12
+
+metternich_bloc_cohesion_target = 75
+
+metternich_agenda_value = {
+	value = 0
+	if = {
+		limit = {
+			NOT = {
+				exists = c:ITA
+			}
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			OR = {
+				c:GER ?= this
+				NOT = {
+					exists = c:GER
+				}
+			}
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			leading_producer_of = g:fine_art
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			owns_entire_state_region = STATE_WEST_GALICIA
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			techs_researched >= 52
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			NOT = {
+				any_political_movement = {
+					OR = {
+						movement_is_liberal = yes
+						movement_is_socialist = yes
+					}
+					political_movement_support >= 0.05
+				}
+			}
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			has_law_or_variant = law_type:law_autocracy
+			has_law_or_variant = law_type:law_secret_police
+			has_law_or_variant = law_type:law_censorship
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			institution:institution_police.investment >= 2
+			institution:institution_home_affairs.investment >= 2
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			power_bloc ?= {
+				num_power_bloc_members >= metternich_bloc_target
+			}
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			power_bloc ?= {
+				current_cohesion_number >= metternich_bloc_cohesion_target
+			}
+		}
+		add = 1
+	}
+	if = {
+		limit = {
+			always = no
+		}
+		add = 1
+	}
+}
+
+grunderzeit_actual_gdp_script_value = {
+	value = 0
+	if = {
+		limit = {
+			has_global_variable = grunderzeit_ongoing_global_var
+		}
+		every_in_global_list = {
+			variable = german_confederation_country_list
+			limit = {
+				has_journal_entry = je_grunderzeit
+			}
+			add = this.gdp
+		}
+	}
+}
+
+danubian_federation_remaining_cultures_to_integrate = {
+	value = 5
+	if = {
+		limit = {
+			has_variable = count_integrated_cultures
+		}
+		subtract = var:count_integrated_cultures
+	}
+}
+
+balkan_war_remaining_days = { #
+	value = 3650 #
+}
+
+
+balkan_league_power_projection = {
+	every_in_global_list = {
+		variable = balkan_league_side_list
+		add = army_power_projection
+	}
+}
+
+ottoman_power_projection= {
+	every_in_global_list = {
+		variable = ottoman_side_list
+		add = army_power_projection
+	}
+}
+
+disease_outbreak_level = { # state scope
+	if = {
+		limit = {
+			any_harvest_condition = {
+				harvest_condition_intensity = { target = prev.owner value > 5 }
+			}
+		}
+		value = 1
+	}
+	else_if = {
+		limit = {
+			any_harvest_condition = {
+				harvest_condition_intensity = { target = prev.owner value > 4 }
+			}
+		}
+		value = 0.85
+	}
+	else_if = {
+		limit = {
+			any_harvest_condition = {
+				harvest_condition_intensity = { target = prev.owner value > 3 }
+			}
+		}
+		value = 0.7
+	}
+	else_if = {
+		limit = {
+			any_harvest_condition = {
+				harvest_condition_intensity = { target = prev.owner value > 2 }
+			}
+		}
+		value = 0.55
+	}
+	else_if = {
+		limit = {
+			any_harvest_condition = {
+				harvest_condition_intensity = { target = prev.owner value > 1 }
+			}
+		}
+		value = 0.4
+	}
+	else_if = {
+		limit = {
+			any_harvest_condition = {
+				harvest_condition_intensity = { target = prev.owner value > 0 }
+			}
+		}
+		value = 0.15
+	}
+	else = {
+		value = 0
+	}
+}
+
+je_anarchy_sol_target = {
+	if = {
+		limit = { root = { has_variable = anarchy_starting_sol_var } }
+		value = root.var:anarchy_starting_sol_var
+	}
+	else = {
+		value = root.average_sol
+	}
+	add = 5
+	round = yes
+	min = 15
+	max = 25
+}
+
+je_anarchy_sol_goal_increase = {
+	value = je_anarchy_sol_target
+	subtract = root.var:anarchy_starting_sol_var
+}
