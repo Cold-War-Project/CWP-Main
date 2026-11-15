@@ -1,0 +1,55 @@
+﻿# The Great Stink: scripted effects. All are called in country scope.
+
+# One cleanup, called by every outcome of je_gs_great_stink.
+# It leaves var:gs_city in place: the ending events still need the city; they remove it in `after`.
+gs_cleanup = {
+	hidden_effect = {
+		var:gs_city ?= {
+			if = {
+				limit = { has_modifier = gs_foul_river }
+				remove_modifier = gs_foul_river
+			}
+		}
+		remove_variable = gs_engineer_appointed
+		remove_variable = gs_design_chosen
+		remove_variable = gs_survey_done
+		set_variable = gs_stink_done
+	}
+}
+
+# The reward for finishing the works. Called by the ending event's option, and inside show_as_tooltip by the
+# journal entry's winning outcome so the player sees it in advance.
+gs_completion_reward = {
+	if = {
+		limit = { has_variable = gs_oversized }
+		var:gs_city ?= {
+			add_modifier = {
+				name = gs_built_for_a_century
+				days = very_long_modifier_time
+			}
+		}
+	}
+	else = {
+		var:gs_city ?= {
+			add_modifier = {
+				name = gs_clean_river
+				days = very_long_modifier_time
+			}
+		}
+	}
+	add_modifier = {
+		name = gs_wonder_of_the_age
+		days = long_modifier_time
+	}
+}
+
+# Head start from the Sanitary Survey decision. Called by both options of the opening event.
+gs_survey_head_start = {
+	if = {
+		limit = { has_variable = gs_survey_done }
+		custom_tooltip = gs_bar_plus_15_tt
+		je:je_gs_great_stink ?= {
+			add_progress = { value = 15 name = gs_sewer_bar }
+		}
+	}
+}

@@ -1,0 +1,176 @@
+﻿# The Great Stink. Shape: automatic start, one scripted bar, two buttons, win + timeout + hidden invalidation.
+# Vanilla model read first: je_scotland_yard (generic entry with a British name), je_tenpo_crisis (buttons).
+
+je_gs_great_stink = {
+	icon = "gfx/interface/icons/event_icons/event_skull.dds"
+
+	group = je_group_internal_affairs
+
+	activation_description = {
+		always = yes
+	}
+
+	# Who this is ever relevant to: cheap tests first.
+	is_shown_when_inactive = {
+		NOT = { has_variable = gs_stink_done }
+		has_technology_researched = urban_planning
+		capital = {
+			any_scope_building = {
+				is_building_type = building_urban_center
+				level >= 10
+			}
+		}
+	}
+
+	# The situation. The calendar is a floor only: history's 1858, less eight years.
+	possible = {
+		game_date >= 1850.1.1
+		capital = {
+			any_scope_building = {
+				is_building_type = building_urban_center
+				level >= 15
+			}
+		}
+	}
+
+	immediate = {
+		# Remember the city: the capital may move while the works go on.
+		capital = {
+			save_scope_as = gs_city
+			add_modifier = {
+				name = gs_foul_river
+			}
+		}
+		set_variable = {
+			name = gs_city
+			value = scope:gs_city
+		}
+		trigger_event = {
+			id = gs_events.1
+			popup = yes
+		}
+	}
+
+	scripted_progress_bar = gs_sewer_bar
+
+	scripted_button = gs_vote_funds_button
+	scripted_button = gs_appoint_engineer_button
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_gs_great_stink_status_works
+				trigger = { has_variable = gs_engineer_appointed }
+			}
+			triggered_desc = {
+				desc = je_gs_great_stink_status_start
+			}
+		}
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			# Staged choice, once, when the works are about a third done.
+			# The variable is set before the event fires so it cannot be queued twice.
+			if = {
+				limit = {
+					NOT = { has_variable = gs_design_chosen }
+					scope:journal_entry = {
+						scripted_bar_progress = {
+							name = gs_sewer_bar
+							value >= 30
+						}
+					}
+				}
+				set_variable = gs_design_chosen
+				trigger_event = {
+					id = gs_events.2
+					popup = yes
+				}
+			}
+		}
+		random_events = {
+			chance_to_happen = 6 # about one event every 17 months
+			1 = gs_events.3
+			1 = gs_events.4
+			1 = gs_events.5
+		}
+	}
+
+	# 1. The works are finished.
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = {
+			scope:journal_entry = {
+				scripted_bar_progress = {
+					name = gs_sewer_bar
+					value >= 100
+				}
+			}
+		}
+		effect = {
+			gs_cleanup = yes
+			trigger_event = {
+				id = gs_events.10
+				popup = yes
+			}
+			show_as_tooltip = {
+				gs_completion_reward = yes
+			}
+		}
+	}
+
+	# 2. The city is no longer ours: nothing left to build. Silent.
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			OR = {
+				NOT = { exists = var:gs_city }
+				var:gs_city ?= {
+					NOT = { owner = root }
+				}
+			}
+		}
+		effect = {
+			gs_cleanup = yes
+			remove_variable = gs_city
+			remove_variable = gs_oversized
+		}
+	}
+
+	# 3. Twenty years and the river still stinks.
+	outcome = {
+		header = JOURNAL_ENTRY_TIMEOUT
+		effect_header = JOURNAL_ENTRY_ON_TIMEOUT
+		flags = { timeout }
+		conclusion_desc = JOURNAL_ENTRY_TIMEOUT_CONCLUSION_DESC
+		effect = {
+			gs_cleanup = yes
+			trigger_event = {
+				id = gs_events.11
+				popup = yes
+			}
+			show_as_tooltip = {
+				var:gs_city ?= {
+					add_modifier = {
+						name = gs_dead_river
+						days = long_modifier_time
+					}
+					add_radicals_in_state = {
+						value = medium_radicals
+					}
+				}
+			}
+		}
+	}
+
+	timeout = 7300 # 20 years: the historical works took 16 (1859 to 1875)
+
+	weight = 100
+
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}

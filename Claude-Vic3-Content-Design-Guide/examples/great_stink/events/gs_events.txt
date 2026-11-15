@@ -1,0 +1,532 @@
+﻿namespace = gs_events
+
+# 1   opener          fired by je_gs_great_stink immediate
+# 2   staged choice   fired by the journal entry's monthly pulse when the bar reaches 30
+# 3-5 pulse events    journal entry random_events
+# 10  ending: works complete
+# 11  ending: timeout
+#
+# Every event re-saves the city from var:gs_city, because the capital may have moved.
+
+# The Great Stink (opener)
+gs_events.1 = {
+	type = country_event
+	placement = scope:gs_city
+
+	title = gs_events.1.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = gs_events.1.d_gbr
+				trigger = {
+					exists = c:GBR
+					c:GBR ?= this
+					var:gs_city ?= { state_region = s:STATE_HOME_COUNTIES }
+				}
+			}
+			triggered_desc = {
+				desc = gs_events.1.d
+			}
+		}
+	}
+	flavor = {
+		first_valid = {
+			triggered_desc = {
+				desc = gs_events.1.f_gbr
+				trigger = {
+					exists = c:GBR
+					c:GBR ?= this
+					var:gs_city ?= { state_region = s:STATE_HOME_COUNTIES }
+				}
+			}
+			triggered_desc = {
+				desc = gs_events.1.f
+			}
+		}
+	}
+
+	event_image = {
+		video = "europenorthamerica_london_center"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_skull.dds"
+
+	duration = 3
+
+	trigger = {
+		exists = var:gs_city
+	}
+
+	immediate = {
+		var:gs_city ?= { save_scope_as = gs_city }
+	}
+
+	# Pay at once: a loan, and the works begin with a head start.
+	option = {
+		name = gs_events.1.a
+		add_modifier = {
+			name = gs_sewer_loan
+			multiplier = money_amount_multiplier_medium
+			days = short_modifier_time
+		}
+		custom_tooltip = gs_bar_plus_10_tt
+		je:je_gs_great_stink ?= {
+			add_progress = { value = 10 name = gs_sewer_bar }
+		}
+		gs_survey_head_start = yes
+		ai_chance = {
+			base = 10
+			modifier = {
+				trigger = { in_default = yes }
+				factor = 0
+			}
+		}
+	}
+
+	# Wait: no cost, and the city resents it.
+	option = {
+		name = gs_events.1.b
+		default_option = yes
+		scope:gs_city = {
+			add_radicals_in_state = {
+				value = medium_radicals
+			}
+		}
+		gs_survey_head_start = yes
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# The Diameter of the Pipes (staged choice: the fork that changes the ending)
+gs_events.2 = {
+	type = country_event
+	placement = scope:gs_city
+
+	title = gs_events.2.t
+	desc = gs_events.2.d
+	flavor = gs_events.2.f
+
+	event_image = {
+		video = "middleeast_engineer_blueprint"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_industry.dds"
+
+	duration = 3
+
+	fire_only_once = yes
+
+	trigger = {
+		has_journal_entry = je_gs_great_stink
+		exists = var:gs_city
+	}
+
+	cancellation_trigger = {
+		NOT = { has_journal_entry = je_gs_great_stink }
+	}
+
+	immediate = {
+		var:gs_city ?= { save_scope_as = gs_city }
+	}
+
+	# The historical choice: dearer now, better for a century.
+	option = {
+		name = gs_events.2.a
+		highlighted_option = yes
+		add_modifier = {
+			name = gs_grand_design_cost
+			multiplier = money_amount_multiplier_small
+			days = normal_modifier_time
+		}
+		set_variable = gs_oversized
+		custom_tooltip = gs_oversized_tt
+		ai_chance = {
+			base = 10
+			modifier = {
+				trigger = {
+					OR = {
+						in_default = yes
+						taking_loans = yes
+					}
+				}
+				factor = 0
+			}
+		}
+	}
+
+	option = {
+		name = gs_events.2.b
+		default_option = yes
+		custom_tooltip = gs_bar_plus_10_tt
+		je:je_gs_great_stink ?= {
+			add_progress = { value = 10 name = gs_sewer_bar }
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# King Cholera (pulse)
+gs_events.3 = {
+	type = country_event
+	placement = scope:gs_city
+
+	title = gs_events.3.t
+	desc = gs_events.3.d
+	flavor = gs_events.3.f
+
+	event_image = {
+		video = "unspecific_sick_in_hospital"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_skull.dds"
+
+	duration = 3
+
+	cooldown = { days = normal_modifier_time }
+
+	trigger = {
+		has_journal_entry = je_gs_great_stink
+		exists = var:gs_city
+		# only while much of the city is still unsewered
+		je:je_gs_great_stink ?= {
+			scripted_bar_progress = {
+				name = gs_sewer_bar
+				value < 80
+			}
+		}
+	}
+
+	cancellation_trigger = {
+		NOT = { has_journal_entry = je_gs_great_stink }
+	}
+
+	immediate = {
+		var:gs_city ?= { save_scope_as = gs_city }
+	}
+
+	# Pay for relief: a short outbreak.
+	option = {
+		name = gs_events.3.a
+		add_modifier = {
+			name = gs_cholera_relief
+			multiplier = money_amount_multiplier_very_small
+			days = short_modifier_time
+		}
+		scope:gs_city = {
+			add_modifier = {
+				name = gs_cholera_outbreak
+				months = 12
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				trigger = { in_default = yes }
+				factor = 0
+			}
+		}
+	}
+
+	# Blame the air: free, longer, and the men of science remember it.
+	option = {
+		name = gs_events.3.b
+		default_option = yes
+		scope:gs_city = {
+			add_modifier = {
+				name = gs_cholera_outbreak
+				days = short_modifier_time
+			}
+			add_radicals_in_state = {
+				value = small_radicals
+			}
+		}
+		ig:ig_intelligentsia ?= {
+			add_modifier = {
+				name = gs_miasma_doctrine
+				days = normal_modifier_time
+			}
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# Nine Hours (pulse)
+gs_events.4 = {
+	type = country_event
+	placement = scope:gs_city
+
+	title = gs_events.4.t
+	desc = gs_events.4.d
+	flavor = gs_events.4.f
+
+	event_image = {
+		video = "asia_union_leader"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+
+	duration = 3
+
+	cooldown = { days = normal_modifier_time }
+
+	trigger = {
+		has_journal_entry = je_gs_great_stink
+		exists = var:gs_city
+		ig:ig_trade_unions ?= { is_marginal = no }
+	}
+
+	cancellation_trigger = {
+		NOT = { has_journal_entry = je_gs_great_stink }
+	}
+
+	immediate = {
+		var:gs_city ?= { save_scope_as = gs_city }
+	}
+
+	# Concede: the unions are pleased, the contractors are not.
+	option = {
+		name = gs_events.4.a
+		ig:ig_trade_unions ?= {
+			add_modifier = {
+				name = gs_nine_hours_won
+				days = normal_modifier_time
+			}
+		}
+		ig:ig_industrialists ?= {
+			add_modifier = {
+				name = gs_contractors_squeezed
+				days = normal_modifier_time
+			}
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				trigger = {
+					ig:ig_trade_unions ?= { is_in_government = yes }
+				}
+				add = 10
+			}
+		}
+	}
+
+	# Break the strike: angry labourers, and time lost while new men are found.
+	option = {
+		name = gs_events.4.b
+		default_option = yes
+		scope:gs_city = {
+			add_radicals_in_state = {
+				value = medium_radicals
+				pop_type = laborers
+			}
+		}
+		custom_tooltip = gs_bar_minus_5_tt
+		je:je_gs_great_stink ?= {
+			add_progress = { value = -5 name = gs_sewer_bar }
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				trigger = {
+					ig:ig_industrialists ?= { is_in_government = yes }
+				}
+				add = 10
+			}
+		}
+	}
+}
+
+# The Embankment (pulse, once)
+gs_events.5 = {
+	type = country_event
+	placement = scope:gs_city
+
+	title = gs_events.5.t
+	desc = gs_events.5.d
+	flavor = gs_events.5.f
+
+	event_image = {
+		video = "unspecific_trains"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_industry.dds"
+
+	duration = 3
+
+	fire_only_once = yes
+
+	trigger = {
+		has_journal_entry = je_gs_great_stink
+		exists = var:gs_city
+		je:je_gs_great_stink ?= {
+			scripted_bar_progress = {
+				name = gs_sewer_bar
+				value >= 40
+			}
+		}
+	}
+
+	cancellation_trigger = {
+		NOT = { has_journal_entry = je_gs_great_stink }
+	}
+
+	immediate = {
+		var:gs_city ?= { save_scope_as = gs_city }
+	}
+
+	option = {
+		name = gs_events.5.a
+		add_modifier = {
+			name = gs_embankment_cost
+			multiplier = money_amount_multiplier_small
+			days = short_modifier_time
+		}
+		scope:gs_city = {
+			add_modifier = {
+				name = gs_embankment
+				days = long_modifier_time
+			}
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				trigger = {
+					OR = {
+						in_default = yes
+						taking_loans = yes
+					}
+				}
+				factor = 0
+			}
+		}
+	}
+
+	option = {
+		name = gs_events.5.b
+		default_option = yes
+		custom_tooltip = gs_bar_plus_5_tt
+		je:je_gs_great_stink ?= {
+			add_progress = { value = 5 name = gs_sewer_bar }
+		}
+		ai_chance = {
+			base = 5
+		}
+	}
+}
+
+# The Main Drainage (ending: the works are complete)
+gs_events.10 = {
+	type = country_event
+	placement = scope:gs_city
+
+	title = gs_events.10.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = gs_events.10.d_gbr
+				trigger = {
+					exists = c:GBR
+					c:GBR ?= this
+					var:gs_city ?= { state_region = s:STATE_HOME_COUNTIES }
+				}
+			}
+			triggered_desc = {
+				desc = gs_events.10.d
+			}
+		}
+	}
+	flavor = gs_events.10.f
+
+	event_image = {
+		video = "unspecific_gears_pistons"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_industry.dds"
+
+	duration = 3
+
+	trigger = {
+		# fired by the journal entry's winning outcome
+		exists = var:gs_city
+	}
+
+	immediate = {
+		var:gs_city ?= { save_scope_as = gs_city }
+	}
+
+	option = {
+		name = gs_events.10.a
+		default_option = yes
+		gs_completion_reward = yes
+	}
+
+	after = {
+		remove_variable = gs_city
+		remove_variable = gs_oversized
+	}
+}
+
+# The River Wins (ending: timeout)
+gs_events.11 = {
+	type = country_event
+	placement = scope:gs_city
+
+	title = gs_events.11.t
+	desc = gs_events.11.d
+	flavor = gs_events.11.f
+
+	event_image = {
+		video = "europenorthamerica_rich_and_poor"
+	}
+
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+
+	icon = "gfx/interface/icons/event_icons/event_skull.dds"
+
+	duration = 3
+
+	trigger = {
+		# fired by the journal entry's timeout outcome
+		exists = var:gs_city
+	}
+
+	immediate = {
+		var:gs_city ?= { save_scope_as = gs_city }
+	}
+
+	option = {
+		name = gs_events.11.a
+		default_option = yes
+		scope:gs_city = {
+			add_modifier = {
+				name = gs_dead_river
+				days = long_modifier_time
+			}
+			add_radicals_in_state = {
+				value = medium_radicals
+			}
+		}
+	}
+
+	after = {
+		remove_variable = gs_city
+		remove_variable = gs_oversized
+	}
+}
