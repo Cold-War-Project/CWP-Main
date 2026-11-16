@@ -115,7 +115,7 @@ Each rule applies to every porting thread. "Dev file" means a file taken from `o
 
 **R12. Do not reintroduce Victorian or vanilla-1836 keys.** Follow `_proposed_fixes/_notes/00_mapping.md` (in commit 083fd12af: `git show 083fd12af:_proposed_fixes/_notes/00_mapping.md`) for the vanilla-to-CWP key mapping that the rebuild used, including the deliberate exceptions.
 
-**R13. Port incrementally and test each batch in game.** The rebuild reached zero errors in steps, launching the game each time. Port one area at a time, launch, read `error.log`, and do not merge a batch that adds new lines. For anything that touches politics, revolutions, wars or on_actions, also run an observer game of several years, because the original crash happened at runtime (civil war), not at load. On Forge only one game can run at a time: wrap the launch in `flock ~/forge/.vic3.lock <launch command>`.
+**R13. Port incrementally and test each batch in game.** The rebuild reached zero errors in steps, launching the game each time. Port one area at a time, launch, read `error.log`, and do not merge a batch that adds new lines. For anything that touches politics, revolutions, wars or on_actions, also run an observer game of several years, because the original crash happened at runtime (civil war), not at load. On Forge only one game can run at a time: set `CWP_AGENT=<your area>` and use the shared wrapper, `cwp-vic lock "<area>: <why>"`, `cwp-vic link <worktree>`, `cwp-vic launch`, `cwp-vic errors` (or `cwp-vic perf 600 15`), then `cwp-vic unlock`. `cwp-vic status` shows who holds the lock.
 
 ## Notes for each porting area
 
@@ -134,5 +134,5 @@ Each rule applies to every porting thread. "Dev file" means a file taken from `o
 1. `python .claude/tools/check_mod.py <paths>` for BOM, braces, loc and duplicate keys.
 2. `git diff origin/cwp_rebuild -- .metadata/metadata.json` must be empty.
 3. Every touched file that has a vanilla namesake: `diff` it against the 1.15 vanilla file, and the diff should show only CWP edits, not a 1.13 copy.
-4. Launch under the lock, load a new game, and compare `~/.local/share/Paradox Interactive/Victoria 3/logs/error.log` with the run before the port.
+4. Launch with `cwp-vic` (rule R13), load a new game, and compare `~/.local/share/Paradox Interactive/Victoria 3/logs/error.log` with the run before the port.
 5. For politics, war, revolution or on_action changes, run an observer game for at least 10 in-game years, which was Maddie96's own crash test, and make sure it reaches at least one civil war or revolution.
