@@ -240,7 +240,7 @@ def main() -> None:
         agitator_guards = [guard for guard in guards if scalar(guard, "has_role_of_type") == "agitator"]
         require(bool(agitator_guards), f"Missing agitator grievance guard: {key}")
         for guard in agitator_guards:
-            goal_laws = [p.value.removeprefix("law_type:") for p in walk(child(guard, "owner")) if p.key == "has_law_or_variant" and isinstance(p.value, str)]
+            goal_laws = [p.value.removeprefix("law_type:") for p in walk(child(guard, "owner")) if p.key in ("has_law_or_variant", "has_law") and isinstance(p.value, str)]
             require(bool(goal_laws), f"Empty agitator grievance goals: {key}")
             for law in goal_laws:
                 group = child(body, law_group.get(law, ""))
@@ -271,7 +271,7 @@ def main() -> None:
         completion = child(body, "disband_trigger")
         negative_program = child(child(child(body, "creation_trigger"), "NOT"), "AND")
         require(completion == negative_program and bool(completion.items), f"Creation/disband completion mismatch: {key}")
-        goal_laws = [p.value.removeprefix("law_type:") for p in walk(completion) if p.key == "has_law_or_variant" and isinstance(p.value, str)]
+        goal_laws = [p.value.removeprefix("law_type:") for p in walk(completion) if p.key in ("has_law_or_variant", "has_law") and isinstance(p.value, str)]
         require(bool(goal_laws), f"Empty movement completion goals: {key}")
         movement_policy = packs.get("movement", {}).get(ideology, Node([]))
         for law in goal_laws:
