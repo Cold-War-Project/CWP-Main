@@ -2,19 +2,30 @@
 
 Total-overhaul mod for **Victoria 3 1.15.1**. Campaign runs **1946.1.1 to 2046.1.1** (`common/defines/cwp_defines.txt`). Almost every vanilla database is replaced with Cold War content: own goods, buildings, production methods, laws, technologies (eras `era_1`..`era_12`), countries, cultures, combat units, ships, history.
 
+**Agents: read [`AGENTS.md`](AGENTS.md) and [`docs/agents/`](docs/agents/README.md) first** (branches, worktrees, testing on Forge, PRs). This file holds the rules for writing mod script.
+
+@AGENTS.md
+
 ## Paths
+
+Forge (Ubuntu, where agents work) and Windows (the original setup, still used by human devs):
+
+| What | Forge | Windows |
+|---|---|---|
+| This mod (working dir) | your worktree, `~/forge/worktrees/<area>` (git; main checkout `~/forge/CWP-Main`) | `Documents/Paradox Interactive/Victoria 3/mod/Cold War Project - Rebuild` |
+| Vanilla game files (READ ONLY) | `~/.steam/steam/steamapps/common/Victoria 3/game` | `F:/SteamLibrary/steamapps/common/Victoria 3/game` |
+| Game logs | `~/.local/share/Paradox Interactive/Victoria 3/logs/` | `Documents/Paradox Interactive/Victoria 3/logs/` (`error.log`, `debug.log`, rotated `.1`-`.5`) |
+| Backups | git: commit before bulk edits | `Documents/Paradox Interactive/Victoria 3/_cold_war_backups/<yyyy-mm-dd>_<label>/` |
+
+Other paths are relative to the mod root:
 
 | What | Where |
 |---|---|
-| This mod (working dir) | `Documents/Paradox Interactive/Victoria 3/mod/Cold War Project - Rebuild` |
-| Vanilla game files (READ ONLY) | `F:/SteamLibrary/steamapps/common/Victoria 3/game` |
-| Game logs | `Documents/Paradox Interactive/Victoria 3/logs/` (`error.log`, `debug.log`, rotated `.1`-`.5`) |
-| Backups | `Documents/Paradox Interactive/Victoria 3/_cold_war_backups/<yyyy-mm-dd>_<label>/` |
 | Area guides (auto-loaded by path) | `.claude/rules/*.md` |
 | Generated vanilla references | `.claude/reference/*.md` (regenerate with `python .claude/tools/vanilla_census.py`) |
 | Modding guide: **how to write** script (16 chapters, engine reference, tools) | `Claude-Vic3-Modding-Guide/` in the mod root, entry point `README.md` |
 | Content design guide: **what to build** for a historical topic (11 chapters, vanilla models, templates, example mod) | `Claude-Vic3-Content-Design-Guide/` in the mod root, entry point `README.md` |
-| `script_docs` output that the modding guide's reference is built from | `Documents/Paradox Interactive/Victoria 3/docs/*.log` |
+| `script_docs` output that the modding guide's reference is built from | `<user folder>/docs/*.log` (Windows: `Documents/Paradox Interactive/Victoria 3/docs/`) |
 
 ## Rules that apply to every task
 
@@ -30,7 +41,7 @@ Total-overhaul mod for **Victoria 3 1.15.1**. Campaign runs **1946.1.1 to 2046.1
 5. **Every key needs its other halves.** A new object usually needs: localization (`localization/english/cwp/...`), an icon path that exists, and every reference it makes (technology, building, goods, law...) must resolve to something defined in the mod, not in vanilla.
 6. **No Victorian leftovers.** References to vanilla-only content (1836 countries, journal entries, techs, buildings, laws, DLC flavour) are removed or remapped to mod content, not kept alive.
 7. **Clean error.log is the acceptance test.** A change is not done until a game launch shows no new lines. See `.claude/reference/debugging.md` for the triage workflow and the list of engine-side lines to ignore.
-8. **Back up before bulk edits** (more than a handful of files, or any scripted rewrite) into `_cold_war_backups/`. Make bulk-edit scripts rerunnable and keep them in the scratchpad, not in the mod.
+8. **Back up before bulk edits** (more than a handful of files, or any scripted rewrite): in a git worktree, commit first; in a Windows mod folder outside git, copy into `_cold_war_backups/`. Make bulk-edit scripts rerunnable and keep them in the scratchpad, not in the mod.
 9. **Binary map files are off limits** (`provinces.png`, `heightmap.*`, `rivers.png`, `nodes.dat`, `*.bin`). They are edited in the in-game map editor. Text map data is fine.
 10. **Ask before deleting whole entries or files** that other content may reference, and remove the references with them (list entries, loc, history, on_actions).
 
@@ -76,7 +87,7 @@ Naming: new mod-only files are prefixed `cwp_`; files in `replace_paths` folders
 3. Copy structure from a working example in the mod (or vanilla), then change content. Do not invent structure.
 4. Look up every engine name you write (rule 2) as you write it, not afterwards.
 5. After editing, run `python ".claude/tools/check_mod.py" <paths you touched>` (BOM, brace balance, loc syntax, duplicate keys), then check by hand that every new key has loc and every referenced key exists in the mod (`Grep` it). For content, also run the content checker (see "Guide tools on this mod").
-6. Ask the user to launch the game (debug mode) and read `logs/error.log`; fix what the change introduced. Claude cannot run the game, so say plainly when a change is untested in game, and name anything that rests on a guide statement marked [WIKI] or [VERIFY] so the user knows what to test first.
+6. Launch the game and read `logs/error.log`; fix what the change introduced. On Forge, do it yourself with `cwp-vic` under the shared lock ([docs/agents/forge-testing.md](docs/agents/forge-testing.md)). Where the game cannot be run (Windows session without game access), ask the user, say plainly that the change is untested in game, and name anything that rests on a guide statement marked [WIKI] or [VERIFY].
 
 Research, bulk lookups, log triage, review and batch edits can be handed to sub-agents at any of these steps: see "Sub-agents".
 
@@ -185,7 +196,7 @@ Run independent agents in parallel, in one message. Do the work directly when it
 - whether it may write, and if so exactly which files. Otherwise say "read-only: report, do not edit";
 - the shape of the report, including a separate list of what it assumed or could not confirm.
 
-**Writing is the risky part.** The mod folder is not a git repository, so nothing isolates a sub-agent's edits and nothing undoes them.
+**Writing is the risky part.** On Forge the mod is a git worktree, so commit before sub-agents edit and `git diff` what they changed. In a Windows mod folder outside git nothing isolates or undoes their edits.
 
 - Back up first (rule 8) whenever sub-agents will edit.
 - One writer per file. Files that many objects share are edited by the main session only: shared localization files, `zz_vanilla_*.txt`, `common/on_actions`, `.metadata/metadata.json`. Have the agents return the lines to add.

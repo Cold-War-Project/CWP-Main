@@ -1,0 +1,162 @@
+#!/usr/bin/env bash
+# cwp-vic: shared Victoria 3 test harness for agents on the Forge machine.
+#
+# Only one Victoria 3 may run at a time (8 GB GPU), and several agents share the machine.
+# Every game session therefore holds ~/forge/.vic3.lock from launch until the game is stopped.
+#
+#   cwp-vic status                  who holds the lock, which worktree is linked, running games
+#   cwp-vic lock [--wait S] [NOTE]  take the lock (waits up to S seconds, default 1800); NOTE says who/why
+#   cwp-vic link <worktree>         enable that worktree as the only mod (content_load.json)  (needs lock)
+#   cwp-vic vanilla                 disable the mod for a vanilla baseline run               (needs lock)
+#   cwp-vic launch [game args]      clear error.log and start the game in debug mode         (needs lock)
+#   cwp-vic stop [--all]            stop the game you launched (--all: every Victoria 3, only if orphaned)
+#   cwp-vic unlock [--force]        stop the game and release the lock
+#   cwp-vic errors                  error.log minus the known vanilla noise
+#   cwp-vic perf [SECONDS] [STEP]   sample CPU/RAM/VRAM of the game into a CSV (default 600 s, 15 s)
+#
+# Typical session:
+#   cwp-vic lock "politics: law port smoke test" && cwp-vic link ~/forge/worktrees/politics \
+#     && cwp-vic launch    ...  vic-shot / vic-key / cwp-vic errors ...   cwp-vic unlock
+#
+# The lock is a flock(1) on ~/forge/.vic3.lock held by a background `sleep`, so it is released
+# automatically if the holder dies, and plain `flock ~/forge/.vic3.lock <cmd>` callers queue
+# behind it correctly. A lock is held at most CWP_VIC_MAX_HOLD seconds (default 7200).
+set -uo pipefail
+
+FORGE="${FORGE:-$HOME/forge}"
+LOCK="$FORGE/.vic3.lock"
+HOLDER="$FORGE/.vic3.lock.holder"      # pid of the sleep that holds the flock
+OWNER="$FORGE/.vic3.lock.owner"        # free-text note: who and why, since when
+GAMEPID="$FORGE/.vic3.game.pid"        # pid of the game started by the current lock holder
+USERDIR="$HOME/.local/share/Paradox Interactive/Victoria 3"
+CONTENT="$USERDIR/content_load.json"   # what the game mounts when started without the launcher
+ERRLOG="$USERDIR/logs/error.log"
+MAX_HOLD="${CWP_VIC_MAX_HOLD:-7200}"
+# The game runs as "./victoria3 -debug_mode" from its binaries folder; match both spellings.
+GAME_PAT='(^|/|\./)victoria3( |$)'
+
+die()  { echo "cwp-vic: $*" >&2; exit 1; }
+game_pids() { pgrep -f "$GAME_PAT" | while read -r p; do
+  [[ "$(readlink "/proc/$p/exe" 2>/dev/null)" == */binaries/victoria3 ]] && echo "$p"; done; }
+holder_alive() { [[ -s "$HOLDER" ]] && kill -0 "$(cat "$HOLDER")" 2>/dev/null; }
+need_lock() { holder_alive || die "you must hold the lock first: cwp-vic lock \"<who>: <why>\""; }
+
+cmd_status() {
+  if holder_alive; then echo "lock:    HELD (pid $(cat "$HOLDER")) by: $(cat "$OWNER" 2>/dev/null)"
+  elif ! flock -n "$LOCK" true 2>/dev/null; then
+    echo "lock:    HELD by a plain flock caller (not cwp-vic); holder and queue:"
+    for p in /proc/[0-9]*; do ls -l "$p/fd" 2>/dev/null | grep -qF "$LOCK" && \
+      echo "         pid ${p#/proc/}: $(tr '\0' ' ' < "$p/cmdline" | cut -c1-120)"; done
+  else echo "lock:    free"; fi
+  if [[ -f "$CONTENT" ]]; then echo "enabled: $(tr -d '\n\t ' < "$CONTENT")"; else echo "enabled: (no content_load.json: vanilla)"; fi
+  local pids; pids=$(game_pids | tr '\n' ' ')
+  if [[ -n "$pids" ]]; then
+    for p in $pids; do echo "game:    pid $p, up $(ps -o etime= -p "$p" | tr -d ' '), RSS $(( $(ps -o rss= -p "$p") / 1024 )) MB"; done
+  else echo "game:    not running"; fi
+  nvidia-smi --query-gpu=memory.used,memory.total --format=csv,noheader 2>/dev/null | sed 's/^/gpu:     /'
+}
+
+cmd_lock() {
+  local wait=1800
+  [[ "${1:-}" == "--wait" ]] && { wait="$2"; shift 2; }
+  local note="${*:-${CWP_AGENT:-$(basename "$PWD")}}"
+  holder_alive && echo "lock is held by: $(cat "$OWNER" 2>/dev/null); queueing behind it"
+  touch "$LOCK"
+  local stamp; stamp="$note (since $(date '+%F %T %Z'), req $$-$RANDOM)"
+  echo "waiting up to ${wait}s for $LOCK ..."
+  # The child takes the flock on fd 9, then records itself as holder and becomes a sleep that keeps
+  # fd 9 open. Holder files are only written by whoever has the flock, so queued callers never clobber them.
+  setsid bash -c 'exec 9>>"$1"; flock -w "$2" 9 || exit 1; echo $$ > "$3"; printf "%s\n" "$5" > "$4"; exec sleep "$6"' \
+    _ "$LOCK" "$wait" "$HOLDER" "$OWNER" "$stamp" "$MAX_HOLD" </dev/null >/dev/null 2>&1 &
+  local child=$!
+  for _ in $(seq 1 "$((wait + 5))"); do
+    [[ "$(cat "$OWNER" 2>/dev/null)" == "$stamp" ]] && holder_alive && { echo "lock taken: $note"; return 0; }
+    kill -0 "$child" 2>/dev/null || break
+    sleep 1
+  done
+  pkill -f "req $$-" 2>/dev/null; kill "$child" 2>/dev/null; die "could not get the lock within ${wait}s (held by: $(cat "$OWNER" 2>/dev/null))"
+}
+
+write_content_load() {   # $1 = mod path or empty for vanilla
+  local mods='[]'
+  [[ -n "${1:-}" ]] && mods="[ { \"path\": \"$1\" } ]"
+  printf '{\n\t"enabledMods": %s,\n\t"enabledUGC": [],\n\t"disabledDLC": []\n}\n' "$mods" > "$CONTENT"
+}
+
+cmd_link() {
+  need_lock
+  local wt; wt=$(readlink -f "${1:?usage: cwp-vic link <worktree>}")
+  [[ -f "$wt/.metadata/metadata.json" ]] || die "$wt has no .metadata/metadata.json; not a mod root"
+  [[ -n "$(game_pids)" ]] && die "stop the game before relinking (cwp-vic stop)"
+  # The game mounts content_load.json paths directly; no copy or link in the mod folder is needed.
+  write_content_load "$wt/"
+  echo "enabled $wt ($(git -C "$wt" rev-parse --abbrev-ref HEAD 2>/dev/null) @ $(git -C "$wt" rev-parse --short HEAD 2>/dev/null))"
+}
+
+cmd_vanilla() { need_lock; [[ -n "$(game_pids)" ]] && die "stop the game first"; write_content_load ""; echo "mod disabled; next launch is vanilla"; }
+
+cmd_launch() {
+  need_lock
+  [[ -n "$(game_pids)" ]] && die "a Victoria 3 is already running (pids $(game_pids | tr '\n' ' ')). Find its owner (cwp-vic status) before stopping it."
+  mkdir -p "$(dirname "$ERRLOG")"; : > "$ERRLOG" 2>/dev/null || true
+  vic-launch "$@"; local rc=$?
+  game_pids | head -1 > "$GAMEPID"
+  return $rc
+}
+
+cmd_stop() {   # stops the game this lock holder launched; --all stops every Victoria 3
+  local pids
+  if [[ "${1:-}" == "--all" ]]; then pids=$(game_pids)
+  else pids=$(cat "$GAMEPID" 2>/dev/null); [[ -n "$pids" ]] && ! kill -0 "$pids" 2>/dev/null && pids=""; fi
+  [[ -z "$pids" ]] && { echo "no game of ours running (see cwp-vic status; --all stops every instance)"; rm -f "$GAMEPID"; return 0; }
+  kill -INT $pids 2>/dev/null
+  for _ in $(seq 1 20); do kill -0 $pids 2>/dev/null || break; sleep 1; done
+  kill $pids 2>/dev/null; sleep 2; kill -9 $pids 2>/dev/null
+  rm -f "$GAMEPID"; echo "Victoria 3 stopped (pid $pids)"
+}
+
+cmd_unlock() {
+  holder_alive || { echo "lock was not held"; rm -f "$HOLDER" "$OWNER"; return 0; }
+  if [[ "${1:-}" != "--force" && -n "${CWP_AGENT:-}" ]] && ! grep -qF "$CWP_AGENT" "$OWNER" 2>/dev/null; then
+    die "lock belongs to: $(cat "$OWNER"). Use --force only if that thread is gone."
+  fi
+  cmd_stop
+  local hp; hp=$(cat "$HOLDER"); rm -f "$HOLDER" "$OWNER"   # remove first: the next holder rewrites them
+  kill "$hp" 2>/dev/null
+  echo "lock released (run 'game-mode off' if nobody else needs the game)"
+}
+
+cmd_errors() {
+  [[ -f "$ERRLOG" ]] || die "no error.log yet"
+  # Engine noise seen on a clean vanilla launch; extend docs/agents/forge-testing.md when adding more.
+  grep -vE 'Could not find item in store backend' "$ERRLOG"
+}
+
+cmd_perf() {
+  local secs="${1:-600}" step="${2:-15}" pid out
+  pid=$(game_pids | head -1); [[ -n "$pid" ]] || die "game not running"
+  out="$FORGE/perf/$(date +%Y%m%d-%H%M%S).csv"; mkdir -p "$FORGE/perf"
+  echo "time,elapsed_s,cpu_pct,rss_mb,vram_used_mb,errorlog_lines" > "$out"
+  local t0=$SECONDS
+  while (( SECONDS - t0 < secs )) && kill -0 "$pid" 2>/dev/null; do
+    printf '%s,%s,%s,%s,%s,%s\n' "$(date +%T)" "$((SECONDS - t0))" \
+      "$(ps -o %cpu= -p "$pid" | tr -d ' ')" "$(( $(ps -o rss= -p "$pid") / 1024 ))" \
+      "$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits 2>/dev/null | head -1)" \
+      "$(wc -l < "$ERRLOG" 2>/dev/null || echo 0)" >> "$out"
+    sleep "$step"
+  done
+  echo "$out"
+}
+
+case "${1:-status}" in
+  status)  cmd_status ;;
+  lock)    shift; cmd_lock "$@" ;;
+  link)    shift; cmd_link "$@" ;;
+  vanilla) cmd_vanilla ;;
+  launch)  shift; cmd_launch "$@" ;;
+  stop)    shift; cmd_stop "$@" ;;
+  unlock)  shift; cmd_unlock "$@" ;;
+  errors)  cmd_errors ;;
+  perf)    shift; cmd_perf "$@" ;;
+  *)       sed -n '2,24p' "$0" ;;
+esac
