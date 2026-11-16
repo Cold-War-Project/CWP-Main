@@ -1,0 +1,888 @@
+﻿# Additive Cold War movements using the installed vanilla political movement schema.
+# Creation/disband triggers run in country scope; character and pop weights use their native scopes.
+# Pop support factors describe the implemented weights; they do not supply the weights themselves.
+
+movement_cwp_orthodox_communist = {
+	category = movement_category_ideological
+	ideology = ideology_cwp_orthodox_communist_movement
+	character_ideologies = {
+		ideology_cwp_marxist_leninist
+	}
+
+	creation_trigger = {
+		game_date >= 1946.1.1
+		OR = {
+			pop_type_percent_country = { pop_type = laborers percent > 0.10 }
+			has_law_or_variant = law_type:law_council_republic
+		}
+		NOT = {
+			AND = {
+				has_law_or_variant = law_type:law_council_republic
+				has_law_or_variant = law_type:law_single_party_state
+				has_law_or_variant = law_type:law_command_economy
+				OR = {
+					has_law_or_variant = law_type:law_corporatized_unions
+					has_law_or_variant = law_type:law_factory_councils
+				}
+			}
+		}
+	}
+	creation_weight = { value = 25 }
+	on_created = { add_movement_enthusiasm_modifier = yes }
+	disband_trigger = {
+		has_law_or_variant = law_type:law_council_republic
+		has_law_or_variant = law_type:law_single_party_state
+		has_law_or_variant = law_type:law_command_economy
+		OR = {
+			has_law_or_variant = law_type:law_corporatized_unions
+			has_law_or_variant = law_type:law_factory_councils
+		}
+	}
+
+	can_pressure_interest_group = {
+		OR = {
+			is_interest_group_type = ig_armed_forces
+			is_interest_group_type = ig_intelligentsia
+			is_interest_group_type = ig_trade_unions
+		}
+	}
+
+	character_support_trigger = {
+		OR = {
+			has_ideology = ideology:ideology_cwp_marxist_leninist
+			has_ideology = ideology:ideology_vanguardist
+			has_ideology = ideology:ideology_communist
+			has_ideology = ideology:ideology_cwp_destalinizer
+			has_ideology = ideology:ideology_cwp_castroist
+			has_ideology = ideology:ideology_cwp_hoxhaist
+			has_ideology = ideology:ideology_cwp_juche
+			has_ideology = ideology:ideology_cwp_soviet_conservative
+		}
+	}
+	character_support_weight = { value = 300 }
+
+	pop_support_trigger = {
+		NOR = {
+			is_pop_type = capitalists
+			is_pop_type = aristocrats
+			is_pop_type = slaves
+		}
+	}
+	pop_support_factors = {
+		movement_support_laborers
+		movement_support_machinists
+		movement_support_academics
+		movement_support_bureaucrats
+		movement_support_high_urbanization
+		movement_support_below_expected_sol
+		movement_support_radicalization
+	}
+	pop_support_weight = {
+		add = { value = 5 desc = "POP_BASE_SUPPORT" }
+		if = {
+			limit = { is_pop_type = laborers }
+			add = { value = 20 desc = "POP_LABORERS" }
+		}
+		if = {
+			limit = { is_pop_type = machinists }
+			add = { value = 25 desc = "POP_MACHINISTS" }
+		}
+		if = {
+			limit = { is_pop_type = academics }
+			add = { value = 10 desc = "POP_ACADEMICS" }
+		}
+		if = {
+			limit = { is_pop_type = bureaucrats }
+			add = { value = 10 desc = "POP_BUREAUCRATS" }
+		}
+		add = { value = state.state_urbanization_rate multiply = 10 desc = "POP_HIGH_URBANIZATION" }
+		if = {
+			limit = { standard_of_living < state.average_expected_sol }
+			add = { value = state.average_expected_sol subtract = standard_of_living max = 10 desc = "IS_BELOW_EXPECTED_SOL" }
+		}
+		multiply = { value = pop_radical_fraction add = 1 desc = "POP_RADICALS" }
+		if = {
+			limit = { exists = scope:political_movement scope:political_movement ?= { is_being_suppressed = yes } }
+			add = {
+				value = suppression_base_value
+				multiply = { value = -0.5 add = owner.modifier:country_suppression_attraction_factor }
+				desc = "concept_suppressed"
+			}
+		}
+		else_if = {
+			limit = { exists = scope:political_movement scope:political_movement ?= { is_being_bolstered = yes } }
+			add = {
+				value = bolstering_base_value
+				multiply = { value = 0.5 add = owner.modifier:country_bolster_attraction_factor }
+				desc = "concept_bolstered"
+			}
+		}
+		min = 0
+	}
+
+	revolution = {
+		possible = { political_movement_support >= 0.10 }
+		weight = { value = 100 }
+	}
+}
+
+movement_cwp_peasant_revolutionary = {
+	category = movement_category_ideological
+	ideology = ideology_cwp_peasant_revolutionary_movement
+	character_ideologies = {
+		ideology_cwp_maoist
+	}
+
+	creation_trigger = {
+		game_date >= 1949.1.1
+		OR = {
+			any_primary_culture = { has_discrimination_trait = heritage_han }
+			game_date >= 1960.1.1
+		}
+		pop_type_percent_country = { pop_type = peasants percent > 0.20 }
+		NOT = {
+			AND = {
+				has_law_or_variant = law_type:law_council_republic
+				has_law_or_variant = law_type:law_single_party_state
+				has_law_or_variant = law_type:law_command_economy
+				has_law_or_variant = law_type:law_collectivized_agriculture
+			}
+		}
+	}
+	creation_weight = { value = 25 }
+	on_created = { add_movement_enthusiasm_modifier = yes }
+	disband_trigger = {
+		has_law_or_variant = law_type:law_council_republic
+		has_law_or_variant = law_type:law_single_party_state
+		has_law_or_variant = law_type:law_command_economy
+		has_law_or_variant = law_type:law_collectivized_agriculture
+	}
+
+	can_pressure_interest_group = {
+		OR = {
+			is_interest_group_type = ig_armed_forces
+			is_interest_group_type = ig_intelligentsia
+			is_interest_group_type = ig_rural_folk
+			is_interest_group_type = ig_trade_unions
+		}
+	}
+
+	character_support_trigger = {
+		OR = {
+			has_ideology = ideology:ideology_cwp_maoist
+			has_ideology = ideology:ideology_cwp_guevarist
+		}
+	}
+	character_support_weight = { value = 300 }
+
+	pop_support_trigger = {
+		NOR = {
+			is_pop_type = capitalists
+			is_pop_type = aristocrats
+			is_pop_type = slaves
+		}
+	}
+	pop_support_factors = {
+		movement_support_peasants
+		movement_support_farmers
+		movement_support_laborers
+		movement_support_soldiers
+		movement_support_low_urbanization
+		movement_support_below_expected_sol
+		movement_support_radicalization
+	}
+	pop_support_weight = {
+		add = { value = 5 desc = "POP_BASE_SUPPORT" }
+		if = {
+			limit = { is_pop_type = peasants }
+			add = { value = 30 desc = "POP_PEASANTS" }
+		}
+		if = {
+			limit = { is_pop_type = farmers }
+			add = { value = 15 desc = "POP_FARMERS" }
+		}
+		if = {
+			limit = { is_pop_type = laborers }
+			add = { value = 15 desc = "POP_LABORERS" }
+		}
+		if = {
+			limit = { is_pop_type = soldiers }
+			add = { value = 10 desc = "POP_SOLDIERS" }
+		}
+		add = { value = 1 subtract = state.state_urbanization_rate multiply = 10 desc = "POP_LOW_URBANIZATION" }
+		if = {
+			limit = { standard_of_living < state.average_expected_sol }
+			add = { value = state.average_expected_sol subtract = standard_of_living max = 10 desc = "IS_BELOW_EXPECTED_SOL" }
+		}
+		multiply = { value = pop_radical_fraction add = 1 desc = "POP_RADICALS" }
+		if = {
+			limit = { exists = scope:political_movement scope:political_movement ?= { is_being_suppressed = yes } }
+			add = {
+				value = suppression_base_value
+				multiply = { value = -0.5 add = owner.modifier:country_suppression_attraction_factor }
+				desc = "concept_suppressed"
+			}
+		}
+		else_if = {
+			limit = { exists = scope:political_movement scope:political_movement ?= { is_being_bolstered = yes } }
+			add = {
+				value = bolstering_base_value
+				multiply = { value = 0.5 add = owner.modifier:country_bolster_attraction_factor }
+				desc = "concept_bolstered"
+			}
+		}
+		min = 0
+	}
+
+	revolution = {
+		possible = { political_movement_support >= 0.10 }
+		weight = { value = 100 }
+	}
+}
+
+movement_cwp_democratic_socialist = {
+	category = movement_category_ideological
+	ideology = ideology_cwp_democratic_socialist_movement
+	character_ideologies = {
+		ideology_cwp_democratic_socialist
+	}
+
+	creation_trigger = {
+		game_date >= 1946.1.1
+		OR = {
+			pop_type_percent_country = { pop_type = laborers percent > 0.10 }
+			has_law_or_variant = law_type:law_right_to_associate
+		}
+		NOT = {
+			AND = {
+				has_law_or_variant = law_type:law_universal_suffrage
+				has_law_or_variant = law_type:law_interventionism
+				has_law_or_variant = law_type:law_old_age_pension
+				has_law_or_variant = law_type:law_public_health_insurance
+			}
+		}
+	}
+	creation_weight = { value = 25 }
+	on_created = { add_movement_enthusiasm_modifier = yes }
+	disband_trigger = {
+		has_law_or_variant = law_type:law_universal_suffrage
+		has_law_or_variant = law_type:law_interventionism
+		has_law_or_variant = law_type:law_old_age_pension
+		has_law_or_variant = law_type:law_public_health_insurance
+	}
+
+	can_pressure_interest_group = {
+		OR = {
+			is_interest_group_type = ig_intelligentsia
+			is_interest_group_type = ig_trade_unions
+		}
+	}
+
+	character_support_trigger = {
+		OR = {
+			has_ideology = ideology:ideology_cwp_democratic_socialist
+			has_ideology = ideology:ideology_social_democrat
+			has_ideology = ideology:ideology_cwp_nordic_social_democrat
+			has_ideology = ideology:ideology_cwp_allendist
+			has_ideology = ideology:ideology_cwp_liberation_theologian
+			has_ideology = ideology:ideology_cwp_democratic_communist
+			has_ideology = ideology:ideology_cwp_green
+			has_ideology = ideology:ideology_cwp_buddhist_socialist
+		}
+	}
+	character_support_weight = { value = 300 }
+
+	pop_support_trigger = {
+		NOR = {
+			is_pop_type = slaves
+		}
+	}
+	pop_support_factors = {
+		movement_support_laborers
+		movement_support_machinists
+		movement_support_clerks
+		movement_support_academics
+		movement_support_high_urbanization
+		movement_support_below_expected_sol
+	}
+	pop_support_weight = {
+		add = { value = 5 desc = "POP_BASE_SUPPORT" }
+		if = {
+			limit = { is_pop_type = laborers }
+			add = { value = 20 desc = "POP_LABORERS" }
+		}
+		if = {
+			limit = { is_pop_type = machinists }
+			add = { value = 20 desc = "POP_MACHINISTS" }
+		}
+		if = {
+			limit = { is_pop_type = clerks }
+			add = { value = 15 desc = "POP_CLERKS" }
+		}
+		if = {
+			limit = { is_pop_type = academics }
+			add = { value = 10 desc = "POP_ACADEMICS" }
+		}
+		add = { value = state.state_urbanization_rate multiply = 10 desc = "POP_HIGH_URBANIZATION" }
+		if = {
+			limit = { standard_of_living < state.average_expected_sol }
+			add = { value = state.average_expected_sol subtract = standard_of_living max = 10 desc = "IS_BELOW_EXPECTED_SOL" }
+		}
+		if = {
+			limit = { exists = scope:political_movement scope:political_movement ?= { is_being_suppressed = yes } }
+			add = {
+				value = suppression_base_value
+				multiply = { value = -0.5 add = owner.modifier:country_suppression_attraction_factor }
+				desc = "concept_suppressed"
+			}
+		}
+		else_if = {
+			limit = { exists = scope:political_movement scope:political_movement ?= { is_being_bolstered = yes } }
+			add = {
+				value = bolstering_base_value
+				multiply = { value = 0.5 add = owner.modifier:country_bolster_attraction_factor }
+				desc = "concept_bolstered"
+			}
+		}
+		min = 0
+	}
+}
+
+movement_cwp_christian_democratic = {
+	category = movement_category_ideological
+	ideology = ideology_cwp_christian_democratic_movement
+	character_ideologies = {
+		ideology_cwp_christian_democrat
+	}
+
+	creation_trigger = {
+		game_date >= 1946.1.1
+		religion = { has_discrimination_trait = cwp_heritage_christian }
+		NOT = {
+			AND = {
+				has_law_or_variant = law_type:law_universal_suffrage
+				has_law_or_variant = law_type:law_freedom_of_conscience
+				has_law_or_variant = law_type:law_antitrust_legislation
+				has_law_or_variant = law_type:law_old_age_pension
+			}
+		}
+	}
+	creation_weight = { value = 25 }
+	on_created = { add_movement_enthusiasm_modifier = yes }
+	disband_trigger = {
+		has_law_or_variant = law_type:law_universal_suffrage
+		has_law_or_variant = law_type:law_freedom_of_conscience
+		has_law_or_variant = law_type:law_antitrust_legislation
+		has_law_or_variant = law_type:law_old_age_pension
+	}
+
+	can_pressure_interest_group = {
+		OR = {
+			is_interest_group_type = ig_devout
+			is_interest_group_type = ig_industrialists
+			is_interest_group_type = ig_petty_bourgeoisie
+			is_interest_group_type = ig_rural_folk
+		}
+	}
+
+	character_support_trigger = {
+		OR = {
+			has_ideology = ideology:ideology_cwp_christian_democrat
+			has_ideology = ideology:ideology_cwp_social_market_liberal
+			has_ideology = ideology:ideology_cwp_one_nation_conservative
+			has_ideology = ideology:ideology_cwp_solidarity_unionist
+		}
+	}
+	character_support_weight = { value = 300 }
+
+	pop_support_trigger = {
+		NOR = {
+			is_pop_type = slaves
+		}
+		religion = { has_discrimination_trait = cwp_heritage_christian }
+	}
+	pop_support_factors = {
+		movement_support_clergymen
+		movement_support_farmers
+		movement_support_shopkeepers
+		movement_support_clerks
+	}
+	pop_support_weight = {
+		add = { value = 5 desc = "POP_BASE_SUPPORT" }
+		if = {
+			limit = { is_pop_type = clergymen }
+			add = { value = 20 desc = "POP_CLERGYMEN" }
+		}
+		if = {
+			limit = { is_pop_type = farmers }
+			add = { value = 15 desc = "POP_FARMERS" }
+		}
+		if = {
+			limit = { is_pop_type = shopkeepers }
+			add = { value = 15 desc = "POP_SHOPKEEPERS" }
+		}
+		if = {
+			limit = { is_pop_type = clerks }
+			add = { value = 10 desc = "POP_CLERKS" }
+		}
+		if = {
+			limit = { exists = scope:political_movement scope:political_movement ?= { is_being_suppressed = yes } }
+			add = {
+				value = suppression_base_value
+				multiply = { value = -0.5 add = owner.modifier:country_suppression_attraction_factor }
+				desc = "concept_suppressed"
+			}
+		}
+		else_if = {
+			limit = { exists = scope:political_movement scope:political_movement ?= { is_being_bolstered = yes } }
+			add = {
+				value = bolstering_base_value
+				multiply = { value = 0.5 add = owner.modifier:country_bolster_attraction_factor }
+				desc = "concept_bolstered"
+			}
+		}
+		min = 0
+	}
+}
+
+movement_cwp_national_development = {
+	category = movement_category_ideological
+	ideology = ideology_cwp_national_development_movement
+	character_ideologies = {
+		ideology_cwp_national_developmentalist
+	}
+
+	creation_trigger = {
+		game_date >= 1946.1.1
+		OR = {
+			has_law_or_variant = law_type:law_colonial_administration
+			has_law_or_variant = law_type:law_extraction_economy
+			has_law_or_variant = law_type:law_traditionalism
+			has_law_or_variant = law_type:law_tenant_farmers
+			has_law_or_variant = law_type:law_latifundias
+			has_law_or_variant = law_type:law_expanded_latifundias
+		}
+		NOT = {
+			AND = {
+				has_law_or_variant = law_type:law_presidential_republic
+				has_law_or_variant = law_type:law_interventionism
+				has_law_or_variant = law_type:law_national_champions
+				OR = {
+					has_law_or_variant = law_type:law_peasant_proprietorship
+					has_law_or_variant = law_type:law_homesteading
+				}
+			}
+		}
+	}
+	creation_weight = { value = 25 }
+	on_created = { add_movement_enthusiasm_modifier = yes }
+	disband_trigger = {
+		has_law_or_variant = law_type:law_presidential_republic
+		has_law_or_variant = law_type:law_interventionism
+		has_law_or_variant = law_type:law_national_champions
+		OR = {
+			has_law_or_variant = law_type:law_peasant_proprietorship
+			has_law_or_variant = law_type:law_homesteading
+		}
+	}
+
+	can_pressure_interest_group = {
+		OR = {
+			is_interest_group_type = ig_armed_forces
+			is_interest_group_type = ig_industrialists
+			is_interest_group_type = ig_intelligentsia
+			is_interest_group_type = ig_rural_folk
+		}
+	}
+
+	character_support_trigger = {
+		OR = {
+			has_ideology = ideology:ideology_cwp_national_developmentalist
+			has_ideology = ideology:ideology_cwp_african_socialist
+			has_ideology = ideology:ideology_cwp_arab_socialist
+			has_ideology = ideology:ideology_cwp_gaullist
+			has_ideology = ideology:ideology_cwp_baathist
+			has_ideology = ideology:ideology_cwp_kemalist
+			has_ideology = ideology:ideology_cwp_pan_africanist
+			has_ideology = ideology:ideology_cwp_guided_democrat
+			has_ideology = ideology:ideology_cwp_agrarian_reformer
+			has_ideology = ideology:ideology_cwp_developmental_conservative
+		}
+	}
+	character_support_weight = { value = 300 }
+
+	pop_support_trigger = {
+		NOR = {
+			is_pop_type = slaves
+		}
+	}
+	pop_support_factors = {
+		movement_support_bureaucrats
+		movement_support_academics
+		movement_support_farmers
+		movement_support_peasants
+		movement_support_engineers
+		movement_support_below_expected_sol
+	}
+	pop_support_weight = {
+		add = { value = 5 desc = "POP_BASE_SUPPORT" }
+		if = {
+			limit = { is_pop_type = bureaucrats }
+			add = { value = 15 desc = "POP_BUREAUCRATS" }
+		}
+		if = {
+			limit = { is_pop_type = academics }
+			add = { value = 15 desc = "POP_ACADEMICS" }
+		}
+		if = {
+			limit = { is_pop_type = farmers }
+			add = { value = 15 desc = "POP_FARMERS" }
+		}
+		if = {
+			limit = { is_pop_type = peasants }
+			add = { value = 10 desc = "POP_PEASANTS" }
+		}
+		if = {
+			limit = { is_pop_type = engineers }
+			add = { value = 10 desc = "POP_ENGINEERS" }
+		}
+		if = {
+			limit = { standard_of_living < state.average_expected_sol }
+			add = { value = state.average_expected_sol subtract = standard_of_living max = 10 desc = "IS_BELOW_EXPECTED_SOL" }
+		}
+		if = {
+			limit = { exists = scope:political_movement scope:political_movement ?= { is_being_suppressed = yes } }
+			add = {
+				value = suppression_base_value
+				multiply = { value = -0.5 add = owner.modifier:country_suppression_attraction_factor }
+				desc = "concept_suppressed"
+			}
+		}
+		else_if = {
+			limit = { exists = scope:political_movement scope:political_movement ?= { is_being_bolstered = yes } }
+			add = {
+				value = bolstering_base_value
+				multiply = { value = 0.5 add = owner.modifier:country_bolster_attraction_factor }
+				desc = "concept_bolstered"
+			}
+		}
+		min = 0
+	}
+}
+
+movement_cwp_national_populist = {
+	category = movement_category_ideological
+	ideology = ideology_cwp_national_populist_movement
+	character_ideologies = {
+		ideology_cwp_national_populist
+	}
+
+	creation_trigger = {
+		game_date >= 1946.1.1
+		OR = {
+			pop_type_percent_country = { pop_type = laborers percent > 0.15 }
+			has_law_or_variant = law_type:law_corporatized_unions
+		}
+		NOT = {
+			AND = {
+				has_law_or_variant = law_type:law_presidential_republic
+				has_law_or_variant = law_type:law_interventionism
+				has_law_or_variant = law_type:law_corporatized_unions
+				has_law_or_variant = law_type:law_worker_protections
+			}
+		}
+	}
+	creation_weight = { value = 25 }
+	on_created = { add_movement_enthusiasm_modifier = yes }
+	disband_trigger = {
+		has_law_or_variant = law_type:law_presidential_republic
+		has_law_or_variant = law_type:law_interventionism
+		has_law_or_variant = law_type:law_corporatized_unions
+		has_law_or_variant = law_type:law_worker_protections
+	}
+
+	can_pressure_interest_group = {
+		OR = {
+			is_interest_group_type = ig_armed_forces
+			is_interest_group_type = ig_petty_bourgeoisie
+			is_interest_group_type = ig_rural_folk
+			is_interest_group_type = ig_trade_unions
+		}
+	}
+
+	character_support_trigger = {
+		OR = {
+			has_ideology = ideology:ideology_cwp_national_populist
+		}
+	}
+	character_support_weight = { value = 300 }
+
+	pop_support_trigger = {
+		NOR = {
+			is_pop_type = slaves
+		}
+	}
+	pop_support_factors = {
+		movement_support_laborers
+		movement_support_machinists
+		movement_support_shopkeepers
+		movement_support_officers
+		movement_support_below_expected_sol
+	}
+	pop_support_weight = {
+		add = { value = 5 desc = "POP_BASE_SUPPORT" }
+		if = {
+			limit = { is_pop_type = laborers }
+			add = { value = 25 desc = "POP_LABORERS" }
+		}
+		if = {
+			limit = { is_pop_type = machinists }
+			add = { value = 20 desc = "POP_MACHINISTS" }
+		}
+		if = {
+			limit = { is_pop_type = shopkeepers }
+			add = { value = 15 desc = "POP_SHOPKEEPERS" }
+		}
+		if = {
+			limit = { is_pop_type = officers }
+			add = { value = 10 desc = "POP_OFFICERS" }
+		}
+		if = {
+			limit = { standard_of_living < state.average_expected_sol }
+			add = { value = state.average_expected_sol subtract = standard_of_living max = 10 desc = "IS_BELOW_EXPECTED_SOL" }
+		}
+		if = {
+			limit = { exists = scope:political_movement scope:political_movement ?= { is_being_suppressed = yes } }
+			add = {
+				value = suppression_base_value
+				multiply = { value = -0.5 add = owner.modifier:country_suppression_attraction_factor }
+				desc = "concept_suppressed"
+			}
+		}
+		else_if = {
+			limit = { exists = scope:political_movement scope:political_movement ?= { is_being_bolstered = yes } }
+			add = {
+				value = bolstering_base_value
+				multiply = { value = 0.5 add = owner.modifier:country_bolster_attraction_factor }
+				desc = "concept_bolstered"
+			}
+		}
+		min = 0
+	}
+}
+
+movement_cwp_civil_rights = {
+	category = movement_category_ideological
+	ideology = ideology_cwp_civil_rights_movement
+	character_ideologies = {
+		ideology_cwp_social_liberal
+		ideology_cwp_democratic_socialist
+	}
+
+	creation_trigger = {
+		game_date >= 1946.1.1
+		OR = {
+			NOT = { has_law_or_variant = law_type:law_multicultural }
+			NOT = { has_law_or_variant = law_type:law_universal_suffrage }
+			NOT = { has_law_or_variant = law_type:law_protected_speech }
+			NOT = { has_law_or_variant = law_type:law_independent_judiciary }
+		}
+		NOT = {
+			AND = {
+				has_law_or_variant = law_type:law_multicultural
+				has_law_or_variant = law_type:law_universal_suffrage
+				has_law_or_variant = law_type:law_independent_judiciary
+				has_law_or_variant = law_type:law_protected_speech
+			}
+		}
+	}
+	creation_weight = { value = 25 }
+	on_created = { add_movement_enthusiasm_modifier = yes }
+	disband_trigger = {
+		has_law_or_variant = law_type:law_multicultural
+		has_law_or_variant = law_type:law_universal_suffrage
+		has_law_or_variant = law_type:law_independent_judiciary
+		has_law_or_variant = law_type:law_protected_speech
+	}
+
+	can_pressure_interest_group = {
+		OR = {
+			is_interest_group_type = ig_industrialists
+			is_interest_group_type = ig_intelligentsia
+			is_interest_group_type = ig_petty_bourgeoisie
+			is_interest_group_type = ig_trade_unions
+		}
+	}
+
+	character_support_trigger = {
+		OR = {
+			has_ideology = ideology:ideology_cwp_social_liberal
+			has_ideology = ideology:ideology_cwp_democratic_socialist
+			has_ideology = ideology:ideology_humanitarian
+			has_ideology = ideology:ideology_radical
+			has_ideology = ideology:ideology_cwp_civil_rights_reformer
+			has_ideology = ideology:ideology_cwp_second_wave_feminist
+			has_ideology = ideology:ideology_cwp_dissident_democrat
+			has_ideology = ideology:ideology_cwp_solidarity_unionist
+			has_ideology = ideology:ideology_cwp_reform_communist
+			has_ideology = ideology:ideology_cwp_eurocommunist
+			has_ideology = ideology:ideology_cwp_democratic_communist
+			has_ideology = ideology:ideology_cwp_islamic_democrat
+			has_ideology = ideology:ideology_cwp_trotskyist
+		}
+	}
+	character_support_weight = { value = 300 }
+
+	pop_support_trigger = {
+		NOR = {
+			is_pop_type = slaves
+		}
+	}
+	pop_support_factors = {
+		movement_support_academics
+		movement_support_clerks
+		movement_support_clergymen
+		movement_support_laborers
+		movement_support_cultural_discrimination
+	}
+	pop_support_weight = {
+		add = { value = 5 desc = "POP_BASE_SUPPORT" }
+		if = {
+			limit = { is_pop_type = academics }
+			add = { value = 20 desc = "POP_ACADEMICS" }
+		}
+		if = {
+			limit = { is_pop_type = clerks }
+			add = { value = 15 desc = "POP_CLERKS" }
+		}
+		if = {
+			limit = { is_pop_type = clergymen }
+			add = { value = 10 desc = "POP_CLERGYMEN" }
+		}
+		if = {
+			limit = { is_pop_type = laborers }
+			add = { value = 10 desc = "POP_LABORERS" }
+		}
+		add = { value = 100 subtract = pop_acceptance divide = 5 min = 0 desc = "POP_DISCRIMINATED" }
+		if = {
+			limit = { exists = scope:political_movement scope:political_movement ?= { is_being_suppressed = yes } }
+			add = {
+				value = suppression_base_value
+				multiply = { value = -0.5 add = owner.modifier:country_suppression_attraction_factor }
+				desc = "concept_suppressed"
+			}
+		}
+		else_if = {
+			limit = { exists = scope:political_movement scope:political_movement ?= { is_being_bolstered = yes } }
+			add = {
+				value = bolstering_base_value
+				multiply = { value = 0.5 add = owner.modifier:country_bolster_attraction_factor }
+				desc = "concept_bolstered"
+			}
+		}
+		min = 0
+	}
+}
+
+movement_cwp_market_reform = {
+	category = movement_category_ideological
+	ideology = ideology_cwp_market_reform_movement
+	character_ideologies = {
+		ideology_cwp_market_conservative
+	}
+
+	creation_trigger = {
+		game_date >= 1975.1.1
+		OR = {
+			has_law_or_variant = law_type:law_laissez_faire
+			has_law_or_variant = law_type:law_interventionism
+			has_law_or_variant = law_type:law_command_economy
+			has_law_or_variant = law_type:law_cooperative_ownership
+			has_law_or_variant = law_type:law_national_champions
+		}
+		NOT = {
+			AND = {
+				has_law_or_variant = law_type:law_laissez_faire
+				has_law_or_variant = law_type:law_corporate_deregulation
+				has_law_or_variant = law_type:law_proportional_taxation
+				has_law_or_variant = law_type:law_anti_strike_laws
+			}
+		}
+	}
+	creation_weight = { value = 25 }
+	on_created = { add_movement_enthusiasm_modifier = yes }
+	disband_trigger = {
+		has_law_or_variant = law_type:law_laissez_faire
+		has_law_or_variant = law_type:law_corporate_deregulation
+		has_law_or_variant = law_type:law_proportional_taxation
+		has_law_or_variant = law_type:law_anti_strike_laws
+	}
+
+	can_pressure_interest_group = {
+		OR = {
+			is_interest_group_type = ig_industrialists
+			is_interest_group_type = ig_landowners
+			is_interest_group_type = ig_petty_bourgeoisie
+		}
+	}
+
+	character_support_trigger = {
+		OR = {
+			has_ideology = ideology:ideology_cwp_market_conservative
+			has_ideology = ideology:ideology_market_liberal
+			has_ideology = ideology:ideology_cwp_libertarian
+		}
+	}
+	character_support_weight = { value = 300 }
+
+	pop_support_trigger = {
+		NOR = {
+			is_pop_type = slaves
+		}
+	}
+	pop_support_factors = {
+		movement_support_capitalists
+		movement_support_shopkeepers
+		movement_support_engineers
+		movement_support_clerks
+		movement_support_high_urbanization
+	}
+	pop_support_weight = {
+		add = { value = 5 desc = "POP_BASE_SUPPORT" }
+		if = {
+			limit = { is_pop_type = capitalists }
+			add = { value = 25 desc = "POP_CAPITALISTS" }
+		}
+		if = {
+			limit = { is_pop_type = shopkeepers }
+			add = { value = 20 desc = "POP_SHOPKEEPERS" }
+		}
+		if = {
+			limit = { is_pop_type = engineers }
+			add = { value = 10 desc = "POP_ENGINEERS" }
+		}
+		if = {
+			limit = { is_pop_type = clerks }
+			add = { value = 10 desc = "POP_CLERKS" }
+		}
+		add = { value = state.state_urbanization_rate multiply = 10 desc = "POP_HIGH_URBANIZATION" }
+		if = {
+			limit = { exists = scope:political_movement scope:political_movement ?= { is_being_suppressed = yes } }
+			add = {
+				value = suppression_base_value
+				multiply = { value = -0.5 add = owner.modifier:country_suppression_attraction_factor }
+				desc = "concept_suppressed"
+			}
+		}
+		else_if = {
+			limit = { exists = scope:political_movement scope:political_movement ?= { is_being_bolstered = yes } }
+			add = {
+				value = bolstering_base_value
+				multiply = { value = 0.5 add = owner.modifier:country_bolster_attraction_factor }
+				desc = "concept_bolstered"
+			}
+		}
+		min = 0
+	}
+}
+
