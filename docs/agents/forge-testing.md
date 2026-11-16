@@ -32,7 +32,7 @@ Rules:
 
 - Hold the lock from `link` until the game is stopped and you have copied what you need out of the logs. The next launch clears them.
 - `cwp-vic vanilla` instead of `link` for a vanilla comparison run.
-- Do **not** use `vic-launch --stop`. The `vic-*` helpers look for `binaries/victoria3`, but the game runs as `./victoria3`, so `--stop` stops nothing and `vic-launch` does not notice a running game. `cwp-vic stop` stops the game you launched; `cwp-vic stop --all` only for an orphan with no lock holder.
+- Stop the game with `cwp-vic stop` (stops only the game you launched), not `vic-launch --stop` (stops whichever Victoria 3 is running, including another thread's). The `vic-*` helpers were fixed on 2026-11-16 to detect the running game correctly; `cwp-vic stop --all` is only for an orphan with no lock holder.
 - Never stop a game someone else launched. `cwp-vic status` names the holder; ask that thread, or the coordinator if the holder is gone.
 - Plain `flock ~/forge/.vic3.lock <script>` also works and queues with `cwp-vic`, if your whole session fits in one script.
 - After your session, run `game-mode off` only if `cwp-vic status` shows nobody queued.

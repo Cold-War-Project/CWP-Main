@@ -48,7 +48,6 @@ Each file was audited line by line against the branch and vanilla 1.15.1 on 2026
 
 ## Open items found by the audit (not fixed here)
 
-- The `vic-*` helpers in `/usr/local/bin` look for the game process under the wrong name (needs sudo).
 - Nine `common/history` folders are replaced but empty: no characters, power blocs, treaties, AI strategies or formations at start. The area threads are porting what dev had.
 - Vanilla `history/governments` files (BEL, FRA, GBR, SPA, USA) still run on the mod's tags.
 - 9 PM keys are defined in both `cwp/` and `replace/` loc.
