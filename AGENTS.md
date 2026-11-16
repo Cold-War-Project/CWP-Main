@@ -14,9 +14,10 @@ Victoria 3 total conversion set 1946 to 2046, targeting game **1.15.1**. Most de
 
 1. One thread per worktree (`~/forge/worktrees/<area>`), one coherent slice per PR.
 2. Shared files (`.metadata/metadata.json`, `zz_vanilla_*.txt`, `common/on_actions`, shared loc) have one writer at a time; mark such PRs `[shared]`.
-3. Jack decides: goals, `replace_paths` changes, dropping whole features, merges. Everything that can be undone, agents decide and report.
-4. Ambiguous? Ask the advisor first ([docs/agents/advisor.md](docs/agents/advisor.md)).
-5. Write down what you learn: area decisions in `docs/agents/areas/<area>.md`, engine facts in the guides, mod conventions in `.claude/rules/`.
+3. **Port Cold War changes, not rewrites.** Where the rebuild re-enabled a vanilla system that dev had rewritten, vanilla 1.15 is the base; port only dev's real Cold War changes on top (see [plan.md](docs/agents/plan.md)).
+4. Jack decides: goals, `replace_paths` changes, dropping whole features, merges. Everything that can be undone, agents decide and report.
+5. Ambiguous? Ask the advisor first ([docs/agents/advisor.md](docs/agents/advisor.md)).
+6. Write down what you learn: area decisions in `docs/agents/areas/<area>.md`, engine facts in the guides, mod conventions in `.claude/rules/`.
 
 ## Map of the docs
 

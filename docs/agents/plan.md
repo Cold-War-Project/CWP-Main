@@ -13,6 +13,8 @@ Written 2026-11-16. Owner: Jack (JackEPepper). Work is agent-driven: human devs 
 
 What the rebuild changed, in one paragraph: dev overrode about 150 vanilla folders with `replace_paths`; the rebuild keeps about 65 (databases and history) and handles the rest with `REPLACE:` keywords in `zz_vanilla_*.txt` files and same-name overwrites of vanilla files. On the way it dropped most of dev's events, journal entries, on_actions, scripted effects, `gui/`, about 2,100 gfx files and many loc files. Treat that narrower override model as the crash fix until [rebuild-crash-fix.md](rebuild-crash-fix.md) says exactly which part matters. **The map is not ported.** Dropping dev's custom map was intentional (Jack, 2026-11-16): the vanilla 1.15.1 map is the baseline for now. A custom map may return later (phase 3 option).
 
+**Vanilla 1.15 is the base where the rebuild re-enabled a vanilla system.** Where dev rewrote or replaced a vanilla system (for example a whole folder under `replace_paths`) and the rebuild brought vanilla back, do not restore dev's rewrite. Start from vanilla 1.15.1 and port only dev's real Cold War changes on top: period content, keys, values and flavour that make it the Cold War, not dev's general reworking of the mechanic (Jack, 2026-11-16). When it is unclear which is which, ask the advisor.
+
 **Porting therefore means restoring what the rebuild commit removed, rewritten to the rebuild's override model, not merging dev.**
 
 ## Short range: port dev onto cwp_rebuild (phase 1, target ~2 weeks)
