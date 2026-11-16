@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Check that facts stated in the agent docs still match the repo.
 
-The guides in .claude/rules/ and CLAUDE.md state precise facts (counts, which replaced folders
-are empty, which lists exist). Each such fact is registered below with the text it is anchored
+The guides keep most statements general on purpose (Jack, 2026-11-16: "we don't need to be super
+correct"). The few precise facts agents rely on (which replaced folders are empty, what the mod
+does not have yet, the replace_paths list in CLAUDE.md) are registered here so drift is caught. Each such fact is registered below with the text it is anchored
 to and a function that recomputes it. Run from the mod root:
 
     python3 .claude/tools/check_doc_facts.py          # report stale facts, exit 1 if any
@@ -82,29 +83,14 @@ class Fact:
 
 R = ".claude/rules/"
 FACTS = [
-    Fact(R + "economy.md", r"Mod goods \((\d+)\):", lambda: [len(top_keys(files(ROOT, "common/goods")))]),
     Fact(R + "economy.md", r"`company_types` and `prestige_goods` are replaced but (empty)",
          lambda: ["empty" if empty("common/company_types") and empty("common/prestige_goods") else "NOT EMPTY ANY MORE"], kind="str"),
-    Fact(R + "politics.md", r"Mod set \((\d+)\):",
-         lambda: [len(top_keys(files(ROOT, "common/institutions"), r"^(institution_\w+)\s*="))]),
-    Fact(R + "journal-and-content.md", r"and (\d+) vanilla JE files are same-name overwrites",
-         lambda: [overwrites("common/journal_entries")[0]], needs_vanilla=True),
     Fact(R + "journal-and-content.md", r"the mod has \*\*(no) journal entries of its own yet\*\*",
          lambda: ["no" if not files(ROOT, "common/journal_entries", "cwp_*.txt") else "SOME NOW"], kind="str"),
-    Fact(R + "journal-and-content.md", r"\((\d+) same-name files in `common/decisions`\)",
-         lambda: [overwrites("common/decisions")[0]], needs_vanilla=True),
     Fact(R + "journal-and-content.md", r"`objectives`, `objective_subgoals` and `achievements` are in `replace_paths` and currently (empty)",
          lambda: ["empty" if all(empty("common/" + f) for f in ("objectives", "objective_subgoals", "achievements")) else "NOT EMPTY ANY MORE"], kind="str"),
-    Fact(R + "events.md", r"overwrites (\d+) of vanilla's (\d+) event files",
-         lambda: list(overwrites("events", "*.txt", recursive=True)), needs_vanilla=True),
     Fact(R + "events.md", r"(no) `cwp_` event files yet",
          lambda: ["no" if not glob.glob(mod("events", "**", "cwp_*.txt"), recursive=True) else "SOME NOW"], kind="str"),
-    Fact(R + "localization.md", r"The mod overwrites (\d+) vanilla files there by same name",
-         lambda: [overwrites("common/customizable_localization")[0]], needs_vanilla=True),
-    Fact(R + "diplomacy.md", r"(\d+) of vanilla's (\d+) article files have both",
-         lambda: list(overwrites("common/treaty_articles")), needs_vanilla=True),
-    Fact(R + "countries-cultures.md", r"holds (\d+) `REPLACE:TAG`",
-         lambda: [len(top_keys([mod("common/country_definitions/zz_vanilla_country_definitions.txt")], r"^(REPLACE:\w+)"))]),
     Fact(R + "technology.md", r"technologies exist only in era_1 to era_(\d+)",
          lambda: [max(int(x) for x in re.findall(r"era\s*=\s*era_(\d+)",
                   "".join(open(p, encoding="utf-8-sig").read() for p in files(ROOT, "common/technology/technologies"))))]),

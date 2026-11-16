@@ -32,7 +32,7 @@ building_cwp_example_throughput_add = {
 }
 ```
 
-- **The key's prefix decides what the modifier is and how far it propagates.** The longest matching prefix wins. Prefixes in vanilla 1.15, by number of types: about: `country_` (1130), `state_` (580), `building_` (300), `goods_` (130), `interest_group_` (80), `ship_` (70), `unit_` (60), `character_` (40), `power_bloc_` (40), `battle_` (12), `military_formation_` (11), `tax_` (6), `political_movement_` (6). A `country_` entry on a power bloc reaches its members; a `state_` entry on a country reaches every state; `goods_output_` reaches buildings/states/countries but never military formations, while other `goods_` keys such as `goods_input_` do.
+- **The key's prefix decides what the modifier is and how far it propagates.** The longest matching prefix wins. Common prefixes, most types first: `country_`, `state_`, `building_`, `goods_`, `interest_group_`, `ship_`, `unit_`, `character_`, `power_bloc_`, `battle_`, `military_formation_`, `tax_`, `political_movement_`. A `country_` entry on a power bloc reaches its members; a `state_` entry on a country reaches every state; `goods_output_` reaches buildings/states/countries but never military formations, while other `goods_` keys such as `goods_input_` do.
 - Suffix conventions: `_add` (flat), `_mult` (percentage of base, additive with other mults), `_factor` (rare, e.g. `interest_group_pol_str_factor`), `_bool` (flag).
 - **Names built from other databases need a definition for each member.** The engine does not create them automatically any more; the definition files do. Patterns the mod must cover for its own content:
   - goods: `goods_input_<goods>_add`, `goods_output_<goods>_add`, plus `_mult` variants where used
@@ -61,7 +61,7 @@ cwp_modifier_example = {
 - `multiplier` scales all values; script values are allowed there.
 - `00_code_static_modifiers.txt` holds names the engine applies itself (`base_values`, rank, difficulty, war exhaustion and so on). **Those keys cannot be renamed or removed**, only their contents changed. The mod currently overrides none of them; if one must change, use `REPLACE:` in a new `zz_vanilla_static_modifiers.txt`. The mod's `static_modifiers` folder holds only the three `cwp_culture_*_modifiers.txt` files.
 - Loc: the modifier key is its display name. No `_desc` is required.
-- Vanilla has 77 static modifier files, nearly all Victorian flavour. They still load. A vanilla static modifier that references a removed goods/building modifier type must be overridden or it logs an error. The mod keeps about 1,300 vanilla modifier types it no longer uses defined as `script_only` in `unwanted_modifier_types.txt` (`TRY_REPLACE:`), so vanilla static modifiers and other references to them still resolve; remove one there only after grepping vanilla and mod for every use.
+- Vanilla has 77 static modifier files, nearly all Victorian flavour. They still load. A vanilla static modifier that references a removed goods/building modifier type must be overridden or it logs an error. The mod keeps the vanilla modifier types it no longer uses defined as `script_only` in `unwanted_modifier_types.txt` (`TRY_REPLACE:`), so vanilla static modifiers and other references to them still resolve; remove one there only after grepping vanilla and mod for every use.
 
 ## scripted_modifiers
 

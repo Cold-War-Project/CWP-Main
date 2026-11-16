@@ -76,7 +76,7 @@ law_cwp_example = {
 
 ## Institutions
 
-`institution_x = { icon = "..." background_texture = "..." modifier = { } dynamic_name = { } }`. An institution only gains levels through a law that names it (`institution = `). Mod set (16): `voting citizenship church_and_state home_affairs economic_system land_reform police corporate_affairs free_speech workplace_safety social_security border_control health_system schools administration judiciary` (prefix `institution_`).
+`institution_x = { icon = "..." background_texture = "..." modifier = { } dynamic_name = { } }`. An institution only gains levels through a law that names it (`institution = `). Mod set: `voting citizenship church_and_state home_affairs economic_system land_reform police corporate_affairs free_speech workplace_safety social_security border_control health_system schools administration judiciary` (prefix `institution_`).
 
 ## Amendments
 

@@ -79,7 +79,7 @@ Derived from vanilla; when unsure, grep vanilla loc for a sibling object's key a
 
 ## Supporting databases
 
-- **`common/customizable_localization`**: `key = { type = country  random_valid = no  text = { trigger = { } localization_key = some_key } text = { ... } }`. Used in loc as `[SCOPE.GetCountry.GetCustom('key')]` (copy the exact call from vanilla). The mod overwrites 17 vanilla files there by same name (see the folder listing); a new entry goes in a new `cwp_*.txt`.
+- **`common/customizable_localization`**: `key = { type = country  random_valid = no  text = { trigger = { } localization_key = some_key } text = { ... } }`. Used in loc as `[SCOPE.GetCountry.GetCustom('key')]` (copy the exact call from vanilla). The mod overwrites many vanilla files there by same name (see the folder listing); a new entry goes in a new `cwp_*.txt`.
 - **`common/game_concepts`**: `concept_x = { texture = "..." is_loading_tip = yes }`. Needed for every `[concept_x]` link. Entries can be empty `{}`.
 - **`common/effect_localization`** / **`common/trigger_localization`**: tooltip sentences for effects and triggers: `name = { global = KEY first = KEY third = KEY }` with `_neg` (effects) or `_not` (triggers) variants; triggers also need the `NOT_<KEY>` loc entries. Scripted triggers that appear in player-facing tooltips need an entry here or the tooltip shows the raw name.
 - **`common/glossary`**: key must start `glossary_`; needs `<key>` and `<key>_desc`.

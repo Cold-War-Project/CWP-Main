@@ -9,8 +9,8 @@ paths:
 ## Event files
 
 - One `namespace = name` line at the top; every event id is `name.<number>`. A file may declare several namespaces. Ids must be unique across the whole game, mod included.
-- Vanilla 1.15 uses only two types: `country_event` (root = country, 2377 of 2391 events) and `state_event` (root = state, 14).
-- **Events have no database keywords.** To change a vanilla event the whole file is overwritten by a mod file with the same path. This mod overwrites 306 of vanilla's 348 event files this way, nearly all as hidden stubs; the ~42 it does not overwrite still load and fire. There are no `cwp_` event files yet on this branch.
+- Vanilla 1.15 uses only two types: `country_event` (root = country, nearly all events) and `state_event` (root = state, a handful).
+- **Events have no database keywords.** To change a vanilla event the whole file is overwritten by a mod file with the same path. This mod overwrites nearly all of vanilla's event files this way, mostly as hidden stubs; the few it does not overwrite still load and fire. There are no `cwp_` event files yet on this branch.
 
 ```
 namespace = cwp_example
@@ -64,7 +64,7 @@ Other keys vanilla uses: `category` (e.g. `enactment`), `gui_window`, `left_icon
 
 ## on_actions (`common/on_actions`)
 
-Hooks the engine calls. Full list with scopes: `.claude/reference/vanilla-on-actions.md` (224 code on_actions in 1.15, e.g. `on_game_started`, `on_game_started_after_lobby`, `on_monthly_pulse_country`, `on_yearly_pulse_state`, `on_building_built`, `on_acquired_technology`, `on_law_activated`, `on_war_end`, `on_country_formed`, `on_state_owner_change`, `on_character_death`, `on_election_campaign_end`, `on_ship_constructed`).
+Hooks the engine calls. Full list with scopes: `.claude/reference/vanilla-on-actions.md` (e.g. `on_game_started`, `on_game_started_after_lobby`, `on_monthly_pulse_country`, `on_yearly_pulse_state`, `on_building_built`, `on_acquired_technology`, `on_law_activated`, `on_war_end`, `on_country_formed`, `on_state_owner_change`, `on_character_death`, `on_election_campaign_end`, `on_ship_constructed`).
 
 ```
 on_some_action = {

@@ -19,7 +19,7 @@ paths:
 
 ## State of this mod
 
-- Vanilla has 449 journal entries; the mod has **no journal entries of its own yet** and keeps only a handful of vanilla ones alive. The rest are neutralised: `zz_vanilla_journal_entries.txt` / `zz_unwanted_vanilla_journal_entries.txt` hold keyword stubs, and 108 vanilla JE files are same-name overwrites, 76 of them with the `# Cold War Project: same-name overwrite` header (user's choice over a `replace_paths` entry, to keep per-file diffs against future patches).
+- Vanilla has hundreds of journal entries; the mod has **no journal entries of its own yet** and keeps only a handful of vanilla ones alive. The rest are neutralised: `zz_vanilla_journal_entries.txt` / `zz_unwanted_vanilla_journal_entries.txt` hold keyword stubs, and most vanilla JE files are same-name overwrites, usually with the `# Cold War Project: same-name overwrite` header (user's choice over a `replace_paths` entry, to keep per-file diffs against future patches).
 - **A stub journal entry has exactly one `outcome` block.** Do not regenerate outcome counts to match vanilla.
 - 177 Victorian JEs were deleted outright; references to them are removed rather than restored.
 - `objectives`, `objective_subgoals` and `achievements` are in `replace_paths` and currently empty: the mod has none. `objective_subgoal_categories` and `tutorial_lesson_chains` are vanilla.
@@ -97,7 +97,7 @@ cwp_example_decision = {
 	ai_chance = { base = 0 }     # 0 = AI never takes it; unspecified = 1
 }
 ```
-Loc: `<key>`, `<key>_desc`, `<key>_tooltip`. Key convention ends in `_decision`. Vanilla decisions load except where the mod overwrites the file (21 same-name files in `common/decisions`); other overrides are in `zz_vanilla_decisions.txt`. Buttons, bars and scripted GUIs follow the same pattern: same-name overwrite files plus a `zz_vanilla_*` file. A decision that should disappear after use needs a variable/flag check in `is_shown`.
+Loc: `<key>`, `<key>_desc`, `<key>_tooltip`. Key convention ends in `_decision`. Vanilla decisions load except where the mod overwrites the file (same-name files in `common/decisions`); other overrides are in `zz_vanilla_decisions.txt`. Buttons, bars and scripted GUIs follow the same pattern: same-name overwrite files plus a `zz_vanilla_*` file. A decision that should disappear after use needs a variable/flag check in `is_shown`.
 
 ## Objectives and subgoals (replaced)
 

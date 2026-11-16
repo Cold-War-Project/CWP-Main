@@ -32,7 +32,7 @@ Load order matters: states and countries exist before pops, buildings and charac
 | `ai` | `AI = { }` | `set_strategy`, `set_secret_goal = { country = c:X secret_goal = befriend }` |
 | `lobbies`, `political_movements`, `cultures`, `conscription`, `global` | `LOBBIES`, `POLITICAL_MOVEMENTS`, `CULTURES`, `CONSCRIPTION`, `GLOBAL` | see the mod's files |
 
-On this branch only `buildings`, `countries`, `cultures`, `diplomacy`, `diplomatic_plays`, `global`, `military_deployments`, `political_movements`, `pops`, `population` and `states` have files. `ai`, `characters`, `conscription`, `lobbies`, `military_formations`, `power_blocs`, `production_methods`, `trade` and `treaties` are in `replace_paths` but empty, so nothing of that kind exists at start. `origin/dev` has `characters` (127 files), `power_blocs`, `ai` and `military_formations` (`.info` stubs only).
+On this branch only `buildings`, `countries`, `cultures`, `diplomacy`, `diplomatic_plays`, `global`, `military_deployments`, `political_movements`, `pops`, `population` and `states` have files. `ai`, `characters`, `conscription`, `lobbies`, `military_formations`, `power_blocs`, `production_methods`, `trade` and `treaties` are in `replace_paths` but empty, so nothing of that kind exists at start. `origin/dev` has `characters`, `power_blocs`, `ai` and `military_formations` (`.info` stubs only).
 
 The wrapper name and the exact inner effect names are fixed; copy them from the existing mod file of the same folder, or for an empty folder from vanilla's `common/history/<folder>/` (wrappers checked: `AI`, `CHARACTERS`, `CONSCRIPTION`, `LOBBIES`, `MILITARY_FORMATIONS`, `POWER_BLOCS`, `PRODUCTION_METHODS`, `TRADE`, `TREATIES`). Field usage per folder is listed at the end of `.claude/reference/vanilla-fields.md`.
 
@@ -40,7 +40,7 @@ The wrapper name and the exact inner effect names are fixed; copy them from the 
 
 One file per starting country, named `TAG - Name.txt`. Typical content, all inside `c:TAG = { }` (the mod's files use plain `=`; `?=` is safer for tags that may be absent):
 - technology: one tier effect per category, `effect_starting_production_technologies_tier_N = yes`, `effect_starting_society_technologies_tier_N = yes`, `effect_starting_military_technologies_tier_N = yes` (N = 1..5, in `common/scripted_effects/00_starting_inventions.txt`), plus individual `add_technology_researched = x` if needed
-- laws: one package `effect_starting_laws_1946_<type> = yes` (19 in `common/scripted_effects/00_starting_law_packages.txt`, each sets all 24 law groups), then single `activate_law = law_type:law_x` lines after it for exceptions (later lines for the same group override earlier ones; USA and LIB do this). A new package must cover **every law group**: a missing group leaves the country with no law there, which logs errors and breaks law panels.
+- laws: one package `effect_starting_laws_1946_<type> = yes` (in `common/scripted_effects/00_starting_law_packages.txt`, each sets every law group), then single `activate_law = law_type:law_x` lines after it for exceptions (later lines for the same group override earlier ones; USA and LIB do this). A new package must cover **every law group**: a missing group leaves the country with no law there, which logs errors and breaks law panels.
 - politics: `ig:ig_x ?= { add_ruling_interest_group = yes }`, `set_next_election_date = 1948.11.2`, `set_institution_investment_level = { institution = institution_x level = 2 }`
 - economy: `set_tax_level = medium`, `add_taxed_goods = g:x`, `set_import_tariff_level = { goods = g:x level = high_tariffs }`, `set_export_tariff_level`
 - flavour: `add_modifier`, `set_variable`, `add_journal_entry = { type = je_x }`, company setup
@@ -81,7 +81,7 @@ create_building = {
 
 ## Characters
 
-`create_character = { template = key }` referencing `common/character_templates`, or inline fields (`first_name`, `last_name`, `ruler = yes`, `ig_leader = yes`, `interest_group = ig_x`, `ideology = ideology_x`, `birth_date`, `traits = { }`, `culture = cu:x`, `is_general = yes`, `commander_rank = commander_rank_3`, `hq = region_x`). Details in `characters.md`. On this branch `history/characters` is empty; dev's 127 files and their name loc are not here yet (porting is tracked in `docs/agents/areas/history-setup.md`).
+`create_character = { template = key }` referencing `common/character_templates`, or inline fields (`first_name`, `last_name`, `ruler = yes`, `ig_leader = yes`, `interest_group = ig_x`, `ideology = ideology_x`, `birth_date`, `traits = { }`, `culture = cu:x`, `is_general = yes`, `commander_rank = commander_rank_3`, `hq = region_x`). Details in `characters.md`. On this branch `history/characters` is empty; dev's character files and their name loc are not here yet (porting is tracked in `docs/agents/areas/history-setup.md`).
 
 ## Rules
 

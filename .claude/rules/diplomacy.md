@@ -23,7 +23,7 @@ paths:
 
 # Diplomacy: actions, plays, treaties, war goals, subjects, power blocs
 
-Only `power_bloc_names` is in `replace_paths` here (plus the history folders `diplomacy`, `diplomatic_plays`, `power_blocs`, `treaties`, see `history.md`). Everything else is vanilla plus overrides: `zz_vanilla_*.txt` keyword files, and same-name overwrites for 7 diplomatic action files, `diplomatic_plays/00_diplomatic_plays.txt` and 27 treaty article files. Mod-only content so far: subject type and diplomatic action `military_occupation` (`subject_types/cwp_military_occupation.txt`, `diplomatic_actions/cwp_subject_type_military_occupation.txt`). Vanilla's `.md` files for treaty articles, war goals, diplomatic actions and plays are long and current: read the vanilla `.md` in the matching folder before any structural change. This guide lists what trips people up.
+Only `power_bloc_names` is in `replace_paths` here (plus the history folders `diplomacy`, `diplomatic_plays`, `power_blocs`, `treaties`, see `history.md`). Everything else is vanilla plus overrides: `zz_vanilla_*.txt` keyword files, and same-name overwrites for 7 diplomatic action files, `diplomatic_plays/00_diplomatic_plays.txt` and most treaty article files. Mod-only content so far: subject type and diplomatic action `military_occupation` (`subject_types/cwp_military_occupation.txt`, `diplomatic_actions/cwp_subject_type_military_occupation.txt`). Vanilla's `.md` files for treaty articles, war goals, diplomatic actions and plays are long and current: read the vanilla `.md` in the matching folder before any structural change. This guide lists what trips people up.
 
 ## Diplomatic actions (`common/diplomatic_actions`)
 
@@ -72,7 +72,7 @@ Vanilla keys: `subject_type_puppet tributary vassal dominion colony personal_uni
   - `ai.inherent_accept_score`: no `scope:treaty`; `ai.contextual_accept_score` has it but is re-evaluated often.
 - `flags = { }` give hard-coded behaviour (`is_alliance`, `is_defensive_pact`, `is_military_access`, `is_goods_transfer`, `is_money_transfer`, `is_investment_rights`, `is_law_commitment`, `can_be_renegotiated`, `can_be_enforced`, `show_in_lens`, ...). An article works without flags if effects and modifiers suffice.
 - `required_inputs = { quantity goods state strategic_region company building_type law_type country ship }` with matching `*_valid_trigger` and AI `*_input_filter` blocks.
-- `unlocked_by_technologies` must be mod techs; goods/law/building inputs resolve against mod databases. 27 of vanilla's 34 article files have both a same-name overwrite and a `zz_vanilla_treaty_article_<name>.txt` `REPLACE:` copy; the `zz_` copy loads last and is the live definition, so edit that one (keep the overwrite in step, or the vanilla-text checker noise may return; not yet confirmed in game).
+- `unlocked_by_technologies` must be mod techs; goods/law/building inputs resolve against mod databases. Most of vanilla's article files have both a same-name overwrite and a `zz_vanilla_treaty_article_<name>.txt` `REPLACE:` copy; the `zz_` copy loads last and is the live definition, so edit that one (keep the overwrite in step, or the vanilla-text checker noise may return; not yet confirmed in game).
 - `dynamic_treaty_names`: `key = { trigger = { } weight = { } }`, root is a `treaty_options` scope; the key is the loc key.
 
 ## Catalysts
