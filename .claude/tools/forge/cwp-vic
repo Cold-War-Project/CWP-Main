@@ -11,7 +11,7 @@
 #   cwp-vic launch [game args]      clear error.log and start the game in debug mode         (needs lock)
 #   cwp-vic stop [--all]            stop the game you launched (--all: every Victoria 3, only if orphaned)
 #   cwp-vic unlock [--force]        stop the game and release the lock
-#   cwp-vic errors                  error.log minus the known vanilla noise
+#   cwp-vic errors                  this session's error log (rotated files included) minus known noise
 #   cwp-vic perf [SECONDS] [STEP]   sample CPU/RAM/VRAM of the game into a CSV (default 600 s, 15 s)
 #
 # Typical session:
@@ -98,7 +98,10 @@ cmd_vanilla() { need_lock; [[ -n "$(game_pids)" ]] && die "stop the game first";
 cmd_launch() {
   need_lock
   [[ -n "$(game_pids)" ]] && die "a Victoria 3 is already running (pids $(game_pids | tr '\n' ' ')). Find its owner (cwp-vic status) before stopping it."
+  # error.log rotates by size (~512 KB) into error.1..5.log within one session; clear them all so
+  # everything left afterwards belongs to this launch.
   mkdir -p "$(dirname "$ERRLOG")"; : > "$ERRLOG" 2>/dev/null || true
+  rm -f "$(dirname "$ERRLOG")"/error.[0-9].log
   vic-launch "$@"; local rc=$?
   game_pids | head -1 > "$GAMEPID"
   return $rc
@@ -128,8 +131,13 @@ cmd_unlock() {
 
 cmd_errors() {
   [[ -f "$ERRLOG" ]] || die "no error.log yet"
-  # Engine noise seen on a clean vanilla launch; extend docs/agents/forge-testing.md when adding more.
-  grep -vE 'Could not find item in store backend' "$ERRLOG"
+  # The whole session, oldest first: rotated error.5..1.log, then error.log.
+  local d f files=(); d=$(dirname "$ERRLOG")
+  for f in "$d"/error.5.log "$d"/error.4.log "$d"/error.3.log "$d"/error.2.log "$d"/error.1.log "$ERRLOG"; do
+    [[ -f "$f" ]] && files+=("$f"); done
+  (( ${#files[@]} > 1 )) && echo "cwp-vic: reading ${#files[@]} log files (error.log rotated; 5 rotations max, older lines are lost)" >&2
+  # Engine noise ignored on purpose; keep in step with the ignore list in .claude/reference/debugging.md.
+  cat "${files[@]}" | grep -vE 'Could not find item in store backend'
 }
 
 cmd_perf() {

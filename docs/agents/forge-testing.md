@@ -8,7 +8,7 @@ Forge is the Ubuntu machine with Victoria 3 1.15.1 installed (GTX 1080, 8 GB, X1
 |---|---|
 | Game install (read only) | `~/.steam/steam/steamapps/common/Victoria 3/game` |
 | User folder | `~/.local/share/Paradox Interactive/Victoria 3` |
-| Logs | `<user folder>/logs/error.log` (also `debug.log`, `game.log`) |
+| Logs | `<user folder>/logs/error.log`, rotated `error.1.log`..`error.5.log` (also `debug.log`, `game.log`, `warning.log`) |
 | Which mod the game loads | `<user folder>/content_load.json` (written by `cwp-vic link`; do not edit by hand) |
 | Saves | `<user folder>/save games/` (never delete; copy before modifying) |
 | Game lock | `~/forge/.vic3.lock` |
@@ -30,7 +30,7 @@ cwp-vic unlock                                   # stops the game you launched, 
 
 Rules:
 
-- Hold the lock from `link` until the game is stopped and you have copied what you need out of `error.log`. The log is cleared by the next launch.
+- Hold the lock from `link` until the game is stopped and you have copied what you need out of the logs. The next launch clears them.
 - `cwp-vic vanilla` instead of `link` for a vanilla comparison run.
 - Do **not** use `vic-launch --stop`. The `vic-*` helpers look for `binaries/victoria3`, but the game runs as `./victoria3`, so `--stop` stops nothing and `vic-launch` does not notice a running game. `cwp-vic stop` stops the game you launched; `cwp-vic stop --all` only for an orphan with no lock holder.
 - Never stop a game someone else launched. `cwp-vic status` names the holder; ask that thread, or the coordinator if the holder is gone.
@@ -43,13 +43,15 @@ Use the `paradox-games` skill (`~/.claude/skills/paradox-games/SKILL.md`): `vic-
 
 ## Reading error.log
 
-1. Right after the main menu appears: `cwp-vic errors | wc -l`, then `vic-logs summary 40` for the most frequent messages.
+1. Right after the main menu appears: `cwp-vic errors | wc -l`, then `cwp-vic errors | sed -E 's/^\[[0-9:]+\]\[[^]]*\]: ?//' | sort | uniq -c | sort -rn | head -40` for the most frequent messages.
+
+   `error.log` rotates by size (about 512 KB) into `error.1.log`..`error.5.log` within one session, and only five rotations are kept. `cwp-vic errors` reads the whole session oldest first; `wc -l error.log` and `vic-logs` see only the newest part. If `cwp-vic errors` reports 6 files, the earliest load-time lines may already be lost: fix the loudest errors and relaunch.
 2. Start a game (any country), unpause for a few in-game months, read again: many script errors fire only on load or on the first monthly tick.
 3. Compare against the baseline below. **The acceptance test is no new lines over the `cwp_rebuild` baseline.** Lines that name a file you touched are yours to fix.
 4. Triage by cause with `.claude/reference/debugging.md` (patterns, the ignore list, what each message means). Most lines carry `[file.txt:123]` or `in file: "<path>" near line: N`.
 5. Copy the log you are reporting on into your scratchpad before unlocking, and quote the relevant lines in the PR.
 
-`cwp-vic errors` filters only the known vanilla noise (`Could not find item in store backend`, 18 lines on a clean vanilla launch). Add new engine-side noise to the filter in the script and to the ignore list in `debugging.md` together.
+`cwp-vic errors` filters only the known vanilla noise (`Could not find item in store backend`, 18 lines on a clean vanilla launch). Add new engine-side noise to the filter in the script and to the ignore list in `.claude/reference/debugging.md` together, or to neither.
 
 A crash to desktop leaves files in `<user folder>/crashes/` and `exceptions/`; note the newest folder name in your report and tell the crash-fix owner ([rebuild-crash-fix.md](rebuild-crash-fix.md)).
 
@@ -73,7 +75,7 @@ What to report, and how:
 | Speed: in-game days per real minute at max speed | Two `vic-shot` dates some minutes apart during an observer run |
 | Memory: game RSS and VRAM over time | `cwp-vic perf` CSV columns `rss_mb`, `vram_used_mb` |
 | CPU | `cpu_pct` in the same CSV |
-| Log growth | `errorlog_lines` column; steady growth means a script error firing every tick |
+| Log growth | `errorlog_lines` column (error.log only, so it drops when the log rotates); steady growth means a script error firing every tick |
 | Load time | Seconds from `cwp-vic launch` to the main menu, and from "play" to the map |
 
 A change is a performance regression if speed drops more than 10% or memory grows steadily without levelling off, compared with the baseline from the same date range.

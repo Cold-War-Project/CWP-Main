@@ -25,10 +25,10 @@ l_english:
 
 ## Mod layout
 
-- `localization/english/cwp/<area>/cwp_*_l_english.yml`: all new mod keys, grouped by area (buildings, cultures_and_religions, diplomacy, government, institutions, interface, laws, map, military, production_methods, technology).
+- `localization/english/cwp/<area>/cwp_*_l_english.yml`: all mod keys, grouped by area (buildings, cultures_and_religions, diplomacy, government, institutions, interface, laws, military, production_methods, technology). The upper-case `CWP/` folder was merged into it in Nov 2026; never create a second casing (folders differing only in case merge on Windows).
 - `localization/english/replace/<area>/...`: overrides of keys that vanilla already defines. A vanilla key changed anywhere else produces a duplicate-key error and an unpredictable winner.
 - Only English is maintained. Vanilla's other languages still load their own (Victorian) text for reused keys; that is accepted.
-- Before adding a key, grep both trees for it; before overriding, grep vanilla to confirm the key really exists there (if it does not, it belongs in `cwp/`).
+- Before adding a key, grep both trees for it; before overriding, grep vanilla to confirm the key really exists there (if it does not, it belongs in `cwp/`). A key must live in one tree only: 9 mod PM keys are currently defined in both `cwp/production_methods` and `replace/production_methods` (e.g. `pm_cultural_building_hagia_sophia`), so check before adding.
 
 ## Text features
 
@@ -79,7 +79,7 @@ Derived from vanilla; when unsure, grep vanilla loc for a sibling object's key a
 
 ## Supporting databases
 
-- **`common/customizable_localization`**: `key = { type = country  random_valid = no  text = { trigger = { } localization_key = some_key } text = { ... } }`. Used in loc as `[SCOPE.GetCountry.GetCustom('key')]` (copy the exact call from vanilla). Three vanilla files are overwritten by the mod (`ip5_custom_loc`, `tsarpoints_custom_loc`, `victoria_ip5_custom_loc`).
+- **`common/customizable_localization`**: `key = { type = country  random_valid = no  text = { trigger = { } localization_key = some_key } text = { ... } }`. Used in loc as `[SCOPE.GetCountry.GetCustom('key')]` (copy the exact call from vanilla). The mod overwrites 17 vanilla files there by same name (see the folder listing); a new entry goes in a new `cwp_*.txt`.
 - **`common/game_concepts`**: `concept_x = { texture = "..." is_loading_tip = yes }`. Needed for every `[concept_x]` link. Entries can be empty `{}`.
 - **`common/effect_localization`** / **`common/trigger_localization`**: tooltip sentences for effects and triggers: `name = { global = KEY first = KEY third = KEY }` with `_neg` (effects) or `_not` (triggers) variants; triggers also need the `NOT_<KEY>` loc entries. Scripted triggers that appear in player-facing tooltips need an entry here or the tooltip shows the raw name.
 - **`common/glossary`**: key must start `glossary_`; needs `<key>` and `<key>_desc`.

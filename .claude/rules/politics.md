@@ -23,7 +23,7 @@ paths:
 
 # Politics: laws, interest groups, ideologies, movements, governments
 
-Replaced folders (mod defines everything, no keywords): `laws`, `law_groups`, `institutions`, `interest_groups`, `ideologies`, `parties`, `government_types`. Vanilla still loads in: `amendments`, `interest_group_traits`, `political_movements` and its helpers, `political_lobbies`, `legitimacy_levels`, `social_classes`, `social_hierarchies`, `acceptance_statuses`, `decrees`; the mod changes those through `zz_vanilla_*.txt` keyword files.
+Replaced folders (mod defines everything, no keywords): `laws`, `law_groups`, `institutions`, `interest_groups`, `ideologies`, `parties`, `government_types`. Vanilla still loads in: `amendments`, `interest_group_traits`, `political_movements` and its helpers, `political_lobbies`, `legitimacy_levels`, `social_classes`, `social_hierarchies`, `acceptance_statuses`, `decrees`; the mod changes those through `zz_vanilla_*.txt` keyword files and same-name overwrites (`political_movements/00_*`..`05_*`, three `amendments/00_amendments_*_04.txt`, `decrees/00_decree.txt`). `legitimacy_levels`, `social_classes`, `acceptance_statuses`, `political_movement_categories` and `political_lobby_appeasement` have no mod files: pure vanilla.
 
 The dependency that causes most errors: **every ideology lists a stance for laws by law group**, so a law or law group added, renamed or removed must be reflected in `common/ideologies`, and in every vanilla movement, amendment, journal entry and event that still mentions it.
 
@@ -40,7 +40,7 @@ lawgroup_judiciary = {
 	linked_social_hierarchy = x              # optional
 }
 ```
-Mod groups (24): `governance_principles distribution_of_power citizenship caste_hegemony church_and_state bureaucracy army_model internal_security judiciary economic_system trade_policy corporate_affairs taxation land_reform policing education_system health_system free_speech labor_rights childrens_rights rights_of_women welfare migration labour_associations` (prefix `lawgroup_`). Vanilla groups the mod dropped (e.g. navy model, colonization, slavery) may still be named by vanilla files that load: check before assuming.
+Mod groups (24): `governance_principles distribution_of_power citizenship caste_hegemony church_and_state bureaucracy army_model internal_security judiciary economic_system trade_policy corporate_affairs taxation land_reform policing education_system health_system free_speech labor_rights childrens_rights rights_of_women welfare migration labour_associations` (prefix `lawgroup_`). Vanilla groups the mod dropped (e.g. navy model, colonization, slavery) may still be named by vanilla files that load: check before assuming. The mod keeps such vanilla law keys as empty, group-less stubs (`laws/00_slavery.txt`, `laws/00_colonial_affairs_compatibility.txt`); do not delete them or give them a group.
 
 A new law group also needs: `country_can_impose_same_<lawgroup>_in_power_bloc_bool` modifier type if power bloc law imposition should cover it, loc, a starting law for every country in `history/countries`, and stance blocks in ideologies.
 
@@ -72,11 +72,11 @@ law_cwp_example = {
 - Exactly one law per group is active per country. Every country must start with one law from every group (set in `history/countries` via `activate_law = law_type:law_x` or the starting law package effects).
 - `has_law = law_type:x` matches that exact law; `has_law_or_variant = law_type:x` also matches variants (`parent`). Prefer the latter unless the variant must be excluded.
 - Some laws drive engine behaviour through boolean modifier types (`country_..._bool`), not through their key. Copy the modifier block of the vanilla law that has the behaviour you want.
-- Some law keys are referenced in defines and vanilla scripted triggers (`country_has_voting_franchise`, monarchy checks, slavery checks). The mod's `zz_vanilla_scripted_triggers.txt` remaps those; update it when a governing law is renamed.
+- Some law keys are referenced in defines and vanilla scripted triggers (`country_has_voting_franchise`, monarchy checks, slavery checks). The mod's same-name overwrites `scripted_triggers/00_scripted_triggers.txt` (`country_has_voting_franchise`) and `00_ep2_victoria_scripted_triggers.txt` (`country_has_monarchy_law`) remap those (grep `common/scripted_triggers` for others); update them when a governing law is renamed.
 
 ## Institutions
 
-`institution_x = { icon = "..." background_texture = "..." modifier = { } dynamic_name = { } }`. An institution only gains levels through a law that names it (`institution = `). Mod set (15): `citizenship church_and_state home_affairs economic_system land_reform police corporate_affairs free_speech workplace_safety social_security border_control health_system schools administration judiciary` (prefix `institution_`).
+`institution_x = { icon = "..." background_texture = "..." modifier = { } dynamic_name = { } }`. An institution only gains levels through a law that names it (`institution = `). Mod set (16): `voting citizenship church_and_state home_affairs economic_system land_reform police corporate_affairs free_speech workplace_safety social_security border_control health_system schools administration judiciary` (prefix `institution_`).
 
 ## Amendments
 
@@ -86,7 +86,7 @@ law_cwp_example = {
 
 The mod has **nine**: the vanilla eight plus `ig_bureaucrats`. (The engine logs `Additional Interest Group Types database objects added` because of the ninth; that line is on the ignore list.)
 
-Every IG entry carries the full set of keys; copy an existing file. Key points:
+The eight vanilla-derived IG files carry the full key set; `cwp_bureaucrats.txt` lacks the leader/character weights and reuses the petty bourgeoisie revolution `layer`. Copy a vanilla-derived file, not the bureaucrats one. Key points:
 - `index` must be unique and contiguous; `layer` names the revolution map layer.
 - `ideologies = { }` are the IG's base ideologies; `character_ideologies = { }` the pool for its leaders.
 - `enable = { }`, `on_enable = { }` (vanilla handles IG traits only here, with `set_ig_trait = ig_trait:x`), `on_disable = { }`, `on_character_ig_membership = { }`.
@@ -96,7 +96,7 @@ Every IG entry carries the full set of keys; copy an existing file. Key points:
 
 IG traits (`interest_group_traits`): `{ icon = "..." min_approval = loyal/happy  (or max_approval = unhappy)  modifier = { } }`.
 
-Per-IG modifier types (`interest_group_<ig>_pol_str_mult`, `_approval_add`) must exist for all nine.
+Per-IG modifier types (`interest_group_<ig>_pol_str_mult`, `_approval_add`) come from vanilla for the eight vanilla IGs. None exist for `ig_bureaucrats`: define them in `cwp_country_modifier_types.txt` before using them.
 
 ## Ideologies
 
@@ -131,8 +131,8 @@ gov_cwp_example = {
 
 - `social_hierarchies`: one must have `is_default = yes`. `social_classes`: each names `social_hierarchy`, `strata` (lower/middle/upper), `allowed_professions = { pop types }`, optional `pop_criteria`. Every pop must match exactly one class of its hierarchy and each hierarchy needs at least one class per strata. If a pop type is added, add it to a class or the game can crash or corrupt saves (vanilla readme says so explicitly).
 - `acceptance_statuses`: thresholds must be unique, one must equal the `MIN_ACCEPTANCE_VALUE` define.
-- `legitimacy_levels`: keys `legitimacy_level_unacceptable/contested/legitimate/righteous` with `threshold` and `modifier`.
+- `legitimacy_levels` (vanilla only): keys `legitimacy_level_illegitimate/unacceptable/contested/legitimate/righteous` with `threshold` and `modifier`.
 
 ## Decrees (`common/decrees`)
 
-`decree_x = { texture = "..." modifier = { state_ modifiers } cost = 100 unlocking_technologies = { } unlocking_laws = { } country_trigger = { } state_trigger = { } ai_weight = { } }`. Mod overrides sit in `zz_vanilla_decrees.txt`.
+`decree_x = { texture = "..." modifier = { state_ modifiers } cost = 100 unlocking_technologies = { } unlocking_laws = { } country_trigger = { } state_trigger = { } ai_weight = { } }`. Mod overrides: same-name overwrite `00_decree.txt` plus `zz_vanilla_decrees.txt`.

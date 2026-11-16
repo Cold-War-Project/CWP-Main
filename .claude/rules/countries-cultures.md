@@ -32,24 +32,24 @@ USA = {
 	is_named_from_capital = yes        # optional
 	social_hierarchy = x               # optional
 	regnal_numbers = { Elizabeth = 2 } # optional; number the NEXT ruler of that name gets
-	dynamic_country_definition = yes   # for the D01.. style dynamic tags in 99_dynamic
+	dynamic_country_definition = yes   # vanilla's 99_dynamic.txt D01.. tags are not loaded here (replace_paths); the mod defines none (not yet confirmed whether the engine needs dynamic tags)
 }
 ```
 - **Tags are upper-case letters and digits only** (vanilla warns that anything else breaks civil wars). Three characters by convention.
-- Mod files: `00_countries.txt`, `starting_countries.txt`, `unused_countries.txt`, plus `zz_vanilla_country_definitions.txt`. Search all four before adding a tag; a duplicate tag is an error.
-- A tag that exists at game start needs, at minimum: this definition, loc `TAG` and `TAG_ADJ`, a flag (see below), states in `history/states`, and a `history/countries` file with laws for every law group. See `history.md` for the full list.
+- Mod files: `00_countries.txt`, `starting_countries.txt`, `unused_countries.txt`, plus `zz_vanilla_country_definitions.txt`. Search all four before adding a tag; a duplicate tag is an error. `zz_vanilla_country_definitions.txt` holds 80 `REPLACE:TAG` entries that replace tags defined in the other three mod files (the folder is replaced, so no vanilla tag is involved); keep that order if you move a tag.
+- A tag that exists at game start needs, at minimum: this definition, loc `TAG` and `TAG_ADJ`, a flag (see below), states in `history/states`, a `history/countries` file (a law package covering every law group and three tech tier effects, see `history.md`) and a `history/population` file (`effect_starting_pop_wealth_*` / `effect_starting_pop_literacy_*`).
 - Vanilla files that still load (events, scripted triggers, journal entries, dynamic names, flag definitions) reference vanilla tags with `c:TAG`. `c:TAG ?= { }` is safe for a tag that is defined but not on the map; a tag that is not *defined* at all logs an error at load. That is why vanilla tags the mod does not use are kept in `unused_countries.txt` or the references are overridden. `can_form_nation` / `was_formed_from` additionally need the tag to be formable.
 
 ## Country types and ranks
 
 - `country_types` (vanilla, not overridden): `recognized`, `colonial`, `unrecognized`, `decentralized`, `company`. Flags: `is_colonizable`, `is_unrecognized`, `uses_prestige`, `has_events`, `has_military`, `has_economy`, `has_politics`, `can_research`, `default_rank`, `default_subject_type`.
-- `country_ranks` (mod has its own `00_country_ranks.txt`): `great_power`, `major_power`, `minor_power`, `insignificant_power`, `unrecognized_major_power`, `unrecognized_regional_power`, `unrecognized_power`, `decentralized_power`. Keys: `rank_value`, `icon_index`, `valid_country_types`, `prestige_average_threshold`, `prestige_relative_threshold`, `enforce_subject_rank_check`, `diplo_pact_cost`, `treaty_article_cost`, `infamy_aggressor_scaling`, `infamy_target_scaling`, `modifier`, `ai_pool_character_multiplier`. Script compares with `country_rank >= rank_value:major_power`; subject types list valid ranks by key, so renaming a rank touches `subject_types` and many scripted triggers.
+- `country_ranks` (mod has its own `00_country_ranks.txt`): `superpower`, `great_power`, `major_power`, `minor_power`, `insignificant_power`, `unrecognized_major_power`, `unrecognized_regional_power`, `unrecognized_power`, `decentralized_power`. Keys: `rank_value`, `icon_index`, `valid_country_types`, `prestige_average_threshold`, `prestige_relative_threshold`, `enforce_subject_rank_check`, `diplo_pact_cost`, `treaty_article_cost`, `infamy_aggressor_scaling`, `infamy_target_scaling`, `modifier`, `ai_pool_character_multiplier`, `ai_innovation_critical_threshold`. Script compares with `country_rank >= rank_value:major_power`; subject types list valid ranks by key, so renaming a rank touches `subject_types` and many scripted triggers.
 
 ## Formation and release
 
 - `country_formation`: `TAG = { use_culture_states = yes  (or states = { STATE_A ... })  required_states_fraction = 0.75  possible = { }  ai_will_do = { } }`. Major formations add `is_major_formation`, `unification_play`, `leadership_play`, `can_be_formation_candidate`, `max_num_formation_candidates`.
 - `country_creation` (releasables, replaced): `TAG = { states = { } or provinces = { } or use_culture_states = yes  required_num_states = N  possible = { }  ai_will_do = { } }`. Root = the country giving up land; `scope:war_goal_holder` is only set when released by a war goal.
-- State keys must exist in `map_data/state_regions`. The 2026-11-05 map sync added `STATE_TULA`, `STATE_KOSTROMA` and removed `STATE_CHUKOTKA`.
+- State keys must exist in `map_data/state_regions`, which uses vanilla 1.15.1's state keys (e.g. `STATE_TULA` and `STATE_KOSTROMA` exist, `STATE_CHUKOTKA` does not). Do not port dev state keys.
 
 ## Cultures (`common/cultures`, replaced)
 
@@ -72,7 +72,7 @@ yankee = {
 - `heritage`/`language`/`traditions` must exist in `common/discrimination_traits` (type `heritage`/`language` need a `trait_group` of the same type from `discrimination_trait_groups`; `tradition` has none). These folders are vanilla and still load; add mod traits in new `cwp_` files.
 - `graphics` values in vanilla: `european african east_asian south_asian arabic balkan polynesian brazilian french decentralised_americas`. They select unit art (`has_culture_graphics`), city sets and clothes.
 - `obsessions` must be mod goods.
-- Each culture generates modifier types (cultural acceptance, fervor target, standard of living). The mod keeps them in three `cwp_*culture*_modifier_types.txt` files and matching static modifier files; **a new culture needs an entry in each**, copied from a neighbour.
+- Each culture generates modifier types (cultural acceptance, fervor target, standard of living). The mod keeps them in two `cwp_*culture*_modifier_types.txt` files (cultural acceptance, standard of living) and three static modifier files (`cwp_culture_cultural_acceptance_modifiers.txt`, `cwp_culture_fervor_target_modifiers.txt`, `cwp_culture_standard_of_living_modifiers.txt`); **a new culture needs an entry in each**, copied from a neighbour.
 - Cultures are referenced as `cu:key` in script, `culture = key` in pops and character templates, `add_homeland = cu:key` in `history/states`.
 
 ## Religions
@@ -90,4 +90,4 @@ Two layers:
 1. **Coat of arms** (`common/coat_of_arms/coat_of_arms/*.txt`): the picture. `KEY = { pattern = "pattern_solid.tga" color1 = "red" color2 = ... colored_emblem = { texture = "ce_x.dds" color1 = ... instance = { position = { } scale = { } } } textured_emblem = { } sub = { parent = OTHER } }`. Textures live in `gfx/coat_of_arms`. Files may use `@constants` and `@[ ]` maths.
 2. **Flag definitions** (`common/flag_definitions`): which CoA a country shows and when. `TAG = { includes = OTHER_LIST  flag_definition = { coa = COA_KEY  subject_canton = COA_KEY  allow_overlord_canton = yes  coa_with_overlord_canton = COA_KEY  overlord_canton_offset = { }  overlord_canton_scale = { }  priority = 10  trigger = { } } }`. The valid definition with the highest priority applies; with no list, the tag itself is used as CoA key. Trigger scopes are documented in the header of `00_flag_definitions.txt` (root is a country *definition*, `scope:actor` the country).
 
-The mod keeps `00_flag_definitions.txt` and `01_flag_definitions_usa.txt` as overwrites plus `zz_vanilla_flag_definitions.txt`, and only ships `coat_of_arms/template_lists`; CoA keys otherwise come from vanilla. Before pointing a flag definition at a CoA key, confirm the key exists (vanilla or mod). Flag triggers commonly call the `coa_*_trigger` scripted triggers, which the mod remaps to its own laws.
+The mod keeps `00_flag_definitions.txt` and `01_flag_definitions_usa.txt` as overwrites, `zz_vanilla_flag_definitions.txt`, and `zzz_cwp_1946_flag_definitions.txt` (the start-date flag per tag, priority 900; it sorts last on purpose because it REPLACEs lists that `zz_vanilla` also replaces). Its own CoAs are in `common/coat_of_arms/coat_of_arms/cwp_1946_countries.txt` (`cwp_<TAG>_1946`, `cwp_<TAG>_<variant>`); other CoA keys come from vanilla. The zzz file says it is generated by `gen_flags.py`, which is not in the repo or on Forge: edit it by hand, keeping its layout, and say so in the PR. Before pointing a flag definition at a CoA key, confirm the key exists (vanilla or mod). Flag triggers commonly call the `coa_*_trigger` scripted triggers, which the mod remaps to its own laws.

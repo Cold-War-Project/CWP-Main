@@ -19,10 +19,11 @@ paths:
 
 ## State of this mod
 
-- Vanilla has 449 journal entries; the mod has **no journal entries of its own yet** and keeps only a handful of vanilla ones alive. The rest are neutralised: `zz_vanilla_journal_entries.txt` / `zz_unwanted_vanilla_journal_entries.txt` hold keyword stubs, and ~76 vanilla JE files are same-name overwrites (user's choice over a `replace_paths` entry, to keep per-file diffs against future patches).
+- Vanilla has 449 journal entries; the mod has **no journal entries of its own yet** and keeps only a handful of vanilla ones alive. The rest are neutralised: `zz_vanilla_journal_entries.txt` / `zz_unwanted_vanilla_journal_entries.txt` hold keyword stubs, and 108 vanilla JE files are same-name overwrites, 76 of them with the `# Cold War Project: same-name overwrite` header (user's choice over a `replace_paths` entry, to keep per-file diffs against future patches).
 - **A stub journal entry has exactly one `outcome` block.** Do not regenerate outcome counts to match vanilla.
 - 177 Victorian JEs were deleted outright; references to them are removed rather than restored.
-- `objectives`, `objective_subgoals` and `achievements` are in `replace_paths`.
+- `objectives`, `objective_subgoals` and `achievements` are in `replace_paths` and currently empty: the mod has none. `objective_subgoal_categories` and `tutorial_lesson_chains` are vanilla.
+- Dev's `cwp_*` journal entries are being ported by area (see `docs/agents/areas/events-logic.md`); check open PRs before writing a journal entry from scratch.
 
 ## Journal entries (1.15 format)
 
@@ -71,7 +72,7 @@ je_cwp_example = {
 - Variables set on the JE itself are read with `je:je_key ?= { has_variable = x }` or `scope:journal_entry`.
 - Map colouring (`map_color`, `map_color_second`, `map_tooltip`) and custom widgets (`widget = { gui = "gui/x.gui" name = "..." container = "custom_widget_container_1" }`) are optional; the full reference is vanilla `common/journal_entries/journal_entries.md`.
 - Loc: `<key>`, `<key>_reason`, `<key>_goal`, and whatever `conclusion_desc`/`status_desc` name; add `<key>_concluded` if the name uses scoped data.
-- Groups: `je_group_x = { context = country/none  illustration = "..."  themed = yes  updates_strategic_region_stances = yes }`.
+- Groups: `je_group_x = { context = country/none  illustration = "..."  themed = yes  updates_strategic_region_stances = yes }`. Vanilla's groups load; the mod adds only `je_group_unwanted` in `cwp_journal_entry_groups.txt`. Put new CWP groups there.
 - Deleting a JE means removing: `has_journal_entry`, `add_journal_entry`, `je:` reads, objective `associated_journal_entries`, tutorial links, AI helper triggers (`ai_has_enact_weight_modifier_journal_entries`), movement `forced_tags` triggers and loc.
 
 ## Scripted buttons (`common/scripted_buttons`)
@@ -96,7 +97,7 @@ cwp_example_decision = {
 	ai_chance = { base = 0 }     # 0 = AI never takes it; unspecified = 1
 }
 ```
-Loc: `<key>`, `<key>_desc`, `<key>_tooltip`. Key convention ends in `_decision`. Vanilla decisions still load; overrides are in `zz_vanilla_decisions.txt`. A decision that should disappear after use needs a variable/flag check in `is_shown`.
+Loc: `<key>`, `<key>_desc`, `<key>_tooltip`. Key convention ends in `_decision`. Vanilla decisions load except where the mod overwrites the file (21 same-name files in `common/decisions`); other overrides are in `zz_vanilla_decisions.txt`. Buttons, bars and scripted GUIs follow the same pattern: same-name overwrite files plus a `zz_vanilla_*` file. A decision that should disappear after use needs a variable/flag check in `is_shown`.
 
 ## Objectives and subgoals (replaced)
 
@@ -114,4 +115,4 @@ Loc: `<key>`, `<key>_desc`, `<key>_tooltip`. Key convention ends in `_decision`.
 
 ## Game rules (`common/game_rules`)
 
-`rule_key = { default = setting_a  setting_a = { }  setting_b = { apply_modifier = player:modifier_key  flag = blocks_achievements } }`. Flags include `disable_<production_method_key>` / `force_<production_method_key>`: such flags must name mod PMs. Loc: `rule_<key>`, `setting_<key>`, `setting_<key>_desc`. Script reads rules with `has_game_rule = setting_key`.
+`rule_key = { default = setting_a  setting_a = { }  setting_b = { apply_modifier = player:modifier_key  flag = blocks_achievements } }`. The mod has no `common/game_rules`; vanilla's `00_game_rules.txt` loads. Its `disable_pm_*` / `force_pm_*` flags name monument and power-bloc PMs, which must exist in the mod; two (`pm_default_building_hagia_sophia`, `pm_default_building_saint_basils_cathedral`) are already missing. Loc: `rule_<key>`, `setting_<key>`, `setting_<key>_desc`. Script reads rules with `has_game_rule = setting_key`.

@@ -10,6 +10,7 @@ Start with [`AGENTS.md`](../../AGENTS.md) at the repo root, then the file for yo
 | [forge-testing.md](forge-testing.md) | Launching the game, error.log, observer runs, performance, baselines |
 | [pr-workflow.md](pr-workflow.md) | Opening or updating a pull request |
 | [advisor.md](advisor.md) | You hit an ambiguous call and want a second opinion or an audit |
+| [instruction-changes.md](instruction-changes.md) | You work the old Windows way, or wonder why `CLAUDE.md` / `.claude/` differ from Maddie's originals |
 | [rebuild-crash-fix.md](rebuild-crash-fix.md) | Before your first PR: what the rebuild changed to stop the crash, and what must not be undone (written by the crash-fix thread) |
 | `areas/<area>.md` | Your area's port inventory and decisions (one per area thread: politics, history-setup, economy, military, tech, events-logic, gui-art) |
 

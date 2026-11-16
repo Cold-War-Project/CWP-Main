@@ -16,16 +16,16 @@ paths:
 - `gfx/interface/icons/`: `building_icons`, `generic_icons`, `goods_icons`, `invention_icons`, `lens_toolbar_icons`, `production_method_icons`.
 - `gfx/map/`: `air_graphics`, `army_dioramas`, `city_data` (`city_centerpiece`, `city_types`, `city_vfx`), `fleet_dioramas`, `fleet_entities`, `front_entities`, `spline_network`.
 - `gfx/models/buildings`, `gfx/portraits/portrait_animations`, `gfx/portraits/portrait_modifiers`.
-- **No `gui/` folder.** The interface is vanilla. Creating one is a deliberate step: ask first.
+- **No `gui/` folder on `cwp_rebuild` yet.** The interface is vanilla; the gui-art port adds small new files there. Add only small new files, never copies of whole vanilla windows.
 
 Replaced whole (`replace_paths`): `gfx/map/army_dioramas`, `fleet_dioramas`, `fleet_entities`, `front_entities`, `spline_network/military_route_graphics`, `spline_network/route_graphics`, `gfx/portraits/portrait_animations`, `portrait_modifiers`.
 
 ## Textures and icons
 
-- Format: `.dds` (vanilla also reads `.png`/`.tga` in places; stay with `.dds`). Claude cannot author or meaningfully edit image files; it can copy, rename and reference them. When art is missing, point the entry at an existing placeholder (the mod uses `gfx/interface/icons/invention_icons/invention_placeholder.dds`) and tell the user which icons are placeholders.
-- Paths in script are relative to the game root, forward slashes, quoted: `"gfx/interface/icons/goods_icons/steel.dds"`. A mod file at the same relative path as a vanilla texture replaces it. **A path that exists in neither the mod nor vanilla logs an error and shows a blank or pink square:** check with Glob in both trees before writing a path.
+- Format: `.dds` (vanilla also reads `.png`/`.tga` in places; stay with `.dds`). Agents can inspect, size-check, crop and convert images (`python3` with Pillow on Forge) and see them in game (`vic-shot`), but do not draw new art. When art is missing, point the entry at an existing placeholder (`gfx/interface/icons/invention_icons/invention_placeholder.dds`) and list the placeholders in the PR. A replacement texture must keep vanilla's dimensions.
+- Paths in script are relative to the game root, forward slashes, quoted: `"gfx/interface/icons/goods_icons/steel.dds"`. A mod file at the same relative path as a vanilla texture replaces it. **A path that exists in neither the mod nor vanilla logs an error and shows a blank or pink square:** check with Glob in both trees before writing a path. Vanilla also includes `game/dlc/*/gfx`; search there too.
 - Vanilla icon folders (`gfx/interface/icons/`): `building_icons` (+`backgrounds`), `goods_icons`, `production_method_icons`, `invention_icons`, `law_icons`, `institution_icons`, `ig_icons`, `ig_trait_icons`, `ideology_icons`, `character_trait_icons`, `event_icons`, `timed_modifier_icons`, `state_trait_icons`, `decree`, `war_goals`, `military_icons`, `ships`, `company_icons`, `religion_icons`, `pops_icons`, `politics_icons`, `diplomatic_action_icons`, `diplomatic_treaties_articles_icons`, `principles_icons`, `generic_icons`, and more.
-- Event pictures are videos referenced by name: `event_image = { video = "unspecific_automobile" }`; names are defined under `gfx/event_pictures`. Use an existing name.
+- Event pictures are videos referenced by name: `event_image = { video = "unspecific_automobile" }`; names are aliases in `gfx/media_aliases/media_aliases.txt` (the `.bk2` files are in `gfx/event_pictures`). Use an existing alias.
 - Text icons (`@steel!` in loc) are defined in `gui/texticons.gui` and `gui/goods_texticons.gui` as `texticon = { icon = name iconsize = { texture = "..." fontsize = N offset = { x y } } }`. New goods used as `@name!` in loc need an entry; that would require the mod's first `gui` file (a new file with only the added `texticon` blocks, not a copy of vanilla's).
 
 ## GUI files (`gui/*.gui`)
@@ -39,7 +39,7 @@ The mod has none; if that changes:
 
 ## Map graphics (`gfx/map`)
 
-- `city_data/city_types/*.txt`: which meshes make up a city/farm/mine/port/wood hub for a graphical culture, including per-building meshes keyed by building type. The mod's files are **same-name overwrites** of vanilla (no `cwp_` prefix, no keywords) so removed vanilla buildings are never parsed. Entries must reference mod building keys and meshes that exist. Header of `00_example.txt` documents the format.
+- `city_data/city_types/*.txt`: which meshes make up a city/farm/mine/port/wood hub for a graphical culture, including per-building meshes keyed by building type. The mod's files are **same-name overwrites** of base-game or DLC files (no `cwp_` prefix, no keywords) so removed vanilla buildings are never parsed. Entries must reference mod building keys and meshes that exist. Header of `00_example.txt` documents the format.
 - `city_data/city_centerpiece`: centrepieces per hub type or city graphics type, with `composition_group` (building types and level thresholds) and `attach` (entities). Format in vanilla `city_centerpiece.md`. Mod files here are overwrites of DLC stubs.
 - `city_data/city_vfx`, `air_graphics`: the mod overwrites `01_fireworks.txt` and `01_zeppelin.txt` to drop vanilla references.
 - `fleet_entities` (one per ship type), `fleet_dioramas`, `army_dioramas`, `front_entities`: which 3D entities represent ships, fleets, armies and fronts; keyed by mod `ship_type` / `combat_unit_group` keys. Formats in vanilla `fleet_entities.md`, `fleet_diorama.md`.

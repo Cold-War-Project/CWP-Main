@@ -14,8 +14,10 @@ Forge (Ubuntu, where agents work) and Windows (the original setup, still used by
 |---|---|---|
 | This mod (working dir) | your worktree, `~/forge/worktrees/<area>` (git; main checkout `~/forge/CWP-Main`) | `Documents/Paradox Interactive/Victoria 3/mod/Cold War Project - Rebuild` |
 | Vanilla game files (READ ONLY) | `~/.steam/steam/steamapps/common/Victoria 3/game` | `F:/SteamLibrary/steamapps/common/Victoria 3/game` |
-| Game logs | `~/.local/share/Paradox Interactive/Victoria 3/logs/` | `Documents/Paradox Interactive/Victoria 3/logs/` (`error.log`, `debug.log`, rotated `.1`-`.5`) |
+| Game logs | `~/.local/share/Paradox Interactive/Victoria 3/logs/` | `Documents/Paradox Interactive/Victoria 3/logs/` |
 | Backups | git: commit before bulk edits | `Documents/Paradox Interactive/Victoria 3/_cold_war_backups/<yyyy-mm-dd>_<label>/` |
+
+`error.log` rotates by size (about 512 KB) into `error.1.log` .. `error.5.log` within one session, and only five rotations are kept, so a noisy launch loses its earliest (load-time) lines. Read a session oldest first; on Forge `cwp-vic errors` does this.
 
 Other paths are relative to the mod root:
 
@@ -37,7 +39,7 @@ Other paths are relative to the mod root:
 
    Paradox renames things between patches and memory of older versions is wrong often enough to matter. When vanilla's `.md` documentation and vanilla's `.txt` files disagree, the `.txt` files win (e.g. `buildings.md` still says `production_methods`, the files use `production_method_groups`).
 3. **Read the guides first.** Each folder has a mod-specific guide in `.claude/rules/` (index below). It loads automatically when a matching file is read; when creating a file in a folder you have not read from yet, open the guide yourself. When that guide does not answer the question, open the matching chapter of the modding guide (same index). For content about a historical topic, follow the content design guide before writing any script.
-4. **Encoding.** `.txt`, `.yml`, `.gui` files are UTF-8 **with BOM** (`EF BB BF`). Keep each file's existing line endings (history files are CRLF, `map_data/state_regions` is LF). Tabs for indentation. PowerShell's `WriteAllText` with a no-BOM encoding strips the BOM: re-add it. Three files have no BOM on purpose and stay that way: the two in `common/coat_of_arms/template_lists/` and the generated `map_data/province_terrains.txt`. `.metadata/metadata.json` is plain JSON without BOM. The modding guide's `add_bom.py` does not know about those three files: give it the files you created, never the mod root.
+4. **Encoding.** `.txt`, `.yml`, `.gui` files are UTF-8 **with BOM** (`EF BB BF`). Keep each file's existing line endings (most files are LF; a few, such as three `common/history` files, are CRLF: check with `file`). Tabs for indentation. PowerShell's `WriteAllText` with a no-BOM encoding strips the BOM: re-add it. Three files have no BOM on purpose and stay that way: the two in `common/coat_of_arms/template_lists/` and the generated `map_data/province_terrains.txt`. `.metadata/metadata.json` is plain JSON without BOM. The modding guide's `add_bom.py` does not know about those three files: give it the files you created, never the mod root.
 5. **Every key needs its other halves.** A new object usually needs: localization (`localization/english/cwp/...`), an icon path that exists, and every reference it makes (technology, building, goods, law...) must resolve to something defined in the mod, not in vanilla.
 6. **No Victorian leftovers.** References to vanilla-only content (1836 countries, journal entries, techs, buildings, laws, DLC flavour) are removed or remapped to mod content, not kept alive.
 7. **Clean error.log is the acceptance test.** A change is not done until a game launch shows no new lines. See `.claude/reference/debugging.md` for the triage workflow and the list of engine-side lines to ignore.

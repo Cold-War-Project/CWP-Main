@@ -23,7 +23,7 @@ paths:
 
 # Diplomacy: actions, plays, treaties, war goals, subjects, power blocs
 
-Only `power_bloc_names` is in `replace_paths`. Everything else is vanilla plus mod overrides in `zz_vanilla_*.txt` (one file per treaty article). Vanilla's `.md` files for treaty articles, war goals, diplomatic actions and plays are long and current: read the vanilla `.md` in the matching folder before any structural change. This guide lists what trips people up.
+Only `power_bloc_names` is in `replace_paths` here (plus the history folders `diplomacy`, `diplomatic_plays`, `power_blocs`, `treaties`, see `history.md`). Everything else is vanilla plus overrides: `zz_vanilla_*.txt` keyword files, and same-name overwrites for 7 diplomatic action files, `diplomatic_plays/00_diplomatic_plays.txt` and 27 treaty article files. Mod-only content so far: subject type and diplomatic action `military_occupation` (`subject_types/cwp_military_occupation.txt`, `diplomatic_actions/cwp_subject_type_military_occupation.txt`). Vanilla's `.md` files for treaty articles, war goals, diplomatic actions and plays are long and current: read the vanilla `.md` in the matching folder before any structural change. This guide lists what trips people up.
 
 ## Diplomatic actions (`common/diplomatic_actions`)
 
@@ -49,7 +49,7 @@ A pact key is what `create_diplomatic_pact = { type = key }`, `has_diplomatic_pa
 
 ## Subject types (`common/subject_types`)
 
-Vanilla keys: `subject_type_puppet tributary vassal dominion colony personal_union crown_land chartered_company` (+ protectorate). Each entry ties to a diplomatic action (`diplomatic_action = puppet`) and a war goal (`re_establish_war_goal`), lists `valid_overlord_country_types`, `valid_subject_country_types`, `valid_overlord_ranks`, `valid_subject_ranks`, autonomy ladders (`lower/same/higher_autonomy_subject_type_alternatives`, `autonomy_level`), and behaviour flags (`join_overlord_wars`, `can_start_own_diplomatic_plays`, `use_overlord_map_color`, `overlord_must_be_higher_rank`...). Mod override: `zz_vanilla_dominion.txt`. Rank and country-type keys must match `common/country_ranks` / `country_types`. A history pact violating these is broken by the game shortly after start with a logged warning.
+Vanilla keys: `subject_type_puppet tributary vassal dominion colony personal_union crown_land chartered_company` (+ protectorate). Each entry ties to a diplomatic action (`diplomatic_action = puppet`) and a war goal (`re_establish_war_goal`), lists `valid_overlord_country_types`, `valid_subject_country_types`, `valid_overlord_ranks`, `valid_subject_ranks`, autonomy ladders (`lower/same/higher_autonomy_subject_type_alternatives`, `autonomy_level`), and behaviour flags (`join_overlord_wars`, `can_start_own_diplomatic_plays`, `use_overlord_map_color`, `overlord_must_be_higher_rank`...). Mod files: `zz_vanilla_dominion.txt` (override) and `cwp_military_occupation.txt` (new `subject_type_military_occupation`, used by start-date pacts in `history/diplomacy`). Rank and country-type keys must match `common/country_ranks` / `country_types`. A history pact violating these is broken by the game shortly after start with a logged warning.
 
 ## Diplomatic plays (`common/diplomatic_plays`)
 
@@ -72,7 +72,7 @@ Vanilla keys: `subject_type_puppet tributary vassal dominion colony personal_uni
   - `ai.inherent_accept_score`: no `scope:treaty`; `ai.contextual_accept_score` has it but is re-evaluated often.
 - `flags = { }` give hard-coded behaviour (`is_alliance`, `is_defensive_pact`, `is_military_access`, `is_goods_transfer`, `is_money_transfer`, `is_investment_rights`, `is_law_commitment`, `can_be_renegotiated`, `can_be_enforced`, `show_in_lens`, ...). An article works without flags if effects and modifiers suffice.
 - `required_inputs = { quantity goods state strategic_region company building_type law_type country ship }` with matching `*_valid_trigger` and AI `*_input_filter` blocks.
-- `unlocked_by_technologies` must be mod techs; goods/law/building inputs resolve against mod databases. The mod has an override file per vanilla article; edit the matching `zz_vanilla_treaty_article_<name>.txt`.
+- `unlocked_by_technologies` must be mod techs; goods/law/building inputs resolve against mod databases. 27 of vanilla's 35 article files have both a same-name overwrite and a `zz_vanilla_treaty_article_<name>.txt` `REPLACE:` copy; the `zz_` copy loads last and is the live definition, so edit that one (keep the overwrite in step, or the vanilla-text checker noise may return; not yet confirmed in game).
 - `dynamic_treaty_names`: `key = { trigger = { } weight = { } }`, root is a `treaty_options` scope; the key is the loc key.
 
 ## Catalysts
@@ -86,7 +86,7 @@ Vanilla keys: `subject_type_puppet tributary vassal dominion colony personal_uni
 - `power_bloc_principle_groups`: `levels = { principle_x_1 principle_x_2 principle_x_3 }` (order = level), `unlocking_identity`, `blocking_identity`, `primary_for_identity`. `power_bloc_principles`: `icon`, `background`, modifiers, `institution` + `institution_modifier`, `visible`, `possible`, `incompatible_with`, `ai_weight`.
 - `power_bloc_names` (replaced): key is the loc key; `trigger = { }` in leader scope with `scope:selected_identity`.
 - PMs, mobilization options and laws can be gated on principles/identities (`unlocking_principles`, `unlocking_identity`). Institutions named by principles must exist in the mod.
-- Start-date blocs are created in `history/power_blocs`.
+- Start-date blocs would be created in `history/power_blocs` and start-date treaties in `history/treaties`; both are replaced and empty on this branch, so 1946 has no power blocs, alliances or defensive pacts.
 
 ## Interests and opinion
 
