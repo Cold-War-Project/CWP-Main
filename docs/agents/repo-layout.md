@@ -13,7 +13,7 @@
 | `CLAUDE.md`, `AGENTS.md` | House rules (modding) and agent entry point. | no |
 | `.claude/rules/*.md` | Per-folder guides, loaded automatically by Claude Code when a matching file is read. | no |
 | `.claude/reference/` | `debugging.md` (log triage and ignore list), vanilla field and token censuses. | no |
-| `.claude/tools/` | `check_mod.py` (static checks), `vanilla_census.py`, `forge/cwp-vic` (Forge game harness). | no |
+| `.claude/tools/` | `check_mod.py` (static checks), `vanilla_census.py`, `forge/cwp-vic` (Forge game harness), `forge/cwp-package` (Workshop package). | no |
 | `Claude-Vic3-Modding-Guide/` | How to write Vic3 script; engine reference built from `script_docs`. | no |
 | `Claude-Vic3-Content-Design-Guide/` | What content to build and how to size it. | no |
 | `docs/agents/` | This folder: plan, Forge testing, workflow, per-area port notes. | no |
@@ -22,4 +22,4 @@
 
 `.gitignore` ignores top-level `/tools`, `/temp`, `/utils`, `/reports`; put scratch output in your session scratchpad, not the repo.
 
-Before a Workshop upload, leave out `.claude/`, `Claude-Vic3-*`, `docs/`, `AGENTS.md` and `CLAUDE.md`.
+Workshop packages: `.claude/tools/forge/cwp-package [ref]` builds `~/forge/dist/<branch>-<sha>` from a commit with `git archive`. Everything marked `export-ignore` in `.gitattributes` (`.claude/`, `Claude-Vic3-*`, `docs/`, `AGENTS.md`, `CLAUDE.md`, `.github/`) is left out, about 2.5 MB of agent material.

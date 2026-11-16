@@ -230,4 +230,4 @@ The third column names the chapters that go deeper than the area guide: **M** = 
 
 On-demand references in `.claude/reference/`: `debugging.md` (log triage, console, validation), `vanilla-fields.md` (every field vanilla uses per folder), `vanilla-script-tokens.md` (prefixes, iterators, trigger/effect names seen in vanilla), `vanilla-on-actions.md` (every code-fired on_action with its scopes).
 
-The `.claude/` folder, the two `Claude-Vic3-*` guide folders and this file are not read by the game. Leave them out of a Steam Workshop upload if a clean package matters (the guide folders are about 2.5 MB).
+The `.claude/` folder, the two `Claude-Vic3-*` guide folders, `docs/`, `AGENTS.md` and this file are not read by the game. They are marked `export-ignore` in `.gitattributes`; build Workshop packages with `.claude/tools/forge/cwp-package` (a `git archive` of a commit), which leaves them out. Uploading a working folder directly would ship them.
