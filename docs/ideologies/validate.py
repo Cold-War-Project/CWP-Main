@@ -138,8 +138,10 @@ def main() -> None:
     law_groups = definitions(ROOT / "common/law_groups")
     law_group = {key: scalar(entries[-1][1], "group") for key, entries in laws.items()}
     known_by_group = {}
+    law_parent = {key: scalar(entries[-1][1], "parent") for key, entries in laws.items()}
     for law, group in law_group.items():
-        if group:
+        # Variant laws (with a parent) inherit the parent's stance; Vic3 1.15 rejects explicit stances for them.
+        if group and not scalar(laws[law][-1][1], "parent"):
             known_by_group.setdefault(group, set()).add(law)
 
     packs = {}
@@ -242,7 +244,7 @@ def main() -> None:
             require(bool(goal_laws), f"Empty agitator grievance goals: {key}")
             for law in goal_laws:
                 group = child(body, law_group.get(law, ""))
-                value = scalar(group, law)
+                value = scalar(group, law) or scalar(group, law_parent.get(law) or "")
                 require(value in {"approve", "strongly_approve"}, f"Agitator goal outside approved policy: {key}/{law}")
                 require(value is not None and ratings.get(value, -3) == max((ratings.get(p.value, -3) for p in pairs(group)), default=-3), f"Agitator goal below best policy: {key}/{law}")
     for key in packs.get("interest_group", {}):
@@ -274,7 +276,7 @@ def main() -> None:
         movement_policy = packs.get("movement", {}).get(ideology, Node([]))
         for law in goal_laws:
             group = child(movement_policy, law_group.get(law, ""))
-            value = scalar(group, law)
+            value = scalar(group, law) or scalar(group, law_parent.get(law) or "")
             require(value in {"approve", "strongly_approve"}, f"Movement goal outside approved policy: {key}/{law}")
             require(value is not None and ratings.get(value, -3) == max((ratings.get(p.value, -3) for p in pairs(group)), default=-3), f"Movement goal below best policy: {key}/{law}")
         pressure_igs = {p.value for p in walk(child(body, "can_pressure_interest_group")) if p.key == "is_interest_group_type"}
