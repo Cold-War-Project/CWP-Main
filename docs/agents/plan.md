@@ -88,7 +88,7 @@ Merge order, because later areas reference earlier keys: **tech and politics, th
 
 ### Phase 4. Stabilize and release
 
-- Long observer runs: 1946 to 1990 at least, checked for crashes, economy collapse, runaway countries, performance decay. Add scripted tests for invariants (vanilla's format is `game/tools/scripted_tests`; the mod's `/tools` is in `.gitignore`, so this needs an exception for `tools/scripted_tests/`, Jack's call) ("USA and USSR exist in 1960", "no great power bankrupt by 1955").
+- Long observer runs: 1946 to 1990 at least, checked for crashes, economy collapse, runaway countries, performance decay. Grow the scripted tests in `tools/scripted_tests/` for invariants ("USA and USSR exist in 1960", "no great power bankrupt by 1955").
 - Performance budget: days per minute and memory at 1950, 1970, 1990 recorded and compared release over release.
 - Fill `.metadata/metadata.json` (`version`, `supported_game_version` = `1.15.*`, description, tags).
 - Merge `cwp_rebuild` into `master`; publish to Steam Workshop without the agent folders (`.claude/`, `Claude-Vic3-*`, `docs/agents/`).

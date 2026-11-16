@@ -138,6 +138,13 @@ cmd_errors() {
   (( ${#files[@]} > 1 )) && echo "cwp-vic: reading ${#files[@]} log files (error.log rotated; 5 rotations max, older lines are lost)" >&2
   # Engine noise ignored on purpose; keep in step with the ignore list in .claude/reference/debugging.md.
   cat "${files[@]}" | grep -vE 'Could not find item in store backend'
+  # Canary: vanilla files from replaced folders in the logs mean replace_paths were not applied.
+  local modroot canary
+  modroot=$(python3 -c 'import json,sys;m=json.load(open(sys.argv[1]))["enabledMods"];print(m[0]["path"] if m else "")' "$CONTENT" 2>/dev/null)
+  canary="$(dirname "$(readlink -f "$0")")/replace_paths_canary.py"
+  if [[ -n "$modroot" && -f "$canary" ]]; then
+    python3 "$canary" "$modroot" "$d"/game*.log "$d"/debug*.log "${files[@]}" || true
+  fi
 }
 
 cmd_perf() {

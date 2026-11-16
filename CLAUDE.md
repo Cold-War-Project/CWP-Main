@@ -168,6 +168,7 @@ Run from the mod root. All are standard-library Python.
 | Command | Use here |
 |---|---|
 | `python ".claude/tools/check_mod.py" <paths>` | The standard static check, written for this mod (knows the no-BOM files and the `replace` localization folder). |
+| `python3 .claude/tools/check_doc_facts.py [--fix]` | Recomputes the facts the guides state (counts, empty replaced folders, the `replace_paths` list above) and flags the stale ones. Run before every PR (CI workflow ready in `.claude/tools/ci/doc-facts.yml`). |
 | `python "Claude-Vic3-Content-Design-Guide/tools/check_content.py" .` | Cross-references content: modifiers, events, buttons, bars, variables, text keys. On the whole mod it prints about 10,000 lines, nearly all from the stubbed vanilla events and journal entries the mod carries. Filter the output to the prefix or event namespace being built, e.g. pipe it through `grep cwp_berlin`. |
 | `python "Claude-Vic3-Modding-Guide/tools/check_mod.py" .` | Adds `metadata.json` and folder-layout checks. Expect false positives: duplicate keys in `localization/english/replace/` (intended), the three no-BOM files, empty metadata fields. |
 | `python "Claude-Vic3-Modding-Guide/tools/add_bom.py" <files>` | Adds a BOM to new `.txt` / `.yml` files, which the Write tool cannot do. **Named files only**, see rule 4. `--check` only reports. |

@@ -51,6 +51,8 @@ Use the `paradox-games` skill (`~/.claude/skills/paradox-games/SKILL.md`): `vic-
 4. Triage by cause with `.claude/reference/debugging.md` (patterns, the ignore list, what each message means). Most lines carry `[file.txt:123]` or `in file: "<path>" near line: N`.
 5. Copy the log you are reporting on into your scratchpad before unlocking, and quote the relevant lines in the PR.
 
+`cwp-vic errors` ends with a **replace_paths canary** (`.claude/tools/forge/replace_paths_canary.py`): if the logs name vanilla files from folders the mod lists in `replace_paths`, it prints a WARNING, because then the mod's overrides were not applied and the error count means nothing. Do not report error counts from such a launch.
+
 `cwp-vic errors` filters only the known vanilla noise (`Could not find item in store backend`, 18 lines on a clean vanilla launch). Add new engine-side noise to the filter in the script and to the ignore list in `.claude/reference/debugging.md` together, or to neither.
 
 A crash to desktop leaves files in `<user folder>/crashes/` and `exceptions/`; note the newest folder name in your report and tell the crash-fix owner ([rebuild-crash-fix.md](rebuild-crash-fix.md)).

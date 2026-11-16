@@ -72,7 +72,7 @@ Vanilla keys: `subject_type_puppet tributary vassal dominion colony personal_uni
   - `ai.inherent_accept_score`: no `scope:treaty`; `ai.contextual_accept_score` has it but is re-evaluated often.
 - `flags = { }` give hard-coded behaviour (`is_alliance`, `is_defensive_pact`, `is_military_access`, `is_goods_transfer`, `is_money_transfer`, `is_investment_rights`, `is_law_commitment`, `can_be_renegotiated`, `can_be_enforced`, `show_in_lens`, ...). An article works without flags if effects and modifiers suffice.
 - `required_inputs = { quantity goods state strategic_region company building_type law_type country ship }` with matching `*_valid_trigger` and AI `*_input_filter` blocks.
-- `unlocked_by_technologies` must be mod techs; goods/law/building inputs resolve against mod databases. 27 of vanilla's 35 article files have both a same-name overwrite and a `zz_vanilla_treaty_article_<name>.txt` `REPLACE:` copy; the `zz_` copy loads last and is the live definition, so edit that one (keep the overwrite in step, or the vanilla-text checker noise may return; not yet confirmed in game).
+- `unlocked_by_technologies` must be mod techs; goods/law/building inputs resolve against mod databases. 27 of vanilla's 34 article files have both a same-name overwrite and a `zz_vanilla_treaty_article_<name>.txt` `REPLACE:` copy; the `zz_` copy loads last and is the live definition, so edit that one (keep the overwrite in step, or the vanilla-text checker noise may return; not yet confirmed in game).
 - `dynamic_treaty_names`: `key = { trigger = { } weight = { } }`, root is a `treaty_options` scope; the key is the loc key.
 
 ## Catalysts

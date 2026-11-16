@@ -10,7 +10,8 @@ Every change reaches `cwp_rebuild` through a pull request on `Cold-War-Project/C
 4. Forge launch with `cwp-vic` on your worktree: main menu reached, a game started and run a few months, **no new error.log lines over the `cwp_rebuild` baseline** ([forge-testing.md](forge-testing.md)).
 5. For gameplay changes: an observer run, with speed and memory compared to the baseline.
 6. The crash-fix "do not undo" list in [rebuild-crash-fix.md](rebuild-crash-fix.md) checked item by item.
-7. Your area doc (`docs/agents/areas/<area>.md`) updated: what this PR ports, what is still missing, what was dropped and why.
+7. `python3 .claude/tools/check_doc_facts.py` passes: every fact your change touched in `.claude/rules/`, `CLAUDE.md` or `docs/agents/` is updated in this PR.
+8. Your area doc (`docs/agents/areas/<area>.md`) updated: what this PR ports, what is still missing, what was dropped and why.
 
 ## Opening
 

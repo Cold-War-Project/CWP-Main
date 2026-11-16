@@ -17,7 +17,8 @@ Victoria 3 total conversion set 1946 to 2046, targeting game **1.15.1**. Most de
 3. **Port Cold War changes, not rewrites.** Where the rebuild re-enabled a vanilla system that dev had rewritten, vanilla 1.15 is the base; port only dev's real Cold War changes on top (see [plan.md](docs/agents/plan.md)).
 4. Jack decides: goals, `replace_paths` changes, dropping whole features, merges. Everything that can be undone, agents decide and report.
 5. Ambiguous? Ask the advisor first ([docs/agents/advisor.md](docs/agents/advisor.md)).
-6. Write down what you learn: area decisions in `docs/agents/areas/<area>.md`, engine facts in the guides, mod conventions in `.claude/rules/`.
+6. **Docs follow the repo in the same PR.** A PR that changes content must update every fact it changes in `.claude/rules/`, `CLAUDE.md` and `docs/agents/` (counts, which folders are empty, key lists, file names). Run `python3 .claude/tools/check_doc_facts.py` before opening the PR (`--fix` rewrites stale numbers); CI will run it on every PR once `.claude/tools/ci/doc-facts.yml` is copied to `.github/workflows/` (needs a token with the `workflow` scope). Prefer stating a fact as a command that produces it over a hard-coded number, and when you add a hard number the docs depend on, register it in that script.
+7. Write down what you learn: area decisions in `docs/agents/areas/<area>.md`, engine facts in the guides, mod conventions in `.claude/rules/`.
 
 ## Map of the docs
 
