@@ -30,6 +30,8 @@ cwp-vic unlock                                   # stops the game you launched, 
 
 Rules:
 
+- **Never write the mod path with a trailing slash.** With `"path": "/home/jack/forge/worktrees/x/"` the mod still mounts, but its `replace_paths` are silently ignored: vanilla files load beside the mod's and error.log fills with thousands of lines (2026-11-16: 11,602 lines with the slash, 18 without, same commit). `cwp-vic link` writes the path correctly, and the canary at the end of `cwp-vic errors` catches it.
+
 - Hold the lock from `link` until the game is stopped and you have copied what you need out of the logs. The next launch clears them.
 - `cwp-vic vanilla` instead of `link` for a vanilla comparison run.
 - Stop the game with `cwp-vic stop` (stops only the game you launched), not `vic-launch --stop` (stops whichever Victoria 3 is running, including another thread's). The `vic-*` helpers were fixed on 2026-11-16 to detect the running game correctly; `cwp-vic stop --all` is only for an orphan with no lock holder.
@@ -89,4 +91,4 @@ Fill these in when measured, with date and commit. A thread that measures one up
 | Run | Commit | error.log lines at menu | after 1 year | Days/min at max speed (1946 to 1956) | RSS at 1956 | Notes |
 |---|---|---|---|---|---|---|
 | Vanilla 1.15.1 | n/a | 18 (noise) | | | | 2026-11-16 |
-| `cwp_rebuild` | `b1daeb9e6` | | | | | to measure |
+| `cwp_rebuild` | `b1daeb9e6` | 18 (9th-IG assertion, a few unset variables and orphaned events, vanilla `scripted_tests/ip3.txt`) | | | | 2026-11-16; menu in about 3 min; canary clean. Earlier counts in the thousands were taken with replace_paths not applied and are invalid. |
