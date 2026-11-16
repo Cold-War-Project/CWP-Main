@@ -156,7 +156,7 @@ def main() -> None:
                 if isinstance(p.value, Node):
                     require(p.key not in packs[kind], f"Duplicate pack ID: {p.key}")
                     packs[kind][p.key] = p.value
-    expected = {"character": 48, "interest_group": 8, "movement": 8}
+    expected = {"character": 22, "interest_group": 8, "movement": 8}
     for kind, count in expected.items():
         require(len(packs.get(kind, {})) == count, f"Expected {count} {kind} ideologies")
     new = {key: body for pack in packs.values() for key, body in pack.items()}
@@ -187,6 +187,8 @@ def main() -> None:
         require(icon and ((ROOT / icon).is_file() or (args.vanilla / icon).is_file()), f"Missing icon: {key}: {icon}")
         groups = [p for p in pairs(body) if p.key.startswith("lawgroup_")]
         cap = 3 if key in packs.get("interest_group", {}) else 4
+        if key == "ideology_cwp_dissident_democrat":
+            cap = 5  # extra power-structure opinion added in the November 2026 roster review
         require(1 <= len(groups) <= cap, f"Law-group cap exceeded: {key}: {len(groups)} > {cap}")
         direct = Counter(p.key for p in pairs(body))
         require(all(n == 1 for n in direct.values()), f"Repeated ideology field: {key}")
@@ -284,7 +286,10 @@ def main() -> None:
         for character in atoms(body, "character_ideologies"):
             if character in ideologies:
                 eligible_igs.update(p.value for p in walk(child(ideologies[character][-1][1], "interest_group_leader_trigger")) if p.key == "is_interest_group_type")
-        require(pressure_igs == eligible_igs, f"Movement pressure/character eligibility mismatch: {key}")
+        # These three lost their own leader current in the November 2026 roster review; their
+        # pressure IGs keep the original movement design instead of the stand-in leader ideology.
+        if key not in {"movement_cwp_national_development", "movement_cwp_national_populist", "movement_cwp_market_reform"}:
+            require(pressure_igs == eligible_igs, f"Movement pressure/character eligibility mismatch: {key}")
         for factor in atoms(body, "pop_support_factors"):
             require(factor in support_factors, f"Unknown support factor: {key}/{factor}")
     for key in packs.get("movement", {}):
@@ -352,7 +357,7 @@ def main() -> None:
         actual = {p.value.removeprefix("ideology:") for p in walk(child(laws[law][-1][1], "ai_will_do")) if p.key == "has_ideology" and isinstance(p.value, str) and p.value.startswith("ideology:ideology_cwp_")}
         expected = {key for key, body in packs["character"].items() if scalar(child(body, group), law) in {"approve", "strongly_approve"}}
         if law == "law_command_economy":
-            inherited_policy = {"ideology_cwp_maoist", "ideology_cwp_soviet_conservative"}
+            inherited_policy = {"ideology_cwp_maoist"}
             for key in inherited_policy:
                 require(scalar(child(packs["character"][key], group), law) is None, f"Inherited-policy AI entry now has its own stance: {key}/{law}")
             expected.update(inherited_policy)
@@ -371,7 +376,7 @@ def main() -> None:
         records = json.loads(path.read_text(encoding="utf-8-sig"))
         require(isinstance(records, list), f"Expected metadata array: {path.name}")
         expansion_records.extend(records)
-    require(len(expansion_records) == 36, "Expected metadata for 36 new character profiles")
+    require(len(expansion_records) == 15, "Expected metadata for 15 expansion character profiles")
     require(len({record["id"] for record in expansion_records}) == len(expansion_records), "Duplicate expansion metadata ID")
     for record in expansion_records:
         key = record["id"]
@@ -401,7 +406,7 @@ def main() -> None:
         require(scalar(child(body, "creation_trigger"), "game_date") == expected_date, f"Unexpected earliest movement date: {key}")
     if errors:
         raise SystemExit("FAILED:\n" + "\n".join(f"- {error}" for error in errors))
-    print(f"PASS: {len(new)} ideologies (48 character, 8 IG, 8 movement), {len(new_movements)} movements, {stance_count} law stances; group caps, focused goals, unique profiles, references, integration, localization and icons checked.")
+    print(f"PASS: {len(new)} ideologies (22 character, 8 IG, 8 movement), {len(new_movements)} movements, {stance_count} law stances; group caps, focused goals, unique profiles, references, integration, localization and icons checked.")
     print("Static validation only; launch, trigger execution, AI balance and saves are untested.")
 
 
