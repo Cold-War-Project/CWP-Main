@@ -1,6 +1,6 @@
 # Germany: the German question
 
-Option C of [the Germany proposal](../proposals/germany.md): one storyline in three chapters. This file is the design brief and the area notes. Status: **chapter 1 merged** (#791) and **chapter 2 built** (#810), **chapter 3 built** (branch `feat/germany-wende`); the parent JE with its chapter widget, the Saar and Austria are not built yet.
+Option C of [the Germany proposal](../proposals/germany.md): one storyline in three chapters. This file is the design brief and the area notes. Status: chapters 1 to 3 merged (#791, #810, #838); Austria and the Saar in #840; the parent JE with a chapter widget is not built (see below).
 
 ## Chapter 1: occupation and division (`je_cwp_german_question`)
 
@@ -92,6 +92,14 @@ Buttons: DDR opens the border, holds a Round Table, or cracks down (only before 
 
 Outcomes: **Unity** (both bars at 100: GER annexes DDR with incorporation, historical), **a democratic GDR** (revolution at 100 but Two Plus Four at 0 with a power blocking: the GDR enacts a parliamentary republic and universal suffrage), **the regime holds** (revolution at 0). Chapter 2 now also sets `cwp_tg_wende` on its Wende outcome.
 
+## Siblings: the Austrian State Treaty and the Saar (`cwp_austria_saar.txt`)
+
+**`je_cwp_austrian_state_treaty`** (contextless: AUS and the four powers). It builds on #794, where AUS owns all Austrian land at start under a Soviet occupation pact, and activates while AUS is a Soviet subject. A State Treaty bar rises with Austria's neutrality pledge, Soviet and US consent, four-power talks (chapter 1's modifier) and a settled German question (FRG sovereign). It falls while the Soviet Union runs the USIA assets and while AUS sits in a power bloc. At 100: AUS becomes independent, and if it pledged neutrality it leaves any bloc and is neutral. The Soviet AI consents once neutrality is pledged and the FRG is proclaimed.
+
+**`je_cwp_saar`** (contextless: FRA and GER). It activates once the FRG is proclaimed, and France holds `cwp_saar_economic_union`. The Saar is part of STATE_RHINELAND on the vanilla map (it has no state of its own), so the JE is economic and political only. When both governments press *Agree to a Saar Referendum*, the Saar votes: rejection is weighted 65 (+10 if the FRG is sovereign) and acceptance 35 (+15 if French-German relations ≥ 50). Rejection (historical, 1955) returns the Saar's economy to Germany; acceptance keeps a European statute.
+
+**Parent JE with a chapter widget: not built.** The chapters already follow each other through flags, and a custom widget adds GUI risk (crash-fix rule R9) for little gameplay. It can come later if the dev meeting wants it.
+
 ## Known gaps and decisions for review
 
 - **Tuning (2026-11-17, shared observer run c609c12fb, 1946-1956):** the first rates were about twice too fast (Bizone 1946, blockade over in 1947, both states proclaimed in 1948, both sovereign by 1949, chapter 2 active in 1949). Every bar factor was roughly halved, the Occupation Statute drag raised to −2, one-off unity hits reduced, and Moscow's AI now recognises GDR sovereignty almost only after the FRG is sovereign. Target: Bizone around 1947, Basic Law and GDR around 1949, sovereignty around 1955. Re-check on the next shared run.
@@ -102,4 +110,4 @@ Outcomes: **Unity** (both bars at 100: GER annexes DDR with incorporation, histo
 - **Chapter 2 hand-off:** copy the final bar values to globals when chapter 2 exists to read them (not now: an unread variable is a log line).
 - **Berlin is not divided on the map**: DDR owns all of STATE_BRANDENBURG. The blockade is therefore modelled through variables and modifiers, not territory.
 - **GER formable** (#783 makes GER formable by any north German country with 63% of its culture states). A western zone or the DDR could form GER outside this JE. The formable should require the German question to be concluded, or not be a zone (to settle with the history thread).
-- Not built yet: parent JE with chapter list widget, the Saar sub-JE, Austria (State Treaty).
+- Not built yet: the parent JE with a chapter-list widget (see above).
