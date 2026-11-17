@@ -27,6 +27,17 @@ FORGE = Path(os.environ.get("FORGE", Path.home() / "forge"))
 QUEUE = FORGE / ".vic3.queue"
 HOLDER = FORGE / ".vic3.lock.holder"
 
+# After --continuelastsave loads a saved game: close any popup, observer mode, max speed, unpause.
+RESUME_STEPS = [
+    ("key", ("Escape",), 2),
+    ("key", ("grave",), 2),
+    ("type", ("observe",), 1),
+    ("key", ("Return",), 2),
+    ("key", ("grave",), 2),
+    ("key", ("5",), 1),
+    ("key", ("space",), 1),
+]
+
 # (action, args, seconds to wait afterwards). Same clicks as cwp-observe: New Game, the first
 # bookmark country, Play; then the console `observe`, max speed, unpause.
 START_STEPS = [
@@ -80,10 +91,23 @@ def game_running() -> bool:
     return "game:    pid" in sh("cwp-vic", "status").stdout
 
 
+def stage_resume(resume: Path):
+    """Make `resume` the game's "last save" so --continuelastsave loads it."""
+    dst = SAVES / "econ_resume.v3"
+    shutil.copy2(resume, dst)
+    os.utime(dst)
+    (USER / "continue_game.json").write_text(json.dumps({
+        "title": "econ_resume", "desc": "Observing NONE", "date": time.strftime("%Y-%m-%d %H:%M:%S"),
+        "rawGameVersion": "1.15.1"}, indent="\t"))
+
+
 def one_run(worktree: Path, out: Path, end_year: int, every: int, max_minutes: float,
             yield_to_queue: bool, pm_tags) -> dict:
     out.mkdir(parents=True, exist_ok=True)
-    note = f"econ: observer economy run {out.name} to {end_year}"
+    resume = out / "resume.v3"
+    resuming = resume.exists()
+    done = sorted(out.glob("[0-9]*.json"))
+    note = f"econ: observer economy run {out.name} to {end_year}" + (" (resume)" if resuming else "")
     r = sh("cwp-vic", "lock", "--wait", "86400", note)
     if r.returncode != 0:
         log(out, f"lock failed: {r.stderr.strip()}")
@@ -92,11 +116,19 @@ def one_run(worktree: Path, out: Path, end_year: int, every: int, max_minutes: f
     status, last_year = "running", None
     try:
         log(out, sh("cwp-vic", "link", str(worktree)).stdout.strip())
-        sh("cwp-vic", "launch")
+        if resuming:
+            stage_resume(resume)
+            sh("cwp-vic", "launch", "--continuelastsave")
+            log(out, f"launched, continuing from {resume.name}")
+            time.sleep(300)
+            steps = RESUME_STEPS
+        else:
+            sh("cwp-vic", "launch")
+            log(out, "launched; waiting for the main menu")
+            time.sleep(170)
+            steps = START_STEPS
         started = time.time()
-        log(out, "launched; waiting for the main menu")
-        time.sleep(170)
-        for act, args, wait in START_STEPS:
+        for act, args, wait in steps:
             if act == "click":
                 sh("vic-click", *map(str, args))
             elif act == "key":
@@ -107,13 +139,18 @@ def one_run(worktree: Path, out: Path, end_year: int, every: int, max_minutes: f
         sh("vic-shot")  # leaves the latest screenshot for a human to check the start
         log(out, "game started (observer, speed 5)")
         next_year, seen = None, set()
+        if done:
+            last_year = int(done[-1].name[:4])
+            next_year = last_year + every
         while True:
             time.sleep(60)
             if not game_running():
                 status = "crash"
                 log(out, "GAME NOT RUNNING (crash?)")
                 break
-            saves = sorted(SAVES.glob("autosave*.v3"), key=lambda p: p.stat().st_mtime)
+            # only autosaves written by this session (the folder also holds other threads' games)
+            saves = sorted((p for p in SAVES.glob("autosave*.v3") if p.stat().st_mtime > started),
+                           key=lambda p: p.stat().st_mtime)
             if not saves and time.time() - started > 900:
                 status = "no_autosave"
                 log(out, "no autosave 15 min after launch: the start clicks probably missed (see vic-shot)")
@@ -148,8 +185,17 @@ def one_run(worktree: Path, out: Path, end_year: int, every: int, max_minutes: f
                 status = "time_limit"
                 log(out, "reached the per-session time limit")
                 break
+        if status in ("yielded", "time_limit"):
+            saves = sorted((p for p in SAVES.glob("autosave*.v3") if p.stat().st_mtime > started),
+                           key=lambda p: p.stat().st_mtime)
+            if saves:
+                shutil.copy2(saves[-1], resume)
+                log(out, f"kept {saves[-1].name} ({save_date(resume)}) to resume from")
+        elif status == "done":
+            resume.unlink(missing_ok=True)
         errs = sh("cwp-vic", "errors").stdout
-        (out / "errors.txt").write_text(errs)
+        with open(out / "errors.txt", "a") as f:
+            f.write(errs)
     finally:
         sh("cwp-vic", "unlock")
         log(out, f"lock released; status {status}")
@@ -164,14 +210,22 @@ def run_batch(worktree: Path, outdir: Path, runs: int, end_year: int, every: int
               when_idle: bool, yield_to_queue: bool, pm_tags):
     outdir.mkdir(parents=True, exist_ok=True)
     os.environ.setdefault("CWP_AGENT", "econ")
-    existing = sorted(p for p in outdir.glob("run-*") if p.is_dir())
-    start = len(existing) + 1
-    for i in range(start, start + runs):
+    # Unfinished runs (yielded or out of time, with a resume save) continue first, then new runs,
+    # until `runs` runs have reached the end year.
+    sessions = 0
+    while True:
+        dirs = sorted(p for p in outdir.glob("run-*") if p.is_dir())
+        unfinished = [d for d in dirs if (d / "resume.v3").exists()]
+        finished = [d for d in dirs if (d / "meta.json").exists() and json.loads((d / "meta.json").read_text()).get("status") == "done"]
+        if len(finished) >= runs:
+            break
+        target = unfinished[0] if unfinished else outdir / f"run-{len(dirs) + 1:03d}"
         if when_idle:
             while not forge_idle():
                 time.sleep(120)
-        meta = one_run(worktree, outdir / f"run-{i:03d}", end_year, every, max_minutes, yield_to_queue, pm_tags)
-        print(json.dumps({"run": i, **meta}), flush=True)
-        if meta["status"] in ("no_autosave",):
-            break  # the start sequence is broken; don't burn more slots
+        meta = one_run(worktree, target, end_year, every, max_minutes, yield_to_queue, pm_tags)
+        sessions += 1
+        print(json.dumps({"run": target.name, **meta}), flush=True)
+        if meta["status"] in ("no_autosave", "no_lock") or sessions > runs * 6:
+            break  # the start sequence is broken (or something keeps failing); don't burn more slots
     sh("bash", "-c", "cwp-vic queue | grep -q . || game-mode off")

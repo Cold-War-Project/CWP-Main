@@ -7,6 +7,8 @@ from pathlib import Path
 
 from . import aggregate as A
 from . import benchmarks as B
+from . import geo_benchmarks as GB
+from . import geo_report as GR
 
 W, H, PAD_L, PAD_R, PAD_T, PAD_B = 300, 190, 44, 12, 26, 26
 
@@ -78,9 +80,14 @@ td,th{padding:3px 8px;border-bottom:1px solid var(--grid);text-align:right} td:f
 .t{font-size:12px;fill:var(--fg);font-weight:600} .ax{font-size:10px;fill:var(--fg2)}
 .grid{stroke:var(--grid);stroke-width:1} .bench{fill:var(--bench);opacity:.45}
 .spread{fill:var(--s1);opacity:.18} .med{fill:none;stroke:var(--s1);stroke-width:2}
+.mrow{display:flex;align-items:center;gap:8px;margin:2px 0}.mlab{width:330px;font-size:13px}.mbar{fill:var(--s1)}
 .hit{fill:transparent} .hit:hover{fill:var(--s1);opacity:.5} .legend span{display:inline-block;width:14px;height:10px;margin:0 4px 0 12px;vertical-align:middle}
 .low{color:#c24a2a}.high{color:#c27a00}
 """
+
+
+def GB_band(table, year):
+    return B.band(table, None, year)
 
 
 def build(outdir: Path) -> Path:
@@ -167,6 +174,9 @@ def build(outdir: Path) -> Path:
         dr = agg["entities"][e]["debt_ratio"]
         md.append(f"| {e} | " + " | ".join(fmt(dr[y]["median"], True) if y in dr else "-" for y in years) + " |")
     md.append("")
+    ev = GR.evaluate(runs) if any("geo" in s for r in runs.values() for s in r.values()) else None
+    if ev:
+        md += GR.markdown(ev)
     (outdir / "REPORT.md").write_text("\n".join(md))
 
     # HTML with charts
@@ -186,6 +196,20 @@ def build(outdir: Path) -> Path:
                     + "".join(panel(e, years, agg["entities"][e]["sol"]) for e in B.ENTITIES if agg["entities"][e]["sol"]) + "</div>")
     sections.append("<h2>Debt as a share of the credit limit</h2><div class='grid-wrap'>"
                     + "".join(panel(e, years, agg["entities"][e]["debt_ratio"], pct=True, ymin=0) for e in B.GREAT_POWERS if agg["entities"][e]["debt_ratio"]) + "</div>")
+    if ev:
+        bars = []
+        for c in sorted(ev["checks"], key=lambda c: c["share"]):
+            w = c["share"] * 260
+            bars.append(f"<div class='mrow'><span class='mlab'>{html.escape(c['title'])}</span>"
+                        f"<svg width='300' height='14'><rect x='0' y='2' width='260' height='10' class='bench'/>"
+                        f"<rect x='0' y='2' width='{w:.0f}' height='10' rx='2' class='mbar'><title>{c['share'] * 100:.0f}% of years held</title></rect>"
+                        f"<text x='266' y='11' class='ax'>{c['share'] * 100:.0f}%</text></svg></div>")
+        sections.insert(0, "<h2>Geopolitical milestones: share of years the historical state held</h2>" + "".join(bars))
+        cps = []
+        for k, c in ev["counts"].items():
+            bench = c["bench"]
+            cps.append(panel(c["title"], years, c["series"], (lambda y, b=bench: GB_band(b, y)) if bench else None, ymin=0))
+        sections.insert(1, "<h2>Geopolitical counts</h2><div class='grid-wrap'>" + "".join(cps) + "</div>")
     legend = ("<p class='legend'><span style='background:var(--s1)'></span>median of runs"
               "<span style='background:var(--s1);opacity:.25'></span>runs p25 to p75"
               "<span style='background:var(--bench);opacity:.6'></span>historical range</p>")
