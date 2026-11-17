@@ -1,4 +1,4 @@
-# Constitutional amendments and bloc features
+﻿# Constitutional amendments and bloc features
 
 Start-state "fingers on levers": constitutional features that shape a country's politics without forcing an outcome. Jack asked (2026-11-17) for the coordinator's candidate list to be checked for historicity, mapped to vanilla 1.15 analogs, applied, and extended where something important was missing.
 
@@ -25,7 +25,7 @@ Certainty: C certain, P probable.
 | Tradition of Free Elections (vanilla) | USA GBR CAN AST NZL IRE SWI SWE NOR DEN NET BEL LUX ICL FIN FRA | continuous free elections, or interrupted only by occupation (Low Countries, Scandinavia, France). Left out: ITA GRE (dictatorship 1922/1936), CHL (Ley Maldita 1948), URU (Terra 1933), CRC (1948 fraud dispute) | C |
 | Second Amendment (vanilla) | USA | 1791 | C |
 | Bill of Rights | USA | 1791 | C |
-| Voter Suppression Policies (vanilla) | USA, only if it starts on universal suffrage | poll taxes, literacy tests, white primaries in the South. PR #797 instead models them as `law_census_voting`; this amendment is the alternative (see open questions) | C |
+| Voter Suppression Policies (vanilla) | USA, only if it starts on universal suffrage | poll taxes, literacy tests, white primaries in the South. with #797 the USA is on universal suffrage plus racial segregation | C |
 | Constitutional Monarchy | GBR, dominions (CAN AST NZL SAF), NET BEL LUX DEN NOR SWE, ITA (until the referendum), GRE (regency), ROM BUL (restored 1923 / Tarnovo constitutions under Soviet occupation), THA (since 1932) | left out: EGY IRQ IRN (the monarch governed), MOR TUN (protectorates), JAP (Meiji: the emperor was sovereign; #815 adds Symbol of the State) | C |
 | Parliamentary Sovereignty | GBR | | C |
 | Direct Democracy | SWI | referendum 1874, initiative 1891 | C |
@@ -67,6 +67,6 @@ Cult of Personality goes when a government IG opposes autocracy (vanilla `ai_wil
 
 ## Open questions
 
-- USA franchise: #797 starts the USA on `law_census_voting` for Jim Crow. Universal suffrage plus vanilla Voter Suppression Policies fits the 15th and 19th Amendments better and gives the civil-rights content a smaller lever (repeal the amendment, as the Voting Rights Act did). The start effect adds the amendment if the USA is on universal suffrage. History area to decide.
-- Tito and Hoxha are `ideology_moderate` in `history/characters`; they still get Leading Role through the command-economy branch of `cwp_country_has_communist_leadership`.
+- USA franchise: settled. #797 keeps the USA on universal suffrage plus racial segregation, so Voter Suppression Policies carries the poll taxes and literacy tests.
+- Tito and Hoxha become Marxist-Leninist in #842; until then they get Leading Role through the command-economy branch of `cwp_country_has_communist_leadership`.
 - Lebanon has no country history file, so its laws are defaults; the National Pact attaches only if a voting law is active.
