@@ -122,7 +122,7 @@ def build(outdir: Path) -> Path:
     off = [r for r in rows if r["verdict"] != "ok"]
     md += ["## Off the historical range", "",
            "| metric | entity | year | median | range | runs p25-p75 | off by |", "|---|---|---|---|---|---|---|"]
-    pct = lambda m: m in ("military_share", "usa_world_share")
+    pct = lambda m: m.endswith("_share")
     for r in sorted(off, key=lambda r: (r["metric"], r["entity"], r["year"])):
         p = pct(r["metric"])
         md.append(f"| {r['metric']} | {r['entity']} | {r['year']} | {fmt(r['median'], p)} | {fmt(r['low'], p)} to {fmt(r['high'], p)} "
@@ -168,6 +168,29 @@ def build(outdir: Path) -> Path:
             md += [f"- {b}: " + ", ".join(f"{pm} {s * 100:.0f}%" for pm, s in pms) for b, pms in mix.items()]
             md.append("")
 
+    dec = [y for y in years if y % 10 == 0] or years[-1:]
+    md += ["## GDP by sector (share of value added, median of runs)", "",
+           "Primary = farms, plantations, mines, oil and gas; secondary = manufacturing and power; tertiary = urban "
+           "facilities, services, transport and trade. Government, military and construction buildings are left out "
+           "(they sell nothing), so tertiary runs low against real GDP. History in brackets where known.", "",
+           "| entity | sector | " + " | ".join(str(y) for y in dec) + " |", "|---|---|" + "---|" * len(dec)]
+    for e in B.GREAT_POWERS:
+        for sec in ("primary", "secondary", "tertiary"):
+            row = []
+            for y in dec:
+                v = agg["entities"][e][f"{sec}_share"].get(y)
+                bd = B.band(B.SECTOR_SHARES[sec], e, y) if sec in B.SECTOR_SHARES else None
+                row.append((f"{v['median'] * 100:.0f}%" if v else "-") + (f" ({bd[0] * 100:.0f}-{bd[1] * 100:.0f})" if bd else ""))
+            md.append(f"| {e} | {sec} | " + " | ".join(row) + " |")
+    md.append("")
+    for y in sorted({years[0] if years[0] >= 1950 else min((y for y in years if y >= 1950), default=years[0]), last}):
+        md += [f"### Largest building types by share of value added, {y}", ""]
+        for e in ("USA", "USSR", "UK", "West Germany", "Japan", "China", "India"):
+            top = A.top_shares(series, e, y, 10)
+            if top:
+                md.append(f"- **{e}**: " + ", ".join(f"{b.replace('building_', '')} {v * 100:.0f}%" for b, v in top))
+        md.append("")
+
     md += ["## Fiscal state of the great powers (median debt / credit limit)", "",
            "| entity | " + " | ".join(str(y) for y in years) + " |", "|---|" + "---|" * len(years)]
     for e in B.GREAT_POWERS:
@@ -184,7 +207,7 @@ def build(outdir: Path) -> Path:
         return lambda y: B.band(table, e, y)
     sections = []
     for key, (title, table) in B.TABLES.items():
-        ps = [panel(e, years, agg["entities"][e][key], bf(table, e), pct=(key == "military_share"), ymin=0)
+        ps = [panel(e, years, agg["entities"][e][key], bf(table, e), pct=key.endswith("_share"), ymin=0)
               for e in table if agg["entities"].get(e, {}).get(key)]
         sections.append(f"<h2>{html.escape(title)}</h2><div class='grid-wrap'>{''.join(ps)}</div>")
     sections.insert(0, "<h2>USA share of world GDP</h2><div class='grid-wrap'>"

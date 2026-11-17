@@ -81,6 +81,10 @@ def build(out: Path, findings: Path) -> Path:
     charts.append("<h2>Chart 2. GDP per head relative to the USA</h2><div class='grid-wrap'>" + "".join(
         R.panel(e, years, agg["entities"][e]["gdppc_vs_usa"], band(B.GDPPC_VS_USA, e), ymin=0)
         for e in ["USSR", "UK", "West Germany", "France", "Japan", "China"]) + "</div>")
+    for k, t in (("secondary_share", "Manufacturing and power share of value added"), ("primary_share", "Farming and mining share of value added")):
+        charts.append(f"<h2>{t} (grey: historical range)</h2><div class='grid-wrap'>" + "".join(
+            R.panel(e, years, agg["entities"][e][k], band(B.SECTOR_SHARES[k.split("_")[0]], e), pct=True, ymin=0)
+            for e in ["USA", "USSR", "UK", "West Germany", "Japan", "China", "India"] if agg["entities"][e][k]) + "</div>")
     charts.append("<h2>Chart 3. Total building levels (does the economy build?)</h2><div class='grid-wrap'>" + "".join(
         R.panel(e, years, levels[e], ymin=0) for e in levels) + "</div>")
     bars = []
@@ -108,7 +112,7 @@ def build(out: Path, findings: Path) -> Path:
     if ff:  # snap Firefox can only write under the home folder, so this works for ~/forge/econ-runs
         with tempfile.TemporaryDirectory(dir=out) as prof:
             try:
-                subprocess.run([ff, "--headless", "--no-remote", "--profile", prof, "--window-size=1100,4000",
+                subprocess.run([ff, "--headless", "--no-remote", "--profile", prof, "--window-size=1100,6400",
                                 "--screenshot", str(out / "SUMMARY.png"), (out / "SUMMARY.html").as_uri()],
                                capture_output=True, timeout=120)
             except subprocess.TimeoutExpired:

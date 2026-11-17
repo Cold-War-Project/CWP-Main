@@ -45,6 +45,8 @@ def entity_view(countries: dict, entity: str):
             for pm, lv in d.items():
                 pms.setdefault(bt, {}).setdefault(pm, 0.0)
                 pms[bt][pm] += lv
+    from .sectors import shares as _shares
+    sec = _shares(bld)
     sol = [c["sol"] for c in cs if c["sol"] is not None]
     return {
         "tags": [c["tag"] for c in cs], "gdp": gdp, "population": pop, "gdppc": gdp / pop if pop else 0,
@@ -57,6 +59,8 @@ def entity_view(countries: dict, entity: str):
         "military_share": sum(c["military_spend"] for c in cs) * 52 / gdp if gdp else 0,
         "rank": cs[0].get("rank"),
         "buildings": bld, "production_methods": pms,
+        "primary_share": sec.get("primary"), "secondary_share": sec.get("secondary"),
+        "tertiary_share": sec.get("tertiary"), "va_shares": sec.get("by_building", {}),
     }
 
 
@@ -105,7 +109,7 @@ def summary(vals):
 
 
 METRICS = ["gdp", "population", "gdppc", "sol", "debt_ratio", "military_share",
-           "gdp_vs_usa", "gdppc_vs_usa", "growth_since_1950"]
+           "gdp_vs_usa", "gdppc_vs_usa", "growth_since_1950", "primary_share", "secondary_share", "tertiary_share"]
 
 
 def aggregate(series: dict) -> dict:
@@ -223,3 +227,14 @@ def pm_mix(series: dict, entity: str, year: int, buildings: list[str]) -> dict:
             # one PM per group per building, so a share is the part of the levels running that PM
             out[b] = sorted(((pm, lv / levels) for pm, lv in tot.items()), key=lambda x: -x[1])[:8]
     return out
+
+
+def top_shares(series: dict, entity: str, year: int, top: int = 12) -> list:
+    """[(building, median share of value added)] for the entity's biggest building types."""
+    per = {}
+    for r in series.values():
+        v = r.get(year, {}).get("entities", {}).get(entity)
+        for b, x in (v or {}).get("va_shares", {}).items():
+            per.setdefault(b, []).append(x)
+    rows = [(b, statistics.median(xs)) for b, xs in per.items()]
+    return sorted(rows, key=lambda r: -r[1])[:top]
