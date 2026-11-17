@@ -1,60 +1,84 @@
 #!/usr/bin/env bash
-# cwp-integrate: build one combined test mod from several open PRs, so they can be tested together.
+# cwp-integrate: build one combined test mod from local feature branches, test it, land what passed on CWP2.
 #
-#   cwp-integrate build [PR# ...]     fresh ~/forge/worktrees/integration off origin/CWP2 (CWP_BASE=<branch> to change), then merge
-#                                     each PR's branch in order (default: every open PR into that base).
-#                                     A PR that conflicts is skipped (merge aborted) and reported.
-#   cwp-integrate attribute [LOGFILE]  group error lines by the merged PR that touched the file they name
-#                                     (default: the current session via `cwp-vic errors`)
-#   cwp-integrate report               print the last build's per-PR table
-#   cwp-integrate publish              push the last build to origin/CWP2-staging (replaced on every publish)
-#                                     so the merged state can be shared and tested by anyone
+# Work stays LOCAL on Forge until it has passed a real run (Jack, 2026-11-17): no new GitHub PRs, PR
+# comments or PR edits (other devs get emailed). Threads commit on local branches in ~/forge/CWP-Main's
+# worktrees and add the branch name to ~/forge/staging-queue.txt when it is ready to test.
 #
-# Then test it like any worktree:  cwp-vic lock "..." && cwp-vic link ~/forge/worktrees/integration && cwp-vic launch
-# The local branch is integration/local; `publish` copies it to CWP2-staging. Never open a PR from either.
+#   cwp-integrate build [ITEM ...]    fresh ~/forge/worktrees/integration off origin/CWP2, then merge each ITEM in order.
+#                                     ITEM = local branch name, or a number = an already-open GitHub PR (read only).
+#                                     Default: the branches in ~/forge/staging-queue.txt, then open PRs into CWP2.
+#                                     A conflicting item is skipped (merge aborted) and reported.
+#   cwp-integrate report              the last build's table: item, branch, tested sha or conflict
+#   cwp-integrate attribute [LOG]     group error lines by the item whose files they name (default: `cwp-vic errors`)
+#   cwp-integrate land ITEM ...       merge each ITEM's TESTED commit (from the last build) into CWP2 and push CWP2.
+#                                     Commits made after the build are not landed. Open PRs close as merged by themselves.
+#   cwp-integrate dequeue ITEM ...    remove landed branches from ~/forge/staging-queue.txt
+#
+# Test the build like any worktree: cwp-vic lock "..." && cwp-vic link ~/forge/worktrees/integration && cwp-vic launch
 set -uo pipefail
 REPO="${CWP_REPO:-$HOME/forge/CWP-Main}"
 WT="${CWP_INTEGRATION:-$HOME/forge/worktrees/integration}"
+LANDWT="$HOME/forge/worktrees/land"
+QUEUEF="${CWP_STAGING_QUEUE:-$HOME/forge/staging-queue.txt}"
 BRANCH="integration/local"
-BASE="${CWP_BASE:-CWP2}"         # the working branch the PRs target
-STATE="$WT/.integration"            # per-build state (untracked)
+BASE="${CWP_BASE:-CWP2}"
+STATE="$WT/.integration"
+GH="gh -R Cold-War-Project/CWP-Main"
 die() { echo "cwp-integrate: $*" >&2; exit 1; }
 
-cmd_build() {
-  git -C "$REPO" fetch -q origin || die "fetch failed"
-  local prs=("$@")
-  if (( ${#prs[@]} == 0 )); then
-    mapfile -t prs < <(gh -R Cold-War-Project/CWP-Main pr list --base "$BASE" --state open --limit 100 \
-      --json number -q '.[].number' | sort -n)
+# resolve ITEM -> "kind ref label title"
+resolve() {
+  local it=$1
+  if [[ "$it" =~ ^[0-9]+$ ]]; then
+    local head title
+    read -r head title < <($GH pr view "$it" --json headRefName,title -q '"\(.headRefName) \(.title)"' 2>/dev/null)
+    [[ -z "$head" ]] && return 1
+    git -C "$REPO" fetch -q origin "+refs/heads/$head:refs/remotes/origin/$head" 2>/dev/null || return 1
+    echo "pr origin/$head #$it $title"
+  else
+    git -C "$REPO" rev-parse -q --verify "refs/heads/$it" >/dev/null || return 1
+    echo "local $it $it $(git -C "$REPO" log -1 --format=%s "refs/heads/$it")"
   fi
-  (( ${#prs[@]} )) || die "no PRs to merge"
+}
+
+cmd_build() {
+  git -C "$REPO" fetch -q origin "$BASE" || die "fetch failed"
+  local items=("$@")
+  if (( ${#items[@]} == 0 )); then
+    [[ -f "$QUEUEF" ]] && mapfile -t items < <(grep -vE '^\s*(#|$)' "$QUEUEF" | awk '{print $1}')
+    mapfile -t -O "${#items[@]}" items < <($GH pr list --base "$BASE" --state open --limit 100 --json number -q '.[].number' | sort -n)
+  fi
+  (( ${#items[@]} )) || die "nothing to build: add branch names to $QUEUEF"
   if [[ -d "$WT" ]]; then
-    [[ -n "$(pgrep -f '\./victoria3' 2>/dev/null)" ]] && grep -q "$WT" "$HOME/.local/share/Paradox Interactive/Victoria 3/content_load.json" 2>/dev/null \
-      && die "the game is running on the integration worktree; stop it first"
+    grep -q "$WT" "$HOME/.local/share/Paradox Interactive/Victoria 3/content_load.json" 2>/dev/null && \
+      cwp-vic status 2>/dev/null | grep -q "game:    pid" && die "the game may be running on the integration worktree; stop it first"
     git -C "$WT" merge --abort 2>/dev/null
-    git -C "$WT" checkout -q -B "$BRANCH" origin/$BASE || die "reset failed"
+    git -C "$WT" checkout -q -B "$BRANCH" "origin/$BASE" || die "reset failed"
     git -C "$WT" clean -qfdx
   else
-    git -C "$REPO" worktree add -q -B "$BRANCH" "$WT" origin/$BASE || die "worktree add failed"
+    git -C "$REPO" worktree add -q -B "$BRANCH" "$WT" "origin/$BASE" || die "worktree add failed"
   fi
   mkdir -p "$STATE"; : > "$STATE/prs.tsv"
-  local base; base=$(git -C "$WT" rev-parse --short HEAD)
-  echo "integration build on $BASE @ $base"
-  for n in "${prs[@]}"; do
-    local head title
-    read -r head title < <(gh -R Cold-War-Project/CWP-Main pr view "$n" --json headRefName,title -q '"\(.headRefName) \(.title)"')
-    [[ -z "$head" ]] && { printf '%s\t-\tmissing\t\t\n' "$n" >> "$STATE/prs.tsv"; continue; }
-    git -C "$REPO" fetch -q origin "+refs/heads/$head:refs/remotes/origin/$head" 2>/dev/null
-    local sha; sha=$(git -C "$REPO" rev-parse --short "origin/$head")
-    local files; files=$(git -C "$WT" diff --name-only "origin/$BASE...origin/$head" | tr '\n' ' ')
-    if git -C "$WT" merge -q --no-ff --no-edit -m "integration: #$n $head" "origin/$head" >/dev/null 2>&1; then
-      printf '%s\t%s\tmerged @ %s\t%s\t%s\n' "$n" "$head" "$sha" "$title" "$files" >> "$STATE/prs.tsv"
-      echo "  #$n $head @ $sha: merged"
+  echo "integration build on $BASE @ $(git -C "$WT" rev-parse --short HEAD)"
+  local it
+  for it in "${items[@]}"; do
+    local kind ref label title
+    if ! read -r kind ref label title < <(resolve "$it"); then
+      printf '%s\t-\tmissing\t\t\n' "$it" >> "$STATE/prs.tsv"; echo "  $it: not found (skipped)"; continue
+    fi
+    local sha; sha=$(git -C "$REPO" rev-parse "$ref")
+    if git -C "$REPO" merge-base --is-ancestor "$sha" "origin/$BASE"; then
+      printf '%s\t%s\talready in %s\t%s\t\n' "$it" "$ref" "$BASE" "$title" >> "$STATE/prs.tsv"; echo "  $it: already in $BASE"; continue
+    fi
+    if git -C "$WT" merge -q --no-ff --no-edit -m "integration: $label" "$sha" >/dev/null 2>&1; then
+      printf '%s\t%s\tmerged @ %s\t%s\t\n' "$it" "$ref" "${sha:0:9}" "$title" >> "$STATE/prs.tsv"
+      echo "  $it ($ref) @ ${sha:0:9}: merged"
     else
       local conflicts; conflicts=$(git -C "$WT" diff --name-only --diff-filter=U | tr '\n' ' ')
       git -C "$WT" merge --abort
-      printf '%s\t%s\tCONFLICT: %s\t%s\t%s\n' "$n" "$head" "$conflicts" "$title" "$files" >> "$STATE/prs.tsv"
-      echo "  #$n $head: CONFLICT in $conflicts(skipped)"
+      printf '%s\t%s\tCONFLICT: %s\t%s\t\n' "$it" "$ref" "$conflicts" "$title" >> "$STATE/prs.tsv"
+      echo "  $it ($ref): CONFLICT in $conflicts(skipped)"
     fi
   done
   git -C "$WT" rev-parse --short HEAD > "$STATE/head"
@@ -63,8 +87,8 @@ cmd_build() {
 
 cmd_report() {
   [[ -f "$STATE/prs.tsv" ]] || die "no build yet"
-  echo "| PR | branch | merge |"; echo "|---|---|---|"
-  awk -F'\t' '{printf "| #%s | `%s` | %s |\n", $1, $2, $3}' "$STATE/prs.tsv"
+  echo "| item | branch | result |"; echo "|---|---|---|"
+  awk -F'\t' '{printf "| %s | `%s` | %s |\n", $1, $2, $3}' "$STATE/prs.tsv"
 }
 
 cmd_attribute() {
@@ -72,20 +96,20 @@ cmd_attribute() {
   local log="${1:-}"
   if [[ -z "$log" ]]; then log=$(mktemp); cwp-vic errors > "$log" 2>/dev/null; fi
   python3 - "$STATE/prs.tsv" "$log" <<'PY'
-import re, sys, collections, os
-import subprocess, os
+import re, sys, collections, os, subprocess
 prs = [l.rstrip("\n").split("\t") for l in open(sys.argv[1]) if l.strip()]
 repo = os.environ.get("CWP_REPO", os.path.expanduser("~/forge/CWP-Main"))
+base = os.environ.get("CWP_BASE", "CWP2")
 owner = collections.defaultdict(list)
-for n, head, status, *_ in prs:
-    if status.startswith("merged"):
-        out = subprocess.run(["git", "-C", repo, "diff", "-z", "--name-only", f"origin/{os.environ.get('CWP_BASE', 'CWP2')}...origin/{head}"],
+for item, ref, status, *_ in prs:
+    if status.startswith("merged @ "):
+        sha = status.split("@ ")[1]
+        out = subprocess.run(["git", "-C", repo, "diff", "-z", "--name-only", f"origin/{base}...{sha}"],
                              capture_output=True, text=True).stdout
+        label = ("#" + item) if item.isdigit() else item
         for f in filter(None, out.split("\0")):   # -z: file names may contain spaces
-            owner[f].append("#" + n)
+            owner[f].append(label)
 pat = re.compile(r"((?:common|events|gfx|gui|localization|map_data|tools)/[\w ./\-']+?\.(?:txt|gui|yml|csv|asset))")
-by = collections.defaultdict(list)
-# Join multi-line errors ("Script system error!" + "  Error: ..." + "  Script location: ...") into one block.
 blocks = []
 for line in open(sys.argv[2], errors="replace"):
     line = line.rstrip()
@@ -95,39 +119,65 @@ for line in open(sys.argv[2], errors="replace"):
         blocks.append(line)
     else:
         blocks[-1] += "\n" + line
-for line in blocks:
-    paths = pat.findall(line)
+by = collections.defaultdict(list)
+for b in blocks:
+    paths = pat.findall(b)
     who = sorted({o for p in paths for o in owner.get(p, [])})
-    key = ", ".join(who) if who else ("base branch or vanilla (file not touched by a merged PR)" if paths else "no file named")
-    by[key].append(line)
+    key = ", ".join(who) if who else ("base branch or vanilla (file not touched by a tested item)" if paths else "no file named")
+    by[key].append(b)
 for key in sorted(by, key=lambda k: -len(by[k])):
-    lines = by[key]
-    print(f"== {key}: {len(lines)} lines")
-    for msg, c in collections.Counter(re.sub(r"^\[[0-9:]+\]", "", l).replace("\n", " | ")[:200] for l in lines).most_common(5):
+    print(f"== {key}: {len(by[key])} lines")
+    for msg, c in collections.Counter(re.sub(r"^\[[0-9:]+\]", "", l).replace("\n", " | ")[:200] for l in by[key]).most_common(5):
         print(f"   {c:5d}  {msg}")
-# Full lines per PR, for the PR threads to read without their own load test.
 with open(os.path.expanduser("~/forge/integration-errors-by-pr.txt"), "w") as out:
     for key in sorted(by, key=lambda k: -len(by[k])):
         out.write(f"== {key}: {len(by[key])} lines\n")
         out.writelines(l + "\n" for l in by[key])
         out.write("\n")
-print("full lines per PR: ~/forge/integration-errors-by-pr.txt")
+print("full lines per item: ~/forge/integration-errors-by-pr.txt")
 PY
 }
 
-cmd_publish() {
-  [[ -f "$STATE/head" ]] || die "no build yet"
-  local staging="${CWP_STAGING:-CWP2-staging}"
-  git -C "$WT" push -q --force origin "HEAD:refs/heads/$staging" || die "push failed"
-  echo "published $(cat "$STATE/head") to origin/$staging"
-  { echo "CWP2-staging = $BASE @ $(git -C "$WT" rev-parse --short "origin/$BASE") + these PRs ($(date '+%F %T %Z')):"; cmd_report; } \
-    > "$STATE/published.md"
+cmd_land() {
+  [[ -f "$STATE/prs.tsv" ]] || die "no build yet"
+  (( $# )) || die "usage: cwp-integrate land ITEM ..."
+  git -C "$REPO" fetch -q origin "$BASE" || die "fetch failed"
+  if [[ -d "$LANDWT" ]]; then
+    git -C "$LANDWT" merge --abort 2>/dev/null; git -C "$LANDWT" checkout -q -B land/local "origin/$BASE"
+  else
+    git -C "$REPO" worktree add -q -B land/local "$LANDWT" "origin/$BASE" || die "worktree add failed"
+  fi
+  local build; build=$(cat "$STATE/head"); local landed=() it
+  for it in "$@"; do
+    local row; row=$(awk -F'\t' -v i="$it" '$1==i' "$STATE/prs.tsv")
+    [[ -z "$row" ]] && { echo "  $it: not in the last build (skipped)"; continue; }
+    local ref status title; IFS=$'\t' read -r _ ref status title _ <<< "$row"
+    [[ "$status" == merged\ @\ * ]] || { echo "  $it: $status (skipped)"; continue; }
+    local sha; sha=$(git -C "$REPO" rev-parse "${status#merged @ }")
+    local label; label=$([[ "$it" =~ ^[0-9]+$ ]] && echo "#$it" || echo "$it")
+    if git -C "$LANDWT" merge -q --no-ff --no-edit -m "Land $label: $title (passed staging $build)" "$sha" >/dev/null 2>&1; then
+      landed+=("$it"); echo "  $label @ ${sha:0:9}: merged"
+    else
+      git -C "$LANDWT" merge --abort; echo "  $label: CONFLICT with $BASE (skipped; rebase and retest)"
+    fi
+  done
+  (( ${#landed[@]} )) || { echo "nothing landed"; return 0; }
+  git -C "$LANDWT" push -q origin "HEAD:refs/heads/$BASE" || die "push to $BASE failed ($BASE moved? rerun land)"
+  echo "landed on $BASE: ${landed[*]} (now $(git -C "$LANDWT" rev-parse --short HEAD))"
+}
+
+cmd_dequeue() {
+  [[ -f "$QUEUEF" ]] || return 0
+  local it; for it in "$@"; do
+    awk -v b="$it" '{ split($0, f, /[ \t]+/) } f[1] != b' "$QUEUEF" > "$QUEUEF.tmp" && mv "$QUEUEF.tmp" "$QUEUEF"; done
+  echo "queue now:"; cat "$QUEUEF"
 }
 
 case "${1:-}" in
   build)     shift; cmd_build "$@" ;;
   report)    cmd_report ;;
   attribute) shift; cmd_attribute "$@" ;;
-  publish)   cmd_publish ;;
-  *)         sed -n '2,16p' "$0" ;;
+  land)      shift; cmd_land "$@" ;;
+  dequeue)   shift; cmd_dequeue "$@" ;;
+  *)         sed -n '2,19p' "$0" ;;
 esac
