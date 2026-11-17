@@ -365,12 +365,19 @@ cwp_indochina_peoples_war_pulse = {
 		limit = {
 			OR = {
 				c:DAI ?= this
-				cwp_is_french_side = yes
+				c:FRA ?= this
+				c:VNM ?= this
 			}
 			NOT = { has_modifier = cwp_indochina_peoples_war }
 		}
 		add_modifier = { name = cwp_indochina_peoples_war }
 	}
+}
+
+# Scope: none. WEEKLY during the people's war phase: war support in the FRA-DAI war cannot sink into the red band,
+# so neither side capitulates to occupation alone (war support runs 0-100, red band at 25; native beats move it by
+# several points a week, so the top-up is +10).
+cwp_indochina_war_support_floor = {
 	c:FRA ?= {
 		every_scope_war = {
 			limit = { any_war_participant = { c:DAI ?= this } }
@@ -378,14 +385,14 @@ cwp_indochina_peoples_war_pulse = {
 				limit = { has_war_support = { target = c:FRA value < 30 } }
 				add_war_war_support = {
 					target = c:FRA
-					value = 3
+					value = 10
 				}
 			}
 			if = {
 				limit = { has_war_support = { target = c:DAI value < 30 } }
 				add_war_war_support = {
 					target = c:DAI
-					value = 3
+					value = 10
 				}
 			}
 		}
@@ -426,28 +433,28 @@ cwp_indochina_war_pressure = {
 				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" >= 40 } }
 				add_war_war_support = {
 					target = c:FRA
-					value = -4
+					value = -10
 				}
 			}
 			else_if = {
 				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" >= 25 } }
 				add_war_war_support = {
 					target = c:FRA
-					value = -2
+					value = -5
 				}
 			}
 			else_if = {
 				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" <= -40 } }
 				add_war_war_support = {
 					target = c:DAI
-					value = -4
+					value = -10
 				}
 			}
 			else_if = {
 				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" <= -25 } }
 				add_war_war_support = {
 					target = c:DAI
-					value = -2
+					value = -5
 				}
 			}
 		}
@@ -549,21 +556,21 @@ cwp_indonesia_war_pressure = {
 				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indonesia_revolution_bar)" >= 40 } }
 				add_war_war_support = {
 					target = c:NET
-					value = -4
+					value = -10
 				}
 			}
 			else_if = {
 				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indonesia_revolution_bar)" >= 25 } }
 				add_war_war_support = {
 					target = c:NET
-					value = -2
+					value = -5
 				}
 			}
 			else_if = {
 				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indonesia_revolution_bar)" <= -25 } }
 				add_war_war_support = {
 					target = c:IDS
-					value = -2
+					value = -5
 				}
 			}
 		}
@@ -596,6 +603,27 @@ cwp_indonesia_end_war = {
 			create_bidirectional_truce = {
 				country = c:IDS
 				months = 60
+			}
+		}
+	}
+}
+
+# Scope: none. WEEKLY: the Republic fights on from the villages while the world still backs it. Its war support
+# cannot sink into the red band unless Pressure on The Hague has turned against it (-25 or below), so taking
+# Yogyakarta alone does not end the revolution.
+cwp_indonesia_war_support_floor = {
+	if = {
+		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indonesia_revolution_bar)" > -25 } }
+		c:NET ?= {
+			every_scope_war = {
+				limit = { any_war_participant = { c:IDS ?= this } }
+				if = {
+					limit = { has_war_support = { target = c:IDS value < 30 } }
+					add_war_war_support = {
+						target = c:IDS
+						value = 10
+					}
+				}
 			}
 		}
 	}
