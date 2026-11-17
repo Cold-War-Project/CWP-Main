@@ -1,0 +1,76 @@
+﻿namespace = cwp_occ
+
+# The occupier decides on a peace treaty. Root = the occupier, scope:cwp_occ_subject = the occupied country.
+cwp_occ.1 = {
+	type = country_event
+	placement = scope:cwp_occ_subject.capital
+
+	title = cwp_occ.1.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = cwp_occ.1.d.JAP
+				trigger = { scope:cwp_occ_subject = { c:JAP ?= this } }
+			}
+			desc = cwp_occ.1.d
+		}
+	}
+	flavor = {
+		first_valid = {
+			triggered_desc = {
+				desc = cwp_occ.1.f.JAP
+				trigger = { scope:cwp_occ_subject = { c:JAP ?= this } }
+			}
+			desc = cwp_occ.1.f
+		}
+	}
+
+	event_image = { video = "unspecific_signed_contract" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+
+	duration = 3
+
+	trigger = {
+		exists = scope:cwp_occ_subject
+		scope:cwp_occ_subject = { is_subject_of = root }
+	}
+
+	option = { # Sign the treaty
+		name = cwp_occ.1.a
+		default_option = yes
+		scope:cwp_occ_subject = {
+			make_independent = yes
+			add_modifier = {
+				name = cwp_occ_sovereignty_restored
+				years = 5
+			}
+		}
+		change_relations = { country = scope:cwp_occ_subject value = 30 }
+		ai_chance = { base = 20 }
+	}
+
+	option = { # Not yet
+		name = cwp_occ.1.b
+		scope:cwp_occ_subject = {
+			remove_variable = cwp_occ_pending_var
+			je:je_cwp_ending_the_occupation ?= {
+				add_progress = { value = -40 name = cwp_occ_sovereignty_bar }
+			}
+			add_modifier = {
+				name = cwp_occ_treaty_refused
+				years = 2
+			}
+		}
+		change_relations = { country = scope:cwp_occ_subject value = -30 }
+		ai_chance = {
+			base = 3
+			modifier = {
+				trigger = {
+					has_law = law_type:law_council_republic
+				}
+				add = 20
+			}
+		}
+	}
+}
