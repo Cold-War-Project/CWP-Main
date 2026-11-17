@@ -1,0 +1,443 @@
+﻿# Cold War Project: constitutional amendments.
+# Start-state holders are set in common/scripted_effects/cwp_amendment_effects.txt (run from common/history/global).
+# Design notes, historicity checks and vanilla analogs: docs/agents/areas/amendments.md.
+# Japan's Symbol Emperor and Article 9 live with the constitutional-transition journal entries (cwp_constitutional_amendments.txt).
+
+############################################################
+# Single-country amendments
+############################################################
+
+# USA: the first ten amendments (1791). Speech, press, assembly, religion, due process.
+cwp_amendment_bill_of_rights = {
+	parent = law_protected_speech
+
+	allowed_laws = {
+		law_right_of_assembly
+		law_protected_speech
+	}
+
+	modifier = {
+		country_legitimacy_base_add = 5
+		state_radicals_from_political_movements_mult = -0.05
+		country_coup_resistance_add = 0.25
+	}
+
+	possible = {
+		c:USA ?= this
+	}
+
+	would_sponsor = {
+		AND = {
+			exists = scope:approval
+			scope:approval > 0
+		}
+	}
+
+	ai_will_revoke = {
+		always = no
+	}
+
+	can_repeal = {
+		legitimacy >= legitimacy_to_repeal_amendment
+	}
+
+	amendment_activism_multiplier = 0.25
+}
+
+# United Kingdom: no written constitution; an Act of Parliament is the highest law.
+cwp_amendment_parliamentary_sovereignty = {
+	parent = law_parliamentary_republic
+
+	allowed_laws = {
+		law_monarchy
+		law_parliamentary_republic
+	}
+
+	modifier = {
+		country_law_enactment_speed_mult = 0.10
+		country_law_enactment_success_add = 0.05
+	}
+
+	possible = {
+		c:GBR ?= this
+		country_has_voting_franchise = yes
+	}
+
+	would_sponsor = {
+		AND = {
+			exists = scope:approval
+			scope:approval > 0
+		}
+	}
+
+	ai_will_revoke = {
+		country_has_voting_franchise = no
+	}
+
+	can_repeal = {
+		legitimacy >= legitimacy_to_repeal_amendment
+	}
+
+	amendment_activism_multiplier = 0.25
+}
+
+# Switzerland: optional and mandatory referendums, popular initiatives (1848, 1874, 1891).
+cwp_amendment_direct_democracy = {
+	parent = law_universal_suffrage
+
+	allowed_laws = {
+		law_wealth_voting
+		law_census_voting
+		law_universal_suffrage
+	}
+
+	modifier = {
+		country_legitimacy_base_add = 10
+		country_law_enactment_speed_mult = -0.15
+		country_enactment_success_chance_law_autocracy_add = -0.10
+		country_enactment_success_chance_law_single_party_state_add = -0.10
+	}
+
+	possible = {
+		c:SWI ?= this
+	}
+
+	would_sponsor = {
+		AND = {
+			exists = scope:approval
+			scope:approval > 0
+		}
+	}
+
+	ai_will_revoke = {
+		always = no
+	}
+
+	can_repeal = {
+		legitimacy >= legitimacy_to_repeal_amendment
+	}
+
+	amendment_activism_multiplier = 0.25
+}
+
+# France: government answerable to a sovereign assembly (law of 2 November 1945, then the Fourth Republic).
+# Leaves with the parliamentary republic; a Gaullist presidential regime drops it.
+cwp_amendment_assembly_government = {
+	parent = law_parliamentary_republic
+
+	allowed_laws = {
+		law_parliamentary_republic
+	}
+
+	modifier = {
+		country_authority_mult = -0.15
+		country_law_enactment_success_add = -0.05
+		country_legitimacy_ideological_incoherence_mult = 0.15
+	}
+
+	possible = {
+		c:FRA ?= this
+	}
+
+	would_sponsor = {
+		AND = {
+			exists = scope:approval
+			scope:approval > 0
+		}
+	}
+
+	ai_will_revoke = {
+		ruler ?= {
+			has_ideology = ideology:ideology_cwp_gaullist
+		}
+	}
+
+	can_repeal = {
+		legitimacy >= legitimacy_to_repeal_amendment
+	}
+
+	amendment_activism_multiplier = 0.5
+}
+
+# Lebanon: the unwritten National Pact of 1943 shares offices and seats among the confessions.
+cwp_amendment_national_pact = {
+	parent = law_census_voting
+
+	allowed_laws = {
+		law_oligarchy
+		law_landed_voting
+		law_wealth_voting
+		law_census_voting
+		law_universal_suffrage
+	}
+
+	modifier = {
+		country_legitimacy_base_add = 10
+		country_authority_mult = -0.15
+		country_law_enactment_speed_mult = -0.10
+		interest_group_ig_devout_pol_str_mult = 0.20
+	}
+
+	possible = {
+		c:LEB ?= this
+	}
+
+	would_sponsor = {
+		is_interest_group_type = ig_devout
+	}
+
+	ai_will_revoke = {
+		always = no
+	}
+
+	can_repeal = {
+		legitimacy >= legitimacy_to_repeal_amendment
+	}
+
+	amendment_activism_multiplier = 0.5
+}
+
+############################################################
+# Amendments shared by a group of countries
+############################################################
+
+# The crown reigns, parliament governs: Britain and the dominions, the Low Countries, Scandinavia, Thailand.
+cwp_amendment_constitutional_monarchy = {
+	parent = law_monarchy
+
+	allowed_laws = {
+		law_monarchy
+	}
+
+	modifier = {
+		country_legitimacy_headofstate_add = 10
+		country_authority_mult = -0.10
+		country_enactment_success_chance_law_autocracy_add = -0.10
+	}
+
+	possible = {
+		has_law = law_type:law_monarchy
+		country_has_voting_franchise = yes
+	}
+
+	would_sponsor = {
+		AND = {
+			exists = scope:approval
+			scope:approval > 0
+		}
+	}
+
+	ai_will_revoke = {
+		country_has_voting_franchise = no
+	}
+
+	can_repeal = {
+		legitimacy >= legitimacy_to_repeal_amendment
+	}
+
+	amendment_activism_multiplier = 0.25
+}
+
+# Presidential term limits: Mexico's "no reelección" (1917), the bars on immediate re-election in
+# Argentina, Chile, Colombia, Peru and Uruguay, and what became the US 22nd Amendment (1951).
+# Parent is the parliamentary republic: groups that want a weaker presidency back it.
+cwp_amendment_no_reelection = {
+	parent = law_parliamentary_republic
+
+	allowed_laws = {
+		law_presidential_republic
+	}
+
+	modifier = {
+		country_legitimacy_base_add = 5
+		country_authority_mult = -0.05
+		country_enactment_success_chance_law_autocracy_add = -0.10
+	}
+
+	possible = {
+		has_law = law_type:law_presidential_republic
+		country_has_voting_franchise = yes
+	}
+
+	# Mostly the opposition: the party that has not held the presidency wants it limited.
+	would_sponsor = {
+		OR = {
+			is_in_government = no
+			AND = {
+				exists = scope:approval
+				scope:approval > 0
+			}
+		}
+	}
+
+	ai_will_revoke = {
+		country_has_voting_franchise = no
+	}
+
+	can_repeal = {
+		legitimacy >= legitimacy_to_repeal_amendment
+	}
+
+	amendment_activism_multiplier = 0.5
+}
+
+# The army as guardian of the nation above civilian politics: Brazil's poder moderador, Turkey's 1935
+# Army Internal Service Law (art. 34; art. 35 of the 1961 law), the Argentine, Venezuelan and Thai officer coups.
+cwp_amendment_military_guardianship = {
+	parent = law_professional_army
+
+	allowed_laws = {
+		law_peasant_levies
+		law_professional_army
+		law_national_militia
+		law_mass_conscription
+	}
+
+	modifier = {
+		interest_group_ig_armed_forces_pol_str_mult = 0.25
+		interest_group_ig_armed_forces_approval_add = 1
+		country_coup_resistance_add = -0.25
+	}
+
+	possible = {
+		always = yes
+	}
+
+	would_sponsor = {
+		is_interest_group_type = ig_armed_forces
+	}
+
+	ai_will_revoke = {
+		NOT = {
+			any_interest_group = {
+				is_interest_group_type = ig_armed_forces
+				is_powerful = yes
+			}
+		}
+	}
+
+	can_repeal = {
+		legitimacy >= legitimacy_to_repeal_amendment
+	}
+
+	amendment_activism_multiplier = 0.5
+}
+
+# The party as the "leading core" of state and society (Soviet constitution of 1936, art. 126),
+# organised by democratic centralism. Only while communists hold power.
+cwp_amendment_leading_role_of_the_party = {
+	parent = law_single_party_state
+
+	allowed_laws = {
+		law_autocracy
+		law_oligarchy
+		law_single_party_state
+	}
+
+	modifier = {
+		country_legitimacy_base_add = 10
+		country_authority_mult = 0.10
+		country_legitimacy_ideological_incoherence_mult = -0.20
+	}
+
+	possible = {
+		cwp_country_has_communist_leadership = yes
+	}
+
+	would_sponsor = {
+		interest_group_has_socialist_ideology = yes
+	}
+
+	ai_will_revoke = {
+		NOT = { cwp_country_has_communist_leadership = yes }
+	}
+
+	can_repeal = {
+		legitimacy >= legitimacy_to_repeal_amendment
+	}
+
+	amendment_activism_multiplier = 0.5
+}
+
+# The party's lists of posts it fills and the cadres eligible for them.
+cwp_amendment_nomenklatura = {
+	parent = law_politicized_bureaucrats
+
+	allowed_laws = {
+		law_appointed_bureaucrats
+		law_politicized_bureaucrats
+	}
+
+	modifier = {
+		country_authority_add = 50
+		country_bureaucrats_pol_str_mult = 0.15
+		state_bureaucracy_population_base_cost_factor_mult = -0.10
+	}
+
+	possible = {
+		active_law:lawgroup_distribution_of_power ?= {
+			has_amendment = amendment_type:cwp_amendment_leading_role_of_the_party
+		}
+	}
+
+	would_sponsor = {
+		interest_group_has_socialist_ideology = yes
+	}
+
+	ai_will_revoke = {
+		NOT = {
+			active_law:lawgroup_distribution_of_power ?= {
+				has_amendment = amendment_type:cwp_amendment_leading_role_of_the_party
+			}
+		}
+	}
+
+	can_repeal = {
+		legitimacy >= legitimacy_to_repeal_amendment
+	}
+
+	amendment_activism_multiplier = 0.5
+}
+
+# Emergency powers in wartime: martial law, emergency regulations, suspended guarantees.
+cwp_amendment_state_of_emergency = {
+	parent = law_secret_police
+
+	allowed_laws = {
+		law_no_home_affairs
+		law_national_guard
+		law_domestic_intelligence_agency
+		law_secret_police
+	}
+
+	modifier = {
+		country_authority_mult = 0.15
+		country_legitimacy_base_add = -10
+		state_radicals_from_political_movements_mult = -0.15
+		country_coup_resistance_add = 0.25
+	}
+
+	possible = {
+		is_at_war = yes
+	}
+
+	would_sponsor = {
+		OR = {
+			is_interest_group_type = ig_armed_forces
+			AND = {
+				exists = scope:approval
+				scope:approval > 0
+			}
+		}
+	}
+
+	ai_will_revoke = {
+		is_at_war = no
+	}
+
+	can_repeal = {
+		legitimacy >= legitimacy_to_repeal_amendment
+	}
+
+	amendment_activism_multiplier = 1
+}
