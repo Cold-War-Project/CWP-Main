@@ -1,6 +1,6 @@
 # Germany: the German question
 
-Option C of [the Germany proposal](../proposals/germany.md): one storyline in three chapters. This file is the design brief and the area notes. Status: **chapter 1 merged** (#791) and **chapter 2 built** (branch `feat/germany-two-germanies`); chapter 3, the parent JE with its chapter widget, the Saar and Austria are not built yet.
+Option C of [the Germany proposal](../proposals/germany.md): one storyline in three chapters. This file is the design brief and the area notes. Status: **chapter 1 merged** (#791) and **chapter 2 built** (#810), **chapter 3 built** (branch `feat/germany-wende`); the parent JE with its chapter widget, the Saar and Austria are not built yet.
 
 ## Chapter 1: occupation and division (`je_cwp_german_question`)
 
@@ -79,6 +79,19 @@ While the border is open and the GDR lives worse, DDR carries `cwp_tg_republikfl
 
 Outcomes: **Die Wende** (legitimacy 0, historical; adds radicals in the GDR; chapter 3 will take over from here), **a lasting division** (legitimacy 100, Basic Treaty, DDR SoL at least GER's), **one German state** (either state gone). The Wall, Ostpolitik and the collapse all come from choices and state; there is no date.
 
+## Chapter 3: Die Wende (`je_cwp_die_wende`)
+
+Contextless, same group. Activates when chapter 2 ends in the Wende outcome (`cwp_tg_wende`) and both states exist. Involved: GER, DDR, USA, GBR, FRA, RUS.
+
+| Bar | Start | Up | Down |
+|---|---|---|---|
+| `cwp_dw_revolution_bar` Peaceful Revolution | 30 | DDR radicals ≥ 10%, the border opened, Moscow's guarantee withdrawn, the Round Table | the crackdown (−3), Soviet troops still guaranteeing the regime (−1) |
+| `cwp_dw_two_plus_four_bar` Two Plus Four | 0 | each of the four powers that consents (+1, the Soviet Union +1.5) | any power blocking (−3), revolution below 60 (−0.5) |
+
+Buttons: DDR opens the border, holds a Round Table, or cracks down (only before the border is open); each of the four powers consents, waits or blocks (stance is a country variable `cwp_dw_consent` / `cwp_dw_block`); GER offers Moscow credits (raises the Soviet AI's weight to consent). AI: the US consents at once, Britain and France once the US has and the revolution is at 70, the Soviet Union mainly once it has withdrawn its guarantee and been paid.
+
+Outcomes: **Unity** (both bars at 100: GER annexes DDR with incorporation, historical), **a democratic GDR** (revolution at 100 but Two Plus Four at 0 with a power blocking: the GDR enacts a parliamentary republic and universal suffrage), **the regime holds** (revolution at 0). Chapter 2 now also sets `cwp_tg_wende` on its Wende outcome.
+
 ## Known gaps and decisions for review
 
 - **Tuning is untested beyond a load test.** Rates were set so that the AI reaches the Bizone after about a year and the Basic Law around 1949; an observer run decides the final numbers.
@@ -87,4 +100,4 @@ Outcomes: **Die Wende** (legitimacy 0, historical; adds radicals in the GDR; cha
 - **Chapter 2 hand-off:** copy the final bar values to globals when chapter 2 exists to read them (not now: an unread variable is a log line).
 - **Berlin is not divided on the map**: DDR owns all of STATE_BRANDENBURG. The blockade is therefore modelled through variables and modifiers, not territory.
 - **GER formable** (#783 makes GER formable by any north German country with 63% of its culture states). A western zone or the DDR could form GER outside this JE. The formable should require the German question to be concluded, or not be a zone (to settle with the history thread).
-- Not built yet: parent JE with chapter list, chapter 2 (Two Germanies), chapter 3 (Die Wende), the Saar sub-JE, Austria.
+- Not built yet: parent JE with chapter list widget, the Saar sub-JE, Austria (State Treaty).

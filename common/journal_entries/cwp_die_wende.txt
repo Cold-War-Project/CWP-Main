@@ -1,0 +1,175 @@
+﻿# Cold War Project: the German question, chapter 3 - Die Wende.
+# Design: docs/agents/areas/germany.md. Starts when chapter 2 (cwp_two_germanies.txt) ends in the
+# collapse of the GDR's legitimacy (cwp_tg_wende). Contextless: GER, DDR and the four powers.
+# The revolution moves with protests, the border and Soviet restraint; unification needs the four
+# powers' consent, each of which can consent, wait or block. Nothing reads the date.
+
+je_cwp_die_wende = {
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+
+	group = je_group_global_international_situations
+
+	activation_description = {
+		always = yes
+	}
+
+	scripted_progress_bar = cwp_dw_revolution_bar
+	scripted_progress_bar = cwp_dw_two_plus_four_bar
+
+	scripted_button = cwp_dw_open_wall_button
+	scripted_button = cwp_dw_round_table_button
+	scripted_button = cwp_dw_crackdown_button
+	scripted_button = cwp_dw_consent_button
+	scripted_button = cwp_dw_delay_button
+	scripted_button = cwp_dw_block_button
+	scripted_button = cwp_dw_credits_button
+
+	is_shown_when_inactive = {
+		always = yes
+	}
+
+	possible = {
+		has_global_variable = cwp_tg_wende
+		NOT = { has_global_variable = cwp_dw_concluded }
+		exists = c:GER
+		exists = c:DDR
+	}
+
+	should_be_involved = {
+		cwp_dw_is_party = yes
+	}
+
+	should_show_when_not_involved = {
+		capital ?= { is_in_geographic_region = geographic_region_europe }
+	}
+
+	immediate_all_involved = {
+		if = {
+			limit = { is_player = yes }
+			trigger_event = { id = cwp_die_wende.1 days = 1 popup = yes }
+		}
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = cwp_dw_status_crackdown
+				trigger = { c:DDR ?= { has_modifier = cwp_dw_crackdown } }
+			}
+			triggered_desc = {
+				desc = cwp_dw_status_wall_open
+				trigger = { has_global_variable = cwp_dw_wall_open }
+			}
+			triggered_desc = {
+				desc = cwp_dw_status_protests
+			}
+		}
+	}
+
+	# Historical: the GDR accedes to the Federal Republic with the four powers' consent
+	outcome = {
+		header = cwp_dw_outcome_accession
+		effect_header = cwp_gq_outcome_effect_header
+		conclusion_desc = cwp_dw_outcome_accession_desc
+		color = "gold_positive"
+		flags = { historical }
+		trigger = {
+			custom_tooltip = {
+				text = cwp_dw_outcome_accession_tt
+				scope:journal_entry = {
+					"scripted_bar_progress(cwp_dw_revolution_bar)" >= 100
+					"scripted_bar_progress(cwp_dw_two_plus_four_bar)" >= 100
+				}
+			}
+		}
+		effect = {
+			set_global_variable = cwp_dw_concluded
+			c:GER ?= {
+				annex_with_incorporation = c:DDR
+				add_modifier = {
+					name = cwp_dw_unity
+					days = long_modifier_time
+				}
+				add_modifier = {
+					name = cwp_dw_solidarity_surcharge
+					days = long_modifier_time
+				}
+			}
+		}
+		effect_all_involved = {
+			trigger_event = { id = cwp_die_wende.4 days = 1 popup = yes }
+		}
+	}
+
+	# The revolution won, but a power blocked unity: a democratic GDR stays separate
+	outcome = {
+		header = cwp_dw_outcome_reformed
+		effect_header = cwp_gq_outcome_effect_header
+		conclusion_desc = cwp_dw_outcome_reformed_desc
+		color = "blue_negative"
+		trigger = {
+			custom_tooltip = {
+				text = cwp_dw_outcome_reformed_tt
+				scope:journal_entry = {
+					"scripted_bar_progress(cwp_dw_revolution_bar)" >= 100
+					"scripted_bar_progress(cwp_dw_two_plus_four_bar)" <= 0
+				}
+				any_country = {
+					cwp_dw_is_four_power = yes
+					has_variable = cwp_dw_block
+				}
+			}
+		}
+		effect = {
+			set_global_variable = cwp_dw_concluded
+			c:DDR ?= {
+				activate_law = law_type:law_parliamentary_republic
+				activate_law = law_type:law_universal_suffrage
+			}
+		}
+		effect_all_involved = {
+			trigger_event = { id = cwp_die_wende.5 days = 1 popup = yes }
+		}
+	}
+
+	# The regime held on by force
+	outcome = {
+		header = cwp_dw_outcome_crushed
+		effect_header = cwp_gq_outcome_effect_header
+		conclusion_desc = cwp_dw_outcome_crushed_desc
+		color = "blue_negative"
+		trigger = {
+			custom_tooltip = {
+				text = cwp_dw_outcome_crushed_tt
+				scope:journal_entry = { "scripted_bar_progress(cwp_dw_revolution_bar)" <= 0 }
+			}
+		}
+		effect = {
+			set_global_variable = cwp_dw_concluded
+		}
+		effect_all_involved = {
+			trigger_event = { id = cwp_die_wende.6 days = 1 popup = yes }
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			OR = {
+				NOT = { exists = c:DDR }
+				NOT = { exists = c:GER }
+			}
+		}
+		effect = {
+			set_global_variable = cwp_dw_concluded
+		}
+	}
+
+	weight = 10000
+
+	should_be_pinned_by_default_involved = yes
+	should_be_pinned_by_default_uninvolved_or_context = no
+
+	can_revolution_inherit = yes
+}
