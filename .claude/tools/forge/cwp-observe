@@ -34,5 +34,13 @@ vic-shot > "$OUT/final_shot.txt"
 cwp-vic errors > "$OUT/errors_end.txt" 2> "$OUT/canary_end.txt"
 command -v cwp-integrate >/dev/null && [[ "$WT" == *integration* ]] && cwp-integrate attribute "$OUT/errors_end.txt" > "$OUT/attribution.txt" 2>&1
 kill $PERF 2>/dev/null; cp "$(ls -t ~/forge/perf/*.csv | head -1)" "$OUT/perf.csv" 2>/dev/null
+# Per-area error greps (whole session), so each area thread reads only its own lines.
+declare -A AREA=(
+  [korea]='cwp_korea|korea|NRK|STK|divided_peninsula'
+  [germany]='cwp_gq|german_question|cwp_german|DDR|occupation_zone'
+  [china]='cwp_ccw|chinese_civil_war|PRC|ROC'
+  [decolonization]='cwp_tide|cwp_india|cwp_indonesia|cwp_indochina|cwp_algeria|decoloni|winds_of_change|war_support_from_journal_entries|cwp_former_colony'
+)
+for a in "${!AREA[@]}"; do grep -E -B2 -A3 "${AREA[$a]}" "$OUT/errors_end.txt" > "$OUT/errors_$a.txt" 2>/dev/null; done
 ls "$OUT"/*.md | sort > "$OUT/INDEX.txt"
 echo "$OUT"
