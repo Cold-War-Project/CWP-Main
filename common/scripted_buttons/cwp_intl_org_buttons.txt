@@ -1,0 +1,330 @@
+﻿# Cold War Project: international organization buttons (UN)
+# Button root = the member country pressing it (the AI presses them through ai_chance).
+
+########## Tabling General Assembly resolutions (on je_cwp_un) ##########
+
+cwp_un_propose_human_rights_button = {
+	name = "cwp_un_propose_human_rights_button"
+	desc = "cwp_un_propose_human_rights_button_desc"
+
+	visible = {
+		cwp_io_is_member = { ORG = un }
+		NOT = { cwp_io_proposal_passed = { PROP = un_human_rights } }
+	}
+	possible = {
+		# The Commission on Human Rights finished its draft in June 1948.
+		game_date >= 1948.6.1
+		custom_tooltip = {
+			text = cwp_io_proposal_can_open_tt
+			cwp_io_proposal_can_open = { PROP = un_human_rights }
+		}
+	}
+	effect = {
+		custom_tooltip = cwp_io_open_proposal_tt
+		hidden_effect = {
+			cwp_io_open_proposal = { PROP = un_human_rights }
+		}
+	}
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				country_rank >= rank_value:major_power
+				OR = {
+					has_law_or_variant = law_type:law_protected_speech
+					has_law_or_variant = law_type:law_right_of_assembly
+				}
+			}
+			add = 10
+		}
+	}
+}
+
+cwp_un_propose_law_of_the_sea_button = {
+	name = "cwp_un_propose_law_of_the_sea_button"
+	desc = "cwp_un_propose_law_of_the_sea_button_desc"
+
+	visible = {
+		cwp_io_is_member = { ORG = un }
+		NOT = { cwp_io_proposal_passed = { PROP = un_law_of_the_sea } }
+	}
+	possible = {
+		# The International Law Commission finished its draft articles in 1956.
+		game_date >= 1956.1.1
+		any_scope_state = { is_coastal = yes }
+		custom_tooltip = {
+			text = cwp_io_proposal_can_open_tt
+			cwp_io_proposal_can_open = { PROP = un_law_of_the_sea }
+		}
+	}
+	effect = {
+		custom_tooltip = cwp_io_open_proposal_tt
+		hidden_effect = {
+			cwp_io_open_proposal = { PROP = un_law_of_the_sea }
+		}
+	}
+	ai_chance = {
+		value = 0
+		if = {
+			limit = { country_rank >= rank_value:major_power }
+			add = 5
+		}
+	}
+}
+
+cwp_un_withdraw_button = {
+	name = "cwp_un_withdraw_button"
+	desc = "cwp_un_withdraw_button_desc"
+
+	visible = {
+		cwp_io_is_member = { ORG = un }
+		is_ai = no
+	}
+	possible = {
+		NOT = { has_variable = cwp_io_veto_un }
+	}
+	effect = {
+		cwp_io_remove_member = { ORG = un }
+		je:je_cwp_un ?= { remove_involved_country = ROOT }
+		set_variable = { name = cwp_io_rejected_un years = 1 }
+	}
+	ai_chance = {
+		value = 0
+	}
+}
+
+########## Admission vote (on je_cwp_un_admission) ##########
+
+cwp_un_admission_vote_yes_button = {
+	name = "cwp_un_admission_vote_yes_button"
+	desc = "cwp_un_admission_vote_yes_button_desc"
+	visible = { cwp_io_is_member = { ORG = un } }
+	selected = { cwp_io_voted = { PROP = un_admission VOTE = yes } }
+	possible = {
+		custom_tooltip = {
+			text = cwp_io_can_vote_tt
+			cwp_io_can_vote = { ORG = un PROP = un_admission }
+		}
+	}
+	effect = { cwp_io_cast_vote = { PROP = un_admission VOTE = yes } }
+	ai_chance = {
+		value = 30
+		if = {
+			limit = { cwp_un_applicant_is_friendly = yes }
+			add = 40
+		}
+		if = {
+			limit = { cwp_un_applicant_is_opposed = yes }
+			multiply = 0
+		}
+		if = {
+			limit = {
+				has_variable = cwp_io_veto_un
+				cwp_un_applicant_is_other_camp = yes
+			}
+			multiply = 0
+		}
+	}
+}
+
+cwp_un_admission_vote_no_button = {
+	name = "cwp_un_admission_vote_no_button"
+	desc = "cwp_un_admission_vote_no_button_desc"
+	visible = { cwp_io_is_member = { ORG = un } }
+	selected = { cwp_io_voted = { PROP = un_admission VOTE = no } }
+	possible = {
+		custom_tooltip = {
+			text = cwp_io_can_vote_tt
+			cwp_io_can_vote = { ORG = un PROP = un_admission }
+		}
+	}
+	effect = {
+		if = {
+			limit = { has_variable = cwp_io_veto_un }
+			custom_tooltip = cwp_io_veto_tt
+		}
+		cwp_io_cast_vote = { PROP = un_admission VOTE = no }
+	}
+	ai_chance = {
+		value = 2
+		if = {
+			limit = { cwp_un_applicant_is_opposed = yes }
+			add = 40
+		}
+		# A permanent member uses its veto against the other camp.
+		if = {
+			limit = {
+				has_variable = cwp_io_veto_un
+				cwp_un_applicant_is_other_camp = yes
+			}
+			add = 100
+		}
+	}
+}
+
+cwp_un_admission_vote_abstain_button = {
+	name = "cwp_un_admission_vote_abstain_button"
+	desc = "cwp_un_admission_vote_abstain_button_desc"
+	visible = { cwp_io_is_member = { ORG = un } }
+	selected = { cwp_io_voted = { PROP = un_admission VOTE = abstain } }
+	possible = {
+		custom_tooltip = {
+			text = cwp_io_can_vote_tt
+			cwp_io_can_vote = { ORG = un PROP = un_admission }
+		}
+	}
+	effect = { cwp_io_cast_vote = { PROP = un_admission VOTE = abstain } }
+	ai_chance = {
+		value = 10
+	}
+}
+
+########## Universal Declaration of Human Rights (on je_cwp_un_res_human_rights) ##########
+# 10 December 1948: 48 for, none against, 8 abstentions (the Soviet bloc, South Africa,
+# Saudi Arabia). The weights read those reasons from laws, not tags.
+
+cwp_un_human_rights_vote_yes_button = {
+	name = "cwp_io_vote_yes_button"
+	desc = "cwp_un_human_rights_vote_yes_button_desc"
+	visible = { cwp_io_is_member = { ORG = un } }
+	selected = { cwp_io_voted = { PROP = un_human_rights VOTE = yes } }
+	possible = {
+		custom_tooltip = {
+			text = cwp_io_can_vote_tt
+			cwp_io_can_vote = { ORG = un PROP = un_human_rights }
+		}
+	}
+	effect = { cwp_io_cast_vote = { PROP = un_human_rights VOTE = yes } }
+	ai_chance = {
+		value = 50
+		if = {
+			limit = {
+				OR = {
+					has_law_or_variant = law_type:law_council_republic
+					has_law_or_variant = law_type:law_racial_segregation
+					has_law_or_variant = law_type:law_ethnostate
+					has_law_or_variant = law_type:law_outlawed_dissent
+				}
+			}
+			multiply = 0.1
+		}
+	}
+}
+
+cwp_un_human_rights_vote_no_button = {
+	name = "cwp_io_vote_no_button"
+	desc = "cwp_un_human_rights_vote_no_button_desc"
+	visible = { cwp_io_is_member = { ORG = un } }
+	selected = { cwp_io_voted = { PROP = un_human_rights VOTE = no } }
+	possible = {
+		custom_tooltip = {
+			text = cwp_io_can_vote_tt
+			cwp_io_can_vote = { ORG = un PROP = un_human_rights }
+		}
+	}
+	effect = { cwp_io_cast_vote = { PROP = un_human_rights VOTE = no } }
+	ai_chance = {
+		value = 1
+	}
+}
+
+cwp_un_human_rights_vote_abstain_button = {
+	name = "cwp_io_vote_abstain_button"
+	desc = "cwp_un_human_rights_vote_abstain_button_desc"
+	visible = { cwp_io_is_member = { ORG = un } }
+	selected = { cwp_io_voted = { PROP = un_human_rights VOTE = abstain } }
+	possible = {
+		custom_tooltip = {
+			text = cwp_io_can_vote_tt
+			cwp_io_can_vote = { ORG = un PROP = un_human_rights }
+		}
+	}
+	effect = { cwp_io_cast_vote = { PROP = un_human_rights VOTE = abstain } }
+	ai_chance = {
+		value = 5
+		if = {
+			limit = { has_law_or_variant = law_type:law_council_republic }
+			add = 100
+		}
+		if = {
+			limit = {
+				OR = {
+					has_law_or_variant = law_type:law_racial_segregation
+					has_law_or_variant = law_type:law_ethnostate
+				}
+			}
+			add = 80
+		}
+		if = {
+			limit = {
+				has_law_or_variant = law_type:law_monarchy
+				has_law_or_variant = law_type:law_state_religion
+				has_law_or_variant = law_type:law_outlawed_dissent
+			}
+			add = 60
+		}
+	}
+}
+
+########## Law of the Sea (on je_cwp_un_res_law_of_the_sea) ##########
+# Geneva, 1958: the four conventions passed by wide margins; landlocked states had
+# little at stake, and the Soviet bloc signed with reservations.
+
+cwp_un_law_of_the_sea_vote_yes_button = {
+	name = "cwp_io_vote_yes_button"
+	desc = "cwp_un_law_of_the_sea_vote_yes_button_desc"
+	visible = { cwp_io_is_member = { ORG = un } }
+	selected = { cwp_io_voted = { PROP = un_law_of_the_sea VOTE = yes } }
+	possible = {
+		custom_tooltip = {
+			text = cwp_io_can_vote_tt
+			cwp_io_can_vote = { ORG = un PROP = un_law_of_the_sea }
+		}
+	}
+	effect = { cwp_io_cast_vote = { PROP = un_law_of_the_sea VOTE = yes } }
+	ai_chance = {
+		value = 20
+		if = {
+			limit = { any_scope_state = { is_coastal = yes } }
+			add = 40
+		}
+	}
+}
+
+cwp_un_law_of_the_sea_vote_no_button = {
+	name = "cwp_io_vote_no_button"
+	desc = "cwp_un_law_of_the_sea_vote_no_button_desc"
+	visible = { cwp_io_is_member = { ORG = un } }
+	selected = { cwp_io_voted = { PROP = un_law_of_the_sea VOTE = no } }
+	possible = {
+		custom_tooltip = {
+			text = cwp_io_can_vote_tt
+			cwp_io_can_vote = { ORG = un PROP = un_law_of_the_sea }
+		}
+	}
+	effect = { cwp_io_cast_vote = { PROP = un_law_of_the_sea VOTE = no } }
+	ai_chance = {
+		value = 3
+	}
+}
+
+cwp_un_law_of_the_sea_vote_abstain_button = {
+	name = "cwp_io_vote_abstain_button"
+	desc = "cwp_un_law_of_the_sea_vote_abstain_button_desc"
+	visible = { cwp_io_is_member = { ORG = un } }
+	selected = { cwp_io_voted = { PROP = un_law_of_the_sea VOTE = abstain } }
+	possible = {
+		custom_tooltip = {
+			text = cwp_io_can_vote_tt
+			cwp_io_can_vote = { ORG = un PROP = un_law_of_the_sea }
+		}
+	}
+	effect = { cwp_io_cast_vote = { PROP = un_law_of_the_sea VOTE = abstain } }
+	ai_chance = {
+		value = 10
+		if = {
+			limit = { NOT = { any_scope_state = { is_coastal = yes } } }
+			add = 40
+		}
+	}
+}

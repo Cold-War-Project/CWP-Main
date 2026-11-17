@@ -1,0 +1,95 @@
+﻿# Cold War Project: international organization template (triggers)
+# State layout: see common/scripted_effects/cwp_intl_org_effects.txt
+
+# Country scope
+cwp_io_is_member = {
+	has_variable = cwp_io_member_$ORG$
+}
+
+# Country scope: may this member vote on the proposal now?
+cwp_io_can_vote = {
+	has_variable = cwp_io_member_$ORG$
+	has_global_variable = cwp_io_$PROP$_open
+	NOT = { has_variable = cwp_io_vote_$PROP$ }
+}
+
+# Country scope: has this country already voted this way?
+cwp_io_voted = {
+	var:cwp_io_vote_$PROP$ ?= flag:$VOTE$
+}
+
+# No scope: may a new proposal be tabled?
+cwp_io_proposal_can_open = {
+	NOT = { has_global_variable = cwp_io_$PROP$_open }
+	NOT = { has_global_variable = cwp_io_$PROP$_cooldown }
+	NOT = { global_var:cwp_io_$PROP$_result ?= flag:passed }
+}
+
+# No scope: would the proposal pass if the vote closed now?
+cwp_io_proposal_would_pass = {
+	global_var:cwp_io_$PROP$_vetoed = 0
+	global_var:cwp_io_$PROP$_yes > 0
+	global_var:cwp_io_$PROP$_share >= global_var:cwp_io_$ORG$_threshold
+}
+
+# No scope: has the proposal passed?
+cwp_io_proposal_passed = {
+	global_var:cwp_io_$PROP$_result ?= flag:passed
+}
+
+# No scope
+cwp_io_has_rotating_presidency = {
+	global_var:cwp_io_$ORG$_presidency ?= 1
+}
+
+# Country scope (root = the voting member): is the UN applicant hostile to root?
+# War, bad relations, or membership of a power bloc led by a country cold toward root.
+cwp_un_applicant_is_opposed = {
+	global_var:cwp_un_admission_target ?= {
+		OR = {
+			has_war_with = root
+			relations:root <= relations_threshold:poor
+			AND = {
+				is_in_power_bloc = yes
+				NOT = { is_in_same_power_bloc = root }
+				power_bloc ?= {
+					power_bloc_leader ?= {
+						NOT = { this = root }
+						relations:root <= relations_threshold:cold
+					}
+				}
+			}
+		}
+	}
+}
+
+# Country scope (root = the voting member): is the applicant in the other Cold War camp?
+# Hostility as above, or the gap between council republics and the rest. Only the
+# permanent members weigh this for a veto, as in the 1946-1955 membership deadlock.
+cwp_un_applicant_is_other_camp = {
+	OR = {
+		cwp_un_applicant_is_opposed = yes
+		global_var:cwp_un_admission_target ?= {
+			OR = {
+				AND = {
+					has_law_or_variant = law_type:law_council_republic
+					root = { NOT = { has_law_or_variant = law_type:law_council_republic } }
+				}
+				AND = {
+					NOT = { has_law_or_variant = law_type:law_council_republic }
+					root = { has_law_or_variant = law_type:law_council_republic }
+				}
+			}
+		}
+	}
+}
+
+# Country scope (root = the voting member): is the applicant a friend of root?
+cwp_un_applicant_is_friendly = {
+	global_var:cwp_un_admission_target ?= {
+		OR = {
+			relations:root >= relations_threshold:cordial
+			is_in_same_power_bloc = root
+		}
+	}
+}

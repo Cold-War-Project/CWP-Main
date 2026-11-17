@@ -5,15 +5,13 @@
 | Branch | Use |
 |---|---|
 | `CWP2` | **Working branch.** Base for all work, target of all PRs. Created 2026-11-16 from `cwp_rebuild` plus the ports that passed the combined test. Upper case. |
-| `CWP2-staging` | `CWP2` plus every open, non-conflicting PR, rebuilt and force-pushed by `cwp-integrate publish`. For testing and sharing the merged state; never base work on it or open a PR from it. |
 | `cwp_rebuild` | Maddie96's rebuild (people call it "CWP_Rebuild"). The base `CWP2` grew from; no new PRs. |
 | `dev` | Read-only porting source (MVP, game 1.13). |
 | `master` | Default branch on GitHub; last release (2024). Read-only reference until release. |
 | `rebuild` | Earlier rebuild attempt off master. Ignore. |
-| `port/<area>` | Phase 1 porting work, one per area. |
-| `feat/<area>-<topic>`, `fix/<topic>`, `docs/<topic>` | Later work. Short-lived; one PR each. |
+| `<area>/<topic>`, `feat/<topic>`, `fix/<topic>`, `docs/<topic>` | Local work branches in `~/forge/CWP-Main`. Not pushed; tested via the staging queue, then landed on `CWP2` ([landing-work.md](landing-work.md)). |
 
-Fetch by name (`git fetch origin CWP2 cwp_rebuild dev master`). Never push to `CWP2`, `cwp_rebuild`, `dev` or `master` directly.
+Fetch by name (`git fetch origin CWP2 cwp_rebuild dev master`). Never push anything: work branches stay local, and only `cwp-integrate land` (integration owner) pushes tested commits to `CWP2`.
 
 ## Worktrees on Forge
 
@@ -40,7 +38,7 @@ Rules:
 
 - **One thread per worktree.** Do not edit files in another area's worktree; send the owner the change instead.
 - A worktree is a complete mod root: `cwp-vic link ~/forge/worktrees/<area>` makes the game load it ([forge-testing.md](forge-testing.md)).
-- Stay current: `git fetch origin CWP2 && git rebase origin/CWP2` before opening a PR and after any PR touching shared files merges. Push with `--force-with-lease` only on your own branch.
+- Stay current: `git fetch origin CWP2 && git rebase origin/CWP2` before opening a PR and after any PR touching shared files merges. 
 - For a second slice while the first PR is in review, branch the next one off your first branch or off `origin/CWP2` in the same worktree; don't make a second worktree for the same area unless the coordinator agrees.
 - The git stash is shared by all worktrees. Use WIP commits, not `git stash`.
 - Remove a worktree only after its branch is merged: `git worktree remove ~/forge/worktrees/<area>`.

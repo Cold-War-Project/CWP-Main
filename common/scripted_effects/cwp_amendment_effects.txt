@@ -1,0 +1,330 @@
+﻿# Cold War Project: constitutional amendments in force on 1946.1.1.
+# Called once from common/history/global/cwp_amendments_1946.txt, after every country has its laws.
+# Each holder and its source are listed in docs/agents/areas/amendments.md.
+
+# Country scope. Adds $AMENDMENT$ to the active law of $LAWGROUP$, sponsored by $IG$ when it exists.
+# The amendment's own allowed_laws and possible decide whether it can attach; callers guard the law.
+cwp_add_start_amendment = {
+	if = {
+		limit = { exists = ig:$IG$ }
+		ig:$IG$ = { save_temporary_scope_as = cwp_amendment_sponsor }
+	}
+	else = {
+		random_interest_group = {
+			limit = { is_marginal = no }
+			save_temporary_scope_as = cwp_amendment_sponsor
+		}
+	}
+	if = {
+		limit = { exists = scope:cwp_amendment_sponsor }
+		active_law:$LAWGROUP$ ?= {
+			add_amendment = {
+				type = $AMENDMENT$
+				sponsor = scope:cwp_amendment_sponsor
+			}
+		}
+	}
+}
+
+# Country scope. Tradition of Free Elections needs vanilla's free_elections_var so that a later change
+# of voting law carries it over (inherit_free_elections_effect in the distribution-of-power laws).
+cwp_add_start_free_elections = {
+	if = {
+		limit = {
+			OR = {
+				has_law = law_type:law_oligarchy
+				has_law = law_type:law_landed_voting
+				has_law = law_type:law_wealth_voting
+				has_law = law_type:law_census_voting
+				has_law = law_type:law_universal_suffrage
+			}
+		}
+		set_variable = free_elections_var
+		cwp_add_start_amendment = { AMENDMENT = amendment_tradition_of_free_elections LAWGROUP = lawgroup_distribution_of_power IG = ig_intelligentsia }
+	}
+}
+
+cwp_effect_1946_starting_amendments = {
+	# Tradition of Free Elections: democracies with an unbroken (or only occupation-interrupted) record.
+	every_country = {
+		limit = {
+			OR = {
+				c:USA ?= this
+				c:GBR ?= this
+				c:CAN ?= this
+				c:AST ?= this
+				c:NZL ?= this
+				c:IRE ?= this
+				c:SWI ?= this
+				c:SWE ?= this
+				c:NOR ?= this
+				c:DEN ?= this
+				c:NET ?= this
+				c:BEL ?= this
+				c:LUX ?= this
+				c:ICL ?= this
+				c:FIN ?= this
+				c:FRA ?= this
+			}
+		}
+		cwp_add_start_free_elections = yes
+	}
+
+	# Constitutional monarchy: the crown without executive power.
+	every_country = {
+		limit = {
+			OR = {
+				c:GBR ?= this
+				c:CAN ?= this
+				c:AST ?= this
+				c:NZL ?= this
+				c:SAF ?= this
+				c:NET ?= this
+				c:BEL ?= this
+				c:LUX ?= this
+				c:DEN ?= this
+				c:NOR ?= this
+				c:SWE ?= this
+				c:ITA ?= this
+				c:GRE ?= this
+				c:ROM ?= this
+				c:BUL ?= this
+				c:THA ?= this
+			}
+			has_law = law_type:law_monarchy
+			country_has_voting_franchise = yes
+		}
+		cwp_add_start_amendment = { AMENDMENT = cwp_amendment_constitutional_monarchy LAWGROUP = lawgroup_governance_principles IG = ig_landowners }
+	}
+
+	# No re-election of the president.
+	every_country = {
+		limit = {
+			OR = {
+				c:MEX ?= this
+				c:ARG ?= this
+				c:CHL ?= this
+				c:CLM ?= this
+				c:PEU ?= this
+				c:URU ?= this
+			}
+			has_law = law_type:law_presidential_republic
+			country_has_voting_franchise = yes
+		}
+		cwp_add_start_amendment = { AMENDMENT = cwp_amendment_no_reelection LAWGROUP = lawgroup_governance_principles IG = ig_intelligentsia }
+	}
+
+	# The army as guardian.
+	every_country = {
+		limit = {
+			OR = {
+				c:BRZ ?= this
+				c:ARG ?= this
+				c:TUR ?= this
+				c:THA ?= this
+				c:VNZ ?= this
+				c:PRG ?= this
+				c:ELS ?= this
+				c:PEU ?= this
+			}
+			OR = {
+				has_law = law_type:law_peasant_levies
+				has_law = law_type:law_professional_army
+				has_law = law_type:law_national_militia
+				has_law = law_type:law_mass_conscription
+			}
+		}
+		cwp_add_start_amendment = { AMENDMENT = cwp_amendment_military_guardianship LAWGROUP = lawgroup_army_model IG = ig_armed_forces }
+	}
+
+	# Cult of personality (vanilla amendment): Stalin, Tito, Franco, Trujillo, Choibalsan.
+	every_country = {
+		limit = {
+			OR = {
+				c:RUS ?= this
+				c:YUG ?= this
+				c:SPA ?= this
+				c:DCR ?= this
+				c:MGL ?= this
+			}
+			OR = {
+				has_law = law_type:law_autocracy
+				has_law = law_type:law_oligarchy
+				has_law = law_type:law_single_party_state
+			}
+		}
+		cwp_add_start_amendment = { AMENDMENT = amendment_cult_of_personality LAWGROUP = lawgroup_distribution_of_power IG = ig_armed_forces }
+	}
+
+	# Leading role of the party, where communists already rule alone.
+	every_country = {
+		limit = {
+			OR = {
+				c:RUS ?= this
+				c:YUG ?= this
+				c:ALB ?= this
+				c:MGL ?= this
+				c:PRC ?= this
+			}
+			OR = {
+				has_law = law_type:law_autocracy
+				has_law = law_type:law_oligarchy
+				has_law = law_type:law_single_party_state
+			}
+			cwp_country_has_communist_leadership = yes
+		}
+		cwp_add_start_amendment = { AMENDMENT = cwp_amendment_leading_role_of_the_party LAWGROUP = lawgroup_distribution_of_power IG = ig_trade_unions }
+	}
+
+	# Anticlerical constitutions (vanilla State Anti-Clericalism): Mexico 1917, Kemalist Turkey.
+	every_country = {
+		limit = {
+			OR = {
+				c:MEX ?= this
+				c:TUR ?= this
+			}
+			OR = {
+				has_law = law_type:law_state_religion
+				has_law = law_type:law_freedom_of_conscience
+				has_law = law_type:law_total_separation
+			}
+		}
+		cwp_add_start_amendment = { AMENDMENT = amendment_state_anti_clericalism LAWGROUP = lawgroup_church_and_state IG = ig_intelligentsia }
+	}
+
+	# Electoral machines that manage the vote (vanilla Electoral Clientelism): the PRI, the Egyptian and Iraqi palaces.
+	every_country = {
+		limit = {
+			OR = {
+				c:MEX ?= this
+				c:EGY ?= this
+				c:IRQ ?= this
+			}
+			modifier:country_forbid_electoral_fraud_bool = no
+			OR = {
+				has_law = law_type:law_oligarchy
+				has_law = law_type:law_landed_voting
+				has_law = law_type:law_wealth_voting
+				has_law = law_type:law_census_voting
+				has_law = law_type:law_universal_suffrage
+			}
+		}
+		set_variable = caciquismo_var
+		cwp_add_start_amendment = { AMENDMENT = amendment_electoral_clientelism LAWGROUP = lawgroup_distribution_of_power IG = ig_landowners }
+	}
+
+	# Voting age (vanilla amendments): 21 in most democracies, 25 in Denmark and the Netherlands.
+	every_country = {
+		limit = {
+			OR = {
+				c:USA ?= this
+				c:GBR ?= this
+				c:FRA ?= this
+				c:CAN ?= this
+				c:AST ?= this
+				c:NZL ?= this
+				c:IRE ?= this
+				c:BEL ?= this
+				c:LUX ?= this
+				c:ICL ?= this
+				c:ITA ?= this
+				c:SWE ?= this
+				c:FIN ?= this
+			}
+			OR = {
+				has_law = law_type:law_census_voting
+				has_law = law_type:law_universal_suffrage
+			}
+		}
+		cwp_add_start_amendment = { AMENDMENT = amendment_voting_age_21 LAWGROUP = lawgroup_distribution_of_power IG = ig_intelligentsia }
+	}
+	every_country = {
+		limit = {
+			OR = {
+				c:DEN ?= this
+				c:NET ?= this
+			}
+			OR = {
+				has_law = law_type:law_census_voting
+				has_law = law_type:law_universal_suffrage
+			}
+		}
+		cwp_add_start_amendment = { AMENDMENT = amendment_voting_age_25 LAWGROUP = lawgroup_distribution_of_power IG = ig_intelligentsia }
+	}
+
+	# Single-country amendments.
+	c:USA ?= {
+		if = {
+			limit = {
+				OR = {
+					has_law = law_type:law_right_of_assembly
+					has_law = law_type:law_protected_speech
+				}
+			}
+			cwp_add_start_amendment = { AMENDMENT = cwp_amendment_bill_of_rights LAWGROUP = lawgroup_free_speech IG = ig_intelligentsia }
+		}
+		if = {
+			limit = { has_law = law_type:law_presidential_republic }
+			cwp_add_start_amendment = { AMENDMENT = amendment_american_second_amendment LAWGROUP = lawgroup_governance_principles IG = ig_rural_folk }
+		}
+		# Poll taxes and literacy tests, if the start state models the vote as universal.
+		if = {
+			limit = { has_law = law_type:law_universal_suffrage }
+			cwp_add_start_amendment = { AMENDMENT = amendment_voter_suppression_policies LAWGROUP = lawgroup_distribution_of_power IG = ig_landowners }
+		}
+	}
+	c:GBR ?= {
+		if = {
+			limit = {
+				OR = {
+					has_law = law_type:law_monarchy
+					has_law = law_type:law_parliamentary_republic
+				}
+			}
+			cwp_add_start_amendment = { AMENDMENT = cwp_amendment_parliamentary_sovereignty LAWGROUP = lawgroup_governance_principles IG = ig_landowners }
+		}
+	}
+	c:SWI ?= {
+		if = {
+			limit = {
+				OR = {
+					has_law = law_type:law_wealth_voting
+					has_law = law_type:law_census_voting
+					has_law = law_type:law_universal_suffrage
+				}
+			}
+			cwp_add_start_amendment = { AMENDMENT = cwp_amendment_direct_democracy LAWGROUP = lawgroup_distribution_of_power IG = ig_petty_bourgeoisie }
+		}
+	}
+	c:FRA ?= {
+		if = {
+			limit = { has_law = law_type:law_parliamentary_republic }
+			cwp_add_start_amendment = { AMENDMENT = cwp_amendment_assembly_government LAWGROUP = lawgroup_governance_principles IG = ig_trade_unions }
+		}
+	}
+	c:LEB ?= {
+		if = {
+			limit = {
+				OR = {
+					has_law = law_type:law_oligarchy
+					has_law = law_type:law_landed_voting
+					has_law = law_type:law_wealth_voting
+					has_law = law_type:law_census_voting
+					has_law = law_type:law_universal_suffrage
+				}
+			}
+			cwp_add_start_amendment = { AMENDMENT = cwp_amendment_national_pact LAWGROUP = lawgroup_distribution_of_power IG = ig_devout }
+		}
+	}
+	c:RUS ?= {
+		if = {
+			limit = {
+				OR = {
+					has_law = law_type:law_appointed_bureaucrats
+					has_law = law_type:law_politicized_bureaucrats
+				}
+			}
+			cwp_add_start_amendment = { AMENDMENT = cwp_amendment_nomenklatura LAWGROUP = lawgroup_bureaucracy IG = ig_bureaucrats }
+		}
+	}
+}

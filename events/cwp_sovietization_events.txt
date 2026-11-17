@@ -1,0 +1,123 @@
+﻿namespace = cwp_sov
+
+cwp_sov.1 = {
+	type = country_event
+	placement = root
+
+	title = cwp_sov.1.t
+	desc = cwp_sov.1.d
+	flavor = cwp_sov.1.f
+
+	event_image = { video = "ip5_soviet_deliberation" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_revolutionary_flag.dds"
+
+	duration = 3
+
+	immediate = {
+		overlord ?= { save_scope_as = cwp_sov_occupier }
+	}
+
+	option = {
+		name = cwp_sov.1.a
+		default_option = yes
+	}
+}
+
+# Control is complete.
+cwp_sov.2 = {
+	type = country_event
+	placement = root
+
+	title = cwp_sov.2.t
+	desc = cwp_sov.2.d
+	flavor = cwp_sov.2.f
+
+	event_image = { video = "unspecific_military_parade" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_revolutionary_flag.dds"
+
+	duration = 3
+
+	immediate = {
+		overlord ?= { save_scope_as = cwp_sov_occupier }
+	}
+
+	option = {
+		name = cwp_sov.2.a
+		default_option = yes
+		set_variable = cwp_sov_settled_var
+		activate_law = law_type:law_council_republic
+		activate_law = law_type:law_single_party_state
+		add_modifier = {
+			name = cwp_sov_peoples_republic
+			years = 5
+		}
+		if = {
+			limit = { is_subject_type = subject_type_military_occupation }
+			change_subject_type = subject_type_puppet
+		}
+	}
+}
+
+# Resistance boils over.
+cwp_sov.3 = {
+	type = country_event
+	placement = root
+
+	title = cwp_sov.3.t
+	desc = cwp_sov.3.d
+	flavor = cwp_sov.3.f
+
+	event_image = { video = "votp_barricade" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+
+	duration = 3
+
+	trigger = {
+		has_journal_entry = je_cwp_peoples_democracy
+	}
+
+	immediate = {
+		overlord ?= { save_scope_as = cwp_sov_occupier }
+	}
+
+	option = { # Call in the occupation troops
+		name = cwp_sov.3.a
+		default_option = yes
+		trigger = { cwp_iq_under_soviet_pressure = yes }
+		remove_variable = cwp_sov_uprising_pending_var
+		je:je_cwp_peoples_democracy ?= {
+			add_progress = { value = -70 name = cwp_sov_resistance_bar }
+			add_progress = { value = 10 name = cwp_sov_control_bar }
+		}
+		add_modifier = {
+			name = cwp_sov_soviet_intervention
+			years = 5
+		}
+		add_radicals = { value = 0.2 }
+		ai_chance = { base = 30 }
+	}
+
+	option = { # Concede free elections
+		name = cwp_sov.3.b
+		remove_variable = cwp_sov_uprising_pending_var
+		set_variable = cwp_sov_settled_var
+		activate_law = law_type:law_universal_suffrage
+		add_modifier = {
+			name = cwp_sov_democracy_survives
+			years = 5
+		}
+		scope:cwp_sov_occupier ?= {
+			change_relations = { country = root value = -40 }
+		}
+		ai_chance = {
+			base = 2
+			modifier = {
+				trigger = { cwp_iq_under_soviet_pressure = no }
+				add = 20
+			}
+		}
+	}
+}

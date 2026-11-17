@@ -1,0 +1,158 @@
+﻿# Cold War Project: nuclear weapons.
+# The United States starts with the bomb (history). Anyone else must build one: a decision opens the programme,
+# two bars track fissile material and weapon design, and the test is the government's call once both are done.
+
+je_cwp_atomic_monopoly = {
+	icon = "gfx/interface/icons/event_icons/event_skull.dds"
+	group = je_group_foreign_affairs
+
+	activation_description = { always = yes }
+
+	is_shown_when_inactive = {
+		c:USA ?= this
+		NOT = { has_variable = cwp_nuc_monopoly_done_var }
+	}
+
+	possible = {
+		NOT = {
+			any_country = {
+				NOT = { this = root }
+				cwp_is_nuclear_power = yes
+			}
+		}
+	}
+
+	immediate = {
+		set_variable = cwp_nuclear_power_var
+		add_modifier = { name = cwp_nuclear_power }
+	}
+
+	modifiers_while_active = {
+		cwp_atomic_monopoly
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		conclusion_desc = je_cwp_atomic_monopoly_broken_desc
+		color = "blue_negative"
+		trigger = {
+			custom_tooltip = {
+				text = cwp_nuc_another_power_tested_tt
+				any_country = {
+					NOT = { this = root }
+					cwp_is_nuclear_power = yes
+				}
+			}
+		}
+		effect = {
+			set_variable = cwp_nuc_monopoly_done_var
+		}
+	}
+
+	weight = 1000
+	transferable = no
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_uninvolved_or_context = no
+}
+
+je_cwp_nuclear_programme = {
+	icon = "gfx/interface/icons/event_icons/event_skull.dds"
+	group = je_group_foreign_affairs
+
+	activation_description = { always = yes }
+
+	immediate = {
+		add_modifier = {
+			name = cwp_nuc_programme_cost
+			multiplier = cwp_nuc_programme_cost
+		}
+		trigger_event = { id = cwp_nuc.4 popup = yes }
+	}
+
+	scripted_progress_bar = cwp_nuc_fissile_bar
+	scripted_progress_bar = cwp_nuc_design_bar
+
+	scripted_button = cwp_nuc_uranium_button
+	scripted_button = cwp_nuc_espionage_button
+	scripted_button = cwp_nuc_foreign_help_button
+	scripted_button = cwp_nuc_test_button
+	scripted_button = cwp_nuc_abandon_button
+
+	on_yearly_pulse = {
+		effect = {
+			remove_modifier = cwp_nuc_programme_cost
+			add_modifier = {
+				name = cwp_nuc_programme_cost
+				multiplier = cwp_nuc_programme_cost
+			}
+		}
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_nuclear_programme_status_ready
+				trigger = {
+					scope:journal_entry = {
+						"scripted_bar_progress(cwp_nuc_fissile_bar)" >= 100
+						"scripted_bar_progress(cwp_nuc_design_bar)" >= 100
+					}
+				}
+			}
+			desc = je_cwp_nuclear_programme_status
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_nuclear_programme_success_desc
+		color = "gold_positive"
+		trigger = {
+			cwp_is_nuclear_power = yes
+		}
+		effect = {
+			remove_modifier = cwp_nuc_programme_cost
+			remove_variable = cwp_nuc_uranium_var
+			remove_variable = cwp_nuc_espionage_var
+			remove_variable = cwp_nuc_foreign_help_var
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		conclusion_desc = je_cwp_nuclear_programme_abandoned_desc
+		color = "blue_negative"
+		trigger = {
+			has_variable = cwp_nuc_abandoned_var
+		}
+		effect = {
+			remove_modifier = cwp_nuc_programme_cost
+			remove_variable = cwp_nuc_abandoned_var
+			remove_variable = cwp_nuc_programme_var
+			remove_variable = cwp_nuc_uranium_var
+			remove_variable = cwp_nuc_espionage_var
+			remove_variable = cwp_nuc_foreign_help_var
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_cwp_nuclear_programme_abandoned_desc
+		trigger = {
+			is_subject = yes
+			NOT = { cwp_is_nuclear_power = yes }
+		}
+		effect = {
+			remove_modifier = cwp_nuc_programme_cost
+			remove_variable = cwp_nuc_programme_var
+		}
+	}
+
+	weight = 1000
+	transferable = no
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}

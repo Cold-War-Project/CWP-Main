@@ -22,13 +22,13 @@ One contextless JE in `je_group_global_international_situations`, involving `PRC
 | PRC holds a Manchurian state | +0.5 |
 | US aid to the ROC | -1 |
 | One army over 1.5 times the other's size | +/-0.5 |
-| Battles won between the two (on_battle_won hook, as vanilla's Carlist score) | +/-1 each |
+| Battles won between the two (on_battle_won hook, as vanilla's Carlist score) | +/-0.5 each (halved after the observer run: the 1946-47 Nationalist battle wins outweighed every structural factor) |
 
 **War support** (1.15 scale 0 to 100, recalculated every weekly beat; occupation alone costs up to -5 a beat). The JE never sets war support directly: its three terms are in the script value `cwp_china_war_support` (`common/script_values/cwp_chinese_civil_war_values.txt`, root = country, `scope:war`), which the shared `REPLACE:war_support_from_journal_entries` in `zz_vanilla_script_values.txt` calls (that block is owned by the decolonization thread, #793; this branch is stacked on it). Advisor review 2026-11-17: pulse top-ups and `add_war_support_change` (a persistent, stacking rate) were rejected in favour of this, which is what vanilla's Carlist (+10 a beat) and Russian Civil War (occupation times a factor from the bar) do.
 
 | Term | When | Per beat |
 |---|---|---|
-| People's war | `cwp_ccw_peoples_war_phase` | +5 for both |
+| People's war | `cwp_ccw_peoples_war_phase` | +5 for both, and the occupation penalty cancelled (observer with 1946 armies: +5 alone let the ROC annex the PRC by Nov 1947) |
 | The strait | ROC controls Formosa and no mainland state | ROC: cancels the occupation penalty, +2. Lapses by itself once the PRC controls Formosa, so a landing that holds ends the war through the annex war goal |
 | Losing the war | decisive phase, bar >= 25 (ROC, while it still holds mainland) or <= -25 (PRC) | enemy occupation x -1, x -2 at +/-40 |
 
