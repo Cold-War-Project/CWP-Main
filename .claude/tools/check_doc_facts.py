@@ -85,8 +85,8 @@ R = ".claude/rules/"
 FACTS = [
     Fact(R + "economy.md", r"`company_types` and `prestige_goods` are replaced but (empty)",
          lambda: ["empty" if empty("common/company_types") and empty("common/prestige_goods") else "NOT EMPTY ANY MORE"], kind="str"),
-    Fact(R + "journal-and-content.md", r"`objectives`, `objective_subgoals` and `achievements` are in `replace_paths` and currently (empty)",
-         lambda: ["empty" if all(empty("common/" + f) for f in ("objectives", "objective_subgoals", "achievements")) else "NOT EMPTY ANY MORE"], kind="str"),
+    Fact(R + "journal-and-content.md", r"`achievements` is still (empty)",
+         lambda: ["empty" if empty("common/achievements") else "NOT EMPTY ANY MORE"], kind="str"),
     Fact(R + "technology.md", r"technologies exist only in era_1 to era_(\d+)",
          lambda: [max(int(x) for x in re.findall(r"era\s*=\s*era_(\d+)",
                   "".join(open(p, encoding="utf-8-sig").read() for p in files(ROOT, "common/technology/technologies"))))]),

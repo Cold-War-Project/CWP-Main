@@ -24,7 +24,7 @@ paths:
 - Vanilla has hundreds of journal entries; the mod has its own `cwp_*` journal entries (see "Mod journal entries" below) and keeps only a handful of vanilla ones alive. The rest are neutralised: `zz_vanilla_journal_entries.txt` / `zz_unwanted_vanilla_journal_entries.txt` hold keyword stubs, and most vanilla JE files are same-name overwrites, usually with the `# Cold War Project: same-name overwrite` header (user's choice over a `replace_paths` entry, to keep per-file diffs against future patches).
 - **A stub journal entry has exactly one `outcome` block.** Do not regenerate outcome counts to match vanilla.
 - 177 Victorian JEs were deleted outright; references to them are removed rather than restored.
-- `objectives`, `objective_subgoals` and `achievements` are in `replace_paths` and currently empty: the mod has none. `objective_subgoal_categories` and `tutorial_lesson_chains` are vanilla.
+- `objectives`, `objective_subgoals` and `achievements` are in `replace_paths`. The mod's objectives are the three bloc player objectives (Western, Eastern, Non-Aligned) in `common/objectives/` with their subgoals in `common/objective_subgoals/`; `achievements` is still empty. `objective_subgoal_categories` and `tutorial_lesson_chains` are vanilla.
 - Dev's `cwp_*` journal entries are being ported by area (see `docs/agents/areas/events-logic.md`); check open PRs before writing a journal entry from scratch.
 
 ## Journal entries (1.15 format)
