@@ -91,9 +91,19 @@ def forge_idle() -> bool:
     return not held and not queue_waiting()
 
 
+def mtime(p: Path) -> float:
+    try:
+        return p.stat().st_mtime
+    except FileNotFoundError:  # rotated away between glob and stat
+        return 0.0
+
+
 def save_date(path: Path):
-    with open(path, "rb") as f:
-        head = f.read(4000).decode("utf-8", "replace")
+    try:
+        with open(path, "rb") as f:
+            head = f.read(4000).decode("utf-8", "replace")
+    except FileNotFoundError:
+        return None
     m = re.search(r"game_date=(\d+)\.(\d+)\.(\d+)", head)
     return tuple(int(x) for x in m.groups()) if m else None
 
@@ -118,7 +128,9 @@ def one_run(worktree: Path, out: Path, end_year: int, every: int, max_minutes: f
     resume = out / "resume.v3"
     resuming = resume.exists()
     done = sorted(out.glob("[0-9]*.json"))
-    note = f"econ: observer economy run {out.name} to {end_year}" + (" (resume)" if resuming else "")
+    # The note must contain CWP_AGENT: `cwp-vic unlock` refuses to release a lock whose note doesn't.
+    agent = os.environ.get("CWP_AGENT", "econ")
+    note = f"{agent}: econ_bench observer run {out.name} to {end_year}" + (" (resume)" if resuming else "")
     # Popen, so that if this process is stopped while waiting, the waiting `cwp-vic lock` goes too
     # (otherwise it takes the lock later for nobody and holds it for two hours).
     lock = subprocess.Popen(["cwp-vic", "lock", "--wait", "86400", note], text=True,
@@ -169,8 +181,7 @@ def one_run(worktree: Path, out: Path, end_year: int, every: int, max_minutes: f
                 log(out, "GAME NOT RUNNING (crash?)")
                 break
             # only autosaves written by this session (the folder also holds other threads' games)
-            saves = sorted((p for p in SAVES.glob("autosave*.v3") if p.stat().st_mtime > started),
-                           key=lambda p: p.stat().st_mtime)
+            saves = sorted((p for p in SAVES.glob("autosave*.v3") if mtime(p) > started), key=mtime)
             if not saves and time.time() - started > 900:
                 status = "no_autosave"
                 log(out, "no autosave 15 min after launch: the start clicks probably missed (see vic-shot)")
@@ -182,8 +193,8 @@ def one_run(worktree: Path, out: Path, end_year: int, every: int, max_minutes: f
                     seen.add(d)
                     time.sleep(3)  # let the writer finish
                     tmp = out / "tmp.v3"
-                    shutil.copy2(newest, tmp)
                     try:
+                        shutil.copy2(newest, tmp)  # autosaves rotate; the file can vanish mid-copy
                         data = extract(str(tmp), pm_tags=pm_tags)
                         name = f"{d[0]:04d}-{d[1]:02d}-{d[2]:02d}.json"
                         (out / name).write_text(json.dumps(data, separators=(",", ":")))
@@ -206,18 +217,25 @@ def one_run(worktree: Path, out: Path, end_year: int, every: int, max_minutes: f
                 log(out, "reached the per-session time limit")
                 break
         if status in ("yielded", "time_limit"):
-            saves = sorted((p for p in SAVES.glob("autosave*.v3") if p.stat().st_mtime > started),
-                           key=lambda p: p.stat().st_mtime)
-            if saves:
-                shutil.copy2(saves[-1], resume)
-                log(out, f"kept {saves[-1].name} ({save_date(resume)}) to resume from")
+            saves = sorted((p for p in SAVES.glob("autosave*.v3") if mtime(p) > started), key=mtime)
+            for cand in reversed(saves):
+                try:
+                    shutil.copy2(cand, resume)
+                    log(out, f"kept {cand.name} ({save_date(resume)}) to resume from")
+                    break
+                except FileNotFoundError:
+                    continue
         elif status == "done":
             resume.unlink(missing_ok=True)
         errs = sh("cwp-vic", "errors").stdout
         with open(out / "errors.txt", "a") as f:
             f.write(errs)
     finally:
-        sh("cwp-vic", "unlock")
+        u = sh("cwp-vic", "unlock")
+        if u.returncode != 0:  # never leave the game running and the lock held
+            log(out, f"unlock refused ({u.stderr.strip()}); stopping our game and forcing the unlock")
+            sh("cwp-vic", "stop")
+            sh("cwp-vic", "unlock", "--force")
         log(out, f"lock released; status {status}")
     meta = {"status": status, "last_year": last_year, "wall_minutes": round((time.time() - t0) / 60, 1),
             "worktree": str(worktree),
