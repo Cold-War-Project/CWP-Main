@@ -11,6 +11,9 @@ Before porting any dev `cwp_` object, check whether it is a vanilla copy:
 
 Dev's git history is squashed, so there is no 1.13 vanilla baseline: differences in infamy formulas, JE `complete`/`on_complete` syntax, `relations_threshold`/`infamy_threshold` tweaks, `war_support` vs `war_exhaustion` and similar are old-patch drift, not design.
 
+## No date-forced outcomes (Jack, 2026-11-17)
+Nothing happens because "it is date X". Events, journal entries, plays and on_actions must fire from simulation state: bars, politics, economy, characters, agitators, wars, technology. Journal entries may steer a country toward an outcome but never force it. Don't use `game_date` as a trigger for an outcome. A date may only be a guard, such as hiding a JE in the lobby. All content ported here passes this check: the highway JE is gated by technology, cities and buildings, resource discovery by mine use and prices, and the Korean War play ends on casualties. The rebuild's remaining `game_date` checks are Victorian dates that are always true after 1946, so they decide nothing.
+
 ## Status
 
 | Dev content | Outcome |
