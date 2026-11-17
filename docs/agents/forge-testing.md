@@ -85,9 +85,11 @@ cwp-vic lock "integration: <why>" && cwp-vic link ~/forge/worktrees/integration 
 # ... main menu, then a new game + observer run (see above) ...
 cwp-integrate attribute             # errors grouped by the merged PR that touched the file each line names
 cwp-vic unlock
+cwp-integrate publish               # push the build to origin/CWP2-staging so others can test the same merged state
 ```
 
-- The build is a local snapshot on branch `integration/local`. Never push it or open a PR from it; rebuild after PRs change.
+- The build is a snapshot on local branch `integration/local`; `publish` force-pushes it to `CWP2-staging`. Never base work on either or open a PR from them; rebuild after PRs change.
+- `CWP2` only takes PRs that passed this test; `CWP2-staging` is where everything open is tried together first.
 - A PR that conflicts with the ones before it is skipped and reported, so one bad merge does not block the rest. Fix the conflict in the PR's own branch.
 - Attribution is by file: a line naming a file that one PR touched goes to that PR, a line naming a file several PRs touched goes to all of them, and lines naming no file (engine asserts, crashes) are listed separately. To confirm a suspect, rebuild without it (`cwp-integrate build <the other PRs>`) and compare.
 - If the combined build crashes, bisect: build with half the PRs, then half again.

@@ -7,9 +7,11 @@
 #   cwp-integrate attribute [LOGFILE]  group error lines by the merged PR that touched the file they name
 #                                     (default: the current session via `cwp-vic errors`)
 #   cwp-integrate report               print the last build's per-PR table
+#   cwp-integrate publish              push the last build to origin/CWP2-staging (replaced on every publish)
+#                                     so the merged state can be shared and tested by anyone
 #
 # Then test it like any worktree:  cwp-vic lock "..." && cwp-vic link ~/forge/worktrees/integration && cwp-vic launch
-# The integration branch is local only: never push it, never open a PR from it.
+# The local branch is integration/local; `publish` copies it to CWP2-staging. Never open a PR from either.
 set -uo pipefail
 REPO="${CWP_REPO:-$HOME/forge/CWP-Main}"
 WT="${CWP_INTEGRATION:-$HOME/forge/worktrees/integration}"
@@ -99,9 +101,19 @@ for key in sorted(by, key=lambda k: -len(by[k])):
 PY
 }
 
+cmd_publish() {
+  [[ -f "$STATE/head" ]] || die "no build yet"
+  local staging="${CWP_STAGING:-CWP2-staging}"
+  git -C "$WT" push -q --force origin "HEAD:refs/heads/$staging" || die "push failed"
+  echo "published $(cat "$STATE/head") to origin/$staging"
+  { echo "CWP2-staging = $BASE @ $(git -C "$WT" rev-parse --short "origin/$BASE") + these PRs ($(date '+%F %T %Z')):"; cmd_report; } \
+    > "$STATE/published.md"
+}
+
 case "${1:-}" in
   build)     shift; cmd_build "$@" ;;
   report)    cmd_report ;;
   attribute) shift; cmd_attribute "$@" ;;
-  *)         sed -n '2,14p' "$0" ;;
+  publish)   cmd_publish ;;
+  *)         sed -n '2,16p' "$0" ;;
 esac

@@ -5,6 +5,7 @@
 | Branch | Use |
 |---|---|
 | `CWP2` | **Working branch.** Base for all work, target of all PRs. Created 2026-11-16 from `cwp_rebuild` plus the ports that passed the combined test. Upper case. |
+| `CWP2-staging` | `CWP2` plus every open, non-conflicting PR, rebuilt and force-pushed by `cwp-integrate publish`. For testing and sharing the merged state; never base work on it or open a PR from it. |
 | `cwp_rebuild` | Maddie96's rebuild (people call it "CWP_Rebuild"). The base `CWP2` grew from; no new PRs. |
 | `dev` | Read-only porting source (MVP, game 1.13). |
 | `master` | Default branch on GitHub; last release (2024). Read-only reference until release. |
