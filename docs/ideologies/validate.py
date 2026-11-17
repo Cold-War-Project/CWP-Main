@@ -156,7 +156,7 @@ def main() -> None:
                 if isinstance(p.value, Node):
                     require(p.key not in packs[kind], f"Duplicate pack ID: {p.key}")
                     packs[kind][p.key] = p.value
-    expected = {"character": 22, "interest_group": 8, "movement": 8}
+    expected = {"character": 22, "interest_group": 9, "movement": 8}
     for kind, count in expected.items():
         require(len(packs.get(kind, {})) == count, f"Expected {count} {kind} ideologies")
     new = {key: body for pack in packs.values() for key, body in pack.items()}
@@ -406,7 +406,7 @@ def main() -> None:
         require(scalar(child(body, "creation_trigger"), "game_date") == expected_date, f"Unexpected earliest movement date: {key}")
     if errors:
         raise SystemExit("FAILED:\n" + "\n".join(f"- {error}" for error in errors))
-    print(f"PASS: {len(new)} ideologies (22 character, 8 IG, 8 movement), {len(new_movements)} movements, {stance_count} law stances; group caps, focused goals, unique profiles, references, integration, localization and icons checked.")
+    print(f"PASS: {len(new)} ideologies (22 character, 9 IG, 8 movement), {len(new_movements)} movements, {stance_count} law stances; group caps, focused goals, unique profiles, references, integration, localization and icons checked.")
     print("Static validation only; launch, trigger execution, AI balance and saves are untested.")
 
 
