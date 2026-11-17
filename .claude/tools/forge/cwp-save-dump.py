@@ -160,7 +160,7 @@ for sid, st in section("states").get("database", {}).items():
     if isinstance(st, dict) and "region" in st:
         # a state region can be split between several countries
         owners.setdefault(st["region"], []).append(tag_of.get(st.get("country"), st.get("country")))
-owners = {r: sorted(set(o)) for r, o in owners.items()}
+owners = {r: sorted({x for x in o if x}) for r, o in owners.items()}   # unowned (sea/wasteland) states have no country
 existing = sorted({t for o in owners.values() for t in o})
 
 # Subjects (overlord -> subject, with type and liberty desire) and USA-RUS relations.
