@@ -85,6 +85,7 @@ je_cwp_example = {
 
 - The mod's own journal entries are the `cwp_*.txt` files in `common/journal_entries/` (`ls common/journal_entries/cwp_*`).
 - They hook activation and monthly logic through a chained `cwp_` on_action in their own file (e.g. `common/on_actions/cwp_korea_on_actions.txt` chains `on_monthly_pulse`), never by editing the shared on_action overwrites.
+- A JE with `progressbar = no` and no `current_value`/`goal_add_value` must not have `<key>_goal` loc: the game logs "Journal entry has redundant loc" for it.
 
 ## Scripted progress bars
 

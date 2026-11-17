@@ -21,7 +21,7 @@ One contextless journal entry (group `je_group_global_international_situations`)
 | Neutral unified Korea | Commission bar reaches 100 | no (the 1946 trusteeship path) |
 | (invalid, hidden) | Both Koreas gone, or the USA or RUS gone before partition | |
 
-Armistice and the line holds leave `cwp_korea_dmz` and a 60-month truce on both Koreas and the global variable `cwp_korea_divided` for later rivalry content (Pueblo, democratisation, the nuclear question).
+Armistice and the line holds leave `cwp_korea_dmz` and a 60-month truce on both Koreas. Later rivalry content can test `has_global_variable = cwp_korea_concluded` with both tags existing.
 
 ## Why the historical path is the likely one
 
@@ -44,5 +44,5 @@ No step has a date. The Joint Commission fails because US-Soviet relations start
 
 - Every bar rate, threshold and AI weight is a first guess; tune from observer runs.
 - No Inchon event: amphibious landings are left to the war system.
-- Follow-up rivalry content after the armistice (Pueblo 1968, South Korean democratisation, the nuclear question) hooks on `cwp_korea_divided`.
+- Follow-up rivalry content after the armistice (Pueblo 1968, South Korean democratisation, the nuclear question) can test `cwp_korea_concluded` with both Koreas existing.
 - Occupation-era names for `STK`/`NRK` (history thread).
