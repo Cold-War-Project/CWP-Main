@@ -8,6 +8,7 @@
 #   cwp-vic lock [--wait S] [--priority] [NOTE]  take the lock, first come first served (waits up to S s,
 #                                   default 1800; --priority jumps normal requests, coordinator-approved only)
 #   cwp-vic queue                   list waiting requests in the order they will be served
+#   cwp-vic bump <pid|text>         move a waiting request to the front (coordinator's call)
 #   cwp-vic link <worktree>         enable that worktree as the only mod (content_load.json)  (needs lock)
 #   cwp-vic vanilla                 disable the mod for a vanilla baseline run               (needs lock)
 #   cwp-vic launch [game args]      clear error.log and start the game in debug mode         (needs lock)
@@ -87,6 +88,8 @@ cmd_lock() {
     if [[ -z "$child" ]]; then
       # Spawn the taker only when we are first in line AND the lock is free right now, so a later
       # higher-priority ticket is not overtaken by a taker already blocked inside flock.
+      # Find our ticket by pid each time: `cwp-vic bump` may have renamed it to reorder the queue.
+      local mine; mine=$(ls "$QUEUE" 2>/dev/null | grep -- "-$$\$" | head -1); [[ -n "$mine" ]] && ticket=$mine
       if [[ "$(queue_first)" == "$ticket" ]] && ! holder_alive && flock -n "$LOCK" true 2>/dev/null; then
         # Our turn: the child takes the flock on fd 9, records itself as holder and becomes a sleep that keeps
         # fd 9 open. Holder files are only written by whoever has the flock, so waiters never clobber them.
@@ -103,6 +106,14 @@ cmd_lock() {
     sleep 1
   done
   die "could not get the lock within ${wait}s (held by: $(cat "$OWNER" 2>/dev/null))"
+}
+
+cmd_bump() {   # move a waiting request (by pid or text in its note) to the front of the line
+  local m t; m="${1:?usage: cwp-vic bump <pid|text>}"
+  t=$(ls "$QUEUE" | while read -r x; do [[ "${x##*-}" == "$m" ]] || grep -qF -- "$m" "$QUEUE/$x" && echo "$x"; done | head -1)
+  [[ -n "$t" ]] || die "no queued request matches '$m'"
+  mv "$QUEUE/$t" "$QUEUE/0$(date +%s%N)-${t##*-}"; echo "moved to front: $(cat "$QUEUE"/0*-"${t##*-}")"
+  echo "note: only requests made with cwp-vic from 2026-11-17 on follow a bump; an older waiting request would stall the line" >&2
 }
 
 cmd_queue() { queue_clean; local t; for t in $(ls "$QUEUE" 2>/dev/null | sort); do echo "  $t  $(cat "$QUEUE/$t")"; done; }
@@ -202,6 +213,7 @@ cmd_perf() {
 case "${1:-status}" in
   status)  cmd_status; echo "queue:"; cmd_queue ;;
   queue)   cmd_queue ;;
+  bump)    shift; cmd_bump "$@" ;;
   lock)    shift; cmd_lock "$@" ;;
   link)    shift; cmd_link "$@" ;;
   vanilla) cmd_vanilla ;;
