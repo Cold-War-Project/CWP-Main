@@ -132,9 +132,11 @@ cmd_job() {   # run a game job outside the Claude process tree, so it survives s
   (( $# )) || die "usage: cwp-vic job <name> -- <command...>"
   mkdir -p "$FORGE/jobs"; local log="$FORGE/jobs/$name.log"
   if command -v systemd-run >/dev/null && systemctl --user show-environment >/dev/null 2>&1; then
+    # A systemd unit starts with an almost empty environment; the game needs this session's display,
+    # X auth, runtime dir and graphics (Vulkan) variables, so the unit replays the caller's exported env.
+    export DISPLAY="${DISPLAY:-:0}"; local envf="$FORGE/jobs/$name.env"; export -p > "$envf"
     systemd-run --user --collect --unit="cwp-job-$name" -p WorkingDirectory="$PWD" \
-      --setenv=PATH="$PATH" ${FORGE:+--setenv=FORGE="$FORGE"} --setenv=DISPLAY="${DISPLAY:-:0}" --setenv=HOME="$HOME" ${CWP_AGENT:+--setenv=CWP_AGENT="$CWP_AGENT"} \
-      bash -c 'exec "$@" >>"'"$log"'" 2>&1' _ "$@" || die "systemd-run failed"
+      bash -c 'set -a; . "$1"; set +a; shift; exec "$@" >>"$0" 2>&1' "$log" "$envf" "$@" || die "systemd-run failed"
     echo "job cwp-job-$name started (systemd --user). log: $log   status: systemctl --user status cwp-job-$name"
   else
     setsid nohup "$@" >>"$log" 2>&1 </dev/null & disown
