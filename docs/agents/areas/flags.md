@@ -114,7 +114,7 @@ python3 tools/flags/gen_flags.py           # only when the table gained a flag_d
 - To add a flag: add a row to `sources.tsv` (coa key, tag, label, Commons file page), run the scripts, look at the PNG in `~/forge/flag-work/png/`, and add a `flag_definition` to the table if the coat of arms is new.
 - Textures have one mip level (Pillow); five vanilla flag textures are the same, so the game accepts it. Sharpness at small sizes in game is unchecked.
 
-Status 2026-11-17: 20 flags textured (Belize, Malawi, Ingushetia, Karachay-Cherkessia, Uganda, Kenya, Mozambique, Zimbabwe, Lesotho, Eswatini, Rhodesia 1968, Zaire, Islamic Republic of Iran, Spain (current arms), Malaysia, Kuwait, Tanzania, UAR, Namibia, Papua New Guinea); Namibia and Papua New Guinea also got independence flag definitions. Bulgaria 1948-67 was skipped (Commons file is CC BY-SA 4.0). Romania 1952-65 followed in a second commit (21 in all). Hungary 1949-56 and Afghanistan 1978-80 hit the rate limit; rerun `fetch_svg.py` for them.
+Status 2026-11-17: 20 flags textured (Belize, Malawi, Ingushetia, Karachay-Cherkessia, Uganda, Kenya, Mozambique, Zimbabwe, Lesotho, Eswatini, Rhodesia 1968, Zaire, Islamic Republic of Iran, Spain (current arms), Malaysia, Kuwait, Tanzania, UAR, Namibia, Papua New Guinea); Namibia and Papua New Guinea also got independence flag definitions. Bulgaria 1948-67 was skipped (Commons file is CC BY-SA 4.0). Romania 1952-65 and Afghanistan 1978-80 followed later (22 in all). Hungary 1949-56 (public domain) is still blocked by the rate limit; rerun `fetch_svg.py cwp_HUN_peoples_republic`.
 
 ## Later plan
 
