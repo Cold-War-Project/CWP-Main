@@ -21,7 +21,7 @@ Forge is the Ubuntu machine with Victoria 3 1.15.1 installed (GTX 1080, 8 GB, X1
 ```bash
 export CWP_AGENT=politics
 cwp-vic status                                   # who holds the lock, queue, enabled mod, running game, VRAM
-cwp-vic lock "politics: smoke test law port"    # waits up to 30 min (--wait S); auto-releases after 2 h
+cwp-vic lock "politics: smoke test law port"    # waits up to 4 h (--wait S); auto-releases after 2 h
 cwp-vic link ~/forge/worktrees/politics          # make that worktree the only enabled mod
 cwp-vic launch                                   # clears error.log, starts the game in -debug_mode
 # ... vic-shot, vic-key, vic-click; cwp-vic errors; cwp-vic perf ...

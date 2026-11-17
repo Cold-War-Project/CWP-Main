@@ -5,8 +5,8 @@
 # Every game session therefore holds ~/forge/.vic3.lock from launch until the game is stopped.
 #
 #   cwp-vic status                  who holds the lock, which worktree is linked, running games
-#   cwp-vic lock [--wait S] [--priority] [NOTE]  take the lock, first come first served (waits up to S s,
-#                                   default 1800; --priority jumps normal requests, coordinator-approved only)
+#   cwp-vic lock [--wait S] [--priority] [NOTE]  take the lock, first come first served (waits up to S s, default 4 h (CWP_VIC_WAIT);
+#                                   --priority jumps normal requests, coordinator-approved only)
 #   cwp-vic queue                   list waiting requests in the order they will be served
 #   cwp-vic bump <pid|text>         move a waiting request to the front (coordinator's call)
 #   cwp-vic link <worktree>         enable that worktree as the only mod (content_load.json)  (needs lock)
@@ -66,7 +66,7 @@ queue_clean() { local t; for t in "$QUEUE"/*; do [[ -e "$t" ]] || continue
 queue_first() { queue_clean; ls "$QUEUE" 2>/dev/null | sort | head -1; }
 
 cmd_lock() {
-  local wait=1800 prio=5
+  local wait="${CWP_VIC_WAIT:-14400}" prio=5
   while [[ "${1:-}" == --* ]]; do
     case "$1" in --wait) wait="$2"; shift 2 ;; --priority) prio=1; shift ;; *) die "unknown option $1" ;; esac
   done
