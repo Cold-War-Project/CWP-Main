@@ -1,0 +1,351 @@
+﻿# Cold War Project: the German question, chapter 1 - occupation and division.
+# Design: docs/agents/areas/germany.md (option C of docs/agents/proposals/germany.md).
+# Contextless: the four occupying powers, the four zones and, once they exist, the two German states.
+# No outcome is scheduled. The bars move with the occupiers' choices and the zones' politics and
+# economy; each milestone fires when its bars and conditions line up, and a country may refuse it.
+
+je_cwp_german_question = {
+	icon = "gfx/interface/icons/event_icons/event_map.dds"
+
+	group = je_group_global_international_situations
+
+	activation_description = {
+		always = yes
+	}
+
+	scripted_progress_bar = cwp_gq_western_bar
+	scripted_progress_bar = cwp_gq_soviet_bar
+	scripted_progress_bar = cwp_gq_unity_bar
+
+	scripted_button = cwp_gq_merge_zones_button
+	scripted_button = cwp_gq_join_trizone_button
+	scripted_button = cwp_gq_marshall_aid_button
+	scripted_button = cwp_gq_currency_reform_button
+	scripted_button = cwp_gq_self_government_button
+	scripted_button = cwp_gq_four_power_talks_button
+	scripted_button = cwp_gq_land_reform_button
+	scripted_button = cwp_gq_sed_merger_button
+	scripted_button = cwp_gq_dismantling_button
+	scripted_button = cwp_gq_antifascist_bloc_button
+	scripted_button = cwp_gq_blockade_button
+	scripted_button = cwp_gq_lift_blockade_button
+	scripted_button = cwp_gq_stalin_note_button
+
+	is_shown_when_inactive = {
+		always = yes
+	}
+
+	possible = {
+		NOT = { has_global_variable = cwp_gq_concluded }
+		exists = c:DDR
+		exists = c:RUS
+		cwp_gq_west_exists = yes
+	}
+
+	should_be_involved = {
+		OR = {
+			cwp_gq_is_occupier = yes
+			cwp_gq_is_german_party = yes
+		}
+	}
+
+	should_show_when_not_involved = {
+		capital ?= { is_in_geographic_region = geographic_region_europe }
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				exists = c:FOZ
+				exists = c:FRA
+			}
+			set_global_variable = cwp_gq_french_reservations
+			c:FRA = {
+				add_modifier = { name = cwp_gq_french_reservations }
+			}
+		}
+	}
+
+	immediate_all_involved = {
+		if = {
+			limit = { is_player = yes }
+			trigger_event = { id = cwp_german_question.1 days = 1 popup = yes }
+		}
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			# Bizone: the American and British zones merge once both occupiers agree
+			if = {
+				limit = {
+					NOT = { has_global_variable = cwp_gq_bizone }
+					exists = c:AOZ
+					exists = c:BOZ
+					OR = {
+						NOT = { exists = c:USA }
+						c:USA = { has_variable = cwp_gq_agreed_bizone }
+					}
+					OR = {
+						NOT = { exists = c:GBR }
+						c:GBR = { has_variable = cwp_gq_agreed_bizone }
+					}
+				}
+				set_global_variable = cwp_gq_bizone
+				c:AOZ = { add_modifier = { name = cwp_gq_bizone } }
+				c:BOZ = { add_modifier = { name = cwp_gq_bizone } }
+				every_country = {
+					limit = {
+						OR = {
+							c:USA ?= this
+							c:GBR ?= this
+							c:AOZ ?= this
+							c:BOZ ?= this
+						}
+					}
+					trigger_event = { id = cwp_german_question.2 popup = yes }
+				}
+			}
+			# Trizone: France has brought its zone in
+			if = {
+				limit = {
+					has_global_variable = cwp_gq_trizone
+					NOT = { has_global_variable = cwp_gq_trizone_done }
+				}
+				set_global_variable = cwp_gq_trizone_done
+				c:FOZ ?= { add_modifier = { name = cwp_gq_bizone } }
+				every_country = {
+					limit = {
+						OR = {
+							cwp_gq_is_western_occupier = yes
+							cwp_gq_is_western_zone = yes
+						}
+					}
+					trigger_event = { id = cwp_german_question.3 popup = yes }
+				}
+			}
+			# Berlin: each month the airlift holds wears down the blockade
+			if = {
+				limit = {
+					has_global_variable = cwp_gq_blockade
+					has_global_variable = cwp_gq_airlift
+				}
+				change_global_variable = { name = cwp_gq_blockade_months add = 1 }
+				if = {
+					limit = {
+						global_var:cwp_gq_blockade_months >= 10
+						NOT = { has_global_variable = cwp_gq_airlift_asked }
+					}
+					set_global_variable = { name = cwp_gq_airlift_asked days = 180 }
+					c:RUS ?= { trigger_event = { id = cwp_german_question.7 popup = yes } }
+				}
+			}
+			# Basic Law: the western zones are integrated enough, and the four powers apart enough
+			if = {
+				limit = {
+					NOT = { has_global_variable = cwp_gq_frg_proclaimed }
+					NOT = { has_global_variable = cwp_gq_basic_law_pending }
+					OR = {
+						has_global_variable = cwp_gq_trizone
+						NOT = { exists = c:FOZ }
+					}
+					scope:journal_entry = {
+						"scripted_bar_progress(cwp_gq_western_bar)" >= 60
+						"scripted_bar_progress(cwp_gq_unity_bar)" < 50
+					}
+				}
+				cwp_gq_save_frg_core = yes
+				if = {
+					limit = { exists = scope:cwp_gq_frg_core }
+					set_global_variable = { name = cwp_gq_basic_law_pending days = 60 }
+					scope:cwp_gq_frg_core = { trigger_event = { id = cwp_german_question.10 popup = yes } }
+				}
+			}
+			# German Democratic Republic: the SED holds the zone, and a western state exists or the East is ready alone
+			if = {
+				limit = {
+					NOT = { has_global_variable = cwp_gq_gdr_proclaimed }
+					NOT = { has_global_variable = cwp_gq_gdr_pending }
+					cwp_gq_soviet_zone_held = yes
+					OR = {
+						AND = {
+							has_global_variable = cwp_gq_frg_proclaimed
+							scope:journal_entry = { "scripted_bar_progress(cwp_gq_soviet_bar)" >= 60 }
+						}
+						scope:journal_entry = { "scripted_bar_progress(cwp_gq_soviet_bar)" >= 90 }
+					}
+				}
+				set_global_variable = { name = cwp_gq_gdr_pending days = 60 }
+				c:DDR = { trigger_event = { id = cwp_german_question.11 popup = yes } }
+			}
+			# Federal Republic: the occupation statute can end
+			if = {
+				limit = {
+					has_global_variable = cwp_gq_frg_proclaimed
+					NOT = { has_global_variable = cwp_gq_frg_sovereign }
+					NOT = { has_global_variable = cwp_gq_frg_sovereignty_pending }
+					exists = c:GER
+					scope:journal_entry = { "scripted_bar_progress(cwp_gq_western_bar)" >= 100 }
+				}
+				set_global_variable = { name = cwp_gq_frg_sovereignty_pending days = 60 }
+				if = {
+					limit = { c:GER = { is_subject = yes } }
+					c:GER.overlord = { trigger_event = { id = cwp_german_question.15 popup = yes } }
+				}
+				else = {
+					c:GER = { trigger_event = { id = cwp_german_question.16 popup = yes } }
+				}
+			}
+			# German Democratic Republic: Moscow can recognise its sovereignty
+			if = {
+				limit = {
+					has_global_variable = cwp_gq_gdr_proclaimed
+					NOT = { has_global_variable = cwp_gq_gdr_sovereign }
+					NOT = { has_global_variable = cwp_gq_gdr_sovereignty_pending }
+					exists = c:DDR
+					scope:journal_entry = { "scripted_bar_progress(cwp_gq_soviet_bar)" >= 100 }
+				}
+				set_global_variable = { name = cwp_gq_gdr_sovereignty_pending days = 60 }
+				if = {
+					limit = { cwp_gq_soviet_zone_held = yes }
+					c:RUS = { trigger_event = { id = cwp_german_question.17 popup = yes } }
+				}
+				else = {
+					c:DDR = { cwp_gq_gdr_sovereignty = yes }
+				}
+			}
+			# June uprising: a proclaimed GDR whose workers live worse than the West's and are turning radical
+			if = {
+				limit = {
+					has_global_variable = cwp_gq_gdr_proclaimed
+					NOT = { has_global_variable = cwp_gq_uprising }
+					exists = c:DDR
+					c:DDR = { radical_fraction = { value >= 0.15 } }
+					OR = {
+						NOT = { exists = c:GER }
+						c:DDR.average_sol < c:GER.average_sol
+					}
+				}
+				set_global_variable = cwp_gq_uprising
+				c:DDR = { trigger_event = { id = cwp_german_question.18 popup = yes } }
+			}
+		}
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = cwp_gq_status_blockade
+				trigger = { has_global_variable = cwp_gq_blockade }
+			}
+			triggered_desc = {
+				desc = cwp_gq_status_two_states
+				trigger = {
+					has_global_variable = cwp_gq_frg_proclaimed
+					has_global_variable = cwp_gq_gdr_proclaimed
+				}
+			}
+			triggered_desc = {
+				desc = cwp_gq_status_frg
+				trigger = { has_global_variable = cwp_gq_frg_proclaimed }
+			}
+			triggered_desc = {
+				desc = cwp_gq_status_bizone
+				trigger = { has_global_variable = cwp_gq_bizone }
+			}
+			triggered_desc = {
+				desc = cwp_gq_status_occupation
+			}
+		}
+	}
+
+	# Historical: two sovereign German states
+	outcome = {
+		header = cwp_gq_outcome_two_states
+		effect_header = cwp_gq_outcome_effect_header
+		conclusion_desc = cwp_gq_outcome_two_states_desc
+		color = "gold_positive"
+		flags = { historical }
+		trigger = {
+			custom_tooltip = {
+				text = cwp_gq_outcome_two_states_tt
+				has_global_variable = cwp_gq_frg_sovereign
+				has_global_variable = cwp_gq_gdr_sovereign
+			}
+		}
+		effect = {
+			set_global_variable = cwp_gq_concluded
+		}
+	}
+
+	# The Stalin Note accepted: one neutral Germany
+	outcome = {
+		header = cwp_gq_outcome_neutral
+		effect_header = cwp_gq_outcome_effect_header
+		conclusion_desc = cwp_gq_outcome_neutral_desc
+		color = "gold_positive"
+		trigger = {
+			custom_tooltip = {
+				text = cwp_gq_outcome_neutral_tt
+				has_global_variable = cwp_gq_neutral_unification
+			}
+		}
+		effect = {
+			set_global_variable = cwp_gq_concluded
+		}
+	}
+
+	# The Soviet zone is gone and the West remains
+	outcome = {
+		header = cwp_gq_outcome_west
+		effect_header = cwp_gq_outcome_effect_header
+		conclusion_desc = cwp_gq_outcome_west_desc
+		color = "gold_positive"
+		trigger = {
+			custom_tooltip = {
+				text = cwp_gq_outcome_west_tt
+				NOT = { exists = c:DDR }
+				cwp_gq_west_exists = yes
+			}
+		}
+		effect = {
+			set_global_variable = cwp_gq_concluded
+		}
+	}
+
+	# The western zones are gone and the East remains
+	outcome = {
+		header = cwp_gq_outcome_east
+		effect_header = cwp_gq_outcome_effect_header
+		conclusion_desc = cwp_gq_outcome_east_desc
+		color = "blue_negative"
+		trigger = {
+			custom_tooltip = {
+				text = cwp_gq_outcome_east_tt
+				exists = c:DDR
+				NOT = { cwp_gq_west_exists = yes }
+			}
+		}
+		effect = {
+			set_global_variable = cwp_gq_concluded
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			NOT = { exists = c:DDR }
+			NOT = { cwp_gq_west_exists = yes }
+		}
+		effect = {
+			set_global_variable = cwp_gq_concluded
+		}
+	}
+
+	weight = 10000
+
+	should_be_pinned_by_default_involved = yes
+	should_be_pinned_by_default_uninvolved_or_context = no
+
+	can_revolution_inherit = yes
+}

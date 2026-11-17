@@ -1,0 +1,183 @@
+﻿# Cold War Project: effects for the German question, chapter 1 (occupation and division).
+# Journal entry: common/journal_entries/cwp_german_question.txt
+
+# Shift one of the journal entry's bars by VALUE (any scope).
+# BAR = cwp_gq_western_bar / cwp_gq_soviet_bar / cwp_gq_unity_bar
+cwp_gq_shift_bar = {
+	je:je_cwp_german_question ?= {
+		set_global_variable = {
+			name = cwp_gq_bar_tmp
+			value = "scripted_bar_progress($BAR$)"
+		}
+		change_global_variable = {
+			name = cwp_gq_bar_tmp
+			add = $VALUE$
+		}
+		clamp_global_variable = {
+			name = cwp_gq_bar_tmp
+			min = 0
+			max = 100
+		}
+		set_bar_progress = {
+			name = $BAR$
+			value = global_var:cwp_gq_bar_tmp
+		}
+		remove_global_variable = cwp_gq_bar_tmp
+	}
+}
+
+# Pick the zone that carries the Federal Republic: a zone a player holds, else the
+# American, British, French zone in that order. Saves scope:cwp_gq_frg_core.
+cwp_gq_save_frg_core = {
+	if = {
+		limit = {
+			any_country = {
+				cwp_gq_is_western_zone = yes
+				is_player = yes
+			}
+		}
+		random_country = {
+			limit = {
+				cwp_gq_is_western_zone = yes
+				is_player = yes
+			}
+			save_scope_as = cwp_gq_frg_core
+		}
+	}
+	else_if = {
+		limit = { exists = c:AOZ }
+		c:AOZ = { save_scope_as = cwp_gq_frg_core }
+	}
+	else_if = {
+		limit = { exists = c:BOZ }
+		c:BOZ = { save_scope_as = cwp_gq_frg_core }
+	}
+	else_if = {
+		limit = { exists = c:FOZ }
+		c:FOZ = { save_scope_as = cwp_gq_frg_core }
+	}
+}
+
+# Run in the core zone's scope. The western zones that still answer to a western power
+# merge into the Federal Republic; zone territory inside Austria passes to Austria first.
+cwp_gq_proclaim_frg = {
+	custom_tooltip = cwp_gq_proclaim_frg_tt
+	hidden_effect = {
+		every_country = {
+			limit = { cwp_gq_is_western_zone = yes }
+			every_scope_state = {
+				limit = {
+					exists = c:AUS
+					OR = {
+						state_region = s:STATE_AUSTRIA
+						state_region = s:STATE_TYROL
+						state_region = s:STATE_STYRIA
+					}
+				}
+				set_state_owner = c:AUS
+			}
+		}
+		every_country = {
+			limit = {
+				cwp_gq_is_western_zone = yes
+				NOT = { this = root }
+				OR = {
+					is_subject = no
+					overlord = { cwp_gq_is_western_occupier = yes }
+				}
+			}
+			save_temporary_scope_as = cwp_gq_merging_zone
+			root = { annex = scope:cwp_gq_merging_zone }
+		}
+		if = {
+			limit = { NOT = { exists = c:GER } }
+			change_tag = GER
+		}
+		set_global_variable = cwp_gq_frg_proclaimed
+	}
+}
+
+# Run in the Federal Republic's scope: the occupation statute ends.
+cwp_gq_frg_sovereignty = {
+	if = {
+		limit = { is_subject = yes }
+		make_independent = yes
+	}
+	set_global_variable = cwp_gq_frg_sovereign
+}
+
+# Run in the GDR's scope: Moscow recognises its sovereignty; it stays in the Eastern bloc.
+cwp_gq_gdr_sovereignty = {
+	if = {
+		limit = { is_subject = yes }
+		make_independent = yes
+	}
+	if = {
+		limit = {
+			is_in_power_bloc = no
+			exists = c:RUS
+			c:RUS = { is_power_bloc_leader = yes }
+		}
+		join_power_bloc = c:RUS
+	}
+	set_global_variable = cwp_gq_gdr_sovereign
+}
+
+# Run in the Federal Republic's scope: unification as a neutral state (the Stalin Note accepted).
+cwp_gq_neutral_unification = {
+	if = {
+		limit = { exists = c:DDR }
+		annex = c:DDR
+	}
+	if = {
+		limit = { is_subject = yes }
+		make_independent = yes
+	}
+	if = {
+		limit = { is_in_power_bloc = yes }
+		leave_power_bloc = yes
+	}
+	add_modifier = {
+		name = cwp_gq_neutral_germany
+		days = long_modifier_time
+	}
+	set_global_variable = cwp_gq_neutral_unification
+}
+
+# The Soviet blockade of West Berlin ends (any scope).
+cwp_gq_end_blockade = {
+	remove_global_variable = cwp_gq_blockade
+	remove_global_variable = cwp_gq_blockade_months
+	set_global_variable = cwp_gq_berlin_settled
+	if = {
+		limit = { has_global_variable = cwp_gq_airlift }
+		custom_tooltip = cwp_gq_airlift_won_tt
+		remove_global_variable = cwp_gq_airlift
+		every_country = {
+			limit = { has_modifier = cwp_gq_airlift }
+			remove_modifier = cwp_gq_airlift
+			add_modifier = {
+				name = cwp_gq_airlift_victory
+				days = normal_modifier_time
+			}
+		}
+		c:RUS ?= {
+			add_modifier = {
+				name = cwp_gq_blockade_failed
+				days = normal_modifier_time
+			}
+		}
+		cwp_gq_shift_bar = { BAR = cwp_gq_western_bar VALUE = 5 }
+	}
+	hidden_effect = {
+		every_country = {
+			limit = {
+				OR = {
+					cwp_gq_is_occupier = yes
+					cwp_gq_is_german_party = yes
+				}
+			}
+			trigger_event = { id = cwp_german_question.8 days = 1 popup = yes }
+		}
+	}
+}
