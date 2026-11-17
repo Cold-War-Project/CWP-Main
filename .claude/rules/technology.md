@@ -36,7 +36,7 @@ cwp_example_tech = {
 - Prerequisites should be in the same or an earlier era and must not form a cycle. Keep the tree connected: a tech with no `unlocking_technologies` is researchable from the start (10 roots now, e.g. `industrial_revolution`, `radio`, `academia`).
 - `technologies/00_engine_compatibility.txt` keeps `nationalism` and `pan-nationalism` as hardcoded engine keys (`can_research = no`, `ai_weight = { value = 0 }`); do not remove or rename them.
 - The tech panel layout derives from era + category + prerequisites; there are no manual coordinates.
-- Loc: `<key>` and `<key>_desc`. Icons: `gfx/interface/icons/invention_icons/`; every researchable tech currently uses `invention_placeholder.dds` (no tech art yet).
+- Loc: `<key>` and `<key>_desc`. Icons: `gfx/interface/icons/invention_icons/`; 64 techs have their own icon (`grep -c "texture = .*invention_placeholder" common/technology/technologies/*.txt` counts the rest, which use `invention_placeholder.dds`). Unused icons in that folder were drawn for an older tree and may suit techs still on the placeholder.
 - Starting technology comes from `history/countries`: `effect_starting_production_technologies_tier_N`, `..._society_...`, `..._military_...` (N = 1..5, `common/scripted_effects/00_starting_inventions.txt`), plus `add_technology_researched = x` where needed. A new era_1/era_2 tech normally needs adding to the matching tier effects.
 - Tech spread and innovation caps are defines (`NTechnology`) plus `country_weekly_innovation_*` and `country_tech_spread_*` modifiers.
 - AI: `ai_weight` is a script value in country scope; vanilla uses about 1 as baseline and 3 for key techs, with conditional bumps.
