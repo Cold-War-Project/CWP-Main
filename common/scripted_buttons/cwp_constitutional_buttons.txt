@@ -176,26 +176,40 @@ cwp_iq_call_referendum_button = {
 
 	ai_chance = {
 		value = 0
-		# Call it when the side in government is ahead, or when the pressure will soon force it anyway.
+		# Governments call the vote when their side is ahead. Monarchist governments wait until pressure
+		# forces their hand, and in the Soviet zone nobody risks an honest count.
 		if = {
 			limit = {
-				cwp_iq_republican_clout_in_government > cwp_iq_monarchist_clout_in_government
-				var:cwp_iq_vote_current_var > 52
+				cwp_iq_under_soviet_pressure = yes
+				NOT = { has_variable = cwp_iq_rigged_var }
 			}
-			add = 30
+			if = {
+				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_iq_pressure_bar)" >= 90 } }
+				add = 10
+			}
 		}
-		if = {
-			limit = {
-				cwp_iq_monarchist_clout_in_government > cwp_iq_republican_clout_in_government
-				var:cwp_iq_vote_current_var < 48
+		else = {
+			if = {
+				limit = {
+					cwp_iq_republican_clout_in_government > cwp_iq_monarchist_clout_in_government
+					var:cwp_iq_vote_current_var > 52
+				}
+				add = 30
 			}
-			add = 30
-		}
-		if = {
-			limit = {
-				scope:journal_entry = { "scripted_bar_progress(cwp_iq_pressure_bar)" >= 75 }
+			if = {
+				limit = {
+					cwp_iq_monarchist_clout_in_government > cwp_iq_republican_clout_in_government
+					var:cwp_iq_vote_current_var < 46
+					scope:journal_entry = { "scripted_bar_progress(cwp_iq_pressure_bar)" >= 60 }
+				}
+				add = 30
 			}
-			add = 20
+			if = {
+				limit = {
+					scope:journal_entry = { "scripted_bar_progress(cwp_iq_pressure_bar)" >= 85 }
+				}
+				add = 20
+			}
 		}
 	}
 }
@@ -220,14 +234,9 @@ cwp_iq_rig_referendum_button = {
 	}
 
 	ai_chance = {
-		value = 0
+		value = 25
 		if = {
-			limit = {
-				OR = {
-					cwp_communists_in_government = yes
-					cwp_iq_republican_clout_in_government > cwp_iq_monarchist_clout_in_government
-				}
-			}
+			limit = { cwp_communists_in_government = yes }
 			add = 25
 		}
 	}
