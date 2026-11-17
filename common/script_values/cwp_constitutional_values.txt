@@ -1,0 +1,198 @@
+﻿# Cold War Project: constitutional transitions (institutional question, Japanese constitution).
+# Country scope unless noted. The pivots are what opinion drifts towards; the bars chase them (pattern: vanilla two_spains_tension_pivot).
+
+# Clout of the interest groups that oppose the monarchy law, weighted by how strongly.
+cwp_iq_republican_clout = {
+	value = 0
+	every_interest_group = {
+		limit = {
+			is_marginal = no
+			law_stance = {
+				law = law_type:law_monarchy
+				value <= disapprove
+			}
+		}
+		add = {
+			value = this.ig_clout
+			if = {
+				limit = {
+					law_stance = {
+						law = law_type:law_monarchy
+						value = strongly_disapprove
+					}
+				}
+				multiply = 1.5
+			}
+		}
+	}
+}
+
+# Clout of the interest groups that support the monarchy law, weighted by how strongly.
+cwp_iq_monarchist_clout = {
+	value = 0
+	every_interest_group = {
+		limit = {
+			is_marginal = no
+			law_stance = {
+				law = law_type:law_monarchy
+				value >= approve
+			}
+		}
+		add = {
+			value = this.ig_clout
+			if = {
+				limit = {
+					law_stance = {
+						law = law_type:law_monarchy
+						value = strongly_approve
+					}
+				}
+				multiply = 1.5
+			}
+		}
+	}
+}
+
+# Same, counting only interest groups in government (they decide whether to call the vote).
+cwp_iq_republican_clout_in_government = {
+	value = 0
+	every_interest_group = {
+		limit = {
+			is_in_government = yes
+			law_stance = {
+				law = law_type:law_monarchy
+				value <= disapprove
+			}
+		}
+		add = this.ig_clout
+	}
+}
+
+cwp_iq_monarchist_clout_in_government = {
+	value = 0
+	every_interest_group = {
+		limit = {
+			is_in_government = yes
+			law_stance = {
+				law = law_type:law_monarchy
+				value >= approve
+			}
+		}
+		add = this.ig_clout
+	}
+}
+
+# Where the republican vote share is heading (0-100).
+cwp_iq_republic_pivot = {
+	add = {
+		desc = "cwp_iq_pivot_base_tt"
+		value = 50
+	}
+	add = {
+		desc = "cwp_iq_pivot_republican_igs_tt"
+		value = cwp_iq_republican_clout
+		multiply = 60
+	}
+	subtract = {
+		desc = "cwp_iq_pivot_monarchist_igs_tt"
+		value = cwp_iq_monarchist_clout
+		multiply = 60
+	}
+	if = {
+		limit = { has_variable = cwp_iq_crown_record_var }
+		add = {
+			desc = "cwp_iq_pivot_crown_record_tt"
+			value = var:cwp_iq_crown_record_var
+		}
+	}
+	if = {
+		limit = { has_variable = cwp_iq_campaign_var }
+		add = {
+			desc = "cwp_iq_pivot_campaign_tt"
+			value = var:cwp_iq_campaign_var
+		}
+	}
+	min = 2
+	max = 98
+}
+
+# Monthly pressure on the government to settle the question.
+cwp_iq_pressure_republicans = {
+	value = cwp_iq_republican_clout_in_government
+	multiply = 8
+}
+
+cwp_iq_pressure_monarchists = {
+	value = cwp_iq_monarchist_clout_in_government
+	multiply = 6
+}
+
+# The counted result: the vote share on polling day plus the swing rolled in the referendum event.
+cwp_iq_counted_result = {
+	value = var:cwp_iq_vote_current_var
+	if = {
+		limit = { has_variable = cwp_iq_swing_var }
+		add = var:cwp_iq_swing_var
+	}
+	if = {
+		limit = { has_variable = cwp_iq_rigged_var }
+		add = 30
+	}
+	min = 1
+	max = 99
+}
+
+# Japan: clout of interest groups that want broad suffrage (support a democratic constitution) or oppose it.
+cwp_jap_reformist_clout = {
+	value = 0
+	every_interest_group = {
+		limit = {
+			is_marginal = no
+			law_stance = {
+				law = law_type:law_universal_suffrage
+				value >= approve
+			}
+		}
+		add = this.ig_clout
+	}
+}
+
+cwp_jap_conservative_clout = {
+	value = 0
+	every_interest_group = {
+		limit = {
+			is_marginal = no
+			law_stance = {
+				law = law_type:law_universal_suffrage
+				value <= disapprove
+			}
+		}
+		add = this.ig_clout
+	}
+}
+
+cwp_jap_reform_pivot = {
+	add = {
+		desc = "cwp_jap_pivot_base_tt"
+		value = 35
+	}
+	add = {
+		desc = "cwp_jap_pivot_reformist_igs_tt"
+		value = cwp_jap_reformist_clout
+		multiply = 60
+	}
+	subtract = {
+		desc = "cwp_jap_pivot_conservative_igs_tt"
+		value = cwp_jap_conservative_clout
+		multiply = 60
+	}
+	if = {
+		limit = { has_variable = cwp_jap_reform_campaign_var }
+		add = {
+			desc = "cwp_jap_pivot_campaign_tt"
+			value = var:cwp_jap_reform_campaign_var
+		}
+	}
+	min = 2
+	max = 98
+}
