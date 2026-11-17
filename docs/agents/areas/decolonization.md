@@ -36,13 +36,17 @@ Partition and release use fixed vanilla 1.15.1 state regions: Pakistan = STATE_P
 
 All of this depends on the 1946 start state (governments, debt, subject types) and on AI weights, so the observer run is what confirms it.
 
+## Opening the journal entries
+
+Contextless journal entries never open from a `possible` block: the 2026-11-17 observer run (1946-1956) showed none of the five active. Each is added by `add_contextless_journal_entry` from `cwp_decolonization_monthly_pulse` (`common/on_actions/cwp_decolonization_on_actions.txt`, chained into `on_monthly_pulse`, the China and Korea pattern) when its `cwp_<x>_can_open` trigger holds (`woc`, `india`, `indonesia`, `indochina`, `algeria`, in `cwp_decolonization_triggers.txt`). Each JE sets the global `cwp_<x>_active` in `immediate` and clears it in every outcome; the Winds of Change also sets `cwp_woc_concluded` when it ends. The JEs have no `possible` or `is_shown_when_inactive` blocks.
+
 ## War support hook
 
 War support effects are **condition-based**, not pulsed. `war_support_from_journal_entries` (vanilla `common/script_values/war_support_values.txt`, summed into each beat's war support change) is overridden once, as a hand-written `REPLACE:` above the generated marker in `common/script_values/zz_vanilla_script_values.txt`. It keeps vanilla's Russian civil war block and adds one line per area: `add = cwp_decolonization_war_support` (defined in `common/script_values/cwp_decolonization_values.txt`) and `add = cwp_china_war_support` (a placeholder in `cwp_chinese_civil_war_values.txt`, owned by the China thread). Root is the country, `scope:war` the war. The JEs only mirror their bars into the globals `cwp_indochina_bar_level` and `cwp_indonesia_bar_level` (-2..2) each month. Don't call `add_war_support_change` on a pulse: it is a persistent rate and stacks (advisor, 2026-11-17). War support runs 0-100, red band at 25, and native per-beat factors reach about -5.
 
 ## Files
 
-`common/journal_entries/cwp_decolonization.txt`, `common/journal_entry_groups/cwp_decolonization_groups.txt`, `common/scripted_progress_bars/cwp_decolonization_bars.txt`, `common/scripted_buttons/cwp_decolonization_buttons.txt`, `common/scripted_effects/cwp_decolonization_effects.txt`, `common/scripted_triggers/cwp_decolonization_triggers.txt`, `common/static_modifiers/cwp_decolonization_modifiers.txt`, `common/script_values/cwp_decolonization_values.txt`, `events/cwp_decolonization/*.txt`, `localization/english/cwp/decolonization/cwp_decolonization_l_english.yml`.
+`common/journal_entries/cwp_decolonization.txt`, `common/on_actions/cwp_decolonization_on_actions.txt`, `common/journal_entry_groups/cwp_decolonization_groups.txt`, `common/scripted_progress_bars/cwp_decolonization_bars.txt`, `common/scripted_buttons/cwp_decolonization_buttons.txt`, `common/scripted_effects/cwp_decolonization_effects.txt`, `common/scripted_triggers/cwp_decolonization_triggers.txt`, `common/static_modifiers/cwp_decolonization_modifiers.txt`, `common/script_values/cwp_decolonization_values.txt`, `events/cwp_decolonization/*.txt`, `localization/english/cwp/decolonization/cwp_decolonization_l_english.yml`.
 
 The buttons and events files were produced by generator scripts; they are ordinary script now and can be edited by hand.
 
