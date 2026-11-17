@@ -15,7 +15,9 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -108,9 +110,18 @@ def one_run(worktree: Path, out: Path, end_year: int, every: int, max_minutes: f
     resuming = resume.exists()
     done = sorted(out.glob("[0-9]*.json"))
     note = f"econ: observer economy run {out.name} to {end_year}" + (" (resume)" if resuming else "")
-    r = sh("cwp-vic", "lock", "--wait", "86400", note)
-    if r.returncode != 0:
-        log(out, f"lock failed: {r.stderr.strip()}")
+    # Popen, so that if this process is stopped while waiting, the waiting `cwp-vic lock` goes too
+    # (otherwise it takes the lock later for nobody and holds it for two hours).
+    lock = subprocess.Popen(["cwp-vic", "lock", "--wait", "86400", note], text=True,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    try:
+        _, err = lock.communicate()
+    except BaseException:
+        lock.terminate()
+        lock.wait(timeout=30)
+        raise
+    if lock.returncode != 0:
+        log(out, f"lock failed: {err.strip()}")
         return {"status": "no_lock"}
     t0 = time.time()
     status, last_year = "running", None
@@ -210,6 +221,9 @@ def run_batch(worktree: Path, outdir: Path, runs: int, end_year: int, every: int
               when_idle: bool, yield_to_queue: bool, pm_tags):
     outdir.mkdir(parents=True, exist_ok=True)
     os.environ.setdefault("CWP_AGENT", "econ")
+    # `kill` (TERM/HUP) runs the cleanup in one_run: drop the queue ticket, or stop the game and unlock.
+    for sig in (signal.SIGTERM, signal.SIGHUP):
+        signal.signal(sig, lambda *_: sys.exit(1))
     # Unfinished runs (yielded or out of time, with a resume save) continue first, then new runs,
     # until `runs` runs have reached the end year.
     sessions = 0
