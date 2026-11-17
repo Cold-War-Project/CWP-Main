@@ -96,6 +96,17 @@ cwp-integrate land fix/y            # push the TESTED commit of each passing ite
 - Attribution is by file: a line naming a file that one PR touched goes to that PR, a line naming a file several PRs touched goes to all of them, and lines naming no file (engine asserts, crashes) are listed separately. To confirm a suspect, rebuild without it (`cwp-integrate build <the other PRs>`) and compare.
 - If the combined build crashes, bisect: build with half the PRs, then half again.
 
+## Run game jobs outside your session
+
+Claude sessions on Forge restart, and a restart kills every process they started, including a background `Bash`. A runner killed mid-game leaves an orphaned game and a lost slot. **Start every observer, benchmark or other long game job with `cwp-vic job`**, which runs it as a `systemd --user` unit outside the Claude process tree:
+
+```bash
+cwp-vic job my-run -- cwp-observe ~/forge/worktrees/<tree> 1960      # log: ~/forge/jobs/my-run.log
+systemctl --user status cwp-job-my-run                                 # is it still running?
+```
+
+Safety nets in `cwp-vic`: a runner that takes the lock with `--owner-pid $$` (cwp-observe does) releases it the moment the runner dies, and whoever takes the lock next stops any game still running, since it can only be an orphan.
+
 ## Shared long observer runs and state dumps
 
 One shared run serves every area; don't queue your own multi-year run on the same code.
