@@ -1,0 +1,275 @@
+﻿# Cold War Project: buttons for the German question, chapter 3 (Die Wende).
+# Journal entry: common/journal_entries/cwp_die_wende.txt
+
+# GDR: open the border crossings
+cwp_dw_open_wall_button = {
+	name = "cwp_dw_open_wall_button"
+	desc = "cwp_dw_open_wall_button_desc"
+
+	visible = {
+		c:DDR ?= this
+		has_global_variable = cwp_tg_wall
+		NOT = { has_global_variable = cwp_dw_wall_open }
+	}
+
+	possible = {
+		NOT = { has_modifier = cwp_dw_crackdown }
+	}
+
+	effect = {
+		set_global_variable = cwp_dw_wall_open
+		if = {
+			limit = { has_modifier = cwp_tg_wall }
+			remove_modifier = cwp_tg_wall
+		}
+		hidden_effect = {
+			every_country = {
+				limit = {
+					cwp_dw_is_party = yes
+					NOT = { this = root }
+				}
+				trigger_event = { id = cwp_die_wende.2 days = 1 popup = yes }
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 1
+		if = {
+			limit = {
+				scope:journal_entry ?= { "scripted_bar_progress(cwp_dw_revolution_bar)" >= 50 }
+			}
+			add = 10
+		}
+	}
+}
+
+# GDR: negotiate with the opposition
+cwp_dw_round_table_button = {
+	name = "cwp_dw_round_table_button"
+	desc = "cwp_dw_round_table_button_desc"
+
+	visible = {
+		c:DDR ?= this
+	}
+
+	possible = {
+		NOT = { has_modifier = cwp_dw_round_table }
+		NOT = { has_modifier = cwp_dw_crackdown }
+	}
+
+	selected = {
+		has_modifier = cwp_dw_round_table
+	}
+
+	effect = {
+		add_modifier = {
+			name = cwp_dw_round_table
+			days = short_modifier_time
+		}
+	}
+
+	ai_chance = {
+		value = 2
+		if = {
+			limit = { has_global_variable = cwp_tg_support_withdrawn }
+			add = 8
+		}
+	}
+}
+
+# GDR: send in the security forces
+cwp_dw_crackdown_button = {
+	name = "cwp_dw_crackdown_button"
+	desc = "cwp_dw_crackdown_button_desc"
+
+	visible = {
+		c:DDR ?= this
+	}
+
+	possible = {
+		NOT = { has_modifier = cwp_dw_crackdown }
+		NOT = { has_global_variable = cwp_dw_wall_open }
+	}
+
+	effect = {
+		add_modifier = {
+			name = cwp_dw_crackdown
+			days = normal_modifier_time
+		}
+		add_radicals = { value = 0.1 }
+		hidden_effect = {
+			every_country = {
+				limit = {
+					cwp_dw_is_party = yes
+					NOT = { this = root }
+				}
+				trigger_event = { id = cwp_die_wende.3 days = 1 popup = yes }
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 1
+		if = {
+			limit = { NOT = { has_global_variable = cwp_tg_support_withdrawn } }
+			add = 4
+		}
+	}
+}
+
+# Four powers: consent to a united Germany
+cwp_dw_consent_button = {
+	name = "cwp_dw_consent_button"
+	desc = "cwp_dw_consent_button_desc"
+
+	visible = {
+		cwp_dw_is_four_power = yes
+	}
+
+	possible = {
+		NOT = { has_variable = cwp_dw_consent }
+	}
+
+	selected = {
+		has_variable = cwp_dw_consent
+	}
+
+	effect = {
+		cwp_dw_clear_stance = yes
+		set_variable = cwp_dw_consent
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = { c:USA ?= this }
+			add = 10
+		}
+		if = {
+			limit = {
+				OR = {
+					c:GBR ?= this
+					c:FRA ?= this
+				}
+				c:USA ?= { has_variable = cwp_dw_consent }
+				scope:journal_entry ?= { "scripted_bar_progress(cwp_dw_revolution_bar)" >= 70 }
+			}
+			add = 5
+		}
+		if = {
+			limit = {
+				c:RUS ?= this
+				has_global_variable = cwp_tg_support_withdrawn
+			}
+			add = 2
+		}
+		if = {
+			limit = {
+				c:RUS ?= this
+				has_modifier = cwp_dw_credits
+			}
+			add = 5
+		}
+	}
+}
+
+# Four powers: hold back and wait (no stance)
+cwp_dw_delay_button = {
+	name = "cwp_dw_delay_button"
+	desc = "cwp_dw_delay_button_desc"
+
+	visible = {
+		cwp_dw_is_four_power = yes
+		OR = {
+			has_variable = cwp_dw_consent
+			has_variable = cwp_dw_block
+		}
+	}
+
+	possible = {
+		always = yes
+	}
+
+	effect = {
+		cwp_dw_clear_stance = yes
+	}
+
+	ai_chance = {
+		value = 0
+	}
+}
+
+# Four powers: refuse a united Germany
+cwp_dw_block_button = {
+	name = "cwp_dw_block_button"
+	desc = "cwp_dw_block_button_desc"
+
+	visible = {
+		cwp_dw_is_four_power = yes
+	}
+
+	possible = {
+		NOT = { has_variable = cwp_dw_block }
+	}
+
+	selected = {
+		has_variable = cwp_dw_block
+	}
+
+	effect = {
+		cwp_dw_clear_stance = yes
+		set_variable = cwp_dw_block
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				c:RUS ?= this
+				NOT = { has_global_variable = cwp_tg_support_withdrawn }
+			}
+			add = 3
+		}
+	}
+}
+
+# Federal Republic: offer Moscow credits and help with its troops' withdrawal
+cwp_dw_credits_button = {
+	name = "cwp_dw_credits_button"
+	desc = "cwp_dw_credits_button_desc"
+
+	visible = {
+		c:GER ?= this
+	}
+
+	possible = {
+		exists = c:RUS
+		NOT = { has_modifier = cwp_dw_credits_paid }
+	}
+
+	selected = {
+		has_modifier = cwp_dw_credits_paid
+	}
+
+	effect = {
+		add_modifier = {
+			name = cwp_dw_credits_paid
+			days = short_modifier_time
+		}
+		c:RUS = {
+			add_modifier = {
+				name = cwp_dw_credits
+				days = short_modifier_time
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 3
+		if = {
+			limit = { c:RUS ?= { NOT = { has_variable = cwp_dw_consent } } }
+			add = 5
+		}
+	}
+}
