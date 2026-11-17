@@ -29,13 +29,11 @@ FORGE = Path(os.environ.get("FORGE", Path.home() / "forge"))
 QUEUE = FORGE / ".vic3.queue"
 HOLDER = FORGE / ".vic3.lock.holder"
 
-# After --continuelastsave loads a saved game: close any popup, observer mode, max speed, unpause.
+# After --continuelastsave the game opens the save in the lobby, already set to Observer (seen
+# 2026-11-17): press Start (bottom right; 1146,696 on the 1280x720 vic-shot = 1719,1044 at 1920x1080),
+# then max speed and unpause. No Escape: in the lobby it opens the Exit dialog.
 RESUME_STEPS = [
-    ("key", ("Escape",), 2),
-    ("key", ("grave",), 2),
-    ("type", ("observe",), 1),
-    ("key", ("Return",), 2),
-    ("key", ("grave",), 2),
+    ("click", (1719, 1044), 20),
     ("key", ("5",), 1),
     ("key", ("space",), 1),
 ]
