@@ -1,0 +1,290 @@
+﻿# Cold War Project: buttons for the German question, chapter 2 (the two Germanies).
+# Journal entry: common/journal_entries/cwp_two_germanies.txt
+# root = the country pressing the button; scope:journal_entry is the chapter.
+
+# GDR: close the border with the West, Berlin included
+cwp_tg_wall_button = {
+	name = "cwp_tg_wall_button"
+	desc = "cwp_tg_wall_button_desc"
+
+	visible = {
+		c:DDR ?= this
+		NOT = { has_global_variable = cwp_tg_wall }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = cwp_tg_emigration_active_tt
+			cwp_tg_emigration_active = yes
+		}
+	}
+
+	effect = {
+		set_global_variable = cwp_tg_wall
+		add_modifier = { name = cwp_tg_wall }
+		cwp_tg_shift_bar = { BAR = cwp_tg_contact_bar VALUE = -20 }
+		hidden_effect = {
+			every_country = {
+				limit = {
+					cwp_tg_is_party = yes
+					NOT = { this = root }
+				}
+				trigger_event = { id = cwp_two_germanies.2 days = 1 popup = yes }
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 1
+		if = {
+			limit = {
+				scope:journal_entry ?= { "scripted_bar_progress(cwp_tg_legitimacy_bar)" <= 35 }
+			}
+			add = 10
+		}
+	}
+}
+
+# GDR: expand the Ministry for State Security
+cwp_tg_stasi_button = {
+	name = "cwp_tg_stasi_button"
+	desc = "cwp_tg_stasi_button_desc"
+
+	visible = {
+		c:DDR ?= this
+	}
+
+	possible = {
+		NOT = { has_modifier = cwp_tg_stasi }
+	}
+
+	selected = {
+		has_modifier = cwp_tg_stasi
+	}
+
+	effect = {
+		add_modifier = {
+			name = cwp_tg_stasi
+			days = normal_modifier_time
+		}
+	}
+
+	ai_chance = {
+		value = 5
+	}
+}
+
+# GDR: put consumer goods and housing before heavy industry
+cwp_tg_consumer_socialism_button = {
+	name = "cwp_tg_consumer_socialism_button"
+	desc = "cwp_tg_consumer_socialism_button_desc"
+
+	visible = {
+		c:DDR ?= this
+	}
+
+	possible = {
+		NOT = { has_modifier = cwp_tg_consumer_socialism }
+	}
+
+	selected = {
+		has_modifier = cwp_tg_consumer_socialism
+	}
+
+	effect = {
+		add_modifier = {
+			name = cwp_tg_consumer_socialism
+			days = normal_modifier_time
+		}
+	}
+
+	ai_chance = {
+		value = 2
+		if = {
+			limit = {
+				scope:journal_entry ?= { "scripted_bar_progress(cwp_tg_legitimacy_bar)" <= 40 }
+			}
+			add = 5
+		}
+	}
+}
+
+# Federal Republic: drop the Hallstein Doctrine and deal with the East
+cwp_tg_ostpolitik_button = {
+	name = "cwp_tg_ostpolitik_button"
+	desc = "cwp_tg_ostpolitik_button_desc"
+
+	visible = {
+		c:GER ?= this
+		has_global_variable = cwp_tg_hallstein
+	}
+
+	possible = {
+		has_global_variable = cwp_tg_hallstein
+	}
+
+	effect = {
+		remove_global_variable = cwp_tg_hallstein
+		set_global_variable = cwp_tg_ostpolitik
+	}
+
+	ai_chance = {
+		value = 1
+		if = {
+			limit = {
+				exists = c:RUS
+				exists = c:USA
+				c:USA = { "relations(c:RUS)" >= 0 }
+			}
+			add = 3
+		}
+		if = {
+			limit = {
+				ig:ig_trade_unions ?= { is_in_government = yes }
+			}
+			add = 5
+		}
+	}
+}
+
+# Federal Republic: offer the GDR a treaty on relations between the two states
+cwp_tg_basic_treaty_button = {
+	name = "cwp_tg_basic_treaty_button"
+	desc = "cwp_tg_basic_treaty_button_desc"
+
+	visible = {
+		c:GER ?= this
+		has_global_variable = cwp_tg_ostpolitik
+		NOT = { has_global_variable = cwp_tg_basic_treaty }
+	}
+
+	possible = {
+		exists = c:DDR
+		custom_tooltip = {
+			text = cwp_tg_basic_treaty_possible_tt
+			scope:journal_entry ?= { "scripted_bar_progress(cwp_tg_contact_bar)" >= 40 }
+		}
+		custom_tooltip = {
+			text = cwp_tg_basic_treaty_pending_tt
+			NOT = { has_global_variable = cwp_tg_basic_treaty_offered }
+		}
+	}
+
+	effect = {
+		set_global_variable = { name = cwp_tg_basic_treaty_offered days = very_short_modifier_time }
+		custom_tooltip = cwp_tg_basic_treaty_button_tt
+		hidden_effect = {
+			c:DDR = { trigger_event = { id = cwp_two_germanies.3 days = 7 popup = yes } }
+		}
+	}
+
+	ai_chance = {
+		value = 10
+	}
+}
+
+# Federal Republic: pay for the release of political prisoners
+cwp_tg_freikauf_button = {
+	name = "cwp_tg_freikauf_button"
+	desc = "cwp_tg_freikauf_button_desc"
+
+	visible = {
+		c:GER ?= this
+	}
+
+	possible = {
+		exists = c:DDR
+		NOT = { has_modifier = cwp_tg_freikauf }
+	}
+
+	selected = {
+		has_modifier = cwp_tg_freikauf
+	}
+
+	effect = {
+		add_modifier = {
+			name = cwp_tg_freikauf
+			days = short_modifier_time
+		}
+		c:DDR = {
+			add_modifier = {
+				name = cwp_tg_freikauf_income
+				days = short_modifier_time
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 3
+	}
+}
+
+# Soviet Union: let the GDR stand or fall on its own
+cwp_tg_withdraw_support_button = {
+	name = "cwp_tg_withdraw_support_button"
+	desc = "cwp_tg_withdraw_support_button_desc"
+
+	visible = {
+		c:RUS ?= this
+		NOT = { has_global_variable = cwp_tg_support_withdrawn }
+	}
+
+	possible = {
+		exists = c:DDR
+	}
+
+	effect = {
+		set_global_variable = cwp_tg_support_withdrawn
+		add_modifier = { name = cwp_tg_support_withdrawn }
+		hidden_effect = {
+			c:DDR = { trigger_event = { id = cwp_two_germanies.5 days = 1 popup = yes } }
+		}
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				exists = c:USA
+				average_sol < c:USA.average_sol
+				c:USA = { "relations(c:RUS)" >= 20 }
+			}
+			add = 2
+		}
+		if = {
+			limit = { radical_fraction = { value >= 0.2 } }
+			add = 5
+		}
+	}
+}
+
+# Soviet Union: stand behind the GDR again
+cwp_tg_reaffirm_support_button = {
+	name = "cwp_tg_reaffirm_support_button"
+	desc = "cwp_tg_reaffirm_support_button_desc"
+
+	visible = {
+		c:RUS ?= this
+		has_global_variable = cwp_tg_support_withdrawn
+	}
+
+	possible = {
+		exists = c:DDR
+	}
+
+	effect = {
+		remove_global_variable = cwp_tg_support_withdrawn
+		if = {
+			limit = { has_modifier = cwp_tg_support_withdrawn }
+			remove_modifier = cwp_tg_support_withdrawn
+		}
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = { radical_fraction = { value < 0.1 } }
+			add = 2
+		}
+	}
+}

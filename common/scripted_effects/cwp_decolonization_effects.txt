@@ -1,0 +1,564 @@
+﻿# Cold War Project: decolonization scripted effects
+# The Winds of Change keeps its state in global variables and in variables on countries:
+#   cwp_colony (country)              a colony the tide tracks; cwp_metropole holds its overlord at registration
+#   cwp_former_colony (country)       a tracked colony that has become independent
+#   cwp_colonial_power (country)      ruled a tracked colony at some point
+#   global cwp_tide_tier              0..4, from the anti-colonial tide bar
+#   global cwp_tide_tier_applied      the tier the colonies' modifier was last set to
+#   global cwp_tide_new_independences independences detected last month (read by the tide bar, reset each month)
+#   global cwp_tide_setbacks          risings crushed last month (read by the tide bar, reset each month)
+#   global cwp_free_former_colonies   number of free former colonies (read by the tide bar)
+#   global cwp_colonial_wars          colonies at war with their overlord (read by the tide bar)
+
+cwp_decolonization_init_globals = {
+	set_global_variable = { name = cwp_tide_tier value = 0 }
+	set_global_variable = { name = cwp_tide_tier_applied value = 0 }
+	set_global_variable = { name = cwp_tide_new_independences value = 0 }
+	set_global_variable = { name = cwp_tide_setbacks value = 0 }
+	set_global_variable = { name = cwp_free_former_colonies value = 0 }
+	set_global_variable = { name = cwp_colonial_wars value = 0 }
+}
+
+# No scope needed. Marks every subject that qualifies as a colony and its overlord.
+cwp_decolonization_register_colonies = {
+	every_country = {
+		limit = {
+			NOT = { has_variable = cwp_colony }
+			NOT = { has_variable = cwp_former_colony }
+			cwp_qualifies_as_colony = yes
+		}
+		set_variable = cwp_colony
+		set_variable = {
+			name = cwp_metropole
+			value = overlord
+		}
+		overlord = {
+			set_variable = cwp_colonial_power
+		}
+	}
+}
+
+# Called by je_cwp_winds_of_change every month, with scope:journal_entry set.
+cwp_decolonization_monthly_update = {
+	# The bar has already read last month's counters.
+	set_global_variable = { name = cwp_tide_new_independences value = 0 }
+	set_global_variable = { name = cwp_tide_setbacks value = 0 }
+
+	cwp_decolonization_register_colonies = yes
+
+	# Independence, by whatever road: a war, a release, a journal entry outcome.
+	every_country = {
+		limit = {
+			has_variable = cwp_colony
+			is_subject = no
+		}
+		remove_variable = cwp_colony
+		set_variable = cwp_former_colony
+		remove_modifier = cwp_anticolonial_tide
+		change_global_variable = { name = cwp_tide_new_independences add = 1 }
+		save_scope_as = cwp_new_state
+		trigger_event = { id = cwp_decolonization.1 popup = yes }
+		var:cwp_metropole ?= {
+			if = {
+				limit = { exists = this }
+				trigger_event = { id = cwp_decolonization.2 popup = yes }
+			}
+		}
+	}
+
+	# Standing counts the tide bar reads.
+	set_global_variable = { name = cwp_free_former_colonies value = 0 }
+	every_country = {
+		limit = { has_variable = cwp_former_colony }
+		change_global_variable = { name = cwp_free_former_colonies add = 1 }
+	}
+	set_global_variable = { name = cwp_colonial_wars value = 0 }
+	every_country = {
+		limit = {
+			cwp_is_tracked_colony = yes
+			is_at_war = yes
+			overlord ?= { has_war_with = prev }
+		}
+		change_global_variable = { name = cwp_colonial_wars add = 1 }
+	}
+
+	# Tide tier from the bar.
+	if = {
+		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_tide_bar)" >= 100 } }
+		set_global_variable = { name = cwp_tide_tier value = 4 }
+	}
+	else_if = {
+		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_tide_bar)" >= 75 } }
+		set_global_variable = { name = cwp_tide_tier value = 3 }
+	}
+	else_if = {
+		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_tide_bar)" >= 50 } }
+		set_global_variable = { name = cwp_tide_tier value = 2 }
+	}
+	else_if = {
+		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_tide_bar)" >= 25 } }
+		set_global_variable = { name = cwp_tide_tier value = 1 }
+	}
+	else = {
+		set_global_variable = { name = cwp_tide_tier value = 0 }
+	}
+
+	# Milestone news when the tide rises a tier.
+	if = {
+		limit = { global_var:cwp_tide_tier > global_var:cwp_tide_tier_applied }
+		every_country = {
+			limit = {
+				OR = {
+					has_variable = cwp_colony
+					has_variable = cwp_colonial_power
+					has_variable = cwp_former_colony
+					c:USA ?= this
+					c:RUS ?= this
+				}
+			}
+			trigger_event = { id = cwp_decolonization.3 }
+		}
+	}
+
+	# Re-apply the colonies' modifier when the tier changes, and give it to newly registered colonies.
+	if = {
+		limit = { NOT = { global_var:cwp_tide_tier = global_var:cwp_tide_tier_applied } }
+		every_country = {
+			limit = { has_modifier = cwp_anticolonial_tide }
+			remove_modifier = cwp_anticolonial_tide
+		}
+		set_global_variable = { name = cwp_tide_tier_applied value = global_var:cwp_tide_tier }
+	}
+	if = {
+		limit = { global_var:cwp_tide_tier > 0 }
+		every_country = {
+			limit = {
+				cwp_is_tracked_colony = yes
+				NOT = { has_modifier = cwp_anticolonial_tide }
+			}
+			add_modifier = {
+				name = cwp_anticolonial_tide
+				multiplier = global_var:cwp_tide_tier
+			}
+		}
+	}
+}
+
+# Country scope: a metropole that crushed a rising. Slows the tide next month.
+cwp_decolonization_add_setback = {
+	change_global_variable = { name = cwp_tide_setbacks add = 1 }
+}
+
+# Country scope (the new state): the shared consequences of independence agreed with the metropole.
+# $METROPOLE$ = the former overlord.
+cwp_decolonization_negotiated_independence = {
+	make_independent = yes
+	add_modifier = {
+		name = cwp_new_nation
+		years = 10
+		is_decaying = yes
+	}
+	change_relations = {
+		country = $METROPOLE$
+		value = 30
+	}
+}
+
+### India
+
+# Scope: none. Gives Pakistan the Muslim-majority provinces of British India that India still holds.
+# West: Punjab (the vanilla state is the western, Lahore half), Sindh, Baluchistan, Quetta, the North-West Frontier.
+# East: East Bengal. Kashmir stays with India and becomes a Pakistani claim.
+cwp_india_partition_effect = {
+	if = {
+		limit = { NOT = { exists = c:PAK } }
+		if = {
+			limit = { exists = s:STATE_PUNJAB.region_state:HND }
+			create_country = {
+				tag = PAK
+				origin = c:HND
+				state = s:STATE_PUNJAB.region_state:HND
+			}
+		}
+		else_if = {
+			limit = { exists = s:STATE_SINDH.region_state:HND }
+			create_country = {
+				tag = PAK
+				origin = c:HND
+				state = s:STATE_SINDH.region_state:HND
+			}
+		}
+		else_if = {
+			limit = { exists = s:STATE_EAST_BENGAL.region_state:HND }
+			create_country = {
+				tag = PAK
+				origin = c:HND
+				state = s:STATE_EAST_BENGAL.region_state:HND
+			}
+		}
+	}
+	if = {
+		limit = { exists = c:PAK }
+		if = {
+			limit = { exists = s:STATE_SINDH.region_state:HND }
+			s:STATE_SINDH.region_state:HND = { set_state_owner = c:PAK }
+		}
+		if = {
+			limit = { exists = s:STATE_BALUCHISTAN.region_state:HND }
+			s:STATE_BALUCHISTAN.region_state:HND = { set_state_owner = c:PAK }
+		}
+		if = {
+			limit = { exists = s:STATE_QUETTA.region_state:HND }
+			s:STATE_QUETTA.region_state:HND = { set_state_owner = c:PAK }
+		}
+		if = {
+			limit = { exists = s:STATE_PASHTUNISTAN.region_state:HND }
+			s:STATE_PASHTUNISTAN.region_state:HND = { set_state_owner = c:PAK }
+		}
+		if = {
+			limit = { exists = s:STATE_EAST_BENGAL.region_state:HND }
+			s:STATE_EAST_BENGAL.region_state:HND = { set_state_owner = c:PAK }
+		}
+		if = {
+			limit = { exists = s:STATE_PUNJAB.region_state:HND }
+			s:STATE_PUNJAB.region_state:HND = { set_state_owner = c:PAK }
+		}
+		s:STATE_KASHMIR = { add_claim = c:PAK }
+		c:PAK = {
+			add_modifier = {
+				name = cwp_new_nation
+				years = 10
+				is_decaying = yes
+			}
+			set_variable = cwp_former_colony
+			every_scope_state = {
+				limit = {
+					OR = {
+						state_region = s:STATE_PUNJAB
+						state_region = s:STATE_EAST_BENGAL
+					}
+				}
+				add_modifier = {
+					name = cwp_india_communal_violence
+					years = 2
+					is_decaying = yes
+				}
+			}
+			change_relations = {
+				country = c:HND
+				value = -50
+			}
+		}
+		c:HND = {
+			every_scope_state = {
+				limit = {
+					OR = {
+						state_region = s:STATE_HILL_PUNJAB
+						state_region = s:STATE_WEST_BENGAL
+						state_region = s:STATE_DELHI
+					}
+				}
+				add_modifier = {
+					name = cwp_india_communal_violence
+					years = 2
+					is_decaying = yes
+				}
+			}
+		}
+	}
+}
+
+### Indochina
+
+# Scope: none. Laos and Cambodia leave French rule as kingdoms, from VNM or from France directly.
+cwp_indochina_release_kingdoms = {
+	if = {
+		limit = { NOT = { exists = c:LAO } }
+		if = {
+			limit = { exists = s:STATE_LAOS.region_state:VNM }
+			create_country = {
+				tag = LAO
+				origin = c:VNM
+				state = s:STATE_LAOS.region_state:VNM
+			}
+		}
+		else_if = {
+			limit = { exists = s:STATE_LAOS.region_state:FRA }
+			create_country = {
+				tag = LAO
+				origin = c:FRA
+				state = s:STATE_LAOS.region_state:FRA
+			}
+		}
+		c:LAO ?= { cwp_indochina_new_kingdom_setup = yes }
+	}
+	if = {
+		limit = { NOT = { exists = c:CAM } }
+		if = {
+			limit = { exists = s:STATE_CAMBODIA.region_state:VNM }
+			create_country = {
+				tag = CAM
+				origin = c:VNM
+				state = s:STATE_CAMBODIA.region_state:VNM
+			}
+		}
+		else_if = {
+			limit = { exists = s:STATE_CAMBODIA.region_state:FRA }
+			create_country = {
+				tag = CAM
+				origin = c:FRA
+				state = s:STATE_CAMBODIA.region_state:FRA
+			}
+		}
+		c:CAM ?= { cwp_indochina_new_kingdom_setup = yes }
+	}
+}
+
+# Country scope (LAO or CAM).
+cwp_indochina_new_kingdom_setup = {
+	set_variable = cwp_former_colony
+	if = {
+		limit = { NOT = { has_modifier = cwp_new_nation } }
+		add_modifier = {
+			name = cwp_new_nation
+			years = 10
+			is_decaying = yes
+		}
+	}
+}
+
+# Scope: none. Ends every play or war between the French side and DAI (used by a negotiated settlement).
+cwp_indochina_end_war = {
+	every_diplomatic_play = {
+		limit = {
+			exists = c:DAI
+			OR = {
+				AND = {
+					initiator_is = c:FRA
+					target_is = c:DAI
+				}
+				AND = {
+					initiator_is = c:DAI
+					target_is = c:FRA
+				}
+			}
+		}
+		end_play = yes
+	}
+	c:DAI ?= {
+		every_country = {
+			limit = {
+				cwp_is_french_side = yes
+				is_subject = no
+			}
+			create_bidirectional_truce = {
+				country = c:DAI
+				months = 60
+			}
+		}
+	}
+}
+
+# Scope: none. The people's war phase: keeps the belligerents' fighting narrow and their war support from collapsing.
+cwp_indochina_peoples_war_pulse = {
+	every_country = {
+		limit = {
+			OR = {
+				c:DAI ?= this
+				c:FRA ?= this
+				c:VNM ?= this
+			}
+			NOT = { has_modifier = cwp_indochina_peoples_war }
+		}
+		add_modifier = { name = cwp_indochina_peoples_war }
+	}
+}
+
+# Scope: none. Ends the people's war phase. $ATTACKER$ launched the offensive and gains momentum.
+cwp_indochina_end_peoples_war = {
+	remove_global_variable = cwp_indochina_peoples_war_phase
+	every_country = {
+		limit = { has_modifier = cwp_indochina_peoples_war }
+		remove_modifier = cwp_indochina_peoples_war
+	}
+	$ATTACKER$ = {
+		add_modifier = {
+			name = cwp_indochina_offensive_momentum
+			years = 2
+			is_decaying = yes
+		}
+	}
+}
+
+# Scope: none. Clears the phase variable and the war modifiers when the JE ends.
+cwp_indochina_cleanup = {
+	remove_global_variable = cwp_indochina_peoples_war_phase
+	remove_global_variable = cwp_indochina_bar_level
+	every_country = {
+		limit = { has_modifier = cwp_indochina_peoples_war }
+		remove_modifier = cwp_indochina_peoples_war
+	}
+}
+
+### Algeria
+
+# Scope: none. Algeria (ALD) is created from the French departments of Algeria and the Algerian Sahara.
+cwp_algeria_independence_effect = {
+	if = {
+		limit = {
+			NOT = { exists = c:ALD }
+			exists = s:STATE_ALGIERS.region_state:FRA
+		}
+		create_country = {
+			tag = ALD
+			origin = c:FRA
+			state = s:STATE_ALGIERS.region_state:FRA
+			on_created = {
+				set_variable = cwp_former_colony
+				add_modifier = {
+					name = cwp_new_nation
+					years = 10
+					is_decaying = yes
+				}
+			}
+		}
+	}
+	if = {
+		limit = { exists = c:ALD }
+		if = {
+			limit = { exists = s:STATE_ORAN.region_state:FRA }
+			s:STATE_ORAN.region_state:FRA = { set_state_owner = c:ALD }
+		}
+		if = {
+			limit = { exists = s:STATE_CONSTANTINE.region_state:FRA }
+			s:STATE_CONSTANTINE.region_state:FRA = { set_state_owner = c:ALD }
+		}
+		if = {
+			limit = { exists = s:STATE_SAHARA.region_state:FRA }
+			s:STATE_SAHARA.region_state:FRA = { set_state_owner = c:ALD }
+		}
+		if = {
+			limit = { exists = s:STATE_EAST_SAHARA.region_state:FRA }
+			s:STATE_EAST_SAHARA.region_state:FRA = { set_state_owner = c:ALD }
+		}
+		c:ALD = {
+			every_scope_state = {
+				add_modifier = {
+					name = cwp_algeria_settler_exodus
+					years = 3
+					is_decaying = yes
+				}
+			}
+		}
+	}
+}
+
+### Indonesia
+
+# Scope: none. The Round Table: every Dutch-held Indonesian state passes to IDS. Western New Guinea stays Dutch.
+cwp_indonesia_transfer_sovereignty = {
+	every_state = {
+		limit = {
+			owner = {
+				OR = {
+					c:NET ?= this
+					is_subject_of = c:NET
+				}
+				NOT = { c:IDS ?= this }
+			}
+			OR = {
+				state_region = s:STATE_WEST_JAVA
+				state_region = s:STATE_CENTRAL_JAVA
+				state_region = s:STATE_EAST_JAVA
+				state_region = s:STATE_NORTH_SUMATRA
+				state_region = s:STATE_SOUTH_SUMATRA
+				state_region = s:STATE_ACEH
+				state_region = s:STATE_WEST_BORNEO
+				state_region = s:STATE_EAST_BORNEO
+				state_region = s:STATE_CELEBES
+				state_region = s:STATE_MOLUCCAS
+				state_region = s:STATE_SUNDA_ISLANDS
+			}
+		}
+		set_state_owner = c:IDS
+	}
+}
+
+# Scope: none. Ends every play or war between the Netherlands and the Republic (used by the Round Table).
+cwp_indonesia_end_war = {
+	if = {
+		limit = {
+			exists = c:NET
+			exists = c:IDS
+		}
+		every_diplomatic_play = {
+			limit = {
+				OR = {
+					AND = {
+						initiator_is = c:NET
+						target_is = c:IDS
+					}
+					AND = {
+						initiator_is = c:IDS
+						target_is = c:NET
+					}
+				}
+			}
+			end_play = yes
+		}
+		c:NET = {
+			create_bidirectional_truce = {
+				country = c:IDS
+				months = 60
+			}
+		}
+	}
+}
+
+# Scope: none, scope:journal_entry set. Monthly: mirrors the bar into cwp_indochina_bar_level (-2..2), which
+# cwp_decolonization_war_support (common/script_values/cwp_decolonization_values.txt) turns into war support.
+cwp_indochina_set_bar_level = {
+	if = {
+		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" >= 40 } }
+		set_global_variable = { name = cwp_indochina_bar_level value = 2 }
+	}
+	else_if = {
+		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" >= 25 } }
+		set_global_variable = { name = cwp_indochina_bar_level value = 1 }
+	}
+	else_if = {
+		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" <= -40 } }
+		set_global_variable = { name = cwp_indochina_bar_level value = -2 }
+	}
+	else_if = {
+		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" <= -25 } }
+		set_global_variable = { name = cwp_indochina_bar_level value = -1 }
+	}
+	else = {
+		set_global_variable = { name = cwp_indochina_bar_level value = 0 }
+	}
+}
+
+# Scope: none, scope:journal_entry set. Monthly: mirrors the bar into cwp_indonesia_bar_level (-2..2), which
+# cwp_decolonization_war_support (common/script_values/cwp_decolonization_values.txt) turns into war support.
+cwp_indonesia_set_bar_level = {
+	if = {
+		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indonesia_revolution_bar)" >= 40 } }
+		set_global_variable = { name = cwp_indonesia_bar_level value = 2 }
+	}
+	else_if = {
+		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indonesia_revolution_bar)" >= 25 } }
+		set_global_variable = { name = cwp_indonesia_bar_level value = 1 }
+	}
+	else_if = {
+		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indonesia_revolution_bar)" <= -40 } }
+		set_global_variable = { name = cwp_indonesia_bar_level value = -2 }
+	}
+	else_if = {
+		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indonesia_revolution_bar)" <= -25 } }
+		set_global_variable = { name = cwp_indonesia_bar_level value = -1 }
+	}
+	else = {
+		set_global_variable = { name = cwp_indonesia_bar_level value = 0 }
+	}
+}

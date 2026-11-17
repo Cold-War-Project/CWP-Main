@@ -1,0 +1,253 @@
+﻿# Cold War Project: the Korean question, 1946 onward (proposal option B, docs/agents/areas/korea.md).
+# One situation shared by both Koreas, their patrons and anyone who fights in Korea.
+# Nothing here happens on a date: every step is a choice or a threshold of the bars, war support and the front.
+# Activated by cwp_korea_monthly_pulse (common/on_actions/cwp_korea_on_actions.txt); monthly logic lives there too.
+
+je_cwp_divided_peninsula = {
+	icon = "gfx/interface/icons/event_icons/event_map.dds"
+
+	group = je_group_global_international_situations
+
+	activation_description = {
+		always = yes
+	}
+
+	scripted_progress_bar = cwp_korea_commission_bar
+	scripted_progress_bar = cwp_korea_balance_bar
+
+	# Joint Commission
+	scripted_button = cwp_korea_commission_concessions_button
+	scripted_button = cwp_korea_un_referral_button
+	scripted_button = cwp_korea_peoples_committees_button
+	# Two states
+	scripted_button = cwp_korea_southern_elections_button
+	scripted_button = cwp_korea_northern_elections_button
+	scripted_button = cwp_korea_proclaim_rok_button
+	scripted_button = cwp_korea_proclaim_dprk_button
+	scripted_button = cwp_korea_us_withdrawal_button
+	scripted_button = cwp_korea_soviet_withdrawal_button
+	scripted_button = cwp_korea_us_aid_button
+	scripted_button = cwp_korea_soviet_arms_button
+	scripted_button = cwp_korea_returned_divisions_button
+	scripted_button = cwp_korea_land_reform_button
+	scripted_button = cwp_korea_security_council_boycott_button
+	scripted_button = cwp_korea_end_boycott_button
+	scripted_button = cwp_korea_volunteers_pledge_button
+	scripted_button = cwp_korea_greenlight_button
+	scripted_button = cwp_korea_invasion_button
+	scripted_button = cwp_korea_march_north_button
+
+	is_shown_when_inactive = {
+		always = no
+	}
+
+	possible = {
+		exists = c:NRK
+		exists = c:STK
+	}
+
+	should_be_involved = {
+		OR = {
+			c:NRK ?= this
+			c:STK ?= this
+			c:USA ?= this
+			c:RUS ?= this
+			c:PRC ?= this
+			has_variable = cwp_korea_participant
+		}
+	}
+
+	should_show_when_not_involved = {
+		country_rank >= rank_value:great_power
+	}
+
+	immediate = {
+		set_global_variable = cwp_korea_active
+	}
+
+	immediate_all_involved = {
+		if = {
+			limit = {
+				OR = {
+					c:NRK ?= this
+					c:STK ?= this
+					c:USA ?= this
+					c:RUS ?= this
+				}
+			}
+			trigger_event = { id = cwp_korea.1 popup = yes }
+		}
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = cwp_korea_status_war
+				trigger = { has_global_variable = cwp_korea_war }
+			}
+			triggered_desc = {
+				desc = cwp_korea_status_two_states
+				trigger = { cwp_korea_both_sovereign = yes }
+			}
+			triggered_desc = {
+				desc = cwp_korea_status_partition
+				trigger = { has_global_variable = cwp_korea_partition }
+			}
+			triggered_desc = {
+				desc = cwp_korea_status_commission
+				trigger = { always = yes }
+			}
+		}
+	}
+
+	map_color = {
+		if = {
+			limit = {
+				owner ?= { c:NRK ?= this }
+			}
+			value = "cwp_korea_north_red"
+		}
+		else_if = {
+			limit = {
+				owner ?= { c:STK ?= this }
+			}
+			value = "cwp_korea_south_blue"
+		}
+	}
+
+	# Armistice: the war ends (talks, the native stalemate or a negotiated peace) with both Koreas standing
+	outcome = {
+		header = je_cwp_divided_peninsula_armistice
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_divided_peninsula_armistice_desc
+		color = "gold_positive"
+		flags = { historical }
+		trigger = {
+			has_global_variable = cwp_korea_war
+			exists = c:NRK
+			exists = c:STK
+			custom_tooltip = {
+				text = cwp_korea_war_over_tt
+				cwp_korea_war_running = no
+			}
+		}
+		effect = {
+			custom_tooltip = cwp_korea_dmz_tt
+			cwp_korea_divided_peace_effect = yes
+			cwp_korea_cleanup_effect = yes
+		}
+	}
+
+	# The line holds: two sovereign states and a real deterrent, with no war
+	outcome = {
+		header = je_cwp_divided_peninsula_line_holds
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_divided_peninsula_line_holds_desc
+		color = "gold_positive"
+		trigger = {
+			NOT = { has_global_variable = cwp_korea_war }
+			cwp_korea_both_sovereign = yes
+			custom_tooltip = {
+				text = cwp_korea_deterrence_held_tt
+				has_global_variable = cwp_korea_deterrence_months
+				global_var:cwp_korea_deterrence_months >= 24
+			}
+		}
+		effect = {
+			custom_tooltip = cwp_korea_dmz_tt
+			cwp_korea_divided_peace_effect = yes
+			cwp_korea_cleanup_effect = yes
+		}
+	}
+
+	# Unified under the North
+	outcome = {
+		header = je_cwp_divided_peninsula_north_unifies
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_divided_peninsula_north_unifies_desc
+		color = "blue_negative"
+		trigger = {
+			exists = c:NRK
+			NOT = { exists = c:STK }
+		}
+		effect = {
+			c:NRK ?= {
+				add_modifier = { name = cwp_korea_unified days = long_modifier_time }
+			}
+			cwp_korea_cleanup_effect = yes
+		}
+	}
+
+	# Unified under the South
+	outcome = {
+		header = je_cwp_divided_peninsula_south_unifies
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_divided_peninsula_south_unifies_desc
+		color = "gold_positive"
+		trigger = {
+			exists = c:STK
+			NOT = { exists = c:NRK }
+		}
+		effect = {
+			c:STK ?= {
+				add_modifier = { name = cwp_korea_unified days = long_modifier_time }
+			}
+			cwp_korea_cleanup_effect = yes
+		}
+	}
+
+	# Neutral unified Korea: the Joint Commission agrees on a provisional government
+	outcome = {
+		header = je_cwp_divided_peninsula_neutral
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_divided_peninsula_neutral_desc
+		color = "gold_positive"
+		trigger = {
+			NOT = { has_global_variable = cwp_korea_partition }
+			custom_tooltip = {
+				text = cwp_korea_commission_agrees_tt
+				scope:journal_entry = {
+					"scripted_bar_progress(cwp_korea_commission_bar)" >= 100
+				}
+			}
+		}
+		effect = {
+			custom_tooltip = cwp_korea_neutral_tt
+			hidden_effect = { cwp_korea_neutral_unification_effect = yes }
+			cwp_korea_cleanup_effect = yes
+		}
+	}
+
+	# Invalid: the situation no longer exists
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			OR = {
+				AND = {
+					NOT = { exists = c:NRK }
+					NOT = { exists = c:STK }
+				}
+				AND = {
+					NOT = { has_global_variable = cwp_korea_partition }
+					OR = {
+						NOT = { exists = c:USA }
+						NOT = { exists = c:RUS }
+					}
+				}
+			}
+		}
+		effect = {
+			cwp_korea_cleanup_effect = yes
+		}
+	}
+
+	progressbar = no
+
+	weight = 10000
+
+	should_be_pinned_by_default_involved = yes
+	should_be_pinned_by_default_uninvolved_or_context = no
+
+	can_revolution_inherit = yes
+}

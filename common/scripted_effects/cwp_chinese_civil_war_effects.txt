@@ -1,0 +1,229 @@
+﻿# Cold War Project: the Chinese Civil War (je_cwp_chinese_civil_war)
+# Design note: docs/agents/areas/chinese-civil-war.md
+
+# Scope: none. Called from the JE's immediate.
+cwp_ccw_open_effect = {
+	set_global_variable = cwp_ccw_active
+	set_global_variable = cwp_ccw_peoples_war_phase
+	set_global_variable = { name = cwp_ccw_balance value = -10 }
+	set_global_variable = { name = cwp_ccw_exhaustion value = 0 }
+	c:ROC ?= {
+		if = {
+			limit = { NOT = { has_modifier = cwp_ccw_hyperinflation } }
+			add_modifier = { name = cwp_ccw_hyperinflation }
+		}
+	}
+	cwp_ccw_peoples_war_pulse = yes
+}
+
+# War support itself is not touched here: the people's-war floor, the strait floor and the decisive-phase drain are
+# per-beat terms in the script value cwp_china_war_support (common/script_values/cwp_chinese_civil_war_values.txt).
+
+# Scope: none. Monthly while the people's war lasts: the slowing modifier on both Chinas, and a month of stalemate counted
+# while the balance stays near the middle (cwp_ccw_exhaustion opens the armistice to a war that is going nowhere).
+cwp_ccw_peoples_war_pulse = {
+	every_country = {
+		limit = {
+			cwp_ccw_is_belligerent = yes
+			NOT = { has_modifier = cwp_ccw_peoples_war }
+		}
+		add_modifier = { name = cwp_ccw_peoples_war }
+	}
+	if = {
+		limit = {
+			cwp_ccw_war_running = yes
+			global_var:cwp_ccw_balance > -15
+			global_var:cwp_ccw_balance < 15
+		}
+		change_global_variable = { name = cwp_ccw_exhaustion add = 1 }
+	}
+}
+
+# Scope: none. Monthly: put the strait question to the PRC.
+cwp_ccw_strait_question = {
+	if = {
+		limit = {
+			cwp_ccw_war_running = yes
+			cwp_ccw_roc_holds_formosa = yes
+			NOT = { cwp_ccw_roc_holds_mainland = yes }
+			NOT = { has_global_variable = cwp_ccw_strait_cd }
+		}
+		set_global_variable = { name = cwp_ccw_strait_cd months = 12 }
+		c:PRC = { trigger_event = { id = cwp_ccw.7 popup = yes } }
+	}
+}
+
+# Scope: none. Ends the people's war phase. $ATTACKER$ launched the offensive, $DEFENDER$ meets it.
+cwp_ccw_end_peoples_war = {
+	remove_global_variable = cwp_ccw_peoples_war_phase
+	every_country = {
+		limit = { has_modifier = cwp_ccw_peoples_war }
+		remove_modifier = cwp_ccw_peoples_war
+	}
+	$ATTACKER$ = {
+		add_modifier = {
+			name = cwp_ccw_offensive_momentum
+			multiplier = {
+				value = global_var:cwp_ccw_balance
+				abs = yes
+				min = 10
+			}
+			years = 2
+			is_decaying = yes
+		}
+	}
+	$DEFENDER$ = {
+		add_modifier = {
+			name = cwp_ccw_last_stand
+			multiplier = {
+				value = global_var:cwp_ccw_balance
+				abs = yes
+				min = 10
+			}
+			years = 1
+			is_decaying = yes
+		}
+	}
+	c:PRC ?= { trigger_event = { id = cwp_ccw.4 popup = yes } }
+	c:ROC ?= { trigger_event = { id = cwp_ccw.4 popup = yes } }
+}
+
+# Scope: none. Ends the war along the front line: every state owned by one China and controlled by the other passes whole to
+# its controller (Soviet-held Manchuria and third countries are untouched), both claim the rest of China, 60-month truce.
+cwp_ccw_front_line_settlement = {
+	every_state = {
+		limit = {
+			exists = owner
+			exists = controller
+			owner = { cwp_ccw_is_belligerent = yes }
+			controller = { cwp_ccw_is_belligerent = yes }
+			NOT = { controller = owner }
+		}
+		add_to_temporary_list = cwp_ccw_transfer_states
+	}
+	every_in_list = {
+		list = cwp_ccw_transfer_states
+		set_state_owner = controller
+	}
+	every_diplomatic_play = {
+		limit = {
+			exists = c:PRC
+			exists = c:ROC
+			OR = {
+				AND = {
+					initiator_is = c:PRC
+					target_is = c:ROC
+				}
+				AND = {
+					initiator_is = c:ROC
+					target_is = c:PRC
+				}
+			}
+		}
+		end_play = yes
+	}
+	c:ROC ?= {
+		every_scope_state = {
+			limit = { cwp_ccw_is_mainland_state = yes }
+			state_region = { add_claim = c:PRC }
+		}
+	}
+	c:PRC ?= {
+		every_scope_state = {
+			state_region = { add_claim = c:ROC }
+		}
+		create_bidirectional_truce = { country = c:ROC months = 60 }
+	}
+	every_country = {
+		limit = { cwp_ccw_is_belligerent = yes }
+		add_modifier = {
+			name = cwp_ccw_settlement
+			years = 10
+			is_decaying = yes
+		}
+	}
+	set_global_variable = cwp_ccw_settled
+}
+
+# Scope: none. Removes every war-time modifier and variable when the JE ends.
+cwp_ccw_cleanup = {
+	remove_global_variable = cwp_ccw_active
+	remove_global_variable = cwp_ccw_peoples_war_phase
+	set_global_variable = cwp_ccw_concluded
+	every_country = {
+		limit = { has_modifier = cwp_ccw_peoples_war }
+		remove_modifier = cwp_ccw_peoples_war
+	}
+	every_country = {
+		limit = { has_modifier = cwp_ccw_ceasefire }
+		remove_modifier = cwp_ccw_ceasefire
+	}
+	every_country = {
+		limit = { has_modifier = cwp_ccw_soviet_aid }
+		remove_modifier = cwp_ccw_soviet_aid
+	}
+	every_country = {
+		limit = { has_modifier = cwp_ccw_soviet_aid_cost }
+		remove_modifier = cwp_ccw_soviet_aid_cost
+	}
+	every_country = {
+		limit = { has_modifier = cwp_ccw_us_aid }
+		remove_modifier = cwp_ccw_us_aid
+	}
+	every_country = {
+		limit = { has_modifier = cwp_ccw_us_aid_cost }
+		remove_modifier = cwp_ccw_us_aid_cost
+	}
+	every_country = {
+		limit = { has_modifier = cwp_ccw_us_arms_embargo }
+		remove_modifier = cwp_ccw_us_arms_embargo
+	}
+	every_country = {
+		limit = { has_modifier = cwp_ccw_manchurian_garrison }
+		remove_modifier = cwp_ccw_manchurian_garrison
+	}
+	remove_global_variable = cwp_ccw_ceasefire
+	every_country = {
+		limit = { has_modifier = cwp_ccw_offensive_momentum }
+		remove_modifier = cwp_ccw_offensive_momentum
+	}
+	every_country = {
+		limit = { has_modifier = cwp_ccw_last_stand }
+		remove_modifier = cwp_ccw_last_stand
+	}
+	# The strait patrol and its cost outlive a standoff only as long as the patrol was set for.
+}
+
+# Scope: none. The Red Army leaves Manchuria. TREATY = yes: the cities (Shengjing, Southern Manchuria) to the government,
+# the rest to the PRC. ALL_TO_ROC = yes: everything to the government. Both no: everything to the PRC.
+cwp_ccw_manchuria_handover = {
+	if = {
+		limit = { exists = c:RUS }
+		c:RUS = {
+			every_scope_state = {
+				limit = { cwp_ccw_is_manchurian_state = yes }
+				if = {
+					limit = {
+						exists = c:ROC
+						OR = {
+							always = $ALL_TO_ROC$
+							AND = {
+								always = $TREATY$
+								OR = {
+									state_region = s:STATE_SHENGJING
+									state_region = s:STATE_SOUTHERN_MANCHURIA
+								}
+							}
+							NOT = { exists = c:PRC }
+						}
+					}
+					set_state_owner = c:ROC
+				}
+				else_if = {
+					limit = { exists = c:PRC }
+					set_state_owner = c:PRC
+				}
+			}
+		}
+	}
+}

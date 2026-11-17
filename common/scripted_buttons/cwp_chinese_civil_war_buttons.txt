@@ -1,0 +1,582 @@
+﻿# Cold War Project: the Chinese Civil War (je_cwp_chinese_civil_war)
+# global_var:cwp_ccw_balance mirrors cwp_ccw_balance_bar (set in the JE's monthly pulse).
+
+### Communists
+
+cwp_ccw_land_reform_button = {
+	name = "cwp_ccw_land_reform_button"
+	desc = "cwp_ccw_land_reform_button_desc"
+
+	visible = {
+		c:PRC ?= this
+	}
+
+	possible = {
+		NOT = { has_modifier = cwp_ccw_land_reform }
+	}
+
+	selected = {
+		has_modifier = cwp_ccw_land_reform
+	}
+
+	effect = {
+		add_modifier = { name = cwp_ccw_land_reform }
+	}
+
+	ai_chance = {
+		value = 50
+	}
+}
+
+cwp_ccw_pla_offensive_button = {
+	name = "cwp_ccw_pla_offensive_button"
+	desc = "cwp_ccw_pla_offensive_button_desc"
+
+	visible = {
+		c:PRC ?= this
+		has_global_variable = cwp_ccw_peoples_war_phase
+	}
+
+	possible = {
+		cwp_ccw_war_running = yes
+		custom_tooltip = {
+			text = cwp_ccw_balance_communist_25_tt
+			global_var:cwp_ccw_balance >= 25
+		}
+	}
+
+	effect = {
+		cwp_ccw_end_peoples_war = {
+			ATTACKER = c:PRC
+			DEFENDER = c:ROC
+		}
+	}
+
+	ai_chance = {
+		value = 50
+	}
+}
+
+### Nationalists
+
+cwp_ccw_nra_offensive_button = {
+	name = "cwp_ccw_nra_offensive_button"
+	desc = "cwp_ccw_nra_offensive_button_desc"
+
+	visible = {
+		c:ROC ?= this
+		has_global_variable = cwp_ccw_peoples_war_phase
+	}
+
+	possible = {
+		cwp_ccw_war_running = yes
+		custom_tooltip = {
+			text = cwp_ccw_balance_nationalist_25_tt
+			global_var:cwp_ccw_balance <= -25
+		}
+	}
+
+	effect = {
+		cwp_ccw_end_peoples_war = {
+			ATTACKER = c:ROC
+			DEFENDER = c:PRC
+		}
+	}
+
+	ai_chance = {
+		value = 50
+	}
+}
+
+cwp_ccw_currency_reform_button = {
+	name = "cwp_ccw_currency_reform_button"
+	desc = "cwp_ccw_currency_reform_button_desc"
+
+	visible = {
+		c:ROC ?= this
+		has_modifier = cwp_ccw_hyperinflation
+	}
+
+	possible = {
+		in_default = no
+		scaled_debt < 0.5
+	}
+
+	effect = {
+		remove_modifier = cwp_ccw_hyperinflation
+		add_modifier = { name = cwp_ccw_currency_reform }
+		custom_tooltip = cwp_ccw_currency_reform_holds_tt
+	}
+
+	ai_chance = {
+		value = 20
+		if = {
+			limit = { global_var:cwp_ccw_balance < 25 }
+			add = 20
+		}
+	}
+}
+
+cwp_ccw_great_retreat_button = {
+	name = "cwp_ccw_great_retreat_button"
+	desc = "cwp_ccw_great_retreat_button_desc"
+
+	visible = {
+		c:ROC ?= this
+		NOT = { has_variable = cwp_ccw_great_retreat }
+	}
+
+	possible = {
+		cwp_ccw_war_running = yes
+		has_state_in_state_region = STATE_FORMOSA
+		cwp_ccw_roc_holds_formosa = yes
+		OR = {
+			custom_tooltip = {
+				text = cwp_ccw_balance_communist_25_tt
+				global_var:cwp_ccw_balance >= 25
+			}
+			custom_tooltip = {
+				text = cwp_ccw_capital_occupied_tt
+				capital = { NOT = { controller ?= root } }
+			}
+		}
+	}
+
+	effect = {
+		set_variable = cwp_ccw_great_retreat
+		set_capital = STATE_FORMOSA
+		s:STATE_FORMOSA.region_state:ROC ?= {
+			add_modifier = {
+				name = cwp_ccw_relocation
+				years = 10
+				is_decaying = yes
+			}
+		}
+		hidden_effect = {
+			c:PRC ?= { trigger_event = { id = cwp_ccw.8 popup = yes } }
+			c:USA ?= { trigger_event = { id = cwp_ccw.8 popup = yes } }
+		}
+	}
+
+	ai_chance = {
+		value = 5
+		if = {
+			limit = { global_var:cwp_ccw_balance >= 40 }
+			add = 40
+		}
+		if = {
+			limit = { capital = { NOT = { controller ?= root } } }
+			add = 50
+		}
+		if = {
+			limit = {
+				any_scope_war = { has_war_support = { target = root value < 40 } }
+			}
+			add = 25
+		}
+	}
+}
+
+### Both Chinas
+
+cwp_ccw_propose_armistice_button = {
+	name = "cwp_ccw_propose_armistice_button"
+	desc = "cwp_ccw_propose_armistice_button_desc"
+
+	visible = {
+		cwp_ccw_is_belligerent = yes
+		cwp_ccw_war_running = yes
+		cwp_ccw_roc_holds_mainland = yes
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = cwp_ccw_armistice_cooldown_tt
+			NOT = { has_global_variable = cwp_ccw_armistice_cd }
+		}
+		OR = {
+			custom_tooltip = {
+				text = cwp_ccw_war_support_low_tt
+				any_scope_war = { has_war_support = { target = root value < 25 } }
+			}
+			custom_tooltip = {
+				text = cwp_ccw_exhaustion_tt
+				global_var:cwp_ccw_exhaustion >= 26
+			}
+		}
+		custom_tooltip = {
+			text = cwp_ccw_balance_undecided_tt
+			global_var:cwp_ccw_balance > -40
+			global_var:cwp_ccw_balance < 40
+		}
+		capital = { controller ?= root }
+	}
+
+	effect = {
+		set_global_variable = { name = cwp_ccw_armistice_cd months = 12 }
+		if = {
+			limit = { c:PRC ?= this }
+			set_global_variable = cwp_ccw_armistice_by_prc
+			c:ROC ?= { trigger_event = { id = cwp_ccw.5 popup = yes } }
+		}
+		else = {
+			remove_global_variable = cwp_ccw_armistice_by_prc
+			c:PRC ?= { trigger_event = { id = cwp_ccw.5 popup = yes } }
+		}
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				any_scope_war = { has_war_support = { target = root value < 25 } }
+			}
+			add = 30
+		}
+		if = {
+			limit = { global_var:cwp_ccw_exhaustion >= 52 }
+			add = 10
+		}
+	}
+}
+
+cwp_ccw_break_ceasefire_button = {
+	name = "cwp_ccw_break_ceasefire_button"
+	desc = "cwp_ccw_break_ceasefire_button_desc"
+
+	visible = {
+		cwp_ccw_is_belligerent = yes
+		has_global_variable = cwp_ccw_ceasefire
+	}
+
+	possible = {
+		cwp_ccw_war_running = yes
+	}
+
+	effect = {
+		remove_global_variable = cwp_ccw_ceasefire
+		every_country = {
+			limit = { has_modifier = cwp_ccw_ceasefire }
+			remove_modifier = cwp_ccw_ceasefire
+		}
+		c:ROC ?= {
+			if = {
+				limit = { has_modifier = cwp_ccw_us_arms_embargo }
+				remove_modifier = cwp_ccw_us_arms_embargo
+			}
+		}
+		hidden_effect = {
+			c:PRC ?= { trigger_event = { id = cwp_ccw.13 popup = yes } }
+			c:ROC ?= { trigger_event = { id = cwp_ccw.13 popup = yes } }
+			c:USA ?= { trigger_event = { id = cwp_ccw.13 popup = yes } }
+		}
+	}
+
+	# The side the balance favours is the one that wants to fight on.
+	ai_chance = {
+		value = 2
+		if = {
+			limit = {
+				OR = {
+					AND = {
+						c:PRC ?= this
+						global_var:cwp_ccw_balance >= 0
+					}
+					AND = {
+						c:ROC ?= this
+						global_var:cwp_ccw_balance <= -10
+					}
+				}
+			}
+			add = 10
+		}
+		if = {
+			limit = {
+				OR = {
+					AND = {
+						c:PRC ?= this
+						global_var:cwp_ccw_balance >= 10
+					}
+					AND = {
+						c:ROC ?= this
+						global_var:cwp_ccw_balance <= -20
+					}
+				}
+			}
+			add = 30
+		}
+	}
+}
+
+### Soviet Union
+
+cwp_ccw_strip_manchuria_button = {
+	name = "cwp_ccw_strip_manchuria_button"
+	desc = "cwp_ccw_strip_manchuria_button_desc"
+
+	visible = {
+		c:RUS ?= this
+		cwp_ccw_soviets_in_manchuria = yes
+	}
+
+	possible = {
+		NOT = { has_global_variable = cwp_ccw_manchuria_stripped }
+	}
+
+	selected = {
+		has_global_variable = cwp_ccw_manchuria_stripped
+	}
+
+	effect = {
+		set_global_variable = cwp_ccw_manchuria_stripped
+		add_modifier = {
+			name = cwp_ccw_manchurian_reparations
+			years = 5
+			is_decaying = yes
+		}
+		every_scope_state = {
+			limit = { cwp_ccw_is_manchurian_state = yes }
+			add_modifier = {
+				name = cwp_ccw_stripped_industry
+				years = 10
+				is_decaying = yes
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 50
+	}
+}
+
+cwp_ccw_soviet_withdrawal_button = {
+	name = "cwp_ccw_soviet_withdrawal_button"
+	desc = "cwp_ccw_red_army_withdrawal_desc"
+
+	visible = {
+		c:RUS ?= this
+		cwp_ccw_soviets_in_manchuria = yes
+	}
+
+	possible = {
+		OR = {
+			exists = c:PRC
+			exists = c:ROC
+		}
+	}
+
+	effect = {
+		trigger_event = { id = cwp_ccw.2 popup = yes }
+	}
+
+	# Once the industry is gone the garrison only costs influence.
+	ai_chance = {
+		value = 2
+		if = {
+			limit = { has_global_variable = cwp_ccw_manchuria_stripped }
+			add = 25
+		}
+	}
+}
+
+cwp_ccw_soviet_aid_button = {
+	name = "cwp_ccw_soviet_aid_button"
+	desc = "cwp_ccw_soviet_aid_button_desc"
+
+	visible = {
+		c:RUS ?= this
+	}
+
+	possible = {
+		cwp_ccw_war_running = yes
+		c:PRC = { NOT = { has_modifier = cwp_ccw_soviet_aid } }
+	}
+
+	effect = {
+		c:PRC = {
+			add_modifier = {
+				name = cwp_ccw_soviet_aid
+				months = 24
+			}
+		}
+		add_modifier = {
+			name = cwp_ccw_soviet_aid_cost
+			months = 24
+		}
+		if = {
+			limit = { NOT = { has_global_variable = cwp_ccw_kwantung_given } }
+			set_global_variable = cwp_ccw_kwantung_given
+			c:PRC = { add_modifier = { name = cwp_ccw_kwantung_arsenals years = 5 is_decaying = yes } }
+		}
+	}
+
+	ai_chance = {
+		value = 15
+		if = {
+			limit = { global_var:cwp_ccw_balance < 0 }
+			add = 15
+		}
+	}
+}
+
+cwp_ccw_counsel_restraint_button = {
+	name = "cwp_ccw_counsel_restraint_button"
+	desc = "cwp_ccw_counsel_restraint_button_desc"
+
+	visible = {
+		c:RUS ?= this
+		NOT = { has_global_variable = cwp_ccw_peoples_war_phase }
+	}
+
+	possible = {
+		cwp_ccw_war_running = yes
+		NOT = { has_global_variable = cwp_ccw_soviet_restraint }
+		custom_tooltip = {
+			text = cwp_ccw_balance_communist_20_tt
+			global_var:cwp_ccw_balance >= 20
+		}
+	}
+
+	selected = {
+		has_global_variable = cwp_ccw_soviet_restraint
+	}
+
+	effect = {
+		set_global_variable = cwp_ccw_soviet_restraint
+		custom_tooltip = cwp_ccw_soviet_restraint_tt
+		c:PRC = {
+			change_relations = { country = c:RUS value = -20 }
+		}
+	}
+
+	ai_chance = {
+		value = 3
+	}
+}
+
+### United States
+
+cwp_ccw_marshall_mission_button = {
+	name = "cwp_ccw_marshall_mission_button"
+	desc = "cwp_ccw_marshall_mission_button_desc"
+
+	visible = {
+		c:USA ?= this
+		NOT = { has_global_variable = cwp_ccw_marshall_done }
+	}
+
+	possible = {
+		cwp_ccw_war_running = yes
+		has_global_variable = cwp_ccw_peoples_war_phase
+	}
+
+	effect = {
+		set_global_variable = cwp_ccw_marshall_done
+		set_global_variable = cwp_ccw_ceasefire
+		c:PRC = { add_modifier = { name = cwp_ccw_ceasefire } }
+		c:ROC = {
+			add_modifier = { name = cwp_ccw_ceasefire }
+			add_modifier = { name = cwp_ccw_us_arms_embargo }
+		}
+		custom_tooltip = cwp_ccw_ceasefire_holds_tt
+		hidden_effect = {
+			c:PRC = { trigger_event = { id = cwp_ccw.12 popup = yes } }
+			c:ROC = { trigger_event = { id = cwp_ccw.12 popup = yes } }
+		}
+	}
+
+	ai_chance = {
+		value = 50
+	}
+}
+
+cwp_ccw_us_aid_button = {
+	name = "cwp_ccw_us_aid_button"
+	desc = "cwp_ccw_us_aid_button_desc"
+
+	visible = {
+		c:USA ?= this
+	}
+
+	possible = {
+		cwp_ccw_war_running = yes
+		custom_tooltip = {
+			text = cwp_ccw_no_ceasefire_tt
+			NOT = { has_global_variable = cwp_ccw_ceasefire }
+		}
+		c:ROC = { NOT = { has_modifier = cwp_ccw_us_aid } }
+	}
+
+	effect = {
+		c:ROC = {
+			add_modifier = {
+				name = cwp_ccw_us_aid
+				months = 24
+			}
+		}
+		add_modifier = {
+			name = cwp_ccw_us_aid_cost
+			months = 24
+		}
+	}
+
+	ai_chance = {
+		value = 10
+		if = {
+			limit = { global_var:cwp_ccw_balance >= 0 }
+			add = 15
+		}
+		if = {
+			limit = { global_var:cwp_ccw_balance >= 25 }
+			add = 15
+		}
+	}
+}
+
+cwp_ccw_strait_patrol_button = {
+	name = "cwp_ccw_strait_patrol_button"
+	desc = "cwp_ccw_strait_patrol_button_desc"
+
+	visible = {
+		c:USA ?= this
+		cwp_ccw_roc_retreated = yes
+	}
+
+	possible = {
+		exists = c:PRC
+		cwp_ccw_roc_holds_formosa = yes
+		c:PRC = { NOT = { has_modifier = cwp_ccw_strait_patrolled } }
+	}
+
+	effect = {
+		c:PRC = {
+			add_modifier = {
+				name = cwp_ccw_strait_patrolled
+				months = 60
+			}
+		}
+		add_modifier = {
+			name = cwp_ccw_strait_patrol_cost
+			months = 60
+		}
+		hidden_effect = {
+			c:PRC = { trigger_event = { id = cwp_ccw.10 popup = yes } }
+			c:ROC ?= { trigger_event = { id = cwp_ccw.10 popup = yes } }
+		}
+	}
+
+	# Truman's 1950 order followed the outbreak of war in Korea.
+	ai_chance = {
+		value = 5
+		if = {
+			limit = {
+				OR = {
+					has_war_with = c:PRC
+					c:PRC = { is_at_war = yes NOT = { has_war_with = c:ROC } }
+					c:STK ?= { is_at_war = yes }
+				}
+			}
+			add = 40
+		}
+	}
+}

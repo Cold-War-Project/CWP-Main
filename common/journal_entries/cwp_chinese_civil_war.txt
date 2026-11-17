@@ -1,0 +1,246 @@
+﻿# Cold War Project: the Chinese Civil War. Design note: docs/agents/areas/chinese-civil-war.md
+# Opened by cwp_ccw_monthly_pulse (common/on_actions/cwp_chinese_civil_war_on_actions.txt) once the history play
+# chinese_civil_war (dp_revolution, PRC against ROC) has become a war. Modelled on vanilla je_the_first_carlist_war.
+
+je_cwp_chinese_civil_war = {
+	group = je_group_global_international_situations
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+
+	activation_description = {
+		always = yes
+	}
+
+	should_be_involved = {
+		OR = {
+			c:PRC ?= this
+			c:ROC ?= this
+			c:USA ?= this
+			c:RUS ?= this
+		}
+	}
+
+	should_show_when_not_involved = {
+		capital ?= { is_in_geographic_region = geographic_region_east_asia }
+	}
+
+	immediate = {
+		cwp_ccw_open_effect = yes
+	}
+
+	immediate_all_involved = {
+		trigger_event = { id = cwp_ccw.1 popup = yes }
+	}
+
+	scripted_progress_bar = cwp_ccw_balance_bar
+
+	scripted_button = cwp_ccw_land_reform_button
+	scripted_button = cwp_ccw_pla_offensive_button
+	scripted_button = cwp_ccw_nra_offensive_button
+	scripted_button = cwp_ccw_currency_reform_button
+	scripted_button = cwp_ccw_great_retreat_button
+	scripted_button = cwp_ccw_propose_armistice_button
+	scripted_button = cwp_ccw_break_ceasefire_button
+	scripted_button = cwp_ccw_strip_manchuria_button
+	scripted_button = cwp_ccw_soviet_withdrawal_button
+	scripted_button = cwp_ccw_soviet_aid_button
+	scripted_button = cwp_ccw_counsel_restraint_button
+	scripted_button = cwp_ccw_marshall_mission_button
+	scripted_button = cwp_ccw_us_aid_button
+	scripted_button = cwp_ccw_strait_patrol_button
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_chinese_civil_war_status_ceasefire
+				trigger = { has_global_variable = cwp_ccw_ceasefire }
+			}
+			triggered_desc = {
+				desc = je_cwp_chinese_civil_war_status_strait
+				trigger = {
+					cwp_ccw_roc_holds_formosa = yes
+					NOT = { cwp_ccw_roc_holds_mainland = yes }
+				}
+			}
+			triggered_desc = {
+				desc = je_cwp_chinese_civil_war_status_peoples_war
+				trigger = { has_global_variable = cwp_ccw_peoples_war_phase }
+			}
+			triggered_desc = {
+				desc = je_cwp_chinese_civil_war_status_decisive
+			}
+		}
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			set_global_variable = {
+				name = cwp_ccw_balance
+				value = "scope:journal_entry.scripted_bar_progress(cwp_ccw_balance_bar)"
+			}
+			if = {
+				limit = { has_global_variable = cwp_ccw_peoples_war_phase }
+				cwp_ccw_peoples_war_pulse = yes
+			}
+			cwp_ccw_strait_question = yes
+			# The war ended some other way (a peace the JE did not make): freeze it as it stands
+			if = {
+				limit = {
+					exists = c:PRC
+					exists = c:ROC
+					NOT = { cwp_ccw_war_running = yes }
+				}
+				set_global_variable = cwp_ccw_settled
+			}
+			# Flavour (the events check their own triggers)
+			c:ROC ?= {
+				random_list = {
+					30 = {}
+					1 = { trigger_event = { id = cwp_ccw.14 popup = yes } }
+					1 = { trigger_event = { id = cwp_ccw.15 popup = yes } }
+				}
+			}
+			# Holding Manchuria costs the USSR
+			c:RUS ?= {
+				if = {
+					limit = { cwp_ccw_soviets_in_manchuria = yes }
+					if = {
+						limit = { NOT = { has_modifier = cwp_ccw_manchurian_garrison } }
+						add_modifier = { name = cwp_ccw_manchurian_garrison }
+					}
+				}
+				else_if = {
+					limit = { has_modifier = cwp_ccw_manchurian_garrison }
+					remove_modifier = cwp_ccw_manchurian_garrison
+				}
+			}
+			# A currency reform holds while the Nationalists can pay their way and are not losing the war
+			c:ROC ?= {
+				if = {
+					limit = {
+						has_modifier = cwp_ccw_currency_reform
+						OR = {
+							in_default = yes
+							scaled_debt >= 0.5
+							global_var:cwp_ccw_balance >= 25
+						}
+					}
+					remove_modifier = cwp_ccw_currency_reform
+					add_modifier = { name = cwp_ccw_hyperinflation }
+					trigger_event = { id = cwp_ccw.9 popup = yes }
+				}
+			}
+		}
+	}
+
+
+	# The Nationalists hold Formosa and nothing on the mainland: the strait standoff
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_cwp_chinese_civil_war_standoff_desc
+		flags = { historical }
+		trigger = {
+			has_global_variable = cwp_ccw_settled
+			exists = c:PRC
+			exists = c:ROC
+			custom_tooltip = {
+				text = cwp_ccw_roc_no_mainland_tt
+				NOT = { cwp_ccw_roc_holds_mainland = yes }
+			}
+		}
+		effect = {
+			set_global_variable = cwp_ccw_outcome_standoff
+			cwp_ccw_cleanup = yes
+			c:PRC = { trigger_event = { id = cwp_ccw.11 popup = yes } }
+			c:ROC = { trigger_event = { id = cwp_ccw.11 popup = yes } }
+			c:USA ?= { trigger_event = { id = cwp_ccw.11 popup = yes } }
+			c:RUS ?= { trigger_event = { id = cwp_ccw.11 popup = yes } }
+		}
+	}
+
+	# An armistice leaves both governments on the mainland
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_cwp_chinese_civil_war_divided_desc
+		trigger = {
+			has_global_variable = cwp_ccw_settled
+			exists = c:PRC
+			exists = c:ROC
+			cwp_ccw_roc_holds_mainland = yes
+		}
+		effect = {
+			set_global_variable = cwp_ccw_outcome_divided
+			cwp_ccw_cleanup = yes
+			c:PRC = { trigger_event = { id = cwp_ccw.11 popup = yes } }
+			c:ROC = { trigger_event = { id = cwp_ccw.11 popup = yes } }
+			c:USA ?= { trigger_event = { id = cwp_ccw.11 popup = yes } }
+			c:RUS ?= { trigger_event = { id = cwp_ccw.11 popup = yes } }
+		}
+	}
+
+	# The Communists take all of China
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_cwp_chinese_civil_war_communist_desc
+		trigger = {
+			exists = c:PRC
+			NOT = { exists = c:ROC }
+		}
+		effect = {
+			set_global_variable = cwp_ccw_outcome_communist
+			cwp_ccw_cleanup = yes
+			c:PRC = {
+				add_modifier = { name = cwp_ccw_victory years = 10 is_decaying = yes }
+				trigger_event = { id = cwp_ccw.11 popup = yes }
+			}
+			c:USA ?= { trigger_event = { id = cwp_ccw.11 popup = yes } }
+			c:RUS ?= { trigger_event = { id = cwp_ccw.11 popup = yes } }
+		}
+	}
+
+	# The Nationalists destroy the Communist state
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_cwp_chinese_civil_war_nationalist_desc
+		trigger = {
+			exists = c:ROC
+			NOT = { exists = c:PRC }
+		}
+		effect = {
+			set_global_variable = cwp_ccw_outcome_nationalist
+			cwp_ccw_cleanup = yes
+			c:ROC = {
+				add_modifier = { name = cwp_ccw_victory years = 10 is_decaying = yes }
+				trigger_event = { id = cwp_ccw.11 popup = yes }
+			}
+			c:USA ?= { trigger_event = { id = cwp_ccw.11 popup = yes } }
+			c:RUS ?= { trigger_event = { id = cwp_ccw.11 popup = yes } }
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_cwp_chinese_civil_war_invalid_desc
+		trigger = {
+			NOT = { exists = c:PRC }
+			NOT = { exists = c:ROC }
+		}
+		effect = {
+			cwp_ccw_cleanup = yes
+		}
+	}
+
+	weight = 1000
+	transferable = no
+	can_deactivate = no
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_involved = yes
+	should_be_pinned_by_default_uninvolved_or_context = no
+}

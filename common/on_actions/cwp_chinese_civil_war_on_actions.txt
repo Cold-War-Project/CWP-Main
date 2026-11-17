@@ -1,0 +1,45 @@
+﻿# Cold War Project: the Chinese Civil War (je_cwp_chinese_civil_war). Chained into the code on_actions, so no shared file changes.
+
+on_monthly_pulse = {
+	on_actions = { cwp_ccw_monthly_pulse }
+}
+
+# Root = attacker or defender country that won, scope:enemy_country = the loser (vanilla carlist_war_battle_score pattern)
+on_battle_won = {
+	on_actions = { cwp_ccw_battle_won }
+}
+
+cwp_ccw_monthly_pulse = {
+	effect = {
+		# Open the situation (first month of a new game, or the first month after the mod is added to a save)
+		if = {
+			limit = {
+				NOT = { has_global_variable = cwp_ccw_active }
+				NOT = { has_global_variable = cwp_ccw_concluded }
+				cwp_ccw_war_running = yes
+			}
+			add_contextless_journal_entry = je_cwp_chinese_civil_war
+		}
+	}
+}
+
+cwp_ccw_battle_won = {
+	trigger = {
+		has_global_variable = cwp_ccw_active
+		cwp_ccw_is_belligerent = yes
+		scope:enemy_country ?= { cwp_ccw_is_belligerent = yes }
+	}
+	effect = {
+		if = {
+			limit = { c:PRC ?= this }
+			je:je_cwp_chinese_civil_war ?= {
+				add_progress = { value = 1 name = cwp_ccw_balance_bar }
+			}
+		}
+		else = {
+			je:je_cwp_chinese_civil_war ?= {
+				add_progress = { value = -1 name = cwp_ccw_balance_bar }
+			}
+		}
+	}
+}

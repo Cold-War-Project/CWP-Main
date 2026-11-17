@@ -14,7 +14,7 @@ paths:
 
 # Map: provinces, state regions, regions, terrain
 
-`map_data` and `map_data/state_regions` are in `replace_paths`. The mod's map was synced to vanilla 1.15 on 2026-11-05 (782 land state regions, same ids, names, provinces and impassables as vanilla); resources, traits and ports are the mod's own. Vanilla's map is the priority when the two disagree on geometry.
+`map_data` and `map_data/state_regions` are in `replace_paths`. The map is vanilla 1.15.1 by decision (`docs/agents/plan.md`; dev's custom map is not ported): every `map_data` file except `state_regions/00_*`..`15_*.txt` is byte-identical to vanilla, and the state regions have vanilla's regions, ids, names, provinces and impassables. The mod changes only resources (arable land and resources, capped, discoverable), traits, a few hub provinces (Akmolinsk, Alentejo, East and West Bengal, Formosa, Laristan, Panama, Ryukyu Islands, Samara, West Micronesia), and drops `prime_land` in Dagestan and Greater Caucasus. Re-diff against vanilla after a game patch.
 
 ## Files in `map_data`
 
@@ -40,22 +40,23 @@ STATE_EXAMPLE = {
 	city = "x112233"  farm = "x..."  mine = "x..."  wood = "x..."
 	port = "x..."                              # coastal only; must be a coastal province of this region
 	arable_land = 30
-	arable_resources = { "bg_wheat_farms" "bg_livestock_ranches" }
-	capped_resources = { bg_coal_mining = 40  bg_logging = 12 }
-	resource = { type = "bg_oil_rig"  undiscovered_amount = 12  amount = 0  depleted_type = "..." }   # repeatable
+	arable_resources = { "building_wheat_farm" "building_livestock_ranch" }
+	capped_resources = { building_coal_mine = 40  building_logging_camp = 12 }
+	resource = { type = "building_oil_rig"  undiscovered_amount = 12  discovered_amount = 0  depleted_type = "..." }   # repeatable
 	naval_exit_id = 3000                       # coastal only: id of the adjacent sea region
 	min_cold_effect = 0.1  max_cold_effect = 0.8   # optional
-	graphical_culture = "x"                    # optional override
+	# vanilla state regions also use blockade_locator, center_province, diorama_radius_multiplier / diorama_center_offset;
+	# graphical_culture is a strategic_regions key, not used in vanilla state regions
 }
 ```
-Sea regions: `STATE_SEA_X = { id = 3000 provinces = { "x..." } }`, exactly one province.
+Sea regions (`99_seas.txt`, identical to vanilla): `STATE_SEA_X = { id = 3000 provinces = { "x..." } diorama_radius_multiplier = 2.5 }`, exactly one province; ids 3000 to 3158, some with `min/max_cold_effect`.
 
 Rules:
 - Every province belongs to exactly one state region. Hub provinces (`city`, `farm`, `mine`, `wood`, `port`) must be in that region's `provinces` and not impassable.
-- `arable_resources`, `capped_resources` keys and `resource.type` are **building group** keys from the mod's `common/building_groups` (resource groups must have `capped_by_resources` / `discoverable_resource` set). A vanilla group the mod removed (e.g. gold fields, rubber, whaling) must not appear.
-- Resource numbers come from the design source `F:/Github/personal stuff/state resources origin.md` (vanilla-era borders; mapped onto mod states by province share, half-up rounding, logging folded into arable land). Compare against that file, not vanilla, when a resource looks wrong. The file lists Khorasan's oil as capped by mistake; it is an oil `resource` block.
+- `arable_resources`, `capped_resources` keys and `resource.type` are **building** keys from the mod's `common/buildings`; the building's group in `common/building_groups` must have `capped_by_resources` / `discoverable_resource` set as appropriate. A vanilla building the mod removed (e.g. `building_whaling_station`, `building_rubber_plantation`) must not appear. Check with `cat map_data/state_regions/*.txt | grep -oE 'building_[a-z_]+' | sort -u` against the mod's building keys.
+- Resource numbers are the mod's own design (the original source, "state resources origin.md", is on a Windows dev machine only). Vanilla's numbers are the fallback when a state has no mod value.
 - Changing a state region's provinces, id or name ripples into: `history/states`, `history/pops`, `history/buildings`, `common/strategic_regions`, `common/geographic_regions`, `country_formation`/`country_creation` state lists, `common/history/military_formations`, loc (`STATE_X`, `HUB_NAME_STATE_X_*`), map object data and city placement. Grep the state key across the whole mod before and after.
-- `naval_exit_id` must be the sea region the port actually touches. `hq.cpp ... Failed to find a travel position for HQ` lines for countries without a usable port are on the ignore list (civil-war/secession tags); for a normal country they mean a wrong port/naval exit. STATE_PANAMA's city/port were restored to vanilla for exactly this reason.
+- `naval_exit_id` must be the sea region the port actually touches. `hq.cpp ... Failed to find a travel position for HQ` lines for countries without a usable port are on the ignore list (civil-war/secession tags); for a normal country they mean a wrong port/naval exit. STATE_PANAMA's city and port are swapped relative to vanilla (mod: city `xD0EF40`, port `x8A8A20`); if Panama logs the HQ travel-position line, restore vanilla's pair.
 - State keys are `STATE_UPPER_SNAKE`. Scripts use `s:STATE_X`.
 
 ## Strategic and geographic regions

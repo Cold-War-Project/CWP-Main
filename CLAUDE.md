@@ -2,19 +2,32 @@
 
 Total-overhaul mod for **Victoria 3 1.15.1**. Campaign runs **1946.1.1 to 2046.1.1** (`common/defines/cwp_defines.txt`). Almost every vanilla database is replaced with Cold War content: own goods, buildings, production methods, laws, technologies (eras `era_1`..`era_12`), countries, cultures, combat units, ships, history.
 
+**Agents: read [`AGENTS.md`](AGENTS.md) and [`docs/agents/`](docs/agents/README.md) first** (branches, worktrees, testing on Forge, PRs). This file holds the rules for writing mod script.
+
+@AGENTS.md
+
 ## Paths
+
+Forge (Ubuntu, where agents work) and Windows (the original setup, still used by human devs):
+
+| What | Forge | Windows |
+|---|---|---|
+| This mod (working dir) | your worktree, `~/forge/worktrees/<area>` (git; main checkout `~/forge/CWP-Main`) | `Documents/Paradox Interactive/Victoria 3/mod/Cold War Project - Rebuild` |
+| Vanilla game files (READ ONLY) | `~/.steam/steam/steamapps/common/Victoria 3/game` | `F:/SteamLibrary/steamapps/common/Victoria 3/game` |
+| Game logs | `~/.local/share/Paradox Interactive/Victoria 3/logs/` | `Documents/Paradox Interactive/Victoria 3/logs/` |
+| Backups | git: commit before bulk edits | `Documents/Paradox Interactive/Victoria 3/_cold_war_backups/<yyyy-mm-dd>_<label>/` |
+
+`error.log` rotates by size (about 512 KB) into `error.1.log` .. `error.5.log` within one session, and only five rotations are kept, so a noisy launch loses its earliest (load-time) lines. Read a session oldest first; on Forge `cwp-vic errors` does this.
+
+Other paths are relative to the mod root:
 
 | What | Where |
 |---|---|
-| This mod (working dir) | `Documents/Paradox Interactive/Victoria 3/mod/Cold War Project - Rebuild` |
-| Vanilla game files (READ ONLY) | `F:/SteamLibrary/steamapps/common/Victoria 3/game` |
-| Game logs | `Documents/Paradox Interactive/Victoria 3/logs/` (`error.log`, `debug.log`, rotated `.1`-`.5`) |
-| Backups | `Documents/Paradox Interactive/Victoria 3/_cold_war_backups/<yyyy-mm-dd>_<label>/` |
 | Area guides (auto-loaded by path) | `.claude/rules/*.md` |
 | Generated vanilla references | `.claude/reference/*.md` (regenerate with `python .claude/tools/vanilla_census.py`) |
 | Modding guide: **how to write** script (16 chapters, engine reference, tools) | `Claude-Vic3-Modding-Guide/` in the mod root, entry point `README.md` |
 | Content design guide: **what to build** for a historical topic (11 chapters, vanilla models, templates, example mod) | `Claude-Vic3-Content-Design-Guide/` in the mod root, entry point `README.md` |
-| `script_docs` output that the modding guide's reference is built from | `Documents/Paradox Interactive/Victoria 3/docs/*.log` |
+| `script_docs` output that the modding guide's reference is built from | `<user folder>/docs/*.log` (Windows: `Documents/Paradox Interactive/Victoria 3/docs/`) |
 
 ## Rules that apply to every task
 
@@ -26,11 +39,11 @@ Total-overhaul mod for **Victoria 3 1.15.1**. Campaign runs **1946.1.1 to 2046.1
 
    Paradox renames things between patches and memory of older versions is wrong often enough to matter. When vanilla's `.md` documentation and vanilla's `.txt` files disagree, the `.txt` files win (e.g. `buildings.md` still says `production_methods`, the files use `production_method_groups`).
 3. **Read the guides first.** Each folder has a mod-specific guide in `.claude/rules/` (index below). It loads automatically when a matching file is read; when creating a file in a folder you have not read from yet, open the guide yourself. When that guide does not answer the question, open the matching chapter of the modding guide (same index). For content about a historical topic, follow the content design guide before writing any script.
-4. **Encoding.** `.txt`, `.yml`, `.gui` files are UTF-8 **with BOM** (`EF BB BF`). Keep each file's existing line endings (history files are CRLF, `map_data/state_regions` is LF). Tabs for indentation. PowerShell's `WriteAllText` with a no-BOM encoding strips the BOM: re-add it. Three files have no BOM on purpose and stay that way: the two in `common/coat_of_arms/template_lists/` and the generated `map_data/province_terrains.txt`. `.metadata/metadata.json` is plain JSON without BOM. The modding guide's `add_bom.py` does not know about those three files: give it the files you created, never the mod root.
+4. **Encoding.** `.txt`, `.yml`, `.gui` files are UTF-8 **with BOM** (`EF BB BF`). Keep each file's existing line endings (most files are LF; a few, such as three `common/history` files, are CRLF: check with `file`). Tabs for indentation. PowerShell's `WriteAllText` with a no-BOM encoding strips the BOM: re-add it. Three files have no BOM on purpose and stay that way: the two in `common/coat_of_arms/template_lists/` and the generated `map_data/province_terrains.txt`. `.metadata/metadata.json` is plain JSON without BOM. The modding guide's `add_bom.py` does not know about those three files: give it the files you created, never the mod root.
 5. **Every key needs its other halves.** A new object usually needs: localization (`localization/english/cwp/...`), an icon path that exists, and every reference it makes (technology, building, goods, law...) must resolve to something defined in the mod, not in vanilla.
 6. **No Victorian leftovers.** References to vanilla-only content (1836 countries, journal entries, techs, buildings, laws, DLC flavour) are removed or remapped to mod content, not kept alive.
 7. **Clean error.log is the acceptance test.** A change is not done until a game launch shows no new lines. See `.claude/reference/debugging.md` for the triage workflow and the list of engine-side lines to ignore.
-8. **Back up before bulk edits** (more than a handful of files, or any scripted rewrite) into `_cold_war_backups/`. Make bulk-edit scripts rerunnable and keep them in the scratchpad, not in the mod.
+8. **Back up before bulk edits** (more than a handful of files, or any scripted rewrite): in a git worktree, commit first; in a Windows mod folder outside git, copy into `_cold_war_backups/`. Make bulk-edit scripts rerunnable and keep them in the scratchpad, not in the mod.
 9. **Binary map files are off limits** (`provinces.png`, `heightmap.*`, `rivers.png`, `nodes.dat`, `*.bin`). They are edited in the in-game map editor. Text map data is fine.
 10. **Ask before deleting whole entries or files** that other content may reference, and remove the references with them (list entries, loc, history, on_actions).
 
@@ -76,7 +89,7 @@ Naming: new mod-only files are prefixed `cwp_`; files in `replace_paths` folders
 3. Copy structure from a working example in the mod (or vanilla), then change content. Do not invent structure.
 4. Look up every engine name you write (rule 2) as you write it, not afterwards.
 5. After editing, run `python ".claude/tools/check_mod.py" <paths you touched>` (BOM, brace balance, loc syntax, duplicate keys), then check by hand that every new key has loc and every referenced key exists in the mod (`Grep` it). For content, also run the content checker (see "Guide tools on this mod").
-6. Ask the user to launch the game (debug mode) and read `logs/error.log`; fix what the change introduced. Claude cannot run the game, so say plainly when a change is untested in game, and name anything that rests on a guide statement marked [WIKI] or [VERIFY] so the user knows what to test first.
+6. Launch the game and read `logs/error.log`; fix what the change introduced. On Forge, do it yourself with `cwp-vic` under the shared lock ([docs/agents/forge-testing.md](docs/agents/forge-testing.md)). Where the game cannot be run (Windows session without game access), ask the user, say plainly that the change is untested in game, and name anything that rests on a guide statement marked [WIKI] or [VERIFY].
 
 Research, bulk lookups, log triage, review and batch edits can be handed to sub-agents at any of these steps: see "Sub-agents".
 
@@ -145,6 +158,7 @@ The guides were written for a small add-on mod on top of vanilla, without sight 
 | Campaign 1836 to 1936, Victorian period voice | 1946 to 2046, eras `era_1`..`era_12` from the mod's `common/technology`. Date floors and ceilings, era-marker technologies and the voice of the text follow the Cold War decade concerned. |
 | Example prefix `gs_`, text in `localization/english/gs_l_english.yml` | Prefix `cwp_` on every new key and file; text under `localization/english/cwp/<area>/`. |
 | Vanilla value ranges set the size of rewards and costs | Start from them, then compare with a similar modifier already in the mod where one exists. |
+| Historical events can be scripted to fire on their date | Never here. Outcomes come from simulation mechanics; journal entries steer but do not force; dates only gate what becomes possible. See "Core design rule" in `AGENTS.md`. |
 | Never invent an attributed quotation or a historical fact | Applies with more force here: the mod's period has living people and well-documented events. Mark certainty, and tell the user which facts were not checked against a source. |
 | Example commands with `F:/Victoria 3 Modding/...` paths | The guides now live in the mod root. |
 
@@ -155,6 +169,7 @@ Run from the mod root. All are standard-library Python.
 | Command | Use here |
 |---|---|
 | `python ".claude/tools/check_mod.py" <paths>` | The standard static check, written for this mod (knows the no-BOM files and the `replace` localization folder). |
+| `python3 .claude/tools/check_doc_facts.py [--fix]` | Recomputes the facts the guides state (counts, empty replaced folders, the `replace_paths` list above) and flags the stale ones. Run before every PR (CI workflow ready in `.claude/tools/ci/doc-facts.yml`). |
 | `python "Claude-Vic3-Content-Design-Guide/tools/check_content.py" .` | Cross-references content: modifiers, events, buttons, bars, variables, text keys. On the whole mod it prints about 10,000 lines, nearly all from the stubbed vanilla events and journal entries the mod carries. Filter the output to the prefix or event namespace being built, e.g. pipe it through `grep cwp_berlin`. |
 | `python "Claude-Vic3-Modding-Guide/tools/check_mod.py" .` | Adds `metadata.json` and folder-layout checks. Expect false positives: duplicate keys in `localization/english/replace/` (intended), the three no-BOM files, empty metadata fields. |
 | `python "Claude-Vic3-Modding-Guide/tools/add_bom.py" <files>` | Adds a BOM to new `.txt` / `.yml` files, which the Write tool cannot do. **Named files only**, see rule 4. `--check` only reports. |
@@ -185,7 +200,7 @@ Run independent agents in parallel, in one message. Do the work directly when it
 - whether it may write, and if so exactly which files. Otherwise say "read-only: report, do not edit";
 - the shape of the report, including a separate list of what it assumed or could not confirm.
 
-**Writing is the risky part.** The mod folder is not a git repository, so nothing isolates a sub-agent's edits and nothing undoes them.
+**Writing is the risky part.** On Forge the mod is a git worktree, so commit before sub-agents edit and `git diff` what they changed. In a Windows mod folder outside git nothing isolates or undoes their edits.
 
 - Back up first (rule 8) whenever sub-agents will edit.
 - One writer per file. Files that many objects share are edited by the main session only: shared localization files, `zz_vanilla_*.txt`, `common/on_actions`, `.metadata/metadata.json`. Have the agents return the lines to add.
@@ -219,4 +234,4 @@ The third column names the chapters that go deeper than the area guide: **M** = 
 
 On-demand references in `.claude/reference/`: `debugging.md` (log triage, console, validation), `vanilla-fields.md` (every field vanilla uses per folder), `vanilla-script-tokens.md` (prefixes, iterators, trigger/effect names seen in vanilla), `vanilla-on-actions.md` (every code-fired on_action with its scopes).
 
-The `.claude/` folder, the two `Claude-Vic3-*` guide folders and this file are not read by the game. Leave them out of a Steam Workshop upload if a clean package matters (the guide folders are about 2.5 MB).
+The `.claude/` folder, the two `Claude-Vic3-*` guide folders, `docs/`, `AGENTS.md` and this file are not read by the game. They are marked `export-ignore` in `.gitattributes`; build Workshop packages with `.claude/tools/forge/cwp-package` (a `git archive` of a commit), which leaves them out. Uploading a working folder directly would ship them.
