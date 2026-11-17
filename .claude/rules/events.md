@@ -12,7 +12,7 @@ paths:
 
 - One `namespace = name` line at the top; every event id is `name.<number>`. A file may declare several namespaces. Ids must be unique across the whole game, mod included.
 - Vanilla 1.15 uses only two types: `country_event` (root = country, nearly all events) and `state_event` (root = state, a handful).
-- **Events have no database keywords.** To change a vanilla event the whole file is overwritten by a mod file with the same path. This mod overwrites nearly all of vanilla's event files this way, mostly as hidden stubs; the few it does not overwrite still load and fire. There are no `cwp_` event files yet on this branch.
+- **Events have no database keywords.** To change a vanilla event the whole file is overwritten by a mod file with the same path. This mod overwrites nearly all of vanilla's event files this way, mostly as hidden stubs; the few it does not overwrite still load and fire. The mod's own events live in `cwp_` files and folders (`find events -name 'cwp_*'`).
 
 ```
 namespace = cwp_example

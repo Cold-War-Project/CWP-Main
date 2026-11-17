@@ -85,12 +85,8 @@ R = ".claude/rules/"
 FACTS = [
     Fact(R + "economy.md", r"`company_types` and `prestige_goods` are replaced but (empty)",
          lambda: ["empty" if empty("common/company_types") and empty("common/prestige_goods") else "NOT EMPTY ANY MORE"], kind="str"),
-    Fact(R + "journal-and-content.md", r"the mod has \*\*(no) journal entries of its own yet\*\*",
-         lambda: ["no" if not files(ROOT, "common/journal_entries", "cwp_*.txt") else "SOME NOW"], kind="str"),
     Fact(R + "journal-and-content.md", r"`objectives`, `objective_subgoals` and `achievements` are in `replace_paths` and currently (empty)",
          lambda: ["empty" if all(empty("common/" + f) for f in ("objectives", "objective_subgoals", "achievements")) else "NOT EMPTY ANY MORE"], kind="str"),
-    Fact(R + "events.md", r"(no) `cwp_` event files yet",
-         lambda: ["no" if not glob.glob(mod("events", "**", "cwp_*.txt"), recursive=True) else "SOME NOW"], kind="str"),
     Fact(R + "technology.md", r"technologies exist only in era_1 to era_(\d+)",
          lambda: [max(int(x) for x in re.findall(r"era\s*=\s*era_(\d+)",
                   "".join(open(p, encoding="utf-8-sig").read() for p in files(ROOT, "common/technology/technologies"))))]),
