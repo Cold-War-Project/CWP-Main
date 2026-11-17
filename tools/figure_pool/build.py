@@ -221,9 +221,9 @@ def main():
         for i, c in enumerate(cands):
             head = 'if' if i == 0 else 'else_if'
             if len(cands) == 1:
-                eff.append(f"\t\tc:{c} = {{ create_character = {{ template = {r['key']} }} }}")
+                eff.append(f"\t\tc:{c} = {{ create_character = {{ template = {r['key']} on_created = {{ set_variable = cwp_fig }} }} }}")
             else:
-                eff.append(f"\t\t{head} = {{ limit = {{ exists = c:{c} }} c:{c} = {{ create_character = {{ template = {r['key']} }} }} }}")
+                eff.append(f"\t\t{head} = {{ limit = {{ exists = c:{c} }} c:{c} = {{ create_character = {{ template = {r['key']} on_created = {{ set_variable = cwp_fig }} }} }} }}")
         eff.append('\t}')
     eff += ['}', '']
 
