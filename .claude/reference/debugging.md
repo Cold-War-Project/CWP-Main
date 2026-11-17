@@ -66,7 +66,7 @@ The first block is quoted from this install's logs; the second block describes m
 Engine-side or accepted; do not propose fixes, only mention if their pattern changes. Keep this list and the filter in `.claude/tools/forge/cwp-vic` (`cmd_errors`) in step: add a pattern to both or neither.
 - `Could not find item in store backend` (18 lines on a clean vanilla launch; filtered by `cwp-vic errors`).
 - `Unknown combat unit group key 'combat_unit_group_infantry'` and siblings (from vanilla loc; count varies by branch).
-- `hq.cpp ... Failed to find a travel position for HQ ...` (including "no coastal state controlled by X has a port travel position"), for revolt/secession countries and for small coastal countries without a usable port in that HQ region. The map data is vanilla 1.15.1, and the engine logs it a few times per HQ over decades.
+- `hq.cpp ... Failed to find a travel position for HQ ...` (including "no coastal state controlled by X has a port travel position"), for revolt/secession countries, small coastal countries without a usable port in that HQ region, and Panama (its hubs must stay as they are, see `.claude/rules/map.md`). The map data is vanilla 1.15.1, and the engine logs it a few times per HQ over decades.
 - `Error: "Failed to read key reference: : , near line: 1" in file: ""`.
 - `Assertion failed: War.GetWarParticipant( Country.GetReference() ).IsValid()`.
 - `Assertion failed: Trying to reposition an invalid formation` / `... a dead formation` and similar formation/unit assertions.
