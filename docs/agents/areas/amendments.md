@@ -61,7 +61,7 @@ Cult of Personality goes when a government IG opposes autocracy (vanilla `ai_wil
 - **Separation of Church and State (USA)**: already the USA's `law_total_separation`.
 - **Laïcité for France**: see above; France keeps `law_total_separation`.
 - **Common Law Tradition**: no game lever that tells common-law and civil-law countries apart; the judiciary law group covers the courts.
-- **Nordic Corporatism**: an alternative way of organising labour, so a law, not an amendment: vanilla's `law_corporatized_unions` exists in the mod; vanilla's `law_corporate_state` is the analog for the governance side (politics area).
+- **Nordic Corporatism**: an alternative way of organising labour, so a law, not an amendment. The politics area's `feat/cold-war-corporatism` adds a Social Partnership labour law and restores `law_corporate_state` (with vanilla's corporate-state nominating-body amendments) and renames factory councils to Workers' Self-Management. No amendment in this file keys off them: Cult of Personality keys off the distribution-of-power law, so Franco keeps it whichever governance law Spain has.
 - **Democratic Centralism**: folded into Leading Role of the Party.
 - **Emergency Powers (India, Israel)**: India's emergency articles are 1950 and Israel's 1948; both are covered by the generic State of Emergency.
 
