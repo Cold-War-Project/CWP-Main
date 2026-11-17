@@ -1159,6 +1159,231 @@ ai_strategy_default = {
 		# Using this value in other strategies will function additively
 	}
 
+	# ---- Navy AI (Victoria 3 1.15 keys, adapted to the CWP fleet) ----
+	# Without these blocks the AI never builds or organises warships (1946-56 observer run: zero ships worldwide).
+	# The weights below are the share of the fleet the AI aims for in each ai_ship_category (common/ai_ship_categories).
+	# The CWP has no naval doctrine laws, so vanilla's law branches are left out; the shares shift with CWP technology instead.
+	ai_ship_category_weights = {
+		ai_ship_category_battle_line = { # Battleships and battlecruisers: still in service in 1946, giving way to carriers
+			value = 15
+			if = {
+				limit = { has_technology_researched = naval_aviation }
+				subtract = 10
+			}
+		}
+		ai_ship_category_coastal_defense = { # No CWP ship type uses this category
+			value = 0
+		}
+		ai_ship_category_screens = { # Cruisers, destroyers, frigates and corvettes: the bulk of every Cold War navy
+			value = 45
+		}
+		ai_ship_category_torpedo_craft = { # No CWP ship type uses this category
+			value = 0
+		}
+		ai_ship_category_submarines = {
+			value = 10
+			if = {
+				limit = { has_technology_researched = submarines }
+				add = 10
+			}
+		}
+		ai_ship_category_carriers = {
+			value = 5
+			if = {
+				limit = { has_technology_researched = naval_aviation }
+				add = 10
+			}
+			if = { # Only the largest navies field carrier groups at scale
+				limit = { country_rank >= rank_value:great_power }
+				add = 5
+			}
+		}
+		ai_ship_category_transports = {
+			value = 10
+		}
+	}
+
+	# A fleet composition is a role a fleet can take: what it is made of and which missions it pursues.
+	fleet_compositions = {
+		main_battle_fleet = { # The main fleet, built around capital ships or carriers
+			ai_ship_category_weights = {
+				ai_ship_category_battle_line = 100.0
+				ai_ship_category_screens = 100.0
+				ai_ship_category_carriers = 100.0
+				ai_ship_category_transports = 100.0
+			}
+			mission_type_weights = {
+				intercept = 1.0
+				project_power = 0.0
+				blockade = 1.0
+				raid_supply = 0.0
+				protect_supply = 0.0
+				port_bombardment = 1.0
+				piracy = 0.0
+				privateer = 0.0
+				hunt_pirates = 0.0
+			}
+			min_ships_wanted = 30 # This is a soft limit
+			num_fleets_wanted = {
+				value = 1
+			}
+			potential = {
+				any_scope_ship = {
+					OR = {
+						is_ai_ship_category = ai_ship_category_battle_line
+						is_ai_ship_category = ai_ship_category_carriers
+					}
+				}
+			}
+		}
+		secondary_fleet = { # A second battle fleet for large navies so they can cover more of the world
+			ai_ship_category_weights = {
+				ai_ship_category_battle_line = 50.0
+				ai_ship_category_screens = 50.0
+				ai_ship_category_carriers = 50.0
+				ai_ship_category_transports = 50.0
+			}
+			mission_type_weights = {
+				intercept = 0.5
+				project_power = 0.0
+				blockade = 0.25
+				raid_supply = 0.5
+				protect_supply = 1.0
+				port_bombardment = 0.25
+				piracy = 0.0
+				privateer = 0.0
+				hunt_pirates = 1.0
+			}
+			min_ships_wanted = 10 # This is a soft limit
+			num_fleets_wanted = { # Only with a large navy
+				value = navy_size_adjusted_by_tech
+				divide = 100
+				max = 1
+			}
+		}
+		light_ship_fleet = { # Escort and patrol squadrons that project power and guard trade
+			ai_ship_category_weights = {
+				ai_ship_category_screens = 30.0
+			}
+			mission_type_weights = {
+				intercept = 0.0
+				project_power = 1.0
+				blockade = 0.0
+				raid_supply = 1.0
+				protect_supply = 0.25
+				port_bombardment = 0.0
+				piracy = 1.0
+				privateer = 1.0
+				hunt_pirates = 1.0
+			}
+			min_ships_wanted = 5 # This is a soft limit
+			num_fleets_wanted = {
+				value = navy_size_adjusted_by_tech
+				divide = 30
+				max = 5
+			}
+		}
+		submarine_raiding_fleet = { # All-submarine fleets that raid enemy supply
+			ai_ship_category_weights = {
+				ai_ship_category_submarines = 100.0
+			}
+			mission_type_weights = {
+				raid_supply = 1.0
+			}
+			min_ships_wanted = 8 # This is a soft limit
+			num_fleets_wanted = { # About 10 submarines per fleet, splitting only once every fleet would have at least 6
+				value = ai_num_submarines
+				divide = 10
+				ceiling = yes
+				max = {
+					value = ai_num_submarines
+					divide = 6
+					floor = yes
+				}
+				min = 1
+				max = 8
+			}
+			potential = {
+				any_scope_ship = {
+					is_ai_ship_category = ai_ship_category_submarines
+				}
+			}
+		}
+	}
+
+	max_ship_design_complexity = {
+		value = 10
+		add = { # +3 to -3
+			value = country_rank
+			subtract = 4
+		}
+	}
+
+	ship_construction_output_multiplier = {
+		value = 10
+	}
+
+	wanted_num_supply_ships = {
+		value = wanted_navy_size_script_value
+		multiply = 20 # Straight multiplier on navy size
+	}
+
+	target_marine_formation_size = {
+		value = 10
+		add = {
+			value = total_marine_capacity
+			divide = 5
+			max = 5
+		}
+	}
+
+	wanted_naval_fortification_levels = {
+		value = 0
+		if = {
+			limit = {
+				state_population >= 50000
+			}
+			if = {
+				limit = {
+					has_building = building_port
+				}
+				add = 1
+			}
+			if = {
+				limit = {
+					has_building = building_shipyard
+				}
+				add = 1
+			}
+			if = {
+				limit = {
+					NOT = { any_neighbouring_state = {} } # Is this a one-state island?
+				}
+				add = 1
+			}
+			if = {
+				limit = {
+					is_capital = yes
+				}
+				add = 2
+			}
+		}
+		if = {
+			limit = {
+				is_world_market_hub = yes
+			}
+			add = 2
+		}
+		if = {
+			limit = {
+				any_scope_strait = {} # Is there a strait linked to this state?
+			}
+			add = 2
+		}
+		max = 5
+	}
+	# ---- end Navy AI ----
+
 	# Set the weights for combat unit groups, this determines the ratio that the AI aims to have of each, and thus what unit types it adds to formations
 	# Using this value in other strategies will function additively
 	# root = country
