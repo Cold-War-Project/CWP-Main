@@ -20,6 +20,7 @@ A contextless journal entry in vanilla's `je_group_global_international_situatio
 
 | Milestone | Conditions | Who decides | Effect |
 |---|---|---|---|
+| Land reform | DDR starts with `law_peasant_proprietorship` (history #797), or RUS/DDR press the button | (start state or button) | Soviet consolidation +1 a month |
 | Bizone | USA and GBR have both pressed *Merge the Zones* | (both buttons) | AOZ and BOZ get `cwp_gq_bizone` |
 | Trizone | FRA presses *Join the Trizone* (needs the Bizone) | France | FOZ joins; French reservations end |
 | Berlin blockade | RUS presses *Blockade West Berlin* (needs the Deutsche Mark) | USA (or GBR): airlift, talks, withdraw | airlift: each month it holds, `cwp_gq_blockade_strain` costs RUS more prestige and the AI's weight to lift rises |
