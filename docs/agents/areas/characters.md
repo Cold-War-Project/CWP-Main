@@ -11,7 +11,15 @@ Area notes for historical characters. Script rules are in `.claude/rules/charact
 
 Count the roster with `grep -c "^[A-Z]\{3\}_.* = {" common/character_templates/cwp_1946_*.txt`. Count roles by grepping `ruler = yes`, `ig_leader = yes` and so on in the same files. After the dominion change: 461 characters, 128 rulers, 14 heirs, 238 IG leaders, 36 generals, 3 admirals and 14 agitators. Every starting tag has at least one character.
 
-The roster was written from a pipe-separated source (one line per person) with a generator. The generator also ran the validity checks below. Both were scratch tools and are not in the repo. Edit the template files directly now; the checks are listed so they can be redone by hand or rebuilt.
+**Source and generator:** the roster comes from `tools/character_roster/roster/*.txt`, one pipe-separated line per person. `tools/character_roster/gen.py` validates it and writes every `cwp_1946_*` template, every history file and the 1946 names loc. It checks the ruler/IG-leader rules per government type, one leader per IG, the ideology leader triggers, and that every key exists.
+
+- `python3 tools/character_roster/gen.py` validates only.
+- `--check` also compares the generated text with the committed files, byte for byte.
+- `--write` regenerates them.
+
+Never edit the generated files by hand; edit the row and regenerate.
+
+**Order:** run `tools/character_roster/gen.py --write` first, then `tools/figure_pool/build.py`. The roster generator ignores the pool's loc file, and the pool build skips keys the roster defines, so in this order neither file defines a key the other already has.
 
 ## Ruler and IG-leader rules (engine, checked against vanilla and the error log)
 
