@@ -28,6 +28,11 @@ def evaluate(runs: dict) -> dict:
         counts[key] = {"title": title, "bench": bench,
                        "series": {y: s for y in years
                                   if (s := summary([fn(r[y]["geo"]) for r in runs.values() if y in r and "geo" in r[y]]))}}
+    figs = {}
+    for y in years:
+        vals = [len(r[y]["geo"].get("figures", [])) for r in runs.values() if y in r and "geo" in r[y]]
+        if vals and any(vals):
+            figs[y] = max(vals)
     first = {}
     for tag, name in (("RUS", "USSR"), ("GBR", "UK"), ("FRA", "France"), ("PRC", "PRC")):
         ys = []
@@ -53,7 +58,7 @@ def evaluate(runs: dict) -> dict:
             "ccw": ", ".join(k for k, v in g.get("global_vars", {}).items() if k.startswith("cwp_ccw_outcome") and v) or "-",
             "wars": len(g["wars"]),
         })
-    return {"years": years, "checks": checks, "counts": counts, "first_nuclear": first, "outcomes": outcomes}
+    return {"figures_by_year": figs, "years": years, "checks": checks, "counts": counts, "first_nuclear": first, "outcomes": outcomes}
 
 
 def markdown(ev: dict) -> list[str]:
@@ -70,6 +75,9 @@ def markdown(ev: dict) -> list[str]:
         md.append(f"| {c['title']} | " + " | ".join(f"{c['series'][y]['median']:.0f}" if y in c["series"] else "-" for y in ev["years"]) + " |")
     md += ["", "First year each country has the bomb, per run (history: USSR 1949, UK 1952, France 1960, China 1964): "
            + "; ".join(f"{k} {', '.join(str(y) if y else 'never' for y in v)}" for k, v in ev["first_nuclear"].items()), ""]
+    if ev.get("figures_by_year"):
+        md += ["Historical figure pool (characters from `cwp_fig_` templates alive in the save, most in any run): "
+               + ", ".join(f"{y}: {n}" for y, n in ev["figures_by_year"].items()), ""]
     md += ["## Outcomes at the last sample, per run", "",
            "| run | year | Germany | Korea | China | blocs | wars |", "|---|---|---|---|---|---|---|"]
     for o in ev["outcomes"]:

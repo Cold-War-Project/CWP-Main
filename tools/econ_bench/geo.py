@@ -105,5 +105,9 @@ def extract_geo(text: str, tag_of: dict, owned: set) -> dict:
         for name, typ, ident in re.findall(r"flag=(cwp_\w+)\s*data=\{\s*type=(\w+)(?:\s*identity=(-?\d+))?", blk):
             gv[name] = int(ident) / 100000 if typ == "value" and ident else (ident == "1" if typ == "boolean" else typ)
 
-    return {"global_vars": gv, "blocs": list(blocs.values()), "subjects": subjects, "wars": wars, "journal_entries": jes,
+    # Characters created from cwp_fig_ templates (the historical figure pool), alive in this save.
+    chars = top_section(text, "character_manager")
+    figures = sorted(set(re.findall(r'template="?(cwp_fig_\w+)', chars)))
+
+    return {"figures": figures, "global_vars": gv, "blocs": list(blocs.values()), "subjects": subjects, "wars": wars, "journal_entries": jes,
             "countries": {c["tag"]: {k: v for k, v in c.items() if k != "tag"} for c in countries.values()}}
