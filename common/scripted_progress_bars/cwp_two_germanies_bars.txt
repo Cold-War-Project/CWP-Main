@@ -1,0 +1,133 @@
+﻿# Cold War Project: bars for the German question, chapter 2 (the two Germanies).
+# Journal entry: common/journal_entries/cwp_two_germanies.txt
+# Every factor reads simulation state or a choice a country made; none reads the date.
+
+# Whether East Germans accept the GDR's rule
+cwp_tg_legitimacy_bar = {
+	name = "cwp_tg_legitimacy_bar"
+	desc = "cwp_tg_legitimacy_bar_desc"
+
+	default_green = yes
+
+	start_value = 50
+	min_value = 0
+	max_value = 100
+
+	monthly_progress = {
+		progress_condition = {
+			limit = { cwp_tg_emigration_active = yes }
+			add = { desc = "cwp_tg_legitimacy_bar_emigration" value = -0.5 }
+		}
+		progress_condition = {
+			limit = {
+				exists = c:DDR
+				exists = c:GER
+				c:DDR.average_sol < c:GER.average_sol
+			}
+			add = { desc = "cwp_tg_legitimacy_bar_living_worse" value = -0.5 }
+		}
+		progress_condition = {
+			limit = {
+				exists = c:DDR
+				exists = c:GER
+				c:DDR.average_sol >= c:GER.average_sol
+			}
+			add = { desc = "cwp_tg_legitimacy_bar_living_better" value = 1 }
+		}
+		progress_condition = {
+			limit = {
+				exists = c:RUS
+				NOT = { has_global_variable = cwp_tg_support_withdrawn }
+				c:DDR ?= { is_in_power_bloc = yes }
+				c:RUS = { is_power_bloc_leader = yes }
+			}
+			add = { desc = "cwp_tg_legitimacy_bar_soviet_backing" value = 0.5 }
+		}
+		progress_condition = {
+			limit = { has_global_variable = cwp_tg_support_withdrawn }
+			add = { desc = "cwp_tg_legitimacy_bar_support_withdrawn" value = -2 }
+		}
+		progress_condition = {
+			limit = { has_global_variable = cwp_tg_wall }
+			add = { desc = "cwp_tg_legitimacy_bar_wall" value = 0.5 }
+		}
+		progress_condition = {
+			limit = { c:DDR ?= { has_modifier = cwp_tg_stasi } }
+			add = { desc = "cwp_tg_legitimacy_bar_stasi" value = 0.5 }
+		}
+		progress_condition = {
+			limit = { c:DDR ?= { has_modifier = cwp_tg_consumer_socialism } }
+			add = { desc = "cwp_tg_legitimacy_bar_consumer_socialism" value = 1 }
+		}
+		progress_condition = {
+			limit = { has_global_variable = cwp_tg_basic_treaty }
+			add = { desc = "cwp_tg_legitimacy_bar_recognition" value = 0.5 }
+		}
+		progress_condition = {
+			limit = {
+				scope:journal_entry ?= { "scripted_bar_progress(cwp_tg_contact_bar)" >= 60 }
+			}
+			add = { desc = "cwp_tg_legitimacy_bar_western_television" value = -0.5 }
+		}
+		progress_condition = {
+			limit = {
+				c:DDR ?= { radical_fraction = { value >= 0.2 } }
+			}
+			add = { desc = "cwp_tg_legitimacy_bar_radicals" value = -1 }
+		}
+	}
+}
+
+# How much the two German states and their people deal with each other
+cwp_tg_contact_bar = {
+	name = "cwp_tg_contact_bar"
+	desc = "cwp_tg_contact_bar_desc"
+
+	default = yes
+
+	start_value = 20
+	min_value = 0
+	max_value = 100
+
+	monthly_progress = {
+		progress_condition = {
+			limit = { has_global_variable = cwp_tg_hallstein }
+			add = { desc = "cwp_tg_contact_bar_hallstein" value = -0.5 }
+		}
+		progress_condition = {
+			limit = { has_global_variable = cwp_tg_ostpolitik }
+			add = { desc = "cwp_tg_contact_bar_ostpolitik" value = 1 }
+		}
+		progress_condition = {
+			limit = { has_global_variable = cwp_tg_basic_treaty }
+			add = { desc = "cwp_tg_contact_bar_basic_treaty" value = 1 }
+		}
+		progress_condition = {
+			limit = { c:GER ?= { has_modifier = cwp_tg_freikauf } }
+			add = { desc = "cwp_tg_contact_bar_freikauf" value = 0.5 }
+		}
+		progress_condition = {
+			limit = {
+				exists = c:USA
+				exists = c:RUS
+				c:USA = { "relations(c:RUS)" >= 20 }
+			}
+			add = { desc = "cwp_tg_contact_bar_detente" value = 0.5 }
+		}
+		progress_condition = {
+			limit = {
+				exists = c:USA
+				exists = c:RUS
+				c:USA = { "relations(c:RUS)" <= -20 }
+			}
+			add = { desc = "cwp_tg_contact_bar_tension" value = -0.5 }
+		}
+		progress_condition = {
+			limit = {
+				has_global_variable = cwp_tg_wall
+				NOT = { has_global_variable = cwp_tg_basic_treaty }
+			}
+			add = { desc = "cwp_tg_contact_bar_wall" value = -0.5 }
+		}
+	}
+}

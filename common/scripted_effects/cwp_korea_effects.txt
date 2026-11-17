@@ -1,0 +1,253 @@
+﻿# Cold War Project: effects for je_cwp_divided_peninsula
+
+# Starts the Korean War. Root = the attacking Korea. $TARGET$ = the other Korea.
+# Each side gets a goal on every state of the other, so the native stalemate (WAR_STALEMATE_MONTHS)
+# freezes the line near the front instead of handing one side the whole peninsula.
+cwp_korea_start_war_effect = {
+	create_diplomatic_play = {
+		name = cwp_korean_war
+		type = dp_cwp_korean_war
+		war = yes
+		target_state = $TARGET$.capital
+	}
+	random_diplomatic_play = {
+		limit = {
+			is_diplomatic_play_type = dp_cwp_korean_war
+		}
+		save_scope_as = cwp_korea_war_play
+	}
+	if = {
+		limit = { exists = scope:cwp_korea_war_play }
+		$TARGET$ = {
+			every_scope_state = {
+				limit = {
+					NOT = { THIS = $TARGET$.capital }
+				}
+				scope:cwp_korea_war_play = {
+					add_war_goal = {
+						holder = root
+						type = conquer_state
+						target_state = prev
+					}
+				}
+			}
+		}
+		root = {
+			every_scope_state = {
+				scope:cwp_korea_war_play = {
+					add_war_goal = {
+						holder = $TARGET$
+						type = conquer_state
+						target_state = prev
+					}
+				}
+			}
+		}
+	}
+	set_global_variable = cwp_korea_war
+	set_variable = cwp_korea_participant
+	$TARGET$ = { set_variable = cwp_korea_participant }
+}
+
+# Both Koreas survive: the line becomes a border nobody accepts.
+cwp_korea_divided_peace_effect = {
+	c:NRK ?= {
+		add_modifier = { name = cwp_korea_dmz days = long_modifier_time }
+		if = {
+			limit = { exists = c:STK }
+			create_bidirectional_truce = { country = c:STK months = 60 }
+		}
+	}
+	c:STK ?= {
+		add_modifier = { name = cwp_korea_dmz days = long_modifier_time }
+	}
+}
+
+# The Joint Commission agrees: one provisional government for the whole peninsula,
+# neutral between the blocs. Until a united Korea formable exists (#783) the southern tag,
+# which holds most of the population, absorbs the northern one.
+cwp_korea_neutral_unification_effect = {
+	c:STK ?= {
+		if = {
+			limit = { is_subject = yes }
+			make_independent = yes
+		}
+	}
+	c:NRK ?= {
+		if = {
+			limit = { is_subject = yes }
+			make_independent = yes
+		}
+	}
+	if = {
+		limit = {
+			exists = c:STK
+			exists = c:NRK
+		}
+		c:STK = {
+			annex = c:NRK
+			add_modifier = { name = cwp_korea_neutral days = long_modifier_time }
+		}
+	}
+}
+
+cwp_korea_cleanup_effect = {
+	remove_global_variable = cwp_korea_active
+	set_global_variable = cwp_korea_concluded
+	remove_global_variable = cwp_korea_partition
+	remove_global_variable = cwp_korea_un_referral
+	remove_global_variable = cwp_korea_us_withdrawn
+	remove_global_variable = cwp_korea_soviet_withdrawn
+	remove_global_variable = cwp_korea_greenlight
+	remove_global_variable = cwp_korea_sc_boycott
+	remove_global_variable = cwp_korea_prc_pledge
+	remove_global_variable = cwp_korea_prc_divisions
+	remove_global_variable = cwp_korea_prc_asked
+	remove_global_variable = cwp_korea_un_mandate
+	remove_global_variable = cwp_korea_war
+	remove_global_variable = cwp_korea_talks_cooldown
+	remove_global_variable = cwp_korea_deterrence_months
+	c:USA ?= {
+		remove_modifier = cwp_korea_us_garrison
+	}
+	c:RUS ?= {
+		remove_modifier = cwp_korea_soviet_garrison
+		remove_modifier = cwp_korea_security_council_boycott
+	}
+	every_country = {
+		limit = { has_variable = cwp_korea_participant }
+		remove_variable = cwp_korea_participant
+	}
+	c:STK ?= { remove_variable = cwp_korea_elections_held }
+	c:NRK ?= { remove_variable = cwp_korea_elections_held }
+}
+
+# Monthly logic of the situation. Called from cwp_korea_monthly_pulse in the scope of STK (or NRK if STK is gone);
+# the scope only exists so that je: links resolve. Do not use root or this for game logic here.
+cwp_korea_monthly_effect = {
+	# 1. The Joint Commission collapses when its bar reaches 0
+	if = {
+		limit = {
+			NOT = { has_global_variable = cwp_korea_partition }
+			je:je_cwp_divided_peninsula ?= {
+				"scripted_bar_progress(cwp_korea_commission_bar)" <= 0
+			}
+		}
+		set_global_variable = cwp_korea_partition
+		c:USA ?= { trigger_event = { id = cwp_korea.2 popup = yes } }
+		c:RUS ?= { trigger_event = { id = cwp_korea.2 popup = yes } }
+		c:STK ?= { trigger_event = { id = cwp_korea.2 popup = yes } }
+		c:NRK ?= { trigger_event = { id = cwp_korea.2 popup = yes } }
+	}
+
+	# 2. Deterrence: both sovereign, no war, and each side's attack held back by something real
+	if = {
+		limit = {
+			NOT = { has_global_variable = cwp_korea_war }
+			cwp_korea_both_sovereign = yes
+			cwp_korea_north_deterred = yes
+			cwp_korea_south_deterred = yes
+		}
+		if = {
+			limit = { has_global_variable = cwp_korea_deterrence_months }
+			change_global_variable = { name = cwp_korea_deterrence_months add = 1 }
+		}
+		else = {
+			set_global_variable = { name = cwp_korea_deterrence_months value = 1 }
+		}
+	}
+	else_if = {
+		limit = { has_global_variable = cwp_korea_deterrence_months }
+		remove_global_variable = cwp_korea_deterrence_months
+	}
+
+	# 3. Southern insurgency (Jeju, Yeosu-Suncheon): more likely the more the balance favours the North
+	if = {
+		limit = {
+			exists = c:STK
+			NOT = { has_global_variable = cwp_korea_war }
+			c:STK = {
+				NOT = { has_modifier = cwp_korea_southern_insurgency }
+				NOT = { has_modifier = cwp_korea_land_reform }
+				NOT = { has_variable = cwp_korea_uprising_cooldown }
+			}
+		}
+		random_list = {
+			3 = {
+				modifier = {
+					if = {
+						limit = {
+							je:je_cwp_divided_peninsula ?= {
+								"scripted_bar_progress(cwp_korea_balance_bar)" >= 10
+							}
+						}
+						add = 3
+					}
+				}
+				c:STK = {
+					set_variable = { name = cwp_korea_uprising_cooldown days = 730 }
+					trigger_event = { id = cwp_korea.10 popup = yes }
+				}
+			}
+			97 = {}
+		}
+	}
+
+	# 4. War: Chinese entry when UN forces near the Yalu and the PRC has pledged volunteers
+	if = {
+		limit = {
+			has_global_variable = cwp_korea_war
+			has_global_variable = cwp_korea_prc_pledge
+			NOT = { has_global_variable = cwp_korea_prc_asked }
+			cwp_korea_war_running = yes
+			exists = c:NRK
+			c:NRK = { enemy_occupation > 0.4 }
+			exists = c:PRC
+			c:PRC = {
+				is_at_war = no
+			}
+		}
+		set_global_variable = cwp_korea_prc_asked
+		c:PRC = { trigger_event = { id = cwp_korea.22 popup = yes } }
+	}
+
+	# 5. War: armistice talks open when the front is stable and both sides have lost the will to push
+	if = {
+		limit = {
+			has_global_variable = cwp_korea_war
+			NOT = { has_global_variable = cwp_korea_talks_cooldown }
+			exists = c:NRK
+			exists = c:STK
+			c:NRK = { enemy_occupation < 0.5 }
+			c:STK = { enemy_occupation < 0.5 }
+			any_diplomatic_play = {
+				is_diplomatic_play_type = dp_cwp_korean_war
+				war ?= {
+					has_war_support = { target = c:NRK value < 0 }
+					has_war_support = { target = c:STK value < 0 }
+				}
+			}
+		}
+		set_global_variable = { name = cwp_korea_talks_cooldown days = 365 }
+		c:NRK = { trigger_event = { id = cwp_korea.30 popup = yes } }
+	}
+}
+
+# Root joins the Korean War on the side of $SIDE$ (c:NRK or c:STK).
+cwp_korea_join_war_effect = {
+	save_scope_as = cwp_korea_joiner
+	set_variable = cwp_korea_participant
+	$SIDE$ = {
+		every_scope_war = {
+			limit = {
+				is_war_participant = c:NRK
+				is_war_participant = c:STK
+				NOT = { is_war_participant = scope:cwp_korea_joiner }
+			}
+			join_war = {
+				target = scope:cwp_korea_joiner
+				side = $SIDE$
+			}
+		}
+	}
+}

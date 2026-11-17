@@ -1,0 +1,533 @@
+﻿# Cold War Project: buttons for the German question, chapter 1 (occupation and division).
+# Journal entry: common/journal_entries/cwp_german_question.txt
+# root = the country pressing the button; scope:journal_entry is the German question.
+
+# USA and Britain: agree to merge the American and British zones (both must agree)
+cwp_gq_merge_zones_button = {
+	name = "cwp_gq_merge_zones_button"
+	desc = "cwp_gq_merge_zones_button_desc"
+
+	visible = {
+		OR = {
+			c:USA ?= this
+			c:GBR ?= this
+		}
+		NOT = { has_global_variable = cwp_gq_bizone }
+	}
+
+	possible = {
+		exists = c:AOZ
+		exists = c:BOZ
+		custom_tooltip = {
+			text = cwp_gq_already_agreed_tt
+			NOT = { has_variable = cwp_gq_agreed_bizone }
+		}
+	}
+
+	selected = {
+		has_variable = cwp_gq_agreed_bizone
+	}
+
+	effect = {
+		set_variable = cwp_gq_agreed_bizone
+		custom_tooltip = cwp_gq_merge_zones_button_tt
+		cwp_gq_shift_bar = { BAR = cwp_gq_unity_bar VALUE = -5 }
+	}
+
+	ai_chance = {
+		value = 1
+		if = {
+			limit = {
+				scope:journal_entry ?= { "scripted_bar_progress(cwp_gq_unity_bar)" <= 45 }
+			}
+			add = 10
+		}
+	}
+}
+
+# France: bring the French zone into the combined western economy
+cwp_gq_join_trizone_button = {
+	name = "cwp_gq_join_trizone_button"
+	desc = "cwp_gq_join_trizone_button_desc"
+
+	visible = {
+		c:FRA ?= this
+		NOT = { has_global_variable = cwp_gq_trizone }
+	}
+
+	possible = {
+		exists = c:FOZ
+		custom_tooltip = {
+			text = cwp_gq_needs_bizone_tt
+			has_global_variable = cwp_gq_bizone
+		}
+	}
+
+	effect = {
+		remove_global_variable = cwp_gq_french_reservations
+		if = {
+			limit = { has_modifier = cwp_gq_french_reservations }
+			remove_modifier = cwp_gq_french_reservations
+		}
+		custom_tooltip = cwp_gq_join_trizone_button_tt
+		hidden_effect = { set_global_variable = cwp_gq_trizone }
+	}
+
+	ai_chance = {
+		value = 1
+		if = {
+			limit = {
+				scope:journal_entry ?= {
+					"scripted_bar_progress(cwp_gq_western_bar)" >= 25
+					"scripted_bar_progress(cwp_gq_soviet_bar)" >= 30
+				}
+			}
+			add = 10
+		}
+		if = {
+			limit = { has_global_variable = cwp_gq_blockade }
+			add = 10
+		}
+	}
+}
+
+# USA: European Recovery Program deliveries to the western zones
+cwp_gq_marshall_aid_button = {
+	name = "cwp_gq_marshall_aid_button"
+	desc = "cwp_gq_marshall_aid_button_desc"
+
+	visible = {
+		c:USA ?= this
+		NOT = { has_global_variable = cwp_gq_frg_sovereign }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = cwp_gq_needs_bizone_tt
+			has_global_variable = cwp_gq_bizone
+		}
+		NOT = { has_modifier = cwp_gq_marshall_aid_donor }
+	}
+
+	selected = {
+		has_modifier = cwp_gq_marshall_aid_donor
+	}
+
+	effect = {
+		add_modifier = {
+			name = cwp_gq_marshall_aid_donor
+			days = normal_modifier_time
+		}
+		every_country = {
+			limit = { cwp_gq_is_west_german = yes }
+			add_modifier = {
+				name = cwp_gq_marshall_aid
+				days = normal_modifier_time
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 1
+		if = {
+			limit = {
+				scope:journal_entry ?= { "scripted_bar_progress(cwp_gq_unity_bar)" <= 35 }
+			}
+			add = 10
+		}
+	}
+}
+
+# USA: replace the Reichsmark with the Deutsche Mark in the western zones
+cwp_gq_currency_reform_button = {
+	name = "cwp_gq_currency_reform_button"
+	desc = "cwp_gq_currency_reform_button_desc"
+
+	visible = {
+		c:USA ?= this
+		NOT = { has_global_variable = cwp_gq_currency_reform }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = cwp_gq_needs_bizone_tt
+			has_global_variable = cwp_gq_bizone
+		}
+	}
+
+	effect = {
+		set_global_variable = cwp_gq_currency_reform
+		cwp_gq_shift_bar = { BAR = cwp_gq_unity_bar VALUE = -10 }
+		hidden_effect = {
+			c:RUS ?= { trigger_event = { id = cwp_german_question.4 days = 7 popup = yes } }
+		}
+	}
+
+	ai_chance = {
+		value = 1
+		if = {
+			limit = {
+				scope:journal_entry ?= { "scripted_bar_progress(cwp_gq_unity_bar)" <= 25 }
+				any_country = {
+					cwp_gq_is_west_german = yes
+					has_modifier = cwp_gq_marshall_aid
+				}
+			}
+			add = 10
+		}
+	}
+}
+
+# Western zone or Federal Republic: elections and Länder governments
+cwp_gq_self_government_button = {
+	name = "cwp_gq_self_government_button"
+	desc = "cwp_gq_self_government_button_desc"
+
+	visible = {
+		cwp_gq_is_west_german = yes
+	}
+
+	possible = {
+		NOT = { has_modifier = cwp_gq_self_government }
+	}
+
+	selected = {
+		has_modifier = cwp_gq_self_government
+	}
+
+	effect = {
+		add_modifier = {
+			name = cwp_gq_self_government
+			days = short_modifier_time
+		}
+	}
+
+	ai_chance = {
+		value = 5
+	}
+}
+
+# Any occupying power: take the German question back to the Council of Foreign Ministers
+cwp_gq_four_power_talks_button = {
+	name = "cwp_gq_four_power_talks_button"
+	desc = "cwp_gq_four_power_talks_button_desc"
+
+	visible = {
+		cwp_gq_is_occupier = yes
+		NOT = { has_global_variable = cwp_gq_frg_proclaimed }
+	}
+
+	possible = {
+		NOT = { has_modifier = cwp_gq_four_power_talks }
+	}
+
+	selected = {
+		has_modifier = cwp_gq_four_power_talks
+	}
+
+	effect = {
+		add_modifier = {
+			name = cwp_gq_four_power_talks
+			days = very_short_modifier_time
+		}
+	}
+
+	ai_chance = {
+		value = 1
+		if = {
+			limit = {
+				c:RUS ?= this
+				scope:journal_entry ?= { "scripted_bar_progress(cwp_gq_western_bar)" >= 30 }
+			}
+			add = 3
+		}
+		if = {
+			limit = {
+				c:GBR ?= this
+				scope:journal_entry ?= { "scripted_bar_progress(cwp_gq_unity_bar)" >= 45 }
+			}
+			add = 2
+		}
+	}
+}
+
+# Soviet Union or Soviet zone: expropriate the estates and give the land to farmers
+cwp_gq_land_reform_button = {
+	name = "cwp_gq_land_reform_button"
+	desc = "cwp_gq_land_reform_button_desc"
+
+	visible = {
+		OR = {
+			c:RUS ?= this
+			c:DDR ?= this
+		}
+		NOT = { has_global_variable = cwp_gq_land_reform }
+	}
+
+	possible = {
+		exists = c:DDR
+	}
+
+	effect = {
+		set_global_variable = cwp_gq_land_reform
+		c:DDR = {
+			add_modifier = {
+				name = cwp_gq_land_reform
+				days = long_modifier_time
+			}
+			ig:ig_landowners ?= {
+				add_modifier = {
+					name = cwp_gq_landowners_expropriated
+					days = long_modifier_time
+				}
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 20
+	}
+}
+
+# Soviet Union or Soviet zone: merge the KPD and SPD into the Socialist Unity Party
+cwp_gq_sed_merger_button = {
+	name = "cwp_gq_sed_merger_button"
+	desc = "cwp_gq_sed_merger_button_desc"
+
+	visible = {
+		OR = {
+			c:RUS ?= this
+			c:DDR ?= this
+		}
+		NOT = { has_global_variable = cwp_gq_sed_formed }
+	}
+
+	possible = {
+		exists = c:DDR
+	}
+
+	effect = {
+		set_global_variable = cwp_gq_sed_formed
+		cwp_gq_shift_bar = { BAR = cwp_gq_unity_bar VALUE = -5 }
+		hidden_effect = {
+			c:DDR = { trigger_event = { id = cwp_german_question.9 days = 3 popup = yes } }
+		}
+	}
+
+	ai_chance = {
+		value = 15
+	}
+}
+
+# Soviet Union: dismantle factories in the zone and ship them east as reparations
+cwp_gq_dismantling_button = {
+	name = "cwp_gq_dismantling_button"
+	desc = "cwp_gq_dismantling_button_desc"
+
+	visible = {
+		c:RUS ?= this
+		NOT = { has_global_variable = cwp_gq_gdr_sovereign }
+	}
+
+	possible = {
+		exists = c:DDR
+		cwp_gq_soviet_zone_held = yes
+		NOT = { has_modifier = cwp_gq_reparations }
+	}
+
+	selected = {
+		has_modifier = cwp_gq_reparations
+	}
+
+	effect = {
+		add_modifier = {
+			name = cwp_gq_reparations
+			days = short_modifier_time
+		}
+		c:DDR = {
+			add_modifier = {
+				name = cwp_gq_dismantling
+				days = short_modifier_time
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 5
+		if = {
+			limit = { has_global_variable = cwp_gq_gdr_proclaimed }
+			add = -5
+		}
+	}
+}
+
+# Soviet zone: the bloc of antifascist parties under SED leadership
+cwp_gq_antifascist_bloc_button = {
+	name = "cwp_gq_antifascist_bloc_button"
+	desc = "cwp_gq_antifascist_bloc_button_desc"
+
+	visible = {
+		c:DDR ?= this
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = cwp_gq_needs_sed_tt
+			has_global_variable = cwp_gq_sed_formed
+		}
+		NOT = { has_modifier = cwp_gq_antifascist_bloc }
+	}
+
+	selected = {
+		has_modifier = cwp_gq_antifascist_bloc
+	}
+
+	effect = {
+		add_modifier = {
+			name = cwp_gq_antifascist_bloc
+			days = short_modifier_time
+		}
+	}
+
+	ai_chance = {
+		value = 5
+	}
+}
+
+# Soviet Union: cut the land and water routes to West Berlin
+cwp_gq_blockade_button = {
+	name = "cwp_gq_blockade_button"
+	desc = "cwp_gq_blockade_button_desc"
+
+	visible = {
+		c:RUS ?= this
+		NOT = { has_global_variable = cwp_gq_blockade }
+		NOT = { has_global_variable = cwp_gq_berlin_settled }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = cwp_gq_needs_currency_reform_tt
+			has_global_variable = cwp_gq_currency_reform
+		}
+		exists = c:DDR
+		cwp_gq_soviet_zone_held = yes
+	}
+
+	effect = {
+		set_global_variable = cwp_gq_blockade
+		set_global_variable = { name = cwp_gq_blockade_months value = 0 }
+		cwp_gq_shift_bar = { BAR = cwp_gq_unity_bar VALUE = -10 }
+		hidden_effect = {
+			if = {
+				limit = { exists = c:USA }
+				c:USA = { trigger_event = { id = cwp_german_question.5 days = 3 popup = yes } }
+			}
+			else = {
+				c:GBR ?= { trigger_event = { id = cwp_german_question.5 days = 3 popup = yes } }
+			}
+			every_country = {
+				limit = {
+					OR = {
+						c:GBR ?= this
+						c:FRA ?= this
+						c:DDR ?= this
+						cwp_gq_is_west_german = yes
+					}
+					NOT = {
+						AND = {
+							c:GBR ?= this
+							NOT = { exists = c:USA }
+						}
+					}
+				}
+				trigger_event = { id = cwp_german_question.6 days = 3 popup = yes }
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 1
+		if = {
+			limit = {
+				scope:journal_entry ?= { "scripted_bar_progress(cwp_gq_soviet_bar)" >= 40 }
+			}
+			add = 10
+		}
+	}
+}
+
+# Soviet Union: reopen the routes to West Berlin
+cwp_gq_lift_blockade_button = {
+	name = "cwp_gq_lift_blockade_button"
+	desc = "cwp_gq_lift_blockade_button_desc"
+
+	visible = {
+		c:RUS ?= this
+		has_global_variable = cwp_gq_blockade
+	}
+
+	possible = {
+		has_global_variable = cwp_gq_blockade
+	}
+
+	effect = {
+		cwp_gq_end_blockade = yes
+	}
+
+	# The longer the airlift holds, the likelier Moscow gives up
+	ai_chance = {
+		value = 0
+		if = {
+			limit = { global_var:cwp_gq_blockade_months >= 3 }
+			add = 2
+		}
+		if = {
+			limit = { global_var:cwp_gq_blockade_months >= 6 }
+			add = 5
+		}
+		if = {
+			limit = { global_var:cwp_gq_blockade_months >= 9 }
+			add = 10
+		}
+		if = {
+			limit = { global_var:cwp_gq_blockade_months >= 12 }
+			add = 20
+		}
+	}
+}
+
+# Soviet Union: offer a united, neutral Germany before the West rearms it
+cwp_gq_stalin_note_button = {
+	name = "cwp_gq_stalin_note_button"
+	desc = "cwp_gq_stalin_note_button_desc"
+
+	visible = {
+		c:RUS ?= this
+		has_global_variable = cwp_gq_frg_proclaimed
+		NOT = { has_global_variable = cwp_gq_stalin_note }
+		NOT = { has_global_variable = cwp_gq_frg_sovereign }
+	}
+
+	possible = {
+		exists = c:DDR
+		exists = c:GER
+		cwp_gq_soviet_zone_held = yes
+		custom_tooltip = {
+			text = cwp_gq_stalin_note_possible_tt
+			scope:journal_entry ?= { "scripted_bar_progress(cwp_gq_western_bar)" >= 70 }
+		}
+	}
+
+	effect = {
+		set_global_variable = cwp_gq_stalin_note
+		custom_tooltip = cwp_gq_stalin_note_button_tt
+		hidden_effect = {
+			c:GER = { trigger_event = { id = cwp_german_question.12 days = 7 popup = yes } }
+		}
+	}
+
+	ai_chance = {
+		value = 10
+	}
+}

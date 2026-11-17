@@ -6,7 +6,7 @@ paths:
 
 # Victoria 3 script language (1.15)
 
-Applies to every `.txt` under `common/` and `events/`. Names quoted here were checked against vanilla 1.15; anything else must be grepped in vanilla or looked up in `.claude/reference/vanilla-script-tokens.md` before use.
+Applies to every `.txt` under `common/` and `events/`. Names quoted here were checked against vanilla 1.15; look up any other engine name in `Claude-Vic3-Modding-Guide/reference/` (grep `^## <name>$` in `effects.md` / `triggers.md`; links and prefixes in `event_targets.md`), then confirm usage by grepping vanilla. `.claude/reference/vanilla-script-tokens.md` is a secondary list.
 
 ## Syntax
 
@@ -58,7 +58,7 @@ Frequently used and verified: `exists`, `has_variable`, `has_global_variable`, `
 - Read: `has_variable = x`, `var:x` (as a value or a scope when it stores one).
 - Global: `set_global_variable`, `change_global_variable`, `remove_global_variable`, `has_global_variable`, `global_var:x`. Local (current execution only): `local_var:x`.
 - Lists: `add_to_variable_list = { name = x target = <scope> }`, `add_to_global_variable_list`, `clear_variable_list`, iterate with `any/every/random/ordered_in_list = { variable = x }`, `..._in_global_list`, `..._in_local_list`.
-- **Mod policy:** the game logs every variable that is read but never set and set but never read. Both count as errors here. When you add a `has_variable`/`var:` read, make sure a `set_variable` for the same literal name exists, and the reverse. Names assembled from macro arguments (`rcw_share_$CAMP$`) are invisible to a literal search; check callers.
+- **Mod policy:** the game logs every variable that is read but never set and set but never read. Both count as errors here. When you add a `has_variable`/`var:` read, make sure a `set_variable` for the same literal name exists, and the reverse. Names assembled from macro arguments (`rcw_seats_$CAMP$` in `05_russian_civil_war_scripted_effects.txt`) are invisible to a literal search; check callers.
 
 ## Script values
 
@@ -84,8 +84,8 @@ my_value = {
 
 - `common/scripted_triggers` and `common/scripted_effects`: `name = { ... }`, called as `name = yes` (triggers also `= no`).
 - Parameters: write `$PARAM$` in the body and call `name = { PARAM = value }`. If an edit removes the last use of a parameter, every caller that still passes it breaks ("unknown arguments"); if none are left, callers must switch to `name = yes`.
-- `common/scripted_lists`: `name = { base = country conditions = { <trigger> } }` creates `any_name`, `every_name`, `random_name`, `ordered_name`.
-- `common/scripted_rules`: fixed names the engine calls (`can_start_diplomatic_plays_against`, `has_voting_franchise`, `can_form_power_bloc`...). Change bodies if needed, never rename or delete.
+- `common/scripted_lists`: `name = { base = country conditions = { <trigger> } }` creates `any_name`, `every_name`, `random_name`, `ordered_name`. The mod has no files here; vanilla's load unchanged.
+- `common/scripted_rules`: fixed names the engine calls (`can_start_diplomatic_plays_against`, `has_voting_franchise`, `can_form_power_bloc`...). Change bodies if needed, never rename or delete. The mod has no files here; vanilla's load unchanged.
 - `common/scripted_modifiers`: reusable `if = { limit = {} factor = }` snippets for weight blocks.
 - Weight blocks in older style (`ai_chance = { base = 10 modifier = { trigger = { } add = 5 } }`) and script-value style (`value = 10 if = { ... }`) both exist; match the neighbouring entries of the folder you are in.
 

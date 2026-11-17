@@ -11,10 +11,10 @@ paths:
 
 ```
 era_3 = {
-	technology_cost = 12500
+	technology_cost = 10000
 }
 ```
-The mod defines `era_1` .. `era_12` (the 1946 start sits in the early eras; later eras carry the tree to 2046). Era cost drives research time, tech-progress rewards in events (vanilla uses about a third of the era cost for a bonus) and AI pacing. The vanilla `.md` mentions `start_date`/`end_date`/`icon`; vanilla's own file only sets `technology_cost`, so check the mod's file before adding other keys.
+The mod defines `era_1` .. `era_12` (era_1 = pre-1940 ... era_12 = post-2040, costs 5000 to 35000; the 1946 start is era_2), but technologies exist only in era_1 to era_5 so far: the tree beyond 1980 is unbuilt. Era cost drives research time, tech-progress rewards in events (each era's comment gives the bonus value, about a third of its cost) and AI pacing. The vanilla `.md` mentions `start_date`/`end_date`/`icon`; vanilla's own file only sets `technology_cost`, so check the mod's file before adding other keys.
 
 ## Technologies (`common/technology/technologies/*.txt`)
 
@@ -32,10 +32,11 @@ cwp_example_tech = {
 }
 ```
 
-- A tech only *unlocks* things because other objects point at it: buildings and PMs (`unlocking_technologies`), laws, decrees, mobilization options, combat unit and ship types, ship modifications, treaty articles (`unlocked_by_technologies`), diplomatic actions, parties, state traits (`disabling_technologies`, `required_techs_for_colonization`). The tech entry itself only carries `modifier` and `on_researched`. When adding a tech, add the pointers; when removing or renaming one, grep the key everywhere (`common/`, `events/`, `localization/`, `gfx/`).
-- Prerequisites should be in the same or an earlier era and must not form a cycle. Keep the tree connected: a tech with no `unlocking_technologies` is researchable from the start.
+- A tech only *unlocks* things because other objects point at it with `unlocking_technologies`: buildings, PMs, laws, decrees, mobilization options, combat unit and ship types, ship modifications, diplomatic actions, parties. Treaty articles use `unlocked_by_technologies`; state traits use `disabling_technologies` / `required_techs_for_colonization`. The tech entry itself only carries `modifier` and `on_researched`. When adding a tech, add the pointers; when removing or renaming one, grep the key everywhere (`common/`, `events/`, `localization/`, `gfx/`).
+- Prerequisites should be in the same or an earlier era and must not form a cycle. Keep the tree connected: a tech with no `unlocking_technologies` is researchable from the start (10 roots now, e.g. `industrial_revolution`, `radio`, `academia`).
+- `technologies/00_engine_compatibility.txt` keeps `nationalism` and `pan-nationalism` as hardcoded engine keys (`can_research = no`, `ai_weight = { value = 0 }`); do not remove or rename them.
 - The tech panel layout derives from era + category + prerequisites; there are no manual coordinates.
-- Loc: `<key>` and `<key>_desc`. Icons: `gfx/interface/icons/invention_icons/`; the mod uses `invention_placeholder.dds` where art is missing.
-- Starting technology comes from `history/countries` (`add_technology_researched = x`, or tier effects in `common/scripted_effects/00_starting_inventions.txt` such as `effect_starting_technology_tier_1_tech = yes`). A new early-era tech normally needs adding to those tier effects.
+- Loc: `<key>` and `<key>_desc`. Icons: `gfx/interface/icons/invention_icons/`; 64 techs have their own icon (`grep -c "texture = .*invention_placeholder" common/technology/technologies/*.txt` counts the rest, which use `invention_placeholder.dds`). Unused icons in that folder were drawn for an older tree and may suit techs still on the placeholder.
+- Starting technology comes from `history/countries`: `effect_starting_production_technologies_tier_N`, `..._society_...`, `..._military_...` (N = 1..5, `common/scripted_effects/00_starting_inventions.txt`), plus `add_technology_researched = x` where needed. A new era_1/era_2 tech normally needs adding to the matching tier effects.
 - Tech spread and innovation caps are defines (`NTechnology`) plus `country_weekly_innovation_*` and `country_tech_spread_*` modifiers.
 - AI: `ai_weight` is a script value in country scope; vanilla uses about 1 as baseline and 3 for key techs, with conditional bumps.

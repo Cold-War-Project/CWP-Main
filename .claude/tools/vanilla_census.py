@@ -12,7 +12,10 @@ import os
 import re
 import sys
 
-DEFAULT_GAME = "F:/SteamLibrary/steamapps/common/Victoria 3/game"
+# Forge (Linux) path first, then the original Windows install; override with --game.
+DEFAULT_GAME = next((p for p in (os.path.expanduser("~/.steam/steam/steamapps/common/Victoria 3/game"),
+                                 "F:/SteamLibrary/steamapps/common/Victoria 3/game") if os.path.isdir(p)),
+                    "F:/SteamLibrary/steamapps/common/Victoria 3/game")
 
 # --------------------------------------------------------------------------- parser
 

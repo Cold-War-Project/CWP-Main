@@ -1,0 +1,183 @@
+﻿# Cold War Project: the German question, chapter 2 - the two Germanies.
+# Design: docs/agents/areas/germany.md. Starts when chapter 1 (cwp_german_question.txt) has left
+# two sovereign German states. Contextless: GER, DDR, USA, RUS.
+# Nothing here is scheduled. The Wall is the GDR's choice under emigration pressure; the GDR's
+# rule erodes or holds with its living standards, its patron and its own policies.
+
+je_cwp_two_germanies = {
+	icon = "gfx/interface/icons/event_icons/event_map.dds"
+
+	group = je_group_global_international_situations
+
+	activation_description = {
+		always = yes
+	}
+
+	scripted_progress_bar = cwp_tg_legitimacy_bar
+	scripted_progress_bar = cwp_tg_contact_bar
+
+	scripted_button = cwp_tg_wall_button
+	scripted_button = cwp_tg_stasi_button
+	scripted_button = cwp_tg_consumer_socialism_button
+	scripted_button = cwp_tg_ostpolitik_button
+	scripted_button = cwp_tg_basic_treaty_button
+	scripted_button = cwp_tg_freikauf_button
+	scripted_button = cwp_tg_withdraw_support_button
+	scripted_button = cwp_tg_reaffirm_support_button
+
+	is_shown_when_inactive = {
+		always = yes
+	}
+
+	possible = {
+		NOT = { has_global_variable = cwp_tg_concluded }
+		has_global_variable = cwp_gq_frg_sovereign
+		has_global_variable = cwp_gq_gdr_sovereign
+		exists = c:GER
+		exists = c:DDR
+	}
+
+	should_be_involved = {
+		cwp_tg_is_party = yes
+	}
+
+	should_show_when_not_involved = {
+		capital ?= { is_in_geographic_region = geographic_region_europe }
+	}
+
+	immediate = {
+		set_global_variable = cwp_tg_hallstein
+	}
+
+	immediate_all_involved = {
+		if = {
+			limit = { is_player = yes }
+			trigger_event = { id = cwp_two_germanies.1 days = 1 popup = yes }
+		}
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			# Republikflucht: while the border is open and the West lives better, people leave
+			if = {
+				limit = { cwp_tg_emigration_active = yes }
+				c:DDR = {
+					if = {
+						limit = { NOT = { has_modifier = cwp_tg_republikflucht } }
+						add_modifier = { name = cwp_tg_republikflucht }
+					}
+				}
+				c:GER = {
+					if = {
+						limit = { NOT = { has_modifier = cwp_tg_refugees } }
+						add_modifier = { name = cwp_tg_refugees }
+					}
+				}
+			}
+			else = {
+				c:DDR ?= {
+					if = {
+						limit = { has_modifier = cwp_tg_republikflucht }
+						remove_modifier = cwp_tg_republikflucht
+					}
+				}
+				c:GER ?= {
+					if = {
+						limit = { has_modifier = cwp_tg_refugees }
+						remove_modifier = cwp_tg_refugees
+					}
+				}
+			}
+		}
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = cwp_tg_status_support_withdrawn
+				trigger = { has_global_variable = cwp_tg_support_withdrawn }
+			}
+			triggered_desc = {
+				desc = cwp_tg_status_basic_treaty
+				trigger = { has_global_variable = cwp_tg_basic_treaty }
+			}
+			triggered_desc = {
+				desc = cwp_tg_status_wall
+				trigger = { has_global_variable = cwp_tg_wall }
+			}
+			triggered_desc = {
+				desc = cwp_tg_status_open_border
+			}
+		}
+	}
+
+	# Historical: the GDR's rule collapses
+	outcome = {
+		header = cwp_tg_outcome_wende
+		effect_header = cwp_gq_outcome_effect_header
+		conclusion_desc = cwp_tg_outcome_wende_desc
+		color = "gold_positive"
+		flags = { historical }
+		trigger = {
+			custom_tooltip = {
+				text = cwp_tg_outcome_wende_tt
+				scope:journal_entry = { "scripted_bar_progress(cwp_tg_legitimacy_bar)" <= 0 }
+			}
+		}
+		effect = {
+			set_global_variable = cwp_tg_concluded
+		}
+		effect_all_involved = {
+			if = {
+				limit = { c:DDR ?= this }
+				add_radicals = { value = 0.2 }
+			}
+		}
+	}
+
+	# A GDR that lives as well as the West and is recognised by it can last
+	outcome = {
+		header = cwp_tg_outcome_lasting
+		effect_header = cwp_gq_outcome_effect_header
+		conclusion_desc = cwp_tg_outcome_lasting_desc
+		color = "blue_negative"
+		trigger = {
+			custom_tooltip = {
+				text = cwp_tg_outcome_lasting_tt
+				scope:journal_entry = { "scripted_bar_progress(cwp_tg_legitimacy_bar)" >= 100 }
+				has_global_variable = cwp_tg_basic_treaty
+				c:DDR.average_sol >= c:GER.average_sol
+			}
+		}
+		effect = {
+			set_global_variable = cwp_tg_concluded
+		}
+	}
+
+	# One of the two states is gone (war, annexation, collapse)
+	outcome = {
+		header = cwp_tg_outcome_one_state
+		effect_header = cwp_gq_outcome_effect_header
+		conclusion_desc = cwp_tg_outcome_one_state_desc
+		color = "gold_positive"
+		trigger = {
+			custom_tooltip = {
+				text = cwp_tg_outcome_one_state_tt
+				OR = {
+					NOT = { exists = c:DDR }
+					NOT = { exists = c:GER }
+				}
+			}
+		}
+		effect = {
+			set_global_variable = cwp_tg_concluded
+		}
+	}
+
+	weight = 10000
+
+	should_be_pinned_by_default_involved = yes
+	should_be_pinned_by_default_uninvolved_or_context = no
+
+	can_revolution_inherit = yes
+}

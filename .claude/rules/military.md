@@ -28,7 +28,7 @@ Replaced folders (mod-only content): `combat_unit_groups`, `combat_unit_types`, 
 
 ## Land units
 
-`combat_unit_groups`: `combat_unit_group_x = { icon = "..." color = { r g b } default_group = yes }`. Mod groups: `frontline_brigades`, `fire_support`, `aviation`, `marines`, `escort_ships`, `capital_ship`, `submarines` (prefix `combat_unit_group_`). Vanilla's own groups (`infantry`, `artillery`, `cavalry`) do not exist here; vanilla loc that calls `GetCombatUnitGroup('combat_unit_group_infantry')` logs ~875 "Unknown combat unit group key" lines, which the user has said to **ignore**. Vanilla's header notes each group needs a text icon entry in `gui/texticons.gui`.
+`combat_unit_groups`: `combat_unit_group_x = { icon = "..." color = { r g b } default_group = yes }`. Mod groups: `frontline_brigades`, `fire_support`, `aviation`, `marines`, `escort_ships`, `capital_ship`, `submarines` (prefix `combat_unit_group_`). Vanilla's own groups (`infantry`, `artillery`, `cavalry`) do not exist here; vanilla loc that calls `GetCombatUnitGroup('combat_unit_group_infantry')` logs ~875 "Unknown combat unit group key" lines, which the user has said to **ignore**. Vanilla's header notes each group needs a text icon entry in `gui/texticons.gui`; the mod does not override that file, so only `combat_unit_group_marines` has one. The mod's groups also lack loc.
 
 ```
 combat_unit_type_armored_brigade = {
@@ -52,7 +52,7 @@ combat_unit_type_armored_brigade = {
 
 ## Mobilization options
 
-Scopes: root = country, `scope:military_formation`. Keys: `group` (from `mobilization_option_groups`: `{ background = "..." weight = N }`), `texture`, `unlocking_technologies`, `unlocking_laws`, `unlocking_principles`, `is_shown`, `possible`, `can_be_turned_off`, `on_activate`, `on_deactivate`, `on_activate_while_mobilized`, `on_deactivate_while_mobilized`, `upkeep_modifier` (goods cost when active and mobilized), `upkeep_modifier_unscaled`, `unit_modifier`, `ai_weight`. Vanilla options load; mod overrides are in `zz_vanilla_mobilization_options.txt` and `zz_unwanted_vanilla_mobilization_options.txt`.
+Scopes: root = country, `scope:military_formation`. Keys: `group` (from `mobilization_option_groups`: `{ background = "..." weight = N }`), `texture`, `unlocking_technologies`, `unlocking_laws`, `unlocking_principles`, `is_shown`, `possible`, `can_be_turned_off`, `on_activate`, `on_deactivate`, `on_activate_while_mobilized`, `on_deactivate_while_mobilized`, `upkeep_modifier` (goods cost when active and mobilized), `upkeep_modifier_unscaled`, `unit_modifier`, `ai_weight`. Vanilla options load; mod options are in `cwp_mobilization_options.txt` (groups in `cwp_mobilization_option_groups.txt`); vanilla overrides are in `zz_vanilla_mobilization_options.txt` and `zz_unwanted_vanilla_mobilization_options.txt`.
 
 ## Commanders
 
@@ -84,7 +84,8 @@ ship_type_destroyer = {
 	default_modifications = { slot_key = modification_a }
 }
 ```
-- `ship_groups`: `{ icon color category ai_weight }`. Mod groups: `ship_group_surface_combatants`, `escort_ships`, `auxiliary_ships`, `submarines`, `supply_ships`.
+- Mod ship types also set `ai_weight`. `ship_type_supply_ship` in `ship_types/00_engine_compatibility.txt` is required by the `SUPPLY_SHIP_TYPE` define; do not remove or rename it.
+- `ship_groups` (`cwp_ship_groups.txt.txt`): `{ icon color category }`. Mod groups: `ship_group_aviation_ships`, `surface_combatants`, `escort_ships`, `auxiliary_ships`, `submarines`, `supply_ships`.
 - `ship_modification_slots`: `{ icon utility = yes/no }`. `ship_modifications`: `{ type = <slot> icon modifier construction_goods materiel_goods unlocking_technologies incompatible_with ai_weight clicksound }`.
 - `ship_veterancy_levels`: `experience_threshold` (unique, one must be 0), `modifier` (only `ship_` modifiers).
 - Ship type keys generate modifier types such as `ship_battle_against_ship_type_<key>_accuracy_mult` (`cwp_ship_modifier_types.txt`). Adding a ship type means adding its family there.
@@ -97,6 +98,8 @@ ship_type_destroyer = {
 `naval_mission_types`: behaviour flags `intercept`, `project_power`, `blockade`, `raid_supply`, `protect_supply`, `piracy`, `port_bombardment`; `intercept_targets`, `piracy_targets`; `experience`, `modifier`, `command_modifier`, `potential`, `possible`, `ai_will_do`, `ai_weight`, `icon`, `map_texture`, `clicksound`. Combining behaviours confuses the AI unless `ai_weight` is solid.
 
 ## Formations at start
+
+The mod has no start-date formations yet: `history/military_formations` is replaced and empty, `history/military_deployments` is an empty stub. Creating them is new work; the syntax is below.
 
 `history/military_formations`: `create_military_formation = { type = army  hq_region = sr:region_x  name = key  combat_unit = { type = unit_type:combat_unit_type_x  state_region = s:STATE_X  count = N } }`; fleets are `type = fleet` with `ship = { type = ship_type:ship_type_x  count = N }` entries, and single named ships can be added with `create_ship = { type = ship_type:x  fleet = scope:saved_fleet  name = sn_key }` after `save_scope_as` on the formation. Units need a barracks/naval base able to support them in that state region, and the HQ region must be one where the country has land. `military_formation_flags` supplies `{ icon type = army/navy }` identities.
 
