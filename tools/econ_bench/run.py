@@ -55,6 +55,15 @@ START_STEPS = [
 ]
 
 
+def launch(out: Path, *args):
+    """cwp-vic launch with output to a file: the game inherits the launcher's stdout, so a pipe
+    (capture_output) would never reach EOF and the call would block until the game exits."""
+    env = dict(os.environ, DISPLAY=os.environ.get("DISPLAY", ":0"))
+    with open(out / "launch.out", "a") as f:
+        return subprocess.run(["cwp-vic", "launch", *args], stdout=f, stderr=subprocess.STDOUT,
+                              stdin=subprocess.DEVNULL, env=env, timeout=600)
+
+
 def sh(*cmd, check=False, **kw):
     env = dict(os.environ, DISPLAY=os.environ.get("DISPLAY", ":0"))
     return subprocess.run(cmd, text=True, capture_output=True, check=check, env=env, **kw)
@@ -129,12 +138,12 @@ def one_run(worktree: Path, out: Path, end_year: int, every: int, max_minutes: f
         log(out, sh("cwp-vic", "link", str(worktree)).stdout.strip())
         if resuming:
             stage_resume(resume)
-            sh("cwp-vic", "launch", "--continuelastsave")
+            launch(out, "--continuelastsave")
             log(out, f"launched, continuing from {resume.name}")
             time.sleep(300)
             steps = RESUME_STEPS
         else:
-            sh("cwp-vic", "launch")
+            launch(out)
             log(out, "launched; waiting for the main menu")
             time.sleep(170)
             steps = START_STEPS
