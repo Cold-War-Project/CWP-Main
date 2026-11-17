@@ -51,7 +51,7 @@ Use the `paradox-games` skill (`~/.claude/skills/paradox-games/SKILL.md`): `vic-
 
    `error.log` rotates by size (about 512 KB) into `error.1.log`..`error.5.log` within one session, and only five rotations are kept. `cwp-vic errors` reads the whole session oldest first; `wc -l error.log` and `vic-logs` see only the newest part. If `cwp-vic errors` reports 6 files, the earliest load-time lines may already be lost: fix the loudest errors and relaunch.
 2. Start a game (any country), unpause for a few in-game months, read again: many script errors fire only on load or on the first monthly tick.
-3. Compare against the baseline below. **The acceptance test is no new lines over the `cwp_rebuild` baseline.** Lines that name a file you touched are yours to fix.
+3. Compare against the baseline below. **The acceptance test is no new lines over the `CWP2` baseline.** Lines that name a file you touched are yours to fix.
 4. Triage by cause with `.claude/reference/debugging.md` (patterns, the ignore list, what each message means). Most lines carry `[file.txt:123]` or `in file: "<path>" near line: N`.
 5. Copy the log you are reporting on into your scratchpad before unlocking, and quote the relevant lines in the PR.
 
@@ -77,7 +77,7 @@ For anything that changes gameplay over time (economy, politics, AI, events):
 Only one game fits on the GPU (a CWP game uses about 5 GB RAM and 6+ GB VRAM), so areas are tested together as **one combined build**, not parallel games.
 
 ```bash
-cwp-integrate build                 # ~/forge/worktrees/integration = origin/cwp_rebuild + every open PR, in PR order
+cwp-integrate build                 # ~/forge/worktrees/integration = origin/CWP2 + every open PR into it, in PR order (CWP_BASE=<branch> for another base)
 cwp-integrate build 777 779 781     # or just these PRs
 cwp-integrate report                # per-PR merge result (merged / CONFLICT in <files>, skipped)
 export CWP_AGENT=integration

@@ -2,6 +2,8 @@
 
 Written 2026-11-16. Owner: Jack (JackEPepper). Work is agent-driven: human devs review and decide, agents port, build, test and document. Update this file when a phase finishes or the plan changes; it is the source the next agent reads first.
 
+**Update 2026-11-16:** the working branch is now **`CWP2`**: `cwp_rebuild` plus the ported PRs that passed the combined Forge test. All new work targets `CWP2`. Goal for the next week: build as much as possible before the dev meeting, then present it to the team. Next major content: Korea, Germany and decolonization, plus the minor content from dev and master (not everything needs a full journal entry). Below, read `cwp_rebuild` as "the base `CWP2` started from".
+
 ## Where we start
 
 | Branch | State on 2026-11-16 | Role from now on |
