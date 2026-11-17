@@ -1,0 +1,303 @@
+﻿# Cold War Project: two sibling situations of the German question.
+# je_cwp_austrian_state_treaty: the four-power occupation of Austria (start state from #794: AUS owns all
+#   Austrian land under a Soviet occupation pact) ends in a State Treaty when the powers consent.
+# je_cwp_saar: France's economic union with the Saar ends in a vote once France and the Federal Republic
+#   agree to hold one. Design: docs/agents/areas/germany.md. Nothing reads the date.
+
+je_cwp_austrian_state_treaty = {
+	icon = "gfx/interface/icons/event_icons/event_scales.dds"
+
+	group = je_group_global_international_situations
+
+	activation_description = {
+		always = yes
+	}
+
+	scripted_progress_bar = cwp_at_treaty_bar
+
+	scripted_button = cwp_at_neutrality_button
+	scripted_button = cwp_at_consent_button
+	scripted_button = cwp_at_usia_button
+
+	is_shown_when_inactive = {
+		always = yes
+	}
+
+	possible = {
+		NOT = { has_global_variable = cwp_at_concluded }
+		exists = c:AUS
+		exists = c:RUS
+		c:AUS = { is_subject_of = c:RUS }
+	}
+
+	should_be_involved = {
+		OR = {
+			c:AUS ?= this
+			c:USA ?= this
+			c:GBR ?= this
+			c:FRA ?= this
+			c:RUS ?= this
+		}
+	}
+
+	should_show_when_not_involved = {
+		capital ?= { is_in_geographic_region = geographic_region_europe }
+	}
+
+	immediate_all_involved = {
+		if = {
+			limit = { is_player = yes }
+			trigger_event = { id = cwp_austria_saar.1 days = 1 popup = yes }
+		}
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = cwp_at_status_neutrality
+				trigger = { has_global_variable = cwp_at_neutrality_pledged }
+			}
+			triggered_desc = {
+				desc = cwp_at_status_occupation
+			}
+		}
+	}
+
+	# Historical: a State Treaty and a neutral Austria
+	outcome = {
+		header = cwp_at_outcome_treaty
+		effect_header = cwp_gq_outcome_effect_header
+		conclusion_desc = cwp_at_outcome_treaty_desc
+		color = "gold_positive"
+		flags = { historical }
+		trigger = {
+			custom_tooltip = {
+				text = cwp_at_outcome_treaty_tt
+				scope:journal_entry = { "scripted_bar_progress(cwp_at_treaty_bar)" >= 100 }
+			}
+		}
+		effect = {
+			set_global_variable = cwp_at_concluded
+			c:AUS ?= {
+				if = {
+					limit = { is_subject = yes }
+					make_independent = yes
+				}
+				add_modifier = {
+					name = cwp_at_state_treaty
+					days = long_modifier_time
+				}
+				if = {
+					limit = { has_global_variable = cwp_at_neutrality_pledged }
+					if = {
+						limit = { is_in_power_bloc = yes }
+						leave_power_bloc = yes
+					}
+					add_modifier = { name = cwp_at_neutrality }
+				}
+			}
+		}
+		effect_all_involved = {
+			trigger_event = { id = cwp_austria_saar.2 days = 1 popup = yes }
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			OR = {
+				NOT = { exists = c:AUS }
+				NOT = { exists = c:RUS }
+				c:AUS = { is_subject = no }
+			}
+		}
+		effect = {
+			set_global_variable = cwp_at_concluded
+		}
+	}
+
+	weight = 1000
+
+	should_be_pinned_by_default_involved = yes
+	should_be_pinned_by_default_uninvolved_or_context = no
+
+	can_revolution_inherit = yes
+}
+
+je_cwp_saar = {
+	icon = "gfx/interface/icons/event_icons/event_election.dds"
+
+	group = je_group_global_international_situations
+
+	activation_description = {
+		always = yes
+	}
+
+	scripted_button = cwp_saar_statute_button
+
+	is_shown_when_inactive = {
+		always = yes
+	}
+
+	possible = {
+		NOT = { has_global_variable = cwp_saar_concluded }
+		has_global_variable = cwp_gq_frg_proclaimed
+		exists = c:FRA
+		exists = c:GER
+	}
+
+	should_be_involved = {
+		OR = {
+			c:FRA ?= this
+			c:GER ?= this
+		}
+	}
+
+	should_show_when_not_involved = {
+		capital ?= { is_in_geographic_region = geographic_region_europe }
+	}
+
+	immediate = {
+		c:FRA ?= {
+			add_modifier = { name = cwp_saar_economic_union }
+		}
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			# Once both governments agree, the Saar votes on the European statute
+			if = {
+				limit = {
+					NOT = { has_global_variable = cwp_saar_vote_held }
+					c:FRA ?= { has_variable = cwp_saar_agreed }
+					c:GER ?= { has_variable = cwp_saar_agreed }
+				}
+				set_global_variable = cwp_saar_vote_held
+				random_list = {
+					65 = {
+						modifier = {
+							if = {
+								limit = { has_global_variable = cwp_gq_frg_sovereign }
+								add = 10
+							}
+						}
+						set_global_variable = cwp_saar_rejected
+					}
+					35 = {
+						modifier = {
+							if = {
+								limit = { c:FRA ?= { "relations(c:GER)" >= 50 } }
+								add = 15
+							}
+						}
+						set_global_variable = cwp_saar_accepted
+					}
+				}
+			}
+		}
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = cwp_saar_status_agreed
+				trigger = {
+					OR = {
+						c:FRA ?= { has_variable = cwp_saar_agreed }
+						c:GER ?= { has_variable = cwp_saar_agreed }
+					}
+				}
+			}
+			triggered_desc = {
+				desc = cwp_saar_status_protectorate
+			}
+		}
+	}
+
+	# Historical: the Saar rejects the statute and joins the Federal Republic
+	outcome = {
+		header = cwp_saar_outcome_rejected
+		effect_header = cwp_gq_outcome_effect_header
+		conclusion_desc = cwp_saar_outcome_rejected_desc
+		color = "gold_positive"
+		flags = { historical }
+		trigger = {
+			custom_tooltip = {
+				text = cwp_saar_outcome_rejected_tt
+				has_global_variable = cwp_saar_rejected
+			}
+		}
+		effect = {
+			set_global_variable = cwp_saar_concluded
+			c:FRA ?= {
+				if = {
+					limit = { has_modifier = cwp_saar_economic_union }
+					remove_modifier = cwp_saar_economic_union
+				}
+			}
+			c:GER ?= {
+				add_modifier = {
+					name = cwp_saar_returned
+					days = long_modifier_time
+				}
+			}
+		}
+		effect_all_involved = {
+			trigger_event = { id = cwp_austria_saar.3 days = 1 popup = yes }
+		}
+	}
+
+	# The Saar accepts a European statute and stays apart
+	outcome = {
+		header = cwp_saar_outcome_accepted
+		effect_header = cwp_gq_outcome_effect_header
+		conclusion_desc = cwp_saar_outcome_accepted_desc
+		color = "blue_negative"
+		trigger = {
+			custom_tooltip = {
+				text = cwp_saar_outcome_accepted_tt
+				has_global_variable = cwp_saar_accepted
+			}
+		}
+		effect = {
+			set_global_variable = cwp_saar_concluded
+			c:GER ?= {
+				add_modifier = {
+					name = cwp_saar_lost
+					days = normal_modifier_time
+				}
+			}
+		}
+		effect_all_involved = {
+			trigger_event = { id = cwp_austria_saar.4 days = 1 popup = yes }
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			OR = {
+				NOT = { exists = c:FRA }
+				NOT = { exists = c:GER }
+			}
+		}
+		effect = {
+			set_global_variable = cwp_saar_concluded
+			c:FRA ?= {
+				if = {
+					limit = { has_modifier = cwp_saar_economic_union }
+					remove_modifier = cwp_saar_economic_union
+				}
+			}
+		}
+	}
+
+	weight = 1000
+
+	should_be_pinned_by_default_involved = yes
+	should_be_pinned_by_default_uninvolved_or_context = no
+
+	can_revolution_inherit = yes
+}
