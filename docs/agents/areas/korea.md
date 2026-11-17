@@ -36,6 +36,14 @@ No step has a date. The Joint Commission fails because US-Soviet relations start
 - Occupation-era country names for `STK`/`NRK` are start-state work for the history thread; not in this PR.
 - The neutral ending merges the two Koreas into the more populous tag until #783's united Korea formable lands.
 
+## Tuning after the first staging run (2026-11-17)
+
+The first CWP2 staging save had the war start on 1947-08-15. The gates held (both Koreas were sovereign, and the Soviets had given the green light), but every step came within months of the one before. Historically: UN referral Sept 1947, ROK Aug 1948, DPRK Sept 1948, Soviet withdrawal Dec 1948, US withdrawal Jun 1949, invasion Jun 1950. The fix uses processes, not dates:
+- Each occupier must first hold elections in its zone (`cwp_korea_*_elections_button`, a 270-day `cwp_korea_state_building` modifier) before it can proclaim the state.
+- A proclaimed state gets `cwp_korea_new_army` for 365 days, and its patron cannot withdraw while it lasts.
+- Lower AI weights for proclaiming, withdrawing and invading. The Soviet green light is multiplied by 0.1 while the PRC is still fighting the ROC, and goes up once the PRC has pledged volunteers.
+- The US is less likely to stay out without a UN mandate (stay-out weight 20, against 60 for going in alone).
+
 ## Files
 
 `common/journal_entries/cwp_korea_divided_peninsula.txt`, `common/scripted_progress_bars/cwp_korea_bars.txt`, `common/scripted_buttons/cwp_korea_buttons.txt`, `common/scripted_effects/cwp_korea_effects.txt`, `common/scripted_triggers/cwp_korea_triggers.txt`, `common/static_modifiers/cwp_korea_modifiers.txt`, `common/diplomatic_plays/cwp_korea_war_play.txt`, `common/named_colors/cwp_korea_colors.txt`, `common/on_actions/cwp_korea_on_actions.txt`, `events/cwp_korea_events.txt`, `localization/english/cwp/journal/cwp_korea_l_english.yml`.

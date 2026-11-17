@@ -104,6 +104,73 @@ cwp_korea_peoples_committees_button = {
 
 #################### Two states ####################
 
+cwp_korea_southern_elections_button = {
+	name = "cwp_korea_southern_elections_button"
+	desc = "cwp_korea_southern_elections_button_desc"
+
+	visible = {
+		c:USA ?= this
+		has_global_variable = cwp_korea_partition
+		c:STK ?= {
+			is_subject_of = root
+			NOT = { has_variable = cwp_korea_elections_held }
+		}
+	}
+
+	possible = {
+		NOT = { has_global_variable = cwp_korea_war }
+	}
+
+	effect = {
+		c:STK = {
+			set_variable = cwp_korea_elections_held
+			add_modifier = { name = cwp_korea_state_building days = 270 }
+		}
+	}
+
+	ai_chance = {
+		value = 3
+		if = {
+			limit = { has_global_variable = cwp_korea_un_referral }
+			add = 10
+		}
+	}
+}
+
+cwp_korea_northern_elections_button = {
+	name = "cwp_korea_northern_elections_button"
+	desc = "cwp_korea_northern_elections_button_desc"
+
+	visible = {
+		c:RUS ?= this
+		has_global_variable = cwp_korea_partition
+		c:NRK ?= {
+			is_subject_of = root
+			NOT = { has_variable = cwp_korea_elections_held }
+		}
+	}
+
+	possible = {
+		NOT = { has_global_variable = cwp_korea_war }
+	}
+
+	effect = {
+		c:NRK = {
+			set_variable = cwp_korea_elections_held
+			add_modifier = { name = cwp_korea_state_building days = 270 }
+		}
+	}
+
+	ai_chance = {
+		value = 1
+		# Pyongyang held its elections in answer to the southern ones
+		if = {
+			limit = { c:STK ?= { has_variable = cwp_korea_elections_held } }
+			add = 15
+		}
+	}
+}
+
 cwp_korea_proclaim_rok_button = {
 	name = "cwp_korea_proclaim_rok_button"
 	desc = "cwp_korea_proclaim_rok_button_desc"
@@ -116,11 +183,19 @@ cwp_korea_proclaim_rok_button = {
 
 	possible = {
 		NOT = { has_global_variable = cwp_korea_war }
+		custom_tooltip = {
+			text = cwp_korea_elections_done_tt
+			c:STK ?= {
+				has_variable = cwp_korea_elections_held
+				NOT = { has_modifier = cwp_korea_state_building }
+			}
+		}
 	}
 
 	effect = {
 		c:STK = {
 			make_independent = yes
+			add_modifier = { name = cwp_korea_new_army days = 365 }
 			if = {
 				limit = { has_global_variable = cwp_korea_un_referral }
 				add_modifier = { name = cwp_korea_un_recognition days = long_modifier_time }
@@ -133,7 +208,7 @@ cwp_korea_proclaim_rok_button = {
 	}
 
 	ai_chance = {
-		value = 50
+		value = 20
 	}
 }
 
@@ -149,11 +224,19 @@ cwp_korea_proclaim_dprk_button = {
 
 	possible = {
 		NOT = { has_global_variable = cwp_korea_war }
+		custom_tooltip = {
+			text = cwp_korea_elections_done_tt
+			c:NRK ?= {
+				has_variable = cwp_korea_elections_held
+				NOT = { has_modifier = cwp_korea_state_building }
+			}
+		}
 	}
 
 	effect = {
 		c:NRK = {
 			make_independent = yes
+			add_modifier = { name = cwp_korea_new_army days = 365 }
 		}
 		if = {
 			limit = { NOT = { has_global_variable = cwp_korea_soviet_withdrawn } }
@@ -166,7 +249,7 @@ cwp_korea_proclaim_dprk_button = {
 		# The Soviets proclaimed their state in answer to the southern one
 		if = {
 			limit = { c:STK ?= { is_subject = no } }
-			add = 50
+			add = 20
 		}
 	}
 }
@@ -183,6 +266,10 @@ cwp_korea_us_withdrawal_button = {
 	possible = {
 		c:STK ?= { is_subject = no }
 		NOT = { has_global_variable = cwp_korea_war }
+		custom_tooltip = {
+			text = cwp_korea_army_handed_over_tt
+			c:STK ?= { NOT = { has_modifier = cwp_korea_new_army } }
+		}
 	}
 
 	effect = {
@@ -192,11 +279,11 @@ cwp_korea_us_withdrawal_button = {
 	}
 
 	ai_chance = {
-		value = 10
+		value = 3
 		# Washington saw Korea as outside its defence perimeter and needed the divisions elsewhere
 		if = {
 			limit = { has_global_variable = cwp_korea_soviet_withdrawn }
-			add = 15
+			add = 7
 		}
 		if = {
 			limit = {
@@ -221,6 +308,10 @@ cwp_korea_soviet_withdrawal_button = {
 	possible = {
 		c:NRK ?= { is_subject = no }
 		NOT = { has_global_variable = cwp_korea_war }
+		custom_tooltip = {
+			text = cwp_korea_army_handed_over_tt
+			c:NRK ?= { NOT = { has_modifier = cwp_korea_new_army } }
+		}
 	}
 
 	effect = {
@@ -230,11 +321,11 @@ cwp_korea_soviet_withdrawal_button = {
 	}
 
 	ai_chance = {
-		value = 15
+		value = 4
 		# Withdrawing first put the burden on the Americans to follow
 		if = {
 			limit = { NOT = { has_global_variable = cwp_korea_us_withdrawn } }
-			add = 15
+			add = 4
 		}
 	}
 }
@@ -483,14 +574,14 @@ cwp_korea_greenlight_button = {
 	}
 
 	ai_chance = {
-		value = 5
+		value = 1
 		if = {
 			limit = {
 				scope:journal_entry ?= {
 					"scripted_bar_progress(cwp_korea_balance_bar)" >= 35
 				}
 			}
-			add = 15
+			add = 3
 		}
 		# A communist China on the mainland made the gamble look safer
 		if = {
@@ -498,7 +589,20 @@ cwp_korea_greenlight_button = {
 				exists = c:PRC
 				c:PRC = { NOT = { has_war_with = c:ROC } }
 			}
-			add = 15
+			add = 5
+		}
+		# Stalin wanted Mao's backing before he agreed
+		if = {
+			limit = { has_global_variable = cwp_korea_prc_pledge }
+			add = 5
+		}
+		# While the Chinese Civil War is undecided, Moscow keeps Pyongyang on a leash
+		if = {
+			limit = {
+				exists = c:PRC
+				c:PRC = { has_war_with = c:ROC }
+			}
+			multiply = 0.1
 		}
 		if = {
 			limit = {
@@ -553,7 +657,7 @@ cwp_korea_invasion_button = {
 	}
 
 	ai_chance = {
-		value = 30
+		value = 10
 	}
 }
 
