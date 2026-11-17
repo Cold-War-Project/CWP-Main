@@ -6,6 +6,8 @@ paths:
 
 # Events and on_actions
 
+
+**Core design rule (AGENTS.md):** no event fires *because* a date arrived. Events react to simulation state (bars, laws, interest groups, characters, wars, economy); a date may only be one gate among those conditions.
 ## Event files
 
 - One `namespace = name` line at the top; every event id is `name.<number>`. A file may declare several namespaces. Ids must be unique across the whole game, mod included.

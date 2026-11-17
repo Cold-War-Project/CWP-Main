@@ -158,6 +158,7 @@ The guides were written for a small add-on mod on top of vanilla, without sight 
 | Campaign 1836 to 1936, Victorian period voice | 1946 to 2046, eras `era_1`..`era_12` from the mod's `common/technology`. Date floors and ceilings, era-marker technologies and the voice of the text follow the Cold War decade concerned. |
 | Example prefix `gs_`, text in `localization/english/gs_l_english.yml` | Prefix `cwp_` on every new key and file; text under `localization/english/cwp/<area>/`. |
 | Vanilla value ranges set the size of rewards and costs | Start from them, then compare with a similar modifier already in the mod where one exists. |
+| Historical events can be scripted to fire on their date | Never here. Outcomes come from simulation mechanics; journal entries steer but do not force; dates only gate what becomes possible. See "Core design rule" in `AGENTS.md`. |
 | Never invent an attributed quotation or a historical fact | Applies with more force here: the mod's period has living people and well-documented events. Mark certainty, and tell the user which facts were not checked against a source. |
 | Example commands with `F:/Victoria 3 Modding/...` paths | The guides now live in the mod root. |
 

@@ -17,6 +17,8 @@ paths:
 
 # Scripted content: journal entries, buttons, decisions, objectives
 
+
+**Core design rule (AGENTS.md):** a journal entry steers, it never forces. No `game_date`-triggered outcomes: completion, failure and their effects must follow from bars, politics, economy, characters or other simulation state. Dates may only gate when an entry becomes possible.
 ## State of this mod
 
 - Vanilla has hundreds of journal entries; the mod has **no journal entries of its own yet** and keeps only a handful of vanilla ones alive. The rest are neutralised: `zz_vanilla_journal_entries.txt` / `zz_unwanted_vanilla_journal_entries.txt` hold keyword stubs, and most vanilla JE files are same-name overwrites, usually with the `# Cold War Project: same-name overwrite` header (user's choice over a `replace_paths` entry, to keep per-file diffs against future patches).

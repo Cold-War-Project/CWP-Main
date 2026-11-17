@@ -10,6 +10,10 @@ Victoria 3 total conversion set 1946 to 2046, targeting game **1.15.1**. Most de
 - **You can run the game.** On Forge, test every change yourself with `cwp-vic` (shared lock, one game at a time). See [docs/agents/forge-testing.md](docs/agents/forge-testing.md). A change is done when a launch shows no new error.log lines over the baseline.
 - **Python on Forge:** the system only ships `python3`; `~/.local/bin/python` is a link to it, so the `python ...` commands in `CLAUDE.md` and the guides work as written. If `python` is missing in your shell, use `python3`.
 
+## Core design rule: the simulation decides, not the calendar
+
+**No "it is date X, so Y happens."** Every outcome comes from the simulation: progress bars, politics, economy, interest groups, characters, agitators, movements, wars, diplomacy. Journal entries may steer toward a specific historical outcome (make it more likely, reward pursuing it), but they **never force it**. Dates may gate when something becomes *possible* (an ideology from 1960, a technology era), never decide *what happens* (Jack, 2026-11-16). When porting content that forces an outcome by date, flag it in your PR and rework it into a mechanic, or ask the advisor.
+
 ## What belongs in the mod
 
 The setting is **1946 to 2046**. Countries, formables and other content that did not exist in that period, and had no nationalist or revival movement in it (even a minor one), are dropped. **Rule of cool overrides this:** if playing as it would be fun, it can stay (Jack, 2026-11-16).
