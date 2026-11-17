@@ -16,6 +16,7 @@ Design rule: a flag follows the simulation (laws, government type, subject statu
 | `common/coat_of_arms/coat_of_arms/cwp_1946_countries.txt` | Start-date flags (`cwp_<TAG>_1946`) and a few successors. |
 | `common/coat_of_arms/coat_of_arms/cwp_regime_variants.txt` | Regime-change flags (`cwp_<TAG>_<variant>`) and the templates of the generic Islamic flag. |
 | `common/coat_of_arms/coat_of_arms/cwp_more_countries.txt` | Flags for tags that had none, and flags adopted at independence by 1946 colonies. Each entry names the real flag and says where it is simplified. |
+| `common/coat_of_arms/coat_of_arms/cwp_historical_flags.txt` | Historical flag changes after 1946 for countries on the map (UAR, Libya 1969, Yemen 1962, Sudan 1970, Iran 1980, Zaire, Rhodesia, Spain 1977). |
 | `common/coat_of_arms/template_lists/coa_templates.txt` | Same-name overwrite (no BOM on purpose); the mod added the `cwp_islamic` random list. |
 | `common/scripted_triggers/cwp_coa_triggers.txt` | `cwp_coa_<regime>_trigger` (country scope) and `cwp_coa_def_<regime>_flag_trigger` (flag scope) for the CWP government types. |
 
@@ -38,6 +39,7 @@ Each list in the generated file is the tag's CWP definitions from the table, the
 | 901 | Generic Islamic-theocracy flag (unless the list has a theocracy flag) |
 | 901-989 | Vanilla variants: 900 + vanilla priority (republic, monarchy, dictatorship, theocracy, subject ensigns) |
 | 990 | Flag after leaving subject status (occupied Germany, dominions, colonies) |
+| 995 | Independence flag that also needs territory (Tanzania: Tanganyika holding Zanzibar) |
 | 1000 | `DEFAULT`: random communist flag, not for a people's democracy |
 | 1100 | The tag's own communist flag |
 | 1500 | Vanilla communist and fascist flags; start flags of communist countries while they stay communist |
@@ -70,13 +72,64 @@ Then `python3 .claude/tools/check_mod.py common/flag_definitions tools/flags/cwp
 
 ## Not done yet
 
-- **In-game check.** Nothing here has been launched. Watch error.log for lines naming `zzz_cwp_1946_flag_definitions`, `cwp_more_countries`, `cwp_regime_variants`, `coa_templates`, `cwp_islamic` or `cwp_coa_`.
+- **In-game check.** Nothing here has been launched. Watch error.log for lines naming `zzz_cwp_1946_flag_definitions`, `cwp_more_countries`, `cwp_regime_variants`, `cwp_historical_flags`, `coa_templates`, `cwp_islamic` or `cwp_coa_`.
 - **Contact sheet.** No screenshot of the flags yet. The approximated emblems and the hoist triangles (`ce_rhombus`) need a look.
-- **Independence flags** exist for 16 colonies (Ghana, Malawi, Botswana, The Gambia, Singapore, Malaya, Kuwait, South Yemen for Aden, Somalia, Somaliland, Djibouti, Madagascar, Rwanda, Guinea-Bissau, West Papua, Greenland). About 30 colonies and protectorates still keep their colonial flag after independence (Zambia, Zimbabwe, Kenya, Tanzania, Uganda, Lesotho, Eswatini, Eritrea, Namibia, Papua New Guinea, the Portuguese colonies, Hong Kong, Qatar ...).
+- **Independence flags** exist for 36 colonies and protectorates (990, `coa_def_independent_trigger`). Still without one: Namibia and Papua New Guinea (diagonal designs), Cyprus (map emblem), Qatar and Bahrain (their 1946 flag is already the national one), Hong Kong and Macau, Palestine, and the fictional federations EQA and WAU.
 - **USA**: the star count follows incorporated states minus DC (48 in 1946). Vanilla's own counter excluded DC and West Virginia through a variable the mod no longer sets.
+
+## Historical changes after 1946
+
+Each is a 1700 definition in the table, gated on simulation state:
+
+| Tag | Flag | Gate |
+|---|---|---|
+| EGY | United Arab Republic | republic law and owns `STATE_SYRIA` |
+| LBY | Libyan Arab Republic (1969) | republic law (the kingdom flag stays while a monarchy) |
+| YEM | Yemen Arab Republic (1962) | republic law |
+| SDN | 1970 pan-Arab flag | military rule or a republican dictatorship |
+| PER | Islamic Republic (1980) | `gov_cwp_islamic_republic` |
+| CNG | Zaire (1971) | independent and a republican dictatorship |
+| MTB | Rhodesia (1968) | independent and minority rule (`gov_cwp_minority_rule_*`) |
+| SPA | democratic Spain (1977) | monarchy law and universal suffrage |
+| TNZ | Tanzania (995) | independent and owns `STATE_ZANZIBAR` |
+| VNM | State of Vietnam / Republic of Vietnam (990) | independent |
+
+Defunct states that have their own tag (BIA Biafra, KTA Katanga, LEV, LNG ...) already have pattern flags in `cwp_releasable_countries.txt`.
+
+## Textured-emblem pipeline: blocked
+
+The plan was Wikimedia Commons public-domain SVG -> 768x512 DDS textured emblems in `gfx/coat_of_arms/textured_emblems/cwp_*.dds`, with a manifest `tools/flags/sources.tsv` (file, source URL, licence; public domain or CC0 only). On Forge (2026-11-17) there is no SVG rasteriser: no `rsvg-convert`, Inkscape, ImageMagick, `cairosvg` or `wand` (only PIL, which can write DDS but cannot read SVG). upload.wikimedia.org is reachable. Nothing was converted and no DDS was added; the pipeline needs a rasteriser installed (Jack's call), after which it is: download SVG, record URL and licence, render to 768x512 PNG, save DDS with PIL, reference it as `textured_emblem = { texture = "cwp_<key>.dds" }`.
+
+## Emblems that need hand-drawn art (UI/art)
+
+These flags are drawn with a vanilla stand-in. A textured emblem (or a new coloured emblem) would make them right:
+
+| Flag | Missing emblem | Stand-in |
+|---|---|---|
+| `cwp_HUN_peoples_republic` | Rakosi coat of arms | hammer, sickle and wreath |
+| `cwp_ROM_peoples_republic` | Romanian People's Republic emblem | hammer, sickle and wreath |
+| `cwp_BUL_peoples_republic` | Bulgarian lion emblem | hammer, sickle and wreath |
+| `cwp_AFH_democratic_republic` | Khalq emblem (1978) | hammer, sickle and wreath |
+| `cwp_BLZ` | Belize coat of arms | laurel wreath |
+| `cwp_MWI` | Malawi half sun with rays | vanilla sun |
+| `cwp_IGH` | Ingush solar sign | vanilla sun |
+| `cwp_KCH` | mountain and rising sun | vanilla sun |
+| `cwp_UGA` | grey crowned crane | none (empty disc) |
+| `cwp_KEN` | Maasai shield and spears | none |
+| `cwp_MOZ` | rifle, hoe and book | none |
+| `cwp_ZWE` | Zimbabwe Bird | none |
+| `cwp_LSO` | mokorotlo hat | none |
+| `cwp_SWZ` | Nguni shield and spears | none |
+| `cwp_RHO` | Rhodesian coat of arms | green shield with a red lion |
+| `cwp_ZAR` | arm holding the torch | torch |
+| `cwp_PER_islamic_republic` | Allah emblem, takbir along the bands | takbir |
+| `cwp_SPA_democratic` | Spanish royal arms | crown |
+| `cwp_MYS` | 14 stripes, 14-point federal star | 13 stripes, 5-point star |
+| `cwp_KWT` | hoist trapezoid | triangle |
+| `cwp_TZA` | bend orientation and colours unverified | vanilla bend textures |
 
 ## Later plan
 
-1. **Historical flag changes 1946-2000 gated by simulation state**: each one a 1700 (or 990) definition whose trigger reads what changed in the simulation, never the year. Examples: Iran's 1980 flag (Islamic republic), Libya's green flag (JMH) and the 1969 tricolour, Egypt's Liberation flag (republic plus military rule), South Africa's 1994 flag (multicultural citizenship), the GDR's emblem (1959), Burma's socialist flag. Where JE content sets variables for the event (e.g. the Chinese Civil War), the flag may read them.
-2. **Defunct states** whose flags vanilla cannot draw (UAR, Biafra, Rhodesia, South Vietnam, Katanga, the Federation of South Arabia ...): a pipeline from public-domain SVGs on Wikimedia Commons to 768x512 DDS textured emblems, one file per flag with its source URL and licence recorded next to it. This needs the UI/art thread (gfx/coat_of_arms) and Jack's sign-off on the source rule.
+1. **More historical changes** in the same pattern: Iraq (1959, 1963), Burma's socialist flag (1974), the Federation of Arab Republics (1972), Ghana 1964, Malaysia 1963 (Malaya plus Borneo states). Where JE content sets variables for the event (e.g. the Chinese Civil War), the flag may read them.
+2. **Textured emblems** for the table above and for defunct states whose flags need more than patterns: the pipeline under "Textured-emblem pipeline: blocked", once a rasteriser is available.
 3. **Contact sheet**: a test map or console run that shows every CWP flag and each regime variant in one screenshot, kept with the branch that changes them.
