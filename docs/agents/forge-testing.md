@@ -71,6 +71,26 @@ For anything that changes gameplay over time (economy, politics, AI, events):
 5. Every few minutes: `vic-shot` to read the in-game date and spot popups, `cwp-vic errors | wc -l` to watch log growth.
 6. Record: start and end in-game date, wall-clock minutes, error.log lines at start and end, crashes, anything visibly wrong (countries collapsing, bankrupt great powers, empty markets).
 
+## Testing several PRs together
+
+Only one game fits on the GPU (a CWP game uses about 5 GB RAM and 6+ GB VRAM), so areas are tested together as **one combined build**, not parallel games.
+
+```bash
+cwp-integrate build                 # ~/forge/worktrees/integration = origin/cwp_rebuild + every open PR, in PR order
+cwp-integrate build 777 779 781     # or just these PRs
+cwp-integrate report                # per-PR merge result (merged / CONFLICT in <files>, skipped)
+export CWP_AGENT=integration
+cwp-vic lock "integration: <why>" && cwp-vic link ~/forge/worktrees/integration && cwp-vic launch
+# ... main menu, then a new game + observer run (see above) ...
+cwp-integrate attribute             # errors grouped by the merged PR that touched the file each line names
+cwp-vic unlock
+```
+
+- The build is a local snapshot on branch `integration/local`. Never push it or open a PR from it; rebuild after PRs change.
+- A PR that conflicts with the ones before it is skipped and reported, so one bad merge does not block the rest. Fix the conflict in the PR's own branch.
+- Attribution is by file: a line naming a file that one PR touched goes to that PR, a line naming a file several PRs touched goes to all of them, and lines naming no file (engine asserts, crashes) are listed separately. To confirm a suspect, rebuild without it (`cwp-integrate build <the other PRs>`) and compare.
+- If the combined build crashes, bisect: build with half the PRs, then half again.
+
 ## Performance
 
 What to report, and how:

@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+# cwp-integrate: build one combined test mod from several open PRs, so they can be tested together.
+#
+#   cwp-integrate build [PR# ...]     fresh ~/forge/worktrees/integration off origin/cwp_rebuild, then merge
+#                                     each PR's branch in order (default: every open PR into cwp_rebuild).
+#                                     A PR that conflicts is skipped (merge aborted) and reported.
+#   cwp-integrate attribute [LOGFILE]  group error lines by the merged PR that touched the file they name
+#                                     (default: the current session via `cwp-vic errors`)
+#   cwp-integrate report               print the last build's per-PR table
+#
+# Then test it like any worktree:  cwp-vic lock "..." && cwp-vic link ~/forge/worktrees/integration && cwp-vic launch
+# The integration branch is local only: never push it, never open a PR from it.
+set -uo pipefail
+REPO="${CWP_REPO:-$HOME/forge/CWP-Main}"
+WT="${CWP_INTEGRATION:-$HOME/forge/worktrees/integration}"
+BRANCH="integration/local"
+STATE="$WT/.integration"            # per-build state (untracked)
+die() { echo "cwp-integrate: $*" >&2; exit 1; }
+
+cmd_build() {
+  git -C "$REPO" fetch -q origin || die "fetch failed"
+  local prs=("$@")
+  if (( ${#prs[@]} == 0 )); then
+    mapfile -t prs < <(gh -R Cold-War-Project/CWP-Main pr list --base cwp_rebuild --state open --limit 100 \
+      --json number -q '.[].number' | sort -n)
+  fi
+  (( ${#prs[@]} )) || die "no PRs to merge"
+  if [[ -d "$WT" ]]; then
+    [[ -n "$(pgrep -f '\./victoria3' 2>/dev/null)" ]] && grep -q "$WT" "$HOME/.local/share/Paradox Interactive/Victoria 3/content_load.json" 2>/dev/null \
+      && die "the game is running on the integration worktree; stop it first"
+    git -C "$WT" merge --abort 2>/dev/null
+    git -C "$WT" checkout -q -B "$BRANCH" origin/cwp_rebuild || die "reset failed"
+    git -C "$WT" clean -qfdx
+  else
+    git -C "$REPO" worktree add -q -B "$BRANCH" "$WT" origin/cwp_rebuild || die "worktree add failed"
+  fi
+  mkdir -p "$STATE"; : > "$STATE/prs.tsv"
+  local base; base=$(git -C "$WT" rev-parse --short HEAD)
+  echo "integration build on cwp_rebuild @ $base"
+  for n in "${prs[@]}"; do
+    local head title
+    read -r head title < <(gh -R Cold-War-Project/CWP-Main pr view "$n" --json headRefName,title -q '"\(.headRefName) \(.title)"')
+    [[ -z "$head" ]] && { printf '%s\t-\tmissing\t\t\n' "$n" >> "$STATE/prs.tsv"; continue; }
+    git -C "$REPO" fetch -q origin "$head" 2>/dev/null
+    local files; files=$(git -C "$WT" diff --name-only "origin/cwp_rebuild...origin/$head" | tr '\n' ' ')
+    if git -C "$WT" merge -q --no-ff --no-edit -m "integration: #$n $head" "origin/$head" >/dev/null 2>&1; then
+      printf '%s\t%s\tmerged\t%s\t%s\n' "$n" "$head" "$title" "$files" >> "$STATE/prs.tsv"
+      echo "  #$n $head: merged"
+    else
+      local conflicts; conflicts=$(git -C "$WT" diff --name-only --diff-filter=U | tr '\n' ' ')
+      git -C "$WT" merge --abort
+      printf '%s\t%s\tCONFLICT: %s\t%s\t%s\n' "$n" "$head" "$conflicts" "$title" "$files" >> "$STATE/prs.tsv"
+      echo "  #$n $head: CONFLICT in $conflicts(skipped)"
+    fi
+  done
+  git -C "$WT" rev-parse --short HEAD > "$STATE/head"
+  echo "built $WT @ $(cat "$STATE/head"). Next: cwp-vic lock/link $WT/launch, then cwp-integrate attribute."
+}
+
+cmd_report() {
+  [[ -f "$STATE/prs.tsv" ]] || die "no build yet"
+  echo "| PR | branch | merge |"; echo "|---|---|---|"
+  awk -F'\t' '{printf "| #%s | `%s` | %s |\n", $1, $2, $3}' "$STATE/prs.tsv"
+}
+
+cmd_attribute() {
+  [[ -f "$STATE/prs.tsv" ]] || die "no build yet"
+  local log="${1:-}"
+  if [[ -z "$log" ]]; then log=$(mktemp); cwp-vic errors > "$log" 2>/dev/null; fi
+  python3 - "$STATE/prs.tsv" "$log" <<'PY'
+import re, sys, collections
+prs = [l.rstrip("\n").split("\t") for l in open(sys.argv[1]) if l.strip()]
+owner = collections.defaultdict(list)
+for n, head, status, title, files in prs:
+    if status == "merged":
+        for f in files.split():
+            owner[f].append("#" + n)
+pat = re.compile(r"((?:common|events|gfx|gui|localization|map_data|tools)/[\w ./\-']+?\.(?:txt|gui|yml|csv|asset))")
+by = collections.defaultdict(list)
+for line in open(sys.argv[2], errors="replace"):
+    line = line.rstrip()
+    if not line.strip():
+        continue
+    paths = pat.findall(line)
+    who = sorted({o for p in paths for o in owner.get(p, [])})
+    key = ", ".join(who) if who else ("cwp_rebuild or vanilla (file not touched by a merged PR)" if paths else "no file named")
+    by[key].append(line)
+for key in sorted(by, key=lambda k: -len(by[k])):
+    lines = by[key]
+    print(f"== {key}: {len(lines)} lines")
+    for msg, c in collections.Counter(re.sub(r"^\[[0-9:]+\]", "", l)[:180] for l in lines).most_common(5):
+        print(f"   {c:5d}  {msg}")
+PY
+}
+
+case "${1:-}" in
+  build)     shift; cmd_build "$@" ;;
+  report)    cmd_report ;;
+  attribute) shift; cmd_attribute "$@" ;;
+  *)         sed -n '2,14p' "$0" ;;
+esac
