@@ -18,6 +18,8 @@ The two guide folders were not changed.
 | Workshop upload: "leave the agent folders out if a clean package matters" | They are `export-ignore` in `.gitattributes`; `.claude/tools/forge/cwp-package` builds the package with `git archive`. | Makes the clean package the default, not a manual step. |
 | `localization/english/CWP/` and `cwp/` both in use | Everything in `cwp/` (separate PR `fix/loc-folder-case`). | Folders that differ only in case merge into one on Windows and stay split on Linux. |
 
+| Every change reaches `CWP2` through a reviewed GitHub PR | Work stays local on Forge; tested commits are landed on `CWP2` by `cwp-integrate land`; no new PRs, PR comments or edits. | Other devs get an email per PR event (Jack, 2026-11-17). |
+
 New, not replacing anything: `AGENTS.md`, `docs/agents/`, `.claude/tools/forge/cwp-vic`, `.claude/tools/forge/cwp-package`. `CLAUDE.md` now imports `AGENTS.md`.
 
 ## Factual corrections
