@@ -2885,6 +2885,488 @@ ai_strategy_default = {
 	}
 
 	# Trigger for whether this strategy can be randomly allocated to a country
+	# ---- Victoria 3 1.15 keys missing from the 1.13-era CWP copy (taken from vanilla 1.15, Victorian journal-entry,
+	# variable and tag-specific branches removed). Navy keys live in the navy section above. ----
+	economic_vs_government_spending_balance = {
+		value = 0.0
+	}
+
+	interest_group_government_weight = {
+		value = 0
+	}
+
+	max_active_stances = {
+		value = 1
+
+		add = {
+			value = country_rank
+			divide = 2
+		}
+
+		add = {
+			value = navy_size
+			divide = 25
+		}
+
+		if = {
+			limit = {
+				has_strategy = ai_strategy_armed_isolationism
+			}
+			multiply = 0.5
+		}
+
+		min = 1
+		max = 10
+	}
+
+	negotiation_chance = {
+		value = 0
+
+		if = {
+			limit = {
+				scope:interest_group ?= {
+					amenability_level != 4
+				}
+			}
+			value = scope:amenability
+
+			add = scope:stall_chance
+
+			if = {
+				limit = {
+					ai_has_reasons_to_not_oppose_law = yes
+				}
+				multiply = 2
+			}
+
+			subtract = {
+				value = scope:advance_chance
+				multiply = 2
+			}
+		}
+
+		max = 1
+	}
+
+	strategic_region_scores = {
+		value = 0
+
+		# Base Value
+		add = {
+			value = 100
+
+			add = {
+				scope:region = {
+					add = gdp
+				}
+				divide = 40000
+				max = 50
+			}
+
+			every_rival_country = {
+				limit = {
+					has_strategic_region_interest_tier = {
+						strategic_region = scope:region
+						value >= 1
+					}
+				}
+				add = 25
+			}
+
+			scope:region = {
+				every_scope_state = {
+					limit = {
+						is_homeland_of_country_cultures = root
+					}
+					add = 10
+				}
+			}
+		}
+
+		# We care about the things happening at home
+		if = {
+			limit = {
+				any_scope_state = {
+					region = scope:region
+				}
+			}
+			add = 50
+
+			if = {
+				limit = {
+					scope:region = {
+						any_scope_state = {
+							owner = root
+							is_incorporated = yes
+						}
+					}
+				}
+				add = 50
+			}
+
+			if = {
+				limit = {
+					scope:region = capital.region
+				}
+				add = 100
+			}
+		}
+
+		# Certain Great Powers care about Egyptian-Ottoman conflict in the early game
+
+		# Britain is participating in the Caucasian War in a certain capacity early game.
+
+		# Annexation of Hawaii
+
+		# Sakoku
+
+		# Scramble for Africa
+
+		# Great Powers always care about Europe somehwat
+
+		# Europeans generally dont have any business in the Americas
+		if = {
+			limit = {
+				scope:region = sr:region_southern_europe
+			}
+			if = {
+				limit = {
+					is_in_geographic_region = geographic_region_europe
+					country_rank >= rank_value:great_power
+				}
+				add = 100
+			}
+		}
+		if = {
+			limit = {
+				scope:region = sr:region_northern_europe
+			}
+			if = { # Prussia should have an interest in Scandinavia
+				limit = {
+					wants_to_solve_schleswig_holstein = yes
+				}
+				add = 250
+			}
+		}
+
+		# Europeans in China
+
+		# Monroe Doctrine
+
+		# Conquest of Algeria
+
+		# Ensure we maintain interests in colonies
+		if = {
+			limit = {
+				scope:region = {
+					any_scope_state = {
+						is_under_colonization = yes
+						owner = root
+					}
+				}
+			}
+			add = 1000
+		}
+	}
+
+	strategic_region_stance_type_scores = {
+		stance_conquer_region = {
+			value = 0
+
+			if = {
+				limit = {
+					country_rank <= rank_value:minor_power
+					scope:target_region != capital.region
+				}
+				multiply = {
+					desc = "AI_REGION_STANCE_SMALL_COUNTRY"
+					value = 0
+				}
+			}
+		}
+
+		stance_protect_region = {
+			value = 0
+
+			if = {
+				limit = {
+					scope:target_region = {
+						any_scope_country = {
+							NOT = {
+								this = root
+							}
+						}
+					}
+				}
+				add = {
+					desc = "AI_REGION_STANCE_BASE_VALUE"
+					value = 100
+				}
+
+				if = {
+					limit = {
+						scope:target_region = {
+							this = root.capital.region
+						}
+					}
+					add = {
+						desc = "AI_REGION_STANCE_CAPITAL_REGION"
+						value = 100
+					}
+				}
+			}
+
+			if = {
+				limit = {
+					country_rank <= rank_value:minor_power
+					scope:target_region != capital.region
+				}
+				multiply = {
+					desc = "AI_REGION_STANCE_SMALL_COUNTRY"
+					value = 0
+				}
+			}
+		}
+
+		stance_colonize_region = {
+			value = 0
+
+			if = {
+				limit = {
+					country_rank <= rank_value:minor_power
+					scope:target_region != capital.region
+				}
+				multiply = {
+					desc = "AI_REGION_STANCE_SMALL_COUNTRY"
+					value = 0
+				}
+			}
+		}
+
+		stance_none = {
+			value = 0
+
+			add = {
+				desc = "AI_REGION_STANCE_BASE_VALUE"
+				value = 100
+				subtract = scope:region_score
+				min = 1
+			}
+		}
+	}
+
+	strait_scores = {
+		status_scores = {
+			open = {
+				value = 1 # Options scoring exactly 0 are skipped, so keep opening up available
+			}
+
+			no_military = {
+				value = 10
+
+				subtract = { # Fallout with the countries this would hurt
+					value = {
+						scope:strait = {
+							add = "military_fallout_for(root)"
+						}
+					}
+					multiply = ai_strait_fallout_weight
+				}
+				min = 0
+			}
+
+			closed = {
+				value = 0
+
+				if = { # Close canals to enemy trade
+					limit = {
+						scope:strait = {
+							OR = {
+								type = strait_type:canal_panama
+								type = strait_type:canal_suez
+							}
+						}
+					}
+
+					add = 100
+				}
+
+				subtract = { # Fallout with the countries this would hurt
+					value = {
+						scope:strait = {
+							add = "fallout_for(root)"
+						}
+					}
+					multiply = ai_strait_fallout_weight
+				}
+				min = 0
+			}
+		}
+
+		permissions_scores = {
+			all = {
+				value = 0
+			}
+
+			no_enemies = {
+				value = 10
+			}
+
+			only_allies = {
+				value = 0
+
+				subtract = { # Fallout with the non-allies this would shut out
+					value = {
+						scope:strait = {
+							add = "only_allies_fallout_for(root)"
+						}
+					}
+					multiply = ai_strait_fallout_weight
+				}
+				min = 0
+
+				if = { # Don't close off gibraltar
+					limit = {
+						scope:strait = {
+							type = strait_type:strait_gibraltar
+						}
+					}
+
+					multiply = 0
+				}
+			}
+
+			only_controller = {
+				value = 0
+			}
+		}
+
+		toll_rate_scores = {
+			no_tolls = {
+				value = 1 # Options scoring exactly 0 are skipped, so keep dropping tolls available
+			}
+
+			low_tolls = {
+				value = 10
+
+				if = {
+					limit = {
+						scope:is_sole_controller = yes
+						OR = {
+							has_strategy = ai_strategy_maintain_power_balance
+							has_strategy = ai_strategy_anti_imperialism
+						}
+					}
+
+					add = 20
+				}
+
+				add = { # The income the tolls would bring
+					value = scope:toll_income_per_percent
+					multiply = define:NEconomy|TOLL_RATE_LOW_TOLLS
+					multiply = 100 # The toll rate defines are fractions, the income is per percent
+					multiply = ai_strait_toll_income_weight
+				}
+
+				subtract = { # Fallout with the countries this would hurt
+					value = {
+						scope:strait = {
+							add = "trade_fallout_for(root)"
+						}
+					}
+					multiply = ai_strait_fallout_weight
+					multiply = define:NEconomy|TOLL_RATE_LOW_TOLLS # The share of their crossing trade the tolls would take
+					divide = 2
+					if = {
+						limit = {
+							scope:is_sole_controller = yes
+						}
+						multiply = define:NEconomy|TOLL_RATE_MULTIPLIER_FULL_CONTROL
+					}
+				}
+				min = 0
+			}
+
+			medium_tolls = {
+				value = 0
+
+				if = { # Can charge higher tolls if we control both sides
+					limit = {
+						scope:is_sole_controller = yes
+					}
+
+					add = 20
+				}
+
+				if = { # Don't extort in gibraltar
+					limit = {
+						scope:strait = {
+							type = strait_type:strait_gibraltar
+						}
+					}
+
+					multiply = 0.5
+				}
+				else_if = { # Make some money on your canals
+					limit = {
+						scope:strait = {
+							OR = {
+								type = strait_type:canal_panama
+								type = strait_type:canal_suez
+							}
+						}
+					}
+
+					add = 100
+				}
+
+				add = { # The income the tolls would bring
+					value = scope:toll_income_per_percent
+					multiply = define:NEconomy|TOLL_RATE_MEDIUM_TOLLS
+					multiply = 100 # The toll rate defines are fractions, the income is per percent
+					multiply = ai_strait_toll_income_weight
+				}
+
+				subtract = { # Fallout with the countries this would hurt
+					value = {
+						scope:strait = {
+							add = "trade_fallout_for(root)"
+						}
+					}
+					multiply = ai_strait_fallout_weight
+					multiply = define:NEconomy|TOLL_RATE_MEDIUM_TOLLS # The share of their crossing trade the tolls would take
+					if = {
+						limit = {
+							scope:is_sole_controller = yes
+						}
+						multiply = define:NEconomy|TOLL_RATE_MULTIPLIER_FULL_CONTROL
+					}
+				}
+				min = 0
+			}
+
+			high_tolls = {
+				value = 0
+			}
+		}
+	}
+
+	liberate_country_scores = {
+		# Vanilla's entries (Holstein, Bulgaria) depend on Victorian journal entries; none for the CWP yet.
+	}
+
+	will_incorporate_state = {
+		trigger_if = { # Colonies have a different behaviour
+			limit = {
+				country_is_colonial_or_company = yes
+			}
+			scope:target_state = { ai_colony_will_incorporate_state = yes }
+		}
+		trigger_else = { # Default behaviour
+			scope:target_state = { ai_will_incorporate_state = yes }
+		}
+	}
+
 	possible = {
 		always = no
 	}
