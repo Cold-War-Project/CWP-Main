@@ -105,4 +105,4 @@ The mod has no start-date formations yet: `history/military_formations` is repla
 
 ## Log lines to ignore here
 
-`Trying to reposition an invalid/dead formation`, `War.GetWarParticipant(...)IsValid()`, `Failed to find a travel position for HQ` for revolt/secession tags: engine-side, do not chase.
+`Trying to reposition an invalid/dead formation`, `War.GetWarParticipant(...)IsValid()`, `Failed to find a travel position for HQ` (also the "no port travel position" variant) for revolt/secession tags and small coastal countries without a usable port in that HQ region: engine-side, do not chase.
