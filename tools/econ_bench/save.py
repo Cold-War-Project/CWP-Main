@@ -210,4 +210,6 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
             if out[tag]["gdp"] >= c["gdp"]:
                 continue
         out[tag] = c
-    return {"save": path.rsplit("/", 1)[-1], "date": date, "year": int(date.split(".")[0]), "countries": out}
+    from .geo import extract_geo
+    return {"save": path.rsplit("/", 1)[-1], "date": date, "year": int(date.split(".")[0]), "countries": out,
+            "geo": extract_geo(text, tag_of, owned)}
