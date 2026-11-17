@@ -96,40 +96,28 @@ Each is a 1700 definition in the table, gated on simulation state:
 
 Defunct states that have their own tag (BIA Biafra, KTA Katanga, LEV, LNG ...) already have pattern flags in `cwp_releasable_countries.txt`.
 
-## Textured-emblem pipeline: blocked
+## Textured flags (Wikimedia Commons SVG -> DDS)
 
-The plan was Wikimedia Commons public-domain SVG -> 768x512 DDS textured emblems in `gfx/coat_of_arms/textured_emblems/cwp_*.dds`, with a manifest `tools/flags/sources.tsv` (file, source URL, licence; public domain or CC0 only). On Forge (2026-11-17) there is no SVG rasteriser: no `rsvg-convert`, Inkscape, ImageMagick, `cairosvg` or `wand` (only PIL, which can write DDS but cannot read SVG). upload.wikimedia.org is reachable. Nothing was converted and no DDS was added; the pipeline needs a rasteriser installed (Jack's call), after which it is: download SVG, record URL and licence, render to 768x512 PNG, save DDS with PIL, reference it as `textured_emblem = { texture = "cwp_<key>.dds" }`.
+Flags whose emblems patterns cannot draw use a whole-flag texture rendered from a Wikimedia Commons SVG. Public domain or CC0 only; anything else is skipped and stays on its pattern stand-in. Source page and licence for each flag are in `tools/flags/sources.tsv` and in the comment on its coat of arms.
 
-## Emblems that need hand-drawn art (UI/art)
+```bash
+python3 -I tools/flags/fetch_svg.py        # Commons API: licence check, download to ~/forge/flag-work/svg, sha256 into sources.tsv
+python3 -I tools/flags/render.py           # headless snap Firefox -> 768x512 PNG -> gfx/coat_of_arms/textured_emblems/cwp_flag_<key>.dds (DXT5)
+python3 -I tools/flags/apply_textures.py   # point each coat of arms at its texture; the pattern stand-in stays below as a comment
+python3 tools/flags/gen_flags.py           # only when the table gained a flag_definition
+```
 
-These flags are drawn with a vanilla stand-in. A textured emblem (or a new coloured emblem) would make them right:
+- Forge has no SVG library; snap Firefox in headless mode (`--screenshot`) is the rasteriser. Snap confinement needs the page, output and profile under `$HOME`, so the work folder is `~/forge/flag-work/` (outside the repo; downloaded SVGs are untrusted data, only shown through an `<img>`).
+- Wikimedia rate-limits downloads (HTTP 429, Retry-After 120 s); `fetch_svg.py` paces itself and is rerunnable, skipping rows already fetched.
+- Credits: every shipped texture is listed under `$TITLE_PROJECT_FLAG_SOURCES$` in `credits.txt` (Commons page and licence). Add a line there with each new texture. Licences were re-checked on Commons on 2026-11-17 (all 20 public domain).
+- Not shipped until cleared: Bulgaria 1948-67 (`cwp_BUL_peoples_republic`), Commons file is CC BY-SA 4.0; it keeps the pattern stand-in. Attribution or share-alike files never ship without Jack's clearance.
+- To add a flag: add a row to `sources.tsv` (coa key, tag, label, Commons file page), run the scripts, look at the PNG in `~/forge/flag-work/png/`, and add a `flag_definition` to the table if the coat of arms is new.
+- Textures have one mip level (Pillow); five vanilla flag textures are the same, so the game accepts it. Sharpness at small sizes in game is unchecked.
 
-| Flag | Missing emblem | Stand-in |
-|---|---|---|
-| `cwp_HUN_peoples_republic` | Rakosi coat of arms | hammer, sickle and wreath |
-| `cwp_ROM_peoples_republic` | Romanian People's Republic emblem | hammer, sickle and wreath |
-| `cwp_BUL_peoples_republic` | Bulgarian lion emblem | hammer, sickle and wreath |
-| `cwp_AFH_democratic_republic` | Khalq emblem (1978) | hammer, sickle and wreath |
-| `cwp_BLZ` | Belize coat of arms | laurel wreath |
-| `cwp_MWI` | Malawi half sun with rays | vanilla sun |
-| `cwp_IGH` | Ingush solar sign | vanilla sun |
-| `cwp_KCH` | mountain and rising sun | vanilla sun |
-| `cwp_UGA` | grey crowned crane | none (empty disc) |
-| `cwp_KEN` | Maasai shield and spears | none |
-| `cwp_MOZ` | rifle, hoe and book | none |
-| `cwp_ZWE` | Zimbabwe Bird | none |
-| `cwp_LSO` | mokorotlo hat | none |
-| `cwp_SWZ` | Nguni shield and spears | none |
-| `cwp_RHO` | Rhodesian coat of arms | green shield with a red lion |
-| `cwp_ZAR` | arm holding the torch | torch |
-| `cwp_PER_islamic_republic` | Allah emblem, takbir along the bands | takbir |
-| `cwp_SPA_democratic` | Spanish royal arms | crown |
-| `cwp_MYS` | 14 stripes, 14-point federal star | 13 stripes, 5-point star |
-| `cwp_KWT` | hoist trapezoid | triangle |
-| `cwp_TZA` | bend orientation and colours unverified | vanilla bend textures |
+Status 2026-11-17: 20 flags textured (Belize, Malawi, Ingushetia, Karachay-Cherkessia, Uganda, Kenya, Mozambique, Zimbabwe, Lesotho, Eswatini, Rhodesia 1968, Zaire, Islamic Republic of Iran, Spain (current arms), Malaysia, Kuwait, Tanzania, UAR, Namibia, Papua New Guinea); Namibia and Papua New Guinea also got independence flag definitions. Bulgaria 1948-67 was skipped (Commons file is CC BY-SA 4.0). Hungary 1949-56, Romania 1952-65 and Afghanistan 1978-80 hit the rate limit; rerun `fetch_svg.py`.
 
 ## Later plan
 
 1. **More historical changes** in the same pattern: Iraq (1959, 1963), Burma's socialist flag (1974), the Federation of Arab Republics (1972), Ghana 1964, Malaysia 1963 (Malaya plus Borneo states). Where JE content sets variables for the event (e.g. the Chinese Civil War), the flag may read them.
-2. **Textured emblems** for the table above and for defunct states whose flags need more than patterns: the pipeline under "Textured-emblem pipeline: blocked", once a rasteriser is available.
+2. **More textured flags** for defunct states whose flags need more than patterns (South Vietnam variants, Biafra's rising sun, Katanga, the Federation of Arab Republics) through the pipeline above.
 3. **Contact sheet**: a test map or console run that shows every CWP flag and each regime variant in one screenshot, kept with the branch that changes them.
