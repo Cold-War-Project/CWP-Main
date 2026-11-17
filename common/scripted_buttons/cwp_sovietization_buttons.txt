@@ -1,0 +1,182 @@
+﻿# Cold War Project: sovietization. Country scope = the occupied country; scope:journal_entry = je_cwp_peoples_democracy.
+
+# Rákosi's "salami tactics": slice away the opposition one faction at a time.
+cwp_sov_salami_button = {
+	name = "cwp_sov_salami_button"
+	desc = "cwp_sov_salami_button_desc"
+
+	visible = { always = yes }
+
+	possible = {
+		cwp_communists_in_government = yes
+		cwp_sov_has_opposition_target = yes
+	}
+
+	effect = {
+		ordered_interest_group = {
+			limit = {
+				is_marginal = no
+				law_stance = {
+					law = law_type:law_council_republic
+					value <= disapprove
+				}
+			}
+			order_by = ig_clout
+			add_modifier = {
+				name = cwp_sov_salami_target
+				years = 2
+			}
+		}
+		scope:journal_entry = {
+			add_progress = { value = 5 name = cwp_sov_control_bar }
+			add_progress = { value = 3 name = cwp_sov_resistance_bar }
+		}
+	}
+
+	cooldown = { months = 6 }
+
+	ai_chance = {
+		value = 20
+	}
+}
+
+# Absorb the Social Democrats into a single workers' party.
+cwp_sov_merge_parties_button = {
+	name = "cwp_sov_merge_parties_button"
+	desc = "cwp_sov_merge_parties_button_desc"
+
+	visible = {
+		NOT = { has_variable = cwp_sov_merged_var }
+	}
+
+	possible = {
+		cwp_communists_in_government = yes
+		scope:journal_entry = {
+			custom_tooltip = {
+				text = cwp_sov_control_40_tt
+				"scripted_bar_progress(cwp_sov_control_bar)" >= 40
+			}
+		}
+	}
+
+	effect = {
+		set_variable = cwp_sov_merged_var
+		ig:ig_trade_unions ?= {
+			add_modifier = {
+				name = cwp_sov_merged_party
+				years = 10
+			}
+		}
+		scope:journal_entry = {
+			add_progress = { value = 5 name = cwp_sov_control_bar }
+		}
+	}
+
+	ai_chance = { value = 30 }
+}
+
+# Break up the great estates and hand the land to the peasants who till it.
+cwp_sov_land_reform_button = {
+	name = "cwp_sov_land_reform_button"
+	desc = "cwp_sov_land_reform_button_desc"
+
+	visible = {
+		NOT = { has_variable = cwp_sov_land_reform_var }
+	}
+
+	possible = { always = yes }
+
+	effect = {
+		set_variable = cwp_sov_land_reform_var
+		ig:ig_rural_folk ?= {
+			add_modifier = {
+				name = cwp_sov_land_reform
+				years = 5
+			}
+		}
+		ig:ig_landowners ?= {
+			add_modifier = {
+				name = cwp_sov_salami_target
+				years = 5
+			}
+		}
+		scope:journal_entry = {
+			add_progress = { value = 3 name = cwp_sov_control_bar }
+			add_progress = { value = -10 name = cwp_sov_resistance_bar }
+		}
+	}
+
+	ai_chance = { value = 25 }
+}
+
+cwp_sov_show_trials_button = {
+	name = "cwp_sov_show_trials_button"
+	desc = "cwp_sov_show_trials_button_desc"
+
+	visible = { always = yes }
+
+	possible = {
+		has_law = law_type:law_secret_police
+		cwp_communists_in_government = yes
+	}
+
+	effect = {
+		add_modifier = {
+			name = cwp_sov_show_trials
+			years = 2
+		}
+		scope:journal_entry = {
+			add_progress = { value = 8 name = cwp_sov_control_bar }
+			add_progress = { value = 6 name = cwp_sov_resistance_bar }
+		}
+	}
+
+	cooldown = { months = 12 }
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				scope:journal_entry = { "scripted_bar_progress(cwp_sov_resistance_bar)" < 60 }
+			}
+			add = 15
+		}
+	}
+}
+
+# The opposition's card: appeal to the Western Allies and the Yalta promise of free elections.
+cwp_sov_appeal_west_button = {
+	name = "cwp_sov_appeal_west_button"
+	desc = "cwp_sov_appeal_west_button_desc"
+
+	visible = { always = yes }
+
+	possible = {
+		custom_tooltip = {
+			text = cwp_sov_no_communist_majority_tt
+			cwp_sov_opposition_clout >= 0.3
+		}
+	}
+
+	effect = {
+		scope:journal_entry = {
+			add_progress = { value = -8 name = cwp_sov_control_bar }
+			add_progress = { value = 4 name = cwp_sov_resistance_bar }
+		}
+		overlord ?= {
+			change_relations = { country = root value = -20 }
+		}
+		c:USA ?= { change_relations = { country = root value = 10 } }
+		c:GBR ?= { change_relations = { country = root value = 10 } }
+	}
+
+	cooldown = { months = 12 }
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = { cwp_communists_in_government = no }
+			add = 15
+		}
+	}
+}
