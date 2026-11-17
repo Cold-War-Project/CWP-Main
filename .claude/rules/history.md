@@ -1,4 +1,4 @@
----
+﻿---
 paths:
   - "common/history/**"
 ---
@@ -32,7 +32,7 @@ Load order matters: states and countries exist before pops, buildings and charac
 | `ai` | `AI = { }` | `set_strategy`, `set_secret_goal = { country = c:X secret_goal = befriend }` |
 | `lobbies`, `political_movements`, `cultures`, `conscription`, `global` | `LOBBIES`, `POLITICAL_MOVEMENTS`, `CULTURES`, `CONSCRIPTION`, `GLOBAL` | see the mod's files |
 
-On this branch only `ai`, `buildings`, `characters`, `conscription`, `countries`, `cultures`, `diplomacy`, `diplomatic_plays`, `global`, `military_deployments`, `political_movements`, `pops`, `population`, `power_blocs` and `states` have files. `lobbies`, `military_formations`, `production_methods`, `trade` and `treaties` are in `replace_paths` but empty, so nothing of that kind exists at start. `characters` holds dev's 1946 historical figures (ported in #779; every `ruler = yes` is still commented out, so heads of state are generated), with name loc in `localization/english/cwp/characters/`. `governments` also has files but is not in `replace_paths`: its files are same-name overwrites of vanilla's or CWP-only names, and vanilla's other government files still run. Starting law packages used by `countries` live in `common/scripted_effects/00_starting_law_packages.txt` (`effect_starting_laws_1946_*`).
+On this branch only `ai`, `buildings`, `characters`, `conscription`, `countries`, `cultures`, `diplomacy`, `diplomatic_plays`, `global`, `military_deployments`, `political_movements`, `pops`, `population`, `power_blocs` and `states` have files. `lobbies`, `military_formations`, `production_methods`, `trade` and `treaties` are in `replace_paths` but empty, so nothing of that kind exists at start. `characters` places the 1946 historical figures, one `create_character = { template = ... }` per person, from `common/character_templates/cwp_1946_<tag>.txt` (rulers, heirs, IG leaders, commanders, agitators; rules and party mapping in `docs/agents/areas/characters.md`), with name loc in `localization/english/cwp/characters/`. `governments` also has files but is not in `replace_paths`: its files are same-name overwrites of vanilla's or CWP-only names, and vanilla's other government files still run. Starting law packages used by `countries` live in `common/scripted_effects/00_starting_law_packages.txt` (`effect_starting_laws_1946_*`).
 
 The wrapper name and the exact inner effect names are fixed; copy them from the existing mod file of the same folder, or for an empty folder from vanilla's `common/history/<folder>/` (wrappers checked: `AI`, `CHARACTERS`, `CONSCRIPTION`, `LOBBIES`, `MILITARY_FORMATIONS`, `POWER_BLOCS`, `PRODUCTION_METHODS`, `TRADE`, `TREATIES`). Field usage per folder is listed at the end of `.claude/reference/vanilla-fields.md`.
 
@@ -81,7 +81,7 @@ create_building = {
 
 ## Characters
 
-`create_character = { template = key }` referencing `common/character_templates`, or inline fields (`first_name`, `last_name`, `ruler = yes`, `ig_leader = yes`, `interest_group = ig_x`, `ideology = ideology_x`, `birth_date`, `traits = { }`, `culture = cu:x`, `is_general = yes`, `commander_rank = commander_rank_3`, `hq = region_x`). Details in `characters.md`. On this branch `history/characters` is empty; dev's character files and their name loc are not here yet (porting is tracked in `docs/agents/areas/history-setup.md`).
+`create_character = { template = key }` referencing `common/character_templates`, or inline fields (`first_name`, `last_name`, `ruler = yes`, `ig_leader = yes`, `interest_group = ig_x`, `ideology = ideology_x`, `birth_date`, `traits = { }`, `culture = cu:x`, `is_general = yes`, `commander_rank = commander_rank_3`, `hq = region_x`). Details in `characters.md`. The mod's files use templates only. Whether a scripted ruler may or must be an IG leader depends on the government type's `transfer_of_power`; see `docs/agents/areas/characters.md`.
 
 ## Rules
 
