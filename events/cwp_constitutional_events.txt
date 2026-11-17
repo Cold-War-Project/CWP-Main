@@ -1,0 +1,469 @@
+﻿namespace = cwp_iq
+namespace = cwp_jap_constitution
+
+# The institutional question opens.
+cwp_iq.1 = {
+	type = country_event
+	placement = root
+
+	title = cwp_iq.1.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = cwp_iq.1.d.ITA
+				trigger = { c:ITA ?= this }
+			}
+			triggered_desc = {
+				desc = cwp_iq.1.d.BUL
+				trigger = { c:BUL ?= this }
+			}
+			triggered_desc = {
+				desc = cwp_iq.1.d.ROM
+				trigger = { c:ROM ?= this }
+			}
+			triggered_desc = {
+				desc = cwp_iq.1.d.GRE
+				trigger = { c:GRE ?= this }
+			}
+			desc = cwp_iq.1.d
+		}
+	}
+	flavor = {
+		first_valid = {
+			triggered_desc = {
+				desc = cwp_iq.1.f.ITA
+				trigger = { c:ITA ?= this }
+			}
+			triggered_desc = {
+				desc = cwp_iq.1.f.ROM
+				trigger = { c:ROM ?= this }
+			}
+			desc = cwp_iq.1.f
+		}
+	}
+
+	event_image = { video = "votp_monarch_holding_court" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_scales.dds"
+
+	duration = 3
+
+	immediate = {
+		ruler ?= { save_scope_as = cwp_iq_monarch }
+	}
+
+	option = { # Put it to the people
+		name = cwp_iq.1.a
+		default_option = yes
+		je:je_cwp_institutional_question ?= {
+			add_progress = { value = 15 name = cwp_iq_pressure_bar }
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				trigger = { cwp_iq_republican_clout_in_government > cwp_iq_monarchist_clout_in_government }
+				add = 20
+			}
+		}
+	}
+
+	option = { # Reconstruction first
+		name = cwp_iq.1.b
+		je:je_cwp_institutional_question ?= {
+			add_progress = { value = -10 name = cwp_iq_pressure_bar }
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				trigger = { cwp_iq_monarchist_clout_in_government > cwp_iq_republican_clout_in_government }
+				add = 20
+			}
+		}
+	}
+}
+
+# Polling day.
+cwp_iq.2 = {
+	type = country_event
+	placement = root
+
+	title = cwp_iq.2.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = cwp_iq.2.d.rigged
+				trigger = { has_variable = cwp_iq_rigged_var }
+			}
+			triggered_desc = {
+				desc = cwp_iq.2.d.republic
+				trigger = { var:cwp_iq_result_var > 50 }
+			}
+			desc = cwp_iq.2.d.crown
+		}
+	}
+	flavor = {
+		first_valid = {
+			triggered_desc = {
+				desc = cwp_iq.2.f.republic
+				trigger = { var:cwp_iq_result_var > 50 }
+			}
+			desc = cwp_iq.2.f.crown
+		}
+	}
+
+	event_image = { video = "southamerica_election" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_election.dds"
+
+	duration = 3
+
+	trigger = {
+		has_journal_entry = je_cwp_institutional_question
+	}
+
+	immediate = {
+		random_list = {
+			20 = { set_variable = { name = cwp_iq_swing_var value = -6 } }
+			20 = { set_variable = { name = cwp_iq_swing_var value = -3 } }
+			20 = { set_variable = { name = cwp_iq_swing_var value = 0 } }
+			20 = { set_variable = { name = cwp_iq_swing_var value = 3 } }
+			20 = { set_variable = { name = cwp_iq_swing_var value = 6 } }
+		}
+		set_variable = { name = cwp_iq_result_var value = cwp_iq_counted_result }
+		ruler ?= { save_scope_as = cwp_iq_monarch }
+	}
+
+	option = { # A parliamentary republic
+		name = cwp_iq.2.a
+		trigger = { var:cwp_iq_result_var > 50 }
+		default_option = yes
+		cwp_iq_proclaim_republic = { LAW = law_parliamentary_republic }
+		cwp_iq_result_aftermath = yes
+		ai_chance = {
+			base = 10
+			modifier = {
+				trigger = {
+					OR = {
+						cwp_iq_under_soviet_pressure = yes
+						cwp_communists_in_government = yes
+					}
+				}
+				factor = 0.1
+			}
+		}
+	}
+
+	option = { # A people's republic
+		name = cwp_iq.2.b
+		trigger = {
+			var:cwp_iq_result_var > 50
+			OR = {
+				cwp_iq_under_soviet_pressure = yes
+				cwp_communists_in_government = yes
+			}
+		}
+		cwp_iq_proclaim_republic = { LAW = law_council_republic }
+		cwp_iq_result_aftermath = yes
+		ai_chance = { base = 10 }
+	}
+
+	option = { # The crown stays
+		name = cwp_iq.2.c
+		trigger = { NOT = { var:cwp_iq_result_var > 50 } }
+		default_option = yes
+		cwp_iq_keep_crown = yes
+		cwp_iq_result_aftermath = yes
+	}
+}
+
+# The pressure bar is full: the vote cannot wait.
+cwp_iq.3 = {
+	type = country_event
+	placement = root
+
+	title = cwp_iq.3.t
+	desc = cwp_iq.3.d
+	flavor = cwp_iq.3.f
+
+	event_image = { video = "unspecific_politicians_arguing" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+
+	duration = 3
+
+	trigger = {
+		has_journal_entry = je_cwp_institutional_question
+		NOT = { has_variable = cwp_iq_vote_pending_var }
+	}
+
+	immediate = {
+		set_variable = cwp_iq_vote_pending_var
+	}
+
+	option = { # Set the date
+		name = cwp_iq.3.a
+		default_option = yes
+		custom_tooltip = cwp_iq_call_referendum_tt
+		trigger_event = { id = cwp_iq.2 days = 30 popup = yes }
+		ai_chance = { base = 10 }
+	}
+
+	option = { # Force the King out instead
+		name = cwp_iq.3.b
+		trigger = {
+			cwp_iq_under_soviet_pressure = yes
+			has_law = law_type:law_secret_police
+		}
+		custom_tooltip = cwp_iq_force_abdication_tt
+		trigger_event = { id = cwp_iq.4 popup = yes }
+		ai_chance = {
+			base = 0
+			modifier = {
+				trigger = { var:cwp_iq_vote_current_var < 55 }
+				add = 15
+			}
+		}
+	}
+}
+
+# Forced abdication.
+cwp_iq.4 = {
+	type = country_event
+	placement = root
+
+	title = cwp_iq.4.t
+	desc = cwp_iq.4.d
+	flavor = cwp_iq.4.f
+
+	event_image = { video = "ip4_abdication" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_skull.dds"
+
+	duration = 3
+
+	trigger = {
+		has_journal_entry = je_cwp_institutional_question
+		country_has_monarchy_law = yes
+	}
+
+	immediate = {
+		set_variable = cwp_iq_vote_pending_var
+		ruler ?= { save_scope_as = cwp_iq_monarch }
+	}
+
+	option = {
+		name = cwp_iq.4.a
+		default_option = yes
+		cwp_iq_proclaim_republic = { LAW = law_council_republic }
+		add_modifier = {
+			name = cwp_iq_forced_abdication
+			years = 5
+		}
+		add_radicals = {
+			value = 0.15
+			interest_group = ig:ig_landowners
+		}
+		add_radicals = {
+			value = 0.1
+			interest_group = ig:ig_devout
+		}
+	}
+}
+
+# Japan: SCAP orders a revision of the Meiji constitution.
+cwp_jap_constitution.1 = {
+	type = country_event
+	placement = root
+
+	title = cwp_jap_constitution.1.t
+	desc = cwp_jap_constitution.1.d
+	flavor = cwp_jap_constitution.1.f
+
+	event_image = { video = "ep2_important_japanese_men_negotiating" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+
+	duration = 3
+
+	option = { # Revise the Meiji charter carefully
+		name = cwp_jap_constitution.1.a
+		default_option = yes
+		ig:ig_landowners ?= {
+			add_modifier = {
+				name = cwp_iq_campaign_ally
+				years = 1
+			}
+		}
+		ai_chance = { base = 10 }
+	}
+
+	option = { # Open the debate to the reformers
+		name = cwp_jap_constitution.1.b
+		set_variable = { name = cwp_jap_reform_campaign_var value = 5 }
+		custom_tooltip = cwp_jap_reform_campaign_tt
+		ai_chance = { base = 10 }
+	}
+}
+
+# Japan: the cabinet's draft reaches the occupation authorities.
+cwp_jap_constitution.2 = {
+	type = country_event
+	placement = root
+
+	title = cwp_jap_constitution.2.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = cwp_jap_constitution.2.d.rejected
+				trigger = {
+					cwp_occupied_by_democracy = yes
+					je:je_cwp_japan_postwar_constitution ?= {
+						"scripted_bar_progress(cwp_jap_occupation_bar)" >= 50
+					}
+				}
+			}
+			desc = cwp_jap_constitution.2.d.accepted
+		}
+	}
+	flavor = cwp_jap_constitution.2.f
+
+	event_image = { video = "unspecific_signed_contract" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+
+	duration = 3
+
+	trigger = {
+		has_journal_entry = je_cwp_japan_postwar_constitution
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				cwp_occupied_by_democracy = yes
+				je:je_cwp_japan_postwar_constitution ?= {
+					"scripted_bar_progress(cwp_jap_occupation_bar)" >= 50
+				}
+			}
+			set_variable = cwp_jap_matsumoto_rejected_var
+		}
+	}
+
+	option = { # Rejected: the occupier will write its own
+		name = cwp_jap_constitution.2.a
+		trigger = { has_variable = cwp_jap_matsumoto_rejected_var }
+		default_option = yes
+		remove_variable = cwp_jap_matsumoto_rejected_var
+		custom_tooltip = cwp_jap_occupier_draft_tt
+		trigger_event = { id = cwp_jap_constitution.3 days = 10 popup = yes }
+	}
+
+	option = { # Accepted: a revised Meiji constitution
+		name = cwp_jap_constitution.2.b
+		trigger = { NOT = { has_variable = cwp_jap_matsumoto_rejected_var } }
+		default_option = yes
+		set_variable = cwp_jap_constitution_settled_var
+		ig:ig_intelligentsia ?= {
+			add_modifier = {
+				name = cwp_iq_lost_the_referendum
+				years = 2
+			}
+		}
+	}
+}
+
+# Japan: the occupation authorities present their own draft.
+cwp_jap_constitution.3 = {
+	type = country_event
+	placement = root
+
+	title = cwp_jap_constitution.3.t
+	desc = cwp_jap_constitution.3.d
+	flavor = cwp_jap_constitution.3.f
+
+	event_image = { video = "ep2_important_japanese_men_negotiating" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+
+	duration = 3
+
+	trigger = {
+		has_journal_entry = je_cwp_japan_postwar_constitution
+	}
+
+	immediate = {
+		overlord ?= { save_scope_as = cwp_jap_occupier }
+	}
+
+	option = { # Accept the draft as written
+		name = cwp_jap_constitution.3.a
+		default_option = yes
+		cwp_jap_adopt_constitution = { ARTICLE_9 = cwp_amendment_article_9 }
+		ai_chance = { base = 10 }
+	}
+
+	option = { # Accept it, with the Ashida amendment
+		name = cwp_jap_constitution.3.b
+		show_as_unavailable = {
+			NOT = { var:cwp_jap_reform_current_var >= 40 }
+		}
+		trigger = { var:cwp_jap_reform_current_var >= 40 }
+		cwp_jap_adopt_constitution = { ARTICLE_9 = cwp_amendment_article_9_ashida }
+		ai_chance = { base = 15 }
+	}
+
+	option = { # Refuse
+		name = cwp_jap_constitution.3.c
+		remove_variable = cwp_jap_draft_pending_var
+		je:je_cwp_japan_postwar_constitution ?= {
+			add_progress = { value = -50 name = cwp_jap_occupation_bar }
+		}
+		add_modifier = {
+			name = cwp_jap_constitution_rejected
+			years = 2
+		}
+		scope:cwp_jap_occupier ?= {
+			change_relations = { country = root value = -30 }
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				trigger = { var:cwp_jap_reform_current_var < 25 }
+				add = 5
+			}
+		}
+	}
+}
+
+# Japan: a democratic constitution drafted at home.
+cwp_jap_constitution.4 = {
+	type = country_event
+	placement = root
+
+	title = cwp_jap_constitution.4.t
+	desc = cwp_jap_constitution.4.d
+	flavor = cwp_jap_constitution.4.f
+
+	event_image = { video = "asia_politician_parliament_motion" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+
+	duration = 3
+
+	trigger = {
+		has_journal_entry = je_cwp_japan_postwar_constitution
+	}
+
+	option = { # Renounce war outright
+		name = cwp_jap_constitution.4.a
+		default_option = yes
+		cwp_jap_adopt_constitution = { ARTICLE_9 = cwp_amendment_article_9 }
+		ai_chance = { base = 10 }
+	}
+
+	option = { # Keep the right of self-defence
+		name = cwp_jap_constitution.4.b
+		cwp_jap_adopt_constitution = { ARTICLE_9 = cwp_amendment_article_9_ashida }
+		ai_chance = { base = 15 }
+	}
+}

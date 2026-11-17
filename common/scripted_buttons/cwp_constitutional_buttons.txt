@@ -1,0 +1,374 @@
+﻿# Cold War Project: constitutional transitions. Country scope; scope:journal_entry is the owning entry.
+
+cwp_iq_campaign_republic_button = {
+	name = "cwp_iq_campaign_republic_button"
+	desc = "cwp_iq_campaign_republic_button_desc"
+
+	visible = { always = yes }
+
+	possible = {
+		custom_tooltip = {
+			text = cwp_iq_campaign_cap_tt
+			OR = {
+				NOT = { has_variable = cwp_iq_campaign_var }
+				var:cwp_iq_campaign_var < 12
+			}
+		}
+	}
+
+	effect = {
+		if = {
+			limit = { NOT = { has_variable = cwp_iq_campaign_var } }
+			set_variable = { name = cwp_iq_campaign_var value = 0 }
+		}
+		change_variable = { name = cwp_iq_campaign_var add = 4 }
+		custom_tooltip = cwp_iq_campaign_republic_tt
+		every_interest_group = {
+			limit = {
+				law_stance = {
+					law = law_type:law_monarchy
+					value >= approve
+				}
+			}
+			add_modifier = {
+				name = cwp_iq_campaigned_against
+				years = 1
+			}
+		}
+		every_interest_group = {
+			limit = {
+				cwp_iq_ig_is_republican = yes
+			}
+			add_modifier = {
+				name = cwp_iq_campaign_ally
+				years = 1
+			}
+		}
+	}
+
+	cooldown = { months = 3 }
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = { cwp_iq_republican_clout_in_government > cwp_iq_monarchist_clout_in_government }
+			add = 20
+		}
+	}
+}
+
+cwp_iq_campaign_crown_button = {
+	name = "cwp_iq_campaign_crown_button"
+	desc = "cwp_iq_campaign_crown_button_desc"
+
+	visible = { always = yes }
+
+	possible = {
+		custom_tooltip = {
+			text = cwp_iq_campaign_cap_tt
+			OR = {
+				NOT = { has_variable = cwp_iq_campaign_var }
+				var:cwp_iq_campaign_var > -12
+			}
+		}
+	}
+
+	effect = {
+		if = {
+			limit = { NOT = { has_variable = cwp_iq_campaign_var } }
+			set_variable = { name = cwp_iq_campaign_var value = 0 }
+		}
+		change_variable = { name = cwp_iq_campaign_var add = -4 }
+		custom_tooltip = cwp_iq_campaign_crown_tt
+		every_interest_group = {
+			limit = {
+				cwp_iq_ig_is_republican = yes
+			}
+			add_modifier = {
+				name = cwp_iq_campaigned_against
+				years = 1
+			}
+		}
+		every_interest_group = {
+			limit = {
+				law_stance = {
+					law = law_type:law_monarchy
+					value >= approve
+				}
+			}
+			add_modifier = {
+				name = cwp_iq_campaign_ally
+				years = 1
+			}
+		}
+	}
+
+	cooldown = { months = 3 }
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = { cwp_iq_monarchist_clout_in_government > cwp_iq_republican_clout_in_government }
+			add = 20
+		}
+	}
+}
+
+# The tainted monarch steps aside for his heir (Victor Emmanuel III for Umberto II, 9 May 1946).
+cwp_iq_heir_button = {
+	name = "cwp_iq_heir_button"
+	desc = "cwp_iq_heir_button_desc"
+
+	visible = {
+		NOT = { has_variable = cwp_iq_heir_used_var }
+		exists = heir
+	}
+
+	possible = {
+		exists = ruler
+		exists = heir
+	}
+
+	effect = {
+		set_variable = cwp_iq_heir_used_var
+		if = {
+			limit = { NOT = { has_variable = cwp_iq_campaign_var } }
+			set_variable = { name = cwp_iq_campaign_var value = 0 }
+		}
+		change_variable = { name = cwp_iq_campaign_var add = -5 }
+		custom_tooltip = cwp_iq_heir_tt
+		ruler = { exile_character = yes }
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				cwp_iq_monarchist_clout_in_government > cwp_iq_republican_clout_in_government
+				has_variable = cwp_iq_vote_current_var
+				var:cwp_iq_vote_current_var > 48
+			}
+			add = 30
+		}
+	}
+}
+
+cwp_iq_call_referendum_button = {
+	name = "cwp_iq_call_referendum_button"
+	desc = "cwp_iq_call_referendum_button_desc"
+
+	visible = {
+		NOT = { has_variable = cwp_iq_vote_pending_var }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = cwp_iq_campaign_time_tt
+			scope:journal_entry = { journal_entry_age >= 90 }
+		}
+	}
+
+	effect = {
+		set_variable = cwp_iq_vote_pending_var
+		custom_tooltip = cwp_iq_call_referendum_tt
+		trigger_event = { id = cwp_iq.2 days = 30 popup = yes }
+	}
+
+	ai_chance = {
+		value = 0
+		# Call it when the side in government is ahead, or when the pressure will soon force it anyway.
+		if = {
+			limit = {
+				cwp_iq_republican_clout_in_government > cwp_iq_monarchist_clout_in_government
+				var:cwp_iq_vote_current_var > 52
+			}
+			add = 30
+		}
+		if = {
+			limit = {
+				cwp_iq_monarchist_clout_in_government > cwp_iq_republican_clout_in_government
+				var:cwp_iq_vote_current_var < 48
+			}
+			add = 30
+		}
+		if = {
+			limit = {
+				scope:journal_entry = { "scripted_bar_progress(cwp_iq_pressure_bar)" >= 75 }
+			}
+			add = 20
+		}
+	}
+}
+
+# Soviet-zone pattern: the interior ministry runs the count (Bulgaria, September 1946).
+cwp_iq_rig_referendum_button = {
+	name = "cwp_iq_rig_referendum_button"
+	desc = "cwp_iq_rig_referendum_button_desc"
+
+	visible = {
+		cwp_iq_under_soviet_pressure = yes
+		NOT = { has_variable = cwp_iq_rigged_var }
+	}
+
+	possible = {
+		cwp_iq_can_rig = yes
+	}
+
+	effect = {
+		set_variable = cwp_iq_rigged_var
+		custom_tooltip = cwp_iq_rig_referendum_tt
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				OR = {
+					cwp_communists_in_government = yes
+					cwp_iq_republican_clout_in_government > cwp_iq_monarchist_clout_in_government
+				}
+			}
+			add = 25
+		}
+	}
+}
+
+# Soviet-zone pattern without a vote: the King is made to sign (Romania, 30 December 1947).
+cwp_iq_force_abdication_button = {
+	name = "cwp_iq_force_abdication_button"
+	desc = "cwp_iq_force_abdication_button_desc"
+
+	visible = {
+		cwp_iq_under_soviet_pressure = yes
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = cwp_iq_force_abdication_pressure_tt
+			scope:journal_entry = { "scripted_bar_progress(cwp_iq_pressure_bar)" >= 60 }
+		}
+		has_law = law_type:law_secret_police
+	}
+
+	effect = {
+		custom_tooltip = cwp_iq_force_abdication_tt
+		trigger_event = { id = cwp_iq.4 popup = yes }
+	}
+
+	ai_chance = {
+		value = 0
+		# Where the crown is popular, a vote is a risk; the communists prefer an ultimatum.
+		if = {
+			limit = {
+				var:cwp_iq_vote_current_var < 55
+				OR = {
+					cwp_communists_in_government = yes
+					cwp_iq_republican_clout_in_government > cwp_iq_monarchist_clout_in_government
+				}
+			}
+			add = 30
+		}
+	}
+}
+
+# Japan
+
+cwp_jap_reform_campaign_button = {
+	name = "cwp_jap_reform_campaign_button"
+	desc = "cwp_jap_reform_campaign_button_desc"
+
+	visible = { always = yes }
+
+	possible = {
+		custom_tooltip = {
+			text = cwp_iq_campaign_cap_tt
+			OR = {
+				NOT = { has_variable = cwp_jap_reform_campaign_var }
+				var:cwp_jap_reform_campaign_var < 15
+			}
+		}
+	}
+
+	effect = {
+		if = {
+			limit = { NOT = { has_variable = cwp_jap_reform_campaign_var } }
+			set_variable = { name = cwp_jap_reform_campaign_var value = 0 }
+		}
+		change_variable = { name = cwp_jap_reform_campaign_var add = 5 }
+		custom_tooltip = cwp_jap_reform_campaign_tt
+		ig:ig_landowners ?= {
+			add_modifier = {
+				name = cwp_iq_campaigned_against
+				years = 1
+			}
+		}
+	}
+
+	cooldown = { months = 3 }
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = {
+				ig:ig_intelligentsia ?= { is_in_government = yes }
+			}
+			add = 15
+		}
+	}
+}
+
+# The cabinet's own, conservative revision of the Meiji constitution (the Matsumoto draft, February 1946).
+cwp_jap_submit_government_draft_button = {
+	name = "cwp_jap_submit_government_draft_button"
+	desc = "cwp_jap_submit_government_draft_button_desc"
+
+	visible = {
+		NOT = { has_variable = cwp_jap_draft_pending_var }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = cwp_iq_campaign_time_tt
+			scope:journal_entry = { journal_entry_age >= 60 }
+		}
+	}
+
+	effect = {
+		set_variable = cwp_jap_draft_pending_var
+		trigger_event = { id = cwp_jap_constitution.2 days = 14 popup = yes }
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = { var:cwp_jap_reform_current_var < 60 }
+			add = 10
+		}
+	}
+}
+
+# A democratic draft written by the Japanese themselves, once reformers are strong enough to carry it.
+cwp_jap_adopt_own_draft_button = {
+	name = "cwp_jap_adopt_own_draft_button"
+	desc = "cwp_jap_adopt_own_draft_button_desc"
+
+	visible = {
+		NOT = { has_variable = cwp_jap_draft_pending_var }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = cwp_jap_reform_majority_tt
+			var:cwp_jap_reform_current_var >= 60
+		}
+	}
+
+	effect = {
+		set_variable = cwp_jap_draft_pending_var
+		trigger_event = { id = cwp_jap_constitution.4 popup = yes }
+	}
+
+	ai_chance = {
+		value = 50
+	}
+}

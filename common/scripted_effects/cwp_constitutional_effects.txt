@@ -1,0 +1,112 @@
+﻿# Cold War Project: constitutional transitions.
+
+# Abolish the monarchy after a referendum or a forced abdication. $LAW$ = the governance law that replaces it.
+cwp_iq_proclaim_republic = {
+	ruler ?= { save_scope_as = cwp_iq_old_monarch }
+	activate_law = law_type:$LAW$
+	set_variable = cwp_iq_settled_var
+	add_modifier = {
+		name = cwp_iq_republic_proclaimed
+		years = 5
+	}
+	every_interest_group = {
+		limit = {
+			law_stance = {
+				law = law_type:law_monarchy
+				value >= approve
+			}
+		}
+		add_modifier = {
+			name = cwp_iq_lost_the_referendum
+			years = 2
+		}
+	}
+	if = {
+		limit = {
+			exists = scope:cwp_iq_old_monarch
+			scope:cwp_iq_old_monarch = { is_ruler_of_own_country = no }
+		}
+		scope:cwp_iq_old_monarch = { exile_character = yes }
+	}
+}
+
+# The crown survives a referendum.
+cwp_iq_keep_crown = {
+	set_variable = cwp_iq_settled_var
+	add_modifier = {
+		name = cwp_iq_crown_confirmed
+		years = 5
+	}
+	every_interest_group = {
+		limit = {
+			cwp_iq_ig_is_republican = yes
+		}
+		add_modifier = {
+			name = cwp_iq_lost_the_referendum
+			years = 2
+		}
+	}
+}
+
+cwp_iq_cleanup = {
+	remove_variable = cwp_iq_vote_current_var
+	remove_variable = cwp_iq_crown_record_var
+	remove_variable = cwp_iq_campaign_var
+	remove_variable = cwp_iq_swing_var
+	remove_variable = cwp_iq_vote_pending_var
+	remove_variable = cwp_iq_heir_used_var
+}
+
+cwp_jap_constitution_cleanup = {
+	remove_variable = cwp_jap_reform_current_var
+	remove_variable = cwp_jap_reform_campaign_var
+	remove_variable = cwp_jap_draft_pending_var
+}
+
+# Adopt the democratic constitution. $ARTICLE_9$ = cwp_amendment_article_9 or cwp_amendment_article_9_ashida.
+cwp_jap_adopt_constitution = {
+	set_variable = cwp_jap_constitution_settled_var
+	set_variable = cwp_jap_new_constitution_var
+	active_law:lawgroup_governance_principles ?= {
+		add_amendment = {
+			type = cwp_amendment_symbol_emperor
+			sponsor = PREV.ig:ig_intelligentsia
+		}
+	}
+	active_law:lawgroup_army_model ?= {
+		add_amendment = {
+			type = $ARTICLE_9$
+			sponsor = PREV.ig:ig_intelligentsia
+		}
+	}
+	add_modifier = {
+		name = cwp_jap_new_constitution
+		years = 5
+	}
+}
+
+# After any referendum: a narrow result leaves a doubt; a rigged one costs legitimacy and Western goodwill.
+cwp_iq_result_aftermath = {
+	if = {
+		limit = {
+			NOT = { has_variable = cwp_iq_rigged_var }
+			var:cwp_iq_result_var > 46
+			var:cwp_iq_result_var < 54
+		}
+		add_modifier = {
+			name = cwp_iq_contested_result
+			years = 2
+		}
+	}
+	if = {
+		limit = { has_variable = cwp_iq_rigged_var }
+		add_modifier = {
+			name = cwp_iq_rigged_referendum
+			years = 5
+		}
+		c:USA ?= { change_relations = { country = root value = -15 } }
+		c:GBR ?= { change_relations = { country = root value = -15 } }
+	}
+	remove_variable = cwp_iq_rigged_var
+	remove_variable = cwp_iq_result_var
+}

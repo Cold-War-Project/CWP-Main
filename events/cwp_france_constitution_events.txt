@@ -1,0 +1,106 @@
+﻿namespace = cwp_fra_constitution
+
+cwp_fra_constitution.1 = {
+	type = country_event
+	placement = root
+
+	title = cwp_fra_constitution.1.t
+	desc = cwp_fra_constitution.1.d
+	flavor = cwp_fra_constitution.1.f
+
+	event_image = { video = "unspecific_politicians_arguing" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_scales.dds"
+
+	duration = 3
+
+	option = {
+		name = cwp_fra_constitution.1.a
+		default_option = yes
+	}
+}
+
+# The draft goes to the people.
+cwp_fra_constitution.2 = {
+	type = country_event
+	placement = root
+
+	title = cwp_fra_constitution.2.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = cwp_fra_constitution.2.d.yes
+				trigger = { var:cwp_fra_result_var > 50 }
+			}
+			triggered_desc = {
+				desc = cwp_fra_constitution.2.d.no_again
+				trigger = { var:cwp_fra_round_var < 3 }
+			}
+			desc = cwp_fra_constitution.2.d.no_final
+		}
+	}
+	flavor = cwp_fra_constitution.2.f
+
+	event_image = { video = "southamerica_election" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_election.dds"
+
+	duration = 3
+
+	trigger = {
+		has_journal_entry = je_cwp_fra_constituent_assembly
+	}
+
+	immediate = {
+		random_list = {
+			20 = { set_variable = { name = cwp_fra_swing_var value = -6 } }
+			20 = { set_variable = { name = cwp_fra_swing_var value = -3 } }
+			20 = { set_variable = { name = cwp_fra_swing_var value = 0 } }
+			20 = { set_variable = { name = cwp_fra_swing_var value = 3 } }
+			20 = { set_variable = { name = cwp_fra_swing_var value = 6 } }
+		}
+		set_variable = { name = cwp_fra_result_var value = cwp_fra_counted_result }
+	}
+
+	option = { # Approved
+		name = cwp_fra_constitution.2.a
+		trigger = { var:cwp_fra_result_var > 50 }
+		default_option = yes
+		cwp_fra_adopt_constitution = yes
+	}
+
+	option = { # Rejected: elect a second constituent assembly
+		name = cwp_fra_constitution.2.b
+		trigger = {
+			NOT = { var:cwp_fra_result_var > 50 }
+			var:cwp_fra_round_var < 3
+		}
+		default_option = yes
+		change_variable = { name = cwp_fra_round_var add = 1 }
+		if = {
+			limit = { NOT = { has_variable = cwp_fra_compromise_var } }
+			set_variable = { name = cwp_fra_compromise_var value = 0 }
+		}
+		change_variable = { name = cwp_fra_compromise_var add = 6 }
+		custom_tooltip = cwp_fra_new_assembly_tt
+		remove_variable = cwp_fra_vote_pending_var
+		remove_variable = cwp_fra_council_conceded_var
+		je:je_cwp_fra_constituent_assembly ?= {
+			set_bar_progress = { value = 20 name = cwp_fra_assembly_bar }
+		}
+	}
+
+	option = { # Rejected a third time: the provisional order stays
+		name = cwp_fra_constitution.2.c
+		trigger = {
+			NOT = { var:cwp_fra_result_var > 50 }
+			var:cwp_fra_round_var >= 3
+		}
+		default_option = yes
+		set_variable = cwp_fra_constitution_settled_var
+		add_modifier = {
+			name = cwp_iq_contested_result
+			years = 5
+		}
+	}
+}
