@@ -157,6 +157,7 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
             "money": fnum(budget, "money", 2),
             "debt": fnum(budget, "principal", 2),
             "credit": fnum(budget, "credit", 2),
+            "investment_pool": fnum(budget, "investment_pool", 2),
             "in_default": field(body, "in_default") is not None,
             "last_bankruptcy": field(body, "last_bankruptcy_date"),
             "weekly_income": sum(float(x.split("=")[-1]) for x in wi.group(1).split()) if wi else 0.0,

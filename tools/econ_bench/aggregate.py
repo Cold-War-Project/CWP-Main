@@ -53,6 +53,7 @@ def entity_view(countries: dict, entity: str):
         "sol": sum(s * c["population"] for s, c in zip(sol, cs)) / pop if sol and pop else None,
         "debt": sum(c["debt"] for c in cs), "credit": sum(c["credit"] for c in cs),
         "money": sum(c["money"] for c in cs),
+        "investment_pool_share": sum(c.get("investment_pool", 0) for c in cs) / gdp if gdp else 0,
         "debt_ratio": (sum(c["debt"] for c in cs) / sum(c["credit"] for c in cs)) if sum(c["credit"] for c in cs) else 0,
         "in_default": any(c["in_default"] for c in cs),
         "bankruptcies": sorted({c["last_bankruptcy"] for c in cs if c["last_bankruptcy"]}),
@@ -109,7 +110,7 @@ def summary(vals):
 
 
 METRICS = ["gdp", "population", "gdppc", "sol", "debt_ratio", "military_share",
-           "gdp_vs_usa", "gdppc_vs_usa", "growth_since_1950", "primary_share", "secondary_share", "tertiary_share"]
+           "gdp_vs_usa", "gdppc_vs_usa", "growth_since_1950", "primary_share", "secondary_share", "tertiary_share", "investment_pool_share"]
 
 
 def aggregate(series: dict) -> dict:
