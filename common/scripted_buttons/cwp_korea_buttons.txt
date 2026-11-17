@@ -1,0 +1,600 @@
+﻿# Cold War Project: buttons for je_cwp_divided_peninsula. Root = the country pressing; scope:journal_entry = the situation.
+# AI weights lean towards the historical path; none of them makes it certain.
+
+#################### Joint Commission (USA, RUS) ####################
+
+cwp_korea_commission_concessions_button = {
+	name = "cwp_korea_commission_concessions_button"
+	desc = "cwp_korea_commission_concessions_button_desc"
+
+	visible = {
+		OR = {
+			c:USA ?= this
+			c:RUS ?= this
+		}
+		cwp_korea_commission_active = yes
+	}
+
+	possible = {
+		NOT = { has_modifier = cwp_korea_commission_concessions }
+	}
+
+	effect = {
+		add_modifier = { name = cwp_korea_commission_concessions days = 365 }
+	}
+
+	ai_chance = {
+		value = 3
+		if = {
+			limit = {
+				c:USA ?= this
+				exists = c:RUS
+				"relations(c:RUS)" >= 0
+			}
+			add = 10
+		}
+		if = {
+			limit = {
+				c:RUS ?= this
+				exists = c:USA
+				"relations(c:USA)" >= 0
+			}
+			add = 10
+		}
+	}
+}
+
+cwp_korea_un_referral_button = {
+	name = "cwp_korea_un_referral_button"
+	desc = "cwp_korea_un_referral_button_desc"
+
+	visible = {
+		c:USA ?= this
+		cwp_korea_commission_active = yes
+	}
+
+	possible = {
+		NOT = { has_global_variable = cwp_korea_un_referral }
+		custom_tooltip = {
+			text = cwp_korea_commission_deadlocked_tt
+			scope:journal_entry ?= {
+				"scripted_bar_progress(cwp_korea_commission_bar)" < 25
+			}
+		}
+	}
+
+	effect = {
+		set_global_variable = cwp_korea_un_referral
+		custom_tooltip = cwp_korea_un_referral_tt
+		c:RUS ?= {
+			change_relations = { country = root value = -10 }
+		}
+	}
+
+	ai_chance = {
+		value = 20
+	}
+}
+
+cwp_korea_peoples_committees_button = {
+	name = "cwp_korea_peoples_committees_button"
+	desc = "cwp_korea_peoples_committees_button_desc"
+
+	visible = {
+		c:RUS ?= this
+		cwp_korea_commission_active = yes
+	}
+
+	possible = {
+		exists = c:NRK
+		NOT = { has_modifier = cwp_korea_peoples_committees }
+	}
+
+	effect = {
+		add_modifier = { name = cwp_korea_peoples_committees days = 730 }
+		c:NRK ?= {
+			add_modifier = { name = cwp_korea_soviet_arms days = 730 }
+		}
+	}
+
+	ai_chance = {
+		value = 15
+	}
+}
+
+#################### Two states ####################
+
+cwp_korea_proclaim_rok_button = {
+	name = "cwp_korea_proclaim_rok_button"
+	desc = "cwp_korea_proclaim_rok_button_desc"
+
+	visible = {
+		c:USA ?= this
+		has_global_variable = cwp_korea_partition
+		c:STK ?= { is_subject_of = root }
+	}
+
+	possible = {
+		NOT = { has_global_variable = cwp_korea_war }
+	}
+
+	effect = {
+		c:STK = {
+			make_independent = yes
+			if = {
+				limit = { has_global_variable = cwp_korea_un_referral }
+				add_modifier = { name = cwp_korea_un_recognition days = long_modifier_time }
+			}
+		}
+		if = {
+			limit = { NOT = { has_global_variable = cwp_korea_us_withdrawn } }
+			add_modifier = { name = cwp_korea_us_garrison }
+		}
+	}
+
+	ai_chance = {
+		value = 50
+	}
+}
+
+cwp_korea_proclaim_dprk_button = {
+	name = "cwp_korea_proclaim_dprk_button"
+	desc = "cwp_korea_proclaim_dprk_button_desc"
+
+	visible = {
+		c:RUS ?= this
+		has_global_variable = cwp_korea_partition
+		c:NRK ?= { is_subject_of = root }
+	}
+
+	possible = {
+		NOT = { has_global_variable = cwp_korea_war }
+	}
+
+	effect = {
+		c:NRK = {
+			make_independent = yes
+		}
+		if = {
+			limit = { NOT = { has_global_variable = cwp_korea_soviet_withdrawn } }
+			add_modifier = { name = cwp_korea_soviet_garrison }
+		}
+	}
+
+	ai_chance = {
+		value = 5
+		# The Soviets proclaimed their state in answer to the southern one
+		if = {
+			limit = { c:STK ?= { is_subject = no } }
+			add = 50
+		}
+	}
+}
+
+cwp_korea_us_withdrawal_button = {
+	name = "cwp_korea_us_withdrawal_button"
+	desc = "cwp_korea_us_withdrawal_button_desc"
+
+	visible = {
+		c:USA ?= this
+		NOT = { has_global_variable = cwp_korea_us_withdrawn }
+	}
+
+	possible = {
+		c:STK ?= { is_subject = no }
+		NOT = { has_global_variable = cwp_korea_war }
+	}
+
+	effect = {
+		set_global_variable = cwp_korea_us_withdrawn
+		remove_modifier = cwp_korea_us_garrison
+		custom_tooltip = cwp_korea_us_withdrawal_tt
+	}
+
+	ai_chance = {
+		value = 10
+		# Washington saw Korea as outside its defence perimeter and needed the divisions elsewhere
+		if = {
+			limit = { has_global_variable = cwp_korea_soviet_withdrawn }
+			add = 15
+		}
+		if = {
+			limit = {
+				scope:journal_entry ?= {
+					"scripted_bar_progress(cwp_korea_balance_bar)" >= 35
+				}
+			}
+			multiply = 0.5
+		}
+	}
+}
+
+cwp_korea_soviet_withdrawal_button = {
+	name = "cwp_korea_soviet_withdrawal_button"
+	desc = "cwp_korea_soviet_withdrawal_button_desc"
+
+	visible = {
+		c:RUS ?= this
+		NOT = { has_global_variable = cwp_korea_soviet_withdrawn }
+	}
+
+	possible = {
+		c:NRK ?= { is_subject = no }
+		NOT = { has_global_variable = cwp_korea_war }
+	}
+
+	effect = {
+		set_global_variable = cwp_korea_soviet_withdrawn
+		remove_modifier = cwp_korea_soviet_garrison
+		custom_tooltip = cwp_korea_soviet_withdrawal_tt
+	}
+
+	ai_chance = {
+		value = 15
+		# Withdrawing first put the burden on the Americans to follow
+		if = {
+			limit = { NOT = { has_global_variable = cwp_korea_us_withdrawn } }
+			add = 15
+		}
+	}
+}
+
+cwp_korea_us_aid_button = {
+	name = "cwp_korea_us_aid_button"
+	desc = "cwp_korea_us_aid_button_desc"
+
+	visible = {
+		c:USA ?= this
+		exists = c:STK
+		NOT = { has_global_variable = cwp_korea_war }
+	}
+
+	possible = {
+		c:STK ?= { NOT = { has_modifier = cwp_korea_us_aid } }
+		NOT = { has_modifier = cwp_korea_us_aid_cost }
+	}
+
+	effect = {
+		c:STK = {
+			add_modifier = { name = cwp_korea_us_aid days = 730 }
+		}
+		add_modifier = { name = cwp_korea_us_aid_cost days = 730 }
+	}
+
+	ai_chance = {
+		value = 10
+		if = {
+			limit = {
+				scope:journal_entry ?= {
+					"scripted_bar_progress(cwp_korea_balance_bar)" >= 20
+				}
+			}
+			add = 10
+		}
+	}
+}
+
+cwp_korea_soviet_arms_button = {
+	name = "cwp_korea_soviet_arms_button"
+	desc = "cwp_korea_soviet_arms_button_desc"
+
+	visible = {
+		c:RUS ?= this
+		exists = c:NRK
+	}
+
+	possible = {
+		c:NRK ?= { NOT = { has_modifier = cwp_korea_soviet_arms } }
+		NOT = { has_modifier = cwp_korea_soviet_arms_cost }
+	}
+
+	effect = {
+		c:NRK = {
+			add_modifier = { name = cwp_korea_soviet_arms days = 730 }
+		}
+		add_modifier = { name = cwp_korea_soviet_arms_cost days = 730 }
+	}
+
+	ai_chance = {
+		value = 25
+	}
+}
+
+cwp_korea_returned_divisions_button = {
+	name = "cwp_korea_returned_divisions_button"
+	desc = "cwp_korea_returned_divisions_button_desc"
+
+	visible = {
+		c:PRC ?= this
+		exists = c:NRK
+		NOT = { has_global_variable = cwp_korea_prc_divisions }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = cwp_korea_prc_civil_war_over_tt
+			NOT = { has_war_with = c:ROC }
+		}
+		c:NRK ?= { is_subject = no }
+	}
+
+	effect = {
+		set_global_variable = cwp_korea_prc_divisions
+		c:NRK = {
+			add_modifier = { name = cwp_korea_returned_divisions days = 1095 }
+			change_relations = { country = root value = 20 }
+		}
+	}
+
+	ai_chance = {
+		value = 30
+	}
+}
+
+cwp_korea_land_reform_button = {
+	name = "cwp_korea_land_reform_button"
+	desc = "cwp_korea_land_reform_button_desc"
+
+	visible = {
+		c:STK ?= this
+		is_subject = no
+		NOT = { has_modifier = cwp_korea_land_reform }
+	}
+
+	possible = {
+		NOT = { has_global_variable = cwp_korea_war }
+	}
+
+	effect = {
+		add_modifier = { name = cwp_korea_land_reform days = long_modifier_time }
+		remove_modifier = cwp_korea_southern_insurgency
+		ig:ig_landowners ?= {
+			add_modifier = { name = cwp_korea_landowners_dispossessed days = normal_modifier_time }
+		}
+	}
+
+	ai_chance = {
+		value = 5
+		if = {
+			limit = { has_modifier = cwp_korea_southern_insurgency }
+			add = 20
+		}
+	}
+}
+
+cwp_korea_security_council_boycott_button = {
+	name = "cwp_korea_security_council_boycott_button"
+	desc = "cwp_korea_security_council_boycott_button_desc"
+
+	visible = {
+		c:RUS ?= this
+		NOT = { has_global_variable = cwp_korea_sc_boycott }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = cwp_korea_china_seat_dispute_tt
+			exists = c:PRC
+			exists = c:ROC
+			c:PRC = { NOT = { has_war_with = c:ROC } }
+		}
+	}
+
+	effect = {
+		set_global_variable = cwp_korea_sc_boycott
+		add_modifier = { name = cwp_korea_security_council_boycott }
+		custom_tooltip = cwp_korea_sc_boycott_tt
+	}
+
+	ai_chance = {
+		value = 20
+	}
+}
+
+cwp_korea_end_boycott_button = {
+	name = "cwp_korea_end_boycott_button"
+	desc = "cwp_korea_end_boycott_button_desc"
+
+	visible = {
+		c:RUS ?= this
+		has_global_variable = cwp_korea_sc_boycott
+	}
+
+	possible = {
+		always = yes
+	}
+
+	effect = {
+		remove_global_variable = cwp_korea_sc_boycott
+		remove_modifier = cwp_korea_security_council_boycott
+	}
+
+	ai_chance = {
+		value = 0
+		# Back in the chamber once the UN had already acted
+		if = {
+			limit = { has_global_variable = cwp_korea_un_mandate }
+			add = 20
+		}
+	}
+}
+
+cwp_korea_volunteers_pledge_button = {
+	name = "cwp_korea_volunteers_pledge_button"
+	desc = "cwp_korea_volunteers_pledge_button_desc"
+
+	visible = {
+		c:PRC ?= this
+		NOT = { has_global_variable = cwp_korea_prc_pledge }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = cwp_korea_prc_civil_war_over_tt
+			NOT = { has_war_with = c:ROC }
+		}
+		c:NRK ?= { is_subject = no }
+	}
+
+	effect = {
+		set_global_variable = cwp_korea_prc_pledge
+		custom_tooltip = cwp_korea_volunteers_pledge_tt
+	}
+
+	ai_chance = {
+		value = 5
+		if = {
+			limit = {
+				has_global_variable = cwp_korea_war
+				c:USA ?= { has_variable = cwp_korea_participant }
+			}
+			add = 50
+		}
+	}
+}
+
+cwp_korea_greenlight_button = {
+	name = "cwp_korea_greenlight_button"
+	desc = "cwp_korea_greenlight_button_desc"
+
+	visible = {
+		c:RUS ?= this
+		NOT = { has_global_variable = cwp_korea_greenlight }
+		NOT = { has_global_variable = cwp_korea_war }
+	}
+
+	possible = {
+		cwp_korea_both_sovereign = yes
+		custom_tooltip = {
+			text = cwp_korea_us_troops_gone_tt
+			has_global_variable = cwp_korea_us_withdrawn
+		}
+		custom_tooltip = {
+			text = cwp_korea_north_advantage_tt
+			scope:journal_entry ?= {
+				"scripted_bar_progress(cwp_korea_balance_bar)" >= 25
+			}
+		}
+	}
+
+	effect = {
+		set_global_variable = cwp_korea_greenlight
+		custom_tooltip = cwp_korea_greenlight_tt
+	}
+
+	ai_chance = {
+		value = 5
+		if = {
+			limit = {
+				scope:journal_entry ?= {
+					"scripted_bar_progress(cwp_korea_balance_bar)" >= 35
+				}
+			}
+			add = 15
+		}
+		# A communist China on the mainland made the gamble look safer
+		if = {
+			limit = {
+				exists = c:PRC
+				c:PRC = { NOT = { has_war_with = c:ROC } }
+			}
+			add = 15
+		}
+		if = {
+			limit = {
+				c:USA ?= {
+					any_scope_treaty = {
+						binds = c:STK
+						any_scope_article = {
+							OR = {
+								has_type = defensive_pact
+								has_type = alliance
+							}
+						}
+					}
+				}
+			}
+			multiply = 0
+		}
+	}
+}
+
+cwp_korea_invasion_button = {
+	name = "cwp_korea_invasion_button"
+	desc = "cwp_korea_invasion_button_desc"
+
+	visible = {
+		c:NRK ?= this
+		NOT = { has_global_variable = cwp_korea_war }
+	}
+
+	possible = {
+		cwp_korea_both_sovereign = yes
+		is_at_war = no
+		custom_tooltip = {
+			text = cwp_korea_patron_consent_tt
+			OR = {
+				has_global_variable = cwp_korea_greenlight
+				NOT = { exists = c:RUS }
+			}
+		}
+		custom_tooltip = {
+			text = cwp_korea_north_advantage_tt
+			scope:journal_entry ?= {
+				"scripted_bar_progress(cwp_korea_balance_bar)" >= 25
+			}
+		}
+	}
+
+	effect = {
+		cwp_korea_start_war_effect = { TARGET = c:STK }
+		c:USA ?= { trigger_event = { id = cwp_korea.20 popup = yes } }
+		c:PRC ?= { trigger_event = { id = cwp_korea.21 popup = yes } }
+	}
+
+	ai_chance = {
+		value = 30
+	}
+}
+
+cwp_korea_march_north_button = {
+	name = "cwp_korea_march_north_button"
+	desc = "cwp_korea_march_north_button_desc"
+
+	visible = {
+		c:STK ?= this
+		NOT = { has_global_variable = cwp_korea_war }
+	}
+
+	possible = {
+		cwp_korea_both_sovereign = yes
+		is_at_war = no
+		custom_tooltip = {
+			text = cwp_korea_soviet_troops_gone_tt
+			has_global_variable = cwp_korea_soviet_withdrawn
+		}
+		custom_tooltip = {
+			text = cwp_korea_south_advantage_tt
+			scope:journal_entry ?= {
+				"scripted_bar_progress(cwp_korea_balance_bar)" <= -25
+			}
+		}
+	}
+
+	effect = {
+		cwp_korea_start_war_effect = { TARGET = c:NRK }
+		c:PRC ?= { trigger_event = { id = cwp_korea.21 popup = yes } }
+	}
+
+	ai_chance = {
+		value = 2
+		if = {
+			limit = {
+				scope:journal_entry ?= {
+					"scripted_bar_progress(cwp_korea_balance_bar)" <= -40
+				}
+			}
+			add = 10
+		}
+	}
+}
