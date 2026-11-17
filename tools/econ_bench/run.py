@@ -23,6 +23,7 @@ from pathlib import Path
 
 from .save import extract, SaveError
 
+MIN_PLAY = 30  # minutes a benchmark run plays before yielding to another benchmark run
 USER = Path.home() / ".local/share/Paradox Interactive/Victoria 3"
 SAVES = USER / "save games"
 FORGE = Path(os.environ.get("FORGE", Path.home() / "forge"))
@@ -206,9 +207,14 @@ def one_run(worktree: Path, out: Path, end_year: int, every: int, max_minutes: f
                     if last_year is not None and last_year >= end_year:
                         status = "done"
                         break
-                    if yield_to_queue and queue_waiting():
+                    waiting = queue_waiting()
+                    # Yield at once to development work. Two benchmark runners yielding to each other
+                    # after one sample each would make no progress (seen 2026-11-17), so another
+                    # econ_bench run only gets the game after this one has played MIN_PLAY minutes.
+                    dev = [w for w in waiting if "econ_bench" not in w]
+                    if yield_to_queue and (dev or (waiting and (time.time() - started) / 60 >= MIN_PLAY)):
                         status = "yielded"
-                        log(out, f"yielding the game to: {queue_waiting()[0]}")
+                        log(out, f"yielding the game to: {(dev or waiting)[0]}")
                         break
             if (time.time() - t0) / 60 > max_minutes:
                 status = "time_limit"
