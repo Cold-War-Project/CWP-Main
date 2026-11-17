@@ -72,7 +72,7 @@ cmd_attribute() {
   local log="${1:-}"
   if [[ -z "$log" ]]; then log=$(mktemp); cwp-vic errors > "$log" 2>/dev/null; fi
   python3 - "$STATE/prs.tsv" "$log" <<'PY'
-import re, sys, collections
+import re, sys, collections, os
 import subprocess, os
 prs = [l.rstrip("\n").split("\t") for l in open(sys.argv[1]) if l.strip()]
 repo = os.environ.get("CWP_REPO", os.path.expanduser("~/forge/CWP-Main"))
@@ -98,6 +98,13 @@ for key in sorted(by, key=lambda k: -len(by[k])):
     print(f"== {key}: {len(lines)} lines")
     for msg, c in collections.Counter(re.sub(r"^\[[0-9:]+\]", "", l)[:180] for l in lines).most_common(5):
         print(f"   {c:5d}  {msg}")
+# Full lines per PR, for the PR threads to read without their own load test.
+with open(os.path.expanduser("~/forge/integration-errors-by-pr.txt"), "w") as out:
+    for key in sorted(by, key=lambda k: -len(by[k])):
+        out.write(f"== {key}: {len(by[key])} lines\n")
+        out.writelines(l + "\n" for l in by[key])
+        out.write("\n")
+print("full lines per PR: ~/forge/integration-errors-by-pr.txt")
 PY
 }
 
