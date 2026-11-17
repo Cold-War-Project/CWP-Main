@@ -5,7 +5,9 @@
 # Every game session therefore holds ~/forge/.vic3.lock from launch until the game is stopped.
 #
 #   cwp-vic status                  who holds the lock, which worktree is linked, running games
-#   cwp-vic lock [--wait S] [NOTE]  take the lock (waits up to S seconds, default 1800); NOTE says who/why
+#   cwp-vic lock [--wait S] [--priority] [NOTE]  take the lock, first come first served (waits up to S s,
+#                                   default 1800; --priority jumps normal requests, coordinator-approved only)
+#   cwp-vic queue                   list waiting requests in the order they will be served
 #   cwp-vic link <worktree>         enable that worktree as the only mod (content_load.json)  (needs lock)
 #   cwp-vic vanilla                 disable the mod for a vanilla baseline run               (needs lock)
 #   cwp-vic launch [game args]      clear error.log and start the game in debug mode         (needs lock)
@@ -56,26 +58,54 @@ cmd_status() {
   nvidia-smi --query-gpu=memory.used,memory.total --format=csv,noheader 2>/dev/null | sed 's/^/gpu:     /'
 }
 
+QUEUE="$FORGE/.vic3.queue"            # FIFO tickets: <order>-<pid>, content = note; dead pids are dropped
+
+queue_clean() { local t; for t in "$QUEUE"/*; do [[ -e "$t" ]] || continue
+  kill -0 "${t##*-}" 2>/dev/null || rm -f "$t"; done; }
+queue_first() { queue_clean; ls "$QUEUE" 2>/dev/null | sort | head -1; }
+
 cmd_lock() {
-  local wait=1800
-  [[ "${1:-}" == "--wait" ]] && { wait="$2"; shift 2; }
+  local wait=1800 prio=5
+  while [[ "${1:-}" == --* ]]; do
+    case "$1" in --wait) wait="$2"; shift 2 ;; --priority) prio=1; shift ;; *) die "unknown option $1" ;; esac
+  done
   local note="${*:-${CWP_AGENT:-$(basename "$PWD")}}"
   holder_alive && echo "lock is held by: $(cat "$OWNER" 2>/dev/null); queueing behind it"
-  touch "$LOCK"
+  touch "$LOCK"; mkdir -p "$QUEUE"
+  # Tickets are served oldest first (--priority, for the coordinator's urgent work, goes ahead of normal ones).
+  local ticket; ticket="$prio$(date +%s%N)-$$"
+  printf '%s (queued %s)\n' "$note" "$(date '+%F %T %Z')" > "$QUEUE/$ticket"
+  child="" taken=0   # globals on purpose: the EXIT trap runs after this function returns
+  # If this wrapper is killed or times out, take our ticket and our not-yet-successful taker with us
+  # (the taker is a setsid group leader, so kill its whole group, including the flock it runs).
+  trap 'rm -f "$QUEUE/'"$ticket"'"; [[ $taken == 0 && -n "$child" ]] && kill -- -"$child" 2>/dev/null' EXIT
+  trap 'exit 1' INT TERM HUP
   local stamp; stamp="$note (since $(date '+%F %T %Z'), req $$-$RANDOM)"
-  echo "waiting up to ${wait}s for $LOCK ..."
-  # The child takes the flock on fd 9, then records itself as holder and becomes a sleep that keeps
-  # fd 9 open. Holder files are only written by whoever has the flock, so queued callers never clobber them.
-  setsid bash -c 'exec 9>>"$1"; flock -w "$2" 9 || exit 1; echo $$ > "$3"; printf "%s\n" "$5" > "$4"; exec sleep "$6"' \
-    _ "$LOCK" "$wait" "$HOLDER" "$OWNER" "$stamp" "$MAX_HOLD" </dev/null >/dev/null 2>&1 &
-  local child=$!
-  for _ in $(seq 1 "$((wait + 5))"); do
-    [[ "$(cat "$OWNER" 2>/dev/null)" == "$stamp" ]] && holder_alive && { echo "lock taken: $note"; return 0; }
-    kill -0 "$child" 2>/dev/null || break
+  local deadline=$((SECONDS + wait))
+  echo "queued (position $(( $(ls "$QUEUE" | sort | grep -n "^$ticket$" | cut -d: -f1) ))); waiting up to ${wait}s ..."
+  while (( SECONDS < deadline )); do
+    if [[ -z "$child" ]]; then
+      # Spawn the taker only when we are first in line AND the lock is free right now, so a later
+      # higher-priority ticket is not overtaken by a taker already blocked inside flock.
+      if [[ "$(queue_first)" == "$ticket" ]] && ! holder_alive && flock -n "$LOCK" true 2>/dev/null; then
+        # Our turn: the child takes the flock on fd 9, records itself as holder and becomes a sleep that keeps
+        # fd 9 open. Holder files are only written by whoever has the flock, so waiters never clobber them.
+        setsid bash -c 'exec 9>>"$1"; flock -w "$2" 9 || exit 1; echo $$ > "$3"; printf "%s\n" "$5" > "$4"; exec sleep "$6"' \
+          _ "$LOCK" "$((deadline - SECONDS + 1))" "$HOLDER" "$OWNER" "$stamp" "$MAX_HOLD" </dev/null >/dev/null 2>&1 &
+        child=$!
+      fi
+    else
+      if [[ "$(cat "$OWNER" 2>/dev/null)" == "$stamp" ]] && holder_alive; then
+        taken=1; rm -f "$QUEUE/$ticket"; echo "lock taken: $note"; return 0
+      fi
+      kill -0 "$child" 2>/dev/null || break
+    fi
     sleep 1
   done
-  pkill -f "req $$-" 2>/dev/null; kill "$child" 2>/dev/null; die "could not get the lock within ${wait}s (held by: $(cat "$OWNER" 2>/dev/null))"
+  die "could not get the lock within ${wait}s (held by: $(cat "$OWNER" 2>/dev/null))"
 }
+
+cmd_queue() { queue_clean; local t; for t in $(ls "$QUEUE" 2>/dev/null | sort); do echo "  $t  $(cat "$QUEUE/$t")"; done; }
 
 write_content_load() {   # $1 = mod path or empty for vanilla
   local mods='[]'
@@ -166,7 +196,8 @@ cmd_perf() {
 }
 
 case "${1:-status}" in
-  status)  cmd_status ;;
+  status)  cmd_status; echo "queue:"; cmd_queue ;;
+  queue)   cmd_queue ;;
   lock)    shift; cmd_lock "$@" ;;
   link)    shift; cmd_link "$@" ;;
   vanilla) cmd_vanilla ;;

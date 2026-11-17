@@ -32,6 +32,7 @@ Rules:
 
 - **Never write the mod path with a trailing slash.** With `"path": "/home/jack/forge/worktrees/x/"` the mod still mounts, but its `replace_paths` are silently ignored: vanilla files load beside the mod's and error.log fills with thousands of lines (2026-11-16: 11,602 lines with the slash, 18 without, same commit). `cwp-vic link` writes the path correctly, and the canary at the end of `cwp-vic errors` catches it.
 
+- Requests are served **first come, first served** (`cwp-vic queue` lists them). `--priority` jumps the normal line; use it only when the coordinator asks. Killing a waiting `cwp-vic lock` removes its place in line cleanly.
 - Hold the lock from `link` until the game is stopped and you have copied what you need out of the logs. The next launch clears them.
 - **Don't edit, commit, check out or rebase in the linked worktree while the game runs.** Debug mode hot-reloads changed script files, and the reload floods error.log with noise (one run went from 7 lines to 379). Work in another worktree, or stop the game first.
 - `cwp-vic vanilla` instead of `link` for a vanilla comparison run.
