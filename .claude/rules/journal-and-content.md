@@ -70,6 +70,7 @@ je_cwp_example = {
 }
 ```
 - Scopes: `root` = owning country (country context) or none (contextless); `scope:journal_entry`; `scope:target` when added with `add_journal_entry = { type = x target = <scope> }`. Contextless JEs use `should_be_involved`, `should_show_when_not_involved`, `immediate_all_involved`, `effect_all_involved`, `on_become_involved_after_activation`, `on_no_longer_involved`.
+- Contextless JEs (checked in game 2026-11-17, see `docs/agents/areas/intl-orgs.md`): a JE activates only when **both** `is_shown_when_inactive` and `possible` hold, so `is_shown_when_inactive = { always = no }` never activates. `should_be_involved` is read only at activation; add countries that qualify later (or that the JE's own `immediate` sets up) with `je:<key> ?= { add_involved_country = PREV }` from a country scope (`je:` needs one). Only involved countries can press the JE's buttons; the AI presses them, and takes decisions, through `ai_chance`.
 - `disable_evaluation = { }` permanently drops the JE for a country; use only cheap, permanent identity checks.
 - Variables set on the JE itself are read with `je:je_key ?= { has_variable = x }` or `scope:journal_entry`.
 - Map colouring (`map_color`, `map_color_second`, `map_tooltip`) and custom widgets (`widget = { gui = "gui/x.gui" name = "..." container = "custom_widget_container_1" }`) are optional; the full reference is vanilla `common/journal_entries/journal_entries.md`.
@@ -79,7 +80,7 @@ je_cwp_example = {
 
 ## Scripted buttons (`common/scripted_buttons`)
 
-`key = { name = "LOC" desc = "LOC_DESC" visible = { } possible = { } effect = { } ai_chance = { base = 0 modifier = { trigger = { } add = 5 } } selected = { } cooldown = { months = N } }`, optional `short_desc`, `icon`, `cost` (**display only**, the engine never deducts it: enforce in `possible` and `effect`), `tags = { }`, `autocomplete = yes` (runs by itself when visible and possible; guard with a variable set in `effect`). Attached to a JE with `scripted_button = key`. Country scope; `scope:journal_entry` available.
+`key = { name = "LOC" desc = "LOC_DESC" visible = { } possible = { } effect = { } ai_chance = { base = 0 modifier = { trigger = { } add = 5 } } selected = { } cooldown = { months = N } }`, optional `short_desc`, `icon`, `cost` (**display only**, the engine never deducts it: enforce in `possible` and `effect`), `tags = { }`, `autocomplete = yes` (runs by itself when visible and possible; guard with a variable set in `effect`). Attached to a JE with `scripted_button = key`. `ai_chance` must be script-value style (`value = 10  if = { limit = { } add = 5 }`); `base`/`modifier` is a parse error here. A button's `effect` is also evaluated for its tooltip, so it must not read a variable that only it sets. Country scope; `scope:journal_entry` available.
 
 ## Mod journal entries
 
