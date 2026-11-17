@@ -71,11 +71,38 @@ Qualitative checks, every sampled year:
 - **1970s to 1980s:** oil shocks and slower growth everywhere. Japan becomes the second economy of the West, and in some estimates passes the USSR by the late 1980s. Soviet growth slows to near stagnation.
 - **1980s:** China's growth begins after 1978. India grows slowly until the 1980s.
 
+## Geopolitics
+
+Jack, 2026-11-17: the median observer run should also be recognisably our history in geopolitics, not only in GDP. The checks are in `tools/econ_bench/geo_benchmarks.py`. Each is a state of the world that held in a window of years. The report gives the share of sampled years in which a run matched it, and names the thread that owns a gap. These are targets for mechanics to make likely. They are never dates to script.
+
+| Milestone | Held historically | Owner |
+|---|---|---|
+| A western bloc led by the USA, an eastern bloc led by the USSR | 1947 (Truman Doctrine, Cominform) to 1990 | events-logic, intl-orgs |
+| The USSR communist, the USA a pluralist democracy, no direct USA-USSR war | throughout | politics, military |
+| Two German states; the FRG sovereign from 1955 and democratic from 1949; the GDR communist | 1949 to 1990 | germany |
+| Two Korean states | 1948 to today | korea |
+| Communist government on the Chinese mainland, the ROC on Taiwan | from 1949 | china |
+| India independent (dominion 1947, republic 1950), Pakistan exists | from 1947 | decolonization, history |
+| Indonesia independent | from 1949 | decolonization |
+| A communist North Vietnam | from 1954 | decolonization |
+| Japan a pluralist democracy | from 1947 | politics, history |
+| Poland, Czechoslovakia, Hungary communist | 1948-49 to 1989 | politics (sovietization) |
+| Nuclear powers: USA 1945, USSR 1949, UK 1952, France 1960, China 1964 | | nuclear content (#818) |
+
+Counts over time:
+
+- **Sovereign states:** about 60 in 1946, 80 in 1955, 100 in 1960, 125 in 1970, 155 in 1980 and 160 in 1990. These are UN members plus the few non-members; the game counts every country that is not a subject.
+- **Communist states:** about 13 in 1950 (the USSR, eastern Europe, Mongolia, China, North Korea), 14 to 15 through the 1960s, 20 to 25 around 1980 (Indochina, Ethiopia, Angola, Mozambique, Afghanistan, South Yemen and others), falling after 1989.
+- **Nuclear powers:** 1 in 1946, 2 in 1950, 3 by 1953, 4 by 1960 and 5 by 1965.
+
+How the tool reads it: regime comes from the government type (communist, pluralist, autocratic, occupied). A subject is any puppet, dominion, protectorate, colony or occupation pact. Nuclear status is any country variable named `*nuclear*` (`cwp_nuclear_power_var` from the nuclear content). Bloc membership comes from the bloc join and leave dates; the save does not say which bloc a member belongs to, only who leads each bloc.
+
 ## Sources
 
 - Angus Maddison, *Contours of the World Economy, 1-2030 AD* (2007) and the Maddison historical statistics: GDP and GDP per capita in 1990 international dollars, anchor years 1950, 1973 and 1989 (via the Wikipedia tables "List of regions by past GDP (PPP)" and "... per capita"). Values for 1955, 1960, 1970 and 1980 are interpolated from the same series and are less certain.
 - Maddison Project Database 2020 (2011 international dollars) for the 1960 and 1973 per capita cross-check.
 - CIA, *A Comparison of Soviet and US Gross National Products, 1960-83* (1984), and the GAO review of CIA Soviet GNP estimates (NSIAD-91-274, 1991). These put the USSR at roughly half the USA in the 1970s, higher than Maddison; the USSR ranges span both.
+- UN membership by year (un.org), standard histories for the milestone dates.
 - OMB Historical Tables (national defense outlays as a share of GDP) for the USA; SIPRI and the CIA's Soviet defence estimates for the others.
 
 ## The tool: `tools/econ_bench`
