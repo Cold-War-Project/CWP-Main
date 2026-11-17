@@ -1,0 +1,117 @@
+﻿namespace = cwp_nf
+
+# The National Convention is elected.
+cwp_nf.1 = {
+	type = country_event
+	placement = root
+
+	title = cwp_nf.1.t
+	desc = cwp_nf.1.d
+	flavor = cwp_nf.1.f
+
+	event_image = { video = "asia_politician_parliament_motion" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_map.dds"
+
+	duration = 3
+
+	option = {
+		name = cwp_nf.1.a
+		default_option = yes
+	}
+}
+
+# The referendum.
+cwp_nf.2 = {
+	type = country_event
+	placement = root
+
+	title = cwp_nf.2.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = cwp_nf.2.d.confederation
+				trigger = { var:cwp_nf_result_var > 50 }
+			}
+			desc = cwp_nf.2.d.responsible
+		}
+	}
+	flavor = cwp_nf.2.f
+
+	event_image = { video = "southamerica_election" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_election.dds"
+
+	duration = 3
+
+	trigger = {
+		has_journal_entry = je_cwp_newfoundland_future
+	}
+
+	immediate = {
+		random_list = {
+			20 = { set_variable = { name = cwp_nf_swing_var value = -6 } }
+			20 = { set_variable = { name = cwp_nf_swing_var value = -3 } }
+			20 = { set_variable = { name = cwp_nf_swing_var value = 0 } }
+			20 = { set_variable = { name = cwp_nf_swing_var value = 3 } }
+			20 = { set_variable = { name = cwp_nf_swing_var value = 6 } }
+		}
+		set_variable = { name = cwp_nf_result_var value = cwp_nf_counted_result }
+		save_scope_as = cwp_nf_newfoundland
+	}
+
+	option = { # Confederation: Ottawa must agree the terms
+		name = cwp_nf.2.a
+		trigger = { var:cwp_nf_result_var > 50 }
+		default_option = yes
+		custom_tooltip = cwp_nf_terms_of_union_tt
+		c:CAN ?= {
+			trigger_event = { id = cwp_nf.3 days = 30 popup = yes }
+		}
+		set_variable = cwp_nf_settled_var
+	}
+
+	option = { # Responsible Government restored
+		name = cwp_nf.2.b
+		trigger = { NOT = { var:cwp_nf_result_var > 50 } }
+		default_option = yes
+		change_subject_type = subject_type_dominion
+		set_variable = cwp_nf_settled_var
+	}
+}
+
+# Canada: the Terms of Union. Root = CAN, scope:cwp_nf_newfoundland = NEW.
+cwp_nf.3 = {
+	type = country_event
+	placement = scope:cwp_nf_newfoundland.capital
+
+	title = cwp_nf.3.t
+	desc = cwp_nf.3.d
+	flavor = cwp_nf.3.f
+
+	event_image = { video = "unspecific_signed_contract" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_map.dds"
+
+	duration = 3
+
+	trigger = {
+		exists = scope:cwp_nf_newfoundland
+		scope:cwp_nf_newfoundland = { is_subject = yes }
+	}
+
+	option = { # Welcome the tenth province
+		name = cwp_nf.3.a
+		default_option = yes
+		annex_with_incorporation = scope:cwp_nf_newfoundland
+		ai_chance = { base = 100 }
+	}
+
+	option = { # Decline
+		name = cwp_nf.3.b
+		scope:cwp_nf_newfoundland = {
+			change_subject_type = subject_type_dominion
+		}
+		ai_chance = { base = 0 }
+	}
+}
