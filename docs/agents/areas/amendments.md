@@ -52,7 +52,7 @@ Not set at start: Norway (23 in 1946), Switzerland (20): no matching vanilla vot
 | Leading Role of the Party, Nomenklatura | communists rule (ruler ideology, or command economy without a vote) | communists lose power |
 | State of Emergency | any country at war | the war ends |
 | Article 9, Symbol of the State | #815 Japan constitution JE | |
-| Basic Law (FRG) | not built; belongs in the German question's FRG founding once the FRG gets democratic laws | |
+| Basic Law (FRG) | built in #837 (`cwp_amendment_basic_law`, German question) | |
 
 Cult of Personality goes when a government IG opposes autocracy (vanilla `ai_will_revoke`): de-Stalinization comes from Soviet politics.
 
