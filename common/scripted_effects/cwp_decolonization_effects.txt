@@ -164,24 +164,6 @@ cwp_decolonization_negotiated_independence = {
 	}
 }
 
-# Country scope (the new state): independence won against the metropole.
-cwp_decolonization_hostile_independence = {
-	make_independent = yes
-	add_modifier = {
-		name = cwp_new_nation
-		years = 10
-		is_decaying = yes
-	}
-	change_relations = {
-		country = $METROPOLE$
-		value = -50
-	}
-	create_bidirectional_truce = {
-		country = $METROPOLE$
-		months = 60
-	}
-}
-
 ### India
 
 # Scope: none. Gives Pakistan the Muslim-majority provinces of British India that India still holds.
@@ -288,86 +270,186 @@ cwp_india_partition_effect = {
 
 ### Indochina
 
-# Scope: none. Laos and Cambodia leave the Indochinese federation as kingdoms.
+# Scope: none. Laos and Cambodia leave French rule as kingdoms, from VNM or from France directly.
 cwp_indochina_release_kingdoms = {
 	if = {
-		limit = {
-			exists = s:STATE_LAOS.region_state:VNM
-			NOT = { exists = c:LAO }
+		limit = { NOT = { exists = c:LAO } }
+		if = {
+			limit = { exists = s:STATE_LAOS.region_state:VNM }
+			create_country = {
+				tag = LAO
+				origin = c:VNM
+				state = s:STATE_LAOS.region_state:VNM
+			}
 		}
-		create_country = {
-			tag = LAO
-			origin = c:VNM
-			state = s:STATE_LAOS.region_state:VNM
-			on_created = {
-				set_variable = cwp_former_colony
-				add_modifier = {
-					name = cwp_new_nation
-					years = 10
-					is_decaying = yes
+		else_if = {
+			limit = { exists = s:STATE_LAOS.region_state:FRA }
+			create_country = {
+				tag = LAO
+				origin = c:FRA
+				state = s:STATE_LAOS.region_state:FRA
+			}
+		}
+		c:LAO ?= { cwp_indochina_new_kingdom_setup = yes }
+	}
+	if = {
+		limit = { NOT = { exists = c:CAM } }
+		if = {
+			limit = { exists = s:STATE_CAMBODIA.region_state:VNM }
+			create_country = {
+				tag = CAM
+				origin = c:VNM
+				state = s:STATE_CAMBODIA.region_state:VNM
+			}
+		}
+		else_if = {
+			limit = { exists = s:STATE_CAMBODIA.region_state:FRA }
+			create_country = {
+				tag = CAM
+				origin = c:FRA
+				state = s:STATE_CAMBODIA.region_state:FRA
+			}
+		}
+		c:CAM ?= { cwp_indochina_new_kingdom_setup = yes }
+	}
+}
+
+# Country scope (LAO or CAM).
+cwp_indochina_new_kingdom_setup = {
+	set_variable = cwp_former_colony
+	if = {
+		limit = { NOT = { has_modifier = cwp_new_nation } }
+		add_modifier = {
+			name = cwp_new_nation
+			years = 10
+			is_decaying = yes
+		}
+	}
+}
+
+# Scope: none. Ends every play or war between the French side and DAI (used by a negotiated settlement).
+cwp_indochina_end_war = {
+	every_diplomatic_play = {
+		limit = {
+			exists = c:DAI
+			OR = {
+				AND = {
+					initiator_is = c:FRA
+					target_is = c:DAI
+				}
+				AND = {
+					initiator_is = c:DAI
+					target_is = c:FRA
 				}
 			}
 		}
+		end_play = yes
 	}
-	if = {
-		limit = {
-			exists = s:STATE_CAMBODIA.region_state:VNM
-			NOT = { exists = c:CAM }
+	c:DAI ?= {
+		every_country = {
+			limit = {
+				cwp_is_french_side = yes
+				is_subject = no
+			}
+			create_bidirectional_truce = {
+				country = c:DAI
+				months = 60
+			}
 		}
-		create_country = {
-			tag = CAM
-			origin = c:VNM
-			state = s:STATE_CAMBODIA.region_state:VNM
-			on_created = {
-				set_variable = cwp_former_colony
-				add_modifier = {
-					name = cwp_new_nation
-					years = 10
-					is_decaying = yes
+	}
+}
+
+# Scope: none. The people's war phase: keeps the belligerents' fighting narrow and their war support from collapsing.
+cwp_indochina_peoples_war_pulse = {
+	every_country = {
+		limit = {
+			OR = {
+				c:DAI ?= this
+				cwp_is_french_side = yes
+			}
+			NOT = { has_modifier = cwp_indochina_peoples_war }
+		}
+		add_modifier = { name = cwp_indochina_peoples_war }
+	}
+	c:FRA ?= {
+		every_scope_war = {
+			limit = { any_war_participant = { c:DAI ?= this } }
+			if = {
+				limit = { has_war_support = { target = c:FRA value < 30 } }
+				add_war_war_support = {
+					target = c:FRA
+					value = 3
+				}
+			}
+			if = {
+				limit = { has_war_support = { target = c:DAI value < 30 } }
+				add_war_war_support = {
+					target = c:DAI
+					value = 3
 				}
 			}
 		}
 	}
 }
 
-# Scope: none. The Democratic Republic of Vietnam (DAI) takes Tonkin; with $ALL$ = yes it takes Annam and the Mekong too.
-cwp_indochina_viet_minh_state = {
-	if = {
-		limit = {
-			NOT = { exists = c:DAI }
-			exists = s:STATE_TONKIN.region_state:VNM
-		}
-		create_country = {
-			tag = DAI
-			origin = c:VNM
-			state = s:STATE_TONKIN.region_state:VNM
-			on_created = {
-				effect_starting_laws_1946_peoples_democracy = yes
-				set_variable = cwp_former_colony
-				add_modifier = {
-					name = cwp_new_nation
-					years = 10
-					is_decaying = yes
-				}
-			}
+# Scope: none. Ends the people's war phase. $ATTACKER$ launched the offensive and gains momentum.
+cwp_indochina_end_peoples_war = {
+	remove_global_variable = cwp_indochina_peoples_war_phase
+	every_country = {
+		limit = { has_modifier = cwp_indochina_peoples_war }
+		remove_modifier = cwp_indochina_peoples_war
+	}
+	$ATTACKER$ = {
+		add_modifier = {
+			name = cwp_indochina_offensive_momentum
+			years = 2
+			is_decaying = yes
 		}
 	}
-	if = {
-		limit = { exists = c:DAI }
-		if = {
-			limit = { always = $ALL$ }
+}
+
+# Scope: none. Clears the phase variable and the war modifiers when the JE ends.
+cwp_indochina_cleanup = {
+	remove_global_variable = cwp_indochina_peoples_war_phase
+	every_country = {
+		limit = { has_modifier = cwp_indochina_peoples_war }
+		remove_modifier = cwp_indochina_peoples_war
+	}
+}
+
+# Scope: none. Monthly: the bar's balance wears down one side's war support.
+cwp_indochina_war_pressure = {
+	c:FRA ?= {
+		every_scope_war = {
+			limit = { any_war_participant = { c:DAI ?= this } }
 			if = {
-				limit = { exists = s:STATE_ANNAM.region_state:VNM }
-				s:STATE_ANNAM.region_state:VNM = { set_state_owner = c:DAI }
+				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" >= 40 } }
+				add_war_war_support = {
+					target = c:FRA
+					value = -4
+				}
 			}
-			if = {
-				limit = { exists = s:STATE_MEKONG.region_state:VNM }
-				s:STATE_MEKONG.region_state:VNM = { set_state_owner = c:DAI }
+			else_if = {
+				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" >= 25 } }
+				add_war_war_support = {
+					target = c:FRA
+					value = -2
+				}
 			}
-		}
-		else = {
-			s:STATE_ANNAM = { add_claim = c:DAI }
-			s:STATE_MEKONG = { add_claim = c:DAI }
+			else_if = {
+				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" <= -40 } }
+				add_war_war_support = {
+					target = c:DAI
+					value = -4
+				}
+			}
+			else_if = {
+				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" <= -25 } }
+				add_war_war_support = {
+					target = c:DAI
+					value = -2
+				}
+			}
 		}
 	}
 }
@@ -483,6 +565,37 @@ cwp_indonesia_war_pressure = {
 					target = c:IDS
 					value = -2
 				}
+			}
+		}
+	}
+}
+
+# Scope: none. Ends every play or war between the Netherlands and the Republic (used by the Round Table).
+cwp_indonesia_end_war = {
+	if = {
+		limit = {
+			exists = c:NET
+			exists = c:IDS
+		}
+		every_diplomatic_play = {
+			limit = {
+				OR = {
+					AND = {
+						initiator_is = c:NET
+						target_is = c:IDS
+					}
+					AND = {
+						initiator_is = c:IDS
+						target_is = c:NET
+					}
+				}
+			}
+			end_play = yes
+		}
+		c:NET = {
+			create_bidirectional_truce = {
+				country = c:IDS
+				months = 60
 			}
 		}
 	}

@@ -454,6 +454,10 @@ je_cwp_indonesian_revolution = {
 }
 
 ### Indochina: the war
+# Modelled on vanilla je_the_first_carlist_war: a slow people's war phase (narrow fighting, war support kept from
+# collapsing), then a general offensive by either side that ends it and gives momentum.
+# 1946 start (history PR #802): DAI independent in Tonkin; VNM, an FRA puppet, holds Annam, the Mekong, Laos and
+# Cambodia; FRA has a dp_make_dominion play against DAI.
 
 je_cwp_indochina_war = {
 	group = je_group_cwp_decolonization
@@ -468,7 +472,9 @@ je_cwp_indochina_war = {
 	}
 
 	possible = {
-		c:VNM ?= { is_subject_of = c:FRA }
+		exists = c:FRA
+		c:DAI ?= { is_subject = no }
+		cwp_french_hold_vietnam = yes
 		NOT = { has_global_variable = cwp_indochina_je_cooldown }
 	}
 
@@ -476,6 +482,7 @@ je_cwp_indochina_war = {
 		OR = {
 			c:FRA ?= this
 			c:VNM ?= this
+			c:DAI ?= this
 			c:PRC ?= this
 			c:USA ?= this
 		}
@@ -486,16 +493,41 @@ je_cwp_indochina_war = {
 	}
 
 	immediate = {
+		set_global_variable = cwp_indochina_peoples_war_phase
 		c:FRA ?= { trigger_event = { id = cwp_indochina.1 popup = yes } }
-		c:VNM ?= { trigger_event = { id = cwp_indochina.1 popup = yes } }
+		c:DAI ?= { trigger_event = { id = cwp_indochina.1 popup = yes } }
 	}
 
 	scripted_progress_bar = cwp_indochina_war_bar
 
 	scripted_button = cwp_indochina_reinforce_button
+	scripted_button = cwp_indochina_french_offensive_button
 	scripted_button = cwp_indochina_negotiate_button
+	scripted_button = cwp_indochina_general_offensive_button
 	scripted_button = cwp_indochina_american_aid_button
 	scripted_button = cwp_indochina_chinese_aid_button
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_indochina_war_status_peoples_war
+				trigger = { has_global_variable = cwp_indochina_peoples_war_phase }
+			}
+			triggered_desc = {
+				desc = je_cwp_indochina_war_status_offensive
+			}
+		}
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			if = {
+				limit = { has_global_variable = cwp_indochina_peoples_war_phase }
+				cwp_indochina_peoples_war_pulse = yes
+			}
+			cwp_indochina_war_pressure = yes
+		}
+	}
 
 	# A conference partitions Vietnam
 	outcome = {
@@ -504,20 +536,20 @@ je_cwp_indochina_war = {
 		color = "gold_positive"
 		conclusion_desc = je_cwp_indochina_partition_desc
 		trigger = {
-			c:VNM ?= { is_subject_of = c:FRA }
-			OR = {
-				c:FRA ?= { has_variable = cwp_indochina_negotiations }
-				AND = {
-					scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" >= 50 }
-					c:USA ?= { has_variable = cwp_us_backed_france }
-				}
-			}
+			c:FRA ?= { has_variable = cwp_indochina_negotiations }
 		}
 		effect = {
+			cwp_indochina_end_war = yes
 			cwp_indochina_release_kingdoms = yes
-			cwp_indochina_viet_minh_state = { ALL = no }
-			c:VNM = { cwp_decolonization_negotiated_independence = { METROPOLE = c:FRA } }
+			c:VNM ?= {
+				if = {
+					limit = { is_subject_of = c:FRA }
+					cwp_decolonization_negotiated_independence = { METROPOLE = c:FRA }
+				}
+			}
+			cwp_indochina_cleanup = yes
 			c:FRA = {
+				remove_variable = cwp_indochina_negotiations
 				set_variable = cwp_france_lost_indochina
 				trigger_event = { id = cwp_indochina.10 popup = yes }
 			}
@@ -526,72 +558,57 @@ je_cwp_indochina_war = {
 		}
 	}
 
-	# The Viet Minh take all of Vietnam
+	# The French side holds nothing in Vietnam any more
 	outcome = {
 		header = je_standard_completion_header
 		effect_header = je_standard_on_completion_header
 		color = "gold_positive"
 		conclusion_desc = je_cwp_indochina_viet_minh_victory_desc
 		trigger = {
-			c:VNM ?= { is_subject_of = c:FRA }
-			scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" >= 50 }
-			NOT = { c:USA ?= { has_variable = cwp_us_backed_france } }
-			NOT = { c:FRA ?= { has_variable = cwp_indochina_negotiations } }
+			c:DAI ?= { is_subject = no }
+			custom_tooltip = {
+				text = cwp_indochina_no_french_states_tt
+				NOT = { cwp_french_hold_vietnam = yes }
+			}
 		}
 		effect = {
 			cwp_indochina_release_kingdoms = yes
-			cwp_indochina_viet_minh_state = { ALL = yes }
+			cwp_indochina_cleanup = yes
+			c:DAI = {
+				set_variable = cwp_former_colony
+			}
+			change_global_variable = { name = cwp_tide_new_independences add = 1 }
 			c:FRA = {
 				set_variable = cwp_france_lost_indochina
-				change_relations = {
-					country = c:DAI
-					value = -50
-				}
 				trigger_event = { id = cwp_indochina.11 popup = yes }
 			}
 			c:DAI ?= { trigger_event = { id = cwp_indochina.11 popup = yes } }
 		}
 	}
 
-	# The French Union holds
+	# The Viet Minh are broken
 	outcome = {
 		header = je_standard_failure_header
 		effect_header = je_standard_on_failure_header
 		color = "blue_negative"
 		conclusion_desc = je_cwp_indochina_french_union_desc
 		trigger = {
-			c:VNM ?= { is_subject_of = c:FRA }
-			scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" <= -50 }
+			OR = {
+				NOT = { exists = c:DAI }
+				c:DAI ?= { is_subject_of = c:FRA }
+			}
 		}
 		effect = {
 			set_global_variable = {
 				name = cwp_indochina_je_cooldown
 				years = 10
 			}
-			c:VNM = { add_liberty_desire = -30 }
+			cwp_indochina_cleanup = yes
 			c:FRA = {
 				cwp_decolonization_add_setback = yes
 				trigger_event = { id = cwp_indochina.12 popup = yes }
 			}
-			c:VNM ?= { trigger_event = { id = cwp_indochina.12 popup = yes } }
-		}
-	}
-
-	# Indochina breaks free in war
-	outcome = {
-		header = je_standard_completion_header
-		effect_header = je_standard_on_completion_header
-		color = "gold_positive"
-		conclusion_desc = je_cwp_indochina_won_desc
-		trigger = {
-			c:VNM ?= { is_subject = no }
-		}
-		effect = {
-			c:FRA ?= {
-				set_variable = cwp_france_lost_indochina
-				trigger_event = { id = cwp_indochina.13 popup = yes }
-			}
-			c:VNM ?= { trigger_event = { id = cwp_indochina.13 popup = yes } }
+			c:DAI ?= { trigger_event = { id = cwp_indochina.12 popup = yes } }
 		}
 	}
 
@@ -600,13 +617,15 @@ je_cwp_indochina_war = {
 		conclusion_desc = je_cwp_decolonization_invalid_desc
 		trigger = {
 			OR = {
-				NOT = { exists = c:VNM }
 				NOT = { exists = c:FRA }
-				c:VNM ?= {
+				c:DAI ?= {
 					is_subject = yes
 					NOT = { is_subject_of = c:FRA }
 				}
 			}
+		}
+		effect = {
+			cwp_indochina_cleanup = yes
 		}
 	}
 
