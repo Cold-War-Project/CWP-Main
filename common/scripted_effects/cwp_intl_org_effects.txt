@@ -1,0 +1,190 @@
+﻿# Cold War Project: international organization template (effects)
+#
+# Every organization (UN, NATO, Warsaw Pact, IMF, ...) is a contextless journal entry
+# whose involved countries are its members. These effects hold the shared machinery;
+# an organization is a data block passed as parameters. See docs/agents/areas/intl-orgs.md.
+#
+# State, per organization $ORG$:
+#   country var  cwp_io_member_$ORG$        member of the organization
+#   country var  cwp_io_veto_$ORG$          holds a veto (UN Security Council permanent members)
+#   country var  cwp_io_applicant_$ORG$     has applied and waits for an admission vote
+#   country var  cwp_io_rejected_$ORG$      application rejected recently (timed)
+#   script value cwp_io_vote_weight_$ORG$   one member's vote weight (1, or GDP plus prestige)
+#   global var   cwp_io_$ORG$_threshold     share of yes votes (percent of yes plus no) needed to pass
+#   global var   cwp_io_$ORG$_presidency    0, or 1 for a rotating presidency
+#   global var   cwp_io_$ORG$_members       cached member count, refreshed monthly
+#
+# State, per proposal $PROP$ (several can be open at once, each in its own journal entry):
+#   global var   cwp_io_$PROP$_open         proposal is before the members
+#   global var   cwp_io_$PROP$_months       months the vote has been open
+#   global var   cwp_io_$PROP$_yes/_no/_abstain/_share/_vetoed   tally, refreshed monthly
+#   global var   cwp_io_$PROP$_result       flag:passed or flag:failed after the vote closes
+#   global var   cwp_io_$PROP$_cooldown     timed; a failed proposal cannot be tabled again yet
+#   country var  cwp_io_vote_$PROP$         flag:yes, flag:no or flag:abstain
+
+# Store an organization's rules. Called once, from the organization JE's immediate.
+# THRESHOLD = percent of yes votes needed, ROTATING_PRESIDENCY = 0 / 1.
+# Vote weighting is the script value cwp_io_vote_weight_$ORG$.
+cwp_io_setup_org = {
+	set_global_variable = { name = cwp_io_$ORG$_threshold value = $THRESHOLD$ }
+	set_global_variable = { name = cwp_io_$ORG$_presidency value = $ROTATING_PRESIDENCY$ }
+	set_global_variable = { name = cwp_io_$ORG$_members value = 0 }
+}
+
+# Country scope: join or leave.
+cwp_io_add_member = {
+	set_variable = cwp_io_member_$ORG$
+	if = {
+		limit = { has_variable = cwp_io_applicant_$ORG$ }
+		remove_variable = cwp_io_applicant_$ORG$
+	}
+}
+
+cwp_io_remove_member = {
+	remove_variable = cwp_io_member_$ORG$
+	if = {
+		limit = { has_variable = cwp_io_veto_$ORG$ }
+		remove_variable = cwp_io_veto_$ORG$
+	}
+}
+
+# Any scope: make the JE's involved countries match the members. Contextless JEs read
+# should_be_involved only when they activate, so membership changes after that (and
+# founders set in the JE's own immediate) are synced here. JE = journal entry key.
+cwp_io_sync_involved = {
+	every_country = {
+		limit = {
+			has_variable = cwp_io_member_$ORG$
+			NOT = { is_involved_in_journal_entry = $JE$ }
+		}
+		je:$JE$ ?= { add_involved_country = PREV }
+	}
+	every_country = {
+		limit = {
+			NOT = { has_variable = cwp_io_member_$ORG$ }
+			is_involved_in_journal_entry = $JE$
+		}
+		je:$JE$ ?= { remove_involved_country = PREV }
+	}
+}
+
+# No scope: refresh the cached member count.
+cwp_io_count_members = {
+	set_global_variable = { name = cwp_io_$ORG$_members value = 0 }
+	every_country = {
+		limit = { has_variable = cwp_io_member_$ORG$ }
+		change_global_variable = { name = cwp_io_$ORG$_members add = 1 }
+	}
+}
+
+# Any scope: put a proposal before the members.
+cwp_io_open_proposal = {
+	set_global_variable = cwp_io_$PROP$_open
+	set_global_variable = { name = cwp_io_$PROP$_months value = 0 }
+	if = {
+		limit = { has_global_variable = cwp_io_$PROP$_result }
+		remove_global_variable = cwp_io_$PROP$_result
+	}
+	every_country = {
+		limit = { has_variable = cwp_io_vote_$PROP$ }
+		remove_variable = cwp_io_vote_$PROP$
+	}
+	# Zero the tally without reading it: this runs from a button, whose tooltip
+	# would otherwise read variables that are not set yet.
+	set_global_variable = { name = cwp_io_$PROP$_yes value = 0 }
+	set_global_variable = { name = cwp_io_$PROP$_no value = 0 }
+	set_global_variable = { name = cwp_io_$PROP$_abstain value = 0 }
+	set_global_variable = { name = cwp_io_$PROP$_vetoed value = 0 }
+	set_global_variable = { name = cwp_io_$PROP$_share value = 0 }
+}
+
+# Country scope: cast this country's vote. VOTE = yes / no / abstain
+cwp_io_cast_vote = {
+	set_variable = { name = cwp_io_vote_$PROP$ value = flag:$VOTE$ }
+}
+
+# No scope: count the votes. Abstentions do not count toward the share, as in the UN's
+# "present and voting" rule. VETO = yes makes a no vote from a veto holder block the proposal.
+cwp_io_tally_votes = {
+	set_global_variable = { name = cwp_io_$PROP$_yes value = 0 }
+	set_global_variable = { name = cwp_io_$PROP$_no value = 0 }
+	set_global_variable = { name = cwp_io_$PROP$_abstain value = 0 }
+	set_global_variable = { name = cwp_io_$PROP$_vetoed value = 0 }
+	set_global_variable = { name = cwp_io_$PROP$_share value = 0 }
+	every_country = {
+		limit = {
+			has_variable = cwp_io_member_$ORG$
+			has_variable = cwp_io_vote_$PROP$
+		}
+		if = {
+			limit = { var:cwp_io_vote_$PROP$ = flag:yes }
+			change_global_variable = { name = cwp_io_$PROP$_yes add = cwp_io_vote_weight_$ORG$ }
+		}
+		else_if = {
+			limit = { var:cwp_io_vote_$PROP$ = flag:no }
+			change_global_variable = { name = cwp_io_$PROP$_no add = cwp_io_vote_weight_$ORG$ }
+			if = {
+				limit = {
+					always = $VETO$
+					has_variable = cwp_io_veto_$ORG$
+				}
+				set_global_variable = { name = cwp_io_$PROP$_vetoed value = 1 }
+			}
+		}
+		else = {
+			change_global_variable = { name = cwp_io_$PROP$_abstain add = cwp_io_vote_weight_$ORG$ }
+		}
+	}
+	if = {
+		limit = { global_var:cwp_io_$PROP$_yes > 0 }
+		set_global_variable = {
+			name = cwp_io_$PROP$_share
+			value = {
+				value = global_var:cwp_io_$PROP$_yes
+				multiply = 100
+				divide = {
+					value = global_var:cwp_io_$PROP$_yes
+					add = global_var:cwp_io_$PROP$_no
+				}
+			}
+		}
+	}
+}
+
+# No scope, from the proposal JE's on_monthly_pulse: advance the vote, close it when the
+# voting period ends. MONTHS = length of the vote. On failure the proposal is closed here,
+# which deactivates its JE so it can be tabled again later. On success the JE's own
+# outcome (or the admission handler) reads flag:passed and closes it.
+cwp_io_advance_proposal = {
+	change_global_variable = { name = cwp_io_$PROP$_months add = 1 }
+	cwp_io_tally_votes = { ORG = $ORG$ PROP = $PROP$ VETO = $VETO$ }
+	if = {
+		limit = { global_var:cwp_io_$PROP$_months >= $MONTHS$ }
+		if = {
+			limit = { cwp_io_proposal_would_pass = { ORG = $ORG$ PROP = $PROP$ } }
+			set_global_variable = { name = cwp_io_$PROP$_result value = flag:passed }
+		}
+		else = {
+			set_global_variable = { name = cwp_io_$PROP$_result value = flag:failed }
+			set_global_variable = { name = cwp_io_$PROP$_cooldown days = $COOLDOWN$ }
+			cwp_io_close_proposal = { PROP = $PROP$ }
+		}
+	}
+}
+
+# No scope: take a proposal off the table and clear its votes.
+cwp_io_close_proposal = {
+	if = {
+		limit = { has_global_variable = cwp_io_$PROP$_open }
+		remove_global_variable = cwp_io_$PROP$_open
+	}
+	every_country = {
+		limit = { has_variable = cwp_io_vote_$PROP$ }
+		remove_variable = cwp_io_vote_$PROP$
+	}
+}
+
+# Country scope: apply for membership.
+cwp_io_apply = {
+	set_variable = cwp_io_applicant_$ORG$
+}
