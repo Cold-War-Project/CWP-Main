@@ -81,6 +81,11 @@ je_cwp_example = {
 
 `key = { name = "LOC" desc = "LOC_DESC" visible = { } possible = { } effect = { } ai_chance = { base = 0 modifier = { trigger = { } add = 5 } } selected = { } cooldown = { months = N } }`, optional `short_desc`, `icon`, `cost` (**display only**, the engine never deducts it: enforce in `possible` and `effect`), `tags = { }`, `autocomplete = yes` (runs by itself when visible and possible; guard with a variable set in `effect`). Attached to a JE with `scripted_button = key`. Country scope; `scope:journal_entry` available.
 
+## Mod journal entries
+
+- The mod's own journal entries are the `cwp_*.txt` files in `common/journal_entries/` (`ls common/journal_entries/cwp_*`).
+- They hook activation and monthly logic through a chained `cwp_` on_action in their own file (e.g. `common/on_actions/cwp_korea_on_actions.txt` chains `on_monthly_pulse`), never by editing the shared on_action overwrites.
+
 ## Scripted progress bars
 
 `key = { name = "LOC" desc = "LOC" second_desc = "LOC" start_value = 0 min_value = 0 max_value = 100 default = yes / default_green = yes / default_bad = yes  is_inverted = yes  weekly_progress / monthly_progress / yearly_progress = { add = { desc = "LOC" value = N }  progress_condition = { limit = { } add = { desc = "LOC" value = N } else = { ... } } } }`. Use `progress_condition` (not `if`) for factors the player should see ticked or unticked in the JE panel; never put `format =` inside one. Bars update before the JE pulse of the same period. Read in a JE scope with `"scripted_bar_progress(bar_key)" >= 50` (quotes required), set with `set_bar_progress = { name = bar_key value = N }`. A `REPLACE` of the vanilla Russian-literature bars did not stop their old PM names being validated; that file is a same-name overwrite.
