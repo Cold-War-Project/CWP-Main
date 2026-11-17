@@ -1,0 +1,848 @@
+﻿# Cold War Project: decolonization (design: docs/agents/areas/decolonization.md)
+# je_cwp_winds_of_change           the global anti-colonial tide (proposal option C)
+# je_cwp_india_transfer_of_power   India and the partition question (option B)
+# je_cwp_indonesian_revolution     the Netherlands and the Republic of Indonesia (option B)
+# je_cwp_indochina_war             France, the Viet Minh and the superpowers (option B)
+# je_cwp_algerian_question         France and Algeria (option B)
+# No outcome is scheduled by date. Every one is reached through the bars, the buttons, the colony's liberty
+# desire or a war.
+
+### The Winds of Change
+
+je_cwp_winds_of_change = {
+	group = je_group_cwp_decolonization
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+
+	activation_description = {
+		always = yes
+	}
+
+	is_shown_when_inactive = {
+		always = no
+	}
+
+	possible = {
+		always = yes
+	}
+
+	should_be_involved = {
+		OR = {
+			c:USA ?= this
+			c:RUS ?= this
+			has_variable = cwp_colony
+			AND = {
+				has_variable = cwp_colonial_power
+				cwp_has_tracked_colonies = yes
+			}
+		}
+	}
+
+	should_show_when_not_involved = {
+		has_variable = cwp_former_colony
+	}
+
+	immediate = {
+		cwp_decolonization_init_globals = yes
+		cwp_decolonization_register_colonies = yes
+	}
+
+	scripted_progress_bar = cwp_tide_bar
+
+	scripted_button = cwp_woc_champion_self_determination_button
+	scripted_button = cwp_woc_guard_allied_empires_button
+	scripted_button = cwp_woc_development_funds_button
+	scripted_button = cwp_woc_promise_self_government_button
+	scripted_button = cwp_woc_hold_the_line_button
+	scripted_button = cwp_woc_managed_withdrawal_button
+	scripted_button = cwp_woc_nationalist_campaign_button
+	scripted_button = cwp_woc_appeal_to_superpowers_button
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_winds_of_change_status_4
+				trigger = { global_var:cwp_tide_tier >= 4 }
+			}
+			triggered_desc = {
+				desc = je_cwp_winds_of_change_status_3
+				trigger = { global_var:cwp_tide_tier >= 3 }
+			}
+			triggered_desc = {
+				desc = je_cwp_winds_of_change_status_2
+				trigger = { global_var:cwp_tide_tier >= 2 }
+			}
+			triggered_desc = {
+				desc = je_cwp_winds_of_change_status_1
+				trigger = { global_var:cwp_tide_tier >= 1 }
+			}
+			triggered_desc = {
+				desc = je_cwp_winds_of_change_status_0
+			}
+		}
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			cwp_decolonization_monthly_update = yes
+		}
+	}
+
+	# Ends only when no colony is left for the tide to act on.
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_cwp_winds_of_change_end_desc
+		trigger = {
+			custom_tooltip = {
+				text = je_cwp_winds_of_change_end_tt
+				has_global_variable = cwp_tide_tier
+				NOT = {
+					any_country = {
+						OR = {
+							has_variable = cwp_colony
+							cwp_qualifies_as_colony = yes
+						}
+					}
+				}
+			}
+		}
+		effect = {
+			custom_tooltip = je_cwp_winds_of_change_end_effect_tt
+		}
+	}
+
+	transferable = no
+	can_deactivate = no
+	weight = 100
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
+
+### India: the Transfer of Power
+
+je_cwp_india_transfer_of_power = {
+	group = je_group_cwp_decolonization
+	icon = "gfx/interface/icons/event_icons/event_scales.dds"
+
+	activation_description = {
+		always = yes
+	}
+
+	is_shown_when_inactive = {
+		always = no
+	}
+
+	possible = {
+		c:HND ?= { is_subject_of = c:GBR }
+		NOT = { has_global_variable = cwp_india_je_cooldown }
+	}
+
+	should_be_involved = {
+		OR = {
+			c:GBR ?= this
+			c:HND ?= this
+		}
+	}
+
+	should_show_when_not_involved = {
+		capital ?= { is_in_geographic_region = geographic_region_india }
+	}
+
+	immediate = {
+		c:GBR ?= { trigger_event = { id = cwp_india.1 popup = yes } }
+		c:HND ?= { trigger_event = { id = cwp_india.1 popup = yes } }
+	}
+
+	scripted_progress_bar = cwp_india_self_rule_bar
+	scripted_progress_bar = cwp_india_communal_bar
+
+	scripted_button = cwp_india_cabinet_mission_button
+	scripted_button = cwp_india_restore_order_button
+	scripted_button = cwp_india_set_date_button
+	scripted_button = cwp_india_quit_india_button
+	scripted_button = cwp_india_unity_talks_button
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_india_transfer_of_power_status_date
+				trigger = { c:GBR ?= { has_variable = cwp_india_withdrawal_announced } }
+			}
+			triggered_desc = {
+				desc = je_cwp_india_transfer_of_power_status_partition
+				trigger = { scope:journal_entry = { "scripted_bar_progress(cwp_india_communal_bar)" >= 60 } }
+			}
+			triggered_desc = {
+				desc = je_cwp_india_transfer_of_power_status_united
+			}
+		}
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			if = {
+				limit = {
+					NOT = { has_global_variable = cwp_india_direct_action_fired }
+					scope:journal_entry = { "scripted_bar_progress(cwp_india_communal_bar)" >= 65 }
+				}
+				set_global_variable = cwp_india_direct_action_fired
+				c:HND ?= { trigger_event = { id = cwp_india.2 popup = yes } }
+			}
+			if = {
+				limit = {
+					NOT = { has_global_variable = cwp_india_naval_mutiny_fired }
+					c:GBR ?= { NOT = { has_variable = cwp_india_withdrawal_announced } }
+					scope:journal_entry = { "scripted_bar_progress(cwp_india_self_rule_bar)" >= 80 }
+				}
+				set_global_variable = cwp_india_naval_mutiny_fired
+				c:HND ?= { trigger_event = { id = cwp_india.3 popup = yes } }
+			}
+		}
+	}
+
+	# A united India
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_cwp_india_united_desc
+		trigger = {
+			c:HND ?= { is_subject_of = c:GBR }
+			OR = {
+				c:GBR ?= { has_variable = cwp_india_withdrawal_announced }
+				scope:journal_entry = { "scripted_bar_progress(cwp_india_self_rule_bar)" >= 100 }
+			}
+			scope:journal_entry = { "scripted_bar_progress(cwp_india_communal_bar)" < 60 }
+		}
+		effect = {
+			c:HND = { cwp_decolonization_negotiated_independence = { METROPOLE = c:GBR } }
+			c:GBR ?= { trigger_event = { id = cwp_india.10 popup = yes } }
+			c:HND ?= { trigger_event = { id = cwp_india.10 popup = yes } }
+		}
+	}
+
+	# Partition
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_cwp_india_partition_desc
+		trigger = {
+			c:HND ?= { is_subject_of = c:GBR }
+			OR = {
+				c:GBR ?= { has_variable = cwp_india_withdrawal_announced }
+				scope:journal_entry = { "scripted_bar_progress(cwp_india_self_rule_bar)" >= 100 }
+			}
+			scope:journal_entry = { "scripted_bar_progress(cwp_india_communal_bar)" >= 60 }
+		}
+		effect = {
+			c:HND = { cwp_decolonization_negotiated_independence = { METROPOLE = c:GBR } }
+			cwp_india_partition_effect = yes
+			c:GBR ?= { trigger_event = { id = cwp_india.11 popup = yes } }
+			c:HND ?= { trigger_event = { id = cwp_india.11 popup = yes } }
+			c:PAK ?= { trigger_event = { id = cwp_india.11 popup = yes } }
+		}
+	}
+
+	# Independence won against Britain
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_cwp_india_won_desc
+		trigger = {
+			c:HND ?= { is_subject = no }
+		}
+		effect = {
+			if = {
+				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_india_communal_bar)" >= 60 } }
+				cwp_india_partition_effect = yes
+			}
+			c:GBR ?= { trigger_event = { id = cwp_india.12 popup = yes } }
+			c:HND ?= { trigger_event = { id = cwp_india.12 popup = yes } }
+		}
+	}
+
+	# The Raj holds, for now
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_cwp_india_raj_holds_desc
+		trigger = {
+			c:HND ?= { is_subject_of = c:GBR }
+			scope:journal_entry = { "scripted_bar_progress(cwp_india_self_rule_bar)" <= 0 }
+		}
+		effect = {
+			set_global_variable = {
+				name = cwp_india_je_cooldown
+				years = 10
+			}
+			c:HND = { add_liberty_desire = -20 }
+			c:GBR = {
+				add_modifier = {
+					name = cwp_india_raj_holds
+					years = 10
+					multiplier = money_amount_multiplier_medium
+				}
+				cwp_decolonization_add_setback = yes
+				trigger_event = { id = cwp_india.13 popup = yes }
+			}
+			c:HND ?= { trigger_event = { id = cwp_india.13 popup = yes } }
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_cwp_decolonization_invalid_desc
+		trigger = {
+			OR = {
+				NOT = { exists = c:HND }
+				NOT = { exists = c:GBR }
+				c:HND ?= {
+					is_subject = yes
+					NOT = { is_subject_of = c:GBR }
+				}
+			}
+		}
+	}
+
+	transferable = no
+	can_deactivate = no
+	weight = 100
+}
+
+### Indonesia: the National Revolution
+
+je_cwp_indonesian_revolution = {
+	group = je_group_cwp_decolonization
+	icon = "gfx/interface/icons/event_icons/event_revolutionary_flag.dds"
+
+	activation_description = {
+		always = yes
+	}
+
+	is_shown_when_inactive = {
+		always = no
+	}
+
+	# 1946 start: the Republic (IDS) is independent and at war with the Netherlands, which holds the outer islands.
+	possible = {
+		exists = c:NET
+		c:IDS ?= { is_subject = no }
+		cwp_dutch_hold_indonesia = yes
+		NOT = { has_global_variable = cwp_indonesia_je_cooldown }
+	}
+
+	should_be_involved = {
+		OR = {
+			c:NET ?= this
+			c:IDS ?= this
+			c:USA ?= this
+		}
+	}
+
+	should_show_when_not_involved = {
+		capital ?= { is_in_geographic_region = geographic_region_south_east_asia }
+	}
+
+	immediate = {
+		set_global_variable = { name = cwp_indonesia_bar_level value = 0 }
+		c:NET ?= { trigger_event = { id = cwp_indonesia.1 popup = yes } }
+		c:IDS ?= { trigger_event = { id = cwp_indonesia.1 popup = yes } }
+	}
+
+	scripted_progress_bar = cwp_indonesia_revolution_bar
+
+	scripted_button = cwp_indonesia_police_action_button
+	scripted_button = cwp_indonesia_talks_button
+	scripted_button = cwp_indonesia_round_table_button
+	scripted_button = cwp_indonesia_guerrilla_button
+	scripted_button = cwp_indonesia_diplomacy_button
+	scripted_button = cwp_indonesia_marshall_pressure_button
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_indonesian_revolution_status_war
+				trigger = { c:IDS ?= { is_at_war = yes } }
+			}
+			triggered_desc = {
+				desc = je_cwp_indonesian_revolution_status_truce
+			}
+		}
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			cwp_indonesia_set_bar_level = yes
+		}
+	}
+
+	# The Dutch hold nothing in Indonesia any more: by war, or by the Round Table.
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_cwp_indonesia_independence_desc
+		trigger = {
+			c:IDS ?= { is_subject = no }
+			custom_tooltip = {
+				text = cwp_indonesia_no_dutch_states_tt
+				NOT = { cwp_dutch_hold_indonesia = yes }
+			}
+		}
+		effect = {
+			remove_global_variable = cwp_indonesia_bar_level
+			c:IDS = {
+				set_variable = cwp_former_colony
+				if = {
+					limit = { NOT = { has_modifier = cwp_new_nation } }
+					add_modifier = {
+						name = cwp_new_nation
+						years = 10
+						is_decaying = yes
+					}
+				}
+			}
+			change_global_variable = { name = cwp_tide_new_independences add = 1 }
+			c:NET ?= { trigger_event = { id = cwp_indonesia.10 popup = yes } }
+			c:IDS ?= { trigger_event = { id = cwp_indonesia.10 popup = yes } }
+		}
+	}
+
+	# The Republic is broken: made a Dutch dominion by the war, or destroyed.
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_cwp_indonesia_restoration_desc
+		trigger = {
+			OR = {
+				NOT = { exists = c:IDS }
+				c:IDS ?= { is_subject_of = c:NET }
+			}
+		}
+		effect = {
+			remove_global_variable = cwp_indonesia_bar_level
+			set_global_variable = {
+				name = cwp_indonesia_je_cooldown
+				years = 10
+			}
+			c:NET = {
+				cwp_decolonization_add_setback = yes
+				trigger_event = { id = cwp_indonesia.11 popup = yes }
+			}
+			c:IDS ?= { trigger_event = { id = cwp_indonesia.11 popup = yes } }
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_cwp_decolonization_invalid_desc
+		trigger = {
+			OR = {
+				NOT = { exists = c:NET }
+				c:IDS ?= {
+					is_subject = yes
+					NOT = { is_subject_of = c:NET }
+				}
+			}
+		}
+		effect = {
+			remove_global_variable = cwp_indonesia_bar_level
+		}
+	}
+
+	transferable = no
+	can_deactivate = no
+	weight = 100
+}
+
+### Indochina: the war
+# Modelled on vanilla je_the_first_carlist_war: a slow people's war phase (narrow fighting, war support kept from
+# collapsing), then a general offensive by either side that ends it and gives momentum.
+# 1946 start (history PR #802): DAI independent in Tonkin; VNM, an FRA puppet, holds Annam, the Mekong, Laos and
+# Cambodia; FRA has a dp_make_dominion play against DAI.
+
+je_cwp_indochina_war = {
+	group = je_group_cwp_decolonization
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+
+	activation_description = {
+		always = yes
+	}
+
+	is_shown_when_inactive = {
+		always = no
+	}
+
+	possible = {
+		exists = c:FRA
+		c:DAI ?= { is_subject = no }
+		cwp_french_hold_vietnam = yes
+		NOT = { has_global_variable = cwp_indochina_je_cooldown }
+	}
+
+	should_be_involved = {
+		OR = {
+			c:FRA ?= this
+			c:VNM ?= this
+			c:DAI ?= this
+			c:PRC ?= this
+			c:USA ?= this
+		}
+	}
+
+	should_show_when_not_involved = {
+		capital ?= { is_in_geographic_region = geographic_region_south_east_asia }
+	}
+
+	immediate = {
+		set_global_variable = cwp_indochina_peoples_war_phase
+		set_global_variable = { name = cwp_indochina_bar_level value = 0 }
+		c:FRA ?= { trigger_event = { id = cwp_indochina.1 popup = yes } }
+		c:DAI ?= { trigger_event = { id = cwp_indochina.1 popup = yes } }
+	}
+
+	scripted_progress_bar = cwp_indochina_war_bar
+
+	scripted_button = cwp_indochina_reinforce_button
+	scripted_button = cwp_indochina_french_offensive_button
+	scripted_button = cwp_indochina_negotiate_button
+	scripted_button = cwp_indochina_general_offensive_button
+	scripted_button = cwp_indochina_american_aid_button
+	scripted_button = cwp_indochina_chinese_aid_button
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_indochina_war_status_peoples_war
+				trigger = { has_global_variable = cwp_indochina_peoples_war_phase }
+			}
+			triggered_desc = {
+				desc = je_cwp_indochina_war_status_offensive
+			}
+		}
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			if = {
+				limit = { has_global_variable = cwp_indochina_peoples_war_phase }
+				cwp_indochina_peoples_war_pulse = yes
+			}
+			cwp_indochina_set_bar_level = yes
+		}
+	}
+
+	# A conference partitions Vietnam
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_cwp_indochina_partition_desc
+		trigger = {
+			c:FRA ?= { has_variable = cwp_indochina_negotiations }
+		}
+		effect = {
+			cwp_indochina_end_war = yes
+			cwp_indochina_release_kingdoms = yes
+			c:VNM ?= {
+				if = {
+					limit = { is_subject_of = c:FRA }
+					cwp_decolonization_negotiated_independence = { METROPOLE = c:FRA }
+				}
+			}
+			cwp_indochina_cleanup = yes
+			c:FRA = {
+				remove_variable = cwp_indochina_negotiations
+				set_variable = cwp_france_lost_indochina
+				trigger_event = { id = cwp_indochina.10 popup = yes }
+			}
+			c:VNM ?= { trigger_event = { id = cwp_indochina.10 popup = yes } }
+			c:DAI ?= { trigger_event = { id = cwp_indochina.10 popup = yes } }
+		}
+	}
+
+	# The French side holds nothing in Vietnam any more
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_cwp_indochina_viet_minh_victory_desc
+		trigger = {
+			c:DAI ?= { is_subject = no }
+			custom_tooltip = {
+				text = cwp_indochina_no_french_states_tt
+				NOT = { cwp_french_hold_vietnam = yes }
+			}
+		}
+		effect = {
+			cwp_indochina_release_kingdoms = yes
+			cwp_indochina_cleanup = yes
+			c:DAI = {
+				set_variable = cwp_former_colony
+			}
+			change_global_variable = { name = cwp_tide_new_independences add = 1 }
+			c:FRA = {
+				set_variable = cwp_france_lost_indochina
+				trigger_event = { id = cwp_indochina.11 popup = yes }
+			}
+			c:DAI ?= { trigger_event = { id = cwp_indochina.11 popup = yes } }
+		}
+	}
+
+	# The Viet Minh are broken
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_cwp_indochina_french_union_desc
+		trigger = {
+			OR = {
+				NOT = { exists = c:DAI }
+				c:DAI ?= { is_subject_of = c:FRA }
+			}
+		}
+		effect = {
+			set_global_variable = {
+				name = cwp_indochina_je_cooldown
+				years = 10
+			}
+			cwp_indochina_cleanup = yes
+			c:FRA = {
+				cwp_decolonization_add_setback = yes
+				trigger_event = { id = cwp_indochina.12 popup = yes }
+			}
+			c:DAI ?= { trigger_event = { id = cwp_indochina.12 popup = yes } }
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_cwp_decolonization_invalid_desc
+		trigger = {
+			OR = {
+				NOT = { exists = c:FRA }
+				c:DAI ?= {
+					is_subject = yes
+					NOT = { is_subject_of = c:FRA }
+				}
+			}
+		}
+		effect = {
+			cwp_indochina_cleanup = yes
+		}
+	}
+
+	transferable = no
+	can_deactivate = no
+	weight = 100
+}
+
+### Algeria
+
+je_cwp_algerian_question = {
+	group = je_group_cwp_decolonization
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+
+	activation_description = {
+		always = yes
+	}
+
+	is_shown_when_inactive = {
+		always = no
+	}
+
+	# Algeria was three French departments, so there is no subject whose liberty desire can rise.
+	# The rising waits for the world around it to move: the tide, a lost war in Indochina, free neighbours.
+	possible = {
+		exists = c:FRA
+		exists = s:STATE_ALGIERS.region_state:FRA
+		NOT = { has_global_variable = cwp_algeria_je_cooldown }
+		OR = {
+			AND = {
+				has_global_variable = cwp_tide_tier
+				global_var:cwp_tide_tier >= 1
+			}
+			c:FRA = { has_variable = cwp_france_lost_indochina }
+			c:MOR ?= { is_subject = no }
+			c:TUN ?= { is_subject = no }
+		}
+	}
+
+	should_be_involved = {
+		c:FRA ?= this
+	}
+
+	should_show_when_not_involved = {
+		capital ?= { is_in_geographic_region = geographic_region_north_africa }
+	}
+
+	immediate = {
+		set_global_variable = { name = cwp_algeria_insurgency_level value = 0 }
+		c:FRA ?= { trigger_event = { id = cwp_algeria.1 popup = yes } }
+	}
+
+	scripted_progress_bar = cwp_algeria_insurgency_bar
+	scripted_progress_bar = cwp_algeria_will_bar
+
+	scripted_button = cwp_algeria_pacification_button
+	scripted_button = cwp_algeria_constantine_plan_button
+	scripted_button = cwp_algeria_referendum_button
+
+	on_monthly_pulse = {
+		effect = {
+			if = {
+				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_algeria_insurgency_bar)" >= 50 } }
+				set_global_variable = { name = cwp_algeria_insurgency_level value = 2 }
+			}
+			else_if = {
+				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_algeria_insurgency_bar)" >= 25 } }
+				set_global_variable = { name = cwp_algeria_insurgency_level value = 1 }
+			}
+			else = {
+				set_global_variable = { name = cwp_algeria_insurgency_level value = 0 }
+			}
+			if = {
+				limit = {
+					NOT = { has_global_variable = cwp_algeria_crisis_fired }
+					scope:journal_entry = { "scripted_bar_progress(cwp_algeria_will_bar)" <= 30 }
+				}
+				set_global_variable = cwp_algeria_crisis_fired
+				c:FRA ?= { trigger_event = { id = cwp_algeria.2 popup = yes } }
+			}
+		}
+	}
+
+	# Self-determination by referendum
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_cwp_algeria_referendum_desc
+		trigger = {
+			c:FRA ?= { has_variable = cwp_algeria_self_determination }
+		}
+		effect = {
+			cwp_algeria_independence_effect = yes
+			c:FRA = {
+				remove_variable = cwp_algeria_self_determination
+				change_relations = {
+					country = c:ALD
+					value = 20
+				}
+				add_modifier = {
+					name = cwp_end_of_empire
+					years = 5
+					is_decaying = yes
+				}
+				trigger_event = { id = cwp_algeria.10 popup = yes }
+			}
+			c:ALD ?= { trigger_event = { id = cwp_algeria.10 popup = yes } }
+		}
+	}
+
+	# France's will breaks first
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_cwp_algeria_will_broken_desc
+		trigger = {
+			NOT = { c:FRA ?= { has_variable = cwp_algeria_self_determination } }
+			scope:journal_entry = { "scripted_bar_progress(cwp_algeria_will_bar)" <= 0 }
+		}
+		effect = {
+			cwp_algeria_independence_effect = yes
+			c:FRA = {
+				add_modifier = {
+					name = cwp_algeria_war_weariness
+					years = 5
+					is_decaying = yes
+				}
+				add_modifier = {
+					name = cwp_end_of_empire
+					years = 5
+					is_decaying = yes
+				}
+				trigger_event = { id = cwp_algeria.11 popup = yes }
+			}
+			c:ALD ?= { trigger_event = { id = cwp_algeria.11 popup = yes } }
+		}
+	}
+
+	# The FLN wins on the ground
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_cwp_algeria_fln_victory_desc
+		trigger = {
+			NOT = { c:FRA ?= { has_variable = cwp_algeria_self_determination } }
+			scope:journal_entry = { "scripted_bar_progress(cwp_algeria_insurgency_bar)" >= 100 }
+		}
+		effect = {
+			cwp_algeria_independence_effect = yes
+			c:FRA = {
+				change_relations = {
+					country = c:ALD
+					value = -50
+				}
+				create_bidirectional_truce = {
+					country = c:ALD
+					months = 60
+				}
+				add_modifier = {
+					name = cwp_algeria_war_weariness
+					years = 10
+					is_decaying = yes
+				}
+				add_radicals = {
+					value = 0.1
+					interest_group = ig:ig_armed_forces
+				}
+				trigger_event = { id = cwp_algeria.12 popup = yes }
+			}
+			c:ALD ?= { trigger_event = { id = cwp_algeria.12 popup = yes } }
+		}
+	}
+
+	# Algérie française
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_cwp_algeria_held_desc
+		trigger = {
+			scope:journal_entry = { "scripted_bar_progress(cwp_algeria_insurgency_bar)" <= 0 }
+		}
+		effect = {
+			set_global_variable = {
+				name = cwp_algeria_je_cooldown
+				years = 10
+			}
+			remove_global_variable = cwp_algeria_crisis_fired
+			c:FRA = {
+				cwp_decolonization_add_setback = yes
+				trigger_event = { id = cwp_algeria.13 popup = yes }
+			}
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_cwp_decolonization_invalid_desc
+		trigger = {
+			OR = {
+				NOT = { exists = c:FRA }
+				NOT = { exists = s:STATE_ALGIERS.region_state:FRA }
+			}
+		}
+	}
+
+	transferable = no
+	can_deactivate = no
+	weight = 100
+}

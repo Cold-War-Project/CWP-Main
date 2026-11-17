@@ -1,0 +1,114 @@
+﻿# Cold War Project: decolonization war support, added to war_support_from_journal_entries
+# (common/script_values/zz_vanilla_script_values.txt). Root = the country whose war support changes,
+# scope:war = the war; the result is part of the per-beat war support change and shows in its tooltip.
+# Global variables set by the journal entries' monthly pulses:
+#   cwp_indochina_bar_level / cwp_indonesia_bar_level  -2..2 from the JE bar (+/-25 = 1, +/-40 = 2)
+#   cwp_indochina_peoples_war_phase                    the Indochina people's war phase is running
+# War support runs 0-100 (red band at 25); native per-beat factors reach -5 (occupation), so these are sized to match.
+
+cwp_decolonization_war_support = {
+	value = 0
+
+	# Indochina: France and the Viet Minh state
+	if = {
+		limit = {
+			has_global_variable = cwp_indochina_bar_level
+			OR = {
+				c:FRA ?= this
+				c:DAI ?= this
+			}
+			exists = c:FRA
+			exists = c:DAI
+			scope:war = {
+				is_war_participant = c:FRA
+				is_war_participant = c:DAI
+			}
+		}
+		if = {
+			limit = { has_global_variable = cwp_indochina_peoples_war_phase }
+			add = {
+				value = 3
+				desc = "cwp_war_support_peoples_war"
+			}
+			if = {
+				limit = { scope:war = { has_war_support = { target = root value < 30 } } }
+				add = {
+					value = 5
+					desc = "cwp_war_support_peoples_war_resilience"
+				}
+			}
+		}
+		if = {
+			limit = {
+				c:FRA ?= this
+				global_var:cwp_indochina_bar_level > 0
+			}
+			add = {
+				value = global_var:cwp_indochina_bar_level
+				multiply = -1.5
+				desc = "cwp_war_support_indochina_balance"
+			}
+		}
+		if = {
+			limit = {
+				c:DAI ?= this
+				global_var:cwp_indochina_bar_level < 0
+			}
+			add = {
+				value = global_var:cwp_indochina_bar_level
+				multiply = 1.5
+				desc = "cwp_war_support_indochina_balance"
+			}
+		}
+	}
+
+	# Indonesia: the Netherlands and the Republic
+	if = {
+		limit = {
+			has_global_variable = cwp_indonesia_bar_level
+			OR = {
+				c:NET ?= this
+				c:IDS ?= this
+			}
+			exists = c:NET
+			exists = c:IDS
+			scope:war = {
+				is_war_participant = c:NET
+				is_war_participant = c:IDS
+			}
+		}
+		if = {
+			limit = {
+				c:IDS ?= this
+				global_var:cwp_indonesia_bar_level > -1
+				scope:war = { has_war_support = { target = root value < 30 } }
+			}
+			add = {
+				value = 5
+				desc = "cwp_war_support_indonesia_resilience"
+			}
+		}
+		if = {
+			limit = {
+				c:NET ?= this
+				global_var:cwp_indonesia_bar_level > 0
+			}
+			add = {
+				value = global_var:cwp_indonesia_bar_level
+				multiply = -1.5
+				desc = "cwp_war_support_indonesia_pressure"
+			}
+		}
+		if = {
+			limit = {
+				c:IDS ?= this
+				global_var:cwp_indonesia_bar_level < 0
+			}
+			add = {
+				value = global_var:cwp_indonesia_bar_level
+				multiply = 1.5
+				desc = "cwp_war_support_indonesia_pressure"
+			}
+		}
+	}
+}
