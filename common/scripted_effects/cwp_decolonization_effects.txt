@@ -44,7 +44,21 @@ cwp_decolonization_monthly_update = {
 	set_global_variable = { name = cwp_tide_new_independences value = 0 }
 	set_global_variable = { name = cwp_tide_setbacks value = 0 }
 
-	cwp_decolonization_register_colonies = yes
+	# Colonies are registered once, when the JE opens: subjects created later (Cold War satellites, former
+	# occupation zones such as Japan) are not colonies. Make sure every tracked colony and its metropole is involved.
+	every_country = {
+		limit = {
+			OR = {
+				cwp_is_tracked_colony = yes
+				AND = {
+					has_variable = cwp_colonial_power
+					cwp_has_tracked_colonies = yes
+				}
+			}
+			NOT = { is_involved_in_journal_entry = je_cwp_winds_of_change }
+		}
+		scope:journal_entry = { add_involved_country = prev }
+	}
 
 	# Independence, by whatever road: a war, a release, a journal entry outcome.
 	every_country = {
@@ -394,6 +408,7 @@ cwp_indochina_end_peoples_war = {
 cwp_indochina_cleanup = {
 	remove_global_variable = cwp_indochina_peoples_war_phase
 	remove_global_variable = cwp_indochina_bar_level
+	remove_global_variable = cwp_indochina_months
 	every_country = {
 		limit = { has_modifier = cwp_indochina_peoples_war }
 		remove_modifier = cwp_indochina_peoples_war
