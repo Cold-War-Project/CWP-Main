@@ -1,0 +1,133 @@
+﻿# Cold War Project: the road to a people's democracy in the Soviet-occupied countries.
+# Nothing is scheduled: control grows with the occupier, communist ministers and the police, and shrinks with
+# the opposition's clout; resistance grows with radicals. Either can win, and the occupier can leave.
+
+je_cwp_peoples_democracy = {
+	icon = "gfx/interface/icons/event_icons/event_revolutionary_flag.dds"
+	group = je_group_internal_affairs
+
+	activation_description = { always = yes }
+
+	is_shown_when_inactive = {
+		cwp_sov_is_candidate = yes
+	}
+
+	possible = {
+		cwp_sov_is_candidate = yes
+	}
+
+	immediate = {
+		overlord ?= { save_scope_as = cwp_sov_occupier }
+		trigger_event = { id = cwp_sov.1 popup = yes }
+	}
+
+	scripted_progress_bar = cwp_sov_control_bar
+	scripted_progress_bar = cwp_sov_resistance_bar
+
+	scripted_button = cwp_sov_salami_button
+	scripted_button = cwp_sov_merge_parties_button
+	scripted_button = cwp_sov_land_reform_button
+	scripted_button = cwp_sov_show_trials_button
+	scripted_button = cwp_sov_appeal_west_button
+
+	on_monthly_pulse = {
+		effect = {
+			if = {
+				limit = {
+					scope:journal_entry = {
+						"scripted_bar_progress(cwp_sov_resistance_bar)" >= 100
+					}
+					NOT = { has_variable = cwp_sov_uprising_pending_var }
+				}
+				set_variable = cwp_sov_uprising_pending_var
+				trigger_event = { id = cwp_sov.3 popup = yes }
+			}
+		}
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_peoples_democracy_status_monarchy
+				trigger = { country_has_monarchy_law = yes }
+			}
+			triggered_desc = {
+				desc = je_cwp_peoples_democracy_status_communists
+				trigger = { cwp_communists_in_government = yes }
+			}
+			desc = je_cwp_peoples_democracy_status_coalition
+		}
+	}
+
+	# The communists hold the state: a single-party people's republic.
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_peoples_democracy_success_desc
+		color = "gold_positive"
+		trigger = {
+			scope:journal_entry = {
+				custom_tooltip = {
+					text = cwp_sov_control_full_tt
+					"scripted_bar_progress(cwp_sov_control_bar)" >= 100
+				}
+			}
+			custom_tooltip = {
+				text = cwp_sov_no_crown_tt
+				country_has_monarchy_law = no
+			}
+		}
+		effect = {
+			trigger_event = { id = cwp_sov.2 popup = yes }
+		}
+	}
+
+	# The occupier left before the communists had the state in hand.
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		conclusion_desc = je_cwp_peoples_democracy_failure_desc
+		color = "blue_negative"
+		trigger = {
+			custom_tooltip = {
+				text = cwp_sov_occupation_over_tt
+				cwp_iq_under_soviet_pressure = no
+			}
+			scope:journal_entry = {
+				"scripted_bar_progress(cwp_sov_control_bar)" < 60
+			}
+		}
+		effect = {
+			set_variable = cwp_sov_settled_var
+			add_modifier = {
+				name = cwp_sov_democracy_survives
+				years = 5
+			}
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_cwp_peoples_democracy_failure_desc
+		trigger = {
+			OR = {
+				has_variable = cwp_sov_settled_var
+				has_law = law_type:law_single_party_state
+				AND = {
+					cwp_iq_under_soviet_pressure = no
+					scope:journal_entry = {
+						"scripted_bar_progress(cwp_sov_control_bar)" >= 60
+					}
+				}
+			}
+		}
+		effect = {
+			set_variable = cwp_sov_settled_var
+		}
+	}
+
+	weight = 1000
+	transferable = no
+	can_revolution_inherit = no
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
