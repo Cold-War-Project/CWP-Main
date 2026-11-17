@@ -374,31 +374,6 @@ cwp_indochina_peoples_war_pulse = {
 	}
 }
 
-# Scope: none. WEEKLY during the people's war phase: war support in the FRA-DAI war cannot sink into the red band,
-# so neither side capitulates to occupation alone (war support runs 0-100, red band at 25; native beats move it by
-# several points a week, so the top-up is +10).
-cwp_indochina_war_support_floor = {
-	c:FRA ?= {
-		every_scope_war = {
-			limit = { any_war_participant = { c:DAI ?= this } }
-			if = {
-				limit = { has_war_support = { target = c:FRA value < 30 } }
-				add_war_war_support = {
-					target = c:FRA
-					value = 10
-				}
-			}
-			if = {
-				limit = { has_war_support = { target = c:DAI value < 30 } }
-				add_war_war_support = {
-					target = c:DAI
-					value = 10
-				}
-			}
-		}
-	}
-}
-
 # Scope: none. Ends the people's war phase. $ATTACKER$ launched the offensive and gains momentum.
 cwp_indochina_end_peoples_war = {
 	remove_global_variable = cwp_indochina_peoples_war_phase
@@ -418,46 +393,10 @@ cwp_indochina_end_peoples_war = {
 # Scope: none. Clears the phase variable and the war modifiers when the JE ends.
 cwp_indochina_cleanup = {
 	remove_global_variable = cwp_indochina_peoples_war_phase
+	remove_global_variable = cwp_indochina_bar_level
 	every_country = {
 		limit = { has_modifier = cwp_indochina_peoples_war }
 		remove_modifier = cwp_indochina_peoples_war
-	}
-}
-
-# Scope: none. Monthly: the bar's balance wears down one side's war support.
-cwp_indochina_war_pressure = {
-	c:FRA ?= {
-		every_scope_war = {
-			limit = { any_war_participant = { c:DAI ?= this } }
-			if = {
-				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" >= 40 } }
-				add_war_war_support = {
-					target = c:FRA
-					value = -10
-				}
-			}
-			else_if = {
-				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" >= 25 } }
-				add_war_war_support = {
-					target = c:FRA
-					value = -5
-				}
-			}
-			else_if = {
-				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" <= -40 } }
-				add_war_war_support = {
-					target = c:DAI
-					value = -10
-				}
-			}
-			else_if = {
-				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" <= -25 } }
-				add_war_war_support = {
-					target = c:DAI
-					value = -5
-				}
-			}
-		}
 	}
 }
 
@@ -545,38 +484,6 @@ cwp_indonesia_transfer_sovereignty = {
 	}
 }
 
-# Scope: none. Monthly: the bar's balance wears down one side's war support in any NET-IDS war.
-cwp_indonesia_war_pressure = {
-	c:NET ?= {
-		every_scope_war = {
-			limit = {
-				any_war_participant = { c:IDS ?= this }
-			}
-			if = {
-				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indonesia_revolution_bar)" >= 40 } }
-				add_war_war_support = {
-					target = c:NET
-					value = -10
-				}
-			}
-			else_if = {
-				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indonesia_revolution_bar)" >= 25 } }
-				add_war_war_support = {
-					target = c:NET
-					value = -5
-				}
-			}
-			else_if = {
-				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indonesia_revolution_bar)" <= -25 } }
-				add_war_war_support = {
-					target = c:IDS
-					value = -5
-				}
-			}
-		}
-	}
-}
-
 # Scope: none. Ends every play or war between the Netherlands and the Republic (used by the Round Table).
 cwp_indonesia_end_war = {
 	if = {
@@ -608,23 +515,50 @@ cwp_indonesia_end_war = {
 	}
 }
 
-# Scope: none. WEEKLY: the Republic fights on from the villages while the world still backs it. Its war support
-# cannot sink into the red band unless Pressure on The Hague has turned against it (-25 or below), so taking
-# Yogyakarta alone does not end the revolution.
-cwp_indonesia_war_support_floor = {
+# Scope: none, scope:journal_entry set. Monthly: mirrors the bar into cwp_indochina_bar_level (-2..2), which
+# cwp_decolonization_war_support (common/script_values/cwp_decolonization_values.txt) turns into war support.
+cwp_indochina_set_bar_level = {
 	if = {
-		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indonesia_revolution_bar)" > -25 } }
-		c:NET ?= {
-			every_scope_war = {
-				limit = { any_war_participant = { c:IDS ?= this } }
-				if = {
-					limit = { has_war_support = { target = c:IDS value < 30 } }
-					add_war_war_support = {
-						target = c:IDS
-						value = 10
-					}
-				}
-			}
-		}
+		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" >= 40 } }
+		set_global_variable = { name = cwp_indochina_bar_level value = 2 }
+	}
+	else_if = {
+		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" >= 25 } }
+		set_global_variable = { name = cwp_indochina_bar_level value = 1 }
+	}
+	else_if = {
+		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" <= -40 } }
+		set_global_variable = { name = cwp_indochina_bar_level value = -2 }
+	}
+	else_if = {
+		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" <= -25 } }
+		set_global_variable = { name = cwp_indochina_bar_level value = -1 }
+	}
+	else = {
+		set_global_variable = { name = cwp_indochina_bar_level value = 0 }
+	}
+}
+
+# Scope: none, scope:journal_entry set. Monthly: mirrors the bar into cwp_indonesia_bar_level (-2..2), which
+# cwp_decolonization_war_support (common/script_values/cwp_decolonization_values.txt) turns into war support.
+cwp_indonesia_set_bar_level = {
+	if = {
+		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indonesia_revolution_bar)" >= 40 } }
+		set_global_variable = { name = cwp_indonesia_bar_level value = 2 }
+	}
+	else_if = {
+		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indonesia_revolution_bar)" >= 25 } }
+		set_global_variable = { name = cwp_indonesia_bar_level value = 1 }
+	}
+	else_if = {
+		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indonesia_revolution_bar)" <= -40 } }
+		set_global_variable = { name = cwp_indonesia_bar_level value = -2 }
+	}
+	else_if = {
+		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indonesia_revolution_bar)" <= -25 } }
+		set_global_variable = { name = cwp_indonesia_bar_level value = -1 }
+	}
+	else = {
+		set_global_variable = { name = cwp_indonesia_bar_level value = 0 }
 	}
 }
