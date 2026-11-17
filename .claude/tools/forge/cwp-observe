@@ -13,16 +13,18 @@ OUT=${3:-$HOME/forge/observer/$(date +%Y%m%d-%H%M)-$SHA}; mkdir -p "$OUT/saves"
 } > "$OUT/BUILD.txt"
 export DISPLAY=:0 CWP_AGENT=${CWP_AGENT:-observer}
 U="$HOME/.local/share/Paradox Interactive/Victoria 3"; SAVES="$U/save games"
-cwp-vic lock --wait "${CWP_OBSERVE_WAIT:-5400}" ${CWP_OBSERVE_PRIORITY:+--priority} "observer: shared run $SHA to $END" || exit 1
+export CWP_VIC_MAX_HOLD=${CWP_VIC_MAX_HOLD:-$(( (END - 1946) * 240 + 3600 ))}   # hold long enough for the whole run
+cwp-vic lock --wait "${CWP_OBSERVE_WAIT:-14400}" ${CWP_OBSERVE_PRIORITY:+--priority} "observer: shared run $SHA to $END" || exit 1
 trap 'cwp-vic unlock >/dev/null' EXIT
 cwp-vic link "$WT" >/dev/null && cwp-vic launch > "$OUT/launch.out" 2>&1
 sleep 170; cwp-vic errors > "$OUT/errors_menu.txt" 2> "$OUT/canary_menu.txt"
 vic-click 266 284 >/dev/null; sleep 6; vic-click 1086 330 >/dev/null; sleep 100
 vic-click 566 702 >/dev/null; sleep 4; vic-key 5 >/dev/null; vic-key space >/dev/null
-cwp-vic perf 7200 30 > "$OUT/perf_path.txt" 2>&1 &
+MAXS=${CWP_OBSERVE_MAX_SECONDS:-$(( (END - 1946) * 240 + 1800 ))}   # ~4 min per game year at max speed, plus slack
+cwp-vic perf "$MAXS" 30 > "$OUT/perf_path.txt" 2>&1 &
 PERF=$!
 last=""; t0=$SECONDS
-while (( SECONDS - t0 < 7200 )); do
+while (( SECONDS - t0 < MAXS )); do
   sleep 120
   cwp-vic status | grep -q "game:    pid" || { echo "GAME NOT RUNNING (crash?) at $((SECONDS-t0))s" | tee "$OUT/CRASH"; break; }
   f=$(ls -t "$SAVES"/autosave*.v3 2>/dev/null | head -1); [[ -z "$f" || "$f" == "$last" && ! "$f" -nt "$OUT/.last" ]] && continue
