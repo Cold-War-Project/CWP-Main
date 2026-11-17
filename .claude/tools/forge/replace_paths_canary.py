@@ -20,6 +20,9 @@ for log in sys.argv[2:]:
     except OSError:
         continue
     for p in pat.findall(text):
+        # Vanilla never ships cwp_* files, so those can only be stale lines from another mod tree.
+        if os.path.basename(p).startswith("cwp_"):
+            continue
         if os.path.dirname(p) in replaced and not os.path.exists(os.path.join(mod, p)):
             leaks[p] += 1
 if leaks:

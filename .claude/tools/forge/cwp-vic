@@ -134,6 +134,10 @@ cmd_launch() {
   # everything left afterwards belongs to this launch.
   mkdir -p "$(dirname "$ERRLOG")"; : > "$ERRLOG" 2>/dev/null || true
   rm -f "$(dirname "$ERRLOG")"/error.[0-9].log
+  # Also start debug/game logs fresh: the canary in `errors` reads them, and a previous session's
+  # lines (another worktree's files) would otherwise show up as leaks.
+  local f; for f in "$(dirname "$ERRLOG")"/{debug,game}.log; do [[ -f "$f" ]] && : > "$f"; done
+  rm -f "$(dirname "$ERRLOG")"/{debug,game}.[0-9].log
   vic-launch "$@"; local rc=$?
   game_pids | head -1 > "$GAMEPID"
   return $rc
