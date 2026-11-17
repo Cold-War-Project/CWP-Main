@@ -143,7 +143,10 @@ def one_run(worktree: Path, out: Path, end_year: int, every: int, max_minutes: f
         _, err = lock.communicate()
     except BaseException:
         lock.terminate()
-        lock.wait(timeout=30)
+        try:
+            lock.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            lock.kill()  # its queue ticket is dropped once the pid is dead
         raise
     if lock.returncode != 0:
         log(out, f"lock failed: {err.strip()}")
