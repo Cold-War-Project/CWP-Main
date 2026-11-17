@@ -72,6 +72,8 @@ For anything that changes gameplay over time (economy, politics, AI, events):
 5. Every few minutes: `vic-shot` to read the in-game date and spot popups, `cwp-vic errors | wc -l` to watch log growth.
 6. Record: start and end in-game date, wall-clock minutes, error.log lines at start and end, crashes, anything visibly wrong (countries collapsing, bankrupt great powers, empty markets).
 
+For the economy (GDP against history, debt, buildings), `python3 -m tools.econ_bench run` does all of this unattended and yields the game when another thread queues; see [areas/economy-benchmarks.md](areas/economy-benchmarks.md).
+
 ## Testing several PRs together
 
 Only one game fits on the GPU (a CWP game uses about 5 GB RAM and 6+ GB VRAM), so areas are tested together as **one combined build**, not parallel games.
