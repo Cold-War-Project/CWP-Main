@@ -1,4 +1,4 @@
----
+﻿---
 paths:
   - "common/character_templates/**"
   - "common/character_traits/**"
@@ -14,7 +14,7 @@ paths:
 
 # Characters
 
-`character_templates` is in `replace_paths` (mod-only: `00_default_template.txt`, `colonial_governor_templates.txt`, `test_template.txt`). Traits are vanilla plus `zz_vanilla_character_traits.txt` / `zz_vanilla_character_skills.txt`; interactions are same-name overwrites of `00_`/`01_`/`02_` plus `zz_vanilla_character_interactions.txt`; roles, DNA, ethnicities and genes are pure vanilla.
+`character_templates` is in `replace_paths` (mod-only: `00_default_template.txt`, `colonial_governor_templates.txt`, `test_template.txt`, `cwp_vanilla_script_templates.txt` for keys live vanilla script creates, and `cwp_1946_<tag>.txt` for the 1946 roster). Traits are vanilla plus `zz_vanilla_character_traits.txt` / `zz_vanilla_character_skills.txt`; interactions are same-name overwrites of `00_`/`01_`/`02_` plus `zz_vanilla_character_interactions.txt`; roles, DNA, ethnicities and genes are pure vanilla.
 
 ## Templates (`common/character_templates`)
 
@@ -43,7 +43,7 @@ USA_harry_truman = {
 }
 ```
 - **The `default` template is hard-coded and must exist** with all parameters (`00_default_template.txt`); its contents may be changed, the entry may not be removed.
-- Template keys are global; convention is `TAG_firstname_lastname`. A template is placed at start by `history/characters` (`create_character = { template = key }`) or spawned later through the `*_usage` blocks (historical characters appearing in a date window) or script. No `TAG_` templates exist on this branch yet; dev's are in `origin/dev:common/character_templates` (6 files), and porting is tracked in `docs/agents/areas/history-setup.md`.
+- Template keys are global; convention is `TAG_firstname_lastname`. A template is placed at start by `history/characters` (`create_character = { template = key }`) or spawned later through the `*_usage` blocks (historical characters appearing in a date window) or script. The 1946 roster is in `cwp_1946_<tag>.txt`; dev's disabled usage-block drafts are in `origin/dev:common/character_templates/*.info`. Area notes: `docs/agents/areas/characters.md`.
 - Names are loc keys: every `first_name`/`last_name` value needs an entry, or the raw key shows. Names with spaces use underscores.
 - `interest_group`, `ideology`, `traits`, `culture`, `religion`, `commander_rank`, `hq` must all be mod-valid keys. The mod has nine interest groups (`ig_bureaucrats` is extra).
 - Role assignment has three interchangeable forms (documented in the default template header): `ruler = yes` style shortcuts, `role = <archetype>`, `role = <database key>`.
