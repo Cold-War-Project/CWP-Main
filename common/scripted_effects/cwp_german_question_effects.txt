@@ -58,40 +58,43 @@ cwp_gq_save_frg_core = {
 	}
 }
 
-# Run in the core zone's scope. The western zones that still answer to a western power
-# merge into the Federal Republic; zone territory inside Austria passes to Austria first.
-cwp_gq_proclaim_frg = {
-	custom_tooltip = cwp_gq_proclaim_frg_tt
-	hidden_effect = {
-		every_country = {
-			limit = { cwp_gq_is_western_zone = yes }
-			every_scope_state = {
-				limit = {
-					exists = c:AUS
-					OR = {
-						state_region = s:STATE_AUSTRIA
-						state_region = s:STATE_TYROL
-						state_region = s:STATE_STYRIA
-					}
-				}
-				set_state_owner = c:AUS
-			}
-		}
-		every_country = {
-			limit = {
-				cwp_gq_is_western_zone = yes
-				NOT = { this = root }
+# Run in the core zone's scope. The other western zones that still answer to a western power
+# merge into it, and it becomes the Federal Republic (tag GER). A player holding another zone
+# is annexed with it (said in the tooltip). Each zone is written out so that nothing is annexed
+# inside a list it is iterating.
+cwp_gq_merge_zone = {
+	if = {
+		limit = {
+			exists = c:$ZONE$
+			NOT = { c:$ZONE$ = root }
+			c:$ZONE$ = {
 				OR = {
 					is_subject = no
 					overlord = { cwp_gq_is_western_occupier = yes }
 				}
 			}
-			save_temporary_scope_as = cwp_gq_merging_zone
-			root = { annex = scope:cwp_gq_merging_zone }
 		}
+		annex_with_incorporation = c:$ZONE$
+	}
+}
+
+cwp_gq_proclaim_frg = {
+	custom_tooltip = cwp_gq_proclaim_frg_tt
+	hidden_effect = {
+		cwp_gq_merge_zone = { ZONE = AOZ }
+		cwp_gq_merge_zone = { ZONE = BOZ }
+		cwp_gq_merge_zone = { ZONE = FOZ }
 		if = {
 			limit = { NOT = { exists = c:GER } }
 			change_tag = GER
+		}
+		if = {
+			limit = { NOT = { is_country_type = recognized } }
+			set_country_type = recognized
+		}
+		if = {
+			limit = { has_state_in_state_region = STATE_NORTH_RHINE }
+			set_capital = STATE_NORTH_RHINE
 		}
 		set_global_variable = cwp_gq_frg_proclaimed
 	}
@@ -127,7 +130,7 @@ cwp_gq_gdr_sovereignty = {
 cwp_gq_neutral_unification = {
 	if = {
 		limit = { exists = c:DDR }
-		annex = c:DDR
+		annex_with_incorporation = c:DDR
 	}
 	if = {
 		limit = { is_subject = yes }
@@ -149,6 +152,12 @@ cwp_gq_end_blockade = {
 	remove_global_variable = cwp_gq_blockade
 	remove_global_variable = cwp_gq_blockade_months
 	set_global_variable = cwp_gq_berlin_settled
+	c:RUS ?= {
+		if = {
+			limit = { has_modifier = cwp_gq_blockade_strain }
+			remove_modifier = cwp_gq_blockade_strain
+		}
+	}
 	if = {
 		limit = { has_global_variable = cwp_gq_airlift }
 		custom_tooltip = cwp_gq_airlift_won_tt

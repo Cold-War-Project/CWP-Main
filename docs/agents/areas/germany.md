@@ -12,9 +12,9 @@ A contextless journal entry in vanilla's `je_group_global_international_situatio
 
 | Bar | Start | Pushed up by | Pushed down by |
 |---|---|---|---|
-| `cwp_gq_western_bar` Western Integration | 0 | Bizone, Trizone, Marshall aid, Deutsche Mark, Länder elections, western SoL above the Soviet zone's, Soviet consolidation ≥ 50, the airlift | French reservations, four-power unity ≥ 60, the Occupation Statute (after the Basic Law), Berlin given up, radicals ≥ 20% |
+| `cwp_gq_western_bar` Western Integration | 0 | Bizone, Trizone, Marshall aid, Deutsche Mark, Länder elections, western SoL above the Soviet zone's, Soviet consolidation ≥ 50, the airlift, the western allies agreeing (US relations with GBR and FRA ≥ 50) | French reservations, Britain or France hostile to the US, four-power unity ≥ 60, the Occupation Statute (after the Basic Law), Berlin given up, radicals ≥ 20% |
 | `cwp_gq_soviet_bar` Soviet Consolidation | 0 | land reform, the SED, dismantling, antifascist bloc, trade unions in government, the western currency, the blockade | radicals ≥ 20% in the zone, the zone no longer a Soviet subject |
-| `cwp_gq_unity_bar` Four-Power Unity | 50 | four-power talks | Control Council deadlock (−0.5 a month), Bizone, currency reform, blockade, reparations quarrels |
+| `cwp_gq_unity_bar` Four-Power Unity | 50 | four-power talks, US-Soviet relations ≥ 50 | US-Soviet relations below 20 (−0.5) or below −20 (−1), Bizone, currency reform, blockade, reparations quarrels |
 
 ### Milestones (checked monthly; each is an event the country can refuse)
 
@@ -22,8 +22,8 @@ A contextless journal entry in vanilla's `je_group_global_international_situatio
 |---|---|---|---|
 | Bizone | USA and GBR have both pressed *Merge the Zones* | (both buttons) | AOZ and BOZ get `cwp_gq_bizone` |
 | Trizone | FRA presses *Join the Trizone* (needs the Bizone) | France | FOZ joins; French reservations end |
-| Berlin blockade | RUS presses *Blockade West Berlin* (needs the Deutsche Mark) | USA (or GBR): airlift, talks, withdraw | airlift: after 10 months Moscow chooses to lift or go on |
-| Basic Law | Western ≥ 60, Trizone (or no FOZ), unity < 50 | the core western zone (a player's zone, else AOZ) | the western zones merge into GER (Federal Republic); their Austrian states pass to AUS |
+| Berlin blockade | RUS presses *Blockade West Berlin* (needs the Deutsche Mark) | USA (or GBR): airlift, talks, withdraw | airlift: each month it holds, `cwp_gq_blockade_strain` costs RUS more prestige and the AI's weight to lift rises |
+| Basic Law | Western ≥ 60, Trizone (or no FOZ), unity < 50, GER does not exist | the core western zone (a player's zone, else AOZ) | the other western zones are annexed with incorporation; the core takes tag GER, becomes `recognized`, capital North Rhine if held |
 | GDR | Soviet zone held, Soviet ≥ 60 and a Federal Republic exists, or Soviet ≥ 90 | DDR | the Soviet zone takes the GDR name |
 | Stalin Note | RUS button, Western ≥ 70, FRG not yet sovereign | GER: reject (AI 85%) or accept | accept: GER annexes DDR, leaves its bloc, neutral |
 | FRG sovereignty | Western = 100 | GER's occupier | occupation ends; GER chooses the Western bloc or non-alignment |
@@ -66,7 +66,9 @@ Nothing reads the date. The historical path is the likely one because of the sta
 ## Known gaps and decisions for review
 
 - **Tuning is untested beyond a load test.** Rates were set so that the AI reaches the Bizone after about a year and the Basic Law around 1949; an observer run decides the final numbers.
-- **The western zones own Austrian states** in the 1946 history (AOZ in STATE_AUSTRIA and STATE_TYROL, BOZ in STATE_STYRIA and STATE_TYROL, FOZ in STATE_TYROL). Chapter 1 hands those states to AUS when the Federal Republic is proclaimed. Better: give the Austrian zones to AUS (or an Allied-occupied Austria) at start, which is the history thread's call.
+- **The western zones own Austrian states** in the 1946 history (AOZ in STATE_AUSTRIA and STATE_TYROL, BOZ in STATE_STYRIA and STATE_TYROL, FOZ in STATE_TYROL). Agreed with the history thread: AUS will own all Austrian land at start, so chapter 1 moves no states. Until that lands, those states go to the Federal Republic at the Basic Law.
+- **GER is tier `empire`** in its country definition; the dynamic names cover the name, but check ruler titles in game.
+- **Chapter 2 hand-off:** copy the final bar values to globals when chapter 2 exists to read them (not now: an unread variable is a log line).
 - **Berlin is not divided on the map**: DDR owns all of STATE_BRANDENBURG. The blockade is therefore modelled through variables and modifiers, not territory.
 - **GER formable** (#783 makes GER formable by any north German country with 63% of its culture states). A western zone or the DDR could form GER outside this JE. The formable should require the German question to be concluded, or not be a zone (to settle with the history thread).
 - Not built yet: parent JE with chapter list, chapter 2 (Two Germanies), chapter 3 (Die Wende), the Saar sub-JE, Austria.
