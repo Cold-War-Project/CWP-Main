@@ -1,0 +1,336 @@
+﻿# Cold War Project: events for je_cwp_divided_peninsula (docs/agents/areas/korea.md)
+namespace = cwp_korea
+
+# The situation opens
+cwp_korea.1 = {
+	type = country_event
+	placement = ROOT
+
+	title = cwp_korea.1.t
+	desc = cwp_korea.1.d
+	flavor = cwp_korea.1.f
+
+	event_image = { video = "unspecific_politicians_arguing" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_map.dds"
+
+	duration = 3
+
+	option = {
+		name = cwp_korea.1.a
+		default_option = yes
+	}
+}
+
+# The Joint Commission collapses
+cwp_korea.2 = {
+	type = country_event
+	placement = ROOT
+
+	title = cwp_korea.2.t
+	desc = cwp_korea.2.d
+	flavor = cwp_korea.2.f
+
+	event_image = { video = "unspecific_politicians_arguing" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_scales.dds"
+
+	duration = 3
+
+	option = {
+		name = cwp_korea.2.a
+		default_option = yes
+		custom_tooltip = cwp_korea_partition_tt
+	}
+}
+
+# Uprising in the South (Jeju 1948, Yeosu-Suncheon 1948)
+cwp_korea.10 = {
+	type = country_event
+	placement = ROOT
+
+	title = cwp_korea.10.t
+	desc = cwp_korea.10.d
+	flavor = cwp_korea.10.f
+
+	event_image = { video = "africa_soldiers_breaking_protest" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_fire.dds"
+
+	duration = 3
+
+	trigger = {
+		NOT = { has_global_variable = cwp_korea_war }
+	}
+
+	# Crush it
+	option = {
+		name = cwp_korea.10.a
+		default_option = yes
+		add_modifier = { name = cwp_korea_southern_insurgency days = 730 }
+		add_radicals = { value = medium_radicals }
+		ig:ig_armed_forces ?= {
+			add_modifier = { name = cwp_korea_crackdown_approval days = short_modifier_time }
+		}
+		ai_chance = { base = 70 }
+	}
+
+	# Promise reform
+	option = {
+		name = cwp_korea.10.b
+		add_modifier = { name = cwp_korea_southern_insurgency days = 365 }
+		ig:ig_landowners ?= {
+			add_modifier = { name = cwp_korea_landowners_dispossessed days = short_modifier_time }
+		}
+		ai_chance = { base = 30 }
+	}
+}
+
+# The North invades: Washington decides
+cwp_korea.20 = {
+	type = country_event
+	placement = c:STK.capital
+
+	title = cwp_korea.20.t
+	desc = cwp_korea.20.d
+	flavor = cwp_korea.20.f
+
+	event_image = { video = "unspecific_military_parade" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+
+	duration = 3
+
+	trigger = {
+		exists = c:STK
+		exists = c:NRK
+		has_global_variable = cwp_korea_war
+		NOT = { has_war_with = c:STK }
+	}
+
+	# The Security Council acts while the Soviet seat is empty
+	option = {
+		name = cwp_korea.20.a
+		default_option = yes
+		trigger = { has_global_variable = cwp_korea_sc_boycott }
+		set_global_variable = cwp_korea_un_mandate
+		add_modifier = { name = cwp_korea_un_command days = long_modifier_time }
+		cwp_korea_join_war_effect = { SIDE = c:STK }
+		custom_tooltip = cwp_korea_un_contingents_tt
+		hidden_effect = {
+			every_country = {
+				limit = {
+					cwp_korea_contingent_candidate = yes
+				}
+				trigger_event = { id = cwp_korea.23 days = 7 popup = yes }
+			}
+		}
+		ai_chance = { base = 90 }
+	}
+
+	# A Soviet veto blocks the UN: go in alone
+	option = {
+		name = cwp_korea.20.b
+		trigger = { NOT = { has_global_variable = cwp_korea_sc_boycott } }
+		cwp_korea_join_war_effect = { SIDE = c:STK }
+		ai_chance = { base = 60 }
+	}
+
+	# Stay out
+	option = {
+		name = cwp_korea.20.c
+		add_modifier = { name = cwp_korea_abandoned_korea days = normal_modifier_time }
+		ai_chance = {
+			base = 10
+			modifier = {
+				trigger = { NOT = { has_global_variable = cwp_korea_sc_boycott } }
+				add = 30
+			}
+		}
+	}
+}
+
+# War in Korea: Beijing watches
+cwp_korea.21 = {
+	type = country_event
+	placement = c:NRK.capital
+
+	title = cwp_korea.21.t
+	desc = cwp_korea.21.d
+	flavor = cwp_korea.21.f
+
+	event_image = { video = "unspecific_military_parade" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+
+	duration = 3
+
+	trigger = {
+		has_global_variable = cwp_korea_war
+		exists = c:NRK
+	}
+
+	option = {
+		name = cwp_korea.21.a
+		default_option = yes
+	}
+}
+
+# Resist America, Aid Korea: UN forces near the Yalu
+cwp_korea.22 = {
+	type = country_event
+	placement = c:NRK.capital
+
+	title = cwp_korea.22.t
+	desc = cwp_korea.22.d
+	flavor = cwp_korea.22.f
+
+	event_image = { video = "unspecific_military_parade" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+
+	duration = 3
+
+	trigger = {
+		exists = c:NRK
+		cwp_korea_war_running = yes
+	}
+
+	# Send the People's Volunteers
+	option = {
+		name = cwp_korea.22.a
+		default_option = yes
+		add_modifier = { name = cwp_korea_chinese_volunteers days = normal_modifier_time }
+		cwp_korea_join_war_effect = { SIDE = c:NRK }
+		ai_chance = {
+			base = 50
+			modifier = {
+				trigger = { c:USA ?= { has_variable = cwp_korea_participant } }
+				add = 40
+			}
+		}
+	}
+
+	# Stay out
+	option = {
+		name = cwp_korea.22.b
+		remove_global_variable = cwp_korea_prc_pledge
+		ai_chance = { base = 10 }
+	}
+}
+
+# Contingents for the UN Command
+cwp_korea.23 = {
+	type = country_event
+	placement = c:STK.capital
+
+	title = cwp_korea.23.t
+	desc = cwp_korea.23.d
+	flavor = cwp_korea.23.f
+
+	event_image = { video = "unspecific_military_parade" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+
+	duration = 3
+
+	trigger = {
+		exists = c:STK
+		has_global_variable = cwp_korea_un_mandate
+		cwp_korea_war_running = yes
+		cwp_korea_contingent_candidate = yes
+	}
+
+	option = {
+		name = cwp_korea.23.a
+		add_modifier = { name = cwp_korea_un_command days = normal_modifier_time }
+		cwp_korea_join_war_effect = { SIDE = c:STK }
+		ai_chance = {
+			base = 25
+			modifier = {
+				trigger = { "relations(c:USA)" >= 80 }
+				add = 25
+			}
+		}
+	}
+
+	option = {
+		name = cwp_korea.23.b
+		default_option = yes
+		ai_chance = { base = 50 }
+	}
+}
+
+# Armistice talks: the North's answer
+cwp_korea.30 = {
+	type = country_event
+	placement = ROOT
+
+	title = cwp_korea.30.t
+	desc = cwp_korea.30.d
+	flavor = cwp_korea.30.f
+
+	event_image = { video = "unspecific_signed_contract" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_scales.dds"
+
+	duration = 3
+
+	trigger = {
+		exists = c:STK
+		cwp_korea_war_running = yes
+	}
+
+	option = {
+		name = cwp_korea.30.a
+		default_option = yes
+		custom_tooltip = cwp_korea_talks_proposed_tt
+		c:STK = { trigger_event = { id = cwp_korea.31 days = 7 popup = yes } }
+		ai_chance = { base = 70 }
+	}
+
+	option = {
+		name = cwp_korea.30.b
+		ai_chance = { base = 30 }
+	}
+}
+
+# Armistice talks: the South's answer
+cwp_korea.31 = {
+	type = country_event
+	placement = ROOT
+
+	title = cwp_korea.31.t
+	desc = cwp_korea.31.d
+	flavor = cwp_korea.31.f
+
+	event_image = { video = "unspecific_signed_contract" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_scales.dds"
+
+	duration = 3
+
+	trigger = {
+		exists = c:NRK
+		cwp_korea_war_running = yes
+	}
+
+	# Sign the armistice
+	option = {
+		name = cwp_korea.31.a
+		default_option = yes
+		custom_tooltip = cwp_korea_armistice_signed_tt
+		every_diplomatic_play = {
+			limit = { is_diplomatic_play_type = dp_cwp_korean_war }
+			end_play = yes
+		}
+		ai_chance = { base = 60 }
+	}
+
+	# Fight on for the whole peninsula
+	option = {
+		name = cwp_korea.31.b
+		add_modifier = { name = cwp_korea_fight_on days = 365 }
+		ai_chance = { base = 40 }
+	}
+}

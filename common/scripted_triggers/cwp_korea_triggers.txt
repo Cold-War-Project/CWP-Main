@@ -1,0 +1,88 @@
+﻿# Cold War Project: triggers for je_cwp_divided_peninsula
+
+# The Joint Commission is still sitting
+cwp_korea_commission_active = {
+	NOT = { has_global_variable = cwp_korea_partition }
+	exists = c:USA
+	exists = c:RUS
+}
+
+# Both Koreas stand and are not at war with each other
+cwp_korea_balance_active = {
+	exists = c:NRK
+	exists = c:STK
+	NOT = { has_global_variable = cwp_korea_war }
+}
+
+# Neither Korea is still a military occupation subject
+cwp_korea_both_sovereign = {
+	exists = c:NRK
+	exists = c:STK
+	c:NRK = { is_subject = no }
+	c:STK = { is_subject = no }
+}
+
+# The Korean War is being fought
+cwp_korea_war_running = {
+	any_diplomatic_play = {
+		is_diplomatic_play_type = dp_cwp_korean_war
+	}
+}
+
+# An attack by the North is held back: US troops remain, a US defence treaty binds the South, or the South is clearly stronger
+cwp_korea_north_deterred = {
+	OR = {
+		NOT = { has_global_variable = cwp_korea_us_withdrawn }
+		c:USA ?= {
+			any_scope_treaty = {
+				binds = c:STK
+				any_scope_article = {
+					OR = {
+						has_type = defensive_pact
+						has_type = alliance
+					}
+				}
+			}
+		}
+		je:je_cwp_divided_peninsula ?= {
+			"scripted_bar_progress(cwp_korea_balance_bar)" <= -15
+		}
+	}
+}
+
+# An attack by the South is held back: Soviet troops remain, a Soviet defence treaty binds the North, or the North is clearly stronger
+cwp_korea_south_deterred = {
+	OR = {
+		NOT = { has_global_variable = cwp_korea_soviet_withdrawn }
+		c:RUS ?= {
+			any_scope_treaty = {
+				binds = c:NRK
+				any_scope_article = {
+					OR = {
+						has_type = defensive_pact
+						has_type = alliance
+					}
+				}
+			}
+		}
+		je:je_cwp_divided_peninsula ?= {
+			"scripted_bar_progress(cwp_korea_balance_bar)" >= 15
+		}
+	}
+}
+
+# A country the UN Command could ask for a contingent: friendly with Washington, at peace, outside the Soviet camp
+cwp_korea_contingent_candidate = {
+	exists = c:USA
+	NOR = {
+		c:USA ?= this
+		c:STK ?= this
+		c:NRK ?= this
+		c:RUS ?= this
+		c:PRC ?= this
+	}
+	is_subject = no
+	is_at_war = no
+	country_rank >= rank_value:minor_power
+	"relations(c:USA)" >= 50
+}

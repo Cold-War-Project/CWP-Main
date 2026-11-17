@@ -21,7 +21,7 @@ paths:
 **Core design rule (AGENTS.md):** a journal entry steers, it never forces. No `game_date`-triggered outcomes: completion, failure and their effects must follow from bars, politics, economy, characters or other simulation state. Dates may only gate when an entry becomes possible.
 ## State of this mod
 
-- Vanilla has hundreds of journal entries; the mod has **no journal entries of its own yet** and keeps only a handful of vanilla ones alive. The rest are neutralised: `zz_vanilla_journal_entries.txt` / `zz_unwanted_vanilla_journal_entries.txt` hold keyword stubs, and most vanilla JE files are same-name overwrites, usually with the `# Cold War Project: same-name overwrite` header (user's choice over a `replace_paths` entry, to keep per-file diffs against future patches).
+- Vanilla has hundreds of journal entries; the mod has its own `cwp_*` journal entries (see "Mod journal entries" below) and keeps only a handful of vanilla ones alive. The rest are neutralised: `zz_vanilla_journal_entries.txt` / `zz_unwanted_vanilla_journal_entries.txt` hold keyword stubs, and most vanilla JE files are same-name overwrites, usually with the `# Cold War Project: same-name overwrite` header (user's choice over a `replace_paths` entry, to keep per-file diffs against future patches).
 - **A stub journal entry has exactly one `outcome` block.** Do not regenerate outcome counts to match vanilla.
 - 177 Victorian JEs were deleted outright; references to them are removed rather than restored.
 - `objectives`, `objective_subgoals` and `achievements` are in `replace_paths` and currently empty: the mod has none. `objective_subgoal_categories` and `tutorial_lesson_chains` are vanilla.
@@ -80,6 +80,12 @@ je_cwp_example = {
 ## Scripted buttons (`common/scripted_buttons`)
 
 `key = { name = "LOC" desc = "LOC_DESC" visible = { } possible = { } effect = { } ai_chance = { base = 0 modifier = { trigger = { } add = 5 } } selected = { } cooldown = { months = N } }`, optional `short_desc`, `icon`, `cost` (**display only**, the engine never deducts it: enforce in `possible` and `effect`), `tags = { }`, `autocomplete = yes` (runs by itself when visible and possible; guard with a variable set in `effect`). Attached to a JE with `scripted_button = key`. Country scope; `scope:journal_entry` available.
+
+## Mod journal entries
+
+- The mod's own journal entries are the `cwp_*.txt` files in `common/journal_entries/` (`ls common/journal_entries/cwp_*`).
+- They hook activation and monthly logic through a chained `cwp_` on_action in their own file (e.g. `common/on_actions/cwp_korea_on_actions.txt` chains `on_monthly_pulse`), never by editing the shared on_action overwrites.
+- A JE with `progressbar = no` and no `current_value`/`goal_add_value` must not have `<key>_goal` loc: the game logs "Journal entry has redundant loc" for it.
 
 ## Scripted progress bars
 
