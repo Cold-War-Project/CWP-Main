@@ -14,7 +14,7 @@ A contextless journal entry in vanilla's `je_group_global_international_situatio
 |---|---|---|---|
 | `cwp_gq_western_bar` Western Integration | 0 | Bizone, Trizone, Marshall aid, Deutsche Mark, Länder elections, western SoL above the Soviet zone's, Soviet consolidation ≥ 50, the airlift, the western allies agreeing (US relations with GBR and FRA ≥ 50) | French reservations, Britain or France hostile to the US, four-power unity ≥ 60, the Occupation Statute (after the Basic Law), Berlin given up, radicals ≥ 20% |
 | `cwp_gq_soviet_bar` Soviet Consolidation | 0 | land reform, the SED, dismantling, antifascist bloc, trade unions in government, the western currency, the blockade | radicals ≥ 20% in the zone, the zone no longer a Soviet subject |
-| `cwp_gq_unity_bar` Four-Power Unity | 50 | four-power talks, US-Soviet relations ≥ 50 | US-Soviet relations below 20 (−0.5) or below −20 (−1), Bizone, currency reform, blockade, reparations quarrels |
+| `cwp_gq_unity_bar` Four-Power Unity | 50 | four-power talks, US-Soviet relations ≥ 50 | US-Soviet relations below 20 (−0.25) or below −20 (−0.5), Bizone, currency reform, blockade, reparations quarrels |
 
 ### Milestones (checked monthly; each is an event the country can refuse)
 
@@ -94,7 +94,9 @@ Outcomes: **Unity** (both bars at 100: GER annexes DDR with incorporation, histo
 
 ## Known gaps and decisions for review
 
-- **Tuning is untested beyond a load test.** Rates were set so that the AI reaches the Bizone after about a year and the Basic Law around 1949; an observer run decides the final numbers.
+- **Tuning (2026-11-17, shared observer run c609c12fb, 1946-1956):** the first rates were about twice too fast (Bizone 1946, blockade over in 1947, both states proclaimed in 1948, both sovereign by 1949, chapter 2 active in 1949). Every bar factor was roughly halved, the Occupation Statute drag raised to −2, one-off unity hits reduced, and Moscow's AI now recognises GDR sovereignty almost only after the FRG is sovereign. Target: Bizone around 1947, Basic Law and GDR around 1949, sovereignty around 1955. Re-check on the next shared run.
+- **The Basic Law sets laws:** parliamentary republic, universal suffrage, independent judiciary, and adds the amendment `cwp_amendment_basic_law` (militant democracy) to the governance law (format from #841). In the observer run the FRG kept the occupation package's presidential autocracy.
+- **The FRG joined the US in a Korean war (1949)** through its bloc. That is a NATO/bloc question for the blocs thread, not a German one.
 - **The western zones own Austrian states** in the 1946 history (AOZ in STATE_AUSTRIA and STATE_TYROL, BOZ in STATE_STYRIA and STATE_TYROL, FOZ in STATE_TYROL). Agreed with the history thread: AUS will own all Austrian land at start, so chapter 1 moves no states. Until that lands, those states go to the Federal Republic at the Basic Law.
 - **GER is tier `empire`** in its country definition; the dynamic names cover the name, but check ruler titles in game.
 - **Chapter 2 hand-off:** copy the final bar values to globals when chapter 2 exists to read them (not now: an unread variable is a log line).
