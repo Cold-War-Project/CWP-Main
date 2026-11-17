@@ -42,11 +42,12 @@ cmd_build() {
     local head title
     read -r head title < <(gh -R Cold-War-Project/CWP-Main pr view "$n" --json headRefName,title -q '"\(.headRefName) \(.title)"')
     [[ -z "$head" ]] && { printf '%s\t-\tmissing\t\t\n' "$n" >> "$STATE/prs.tsv"; continue; }
-    git -C "$REPO" fetch -q origin "$head" 2>/dev/null
+    git -C "$REPO" fetch -q origin "+refs/heads/$head:refs/remotes/origin/$head" 2>/dev/null
+    local sha; sha=$(git -C "$REPO" rev-parse --short "origin/$head")
     local files; files=$(git -C "$WT" diff --name-only "origin/$BASE...origin/$head" | tr '\n' ' ')
     if git -C "$WT" merge -q --no-ff --no-edit -m "integration: #$n $head" "origin/$head" >/dev/null 2>&1; then
-      printf '%s\t%s\tmerged\t%s\t%s\n' "$n" "$head" "$title" "$files" >> "$STATE/prs.tsv"
-      echo "  #$n $head: merged"
+      printf '%s\t%s\tmerged @ %s\t%s\t%s\n' "$n" "$head" "$sha" "$title" "$files" >> "$STATE/prs.tsv"
+      echo "  #$n $head @ $sha: merged"
     else
       local conflicts; conflicts=$(git -C "$WT" diff --name-only --diff-filter=U | tr '\n' ' ')
       git -C "$WT" merge --abort
@@ -75,7 +76,7 @@ prs = [l.rstrip("\n").split("\t") for l in open(sys.argv[1]) if l.strip()]
 repo = os.environ.get("CWP_REPO", os.path.expanduser("~/forge/CWP-Main"))
 owner = collections.defaultdict(list)
 for n, head, status, *_ in prs:
-    if status == "merged":
+    if status.startswith("merged"):
         out = subprocess.run(["git", "-C", repo, "diff", "-z", "--name-only", f"origin/{os.environ.get('CWP_BASE', 'CWP2')}...origin/{head}"],
                              capture_output=True, text=True).stdout
         for f in filter(None, out.split("\0")):   # -z: file names may contain spaces
