@@ -30,7 +30,7 @@ def evaluate(runs: dict) -> dict:
                                   if (s := summary([fn(r[y]["geo"]) for r in runs.values() if y in r and "geo" in r[y]]))}}
     figs = {}
     for y in years:
-        vals = [len(r[y]["geo"].get("figures", [])) for r in runs.values() if y in r and "geo" in r[y]]
+        vals = [(lambda f: f if isinstance(f, int) else len(f))(r[y]["geo"].get("figures", 0)) for r in runs.values() if y in r and "geo" in r[y]]
         if vals and any(vals):
             figs[y] = max(vals)
     first = {}
@@ -76,7 +76,7 @@ def markdown(ev: dict) -> list[str]:
     md += ["", "First year each country has the bomb, per run (history: USSR 1949, UK 1952, France 1960, China 1964): "
            + "; ".join(f"{k} {', '.join(str(y) if y else 'never' for y in v)}" for k, v in ev["first_nuclear"].items()), ""]
     if ev.get("figures_by_year"):
-        md += ["Historical figure pool (characters from `cwp_fig_` templates alive in the save, most in any run): "
+        md += ["Historical figure pool (living characters with the `cwp_fig` variable, most in any run): "
                + ", ".join(f"{y}: {n}" for y, n in ev["figures_by_year"].items()), ""]
     md += ["## Outcomes at the last sample, per run", "",
            "| run | year | Germany | Korea | China | blocs | wars |", "|---|---|---|---|---|---|---|"]
