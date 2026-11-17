@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# cwp-observe: one shared long observer game, with periodic state dumps for every area to tune from.
+#   cwp-observe <mod worktree> [END_YEAR=1956] [OUT=~/forge/observer/<date>-<sha>]
+# Takes the game lock, starts a new game in observer mode at max speed, and every ~2 minutes copies the
+# newest autosave and dumps it with cwp-save-dump (journal entries, bars, wars, cwp_ flags, key tags).
+# Stops at END_YEAR, writes errors + per-PR attribution + perf CSV, unlocks. Clicks assume 1920x1080.
+set -u
+WT=$(readlink -f "${1:?usage: cwp-observe <worktree> [end_year] [outdir]}"); END=${2:-1956}
+SHA=$(git -C "$WT" rev-parse --short HEAD)
+OUT=${3:-$HOME/forge/observer/$(date +%Y%m%d-%H%M)-$SHA}; mkdir -p "$OUT/saves"
+{ echo "tree: $WT"; echo "build: $SHA ($(git -C "$WT" rev-parse --abbrev-ref HEAD))"; echo "started: $(date '+%F %T %Z')"
+  [[ -f "$WT/.integration/prs.tsv" ]] && { echo "PRs (number, branch, merge result):"; cut -f1-3 "$WT/.integration/prs.tsv"; }
+} > "$OUT/BUILD.txt"
+export DISPLAY=:0 CWP_AGENT=${CWP_AGENT:-observer}
+U="$HOME/.local/share/Paradox Interactive/Victoria 3"; SAVES="$U/save games"
+cwp-vic lock --wait "${CWP_OBSERVE_WAIT:-5400}" ${CWP_OBSERVE_PRIORITY:+--priority} "observer: shared run $SHA to $END" || exit 1
+trap 'cwp-vic unlock >/dev/null' EXIT
+cwp-vic link "$WT" >/dev/null && cwp-vic launch > "$OUT/launch.out" 2>&1
+sleep 170; cwp-vic errors > "$OUT/errors_menu.txt" 2> "$OUT/canary_menu.txt"
+vic-click 266 284 >/dev/null; sleep 6; vic-click 1086 330 >/dev/null; sleep 100
+vic-click 566 702 >/dev/null; sleep 4; vic-key 5 >/dev/null; vic-key space >/dev/null
+cwp-vic perf 7200 30 > "$OUT/perf_path.txt" 2>&1 &
+PERF=$!
+last=""; t0=$SECONDS
+while (( SECONDS - t0 < 7200 )); do
+  sleep 120
+  cwp-vic status | grep -q "game:    pid" || { echo "GAME NOT RUNNING (crash?) at $((SECONDS-t0))s" | tee "$OUT/CRASH"; break; }
+  f=$(ls -t "$SAVES"/autosave*.v3 2>/dev/null | head -1); [[ -z "$f" || "$f" == "$last" && ! "$f" -nt "$OUT/.last" ]] && continue
+  touch "$OUT/.last"; last=$f
+  d=$(head -c 4000 "$f" | grep -m1 -o 'game_date=[0-9.]*' | cut -d= -f2); [[ -z "$d" ]] && d=$(grep -m1 -o '^date=[0-9.]*' "$f" | cut -d= -f2)
+  cp "$f" "$OUT/saves/$d.v3"
+  cwp-save-dump "$OUT/saves/$d.v3" --out "$OUT" > /dev/null
+  echo "$(date +%T) $d" >> "$OUT/progress.txt"
+  (( ${d%%.*} >= END )) && break
+done
+vic-shot > "$OUT/final_shot.txt"
+cwp-vic errors > "$OUT/errors_end.txt" 2> "$OUT/canary_end.txt"
+command -v cwp-integrate >/dev/null && [[ "$WT" == *integration* ]] && cwp-integrate attribute "$OUT/errors_end.txt" > "$OUT/attribution.txt" 2>&1
+kill $PERF 2>/dev/null; cp "$(ls -t ~/forge/perf/*.csv | head -1)" "$OUT/perf.csv" 2>/dev/null
+# Per-area error greps (whole session), so each area thread reads only its own lines.
+declare -A AREA=(
+  [korea]='cwp_korea|korea|NRK|STK|divided_peninsula'
+  [germany]='cwp_gq|german_question|cwp_german|DDR|occupation_zone'
+  [china]='cwp_ccw|chinese_civil_war|PRC|ROC'
+  [decolonization]='cwp_tide|cwp_india|cwp_indonesia|cwp_indochina|cwp_algeria|decoloni|winds_of_change|war_support_from_journal_entries|cwp_former_colony'
+)
+for a in "${!AREA[@]}"; do grep -E -B2 -A3 "${AREA[$a]}" "$OUT/errors_end.txt" > "$OUT/errors_$a.txt" 2>/dev/null; done
+ls "$OUT"/*.md | sort > "$OUT/INDEX.txt"
+echo "$OUT"

@@ -47,6 +47,6 @@ Anything dropped, deferred, or waiting on Jack.
 ## After opening
 
 - Review comments and failing checks are fixed by pushing to the same branch.
-- Do not merge your own PR. Jack (or a reviewer he names) merges.
+- **Merging into `CWP2`** (Jack, 2026-11-17): a PR may be merged without asking Jack once it has passed a real run on Forge: it was part of a `CWP2-staging` build that reached the main menu, started a game and ran an observer stretch with a clean canary and no new errors attributed to it. Merge exactly the tested commit (`gh pr merge --merge --match-head-commit <tested sha>`); commits pushed after the test go through the next staging run first. The integration owner merges; PR threads do not merge their own PRs.
 - After a merge that touched shared files, tell the other area threads (through the coordinator) to rebase.
 - Ambiguity during review goes to the advisor ([advisor.md](advisor.md)) before it goes to Jack.
