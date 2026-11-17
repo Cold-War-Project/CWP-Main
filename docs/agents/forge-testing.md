@@ -30,7 +30,7 @@ cwp-vic unlock                                   # stops the game you launched, 
 
 Rules:
 
-- **Never write the mod path with a trailing slash.** With `"path": "/home/jack/forge/worktrees/x/"` the mod still mounts, but its `replace_paths` are silently ignored: vanilla files load beside the mod's and error.log fills with thousands of lines (2026-11-16: 11,602 lines with the slash, 18 without, same commit). `cwp-vic link` writes the path correctly, and the canary at the end of `cwp-vic errors` catches it.
+- **Never write the mod path with a trailing slash.** (The two New Game crashes to desktop on 16 Nov 2026 were this: with replace_paths ignored, vanilla's 1836 military formations and government types ran against CWP tags and the game segfaulted. With the mod loaded correctly, New Game starts fine.) With `"path": "/home/jack/forge/worktrees/x/"` the mod still mounts, but its `replace_paths` are silently ignored: vanilla files load beside the mod's and error.log fills with thousands of lines (2026-11-16: 11,602 lines with the slash, 18 without, same commit). `cwp-vic link` writes the path correctly, and the canary at the end of `cwp-vic errors` catches it.
 
 - Requests are served **first come, first served** (`cwp-vic queue` lists them). `--priority` jumps the normal line; use it only when the coordinator asks. Killing a waiting `cwp-vic lock` removes its place in line cleanly.
 - Hold the lock from `link` until the game is stopped and you have copied what you need out of the logs. The next launch clears them.
@@ -94,7 +94,18 @@ cwp-integrate publish               # push the build to origin/CWP2-staging so o
 - Attribution is by file: a line naming a file that one PR touched goes to that PR, a line naming a file several PRs touched goes to all of them, and lines naming no file (engine asserts, crashes) are listed separately. To confirm a suspect, rebuild without it (`cwp-integrate build <the other PRs>`) and compare.
 - If the combined build crashes, bisect: build with half the PRs, then half again.
 
-## Performance
+## Shared long observer runs and state dumps
+
+One shared run serves every area; don't queue your own multi-year run on the same code.
+
+```bash
+cwp-observe ~/forge/worktrees/<tree> 1956      # lock, new game, observe at max speed to 1956, unlock
+cwp-save-dump "<user folder>/save games/autosave.v3" --out /tmp/x   # dump any debug-mode save
+```
+
+`cwp-observe` copies the newest autosave every ~2 minutes into `~/forge/observer/<date>-<sha>/saves/` and dumps each with `cwp-save-dump` to `<game date>.md` / `.json`: every `je_cwp_*` journal entry (active, involved tags, progress bar values), active wars with participants and war support, all `cwp_*` flags and variables set, and government types of key tags. Debug-mode saves are plain text, so anything else in them can be grepped too. The run folder also gets menu/end error logs, the canary, a perf CSV and, for an integration tree, per-PR attribution.
+
+
 
 What to report, and how:
 
