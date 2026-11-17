@@ -1,6 +1,6 @@
 # Germany: the German question
 
-Option C of [the Germany proposal](../proposals/germany.md): one storyline in three chapters. This file is the design brief and the area notes. Status: **chapter 1 built** (branch `feat/germany-occupation`); chapters 2 and 3, the parent JE with its chapter widget, the Saar and Austria are not built yet.
+Option C of [the Germany proposal](../proposals/germany.md): one storyline in three chapters. This file is the design brief and the area notes. Status: **chapter 1 merged** (#791) and **chapter 2 built** (branch `feat/germany-two-germanies`); chapter 3, the parent JE with its chapter widget, the Saar and Austria are not built yet.
 
 ## Chapter 1: occupation and division (`je_cwp_german_question`)
 
@@ -63,6 +63,21 @@ Nothing reads the date. The historical path is the likely one because of the sta
 | Stalin Note 10 March 1952: united, armed, neutral Germany; rejected by the West | C | button, event .12 |
 | 17 June 1953 uprising after a 10% norm increase; put down by Soviet troops | C | event .18 |
 | FRG sovereign 5 May 1955 (Paris Agreements), NATO 9 May 1955; USSR recognised GDR sovereignty 1954-55 | C | events .15-.17 |
+
+## Chapter 2: the two Germanies (`je_cwp_two_germanies`)
+
+Contextless, same group as chapter 1. Activates once chapter 1 has left both states sovereign (`cwp_gq_frg_sovereign`, `cwp_gq_gdr_sovereign`) and GER and DDR exist. Involved: GER, DDR, USA, RUS.
+
+| Bar | Start | Up | Down |
+|---|---|---|---|
+| `cwp_tg_legitimacy_bar` GDR Legitimacy | 50 | DDR SoL at least GER's (+1), Soviet backing (DDR in a bloc RUS leads), the closed border, Stasi, consumer socialism, Basic Treaty recognition | Republikflucht (open border and lower SoL), lower SoL than GER, Moscow's guarantee withdrawn (−2), contact ≥ 60 (Western television), radicals ≥ 20% |
+| `cwp_tg_contact_bar` Inner-German Contact | 20 | Ostpolitik, Basic Treaty, Freikauf, détente (US-Soviet relations ≥ 20) | Hallstein Doctrine (set at activation), tension (≤ −20), the closed border without a treaty |
+
+Buttons: DDR closes the border (only while East Germans are leaving for a better-off West; AI at legitimacy ≤ 35), Stasi, consumer socialism; GER Ostpolitik (AI likelier under détente or with the trade unions in government), Basic Treaty offer (contact ≥ 40, the GDR may refuse), Freikauf; RUS withdraws or reaffirms its guarantee (AI weight only when the Soviet Union lives worse than the US under détente, or has many radicals).
+
+While the border is open and the GDR lives worse, DDR carries `cwp_tg_republikflucht` and GER `cwp_tg_refugees`.
+
+Outcomes: **Die Wende** (legitimacy 0, historical; adds radicals in the GDR; chapter 3 will take over from here), **a lasting division** (legitimacy 100, Basic Treaty, DDR SoL at least GER's), **one German state** (either state gone). The Wall, Ostpolitik and the collapse all come from choices and state; there is no date.
 
 ## Known gaps and decisions for review
 
