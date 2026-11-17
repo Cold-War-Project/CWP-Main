@@ -9,7 +9,7 @@ Area notes for historical characters. Script rules are in `.claude/rules/charact
 - **Names:** `localization/english/cwp/characters/cwp_character_names_l_english.yml` holds only the name keys that vanilla's `names_l_english.yml` does not already define. A key vanilla has with different text gets a `_cwp` suffix.
 - **Other templates:** `00_default_template.txt` (hard-coded, must exist), `colonial_governor_templates.txt`, `test_template.txt`, and `cwp_vanilla_script_templates.txt`. The last one keeps template keys that live vanilla script still creates; see "Vanilla template references".
 
-Count the roster with `grep -c "^[A-Z]\{3\}_.* = {" common/character_templates/cwp_1946_*.txt`. Count roles by grepping `ruler = yes`, `ig_leader = yes` and so on in the same files. After the dominion change: 461 characters, 128 rulers, 14 heirs, 238 IG leaders, 36 generals, 3 admirals and 14 agitators. Every starting tag has at least one character.
+Count the roster with `grep -c "^[A-Z]\{3\}_.* = {" common/character_templates/cwp_1946_*.txt`. Count roles by grepping `ruler = yes`, `ig_leader = yes` and so on in the same files. Current counts: 834 characters, 128 rulers, 20 heirs, 335 IG leaders, 125 generals, 18 admirals and 55 agitators. Every starting tag has at least one character. The ~50 major tags have historical leaders for most IGs, plus 5-10 commanders for the main powers.
 
 **Source and generator:** the roster comes from `tools/character_roster/roster/*.txt`, one pipe-separated line per person. `tools/character_roster/gen.py` validates it and writes every `cwp_1946_*` template, every history file and the 1946 names loc. It checks the ruler/IG-leader rules per government type, one leader per IG, the ideology leader triggers, and that every key exists.
 
@@ -69,6 +69,9 @@ Best judgement for 1946. One IG can have only one leader, so where two parties w
 | Anti-colonial nationalists | Educated Professionals, Defense for armed movements | `ethno_nationalist` (Sukarno, Jinnah, Aung San, Bourguiba, Kenyatta, Barzani...) |
 | Salazar, Spanish Catholic monarchists | Religious Groups / Defense | `integralist`; Franco keeps `fascist` |
 | Islamic movements (Muslim Brotherhood, Yemen's imamate) | Religious Groups | `theocrat` |
+| Baathists (Aflaq) | Educated Professionals | `cwp_baathist` (random availability starts 1947; history assignments are explicit) |
+| Revolutionary socialists and Trotskyists outside the Soviet line (LSSP, Bolivian miners, Sartre) | Organized Labor / Educated Professionals | `radical` |
+| Feminist campaigners (Ichikawa, de Beauvoir) | Educated Professionals | `feminist` |
 
 Points for review:
 
@@ -105,7 +108,7 @@ The 1946 roster covers the start state. Later figures come from a pool, and the 
 
   The figure joins the first existing tag with `create_character = { template = ... }`. Nothing sets a leader or a ruler: politicians compete for IG leadership as any member does, agitators and commanders take their roles, and vanilla mortality applies.
 - **Tests:** `tools/scripted_tests/cwp_figure_pool.txt` has three tests: Nasser spawns inside his window, King does not spawn before 1955, and Brandt spawns through a fallback tag. The tests have not been run yet.
-- **Seed batch:** 94 figures from the 1950s and 1960s for USA, RUS, GBR, FRA, PRC, ROC, HND, PAK, GER and the zones, DDR, ITA, JAP, EGY, IDS, STK, VNM, DAI, CUB, ISR, PER, TUR, BRZ, POL, HUN and CZH. Count them with `grep -vc "^#" tools/figure_pool/figures.tsv`. The facts come from memory and were not fetched from Wikidata. Doubtful ones say "unverified" in the note (Khomeini's birth date). Windows are judgement calls: from when the person could plausibly enter national politics to their real retirement or death.
+- **Figures:** 268 in total. The 1950s seed has 94 figures for the majors. The 1960s-70s batch has 174 (Africa and North Africa 73, Asia and the Middle East 56, West, Eastern bloc and Americas 45); its windows open mostly 1958-1980, plus ten key figures with earlier windows who were missing (Nyerere, Ben Bella, Mujibur Rahman, Lee Kuan Yew, Ceaușescu, Mandela, Tambo, Marcos, Kim Young-sam, Kasa-Vubu). Count them with `grep -vc "^#" tools/figure_pool/figures.tsv` (the result includes the blank line between batches). Windows are judgement calls: from when the person could plausibly enter national politics or top command, to their retirement, fall or death. A general's window ends when they leave military command (Dayan, Rabin). Cultures missing in the mod use stand-ins, noted per row (Kikuyu and Ganda use `hutu`, Xhosa `zulu`, Luo, Kalenjin and Acholi `nilotes`).
 - **Conventions:**
   - Pick an IG and ideology that passes the ideology's IG-leader trigger, so the figure is a valid leader if the simulation picks them. Imre Nagy is in Agrarian Communities with `moderate`, because Marxist-Leninist leaders cannot lead that IG.
   - Use a window rather than a forced date.
@@ -115,7 +118,24 @@ The 1946 roster covers the start state. Later figures come from a pool, and the 
   - Add more countries and decades from Wikidata (heads of government, party leaders, union leaders and generals by country and decade, with birth dates and party), mapped with the table above and checked by hand.
   - Consider vanilla's `interest_group_leader_usage` blocks on the same templates if the engine should draw them directly when it needs a new leader.
   - Jimmy Carter and George H. W. Bush, left out of the 1946 roster, belong in a 1960s/70s batch.
-- **Caution:** the 1946 roster's generator was a scratch tool. When editing `cwp_1946_*.txt` by hand, check that new name keys do not duplicate keys in the pool's loc file, and the reverse. `build.py` already skips keys defined in any other loc file.
+- **Caution:** regenerate in order: `tools/character_roster/gen.py --write`, then `tools/figure_pool/build.py`. Never put the same person in both the 1946 roster and the pool.
+
+## Source check (2026-11-17)
+
+Research agents checked everything against Wikipedia and Wikidata. The bulk APIs were often rate-limited, and nobody worked around the limit, so some rows were checked from biography knowledge only.
+
+- **Pool, 1950s seed (94):** two independent checks. Corrected: Khomeini's birth (1900.5.17, from his birth certificate), Naguib's birth, Chen Cheng's birth, Amer's death; Indira Gandhi's culture (`kashmiri`); Bhutto's religion (`shiite`); end dates for Kim Dae-jung, Le Pen, Goulart, Kishi, Tanaka and Meir; Dayan and Rabin end as generals when they left the Chief of Staff post; Hua Guofeng's window opens 1969 and Jiang Qing's 1964.
+- **Pool, 1960s-70s (174):** dates checked against Wikidata when the rows were written. Six are approximate and their notes say so (Balewa, Odinga, Wang Hongwen, Idi Amin, Kasa-Vubu, Salah Jadid).
+- **1946 roster extension (373 rows):**
+  - Birth dates: about 30 corrected, mostly Old Style dates or off by a few days, and Razmara's and Kashani's year-only dates filled in.
+  - Religion and culture: Byrnes, Dehler and Coposu's religions corrected; Kaganovich is now `ashkenazi`.
+  - 1946 posts: Jovanović was Yugoslav Chief of Staff, so he now leads the armed forces instead of Popović. Baumgartner was CSU in 1946, Oud was PvdA, and Shimomura was a former Army Minister. Covelli, Spaatz, Sturdee, Spoor, Khuang and Chin Peng took their posts later in 1946-47; their notes say so.
+- **Still unverified:**
+  - Sforza's and William Green's birth dates (the sources conflict).
+  - The 1946 roster's original 461 rows beyond the governor and ruler corrections already applied.
+  - About 250 of the 1946 extension rows, which were checked from memory, not by live lookup.
+  - Cultures: no Tswana for Kotane, no Urdu-speaking culture for the Nizam, Chin Peng's and Tan Cheng Lock's dialect group, and Solon Low (the mod has no Mormon religion).
+  - Notes: Messali Hadj's and Ferhat Abbas's release dates, and Ben Youssef's Neo Destour post.
 
 ## Requests for other threads
 
