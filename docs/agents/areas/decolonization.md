@@ -21,7 +21,7 @@ A contextless JE, active from day one, involving the USA, the USSR, every tracke
 | JE | Sides | Bars | Outcomes |
 |---|---|---|---|
 | `je_cwp_india_transfer_of_power` | GBR, HND | Self-rule (0-100, start 60), communal tension (0-100, start 55) | Britain sets a date (button at self-rule 75+) or self-rule hits 100: independence; **partition** into India and Pakistan if communal tension is 60+ at that moment. Self-rule 0: the Raj holds, JE can return after 10 years. Independence by war also partitions at 60+. |
-| `je_cwp_indonesian_revolution` | NET, IDS, USA | Revolution (-50 to +50, start +10) | +50: transfer of sovereignty (friendly if the Dutch negotiated). -50: Dutch restoration. US aid pressure unlocks after a Dutch police action. |
+| `je_cwp_indonesian_revolution` | NET, IDS, USA | Pressure on The Hague (-50 to +50, start +10) | Start state (Jack, 2026-11-17, history PR #798): IDS is an independent Republic holding Java and Sumatra, at war with NET, which holds the outer islands directly (`dp_make_dominion` vs IDS `return_state` on CELEBES). The bar is the political layer: at +25/+40 it drains Dutch war support monthly, at -25 the Republic's. Ends when the Dutch hold no Indonesian state outside western New Guinea (war, or NET's Round Table button at +25 while not at war), or when IDS becomes a NET subject or is destroyed. |
 | `je_cwp_indochina_war` | FRA, VNM, PRC, USA | War (-50 to +50, start 0) | +50 with US aid to France, or French negotiation at +25: **Geneva-style partition** (DAI takes Tonkin with claims on Annam and the Mekong; LAO and CAM released; VNM independent). +50 without US aid: DAI takes all of Vietnam. -50: the French Union holds. |
 | `je_cwp_algerian_question` | FRA | Insurgency (0-100, start 20), will to hold Algeria (0-100, start 80) | Activates only once the world moves (tide tier 1, Indochina lost, or Morocco/Tunisia free). Referendum button (insurgency 40+, will 50 or less) or will 0: ALD created by negotiation. Insurgency 100: FLN victory. Insurgency 0: held, returns after 10 years. Will 30 or less fires the crisis of the Republic (`cwp_algeria.2`). |
 
@@ -30,7 +30,7 @@ Partition and release use fixed vanilla 1.15.1 state regions: Pakistan = STATE_P
 ## Why the historical path is the likely one
 
 - India: Labour in government, British debt and India's liberty desire push self-rule to 100 in about two years; communal tension starts close to the partition line and only sustained Congress-League talks keep it below.
-- Indonesia: the Republic's drift beats Dutch police actions only once American pressure starts, which the AI applies after a police action.
+- Indonesia: the Republic's hold on Java and Sumatra slowly raises pressure; police actions push it back until the AI US answers one with aid pressure, after which Dutch war support drains and the war or the Round Table ends Dutch rule.
 - Indochina: the Viet Minh drift and the Chinese sanctuary outpace French reinforcements over several years; the US AI funds France once the PRC is at peace, so the likely ending is partition.
 - Algeria: the FLN only rises after Indochina and the neighbours change the picture, and French will erodes with the length of the war.
 
@@ -46,7 +46,8 @@ Also fixed here: PAK and BGL capitals in `common/country_definitions/00_countrie
 
 ## Open questions and follow-ups
 
-- **History setup**: HND is a GBR dominion owning part of STATE_PEGU (Burma, separated from India in 1937); IDS is a Dutch puppet although the Republic declared independence in 1945; SYR, LBY, ERI, SML are military occupations and so outside the tide. Owners: history thread.
+- **History setup**: HND is a GBR dominion owning part of STATE_PEGU (Burma, separated from India in 1937); SYR, LBY, ERI, SML are military occupations and so outside the tide. Owners: history thread.
+- **Indonesia**: the State of East Indonesia (EIN) could be created by the Dutch as a federal counterweight; not in this PR.
 - **Names**: VNM is still "Indochina" after the partition; it needs a "State of Vietnam" dynamic name. DAI and ALD inherit laws from their origin (DAI gets the people's democracy package; ALD keeps French laws).
 - **Next B cases** in proposal order: Gold Coast, Kenya, Belgian Congo, Angola and Mozambique (Portugal's longer hold), Rhodesia.
 - **UN**: a hook for anti-colonial UN resolutions (tide factor) once the international organizations work lands.

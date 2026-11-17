@@ -326,8 +326,11 @@ je_cwp_indonesian_revolution = {
 		always = no
 	}
 
+	# 1946 start: the Republic (IDS) is independent and at war with the Netherlands, which holds the outer islands.
 	possible = {
-		c:IDS ?= { is_subject_of = c:NET }
+		exists = c:NET
+		c:IDS ?= { is_subject = no }
+		cwp_dutch_hold_indonesia = yes
 		NOT = { has_global_variable = cwp_indonesia_je_cooldown }
 	}
 
@@ -352,63 +355,77 @@ je_cwp_indonesian_revolution = {
 
 	scripted_button = cwp_indonesia_police_action_button
 	scripted_button = cwp_indonesia_talks_button
+	scripted_button = cwp_indonesia_round_table_button
 	scripted_button = cwp_indonesia_guerrilla_button
+	scripted_button = cwp_indonesia_diplomacy_button
 	scripted_button = cwp_indonesia_marshall_pressure_button
 
-	# The Round Table: independence
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_indonesian_revolution_status_war
+				trigger = { c:IDS ?= { is_at_war = yes } }
+			}
+			triggered_desc = {
+				desc = je_cwp_indonesian_revolution_status_truce
+			}
+		}
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			cwp_indonesia_war_pressure = yes
+		}
+	}
+
+	# The Dutch hold nothing in Indonesia any more: by war, or by the Round Table.
 	outcome = {
 		header = je_standard_completion_header
 		effect_header = je_standard_on_completion_header
 		color = "gold_positive"
 		conclusion_desc = je_cwp_indonesia_independence_desc
 		trigger = {
-			c:IDS ?= { is_subject_of = c:NET }
-			scope:journal_entry = { "scripted_bar_progress(cwp_indonesia_revolution_bar)" >= 50 }
+			c:IDS ?= { is_subject = no }
+			custom_tooltip = {
+				text = cwp_indonesia_no_dutch_states_tt
+				NOT = { cwp_dutch_hold_indonesia = yes }
+			}
 		}
 		effect = {
-			if = {
-				limit = { c:NET ?= { has_variable = cwp_indonesia_talks } }
-				c:IDS = { cwp_decolonization_negotiated_independence = { METROPOLE = c:NET } }
+			c:IDS = {
+				set_variable = cwp_former_colony
+				if = {
+					limit = { NOT = { has_modifier = cwp_new_nation } }
+					add_modifier = {
+						name = cwp_new_nation
+						years = 10
+						is_decaying = yes
+					}
+				}
 			}
-			else = {
-				c:IDS = { cwp_decolonization_hostile_independence = { METROPOLE = c:NET } }
-			}
+			change_global_variable = { name = cwp_tide_new_independences add = 1 }
 			c:NET ?= { trigger_event = { id = cwp_indonesia.10 popup = yes } }
 			c:IDS ?= { trigger_event = { id = cwp_indonesia.10 popup = yes } }
 		}
 	}
 
-	# Independence won in war
-	outcome = {
-		header = je_standard_completion_header
-		effect_header = je_standard_on_completion_header
-		color = "gold_positive"
-		conclusion_desc = je_cwp_indonesia_won_desc
-		trigger = {
-			c:IDS ?= { is_subject = no }
-		}
-		effect = {
-			c:NET ?= { trigger_event = { id = cwp_indonesia.12 popup = yes } }
-			c:IDS ?= { trigger_event = { id = cwp_indonesia.12 popup = yes } }
-		}
-	}
-
-	# Dutch authority restored
+	# The Republic is broken: made a Dutch dominion by the war, or destroyed.
 	outcome = {
 		header = je_standard_failure_header
 		effect_header = je_standard_on_failure_header
 		color = "blue_negative"
 		conclusion_desc = je_cwp_indonesia_restoration_desc
 		trigger = {
-			c:IDS ?= { is_subject_of = c:NET }
-			scope:journal_entry = { "scripted_bar_progress(cwp_indonesia_revolution_bar)" <= -50 }
+			OR = {
+				NOT = { exists = c:IDS }
+				c:IDS ?= { is_subject_of = c:NET }
+			}
 		}
 		effect = {
 			set_global_variable = {
 				name = cwp_indonesia_je_cooldown
 				years = 10
 			}
-			c:IDS = { add_liberty_desire = -30 }
 			c:NET = {
 				cwp_decolonization_add_setback = yes
 				trigger_event = { id = cwp_indonesia.11 popup = yes }
@@ -422,7 +439,6 @@ je_cwp_indonesian_revolution = {
 		conclusion_desc = je_cwp_decolonization_invalid_desc
 		trigger = {
 			OR = {
-				NOT = { exists = c:IDS }
 				NOT = { exists = c:NET }
 				c:IDS ?= {
 					is_subject = yes
