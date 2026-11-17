@@ -79,14 +79,35 @@ Points for review:
 
 `common/character_templates` is replaced, so vanilla's templates do not exist. Live vanilla script creates 140 templates by key (`create_character = { template = X }`) and checks many more with `has_template`. A failed `has_template` simply returns false. The `template =` calls were traced through their callers. All but one are unreachable: their effect is a `REPLACE:` stub, an `always = no` branch, a stubbed JE or event, or they are gated on Victorian templates or tags that do not exist. The one live call is `GBR_david_copperfield` from `events/decree_events.txt` `decree_events.3`. It is now defined in `cwp_vanilla_script_templates.txt` as a generated English intelligentsia politician, the same character the event makes for other countries. If a vanilla update or a re-enabled system makes another call reachable, define that key there, never as a Victorian figure.
 
-## Later plan: a date-gated historical-figure pool
+## Historical-figure pool (date-gated arrivals)
 
-The 1946 roster is the start state only. Later figures should enter the same way vanilla's do, so the simulation decides who leads:
+The 1946 roster covers the start state. Later figures come from a pool, and the simulation decides whether they lead.
 
-1. **Templates with usage blocks.** One template per figure: tag or culture, IG, ideology, role, birth date, traits, and `interest_group_leader_usage` / `commander_usage` / `agitator_usage` with `earliest_usage_date` and `latest_usage_date` (the eligible window) and a `country_trigger` (the country exists and is the right tag, or has the right primary culture). Dev's disabled `common/character_templates/ger.info` (Kiesinger, Brandt, Schmidt, Kohl) is a worked draft of this shape.
-2. **A yearly pulse** (chained `cwp_on_yearly_pulse_country`, not a code on_action body) that offers eligible, unused figures as IG-leader candidates, agitators or commanders when their country exists (`is_template_used` stops repeats). Dates gate possibility only. Whether they lead is left to IG politics, elections and events; nothing forces an outcome.
-3. **Cold War arrivals decade by decade**, sourced from Wikidata (heads of government, party leaders, union leaders, generals by country and decade, with birth dates and party). Map parties with the table above, then hand-check.
-4. **Re-check the start roster** whenever country history changes laws, ruling IGs or tags.
+- **Data:** `tools/figure_pool/figures.tsv` has one line per figure. Columns: tag, fallback tags, given and family name, birth and death dates, culture, religion, role, IG, ideology, traits, eligible window (`from`, `to`) and a note. Roles: `P` (politician, a plain IG member), `X` (agitator), `G1`-`G5` (general), `A1`-`A5` (admiral), plus `F` for women. Fallback tags cover successor states and occupation zones, for example GER then BOZ, AOZ, FOZ.
+- **Build:** `python3 tools/figure_pool/build.py` validates every tag, culture, religion, IG, ideology, trait, date and key against the mod (and vanilla where it is installed), then regenerates three files:
+  - `common/character_templates/cwp_figure_pool.txt` (template keys `cwp_fig_<TAG>_<given>_<family>`);
+  - `common/scripted_effects/cwp_figure_pool_effects.txt` (`cwp_figure_pool_yearly_effect`);
+  - `localization/english/cwp/characters/cwp_figure_pool_names_l_english.yml` (only name keys that no other loc file defines).
+
+  `--check` validates without writing. Adding a figure is one TSV line and a rebuild. Never edit the generated files by hand.
+- **Pulse:** `common/on_actions/cwp_figure_pool_on_actions.txt` chains `cwp_figure_pool_yearly` into `on_yearly_pulse`, the global yearly on_action with no root, so no shared file changes. Once a year, a figure spawns if all of these hold:
+  - global variable `cwp_fig_<key>` is not set and `is_template_used` is false, so each figure spawns once and never again after dying;
+  - `from <= game_date < min(to, death)`; the real death date only closes the window and never kills anyone;
+  - one of its tags exists.
+
+  The figure joins the first existing tag with `create_character = { template = ... }`. Nothing sets a leader or a ruler: politicians compete for IG leadership as any member does, agitators and commanders take their roles, and vanilla mortality applies.
+- **Tests:** `tools/scripted_tests/cwp_figure_pool.txt` has three tests: Nasser spawns inside his window, King does not spawn before 1955, and Brandt spawns through a fallback tag. The tests have not been run yet.
+- **Seed batch:** 94 figures from the 1950s and 1960s for USA, RUS, GBR, FRA, PRC, ROC, HND, PAK, GER and the zones, DDR, ITA, JAP, EGY, IDS, STK, VNM, DAI, CUB, ISR, PER, TUR, BRZ, POL, HUN and CZH. Count them with `grep -vc "^#" tools/figure_pool/figures.tsv`. The facts come from memory and were not fetched from Wikidata. Doubtful ones say "unverified" in the note (Khomeini's birth date). Windows are judgement calls: from when the person could plausibly enter national politics to their real retirement or death.
+- **Conventions:**
+  - Pick an IG and ideology that passes the ideology's IG-leader trigger, so the figure is a valid leader if the simulation picks them. Imre Nagy is in Agrarian Communities with `moderate`, because Marxist-Leninist leaders cannot lead that IG.
+  - Use a window rather than a forced date.
+  - Keep 1946-roster people out of the pool.
+  - A figure who did not want office (dissidents, clergy) is an agitator, not a politician.
+- **Next:**
+  - Add more countries and decades from Wikidata (heads of government, party leaders, union leaders and generals by country and decade, with birth dates and party), mapped with the table above and checked by hand.
+  - Consider vanilla's `interest_group_leader_usage` blocks on the same templates if the engine should draw them directly when it needs a new leader.
+  - Jimmy Carter and George H. W. Bush, left out of the 1946 roster, belong in a 1960s/70s batch.
+- **Caution:** the 1946 roster's generator was a scratch tool. When editing `cwp_1946_*.txt` by hand, check that new name keys do not duplicate keys in the pool's loc file, and the reverse. `build.py` already skips keys defined in any other loc file.
 
 ## Requests for other threads
 
