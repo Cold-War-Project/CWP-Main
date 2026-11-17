@@ -142,6 +142,7 @@ class World:
         self.gov_type_defs = {k: n.value for k, n in load_db_keys("common/government_types").items() if n.is_block()}
         self.gov_types = set(self.gov_type_defs)
         self.ideologies = set(load_db_keys("common/ideologies"))
+        self.parties = set(load_db_keys("common/parties"))
         self.cultures = set(load_db_keys("common/cultures"))
         self.religions = set(load_db_keys("common/religions"))
         self.triggers = {}
@@ -239,6 +240,27 @@ class World:
                         overlord[c[2:]] = o.key[2:]
                         stype[c[2:]] = t
         return overlord, stype
+
+    def start_gov(self, tag):
+        """Government type on 1946.1.1: the first type in load order whose `possible` holds.
+        None when a type before the first certain match cannot be decided."""
+        if not hasattr(self, "_gov_cache"):
+            self._gov_cache = {}
+        if tag in self._gov_cache:
+            return self._gov_cache[tag]
+        self._gov_cache[tag] = None  # guards recursion
+        result = None
+        for name, body in self.gov_type_defs.items():
+            poss = pdx.get(body, "possible")
+            r = eval_block(poss, Ctx(self, tag, "start"), tag) if isinstance(poss, list) else T
+            if r is T:
+                result = name
+                break
+            if r is U:
+                result = None
+                break
+        self._gov_cache[tag] = result
+        return result
 
     def has_law(self, tag, law, variant=False):
         laws = set(self.start_laws.get(tag, {}).values())
@@ -395,13 +417,21 @@ def eval_node(n: Node, ctx: Ctx, this):
         want = int(count.value)
         return {"=": n_hits == want, "<=": n_hits <= want, ">=": n_hits >= want,
                 "<": n_hits < want, ">": n_hits > want}.get(count.op, U)
+    if k.startswith("c:") and isinstance(v, str) and v == "this":
+        a = resolve_scope(k, ctx, this)
+        if a is U or this in (U, None, "DEF"):
+            return U
+        return a is not F and a == this
     if k == "has_government_type":
         if v not in w.gov_types:
             return F
         if ctx.mode != "start" or this in (U, None, "DEF"):
             return U
+        gov = w.start_gov(this)
+        if gov is not None:
+            return gov == v
         poss = pdx.get(w.gov_type_defs[v], "possible")
-        r = eval_block(poss, ctx, this) if isinstance(poss, list) else U
+        r = eval_block(poss, Ctx(w, this, "start"), this) if isinstance(poss, list) else U
         return F if r is F else U
     if k == "any_overlord_or_above" and n.is_block():
         if ctx.mode != "start" or this in (U, None, "DEF"):
@@ -436,6 +466,13 @@ def eval_node(n: Node, ctx: Ctx, this):
             return U
         o = resolve_scope(v, ctx, this)
         return U if o is U else (w.overlord.get(this) == o)
+    if k == "owns_entire_state_region" and isinstance(v, str):
+        if v not in w.states:
+            return F
+        if ctx.mode != "start":
+            return U
+        owners = [c for c, sts in w.state_owners.items() if v in sts]
+        return owners == [this]
     if k in ("play_participant_has_war_goal_of_type_against", "war_participant_has_war_goal_of_type_against",
              "is_secessionist", "is_revolutionary"):
         return F if ctx.mode == "start" else U
@@ -512,17 +549,18 @@ def eval_def_trigger(defn: list[Node], world, tag, mode):
 REF_PATTERNS = [
     ("law", re.compile(r"law_type:([A-Za-z0-9_]+)")),
     ("tag", re.compile(r"\bc:([A-Z0-9]{3})\b")),
-    ("state", re.compile(r"\bs:(STATE_[A-Za-z0-9_]+)")),
+    ("state", re.compile(r"(?<![A-Za-z0-9_])(STATE_[A-Z0-9_]+)")),
     ("ideology", re.compile(r"ideology:([A-Za-z0-9_]+)")),
     ("culture", re.compile(r"\bcu:([A-Za-z0-9_]+)")),
     ("religion", re.compile(r"\brel:([A-Za-z0-9_]+)")),
+    ("party", re.compile(r"\bpy:([A-Za-z0-9_]+)")),
 ]
 
 
 def check_refs(defs_text: str, world: World, coa_keys, template_lists, where: str) -> list[str]:
     errs = []
     sets = {"law": set(world.laws), "tag": world.tags, "state": world.states, "ideology": world.ideologies,
-            "culture": world.cultures, "religion": world.religions}
+            "culture": world.cultures, "religion": world.religions, "party": world.parties}
     for kind, pat in REF_PATTERNS:
         for m in pat.findall(defs_text):
             if m not in sets[kind]:
@@ -594,15 +632,37 @@ def used_vars(nodes) -> set[str]:
     return found
 
 
-def merge_tag(tag, table_entry, vlists, world, verbose_log, coa_keys):
-    """Return (list of flag_definition Nodes, notes)."""
+def block_items(v) -> list[str]:
+    if isinstance(v, Block):
+        return [x for x in v.items if isinstance(x, str)]
+    if isinstance(v, str):
+        return [v]
+    return []
+
+
+def trigger_names(defn) -> set[str]:
+    names = set()
+    trig = pdx.get(defn, "trigger")
+    if isinstance(trig, list):
+        pdx.walk(trig, lambda n: names.add(n.key))
+    return names
+
+
+def strip_directives(defn: list[Node]) -> list[Node]:
+    return [x for x in defn if not x.key.startswith("cwp_")]
+
+
+def merge_tag(tag, table_entry, vlists, world, verbose_log, coa_keys, generic):
+    """Return (flag_definition Nodes, vanilla kept, vanilla dropped)."""
     directives = {n.key: n.value for n in table_entry if n.key.startswith("cwp_")}
-    drop_coas = set(directives.get("cwp_drop_vanilla", Block()).items) if "cwp_drop_vanilla" in directives else set()
-    keep_coas = set(directives.get("cwp_keep_vanilla", Block()).items) if "cwp_keep_vanilla" in directives else set()
+    drop_coas = set(block_items(directives.get("cwp_drop_vanilla")))
+    keep_coas = set(block_items(directives.get("cwp_keep_vanilla")))
+    no_generic = set(block_items(directives.get("cwp_no_generic")))
     no_vanilla = directives.get("cwp_no_vanilla") == "yes"
     drop_re = re.compile(directives["cwp_drop_vanilla_pattern"].strip('"')) if "cwp_drop_vanilla_pattern" in directives else None
-    cwp_defs = defs_of(table_entry)
-    cwp_coas = {pdx.get(d.value, "coa") for d in cwp_defs}
+    sources = ([] if no_vanilla else [tag]) + block_items(directives.get("cwp_vanilla_list"))
+    cwp_defs = [Node(d.key, d.op, strip_directives(d.value), d.comment) for d in defs_of(table_entry)]
+    seen_coas = {pdx.get(d.value, "coa") for d in cwp_defs}
 
     # which CWP definition shows on 1946.1.1
     winner = 0
@@ -613,36 +673,50 @@ def merge_tag(tag, table_entry, vlists, world, verbose_log, coa_keys):
         winner = 10 ** 6  # not on the map in 1946: nothing to protect, keep every live variant
     out = list(cwp_defs)
     kept = dropped = 0
-    for d in defs_of(vlists.get(tag, [])) if not no_vanilla else []:
-        coa = pdx.get(d.value, "coa")
-        p_new = new_priority(prio(d.value))
-        reason = None
-        if coa in keep_coas:
+    for src in sources:
+        for d in defs_of(vlists.get(src, [])):
+            coa = pdx.get(d.value, "coa")
+            p_new = new_priority(prio(d.value))
             reason = None
-        elif coa in cwp_coas:
-            reason = "same coa as a CWP definition"
-        elif coa in drop_coas or (drop_re and drop_re.fullmatch(coa or "")):
-            reason = "dropped in the table"
-        elif eval_def_trigger(d.value, world, tag, "ever") is F:
-            reason = "dead trigger"
-        else:
-            s = eval_def_trigger(d.value, world, tag, "start")
-            if s is T and p_new >= winner:
-                reason = "true on 1946.1.1 (start flag covers it)"
-            elif s is U and p_new >= winner:
-                reason = "unknown on 1946.1.1 and would outrank the start flag (add to cwp_keep_vanilla to keep)"
-        if reason and coa not in keep_coas:
-            dropped += 1
-            verbose_log.append(f"  {tag}: drop {coa} ({prio(d.value)}): {reason}")
+            label = coa if src == tag else f"{coa} (from {src})"
+            if coa in keep_coas:
+                reason = None
+            elif coa in seen_coas:
+                reason = "same coa as an earlier definition"
+            elif coa in drop_coas or (drop_re and drop_re.fullmatch(coa or "")):
+                reason = "dropped in the table"
+            elif pdx.get(d.value, "trigger") is None:
+                reason = "no trigger (the CWP start flag is the base flag)"
+            elif eval_def_trigger(d.value, world, tag, "ever") is F:
+                reason = "dead trigger"
+            else:
+                st = eval_def_trigger(d.value, world, tag, "start")
+                if st is T and p_new >= winner:
+                    reason = "true on 1946.1.1 (start flag covers it)"
+                elif st is U and p_new >= winner:
+                    reason = "unknown on 1946.1.1 and would outrank the start flag (add to cwp_keep_vanilla to keep)"
+            if reason:
+                dropped += 1
+                verbose_log.append(f"  {tag}: drop {label} ({prio(d.value)}): {reason}")
+                continue
+            kept += 1
+            seen_coas.add(coa)
+            verbose_log.append(f"  {tag}: keep {label} ({prio(d.value)} -> {p_new})")
+            body = set_prio(d.value, p_new)
+            for x in list(body):
+                if x.key in ("subject_canton", "coa_with_overlord_canton") and x.value not in coa_keys:
+                    body.remove(x)  # vanilla points at a CoA that does not exist (logs an error in vanilla too)
+                    verbose_log.append(f"  {tag}: {coa}: removed {x.key} {x.value} (no such coat of arms)")
+            out.append(Node("flag_definition", "=", body, "# vanilla" if src == tag else f"# vanilla {src}"))
+    # generic regime flags, unless the list already has a definition for that regime
+    have = set().union(*(trigger_names(d.value) for d in out)) if out else set()
+    for g in generic:
+        unless = set(block_items(pdx.get(g.value, "cwp_unless_trigger")))
+        coa = pdx.get(g.value, "coa")
+        if coa in no_generic or (unless & have):
+            verbose_log.append(f"  {tag}: no generic {coa}")
             continue
-        kept += 1
-        verbose_log.append(f"  {tag}: keep {coa} ({prio(d.value)} -> {p_new})")
-        body = set_prio(d.value, p_new)
-        for x in list(body):
-            if x.key in ("subject_canton", "coa_with_overlord_canton") and x.value not in coa_keys:
-                body.remove(x)  # vanilla points at a CoA that does not exist (logs an error in vanilla too)
-                verbose_log.append(f"  {tag}: {coa}: removed {x.key} {x.value} (no such coat of arms)")
-        out.append(Node("flag_definition", "=", body, "# vanilla"))
+        out.append(Node("flag_definition", "=", strip_directives(g.value), "# generic"))
     return out, kept, dropped
 
 
@@ -696,6 +770,8 @@ def main():
     coa_keys = load_coa_keys()
     tlists = load_template_lists()
     table = pdx.read(TABLE)
+    generic = next((defs_of(n.value) for n in table if n.key == "CWP_GENERIC"), [])
+    default_defs = defs_of(vlists.get("DEFAULT", []))
 
     errors, log = [], []
     entries = []
@@ -703,10 +779,10 @@ def main():
     start_flags = {}
     all_defs = []
     for n in table:
-        if n.key.startswith("@") or not n.is_block():
+        if n.key.startswith("@") or not n.is_block() or n.key == "CWP_GENERIC":
             continue
         tag = n.key
-        defs, kept, dropped = merge_tag(tag, n.value, vlists, world, log, coa_keys)
+        defs, kept, dropped = merge_tag(tag, n.value, vlists, world, log, coa_keys, generic)
         kw = "REPLACE:" if tag in vlists else "REPLACE_OR_CREATE:"
         entries.append((kw, tag, n.comment, defs))
         stats[tag] = (len(defs), kept, dropped, len(defs_of(vlists.get(tag, []))))
@@ -714,13 +790,14 @@ def main():
         for i, d in enumerate(defs):
             errors += check_def(d.value, world, coa_keys, tlists, f"{tag}[{i}] {pdx.get(d.value, 'coa')}")
         if tag in world.start_laws:
-            shown = [(prio(d.value), pdx.get(d.value, "coa"), d.comment == "# vanilla") for d in defs
+            shown = [(prio(d.value), pdx.get(d.value, "coa"), d.comment.startswith(("# vanilla", "# generic")))
+                     for d in defs + [Node(x.key, x.op, x.value, "# vanilla DEFAULT") for x in default_defs]
                      if eval_def_trigger(d.value, world, tag, "start") is T]
             if shown:
                 top = max(shown)
                 start_flags[tag] = top[1]
-                if top[2]:
-                    errors.append(f"{tag}: a vanilla definition ({top[1]}) would replace the CWP start flag")
+                if top[2] is True:
+                    errors.append(f"{tag}: a vanilla or DEFAULT definition ({top[1]}, {top[0]}) would replace the CWP start flag")
             else:
                 errors.append(f"{tag}: no definition is valid on 1946.1.1")
     entries.sort(key=lambda e: e[1])
