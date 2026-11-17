@@ -1,0 +1,249 @@
+﻿# Cold War Project: constitutional transitions after 1945.
+# Nothing here fires on a date. The question opens from the country's state (tag, monarchy law, occupation)
+# and is settled by the bars, interest groups and the government's choices. See docs/agents/areas/constitutional-transitions.md.
+
+# Italy, Bulgaria, Romania, Greece: should the monarchy survive?
+je_cwp_institutional_question = {
+	icon = "gfx/interface/icons/event_icons/event_scales.dds"
+	group = je_group_internal_affairs
+
+	activation_description = { always = yes }
+
+	is_shown_when_inactive = {
+		cwp_iq_is_candidate = yes
+	}
+
+	possible = {
+		cwp_iq_is_candidate = yes
+	}
+
+	immediate = {
+		set_variable = { name = cwp_iq_vote_current_var value = 50 }
+		# The crown's own record moves opinion before any campaign starts.
+		if = {
+			limit = { c:ITA ?= this }
+			set_variable = { name = cwp_iq_crown_record_var value = 6 } # twenty years beside Mussolini, the flight from Rome in 1943
+			set_variable = cwp_iq_vote_promised_var # the Salerno truce of 1944 put the question to a vote after liberation
+		}
+		else_if = {
+			limit = { c:BUL ?= this }
+			set_variable = { name = cwp_iq_crown_record_var value = 4 } # the Axis alliance under Boris III
+			set_variable = cwp_iq_vote_promised_var # the Fatherland Front programme
+		}
+		else_if = {
+			limit = { c:ROM ?= this }
+			set_variable = { name = cwp_iq_crown_record_var value = -8 } # King Michael's coup of 23 August 1944 took Romania out of the Axis
+		}
+		else_if = {
+			limit = { c:GRE ?= this }
+			set_variable = { name = cwp_iq_crown_record_var value = -4 } # George II and the Metaxas dictatorship cut both ways, but fear of the communist EAM helps the crown
+			set_variable = cwp_iq_vote_promised_var # Varkiza (1945): a plebiscite on the King's return
+		}
+		ruler ?= { save_scope_as = cwp_iq_monarch }
+		trigger_event = { id = cwp_iq.1 popup = yes }
+	}
+
+	scripted_progress_bar = cwp_iq_vote_bar
+	scripted_progress_bar = cwp_iq_pressure_bar
+
+	scripted_button = cwp_iq_campaign_republic_button
+	scripted_button = cwp_iq_campaign_crown_button
+	scripted_button = cwp_iq_heir_button
+	scripted_button = cwp_iq_call_referendum_button
+	scripted_button = cwp_iq_rig_referendum_button
+	scripted_button = cwp_iq_force_abdication_button
+
+	on_monthly_pulse = {
+		effect = {
+			set_variable = { name = cwp_iq_vote_current_var value = "scope:journal_entry.scripted_bar_progress(cwp_iq_vote_bar)" }
+			if = {
+				limit = {
+					scope:journal_entry = {
+						"scripted_bar_progress(cwp_iq_pressure_bar)" >= 100
+					}
+					NOT = { has_variable = cwp_iq_vote_pending_var }
+				}
+				trigger_event = { id = cwp_iq.3 popup = yes }
+			}
+		}
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_institutional_question_status_republic
+				trigger = { var:cwp_iq_vote_current_var > 53 }
+			}
+			triggered_desc = {
+				desc = je_cwp_institutional_question_status_crown
+				trigger = { var:cwp_iq_vote_current_var < 47 }
+			}
+			desc = je_cwp_institutional_question_status_close
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_institutional_question_republic_desc
+		color = "gold_positive"
+		trigger = {
+			has_variable = cwp_iq_settled_var
+			country_has_monarchy_law = no
+		}
+		effect = {
+			cwp_iq_cleanup = yes
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_institutional_question_crown_desc
+		color = "gold_positive"
+		trigger = {
+			has_variable = cwp_iq_settled_var
+			country_has_monarchy_law = yes
+		}
+		effect = {
+			cwp_iq_cleanup = yes
+		}
+	}
+
+	# The monarchy fell some other way: a law enactment, a revolution, a new country.
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_cwp_institutional_question_republic_desc
+		trigger = {
+			country_has_monarchy_law = no
+			NOT = { has_variable = cwp_iq_settled_var }
+		}
+		effect = {
+			set_variable = cwp_iq_settled_var
+			cwp_iq_cleanup = yes
+		}
+	}
+
+	weight = 1000
+	transferable = no
+	can_revolution_inherit = no
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
+
+# Japan: a new constitution under occupation.
+je_cwp_japan_postwar_constitution = {
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+	group = je_group_internal_affairs
+
+	activation_description = { always = yes }
+
+	is_shown_when_inactive = {
+		cwp_jap_constitution_is_candidate = yes
+	}
+
+	possible = {
+		cwp_jap_constitution_is_candidate = yes
+		is_subject_type = subject_type_military_occupation
+	}
+
+	immediate = {
+		set_variable = { name = cwp_jap_reform_current_var value = 35 }
+		trigger_event = { id = cwp_jap_constitution.1 popup = yes }
+	}
+
+	scripted_progress_bar = cwp_jap_reform_bar
+	scripted_progress_bar = cwp_jap_occupation_bar
+
+	scripted_button = cwp_jap_reform_campaign_button
+	scripted_button = cwp_jap_submit_government_draft_button
+	scripted_button = cwp_jap_adopt_own_draft_button
+
+	on_monthly_pulse = {
+		effect = {
+			set_variable = { name = cwp_jap_reform_current_var value = "scope:journal_entry.scripted_bar_progress(cwp_jap_reform_bar)" }
+			if = {
+				limit = {
+					scope:journal_entry = {
+						"scripted_bar_progress(cwp_jap_occupation_bar)" >= 100
+					}
+					NOT = { has_variable = cwp_jap_draft_pending_var }
+				}
+				set_variable = cwp_jap_draft_pending_var
+				trigger_event = { id = cwp_jap_constitution.3 popup = yes }
+			}
+		}
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_japan_postwar_constitution_status_reform
+				trigger = { var:cwp_jap_reform_current_var >= 60 }
+			}
+			desc = je_cwp_japan_postwar_constitution_status_occupier
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_japan_postwar_constitution_adopted_desc
+		color = "gold_positive"
+		trigger = {
+			has_variable = cwp_jap_constitution_settled_var
+			has_variable = cwp_jap_new_constitution_var
+		}
+		effect = {
+			cwp_jap_constitution_cleanup = yes
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		conclusion_desc = je_cwp_japan_postwar_constitution_revised_desc
+		color = "blue_negative"
+		trigger = {
+			has_variable = cwp_jap_constitution_settled_var
+			NOT = { has_variable = cwp_jap_new_constitution_var }
+		}
+		effect = {
+			cwp_jap_constitution_cleanup = yes
+		}
+	}
+
+	# The occupation ended before a constitution was settled: the Meiji constitution stays.
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		conclusion_desc = je_cwp_japan_postwar_constitution_lapsed_desc
+		color = "blue_negative"
+		trigger = {
+			NOT = { has_variable = cwp_jap_constitution_settled_var }
+			country_has_monarchy_law = yes
+			NOT = { is_subject_type = subject_type_military_occupation }
+		}
+		effect = {
+			set_variable = cwp_jap_constitution_settled_var
+			cwp_jap_constitution_cleanup = yes
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_cwp_japan_postwar_constitution_lapsed_desc
+		trigger = {
+			country_has_monarchy_law = no
+			NOT = { has_variable = cwp_jap_constitution_settled_var }
+		}
+		effect = {
+			set_variable = cwp_jap_constitution_settled_var
+			cwp_jap_constitution_cleanup = yes
+		}
+	}
+
+	weight = 1000
+	transferable = no
+	can_revolution_inherit = no
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}

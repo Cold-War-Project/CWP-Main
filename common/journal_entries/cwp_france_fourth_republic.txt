@@ -1,0 +1,110 @@
+﻿# Cold War Project: France writes a constitution for the Fourth Republic.
+# Each constituent assembly drafts a text and puts it to a referendum; the vote follows the bar, and a
+# rejected draft sends a new assembly back to work on a more balanced text. No date fixes the result.
+
+je_cwp_fra_constituent_assembly = {
+	icon = "gfx/interface/icons/event_icons/event_scales.dds"
+	group = je_group_internal_affairs
+
+	activation_description = { always = yes }
+
+	is_shown_when_inactive = {
+		c:FRA ?= this
+		has_variable = fra_republic_counter
+		var:fra_republic_counter = 4
+		NOT = { has_variable = cwp_fra_constitution_settled_var }
+	}
+
+	possible = {
+		NOT = { country_has_monarchy_law = yes }
+	}
+
+	immediate = {
+		set_variable = { name = cwp_fra_draft_current_var value = 48 }
+		set_variable = { name = cwp_fra_round_var value = 1 }
+		trigger_event = { id = cwp_fra_constitution.1 popup = yes }
+	}
+
+	scripted_progress_bar = cwp_fra_draft_bar
+	scripted_progress_bar = cwp_fra_assembly_bar
+
+	scripted_button = cwp_fra_council_of_republic_button
+	scripted_button = cwp_fra_strong_presidency_button
+	scripted_button = cwp_fra_tripartisme_button
+	scripted_button = cwp_fra_campaign_yes_button
+
+	on_monthly_pulse = {
+		effect = {
+			set_variable = { name = cwp_fra_draft_current_var value = "scope:journal_entry.scripted_bar_progress(cwp_fra_draft_bar)" }
+			if = {
+				limit = {
+					scope:journal_entry = {
+						"scripted_bar_progress(cwp_fra_assembly_bar)" >= 100
+					}
+					NOT = { has_variable = cwp_fra_vote_pending_var }
+				}
+				set_variable = cwp_fra_vote_pending_var
+				trigger_event = { id = cwp_fra_constitution.2 days = 30 popup = yes }
+			}
+		}
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_fra_constituent_assembly_status_gaullist
+				trigger = { has_variable = cwp_fra_gaullist_draft_var }
+			}
+			triggered_desc = {
+				desc = je_cwp_fra_constituent_assembly_status_second
+				trigger = { var:cwp_fra_round_var >= 2 }
+			}
+			desc = je_cwp_fra_constituent_assembly_status_first
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_fra_constituent_assembly_success_desc
+		color = "gold_positive"
+		trigger = {
+			has_variable = cwp_fra_constitution_settled_var
+			has_variable = cwp_fra_constitution_adopted_var
+		}
+		effect = {
+			cwp_fra_constitution_cleanup = yes
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		conclusion_desc = je_cwp_fra_constituent_assembly_failure_desc
+		color = "blue_negative"
+		trigger = {
+			has_variable = cwp_fra_constitution_settled_var
+			NOT = { has_variable = cwp_fra_constitution_adopted_var }
+		}
+		effect = {
+			cwp_fra_constitution_cleanup = yes
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_cwp_fra_constituent_assembly_failure_desc
+		trigger = {
+			country_has_monarchy_law = yes
+		}
+		effect = {
+			set_variable = cwp_fra_constitution_settled_var
+			cwp_fra_constitution_cleanup = yes
+		}
+	}
+
+	weight = 1000
+	transferable = no
+	can_revolution_inherit = no
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
