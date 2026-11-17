@@ -109,12 +109,12 @@ python3 tools/flags/gen_flags.py           # only when the table gained a flag_d
 
 - Forge has no SVG library; snap Firefox in headless mode (`--screenshot`) is the rasteriser. Snap confinement needs the page, output and profile under `$HOME`, so the work folder is `~/forge/flag-work/` (outside the repo; downloaded SVGs are untrusted data, only shown through an `<img>`).
 - Wikimedia rate-limits downloads (HTTP 429, Retry-After 120 s); `fetch_svg.py` paces itself and is rerunnable, skipping rows already fetched.
-- Credits: every shipped texture is listed under `$TITLE_PROJECT_FLAG_SOURCES$` in `credits.txt` (Commons page and licence). Add a line there with each new texture. Licences were re-checked on Commons on 2026-11-17 (all 20 public domain).
+- Credits: every shipped texture is listed under `$TITLE_PROJECT_FLAG_SOURCES$` in `credits.txt` (Commons page and licence). Add a line there with each new texture. Licences were re-checked on Commons on 2026-11-17 (all public domain).
 - Not shipped until cleared: Bulgaria 1948-67 (`cwp_BUL_peoples_republic`), Commons file is CC BY-SA 4.0; it keeps the pattern stand-in. Attribution or share-alike files never ship without Jack's clearance.
 - To add a flag: add a row to `sources.tsv` (coa key, tag, label, Commons file page), run the scripts, look at the PNG in `~/forge/flag-work/png/`, and add a `flag_definition` to the table if the coat of arms is new.
 - Textures have one mip level (Pillow); five vanilla flag textures are the same, so the game accepts it. Sharpness at small sizes in game is unchecked.
 
-Status 2026-11-17: 20 flags textured (Belize, Malawi, Ingushetia, Karachay-Cherkessia, Uganda, Kenya, Mozambique, Zimbabwe, Lesotho, Eswatini, Rhodesia 1968, Zaire, Islamic Republic of Iran, Spain (current arms), Malaysia, Kuwait, Tanzania, UAR, Namibia, Papua New Guinea); Namibia and Papua New Guinea also got independence flag definitions. Bulgaria 1948-67 was skipped (Commons file is CC BY-SA 4.0). Hungary 1949-56, Romania 1952-65 and Afghanistan 1978-80 hit the rate limit; rerun `fetch_svg.py`.
+Status 2026-11-17: 20 flags textured (Belize, Malawi, Ingushetia, Karachay-Cherkessia, Uganda, Kenya, Mozambique, Zimbabwe, Lesotho, Eswatini, Rhodesia 1968, Zaire, Islamic Republic of Iran, Spain (current arms), Malaysia, Kuwait, Tanzania, UAR, Namibia, Papua New Guinea); Namibia and Papua New Guinea also got independence flag definitions. Bulgaria 1948-67 was skipped (Commons file is CC BY-SA 4.0). Romania 1952-65 followed in a second commit (21 in all). Hungary 1949-56 and Afghanistan 1978-80 hit the rate limit; rerun `fetch_svg.py` for them.
 
 ## Later plan
 
