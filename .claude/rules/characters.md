@@ -14,7 +14,7 @@ paths:
 
 # Characters
 
-`character_templates` is in `replace_paths` (mod-only). Traits, roles, interactions, DNA, ethnicities and genes are vanilla with mod overrides (`zz_vanilla_character_traits.txt`, `zz_vanilla_character_skills.txt`, `zz_vanilla_character_interactions.txt`).
+`character_templates` is in `replace_paths` (mod-only: `00_default_template.txt`, `colonial_governor_templates.txt`, `test_template.txt`). Traits are vanilla plus `zz_vanilla_character_traits.txt` / `zz_vanilla_character_skills.txt`; interactions are same-name overwrites of `00_`/`01_`/`02_` plus `zz_vanilla_character_interactions.txt`; roles, DNA, ethnicities and genes are pure vanilla.
 
 ## Templates (`common/character_templates`)
 
@@ -43,7 +43,7 @@ USA_harry_truman = {
 }
 ```
 - **The `default` template is hard-coded and must exist** with all parameters (`00_default_template.txt`); its contents may be changed, the entry may not be removed.
-- Template keys are global; convention is `TAG_firstname_lastname`. A template is placed at start by `history/characters` (`create_character = { template = key }`) or spawned later through the `*_usage` blocks (historical characters appearing in a date window) or script.
+- Template keys are global; convention is `TAG_firstname_lastname`. A template is placed at start by `history/characters` (`create_character = { template = key }`) or spawned later through the `*_usage` blocks (historical characters appearing in a date window) or script. No `TAG_` templates exist on this branch yet; dev's are in `origin/dev:common/character_templates` (6 files), and porting is tracked in `docs/agents/areas/history-setup.md`.
 - Names are loc keys: every `first_name`/`last_name` value needs an entry, or the raw key shows. Names with spaces use underscores.
 - `interest_group`, `ideology`, `traits`, `culture`, `religion`, `commander_rank`, `hq` must all be mod-valid keys. The mod has nine interest groups (`ig_bureaucrats` is extra).
 - Role assignment has three interchangeable forms (documented in the default template header): `ruler = yes` style shortcuts, `role = <archetype>`, `role = <database key>`.
@@ -84,10 +84,10 @@ Per vanilla `.md`: `type` (archetype: politician/general/admiral/executive/agita
 - `ethnicities` define gene ranges per ethnicity and are referenced from cultures (`ethnicities = { 1 = key }`). `genes` define the gene database; do not edit without art knowledge.
 - `gfx/portraits/portrait_modifiers` and `portrait_animations` are in `replace_paths`: clothing, headgear, props and poses are selected by triggers there (culture graphics, role, law, era). They reference pop types, laws, traits and technologies, which must be mod keys. This is where era-appropriate (20th century) clothing rules live.
 - Pop portraits use `portrait_age`, `portrait_pose`, `portrait_is_female` from `common/pop_types`.
-- The mod's modifiers (`cwp_clothes`, `cwp_headgear`, `cwp_accessories`, `cwp_beards`, `cwp_hairstyles`, `cwp_decals`, `cwp_weight`) use only the `cwp_portrait_*` triggers in `common/scripted_triggers/cwp_portrait_triggers.txt`: culture zones by heritage, eras by `game_date`, uniform style (USA / Britain / communist = `law_council_republic` / generic). Do not call the vanilla `*_clothes_trigger`s from `00_clothes_triggers.txt`; they test Victorian tags, techs and cultures. Garments come from vanilla genes; keep each one's vanilla `has_dlc_feature` gate (ep1 for the late uniforms, ip2/ip3/ip5/mp1 for others) and give a base-game alternative where one exists.
+- The mod's modifiers (`cwp_clothes`, `cwp_headgear`, `cwp_accessories`, `cwp_beards`, `cwp_hairstyles`, `cwp_decals`, `cwp_weight`, `cwp_animation_props`, `cwp_shrink_body`) use only the `cwp_portrait_*` triggers in `common/scripted_triggers/cwp_portrait_triggers.txt`: culture zones by heritage, eras by `game_date`, uniform style (USA / Britain / communist = `law_council_republic` / generic). Do not call the vanilla `*_clothes_trigger`s from `00_clothes_triggers.txt`; they test Victorian tags, techs and cultures. Garments come from vanilla genes; keep each one's vanilla `has_dlc_feature` gate (ep1 for the late uniforms, ip2/ip3/ip5/mp1 for others) and give a base-game alternative where one exists.
 
 ## Script notes
 
 - Common character effects/triggers verified in vanilla: `create_character`, `kill_character`, `retire_character`, `set_character_as_ruler`, `set_as_interest_group_leader`, `add_trait`, `remove_trait`, `set_ideology = ideology:x`, `add_character_role`, `remove_character_role`, `transfer_character`, `place_character_in_void = N`, `free_character_from_void`, `exile_character`, `set_character_immortal`; `has_trait`, `has_role_of_type`, `has_role`, `has_ideology = ideology:x`, `is_ruler_of_own_country`, `is_interest_group_leader`, `is_character_alive`, `is_female`, `is_historical`, `has_template = key`, `age`, `popularity`.
-- Iterators from a country: `any/every/random/ordered_scope_character`, `..._scope_general`, `..._scope_admiral`, `..._scope_politician`, `..._character_in_exile_pool`, `..._character_in_void`.
+- Iterators from a country: `any/every/random/ordered_scope_character`, `..._scope_general`, `..._scope_admiral`, `..._scope_politician`. Global (any scope): `..._character_in_exile_pool`, `..._character_in_void`.
 - Pulse on_actions with character root (`on_monthly_pulse_character` ...) run for every character alive; keep them cheap.

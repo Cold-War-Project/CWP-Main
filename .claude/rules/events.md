@@ -6,11 +6,13 @@ paths:
 
 # Events and on_actions
 
+
+**Core design rule (AGENTS.md):** no event fires *because* a date arrived. Events react to simulation state (bars, laws, interest groups, characters, wars, economy); a date may only be one gate among those conditions.
 ## Event files
 
 - One `namespace = name` line at the top; every event id is `name.<number>`. A file may declare several namespaces. Ids must be unique across the whole game, mod included.
-- Vanilla 1.15 uses only two types: `country_event` (root = country, 2377 of 2402 events) and `state_event` (root = state).
-- **Events have no database keywords.** To change a vanilla event the whole file is overwritten by a mod file with the same path. This mod has ~130 such files; most Victorian ones are hidden stubs.
+- Vanilla 1.15 uses only two types: `country_event` (root = country, nearly all events) and `state_event` (root = state, a handful).
+- **Events have no database keywords.** To change a vanilla event the whole file is overwritten by a mod file with the same path. This mod overwrites nearly all of vanilla's event files this way, mostly as hidden stubs; the few it does not overwrite still load and fire. There are no `cwp_` event files yet on this branch.
 
 ```
 namespace = cwp_example
@@ -64,7 +66,7 @@ Other keys vanilla uses: `category` (e.g. `enactment`), `gui_window`, `left_icon
 
 ## on_actions (`common/on_actions`)
 
-Hooks the engine calls. Full list with scopes: `.claude/reference/vanilla-on-actions.md` (223 code on_actions in 1.15, e.g. `on_game_started`, `on_game_started_after_lobby`, `on_monthly_pulse_country`, `on_yearly_pulse_state`, `on_building_built`, `on_acquired_technology`, `on_law_activated`, `on_war_end`, `on_country_formed`, `on_state_owner_change`, `on_character_death`, `on_election_campaign_end`, `on_ship_constructed`).
+Hooks the engine calls. Full list with scopes: `.claude/reference/vanilla-on-actions.md` (e.g. `on_game_started`, `on_game_started_after_lobby`, `on_monthly_pulse_country`, `on_yearly_pulse_state`, `on_building_built`, `on_acquired_technology`, `on_law_activated`, `on_war_end`, `on_country_formed`, `on_state_owner_change`, `on_character_death`, `on_election_campaign_end`, `on_ship_constructed`).
 
 ```
 on_some_action = {
@@ -87,7 +89,11 @@ on_some_action = {
   on_monthly_pulse_country = { on_actions = { cwp_on_monthly_pulse_country } }
   cwp_on_monthly_pulse_country = { effect = { ... } }
   ```
-- This mod overwrites several vanilla on_action files (`00_code_on_actions.txt`, `00_on_actions_yearly.txt`, `ip4_on_actions.txt`, `ip5_on_actions.txt`) to strip Victorian effects. Inside those files edit the `effect` directly; in any other case chain as above. Vanilla on_action files the mod does not overwrite still load and still fire their events.
+- This mod overwrites several vanilla on_action files (`00_code_on_actions.txt`, `00_on_actions_yearly.txt`, `ip4_on_actions.txt`, `ip5_on_actions.txt`) to strip Victorian effects. Inside those files edit the `effect` directly; in any other case chain as above. Vanilla on_action files the mod does not overwrite still load and still fire their events. The overwritten files' `events = { }` lists still name vanilla ids (e.g. `communism.8` in `on_monthly_pulse_country`); those resolve to the hidden stubs, so when an id is un-stubbed, re-check which on_action fires it.
 - Scopes and local variables set in an on_action `effect` do not carry into events fired by the same on_action.
 - Pulse on_actions run for every country/state/character: keep triggers cheap and put the cheapest condition first.
 - Never create a `fallback` loop; it can stop time from advancing.
+
+## Testing
+
+- Test in game on Forge with `cwp-vic` (`docs/agents/forge-testing.md`). Console: `event <id> [TAG]` fires an event, `testevent <id> [TAG]` checks it (`Claude-Vic3-Modding-Guide/reference/wiki/console_commands.md`). Orphan and missing-loc lines show in `cwp-vic errors` at the main menu.

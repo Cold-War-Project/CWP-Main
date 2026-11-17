@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# cwp-package: build a clean copy of the mod for a Steam Workshop upload.
+#   cwp-package [REF] [OUTDIR]     default REF=HEAD, OUTDIR=~/forge/dist/<ref>-<sha>
+# Uses `git archive`, so only committed files are packaged, and everything marked
+# `export-ignore` in .gitattributes (agent docs, guides, .claude/, .github/) is left out.
+set -euo pipefail
+ref="${1:-HEAD}"
+root=$(git rev-parse --show-toplevel)
+sha=$(git -C "$root" rev-parse --short "$ref")
+name=$(git -C "$root" rev-parse --abbrev-ref "$ref" 2>/dev/null | tr '/' '_'); [[ "$name" == HEAD ]] && name=detached
+out="${2:-$HOME/forge/dist/$name-$sha}"
+[[ -e "$out" ]] && { echo "cwp-package: $out already exists" >&2; exit 1; }
+mkdir -p "$out"
+git -C "$root" archive --worktree-attributes "$ref" | tar -x -C "$out"
+for p in .claude Claude-Vic3-Modding-Guide Claude-Vic3-Content-Design-Guide docs AGENTS.md CLAUDE.md; do
+  [[ -e "$out/$p" ]] && { echo "cwp-package: $p leaked into the package; check .gitattributes" >&2; exit 1; }
+done
+[[ -f "$out/.metadata/metadata.json" ]] || { echo "cwp-package: no .metadata/metadata.json in package" >&2; exit 1; }
+echo "$out ($(du -sh "$out" | cut -f1), $(find "$out" -type f | wc -l) files)"

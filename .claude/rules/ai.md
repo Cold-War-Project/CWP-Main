@@ -40,7 +40,7 @@ ai_strategy_cwp_example = {
 ```
 - The exact key set differs by `type`; copy from an existing mod strategy of the same type and check `.claude/reference/vanilla-fields.md` for the 67 keys vanilla uses. Every key inside the weight tables (building groups, goods, institutions, unit groups, ship categories, war goals, strategic regions, interest groups, movements) must exist in the mod. Because the whole economy was replaced, these tables are the first place stale vanilla keys hide.
 - A country always needs at least one possible strategy of each type, or it has none: keep a default with `possible = { always = yes }`-equivalent conditions.
-- Starting strategies and secret goals are set in `history/ai` (`set_strategy = ai_strategy_x`, `set_secret_goal = { country = c:X secret_goal = befriend }`).
+- Starting strategies and secret goals would be set in `history/ai` (`set_strategy = ai_strategy_x`, `set_secret_goal = { country = c:X secret_goal = befriend }`). That folder is in `replace_paths` and the mod has no files there yet, so the AI picks strategies by weight alone; filling it is an open item.
 - Script checks use `has_strategy = ai_strategy_x`. Vanilla events and scripted triggers name vanilla strategies (e.g. `ai_strategy_conservative_agenda`); keep those keys or remap the references.
 
 ## Regional objectives and stances (1.15)
@@ -69,8 +69,8 @@ ai_strategy_cwp_example = {
 Rules of thumb:
 - New content the AI should use needs a non-zero weight **and** to be reachable by the AI's planner (a building in a group listed in `building_group_weights`; a company with `ai_will_do`; a treaty article with `evaluation_chance`). Content without them is player-only.
 - AI script values run very often. Avoid nested list iterators (`every_scope_state` inside `every_country`) in `ai_value`, `weight`, role spawn targets and pulse triggers.
-- Tune with observer runs (console `observe`, multi-year) and read `logs/ai.log`/`debug.log`; behaviour claims without a run are guesses.
+- Tune with observer runs on Forge (`cwp-vic`, see `docs/agents/forge-testing.md`, "Observer runs") and read `ai.log`, `debug.log` and the error log in the user folder; behaviour claims without a run are guesses.
 
 ## Defines
 
-`NAI` in `common/defines/00_ai.txt` holds global AI constants (building base values, diplomatic thresholds, aggression scaling). The mod changes defines only through `common/defines/cwp_defines.txt` by restating the namespace and the changed keys; see `defines-and-misc.md`.
+`NAI` in `common/defines/00_ai.txt` holds global AI constants (building base values, diplomatic thresholds, aggression scaling). The mod changes defines only through `common/defines/cwp_defines.txt` by restating the namespace and the changed keys (graphics defines in `cwp_graphics.txt`); see `defines-and-misc.md`.
