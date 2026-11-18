@@ -44,6 +44,13 @@ The first CWP2 staging save had the war start on 1947-08-15. The gates held (bot
 - Lower AI weights for proclaiming, withdrawing and invading. The Soviet green light is multiplied by 0.1 while the PRC is still fighting the ROC, and goes up once the PRC has pledged volunteers.
 - The US is less likely to stay out without a UN mandate (stay-out weight 20, against 60 for going in alone).
 
+## Shared observer run, 1946-1960 (CWP2 e638a85ce, 2026-11-17)
+
+- No Korea error lines in 14 years (`errors_korea.txt` empty).
+- Commission bar at 0 and partition by 1947-09 (historical: autumn 1947). Both elections were held by 1947-09, the deterrence counter ran from early 1948, the US withdrew in early 1949 (counter at 16 of 24), the Soviets by 1950-12, and the green light and invasion came on 1951-08-17 (historical: June 1950).
+- The US intervened with a UN mandate, and Colombia, India, Mexico and Japan sent contingents. The PRC had pledged volunteers but never entered, because the Chinese Civil War was still running in that game and the entry check needed the PRC to be at peace. The South won, and a united Korea (`KOR`, formable) existed by 1952-08.
+- Change: the Chinese entry check now allows a PRC whose only war is against the ROC. Its AI is much less likely to choose entry while that war lasts (-40).
+
 ## Files
 
 `common/journal_entries/cwp_korea_divided_peninsula.txt`, `common/scripted_progress_bars/cwp_korea_bars.txt`, `common/scripted_buttons/cwp_korea_buttons.txt`, `common/scripted_effects/cwp_korea_effects.txt`, `common/scripted_triggers/cwp_korea_triggers.txt`, `common/static_modifiers/cwp_korea_modifiers.txt`, `common/diplomatic_plays/cwp_korea_war_play.txt`, `common/named_colors/cwp_korea_colors.txt`, `common/on_actions/cwp_korea_on_actions.txt`, `events/cwp_korea_events.txt`, `localization/english/cwp/journal/cwp_korea_l_english.yml`.
