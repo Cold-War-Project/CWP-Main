@@ -108,6 +108,14 @@ systemctl --user status cwp-job-my-run                                 # is it s
 
 Safety nets in `cwp-vic`: a runner that takes the lock with `--owner-pid $$` (cwp-observe does) releases it the moment the runner dies, and whoever takes the lock next stops any game still running, since it can only be an orphan.
 
+## GUI screenshot checks (batched)
+
+Every GUI-facing change is screenshot-checked in game before it lands (Jack, 2026-11-18). To keep game slots for economy runs, checks share one launch:
+
+1. Book: write `~/forge/gui-checks/book/<your-name>.sh`. Header lines `# branch: <local branch>` (repeatable; merged on top of CWP2) and optionally `# needs-game: yes` (start a 1946 observer game first). The body uses `shot <label>`, `console "<cmd>"`, `click X Y`, `key KEY` and must finish in 4 minutes.
+2. A batch runs every booking in one launch: `cwp-vic job gui-batch-$(date +%H%M) -- cwp-gui-batch run` (takes the lock with priority, ~15 min). Anyone may start it; the coordinator or integration owner usually does, about hourly while bookings exist.
+3. Results: `~/forge/gui-checks/done/<date>-<name>/` (full-resolution PNGs, log, your booking), plus the batch's `cwp-vic errors`. Read your PNGs before landing.
+
 ## Shared long observer runs and state dumps
 
 One shared run serves every area; don't queue your own multi-year run on the same code.

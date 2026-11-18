@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# cwp-gui-batch: one shared game launch for everyone's GUI screenshot checks (Jack's rule: every
+# GUI-facing change is screenshot-checked in game before it lands).
+#
+# Book a check: drop a bash script in ~/forge/gui-checks/book/<name>.sh. First line(s) may say
+#   # branch: <local branch to include>        (repeatable; merged on top of CWP2 for the batch)
+#   # needs-game: yes                           (start a 1946 observer game before your steps; default: main menu)
+# The script runs with these helpers and must finish within 4 minutes:
+#   shot <label>           screenshot -> $OUT/<label>.png (full resolution)
+#   console "<command>"    run an in-game console command
+#   click X Y / key KEY... (vic-click / vic-key on 1280x720 screenshot coordinates)
+# Results: ~/forge/gui-checks/done/<date>-<name>/ (PNGs, log); the booking is moved there too.
+#
+#   cwp-gui-batch run      run all bookings now (takes the game lock with priority; ~15 min)
+#   cwp-gui-batch list     show bookings
+set -u
+B=~/forge/gui-checks/book; D=~/forge/gui-checks/done
+export DISPLAY=:0 CWP_AGENT=gui-batch
+case "${1:-list}" in
+  list) ls -1 "$B"/*.sh 2>/dev/null | xargs -r -n1 basename; exit 0 ;;
+  run) ;;
+  *) sed -n '2,20p' "$0"; exit 1 ;;
+esac
+mapfile -t books < <(ls -1 "$B"/*.sh 2>/dev/null)
+(( ${#books[@]} )) || { echo "no bookings"; exit 0; }
+stamp=$(date +%Y%m%d-%H%M)
+branches=$(grep -h '^# branch:' "${books[@]}" | awk '{print $3}' | awk '!s[$0]++')
+needs_game=$(grep -lh '^# needs-game: yes' "${books[@]}" | head -1)
+WT=~/forge/worktrees/gui-batch
+if [[ ! -d $WT ]]; then git -C ~/forge/CWP-Main worktree add -q --detach "$WT" origin/CWP2; fi
+cwp-vic lock --owner-pid $$ --priority "gui-batch: ${#books[@]} screenshot checks (~15 min)" || exit 1
+trap 'cwp-vic unlock >/dev/null' EXIT
+git -C ~/forge/CWP-Main fetch -q origin CWP2
+git -C "$WT" checkout -q --detach origin/CWP2
+for br in $branches; do git -C "$WT" merge -q --no-ff --no-edit -m "gui-batch: $br" "$br" >/dev/null 2>&1 \
+  || { git -C "$WT" merge --abort; echo "branch $br: CONFLICT, skipped" | tee -a "$D/$stamp-batch.log"; }; done
+cwp-vic link "$WT" >/dev/null && cwp-vic launch >/dev/null 2>&1
+sleep 200
+for w in $(xdotool search --name "Unlock Keyring|Authentication required" 2>/dev/null); do xdotool windowclose "$w"; done
+if [[ -n "$needs_game" ]]; then
+  vic-click 266 284 >/dev/null; sleep 6; vic-click 1086 330 >/dev/null; sleep 100; vic-click 566 702 >/dev/null; sleep 5
+fi
+shot()    { local f; f=$(vic-shot --full | tail -1); cp "$f" "$OUT/$1.png"; echo "shot $1" >> "$OUT/log.txt"; }
+console() { vic-key grave >/dev/null; sleep 1; vic-key --type "$1" >/dev/null; vic-key Return >/dev/null; sleep 1; vic-key grave >/dev/null; sleep 1; }
+click()   { vic-click "$@" >/dev/null; sleep 1; }
+key()     { vic-key "$@" >/dev/null; sleep 1; }
+export -f shot console click key
+for bk in "${books[@]}"; do
+  name=$(basename "$bk" .sh); export OUT="$D/$stamp-$name"; mkdir -p "$OUT"; cp "$bk" "$OUT/"
+  echo "$(date +%T) start $name" >> "$OUT/log.txt"
+  timeout 240 bash -c 'source "$1"' _ "$bk" >> "$OUT/log.txt" 2>&1; echo "$(date +%T) end $name rc=$?" >> "$OUT/log.txt"
+  rm -f "$bk"; vic-key Escape >/dev/null; sleep 1; vic-key Escape >/dev/null; sleep 2
+done
+cwp-vic errors > "$D/$stamp-errors.txt" 2>&1
+echo "batch $stamp done: ${#books[@]} checks, results in $D/$stamp-*"
