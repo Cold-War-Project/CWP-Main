@@ -33,6 +33,7 @@ These strings sit in fixed-width widgets, so they are limits, not ceilings. Chec
 | Scripted bar `desc` | Drawn **on the bar** (504 px, one line): `Name: value`, about 40 characters, e.g. `#tooltippable;tooltip:[GetPlayer.GetTooltipTag],<bar>_explain_tt Western integration#!: #v [JournalEntry.GetCurrentBarValue(ScriptedProgressBar.Self)\|0]#!`. The explanation goes in `<bar>_explain_tt`, shown on hover |
 | Scripted bar `second_desc` | Right-aligned on the same line; only drawn on `default_green` and dynamic-texture bars. About 25 characters: thresholds such as `Basic Law at 60` |
 | `status_desc` | One line, about 50 characters, stating the situation |
+| Scripted button `name` | About 30 characters; longer names are cut off with "..." on the button |
 | Outcome and button conditions | One short line per condition. Wrap every `has_variable`, `has_global_variable`, bar comparison, `any_*` list and CWP scripted trigger in a `custom_tooltip` that says what it means to the player ("The fighting has ended", not "has global variable cwp_ccw_settled"). Prefer several one-line conditions to one long tooltip, so the player sees which one fails. Shared scripted triggers carry their own `custom_tooltip` |
 | Money and derived numbers | Never show a raw computed sum: round the script value, or state it as a share ("Costs #v 2%#! of our GDP") in a `custom_tooltip` |
 
