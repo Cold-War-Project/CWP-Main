@@ -1,6 +1,6 @@
 # Single-option popup events
 
-Jack's rule (2026-11-18, AGENTS.md): every popup event gives the player a real choice; two bad options are fine. These non-hidden `cwp_` events have exactly one `option`. Generated on branch `loc/prose` from CWP2 @ 34bee2866 by counting top-level `option = {` blocks per event; re-run before relying on it. Some may be better as notifications or JE updates than popups.
+Jack's rule (2026-11-18, AGENTS.md): every popup event gives the player a real choice; two bad options are fine. These non-hidden `cwp_` events have exactly one `option`. Generated on branch `loc/prose` from CWP2 @ 34bee2866 by counting top-level `option = {` blocks per event; re-run before relying on it. Not all need fixing: an event that only formalizes something that already happened may keep one option (Jack, 2026-11-18; vanilla: 18% of visible events have one option). Triage each: add a real choice, keep as a formalizing event, or turn it into a notification or JE update.
 
 Total: 112 events in 25 namespaces.
 

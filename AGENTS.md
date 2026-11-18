@@ -20,7 +20,7 @@ Victoria 3 total conversion set 1946 to 2046, targeting game **1.15.1**. Most de
 
 **No "it is date X, so Y happens."** Every outcome comes from the simulation: progress bars, politics, economy, interest groups, characters, agitators, movements, wars, diplomacy. Journal entries may steer toward a specific historical outcome (make it more likely, reward pursuing it), but they **never force it**. Dates may gate when something becomes *possible* (an ideology from 1960, a technology era), never decide *what happens* (Jack, 2026-11-16). When porting content that forces an outcome by date, flag it in your PR and rework it into a mechanic, or ask the advisor.
 
-**Every popup event is a real choice** (Jack, 2026-11-18). Never "X happened, so now Y happens" with one acknowledgment button: give the player at least two options with different consequences. They need not be good; a choice between two bad options is fine. Details: [docs/agents/loc-style.md](docs/agents/loc-style.md) and `.claude/rules/events.md`.
+**Popup events should offer a real choice** (Jack, 2026-11-18). Aim for vanilla's spread: of 2,313 visible vanilla 1.15.1 events, 53% have two options, 23% three and 18% one (median 2, mean 2.2). Options need different consequences but need not be good; a choice between two bad options is fine. One option is acceptable when the event only formalizes something that has already happened (a state proclaimed, a treaty signed); it is not acceptable for "X happened, so now Y happens" when Y is a decision the player could plausibly make. Details: [docs/agents/loc-style.md](docs/agents/loc-style.md) and `.claude/rules/events.md`.
 
 ## What belongs in the mod
 
