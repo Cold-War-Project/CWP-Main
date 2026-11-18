@@ -15,9 +15,12 @@ Technology, decolonization (+ Africa), Korea, objectives, government/*, laws, am
 - Flavor text round figures: US ~half of world industrial output, >12 million under arms; ROC ">10 million dead since 1937" (deliberate floor).
 - Tech: Meuse Valley fog ~60 deaths; Housing (Temporary Accommodation) Act 1944 wording.
 
-## Left for a decision
-- `cwp_iq.1.f.ITA` Nenni slogan "La Repubblica o il caos!" is from the spring 1946 campaign (just after start; the event is that campaign).
-- Button "Follow the Bayeux Program" names de Gaulle's June 1946 speech.
-- Event title "[X] Goes Red" (period slang) and option "A New World Order" (1990 phrase).
-- Ideology name "Liberation Theologist" uses a ~1971 term.
+## Naming calls (Jack, 2026-11-18): all kept
+- "Liberation Theologist" stays available from 1946 (the current existed before the 1971 term).
+- "Follow the Bayeux Program" button stays: an acceptable departure.
+- "[X] Goes Red" title stays (period slang preferred).
+- Option "A new world order." stays: real phrase, the event fires only after the Cold War ends.
+- Nenni's "La Repubblica o il caos!" stays: real quote.
+
+## Other
 - `mobilization_*` keys in `cwp_mobilization_options_l_english.yml` look unused (live options use `mobilization_option_*`).
