@@ -184,6 +184,10 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
             if c in countries:
                 countries[c]["_state_pop"] = countries[c].get("_state_pop", 0.0) + sum(
                     fnum(ps, k, 2) for k in ("population_lower_strata", "population_middle_strata", "population_upper_strata"))
+                for k, name in (("population_unemployed_workforce", "unemployed"),
+                                ("population_subsisting_workforce", "subsisting"),
+                                ("population_salaried_workforce", "salaried")):
+                    countries[c][name] = countries[c].get(name, 0.0) + fnum(ps, k, 2)
 
     # Famines in progress: deaths so far per country (the famine manager keeps one entry per state).
     for _, b in db_entries(top_section(text, "famine_manager")):
