@@ -70,6 +70,10 @@ cwp_un_applicant_is_other_camp = {
 	OR = {
 		cwp_un_applicant_is_opposed = yes
 		global_var:cwp_un_admission_target ?= {
+			# Only applicants already inside a power bloc are seen as the other camp's;
+			# newly independent states outside the blocs are not vetoed for their politics.
+			is_in_power_bloc = yes
+			NOT = { is_in_same_power_bloc = root }
 			OR = {
 				AND = {
 					has_law_or_variant = law_type:law_council_republic
@@ -91,5 +95,149 @@ cwp_un_applicant_is_friendly = {
 			relations:root >= relations_threshold:cordial
 			is_in_same_power_bloc = root
 		}
+	}
+}
+
+# Country scope: in the Soviet-led camp: a council republic, or in a power bloc led by one.
+cwp_io_in_eastern_camp = {
+	OR = {
+		has_law_or_variant = law_type:law_council_republic
+		AND = {
+			is_in_power_bloc = yes
+			power_bloc ?= {
+				power_bloc_leader ?= { has_law_or_variant = law_type:law_council_republic }
+			}
+		}
+	}
+}
+
+# Country scope: may take part in a North Atlantic alliance.
+cwp_nato_eligible = {
+	OR = {
+		is_subject = no
+		is_subject_type = subject_type_dominion    # Canada signed in 1949
+	}
+	capital ?= {
+		OR = {
+			is_in_geographic_region = geographic_region_europe
+			is_in_geographic_region = geographic_region_north_america
+		}
+	}
+	NOT = { cwp_io_in_eastern_camp = yes }
+}
+
+# Country scope: may take part in an Eastern European mutual defence treaty.
+cwp_wp_eligible = {
+	capital ?= { is_in_geographic_region = geographic_region_europe }
+	cwp_io_in_eastern_camp = yes
+}
+
+# Country scope (root = the voting member): NATO applicant hostile to root or in the other camp.
+cwp_nato_applicant_is_opposed = {
+	global_var:cwp_nato_admission_target ?= {
+		OR = {
+			has_war_with = root
+			relations:root <= relations_threshold:poor
+			cwp_io_in_eastern_camp = yes
+		}
+	}
+}
+
+# Country scope (root = the voting member): Warsaw Pact applicant hostile to root or not in the camp.
+cwp_wp_applicant_is_opposed = {
+	global_var:cwp_wp_admission_target ?= {
+		OR = {
+			has_war_with = root
+			relations:root <= relations_threshold:poor
+			NOT = { cwp_io_in_eastern_camp = yes }
+		}
+	}
+}
+
+# Country scope: a NATO member that is the target of a war by a non-member (Article 5).
+cwp_nato_under_attack = {
+	has_variable = cwp_io_member_nato
+	is_at_war = yes
+	is_diplomatic_play_target = yes
+	NOT = {
+		any_country = {
+			has_variable = cwp_io_member_nato
+			has_war_with = PREV
+		}
+	}
+}
+
+# Country scope: may call a North Atlantic founding conference.
+cwp_nato_can_call_conference = {
+	cwp_nato_eligible = yes
+	country_rank >= rank_value:major_power
+	NOT = { has_global_variable = cwp_nato_founded }
+	NOT = { has_global_variable = cwp_io_nato_conf_open }
+	NOT = { has_global_variable = cwp_io_nato_conf_cooldown }
+}
+
+# Country scope: may call the Eastern founding conference: a power bloc leader of the eastern
+# camp, once a North Atlantic alliance exists and has taken in a new member.
+cwp_wp_can_call_conference = {
+	cwp_wp_eligible = yes
+	is_power_bloc_leader = yes
+	has_global_variable = cwp_nato_founded
+	has_global_variable = cwp_nato_enlargements
+	trigger_if = {
+		limit = { has_global_variable = cwp_nato_enlargements }
+		global_var:cwp_nato_enlargements >= 1
+	}
+	NOT = { has_global_variable = cwp_wp_founded }
+	NOT = { has_global_variable = cwp_io_wp_conf_open }
+	NOT = { has_global_variable = cwp_io_wp_conf_cooldown }
+}
+
+# No scope: the North Atlantic conference succeeds. Shown as a checklist in the JE panel.
+cwp_nato_conf_succeeds = {
+	custom_tooltip = {
+		text = cwp_nato_conf_cond_signers_tt
+		global_var:cwp_io_nato_conf_yes >= 5
+	}
+	custom_tooltip = {
+		text = cwp_nato_conf_cond_majority_tt
+		global_var:cwp_io_nato_conf_share >= 50
+		global_var:cwp_io_nato_conf_vetoed = 0
+	}
+	custom_tooltip = {
+		text = cwp_nato_conf_cond_transatlantic_tt
+		any_country = {
+			var:cwp_io_vote_nato_conf ?= flag:yes
+			capital ?= { is_in_geographic_region = geographic_region_north_america }
+		}
+	}
+	custom_tooltip = {
+		text = cwp_nato_conf_cond_europe_tt
+		any_country = {
+			var:cwp_io_vote_nato_conf ?= flag:yes
+			country_rank >= rank_value:great_power
+			capital ?= { is_in_geographic_region = geographic_region_europe }
+		}
+	}
+}
+
+# No scope: enough Europeans signed for a European-only pact (the Western Union).
+cwp_nato_conf_western_union = {
+	any_country = {
+		count >= 3
+		var:cwp_io_vote_nato_conf ?= flag:yes
+		capital ?= { is_in_geographic_region = geographic_region_europe }
+	}
+}
+
+# No scope: the Warsaw conference may be proclaimed. Shown as a checklist on the button.
+cwp_wp_conf_ready = {
+	custom_tooltip = {
+		text = cwp_wp_conf_cond_signers_tt
+		global_var:cwp_io_wp_conf_yes >= 4
+	}
+	custom_tooltip = {
+		text = cwp_wp_conf_cond_majority_tt
+		global_var:cwp_io_wp_conf_share >= 50
+		global_var:cwp_io_wp_conf_vetoed = 0
 	}
 }

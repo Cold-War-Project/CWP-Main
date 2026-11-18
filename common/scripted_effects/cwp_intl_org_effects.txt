@@ -6,13 +6,15 @@
 #
 # State, per organization $ORG$:
 #   country var  cwp_io_member_$ORG$        member of the organization
-#   country var  cwp_io_veto_$ORG$          holds a veto (UN Security Council permanent members)
+#   country var  cwp_io_veto_un             holds a UN Security Council veto (permanent members)
 #   country var  cwp_io_applicant_$ORG$     has applied and waits for an admission vote
 #   country var  cwp_io_rejected_$ORG$      application rejected recently (timed)
 #   script value cwp_io_vote_weight_$ORG$   one member's vote weight (1, or GDP plus prestige)
 #   global var   cwp_io_$ORG$_threshold     share of yes votes (percent of yes plus no) needed to pass
 #   global var   cwp_io_$ORG$_presidency    0, or 1 for a rotating presidency
 #   global var   cwp_io_$ORG$_members       cached member count, refreshed monthly
+#   global var   cwp_io_$ORG$_president     current holder of a rotating presidency
+#   country var  cwp_io_presided_$ORG$      terms this member has held the presidency
 #
 # State, per proposal $PROP$ (several can be open at once, each in its own journal entry):
 #   global var   cwp_io_$PROP$_open         proposal is before the members
@@ -35,6 +37,10 @@ cwp_io_setup_org = {
 cwp_io_add_member = {
 	set_variable = cwp_io_member_$ORG$
 	if = {
+		limit = { NOT = { has_variable = cwp_io_presided_$ORG$ } }
+		set_variable = { name = cwp_io_presided_$ORG$ value = 0 }
+	}
+	if = {
 		limit = { has_variable = cwp_io_applicant_$ORG$ }
 		remove_variable = cwp_io_applicant_$ORG$
 	}
@@ -42,10 +48,6 @@ cwp_io_add_member = {
 
 cwp_io_remove_member = {
 	remove_variable = cwp_io_member_$ORG$
-	if = {
-		limit = { has_variable = cwp_io_veto_$ORG$ }
-		remove_variable = cwp_io_veto_$ORG$
-	}
 }
 
 # Any scope: make the JE's involved countries match the members. Contextless JEs read
@@ -104,7 +106,7 @@ cwp_io_cast_vote = {
 }
 
 # No scope: count the votes. Abstentions do not count toward the share, as in the UN's
-# "present and voting" rule. VETO = yes makes a no vote from a veto holder block the proposal.
+# "present and voting" rule. VETO = the veto check effect (see below).
 cwp_io_tally_votes = {
 	set_global_variable = { name = cwp_io_$PROP$_yes value = 0 }
 	set_global_variable = { name = cwp_io_$PROP$_no value = 0 }
@@ -123,18 +125,15 @@ cwp_io_tally_votes = {
 		else_if = {
 			limit = { var:cwp_io_vote_$PROP$ = flag:no }
 			change_global_variable = { name = cwp_io_$PROP$_no add = cwp_io_vote_weight_$ORG$ }
-			if = {
-				limit = {
-					always = $VETO$
-					has_variable = cwp_io_veto_$ORG$
-				}
-				set_global_variable = { name = cwp_io_$PROP$_vetoed value = 1 }
-			}
 		}
 		else = {
 			change_global_variable = { name = cwp_io_$PROP$_abstain add = cwp_io_vote_weight_$ORG$ }
 		}
 	}
+	# VETO names a scripted effect that sets cwp_io_$PROP$_vetoed: cwp_un_p5_veto_check for
+	# UN Security Council matters, cwp_io_no_veto_check everywhere else. (A literal veto
+	# variable per organization would trip the game's unused-variable checker.)
+	$VETO$ = { PROP = $PROP$ }
 	if = {
 		limit = { global_var:cwp_io_$PROP$_yes > 0 }
 		set_global_variable = {
@@ -187,4 +186,95 @@ cwp_io_close_proposal = {
 # Country scope: apply for membership.
 cwp_io_apply = {
 	set_variable = cwp_io_applicant_$ORG$
+}
+
+# No scope: pass a rotating presidency to the member that has held it least often
+# (alphabetical rotation in NATO's North Atlantic Council is approximated by "fewest terms").
+cwp_io_rotate_presidency = {
+	if = {
+		limit = { any_country = { has_variable = cwp_io_member_$ORG$ } }
+		ordered_country = {
+			limit = { has_variable = cwp_io_member_$ORG$ }
+			order_by = {
+				value = 1000
+				subtract = var:cwp_io_presided_$ORG$
+			}
+			position = 0
+			set_global_variable = { name = cwp_io_$ORG$_president value = this }
+			change_variable = { name = cwp_io_presided_$ORG$ add = 1 }
+			add_modifier = { name = cwp_io_presidency_modifier years = 1 }
+		}
+	}
+}
+
+# No scope: the generic admission handler for one applicant at a time. Call from the
+# admission JE's monthly pulse after cwp_io_advance_proposal. TARGET = global variable that
+# holds the applicant; EVENT_YES / EVENT_NO = notification events for the applicant.
+cwp_io_settle_admission = {
+	if = {
+		limit = { cwp_io_proposal_passed = { PROP = $PROP$ } }
+		global_var:$TARGET$ ?= {
+			cwp_io_add_member = { ORG = $ORG$ }
+			je:$JE$ ?= { add_involved_country = PREV }
+			trigger_event = { id = $EVENT_YES$ popup = yes }
+		}
+		cwp_io_close_proposal = { PROP = $PROP$ }
+	}
+	else_if = {
+		limit = { global_var:cwp_io_$PROP$_result ?= flag:failed }
+		global_var:$TARGET$ ?= {
+			remove_variable = cwp_io_applicant_$ORG$
+			set_variable = { name = cwp_io_rejected_$ORG$ years = 3 }
+			trigger_event = { id = $EVENT_NO$ popup = yes }
+		}
+	}
+}
+
+# No scope, from the organization JE's monthly pulse: bring the next applicant to a vote.
+cwp_io_queue_admission = {
+	if = {
+		limit = {
+			has_global_variable = cwp_io_$PROP$_open
+			NOT = { exists = global_var:$TARGET$ }
+		}
+		cwp_io_close_proposal = { PROP = $PROP$ }
+	}
+	if = {
+		limit = {
+			NOT = { has_global_variable = cwp_io_$PROP$_open }
+			NOT = { has_global_variable = cwp_io_$PROP$_cooldown }
+			any_country = { has_variable = cwp_io_applicant_$ORG$ }
+		}
+		random_country = {
+			limit = { has_variable = cwp_io_applicant_$ORG$ }
+			set_global_variable = { name = $TARGET$ value = this }
+		}
+		cwp_io_open_proposal = { PROP = $PROP$ }
+	}
+}
+
+# No scope: veto checks passed as VETO to cwp_io_tally_votes / cwp_io_advance_proposal.
+cwp_io_no_veto_check = {
+	set_global_variable = { name = cwp_io_$PROP$_vetoed value = 0 }
+}
+
+cwp_un_p5_veto_check = {
+	if = {
+		limit = {
+			any_country = {
+				has_variable = cwp_io_veto_un
+				var:cwp_io_vote_$PROP$ ?= flag:no
+			}
+		}
+		set_global_variable = { name = cwp_io_$PROP$_vetoed value = 1 }
+	}
+}
+
+# No scope: close the Warsaw conference (after proclamation or when it lapses).
+cwp_wp_end_conference = {
+	every_country = {
+		limit = { has_variable = cwp_io_member_wp_conf }
+		remove_variable = cwp_io_member_wp_conf
+	}
+	cwp_io_close_proposal = { PROP = wp_conf }
 }

@@ -1,0 +1,489 @@
+﻿# Cold War Project: NATO and Warsaw Pact buttons (international organization template)
+# Button root = the country pressing it; the AI presses them through ai_chance.
+
+########## Founding conferences ##########
+
+cwp_nato_conf_sign_button = {
+	name = "cwp_nato_conf_sign_button"
+	desc = "cwp_nato_conf_sign_button_desc"
+	visible = {
+		# The UI evaluates this with no country while observing: guard the scope.
+		trigger_if = {
+			limit = { exists = root }
+			cwp_io_is_member = { ORG = nato_conf }
+		}
+		trigger_else = { always = no }
+	}
+	selected = { cwp_io_voted = { PROP = nato_conf VOTE = yes } }
+	possible = {
+		custom_tooltip = {
+			text = cwp_io_can_vote_tt
+			cwp_io_can_vote = { ORG = nato_conf PROP = nato_conf }
+		}
+	}
+	effect = { cwp_io_cast_vote = { PROP = nato_conf VOTE = yes } }
+	ai_chance = {
+		value = 20
+		if = {
+			limit = {
+				global_var:cwp_nato_conf_caller ?= {
+					OR = {
+						this = root
+						relations:root >= relations_threshold:cordial
+						is_in_same_power_bloc = root
+					}
+				}
+			}
+			add = 60
+		}
+		if = {
+			# Countries that felt the Soviet threat directly.
+			limit = {
+				any_country = {
+					is_power_bloc_leader = yes
+					cwp_io_in_eastern_camp = yes
+					relations:root <= relations_threshold:cold
+				}
+			}
+			add = 30
+		}
+		if = {
+			# Neutrals outside any bloc (Sweden, Switzerland, Ireland) stayed out.
+			limit = { is_in_power_bloc = no }
+			multiply = 0.2
+		}
+	}
+}
+
+cwp_nato_conf_decline_button = {
+	name = "cwp_nato_conf_decline_button"
+	desc = "cwp_nato_conf_decline_button_desc"
+	visible = {
+		# The UI evaluates this with no country while observing: guard the scope.
+		trigger_if = {
+			limit = { exists = root }
+			cwp_io_is_member = { ORG = nato_conf }
+		}
+		trigger_else = { always = no }
+	}
+	selected = { cwp_io_voted = { PROP = nato_conf VOTE = no } }
+	possible = {
+		custom_tooltip = {
+			text = cwp_io_can_vote_tt
+			cwp_io_can_vote = { ORG = nato_conf PROP = nato_conf }
+		}
+	}
+	effect = { cwp_io_cast_vote = { PROP = nato_conf VOTE = no } }
+	ai_chance = {
+		value = 10
+		if = {
+			limit = { is_in_power_bloc = no }
+			add = 40
+		}
+	}
+}
+
+cwp_wp_conf_sign_button = {
+	name = "cwp_wp_conf_sign_button"
+	desc = "cwp_wp_conf_sign_button_desc"
+	visible = {
+		# The UI evaluates this with no country while observing: guard the scope.
+		trigger_if = {
+			limit = { exists = root }
+			cwp_io_is_member = { ORG = wp_conf }
+		}
+		trigger_else = { always = no }
+	}
+	selected = { cwp_io_voted = { PROP = wp_conf VOTE = yes } }
+	possible = {
+		custom_tooltip = {
+			text = cwp_io_can_vote_tt
+			cwp_io_can_vote = { ORG = wp_conf PROP = wp_conf }
+		}
+	}
+	effect = { cwp_io_cast_vote = { PROP = wp_conf VOTE = yes } }
+	ai_chance = {
+		value = 40
+		if = {
+			limit = {
+				global_var:cwp_wp_conf_caller ?= {
+					OR = {
+						this = root
+						is_in_same_power_bloc = root
+					}
+				}
+			}
+			add = 100
+		}
+	}
+}
+
+cwp_wp_conf_decline_button = {
+	name = "cwp_wp_conf_decline_button"
+	desc = "cwp_wp_conf_decline_button_desc"
+	visible = {
+		# The UI evaluates this with no country while observing: guard the scope.
+		trigger_if = {
+			limit = { exists = root }
+			cwp_io_is_member = { ORG = wp_conf }
+		}
+		trigger_else = { always = no }
+	}
+	selected = { cwp_io_voted = { PROP = wp_conf VOTE = no } }
+	possible = {
+		custom_tooltip = {
+			text = cwp_io_can_vote_tt
+			cwp_io_can_vote = { ORG = wp_conf PROP = wp_conf }
+		}
+	}
+	effect = { cwp_io_cast_vote = { PROP = wp_conf VOTE = no } }
+	ai_chance = {
+		value = 5
+		if = {
+			# Yugoslavia, expelled from the Cominform in 1948, stayed out.
+			limit = {
+				global_var:cwp_wp_conf_caller ?= { relations:root <= relations_threshold:poor }
+			}
+			add = 80
+		}
+	}
+}
+
+# The caller proclaims the treaty once enough governments have signed: the Pact exists when
+# its leading member decides it does.
+cwp_wp_conf_proclaim_button = {
+	name = "cwp_wp_conf_proclaim_button"
+	desc = "cwp_wp_conf_proclaim_button_desc"
+	visible = {
+		# The UI evaluates this with no country while observing: guard the scope.
+		trigger_if = {
+			limit = { exists = root }
+			global_var:cwp_wp_conf_caller ?= root
+		}
+		trigger_else = { always = no }
+	}
+	possible = {
+		has_global_variable = cwp_io_wp_conf_open
+		cwp_wp_conf_ready = yes
+	}
+	effect = {
+		custom_tooltip = cwp_wp_founding_effect_tt
+		hidden_effect = {
+			every_country = {
+				limit = { var:cwp_io_vote_wp_conf ?= flag:yes }
+				cwp_io_add_member = { ORG = wp }
+			}
+			set_global_variable = { name = cwp_io_wp_conf_result value = flag:passed }
+			set_global_variable = cwp_wp_founded
+			cwp_wp_end_conference = yes
+		}
+	}
+	ai_chance = {
+		value = 50
+	}
+}
+
+########## NATO ##########
+
+# Article 5: an attack on one is an attack on all, but each member decides how to respond.
+cwp_nato_article5_button = {
+	name = "cwp_nato_article5_button"
+	desc = "cwp_nato_article5_button_desc"
+	visible = {
+		# The UI evaluates this with no country while observing: guard the scope.
+		trigger_if = {
+			limit = { exists = root }
+			cwp_io_is_member = { ORG = nato }
+			exists = global_var:cwp_nato_article5_victim
+			NOT = { global_var:cwp_nato_article5_victim ?= root }
+		}
+		trigger_else = { always = no }
+	}
+	possible = {
+		custom_tooltip = {
+			text = cwp_nato_article5_possible_tt
+			global_var:cwp_nato_article5_victim ?= {
+				is_at_war = yes
+				any_scope_war = { NOT = { is_war_participant = root } }
+			}
+		}
+	}
+	effect = {
+		custom_tooltip = cwp_nato_article5_effect_tt
+		hidden_effect = {
+			global_var:cwp_nato_article5_victim ?= {
+				every_scope_war = {
+					limit = { NOT = { is_war_participant = root } }
+					join_war = { target = root side = PREV }
+				}
+			}
+		}
+	}
+	ai_chance = {
+		value = 40
+		if = {
+			limit = {
+				global_var:cwp_nato_article5_victim ?= { relations:root >= relations_threshold:cordial }
+			}
+			add = 40
+		}
+		if = {
+			limit = { is_at_war = yes }
+			multiply = 0.3
+		}
+	}
+}
+
+cwp_nato_withdraw_button = {
+	name = "cwp_nato_withdraw_button"
+	desc = "cwp_nato_withdraw_button_desc"
+	visible = {
+		# The UI evaluates this with no country while observing: guard the scope.
+		trigger_if = {
+			limit = { exists = root }
+			cwp_io_is_member = { ORG = nato }
+		}
+		trigger_else = { always = no }
+	}
+	possible = { is_at_war = no }
+	effect = {
+		cwp_io_remove_member = { ORG = nato }
+		je:je_cwp_nato ?= { remove_involved_country = ROOT }
+		set_variable = { name = cwp_io_rejected_nato years = 5 }
+	}
+	ai_chance = {
+		value = 0
+		if = {
+			# A member that turned to the eastern camp would leave.
+			limit = { cwp_io_in_eastern_camp = yes }
+			add = 50
+		}
+	}
+}
+
+########## Warsaw Pact ##########
+
+# Leaving: Hungary announced its withdrawal in 1956; Albania left in 1968.
+cwp_wp_withdraw_button = {
+	name = "cwp_wp_withdraw_button"
+	desc = "cwp_wp_withdraw_button_desc"
+	visible = {
+		# The UI evaluates this with no country while observing: guard the scope.
+		trigger_if = {
+			limit = { exists = root }
+			cwp_io_is_member = { ORG = wp }
+		}
+		trigger_else = { always = no }
+	}
+	possible = {
+		is_at_war = no
+		is_power_bloc_leader = no
+	}
+	effect = {
+		cwp_io_remove_member = { ORG = wp }
+		je:je_cwp_wp ?= { remove_involved_country = ROOT }
+		set_variable = { name = cwp_io_rejected_wp years = 5 }
+	}
+	ai_chance = {
+		value = 0
+		if = {
+			limit = { NOT = { has_law_or_variant = law_type:law_council_republic } }
+			add = 5
+		}
+		if = {
+			limit = {
+				power_bloc ?= {
+					power_bloc_leader ?= {
+						NOT = { this = root }
+						relations:root <= relations_threshold:poor
+					}
+				}
+			}
+			add = 10
+		}
+	}
+}
+
+########## Accession votes ##########
+
+cwp_nato_admission_vote_yes_button = {
+	name = "cwp_nato_admission_vote_yes_button"
+	desc = "cwp_nato_admission_vote_yes_button_desc"
+	visible = {
+		# The UI evaluates this with no country while observing: guard the scope.
+		trigger_if = {
+			limit = { exists = root }
+			cwp_io_is_member = { ORG = nato }
+		}
+		trigger_else = { always = no }
+	}
+	selected = { cwp_io_voted = { PROP = nato_admission VOTE = yes } }
+	possible = {
+		custom_tooltip = {
+			text = cwp_io_can_vote_tt
+			cwp_io_can_vote = { ORG = nato PROP = nato_admission }
+		}
+	}
+	effect = { cwp_io_cast_vote = { PROP = nato_admission VOTE = yes } }
+	ai_chance = {
+		value = 30
+		if = {
+			limit = {
+				global_var:cwp_nato_admission_target ?= {
+					OR = {
+						relations:root >= relations_threshold:cordial
+						is_in_same_power_bloc = root
+					}
+				}
+			}
+			add = 50
+		}
+		if = {
+			limit = { cwp_nato_applicant_is_opposed = yes }
+			multiply = 0
+		}
+	}
+}
+
+cwp_nato_admission_vote_no_button = {
+	name = "cwp_nato_admission_vote_no_button"
+	desc = "cwp_nato_admission_vote_no_button_desc"
+	visible = {
+		# The UI evaluates this with no country while observing: guard the scope.
+		trigger_if = {
+			limit = { exists = root }
+			cwp_io_is_member = { ORG = nato }
+		}
+		trigger_else = { always = no }
+	}
+	selected = { cwp_io_voted = { PROP = nato_admission VOTE = no } }
+	possible = {
+		custom_tooltip = {
+			text = cwp_io_can_vote_tt
+			cwp_io_can_vote = { ORG = nato PROP = nato_admission }
+		}
+	}
+	effect = { cwp_io_cast_vote = { PROP = nato_admission VOTE = no } }
+	ai_chance = {
+		value = 2
+		if = {
+			limit = { cwp_nato_applicant_is_opposed = yes }
+			add = 80
+		}
+	}
+}
+
+cwp_nato_admission_vote_abstain_button = {
+	name = "cwp_nato_admission_vote_abstain_button"
+	desc = "cwp_nato_admission_vote_abstain_button_desc"
+	visible = {
+		# The UI evaluates this with no country while observing: guard the scope.
+		trigger_if = {
+			limit = { exists = root }
+			cwp_io_is_member = { ORG = nato }
+		}
+		trigger_else = { always = no }
+	}
+	selected = { cwp_io_voted = { PROP = nato_admission VOTE = abstain } }
+	possible = {
+		custom_tooltip = {
+			text = cwp_io_can_vote_tt
+			cwp_io_can_vote = { ORG = nato PROP = nato_admission }
+		}
+	}
+	effect = { cwp_io_cast_vote = { PROP = nato_admission VOTE = abstain } }
+	ai_chance = {
+		value = 10
+	}
+}
+
+cwp_wp_admission_vote_yes_button = {
+	name = "cwp_wp_admission_vote_yes_button"
+	desc = "cwp_wp_admission_vote_yes_button_desc"
+	visible = {
+		# The UI evaluates this with no country while observing: guard the scope.
+		trigger_if = {
+			limit = { exists = root }
+			cwp_io_is_member = { ORG = wp }
+		}
+		trigger_else = { always = no }
+	}
+	selected = { cwp_io_voted = { PROP = wp_admission VOTE = yes } }
+	possible = {
+		custom_tooltip = {
+			text = cwp_io_can_vote_tt
+			cwp_io_can_vote = { ORG = wp PROP = wp_admission }
+		}
+	}
+	effect = { cwp_io_cast_vote = { PROP = wp_admission VOTE = yes } }
+	ai_chance = {
+		value = 30
+		if = {
+			limit = {
+				global_var:cwp_wp_admission_target ?= {
+					OR = {
+						relations:root >= relations_threshold:cordial
+						is_in_same_power_bloc = root
+					}
+				}
+			}
+			add = 50
+		}
+		if = {
+			limit = { cwp_wp_applicant_is_opposed = yes }
+			multiply = 0
+		}
+	}
+}
+
+cwp_wp_admission_vote_no_button = {
+	name = "cwp_wp_admission_vote_no_button"
+	desc = "cwp_wp_admission_vote_no_button_desc"
+	visible = {
+		# The UI evaluates this with no country while observing: guard the scope.
+		trigger_if = {
+			limit = { exists = root }
+			cwp_io_is_member = { ORG = wp }
+		}
+		trigger_else = { always = no }
+	}
+	selected = { cwp_io_voted = { PROP = wp_admission VOTE = no } }
+	possible = {
+		custom_tooltip = {
+			text = cwp_io_can_vote_tt
+			cwp_io_can_vote = { ORG = wp PROP = wp_admission }
+		}
+	}
+	effect = { cwp_io_cast_vote = { PROP = wp_admission VOTE = no } }
+	ai_chance = {
+		value = 2
+		if = {
+			limit = { cwp_wp_applicant_is_opposed = yes }
+			add = 80
+		}
+	}
+}
+
+cwp_wp_admission_vote_abstain_button = {
+	name = "cwp_wp_admission_vote_abstain_button"
+	desc = "cwp_wp_admission_vote_abstain_button_desc"
+	visible = {
+		# The UI evaluates this with no country while observing: guard the scope.
+		trigger_if = {
+			limit = { exists = root }
+			cwp_io_is_member = { ORG = wp }
+		}
+		trigger_else = { always = no }
+	}
+	selected = { cwp_io_voted = { PROP = wp_admission VOTE = abstain } }
+	possible = {
+		custom_tooltip = {
+			text = cwp_io_can_vote_tt
+			cwp_io_can_vote = { ORG = wp PROP = wp_admission }
+		}
+	}
+	effect = { cwp_io_cast_vote = { PROP = wp_admission VOTE = abstain } }
+	ai_chance = {
+		value = 10
+	}
+}

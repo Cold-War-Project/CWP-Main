@@ -1,0 +1,408 @@
+﻿# Cold War Project: NATO and the Warsaw Pact on the international organization template.
+# Design: docs/agents/areas/intl-orgs.md.
+#
+# je_cwp_nato_founding   a founding conference, opened by a decision; invitees sign or decline
+# je_cwp_nato            the alliance; involved = members; unanimity; rotating presidency; Article 5
+# je_cwp_nato_admission  an accession vote on one applicant (unanimity)
+# je_cwp_wp_founding     the Eastern answer, possible once a North Atlantic alliance has grown
+# je_cwp_wp              the Warsaw Pact; votes weighted by economic weight
+# je_cwp_wp_admission    an accession vote on one applicant
+#
+# Nothing here is founded by date: a country must call the conference, enough invitees must
+# sign, and the Warsaw Pact can only answer a Western alliance that has expanded.
+
+########## North Atlantic Treaty: founding conference ##########
+
+je_cwp_nato_founding = {
+	icon = "gfx/interface/icons/cwp_icons/nato.dds"
+	group = je_group_cwp_international_organizations
+
+	activation_description = { always = yes }
+
+	is_shown_when_inactive = { has_global_variable = cwp_io_nato_conf_open }
+	possible = { has_global_variable = cwp_io_nato_conf_open }
+	can_deactivate = yes
+
+	should_be_involved = {
+		cwp_io_is_member = { ORG = nato_conf }
+	}
+	should_show_when_not_involved = { always = no }
+
+	scripted_button = cwp_nato_conf_sign_button
+	scripted_button = cwp_nato_conf_decline_button
+
+	current_value = { value = global_var:cwp_io_nato_conf_months }
+	goal_add_value = { value = 6 }
+	progressbar = yes
+
+	on_monthly_pulse = {
+		effect = {
+			cwp_io_sync_involved = { ORG = nato_conf JE = je_cwp_nato_founding }
+			change_global_variable = { name = cwp_io_nato_conf_months add = 1 }
+			cwp_io_tally_votes = { ORG = nato_conf PROP = nato_conf VETO = cwp_io_no_veto_check }
+			if = {
+				limit = { global_var:cwp_io_nato_conf_months >= 6 }
+				if = {
+					limit = { cwp_nato_conf_succeeds = yes }
+					set_global_variable = { name = cwp_io_nato_conf_result value = flag:passed }
+					every_country = {
+						limit = { var:cwp_io_vote_nato_conf ?= flag:yes }
+						cwp_io_add_member = { ORG = nato }
+					}
+					set_global_variable = cwp_nato_founded
+				}
+				else = {
+					set_global_variable = { name = cwp_io_nato_conf_result value = flag:failed }
+					set_global_variable = { name = cwp_io_nato_conf_cooldown years = 2 }
+					# Without the North Americans, the Europeans who signed may still bind
+					# themselves to each other: a Western Union, as in the 1948 Brussels Treaty.
+					if = {
+						limit = { cwp_nato_conf_western_union = yes }
+						every_country = {
+							limit = {
+								var:cwp_io_vote_nato_conf ?= flag:yes
+								capital ?= { is_in_geographic_region = geographic_region_europe }
+							}
+							add_modifier = { name = cwp_weu_member_modifier }
+							trigger_event = { id = cwp_intl_org_nato.5 popup = yes }
+						}
+					}
+				}
+				every_country = {
+					limit = { has_variable = cwp_io_member_nato_conf }
+					remove_variable = cwp_io_member_nato_conf
+				}
+				cwp_io_close_proposal = { PROP = nato_conf }
+			}
+		}
+	}
+
+	status_desc = je_cwp_nato_founding_status
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_nato_founding_done_desc
+		color = "gold_positive"
+		flags = { historical }
+		trigger = {
+			cwp_nato_conf_succeeds = yes
+			custom_tooltip = {
+				text = cwp_nato_founding_passes_tt
+				has_global_variable = cwp_nato_founded
+			}
+		}
+		effect = {
+			custom_tooltip = cwp_nato_founding_effect_tt
+		}
+	}
+
+	weight = 70
+	transferable = no
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
+
+########## NATO ##########
+
+je_cwp_nato = {
+	icon = "gfx/interface/icons/cwp_icons/nato.dds"
+	group = je_group_cwp_international_organizations
+
+	activation_description = { always = yes }
+
+	is_shown_when_inactive = { has_global_variable = cwp_nato_founded }
+	possible = { has_global_variable = cwp_nato_founded }
+
+	should_be_involved = {
+		cwp_io_is_member = { ORG = nato }
+	}
+	should_show_when_not_involved = {
+		cwp_nato_eligible = yes
+	}
+
+	scripted_button = cwp_nato_article5_button
+	scripted_button = cwp_nato_withdraw_button
+
+	modifiers_while_active = {
+		cwp_nato_member_modifier
+	}
+
+	immediate = {
+		# Decisions by consensus: every member voting yes or no must agree. The chair of the
+		# North Atlantic Council rotated yearly among the members.
+		cwp_io_setup_org = { ORG = nato THRESHOLD = 100 ROTATING_PRESIDENCY = 1 }
+		set_global_variable = { name = cwp_nato_enlargements value = 0 }
+		cwp_io_sync_involved = { ORG = nato JE = je_cwp_nato }
+		cwp_io_count_members = { ORG = nato }
+		cwp_io_rotate_presidency = { ORG = nato }
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			cwp_io_count_members = { ORG = nato }
+			cwp_io_sync_involved = { ORG = nato JE = je_cwp_nato }
+			cwp_io_queue_admission = { ORG = nato PROP = nato_admission TARGET = cwp_nato_admission_target }
+			# Article 5: a member that is the target of a war by a non-member asks the others for help.
+			if = {
+				limit = {
+					NOT = { exists = global_var:cwp_nato_article5_victim }
+					any_country = { cwp_nato_under_attack = yes }
+				}
+				random_country = {
+					limit = { cwp_nato_under_attack = yes }
+					set_global_variable = { name = cwp_nato_article5_victim value = this days = 180 }
+				}
+			}
+		}
+	}
+
+	on_yearly_pulse = {
+		effect = {
+			cwp_io_rotate_presidency = { ORG = nato }
+		}
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_nato_status_article5
+				trigger = { exists = global_var:cwp_nato_article5_victim }
+			}
+			triggered_desc = {
+				desc = je_cwp_nato_status
+				trigger = {
+					cwp_io_has_rotating_presidency = { ORG = nato }
+					exists = global_var:cwp_io_nato_president
+				}
+			}
+			desc = je_cwp_nato_status_plain
+		}
+	}
+
+	weight = 55
+	transferable = no
+	should_be_pinned_by_default_uninvolved_or_context = no
+}
+
+je_cwp_nato_admission = {
+	icon = "gfx/interface/icons/cwp_icons/nato.dds"
+	group = je_group_cwp_international_organizations
+
+	activation_description = { always = yes }
+
+	is_shown_when_inactive = { has_global_variable = cwp_io_nato_admission_open }
+	possible = {
+		has_global_variable = cwp_io_nato_admission_open
+		exists = global_var:cwp_nato_admission_target
+	}
+	can_deactivate = yes
+
+	should_be_involved = {
+		cwp_io_is_member = { ORG = nato }
+	}
+	should_show_when_not_involved = {
+		global_var:cwp_nato_admission_target ?= this
+	}
+
+	scripted_button = cwp_nato_admission_vote_yes_button
+	scripted_button = cwp_nato_admission_vote_no_button
+	scripted_button = cwp_nato_admission_vote_abstain_button
+	scripted_progress_bar = cwp_io_support_bar
+
+	current_value = { value = global_var:cwp_io_nato_admission_months }
+	goal_add_value = { value = 6 }
+	progressbar = yes
+
+	on_monthly_pulse = {
+		effect = {
+			cwp_io_sync_involved = { ORG = nato JE = je_cwp_nato_admission }
+			cwp_io_advance_proposal = { ORG = nato PROP = nato_admission VETO = cwp_io_no_veto_check MONTHS = 6 COOLDOWN = 30 }
+			scope:journal_entry = {
+				set_bar_progress = { name = cwp_io_support_bar value = global_var:cwp_io_nato_admission_share }
+			}
+			cwp_io_settle_admission = {
+				ORG = nato PROP = nato_admission TARGET = cwp_nato_admission_target JE = je_cwp_nato
+				EVENT_YES = cwp_intl_org_nato.1 EVENT_NO = cwp_intl_org_nato.2
+			}
+			if = {
+				limit = { cwp_io_proposal_passed = { PROP = nato_admission } }
+				change_global_variable = { name = cwp_nato_enlargements add = 1 }
+			}
+		}
+	}
+
+	status_desc = je_cwp_nato_admission_status
+
+	weight = 60
+	transferable = no
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
+
+########## Warsaw Treaty: founding conference ##########
+
+je_cwp_wp_founding = {
+	icon = "gfx/interface/icons/cwp_icons/warsaw_pact.dds"
+	group = je_group_cwp_international_organizations
+
+	activation_description = { always = yes }
+
+	is_shown_when_inactive = { has_global_variable = cwp_io_wp_conf_open }
+	possible = { has_global_variable = cwp_io_wp_conf_open }
+	can_deactivate = yes
+
+	should_be_involved = {
+		cwp_io_is_member = { ORG = wp_conf }
+	}
+	should_show_when_not_involved = { always = no }
+
+	scripted_button = cwp_wp_conf_sign_button
+	scripted_button = cwp_wp_conf_decline_button
+	scripted_button = cwp_wp_conf_proclaim_button
+
+	current_value = { value = global_var:cwp_io_wp_conf_months }
+	goal_add_value = { value = 12 }
+	progressbar = yes
+
+	on_monthly_pulse = {
+		effect = {
+			cwp_io_sync_involved = { ORG = wp_conf JE = je_cwp_wp_founding }
+			change_global_variable = { name = cwp_io_wp_conf_months add = 1 }
+			cwp_io_tally_votes = { ORG = wp_conf PROP = wp_conf VETO = cwp_io_no_veto_check }
+			# The caller must proclaim the treaty within a year, or the conference lapses.
+			if = {
+				limit = { global_var:cwp_io_wp_conf_months >= 12 }
+				set_global_variable = { name = cwp_io_wp_conf_result value = flag:failed }
+				set_global_variable = { name = cwp_io_wp_conf_cooldown years = 2 }
+				cwp_wp_end_conference = yes
+			}
+		}
+	}
+
+	status_desc = je_cwp_wp_founding_status
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_wp_founding_done_desc
+		color = "gold_positive"
+		flags = { historical }
+		trigger = {
+			custom_tooltip = {
+				text = cwp_wp_founding_passes_tt
+				has_global_variable = cwp_wp_founded
+			}
+		}
+		effect = {
+			custom_tooltip = cwp_wp_founding_effect_tt
+		}
+	}
+
+	weight = 70
+	transferable = no
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
+
+########## Warsaw Pact ##########
+
+je_cwp_wp = {
+	icon = "gfx/interface/icons/cwp_icons/warsaw_pact.dds"
+	group = je_group_cwp_international_organizations
+
+	activation_description = { always = yes }
+
+	is_shown_when_inactive = { has_global_variable = cwp_wp_founded }
+	possible = { has_global_variable = cwp_wp_founded }
+
+	should_be_involved = {
+		cwp_io_is_member = { ORG = wp }
+	}
+	should_show_when_not_involved = {
+		cwp_wp_eligible = yes
+	}
+
+	scripted_button = cwp_wp_withdraw_button
+
+	modifiers_while_active = {
+		cwp_wp_member_modifier
+	}
+
+	immediate = {
+		# A Political Consultative Committee in form; in practice the weight of the leading
+		# member decided, which weighted votes reproduce. No rotating chair.
+		cwp_io_setup_org = { ORG = wp THRESHOLD = 51 ROTATING_PRESIDENCY = 0 }
+		cwp_io_sync_involved = { ORG = wp JE = je_cwp_wp }
+		cwp_io_count_members = { ORG = wp }
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			cwp_io_count_members = { ORG = wp }
+			cwp_io_sync_involved = { ORG = wp JE = je_cwp_wp }
+			cwp_io_queue_admission = { ORG = wp PROP = wp_admission TARGET = cwp_wp_admission_target }
+		}
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_wp_status_rotating
+				trigger = { cwp_io_has_rotating_presidency = { ORG = wp } }
+			}
+			desc = je_cwp_wp_status
+		}
+	}
+
+	weight = 55
+	transferable = no
+	should_be_pinned_by_default_uninvolved_or_context = no
+}
+
+je_cwp_wp_admission = {
+	icon = "gfx/interface/icons/cwp_icons/warsaw_pact.dds"
+	group = je_group_cwp_international_organizations
+
+	activation_description = { always = yes }
+
+	is_shown_when_inactive = { has_global_variable = cwp_io_wp_admission_open }
+	possible = {
+		has_global_variable = cwp_io_wp_admission_open
+		exists = global_var:cwp_wp_admission_target
+	}
+	can_deactivate = yes
+
+	should_be_involved = {
+		cwp_io_is_member = { ORG = wp }
+	}
+	should_show_when_not_involved = {
+		global_var:cwp_wp_admission_target ?= this
+	}
+
+	scripted_button = cwp_wp_admission_vote_yes_button
+	scripted_button = cwp_wp_admission_vote_no_button
+	scripted_button = cwp_wp_admission_vote_abstain_button
+	scripted_progress_bar = cwp_io_support_bar
+
+	current_value = { value = global_var:cwp_io_wp_admission_months }
+	goal_add_value = { value = 6 }
+	progressbar = yes
+
+	on_monthly_pulse = {
+		effect = {
+			cwp_io_sync_involved = { ORG = wp JE = je_cwp_wp_admission }
+			cwp_io_advance_proposal = { ORG = wp PROP = wp_admission VETO = cwp_io_no_veto_check MONTHS = 6 COOLDOWN = 30 }
+			scope:journal_entry = {
+				set_bar_progress = { name = cwp_io_support_bar value = global_var:cwp_io_wp_admission_share }
+			}
+			cwp_io_settle_admission = {
+				ORG = wp PROP = wp_admission TARGET = cwp_wp_admission_target JE = je_cwp_wp
+				EVENT_YES = cwp_intl_org_nato.3 EVENT_NO = cwp_intl_org_nato.4
+			}
+		}
+	}
+
+	status_desc = je_cwp_wp_admission_status
+
+	weight = 60
+	transferable = no
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
