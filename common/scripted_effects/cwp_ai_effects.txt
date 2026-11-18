@@ -1,0 +1,78 @@
+﻿# Cold War Project AI helpers (docs/agents/areas/ai.md).
+
+# Construction backstop. The vanilla AI sizes its construction sector from money-spending ratios,
+# so private capital can pile up with nothing to build it: in observer runs the USA's investment
+# pool reached 9 billion (about 900 weeks of spending) by 1989. When investors are waiting on
+# construction capacity and the budget is sound, a rational government adds capacity. Each level
+# is mostly paid back by the investment pool once private projects use it.
+cwp_ai_construction_backstop = {
+	if = {
+		limit = {
+			is_ai = yes
+			in_default = no
+			scaled_debt < 0.25
+			# The queue estimate logs an error when construction speed is zero, so check capacity first.
+			country_has_building_type_levels = {
+				target = bt:building_construction_sector
+				value >= 1
+			}
+			has_sufficient_construction_capacity_for_investment = no
+			construction_queue_private_duration > 26
+			construction_queue_num_queued_government_levels < 25
+		}
+		ordered_scope_state = {
+			limit = {
+				is_incorporated = yes
+				state_population >= 250000
+				can_construct_building = building_construction_sector
+			}
+			order_by = state_population
+			position = 0
+			check_range_bounds = no
+			start_building_construction = building_construction_sector
+		}
+		# Large economies add capacity in a second state as well.
+		if = {
+			limit = { total_population >= 40000000 }
+			ordered_scope_state = {
+				limit = {
+					is_incorporated = yes
+					state_population >= 250000
+					can_construct_building = building_construction_sector
+				}
+				order_by = state_population
+				position = 1
+				check_range_bounds = no
+				start_building_construction = building_construction_sector
+			}
+		}
+	}
+}
+
+# Construction workforce. Technology sets a flat per-state cap on construction sector levels (30 by
+# 1960), the same for California as for Nevada, so large economies run out of room to build: in
+# observer runs every US state sat at the cap from the mid-1950s while the US and UK investment
+# pools grew to several times annual GDP. A state can host more construction with more people.
+# Run yearly from on_yearly_pulse_state (root = state).
+cwp_construction_workforce_update = {
+	# Only ever raise the bonus. Removing it, even to re-add it at once, lowers the cap for a moment
+	# and the engine demolishes the levels above it; a shrinking population keeps what it built.
+	if = {
+		limit = {
+			state_population >= 400000
+			OR = {
+				NOT = { has_variable = cwp_construction_workforce_levels }
+				var:cwp_construction_workforce_levels < cwp_construction_workforce_target
+			}
+		}
+		remove_modifier = cwp_construction_workforce
+		set_variable = {
+			name = cwp_construction_workforce_levels
+			value = cwp_construction_workforce_target
+		}
+		add_modifier = {
+			name = cwp_construction_workforce
+			multiplier = var:cwp_construction_workforce_levels
+		}
+	}
+}

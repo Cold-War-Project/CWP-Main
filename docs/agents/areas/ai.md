@@ -31,6 +31,7 @@ Evidence is from the shared 1946-1990 observer run f30e83cd6 unless stated.
 | F4 | Poor states run structural deficits for decades. The construction target's population, kickstart and rank terms don't depend on income, so a state earning a fraction of one sector's upkeep was "critically" short and kept building. | 19-25 states in default in every sample. Afghanistan spends 5-30x income (construction sector 30x income in 1970), in default 1956-1990. | Fix 2: budget terms capped at income/2500 |
 | F5 | Tiny states keep armies costing several times their income while in default. | 1980-90: Kuwait 6-7x income on military, Qatar 7x, Abu Dhabi 6x, Iceland 4-5x, ZZB 14x. | Military thread (army sizing) |
 | F7 | Democracies barely legislate. | 1946-1990 law changes: GBR 0, GER 1, CAN 1, JAP 2, USA 4 (and the USA's are censorship, combination acts, national guard); median country 7. | Politics/history threads (change_law_chance in political strategies) |
+| F8 | Construction capacity hits a flat per-state level cap (tech: 15, 30 by ~1960, 40 later), so big economies can't add construction however much capital waits. | 16ccecae3 staging run 1960: every US state's construction sector at 30 levels; UK investment pool 0.99B vs GDP 0.48B. F1's brick share follows engineer shortages in rural states, not cost. | Fix 5: +1 level per 400k people (max 40) |
 | F6 | Government building PMs lag (admin on filing systems, universities on modern disciplines, railways on steam into the 1980s). | USA 1980: 523 of 1176 railway levels on steam trains. | Not started |
 
 ## Changes
@@ -43,6 +44,19 @@ Evidence is from the shared 1946-1990 observer run f30e83cd6 unless stated.
    (vanilla 1.05-1.20), add spending from 1.1-1.25 (vanilla 1.2-1.4), ride out dips with 10/20
    weeks of reserves (vanilla 20/40), and construction becomes a must-have at 26 weeks of idle pool
    (vanilla 52).
+
+4. (branch `fix/ai-construction-backstop`, stage 2, untested) `common/scripted_effects/cwp_ai_effects.txt`
+   `cwp_ai_construction_backstop`, run monthly for AI countries from `common/on_actions/cwp_ai_on_actions.txt`:
+   when `has_sufficient_construction_capacity_for_investment = no`, the private queue is over 26 weeks long,
+   the state isn't in default and debt is under 25% of the ceiling, queue a construction sector level in the most
+   populous incorporated state (and the second, for countries over 40M people). At most 25 queued government levels.
+
+5. (stage 2) `cwp_construction_workforce` state modifier (+1 construction sector max level per 400k people,
+   max 40), recomputed yearly from `on_yearly_pulse_state`. The backstop only builds where
+   `can_construct_building = building_construction_sector`.
+6. (stage 2) `wanted_construction_output`: an extra income/12500 term above 1M/week income, since
+   vanilla's income term caps at 200 (1M/week), which every major power passes in 1946. USSR 1960
+   (d84f9452d): 194M idle cash, income 16% above spending, construction flat.
 
 ## Workshop AI mods
 
@@ -61,4 +75,6 @@ Evidence is from the shared 1946-1990 observer run f30e83cd6 unless stated.
 | Run | Build | Notes |
 |---|---|---|
 | f30e83cd6 shared | CWP2 bbaffa2b0 + 3 fixes | baseline to 1990 |
-| ai-50d9d92 | fix/ai-failure-modes 50d9d9266 | fixes 1-3, to 1962 |
+| staging 16ccecae3 | integration incl. stage 1 | to 1960: defaults 16 (25 in d84f9452d), USA still ~50% brick (engineer shortage, see F8). Stage 1 landed on CWP2 (627e6205e). |
+| ai-base-b5bcea972 | plain CWP2 b5bcea972 | clean baseline to 1962 |
+| ai-ebb01b142 (really 9cf3e81e6) | stage 1+2 | to 1962 vs baseline: GDP USA 1336 vs 1252 (+7%), USSR 358 vs 303 (+18%), UK 389 vs 366, Japan 146 vs 132; France 143 vs 221 (lost 8M people to a 1954 split, path noise). US pool 8M vs 616M, USSR debt 60M vs 283M, US construction 2034 vs 1662 levels, defaults 15-17 vs 16-27 (1958-62). Two new log lines fixed in 2940ec183. One game each, so treat as a signal. |
