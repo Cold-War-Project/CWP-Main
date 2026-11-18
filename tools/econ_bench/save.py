@@ -178,6 +178,12 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
         c = field(body, "country")
         if c:
             state_owner[sid] = c
+            # Population from the states: the country-level pop_statistics can lag badly (India read
+            # 126M against 315M in its states in a 1950 save), so the states are the reliable count.
+            ps = sub_block(body, "pop_statistics")
+            if c in countries:
+                countries[c]["_state_pop"] = countries[c].get("_state_pop", 0.0) + sum(
+                    fnum(ps, k, 2) for k in ("population_lower_strata", "population_middle_strata", "population_upper_strata"))
 
     # Famines in progress: deaths so far per country (the famine manager keeps one entry per state).
     for _, b in db_entries(top_section(text, "famine_manager")):
@@ -186,6 +192,12 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
             c = countries[cid]
             c["famine_deaths"] = c.get("famine_deaths", 0.0) + fnum(b, "num_deaths")
             c["famine_states"] = c.get("famine_states", 0) + 1
+
+    for c in countries.values():
+        sp = c.pop("_state_pop", 0.0)
+        if sp > 0:
+            c["population"] = sp
+            c["gdp_per_capita"] = c["gdp"] / sp
 
     owned = set(state_owner.values())
     countries = {cid: c for cid, c in countries.items() if cid in owned}
