@@ -75,4 +75,6 @@ Evidence is from the shared 1946-1990 observer run f30e83cd6 unless stated.
 | Run | Build | Notes |
 |---|---|---|
 | f30e83cd6 shared | CWP2 bbaffa2b0 + 3 fixes | baseline to 1990 |
-| ai-50d9d92 | fix/ai-failure-modes 50d9d9266 | fixes 1-3, to 1962 |
+| staging 16ccecae3 | integration incl. stage 1 | to 1960: defaults 16 (25 in d84f9452d), USA still ~50% brick (engineer shortage, see F8). Stage 1 landed on CWP2 (627e6205e). |
+| ai-base-b5bcea972 | plain CWP2 b5bcea972 | clean baseline to 1962 |
+| ai-ebb01b142 (really 9cf3e81e6) | stage 1+2 | to 1962 vs baseline: GDP USA 1336 vs 1252 (+7%), USSR 358 vs 303 (+18%), UK 389 vs 366, Japan 146 vs 132; France 143 vs 221 (lost 8M people to a 1954 split, path noise). US pool 8M vs 616M, USSR debt 60M vs 283M, US construction 2034 vs 1662 levels, defaults 15-17 vs 16-27 (1958-62). Two new log lines fixed in 2940ec183. One game each, so treat as a signal. |
