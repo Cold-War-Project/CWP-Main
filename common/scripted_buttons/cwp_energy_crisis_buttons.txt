@@ -7,13 +7,14 @@ cwp_ec_conservation_button = {
 
 	visible = { always = yes }
 
+	possible = {
+		NOT = { has_modifier = cwp_ec_conservation }
+	}
+
 	effect = {
 		add_modifier = {
 			name = cwp_ec_conservation
 			years = 1
-		}
-		scope:journal_entry = {
-			add_progress = { value = -3 name = cwp_ec_anger_bar }
 		}
 	}
 
@@ -53,25 +54,16 @@ cwp_ec_rationing_button = {
 				years = 2
 			}
 		}
-		scope:journal_entry = {
-			add_progress = { value = 5 name = cwp_ec_anger_bar }
-		}
 	}
 
 	cooldown = { months = 24 }
 
 	ai_chance = {
 		value = 4
-		if = {
-			limit = {
-				scope:journal_entry = { "scripted_bar_progress(cwp_ec_anger_bar)" >= 60 }
-			}
-			multiply = 0.25
-		}
 	}
 }
 
-# Cap fuel prices and pay the difference from the treasury.
+# Cap fuel prices and pay the difference from the treasury. While it lasts, there are no fuel riots.
 cwp_ec_price_controls_button = {
 	name = "cwp_ec_price_controls_button"
 	desc = "cwp_ec_price_controls_button_desc"
@@ -93,7 +85,11 @@ cwp_ec_price_controls_button = {
 	cooldown = { months = 6 }
 
 	ai_chance = {
-		value = 6
+		value = 4
+		if = {
+			limit = { government_legitimacy < 60 }
+			add = 6
+		}
 		if = {
 			limit = { in_default = yes }
 			multiply = 0
@@ -101,7 +97,7 @@ cwp_ec_price_controls_button = {
 	}
 }
 
-# A long-term programme to cut dependence on oil: nuclear power, coal, efficiency standards.
+# Fund a long-term programme to cut dependence on oil: nuclear power, hydro, domestic refining.
 cwp_ec_diversify_button = {
 	name = "cwp_ec_diversify_button"
 	desc = "cwp_ec_diversify_button_desc"
@@ -121,5 +117,56 @@ cwp_ec_diversify_button = {
 			limit = { in_default = yes }
 			multiply = 0
 		}
+	}
+}
+
+# The mission's last step: once the programme has built the plant, the government declares energy independence.
+cwp_ec_declare_independence_button = {
+	name = "cwp_ec_declare_independence_button"
+	desc = "cwp_ec_declare_independence_button_desc"
+
+	visible = {
+		has_variable = cwp_ec_diversify_var
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = cwp_ec_clean_power_tt
+			any_scope_building = {
+				OR = {
+					AND = {
+						is_building_type = building_nuclear_power_plant
+						level >= 1
+					}
+					AND = {
+						is_building_type = building_hydroelectric_power_plant
+						level >= 3
+					}
+				}
+			}
+		}
+		custom_tooltip = {
+			text = cwp_ec_domestic_refining_tt
+			any_scope_building = {
+				is_building_type = building_oil_refineries
+				level >= 3
+			}
+		}
+		custom_tooltip = {
+			text = cwp_ec_demand_cut_tt
+			OR = {
+				has_modifier = cwp_ec_conservation
+				has_modifier = cwp_ec_rationing
+			}
+		}
+	}
+
+	effect = {
+		remove_variable = cwp_ec_diversify_var
+		set_variable = cwp_ec_independence_declared_var
+	}
+
+	ai_chance = {
+		value = 50
 	}
 }
