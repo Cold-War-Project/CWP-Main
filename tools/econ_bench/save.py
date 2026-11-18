@@ -179,6 +179,14 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
         if c:
             state_owner[sid] = c
 
+    # Famines in progress: deaths so far per country (the famine manager keeps one entry per state).
+    for _, b in db_entries(top_section(text, "famine_manager")):
+        cid = state_owner.get(field(b, "state", default=""))
+        if cid in countries:
+            c = countries[cid]
+            c["famine_deaths"] = c.get("famine_deaths", 0.0) + fnum(b, "num_deaths")
+            c["famine_states"] = c.get("famine_states", 0) + 1
+
     owned = set(state_owner.values())
     countries = {cid: c for cid, c in countries.items() if cid in owned}
     by_gdp = sorted(countries, key=lambda k: -countries[k]["gdp"])
