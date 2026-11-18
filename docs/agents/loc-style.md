@@ -75,6 +75,7 @@ These read as default AI prose. Rewrite on sight:
 
 ## Workflow
 
+- Never write a bare `$` (it opens a `$key$` reference and logs "Unterminated '$'"): write "3.75 billion dollars" or use `@money!`.
 - Change text only, never keys. Keep every `[...]` data function, `$key$` and `#format#!` intact.
 - Check each fact you add. If you can't verify it, leave it out.
 - Read the triggering script before editing an event or JE, so the text matches every way it can fire.
