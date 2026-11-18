@@ -1,0 +1,617 @@
+﻿namespace = cwp_rx
+
+# Cold War Project: reaction events. A major happening elsewhere reaches the public at home, and the government
+# must choose how to answer it. Every event offers a real choice; neither option is free.
+# Fired by common/scripted_effects/cwp_reaction_effects.txt (cwp_rx_fire_*). See docs/agents/areas/reactions.md.
+
+### A first atomic test. scope:cwp_rx_tester = the new nuclear power.
+
+# A nuclear power whose monopoly or lead is broken by a rival.
+cwp_rx.1 = {
+	type = country_event
+	placement = root
+
+	title = cwp_rx.1.t
+	desc = cwp_rx.1.d
+	flavor = cwp_rx.1.f
+
+	event_image = { video = "unspecific_devastation" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_skull.dds"
+
+	duration = 3
+
+	trigger = {
+		exists = scope:cwp_rx_tester
+	}
+
+	option = { # A thermonuclear program
+		name = cwp_rx.1.a
+		default_option = yes
+		add_modifier = { name = cwp_rx_thermonuclear_program days = normal_modifier_time multiplier = cwp_rx_cost_rearmament }
+		cwp_rx_ig_mood = { IG = ig_armed_forces MOD = cwp_rx_ig_budget_raised }
+		cwp_rx_ig_mood = { IG = ig_intelligentsia MOD = cwp_rx_ig_overruled }
+		if = {
+			limit = { scope:cwp_rx_tester = { cwp_cw_is_communist_state = yes } }
+			cwp_rs_move_fear = { FEAR = 10 }
+		}
+		ai_chance = {
+			base = 3
+		}
+	}
+	option = { # International control
+		name = cwp_rx.1.b
+		add_modifier = { name = cwp_rx_international_control days = short_modifier_time is_decaying = yes }
+		cwp_rx_ig_mood = { IG = ig_armed_forces MOD = cwp_rx_ig_overruled }
+		cwp_rx_ig_mood = { IG = ig_intelligentsia MOD = cwp_rx_ig_heeded }
+		change_relations = { country = scope:cwp_rx_tester value = 10 }
+		if = {
+			limit = { scope:cwp_rx_tester = { cwp_cw_is_communist_state = yes } }
+			cwp_rs_move_fear = { FEAR = 5 }
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				trigger = { ig:ig_intelligentsia ?= { is_in_government = yes } }
+				add = 1
+			}
+		}
+	}
+}
+
+# Communists at home hail the bomb of a communist state (the peace campaign). Not a nuclear power's own camp.
+cwp_rx.2 = {
+	type = country_event
+	placement = root
+
+	title = cwp_rx.2.t
+	desc = cwp_rx.2.d
+	flavor = cwp_rx.2.f
+
+	event_image = { video = "europenorthamerica_political_extremism" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+
+	duration = 3
+
+	trigger = {
+		exists = scope:cwp_rx_tester
+		cwp_rx_not_recent = yes
+	}
+
+	immediate = {
+		cwp_rx_mark_recent = yes
+	}
+
+	option = { # Ban the petition campaign
+		name = cwp_rx.2.a
+		default_option = yes
+		add_modifier = { name = cwp_rx_peace_campaign_banned days = normal_modifier_time is_decaying = yes }
+		cwp_rx_ig_mood = { IG = ig_trade_unions MOD = cwp_rx_ig_civil_liberties_curtailed }
+		cwp_rx_ig_mood = { IG = ig_intelligentsia MOD = cwp_rx_ig_civil_liberties_curtailed }
+		ai_chance = {
+			base = 2
+			modifier = {
+				trigger = { ig:ig_trade_unions ?= { is_in_government = yes } }
+				add = -1
+			}
+		}
+	}
+	option = { # Let the petitions circulate
+		name = cwp_rx.2.b
+		add_modifier = { name = cwp_rx_peace_campaign days = normal_modifier_time is_decaying = yes }
+		ai_chance = {
+			base = 2
+			modifier = {
+				trigger = { cwp_cw_in_west = yes }
+				add = -1
+			}
+		}
+	}
+}
+
+# A major power without the bomb, on the wrong side of the new nuclear power.
+cwp_rx.3 = {
+	type = country_event
+	placement = root
+
+	title = cwp_rx.3.t
+	desc = cwp_rx.3.d
+	flavor = cwp_rx.1.f
+
+	event_image = { video = "unspecific_military_parade" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+
+	duration = 3
+
+	trigger = {
+		exists = scope:cwp_rx_tester
+		cwp_rx_not_recent = yes
+	}
+
+	immediate = {
+		cwp_rx_mark_recent = yes
+		if = {
+			limit = { cwp_cw_in_west = yes }
+			global_var:cwp_cw_west_leader ?= { save_scope_as = cwp_rx_patron }
+		}
+		else_if = {
+			limit = { cwp_cw_in_east = yes }
+			global_var:cwp_cw_east_leader ?= { save_scope_as = cwp_rx_patron }
+		}
+	}
+
+	option = { # Rely on the patron's deterrent
+		name = cwp_rx.3.a
+		trigger = {
+			exists = scope:cwp_rx_patron
+			NOT = { scope:cwp_rx_patron = root }
+			scope:cwp_rx_patron = { cwp_is_nuclear_power = yes }
+		}
+		default_option = yes
+		add_modifier = { name = cwp_rx_nuclear_umbrella days = short_modifier_time is_decaying = yes }
+		change_relations = { country = scope:cwp_rx_patron value = 15 }
+		cwp_rx_ig_mood = { IG = ig_armed_forces MOD = cwp_rx_ig_overruled }
+		ai_chance = {
+			base = 2
+		}
+	}
+	option = { # No nuclear ally: call for a ban on tests
+		name = cwp_rx.3.c
+		trigger = {
+			NOT = {
+				scope:cwp_rx_patron ?= {
+					NOT = { this = root }
+					cwp_is_nuclear_power = yes
+				}
+			}
+		}
+		default_option = yes
+		add_modifier = { name = cwp_rx_international_control days = short_modifier_time is_decaying = yes }
+		cwp_rx_ig_mood = { IG = ig_armed_forces MOD = cwp_rx_ig_overruled }
+		cwp_rx_ig_mood = { IG = ig_intelligentsia MOD = cwp_rx_ig_heeded }
+		ai_chance = {
+			base = 2
+		}
+	}
+	option = { # Raise the defense budget
+		name = cwp_rx.3.b
+		add_modifier = { name = cwp_rx_defense_budget_raised days = normal_modifier_time multiplier = cwp_rx_cost_small }
+		cwp_rx_ig_mood = { IG = ig_armed_forces MOD = cwp_rx_ig_budget_raised }
+		cwp_rx_ig_mood = { IG = ig_trade_unions MOD = cwp_rx_ig_social_spending_cut }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+### The Chinese civil war
+
+# The Western camp's leader after a Communist victory on the mainland: "Who lost China?"
+cwp_rx.10 = {
+	type = country_event
+	placement = root
+
+	title = cwp_rx.10.t
+	desc = cwp_rx.10.d
+	flavor = cwp_rx.10.f
+
+	event_image = { video = "unspecific_politicians_arguing" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+
+	duration = 3
+
+	immediate = {
+		c:PRC ?= { save_scope_as = cwp_rx_prc }
+	}
+
+	option = { # Investigate the China hands
+		name = cwp_rx.10.a
+		default_option = yes
+		cwp_rs_move_fear = { FEAR = 10 }
+		cwp_rx_ig_mood = { IG = ig_bureaucrats MOD = cwp_rx_ig_loyalty_investigations }
+		cwp_rx_ig_mood = { IG = ig_devout MOD = cwp_rx_ig_heeded }
+		ai_chance = {
+			base = 2
+		}
+	}
+	option = { # Publish a white paper
+		name = cwp_rx.10.b
+		add_modifier = { name = cwp_rx_china_white_paper days = short_modifier_time is_decaying = yes }
+		cwp_rs_move_fear = { FEAR = 3 }
+		cwp_rx_ig_mood = { IG = ig_devout MOD = cwp_rx_ig_overruled }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Asian governments with communists at home, after a Communist victory on the mainland.
+cwp_rx.11 = {
+	type = country_event
+	placement = root
+
+	title = cwp_rx.11.t
+	desc = cwp_rx.11.d
+	flavor = cwp_rx.11.f
+
+	event_image = { video = "asia_union_leader" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_revolutionary_flag.dds"
+
+	duration = 3
+
+	trigger = {
+		exists = c:PRC
+		cwp_rx_not_recent = yes
+	}
+
+	immediate = {
+		cwp_rx_mark_recent = yes
+		c:PRC ?= { save_scope_as = cwp_rx_prc }
+		global_var:cwp_cw_west_leader ?= { save_scope_as = cwp_rx_west_leader }
+	}
+
+	option = { # Emergency regulations
+		name = cwp_rx.11.a
+		default_option = yes
+		add_modifier = { name = cwp_rx_emergency_regulations days = normal_modifier_time is_decaying = yes }
+		cwp_rx_ig_mood = { IG = ig_rural_folk MOD = cwp_rx_ig_civil_liberties_curtailed }
+		cwp_rx_ig_mood = { IG = ig_intelligentsia MOD = cwp_rx_ig_civil_liberties_curtailed }
+		add_radicals = { strata = lower value = small_radicals }
+		ai_chance = {
+			base = 2
+			modifier = {
+				trigger = { cwp_cw_in_west = yes }
+				add = 2
+			}
+		}
+	}
+	option = { # Recognize the new government
+		name = cwp_rx.11.b
+		add_modifier = { name = cwp_rx_chinese_example days = normal_modifier_time is_decaying = yes }
+		change_relations = { country = scope:cwp_rx_prc value = 20 }
+		if = {
+			limit = {
+				exists = scope:cwp_rx_west_leader
+				NOT = { scope:cwp_rx_west_leader = root }
+			}
+			change_relations = { country = scope:cwp_rx_west_leader value = -15 }
+		}
+		ai_chance = {
+			base = 2
+			modifier = {
+				trigger = { is_subject = yes }
+				add = -2
+			}
+		}
+	}
+}
+
+# Asian governments with communists at home, after the Nationalists destroy the Communist state.
+cwp_rx.12 = {
+	type = country_event
+	placement = root
+
+	title = cwp_rx.12.t
+	desc = cwp_rx.12.d
+	flavor = cwp_rx.12.f
+
+	event_image = { video = "asia_politician_parliament_motion" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+
+	duration = 3
+
+	trigger = {
+		cwp_rx_not_recent = yes
+	}
+
+	immediate = {
+		cwp_rx_mark_recent = yes
+		c:ROC ?= { save_scope_as = cwp_rx_roc }
+	}
+
+	option = { # Outlaw the party
+		name = cwp_rx.12.a
+		default_option = yes
+		add_modifier = { name = cwp_rx_party_outlawed days = normal_modifier_time is_decaying = yes }
+		cwp_rx_ig_mood = { IG = ig_trade_unions MOD = cwp_rx_ig_civil_liberties_curtailed }
+		add_radicals = { strata = lower value = small_radicals }
+		ai_chance = {
+			base = 2
+		}
+	}
+	option = { # Offer an amnesty
+		name = cwp_rx.12.b
+		add_modifier = { name = cwp_rx_amnesty days = normal_modifier_time is_decaying = yes }
+		cwp_rx_ig_mood = { IG = ig_armed_forces MOD = cwp_rx_ig_overruled }
+		cwp_rx_ig_mood = { IG = ig_landowners MOD = cwp_rx_ig_overruled }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+### War in Korea
+
+# Western major powers: rearm, or hold the budget.
+cwp_rx.20 = {
+	type = country_event
+	placement = root
+
+	title = cwp_rx.20.t
+	desc = cwp_rx.20.d
+	flavor = cwp_rx.20.f
+
+	event_image = { video = "europenorthamerica_before_the_battle" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+
+	duration = 3
+
+	immediate = {
+		global_var:cwp_cw_west_leader ?= { save_scope_as = cwp_rx_west_leader }
+	}
+
+	option = { # A rearmament program
+		name = cwp_rx.20.a
+		default_option = yes
+		add_modifier = { name = cwp_rx_rearmament_program days = normal_modifier_time multiplier = cwp_rx_cost_rearmament }
+		cwp_rx_ig_mood = { IG = ig_armed_forces MOD = cwp_rx_ig_budget_raised }
+		cwp_rx_ig_mood = { IG = ig_industrialists MOD = cwp_rx_ig_heeded }
+		cwp_rx_ig_mood = { IG = ig_trade_unions MOD = cwp_rx_ig_social_spending_cut }
+		cwp_rs_move_fear = { FEAR = 8 }
+		ai_chance = {
+			base = 3
+		}
+	}
+	option = { # Hold the budget
+		name = cwp_rx.20.b
+		cwp_rx_ig_mood = { IG = ig_armed_forces MOD = cwp_rx_ig_overruled }
+		if = {
+			limit = {
+				exists = scope:cwp_rx_west_leader
+				NOT = { scope:cwp_rx_west_leader = root }
+			}
+			change_relations = { country = scope:cwp_rx_west_leader value = -15 }
+		}
+		cwp_rs_move_fear = { FEAR = 4 }
+		ai_chance = {
+			base = 1
+			modifier = {
+				trigger = { ig:ig_trade_unions ?= { is_in_government = yes } }
+				add = 1
+			}
+		}
+	}
+}
+
+### Independence of a great colony. scope:cwp_rx_new_state = the new state.
+
+# Colonies that take the lead.
+cwp_rx.30 = {
+	type = country_event
+	placement = root
+
+	title = cwp_rx.30.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = cwp_rx.30.d.india
+				trigger = { c:HND ?= scope:cwp_rx_new_state }
+			}
+			desc = cwp_rx.30.d
+		}
+	}
+	flavor = cwp_rx.30.f
+
+	event_image = { video = "africa_public_protest" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+
+	duration = 3
+
+	trigger = {
+		exists = scope:cwp_rx_new_state
+		is_subject = yes
+		cwp_rx_not_recent = yes
+	}
+
+	immediate = {
+		cwp_rx_mark_recent = yes
+		overlord = { save_scope_as = cwp_rx_metropole }
+	}
+
+	option = { # Demand a date for independence
+		name = cwp_rx.30.a
+		default_option = yes
+		add_modifier = { name = cwp_rx_independence_example days = short_modifier_time is_decaying = yes }
+		scope:cwp_rx_metropole = { change_relations = { country = root value = -10 } }
+		ai_chance = {
+			base = 2
+		}
+	}
+	option = { # Work through the constitution
+		name = cwp_rx.30.b
+		add_modifier = { name = cwp_rx_constitutional_path days = short_modifier_time is_decaying = yes }
+		cwp_rx_ig_mood = { IG = ig_intelligentsia MOD = cwp_rx_ig_overruled }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+# Colonial powers with colonies that take the lead.
+cwp_rx.31 = {
+	type = country_event
+	placement = root
+
+	title = cwp_rx.31.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = cwp_rx.31.d.india
+				trigger = { c:HND ?= scope:cwp_rx_new_state }
+			}
+			desc = cwp_rx.31.d
+		}
+	}
+	flavor = cwp_rx.30.f
+
+	event_image = { video = "asia_politician_parliament_motion" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_map.dds"
+
+	duration = 3
+
+	trigger = {
+		exists = scope:cwp_rx_new_state
+		cwp_rx_metropole_watches_independence = yes
+	}
+
+	option = { # Promise constitutional advance
+		name = cwp_rx.31.a
+		default_option = yes
+		every_direct_subject = {
+			limit = { cwp_rx_colony_watches_independence = yes }
+			add_modifier = { name = cwp_rx_constitutional_advance days = short_modifier_time is_decaying = yes }
+		}
+		cwp_rx_ig_mood = { IG = ig_armed_forces MOD = cwp_rx_ig_overruled }
+		cwp_rx_ig_mood = { IG = ig_landowners MOD = cwp_rx_ig_overruled }
+		ai_chance = {
+			base = 2
+			modifier = {
+				trigger = { cwp_has_imperialist_leaning_government = yes }
+				add = -1
+			}
+		}
+	}
+	option = { # Hold firm
+		name = cwp_rx.31.b
+		every_direct_subject = {
+			limit = { cwp_rx_colony_watches_independence = yes }
+			add_modifier = { name = cwp_rx_nationalists_radicalized days = short_modifier_time is_decaying = yes }
+		}
+		cwp_rx_ig_mood = { IG = ig_intelligentsia MOD = cwp_rx_ig_overruled }
+		ai_chance = {
+			base = 1
+			modifier = {
+				trigger = { cwp_has_imperialist_leaning_government = yes }
+				add = 2
+			}
+		}
+	}
+}
+
+### The Berlin blockade
+
+# Western European governments with communists at home.
+cwp_rx.40 = {
+	type = country_event
+	placement = root
+
+	title = cwp_rx.40.t
+	desc = cwp_rx.40.d
+	flavor = cwp_rx.40.f
+
+	event_image = { video = "unspecific_airPlane" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_map.dds"
+
+	duration = 3
+
+	trigger = {
+		cwp_rx_not_recent = yes
+	}
+
+	immediate = {
+		cwp_rx_mark_recent = yes
+		global_var:cwp_cw_west_leader ?= { save_scope_as = cwp_rx_west_leader }
+	}
+
+	option = { # Contribute to the airlift
+		name = cwp_rx.40.a
+		default_option = yes
+		add_modifier = { name = cwp_rx_airlift_contribution days = 365 multiplier = cwp_rx_cost_small }
+		if = {
+			limit = { exists = scope:cwp_rx_west_leader }
+			change_relations = { country = scope:cwp_rx_west_leader value = 10 }
+		}
+		ai_chance = {
+			base = 2
+		}
+	}
+	option = { # Urge a settlement over Germany
+		name = cwp_rx.40.b
+		add_modifier = { name = cwp_rx_german_settlement_urged days = short_modifier_time is_decaying = yes }
+		if = {
+			limit = { exists = scope:cwp_rx_west_leader }
+			change_relations = { country = scope:cwp_rx_west_leader value = -10 }
+		}
+		cwp_rx_ig_mood = { IG = ig_armed_forces MOD = cwp_rx_ig_overruled }
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+### NATO
+
+# Members with a strong communist party: the campaign against the Atlantic Pact and the arms shipments.
+cwp_rx.50 = {
+	type = country_event
+	placement = root
+
+	title = cwp_rx.50.t
+	desc = cwp_rx.50.d
+	flavor = cwp_rx.50.f
+
+	event_image = { video = "unspecific_steam_ship" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+
+	duration = 3
+
+	trigger = {
+		has_variable = cwp_io_member_nato
+		cwp_rx_not_recent = yes
+	}
+
+	immediate = {
+		cwp_rx_mark_recent = yes
+		global_var:cwp_cw_west_leader ?= { save_scope_as = cwp_rx_west_leader }
+	}
+
+	option = { # Send in the police
+		name = cwp_rx.50.a
+		default_option = yes
+		add_modifier = { name = cwp_rx_dock_strikes_broken days = normal_modifier_time is_decaying = yes }
+		cwp_rx_ig_mood = { IG = ig_trade_unions MOD = cwp_rx_ig_strikebreaking }
+		add_radicals = { strata = lower value = small_radicals }
+		ai_chance = {
+			base = 2
+			modifier = {
+				trigger = { ig:ig_trade_unions ?= { is_in_government = yes } }
+				add = -1
+			}
+		}
+	}
+	option = { # Negotiate with the unions
+		name = cwp_rx.50.b
+		add_modifier = { name = cwp_rx_dock_strikes_conceded days = short_modifier_time is_decaying = yes }
+		cwp_rx_ig_mood = { IG = ig_armed_forces MOD = cwp_rx_ig_overruled }
+		if = {
+			limit = {
+				exists = scope:cwp_rx_west_leader
+				NOT = { scope:cwp_rx_west_leader = root }
+			}
+			change_relations = { country = scope:cwp_rx_west_leader value = -10 }
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}

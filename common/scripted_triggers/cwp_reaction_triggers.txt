@@ -1,0 +1,83 @@
+﻿# Cold War Project: reaction events (namespace cwp_rx). See docs/agents/areas/reactions.md.
+# Audience triggers: who reacts to a major happening elsewhere. Keep them cheap; they run inside every_country limits.
+
+# Country scope: a country that can take part in world politics at all.
+cwp_rx_can_react = {
+	exists = this
+	NOT = { is_country_type = decentralized }
+}
+
+# Country scope: not already handling a reaction event (anti-spam). Camp leaders are exempt; see cwp_rx_mark_recent.
+cwp_rx_not_recent = {
+	NOT = { has_variable = cwp_rx_recent }
+}
+
+# Country scope: communists are a real force at home (any communist movement at the given support, 0-1).
+cwp_rx_has_communists = {
+	NOT = { cwp_cw_in_east = yes }
+	cwp_cw_communist_movement_support = { VALUE = $VALUE$ }
+}
+
+# Country scope: in the camp opposite to the country saved as $WHO$, or on cold terms with it.
+cwp_rx_is_rival_of = {
+	NOT = { this = scope:$WHO$ }
+	OR = {
+		AND = {
+			cwp_cw_in_west = yes
+			scope:$WHO$ = { cwp_cw_in_east = yes }
+		}
+		AND = {
+			cwp_cw_in_east = yes
+			scope:$WHO$ = { cwp_cw_in_west = yes }
+		}
+		scope:$WHO$ = { relations:prev <= relations_threshold:cold }
+	}
+}
+
+# Country scope: capital in East, Southeast or South Asia (the region that watched the Chinese civil war).
+cwp_rx_in_monsoon_asia = {
+	capital ?= {
+		OR = {
+			is_in_geographic_region = geographic_region_east_asia
+			is_in_geographic_region = geographic_region_south_east_asia
+			is_in_geographic_region = geographic_region_india
+		}
+	}
+}
+
+# Country scope: capital in Europe.
+cwp_rx_in_europe = {
+	capital ?= { is_in_geographic_region = geographic_region_europe }
+}
+
+# Country scope: capital in Africa.
+cwp_rx_in_africa = {
+	capital ?= { is_in_geographic_region = geographic_region_africa }
+}
+
+# Country scope: one of the two Chinas.
+cwp_rx_is_china = {
+	OR = {
+		c:PRC ?= this
+		c:ROC ?= this
+		c:CHI ?= this
+	}
+}
+
+# Country scope: a colony that would take a lead from the independence saved as scope:cwp_rx_new_state.
+# India speaks to every colony; a first African independence speaks to Africa.
+cwp_rx_colony_watches_independence = {
+	cwp_is_tracked_colony = yes
+	NOT = { this = scope:cwp_rx_new_state }
+	OR = {
+		scope:cwp_rx_new_state = { cwp_rx_in_africa = no }
+		cwp_rx_in_africa = yes
+	}
+}
+
+# Country scope: a colonial power with colonies that would take that lead.
+cwp_rx_metropole_watches_independence = {
+	any_direct_subject = {
+		cwp_rx_colony_watches_independence = yes
+	}
+}
