@@ -49,6 +49,8 @@ When the simulation leaves the historical path, write the deviation in the vocab
 
 ## Event options
 
+**Every popup event is a real choice** (Jack, 2026-11-18). Never "X happened, so now Y happens" with one acknowledgment button: give the player at least two options with different consequences. They need not be good; a choice between two bad options is fine. See `.claude/rules/events.md`.
+
 Short, in character, and specific to the choice: "Send in the troops.", "Require the oath." Avoid filler reactions ("So it begins.", "Interesting.") and slogans nobody said.
 
 ## Habits to cut
