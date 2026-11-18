@@ -94,3 +94,9 @@ Not yet: repayment of stand-by loans; quota reviews; the World Bank.
 - Scripted button `ai_chance` must be script-value style (`value = 10  if = { limit = { } add = 5 }`); `base` and `modifier` are parse errors there.
 - A button's `effect` is evaluated for its tooltip, so it must not read a variable that only that effect sets ("Failed to fetch variable").
 - Passing an argument a scripted effect no longer uses makes the whole effect fail to compile ("unknown arguments").
+
+## Staging findings (observer 16ccecae3, 1946-1960)
+
+- The UN admitted nobody in 14 years: some permanent member vetoed every applicant. Fixed: the ideology veto now applies only to applicants already inside a rival power bloc, and each failed application makes a veto less likely (`cwp_io_un_rejected_before` / `_twice`), which is how the 1955 package deal broke the real deadlock.
+- No NATO conference was called (USA and USSR relations never fell to "cold"). The threat condition is now "no better than neutral" toward an eastern-camp bloc leader.
+- The IMF grew from 29 to 46 members by 1960; a stand-by programme ran.
