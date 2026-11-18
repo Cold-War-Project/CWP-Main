@@ -1,0 +1,114 @@
+﻿# Cold War Project: the energy crisis. A generic situation for any country whose market pays far more than the
+# base price for refined fuel. Nothing is scheduled: it opens when fuel is dear, public anger follows the price,
+# and it ends when the price falls back or the anger boils over.
+
+je_cwp_energy_crisis = {
+	icon = "gfx/interface/icons/event_icons/event_industry.dds"
+	group = je_group_internal_affairs
+
+	activation_description = { always = yes }
+
+	is_shown_when_inactive = {
+		cwp_ec_is_candidate = yes
+	}
+
+	possible = {
+		cwp_ec_is_candidate = yes
+	}
+
+	immediate = {
+		trigger_event = { id = cwp_ec.1 popup = yes }
+	}
+
+	scripted_progress_bar = cwp_ec_anger_bar
+
+	scripted_button = cwp_ec_conservation_button
+	scripted_button = cwp_ec_rationing_button
+	scripted_button = cwp_ec_price_controls_button
+	scripted_button = cwp_ec_diversify_button
+
+	on_monthly_pulse = {
+		random_events = {
+			100 = 0
+			10 = cwp_ec.2
+			10 = cwp_ec.3
+			10 = cwp_ec.4
+			10 = cwp_ec.5
+		}
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_energy_crisis_status_severe
+				trigger = { cwp_ec_fuel_pricier = { PCT = 1 } }
+			}
+			triggered_desc = {
+				desc = je_cwp_energy_crisis_status_high
+				trigger = { cwp_ec_fuel_pricier = { PCT = 0.25 } }
+			}
+			desc = je_cwp_energy_crisis_status_easing
+		}
+	}
+
+	# Fuel prices fall back toward normal.
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_energy_crisis_over_desc
+		color = "gold_positive"
+		trigger = {
+			custom_tooltip = {
+				text = cwp_ec_price_normal_tt
+				NOT = { cwp_ec_fuel_pricier = { PCT = 0.2 } }
+			}
+		}
+		effect = {
+			set_variable = {
+				name = cwp_ec_cooldown_var
+				years = 5
+			}
+			if = {
+				limit = { has_variable = cwp_ec_diversify_var }
+				remove_variable = cwp_ec_diversify_var
+				add_modifier = {
+					name = cwp_ec_energy_diversified
+					years = 10
+				}
+			}
+			trigger_event = { id = cwp_ec.20 popup = yes }
+		}
+	}
+
+	# Anger boils over into the streets.
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		conclusion_desc = je_cwp_energy_crisis_riots_desc
+		color = "blue_negative"
+		trigger = {
+			scope:journal_entry = {
+				custom_tooltip = {
+					text = cwp_ec_anger_full_tt
+					"scripted_bar_progress(cwp_ec_anger_bar)" >= 100
+				}
+			}
+		}
+		effect = {
+			set_variable = {
+				name = cwp_ec_cooldown_var
+				years = 5
+			}
+			add_modifier = {
+				name = cwp_ec_fuel_riots
+				years = 3
+			}
+			trigger_event = { id = cwp_ec.21 popup = yes }
+		}
+	}
+
+	weight = 800
+	transferable = no
+	can_revolution_inherit = yes
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
