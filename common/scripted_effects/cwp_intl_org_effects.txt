@@ -13,6 +13,8 @@
 #   global var   cwp_io_$ORG$_threshold     share of yes votes (percent of yes plus no) needed to pass
 #   global var   cwp_io_$ORG$_presidency    0, or 1 for a rotating presidency
 #   global var   cwp_io_$ORG$_members       cached member count, refreshed monthly
+#   global var   cwp_io_$ORG$_president     current holder of a rotating presidency
+#   country var  cwp_io_presided_$ORG$      terms this member has held the presidency
 #
 # State, per proposal $PROP$ (several can be open at once, each in its own journal entry):
 #   global var   cwp_io_$PROP$_open         proposal is before the members
@@ -34,6 +36,10 @@ cwp_io_setup_org = {
 # Country scope: join or leave.
 cwp_io_add_member = {
 	set_variable = cwp_io_member_$ORG$
+	if = {
+		limit = { NOT = { has_variable = cwp_io_presided_$ORG$ } }
+		set_variable = { name = cwp_io_presided_$ORG$ value = 0 }
+	}
 	if = {
 		limit = { has_variable = cwp_io_applicant_$ORG$ }
 		remove_variable = cwp_io_applicant_$ORG$
@@ -187,4 +193,69 @@ cwp_io_close_proposal = {
 # Country scope: apply for membership.
 cwp_io_apply = {
 	set_variable = cwp_io_applicant_$ORG$
+}
+
+# No scope: pass a rotating presidency to the member that has held it least often
+# (alphabetical rotation in NATO's North Atlantic Council is approximated by "fewest terms").
+cwp_io_rotate_presidency = {
+	if = {
+		limit = { any_country = { has_variable = cwp_io_member_$ORG$ } }
+		ordered_country = {
+			limit = { has_variable = cwp_io_member_$ORG$ }
+			order_by = {
+				value = 1000
+				subtract = var:cwp_io_presided_$ORG$
+			}
+			position = 0
+			set_global_variable = { name = cwp_io_$ORG$_president value = this }
+			change_variable = { name = cwp_io_presided_$ORG$ add = 1 }
+			add_modifier = { name = cwp_io_presidency_modifier years = 1 }
+		}
+	}
+}
+
+# No scope: the generic admission handler for one applicant at a time. Call from the
+# admission JE's monthly pulse after cwp_io_advance_proposal. TARGET = global variable that
+# holds the applicant; EVENT_YES / EVENT_NO = notification events for the applicant.
+cwp_io_settle_admission = {
+	if = {
+		limit = { cwp_io_proposal_passed = { PROP = $PROP$ } }
+		global_var:$TARGET$ ?= {
+			cwp_io_add_member = { ORG = $ORG$ }
+			je:$JE$ ?= { add_involved_country = PREV }
+			trigger_event = { id = $EVENT_YES$ popup = yes }
+		}
+		cwp_io_close_proposal = { PROP = $PROP$ }
+	}
+	else_if = {
+		limit = { global_var:cwp_io_$PROP$_result ?= flag:failed }
+		global_var:$TARGET$ ?= {
+			remove_variable = cwp_io_applicant_$ORG$
+			set_variable = { name = cwp_io_rejected_$ORG$ years = 3 }
+			trigger_event = { id = $EVENT_NO$ popup = yes }
+		}
+	}
+}
+
+# No scope, from the organization JE's monthly pulse: bring the next applicant to a vote.
+cwp_io_queue_admission = {
+	if = {
+		limit = {
+			has_global_variable = cwp_io_$PROP$_open
+			NOT = { exists = global_var:$TARGET$ }
+		}
+		cwp_io_close_proposal = { PROP = $PROP$ }
+	}
+	if = {
+		limit = {
+			NOT = { has_global_variable = cwp_io_$PROP$_open }
+			NOT = { has_global_variable = cwp_io_$PROP$_cooldown }
+			any_country = { has_variable = cwp_io_applicant_$ORG$ }
+		}
+		random_country = {
+			limit = { has_variable = cwp_io_applicant_$ORG$ }
+			set_global_variable = { name = $TARGET$ value = this }
+		}
+		cwp_io_open_proposal = { PROP = $PROP$ }
+	}
 }
