@@ -68,7 +68,7 @@ Each fall also fires a news event to both camp leaders, naming the country and t
 
 ## The map mode
 
-`map_color` by owner camp: deep red for the communist core, orange-red for the outer ring, deep blue for the Western core, light blue for the outer ring, grey for non-aligned. `map_color_second` stripes: red where a communist revolution is under way, pink where communist movement support is above 25%, blue where the state's owner receives Western aid. The tooltip names the owner's camp, its communist movement's support, any aid or sponsorship pact and any revolution.
+`map_color` by owner camp: deep red for the communist core, orange-red for the outer ring, deep blue for the Western core, light blue for the outer ring, grey for non-aligned. `map_color_second` stripes: red where a communist revolution is under way, pink where communist movement support is above 25%, blue where the state's owner receives economic aid (keyed on the pact's marker variable `cwp_cw_aid_recipient`, refreshed weekly, not on the appeal modifier, which other content such as reaction events also uses). The tooltip names the owner's camp, its communist movement's support, any aid or sponsorship pact and any revolution.
 
 ## The containment lever
 
