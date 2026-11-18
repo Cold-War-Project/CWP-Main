@@ -159,6 +159,7 @@ The guides were written for a small add-on mod on top of vanilla, without sight 
 | Example prefix `gs_`, text in `localization/english/gs_l_english.yml` | Prefix `cwp_` on every new key and file; text under `localization/english/cwp/<area>/`. |
 | Vanilla value ranges set the size of rewards and costs | Start from them, then compare with a similar modifier already in the mod where one exists. |
 | Historical events can be scripted to fire on their date | Never here. Outcomes come from simulation mechanics; journal entries steer but do not force; dates only gate what becomes possible. See "Core design rule" in `AGENTS.md`. |
+| A progress bar is a good default for a journal entry | Use bars sparingly. Mix condition-list outcomes, missions with a confirming button and bars, and give each journal entry its own twist (AGENTS.md, Jack's team 2026-11-18). |
 | Never invent an attributed quotation or a historical fact | Applies with more force here: the mod's period has living people and well-documented events. Mark certainty, and tell the user which facts were not checked against a source. |
 | Example commands with `F:/Victoria 3 Modding/...` paths | The guides now live in the mod root. |
 

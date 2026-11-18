@@ -12,6 +12,8 @@ Victoria 3 total conversion set 1946 to 2046, targeting game **1.15.1**. Most de
 
 ## Core design rule: the simulation decides, not the calendar
 
+**Journal entries need variety** (Jack and the dev team, 2026-11-18). Not every journal entry is a progress bar. Use the shape that fits the history: a list of conditions for success and another for failure or a different outcome (as many vanilla journal entries do), a mission the player carries out and then confirms with a button, or a bar where gradual pressure really is the story. Give each journal entry its own twist instead of repeating the same bar management, and keep everything diegetic: the player acts through the simulation (laws, wars, diplomacy, buildings, characters), not by clicking buttons alone.
+
 **No "it is date X, so Y happens."** Every outcome comes from the simulation: progress bars, politics, economy, interest groups, characters, agitators, movements, wars, diplomacy. Journal entries may steer toward a specific historical outcome (make it more likely, reward pursuing it), but they **never force it**. Dates may gate when something becomes *possible* (an ideology from 1960, a technology era), never decide *what happens* (Jack, 2026-11-16). When porting content that forces an outcome by date, flag it in your PR and rework it into a mechanic, or ask the advisor.
 
 ## What belongs in the mod

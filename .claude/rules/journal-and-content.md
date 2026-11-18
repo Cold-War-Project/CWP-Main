@@ -18,7 +18,7 @@ paths:
 # Scripted content: journal entries, buttons, decisions, objectives
 
 
-**Core design rule (AGENTS.md):** a journal entry steers, it never forces. No `game_date`-triggered outcomes: completion, failure and their effects must follow from bars, politics, economy, characters or other simulation state. Dates may only gate when an entry becomes possible.
+**Core design rule (AGENTS.md):** a journal entry steers, it never forces. **Variety rule (AGENTS.md):** bars only where they earn their place; prefer condition lists for success/failure/alternative outcomes, or a mission followed by a confirming button, and give each journal entry a mechanic of its own. Model shapes on vanilla journal entries (`Claude-Vic3-Content-Design-Guide/02-choosing-the-tools.md`, `reference/generated/vanilla_journal_entries.md`). No `game_date`-triggered outcomes: completion, failure and their effects must follow from bars, politics, economy, characters or other simulation state. Dates may only gate when an entry becomes possible.
 ## State of this mod
 
 - Vanilla has hundreds of journal entries; the mod has its own `cwp_*` journal entries (see "Mod journal entries" below) and keeps only a handful of vanilla ones alive. The rest are neutralised: `zz_vanilla_journal_entries.txt` / `zz_unwanted_vanilla_journal_entries.txt` hold keyword stubs, and most vanilla JE files are same-name overwrites, usually with the `# Cold War Project: same-name overwrite` header (user's choice over a `replace_paths` entry, to keep per-file diffs against future patches).
