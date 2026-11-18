@@ -221,11 +221,19 @@ def main():
         for i, c in enumerate(cands):
             head = 'if' if i == 0 else 'else_if'
             if len(cands) == 1:
-                eff.append(f"\t\tc:{c} = {{ create_character = {{ template = {r['key']} on_created = {{ set_variable = cwp_fig }} }} }}")
+                eff.append(f"\t\tc:{c} = {{ create_character = {{ template = {r['key']} on_created = {{ cwp_mark_historical_figure = yes }} }} }}")
             else:
-                eff.append(f"\t\t{head} = {{ limit = {{ exists = c:{c} }} c:{c} = {{ create_character = {{ template = {r['key']} on_created = {{ set_variable = cwp_fig }} }} }} }}")
+                eff.append(f"\t\t{head} = {{ limit = {{ exists = c:{c} }} c:{c} = {{ create_character = {{ template = {r['key']} on_created = {{ cwp_mark_historical_figure = yes }} }} }} }}")
         eff.append('\t}')
-    eff += ['}', '']
+    eff += ['}', '',
+            '# Marks a pool figure so it can be recognised later (econ_bench counts it from saves; events can test',
+            '# cwp_is_historical_figure, common/scripted_triggers/cwp_figure_pool_triggers.txt).',
+            'cwp_mark_historical_figure = {',
+            '\tif = {',
+            '\t\tlimit = { NOT = { cwp_is_historical_figure = yes } }',
+            '\t\tset_variable = cwp_fig',
+            '\t}',
+            '}', '']
 
     if CHECK_ONLY:
         print(f'{len(rows)} figures OK, {len(newloc)} new name keys (not written)')
