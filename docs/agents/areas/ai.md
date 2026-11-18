@@ -32,6 +32,7 @@ Evidence is from the shared 1946-1990 observer run f30e83cd6 unless stated.
 | F5 | Tiny states keep armies costing several times their income while in default. | 1980-90: Kuwait 6-7x income on military, Qatar 7x, Abu Dhabi 6x, Iceland 4-5x, ZZB 14x. | Military thread (army sizing) |
 | F7 | Democracies barely legislate. | 1946-1990 law changes: GBR 0, GER 1, CAN 1, JAP 2, USA 4 (and the USA's are censorship, combination acts, national guard); median country 7. | Politics/history threads (change_law_chance in political strategies) |
 | F8 | Construction capacity hits a flat per-state level cap (tech: 15, 30 by ~1960, 40 later), so big economies can't add construction however much capital waits. | 16ccecae3 staging run 1960: every US state's construction sector at 30 levels; UK investment pool 0.99B vs GDP 0.48B. F1's brick share follows engineer shortages in rural states, not cost. | Fix 5: +1 level per 400k people (max 40) |
+| F9 | Microstates build construction sectors they can't pay for: the target's flat floor of 10 exceeds their free construction (2 + 8 x GDP/2M). | 1bf5b419c 1958: 31 in default, nearly all microstates with 2-6 construction levels; their armies cost 2-6.5x income (military thread). | Fix 7 |
 | F6 | Government building PMs lag (admin on filing systems, universities on modern disciplines, railways on steam into the 1980s). | USA 1980: 523 of 1176 railway levels on steam trains. | Not started |
 
 ## Changes
@@ -57,6 +58,10 @@ Evidence is from the shared 1946-1990 observer run f30e83cd6 unless stated.
 6. (stage 2) `wanted_construction_output`: an extra income/12500 term above 1M/week income, since
    vanilla's income term caps at 200 (1M/week), which every major power passes in 1946. USSR 1960
    (d84f9452d): 194M idle cash, income 16% above spending, construction flat.
+
+7. `wanted_construction_output` base: 2 + 8 x GDP/2M (max 10), the free construction formula, instead of a flat 10;
+   final floor 2 (branch `fix/ai-microstate-construction`). Stage 2 landed on CWP2 as cd22bb759;
+   `fix/ai-backstop-queue-check` swaps the backstop's queue-duration test for a queued-levels count.
 
 ## Workshop AI mods
 
