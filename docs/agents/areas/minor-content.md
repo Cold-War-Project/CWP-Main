@@ -20,6 +20,7 @@ Every piece follows the core rule: nothing fires on a date. A journal entry open
 | `feat/constitutional-transitions` (France) | `je_cwp_fra_constituent_assembly`: draft support and assembly bars, second-chamber and Bayeux buttons, up to three referendums | FRA | Algeria and Indochina stay with decolonization. Resets `fra_republic_counter` to 4 after activating the parliamentary republic |
 | `feat/postwar-settlements` | Spain's Law of Succession (decision); `je_cwp_ending_the_occupation` (case for sovereignty, occupier signs or refuses), Newfoundland | SPA; JAP; NEW | Korea, Germany and Austria (#840) have their own occupation content |
 | `feat/nuclear-programme` | `je_cwp_atomic_monopoly` (USA), decision and `je_cwp_nuclear_programme` (fissile and design bars, uranium, espionage, foreign help, test), world reaction | any major power | Other content tests nuclear status with `cwp_is_nuclear_power` |
+| `feat/royal-question` | `je_cwp_royal_question`: support for Leopold III's return (Catholic/Flemish vs Socialist/liberal IGs), consultation pressure, the vote, then the strikes: with powerful unions the King abdicates for Baudouin | BEL | Built 2026-11-18 |
 | `fix/victorian-decision-leaks` | `[shared]` ten more REPLACE stubs in `zz_vanilla_decisions.txt` (audit R2) | | |
 
 ## Deferred, with reasons
@@ -30,4 +31,10 @@ Every piece follows the core rule: nothing fires on a date. A journal entry open
 - **Music** (#18): three CWP tracks by Arcady on master (about 100 MB of WAV). Presentation call for gui-art and Jack.
 - **Game rules** (#18): master's two rules (central bank control, chaos mode) have nothing to switch on the rebuild. Dropped.
 - **Corruption and readiness** (#17): master's versions are scripted-GUI systems; vanilla 1.15 has no equivalent, and a rebuild needs a design first.
-- **Belgium's Royal Question** (1950): fits the institutional-question pattern as a vote on the King's return; not built yet.
+
+## Tuning round 2 (2026-11-18, branch `fix/minor-tuning`)
+
+The 1946-1960 shared run (e638a85ce) showed two structural faults, both fixed in mechanics:
+
+- **Satellites stalled** at 20-55% control for fourteen years: occupier and ministries exactly balanced the opposition. The opposition drag now shrinks with control (`cwp_sov_opposition_drag` times the share of the state not yet held), and above 50% the party consolidates by +1 a month, so the bar tips one way or the other.
+- **The USSR never built a bomb**: the AI looked for a nuclear power with `cold` relations, and US-Soviet relations start at -22 and warm up. Programmes now follow bloc rivalry (`cwp_nuc_faces_outside_nuclear_power`) and protection (`cwp_nuc_under_nuclear_umbrella`): a superpower starts at once, an unsheltered great power sometimes, a sheltered ally never. National pace is slower, and foreign help needs the overlord or a friendly nuclear bloc leader.
