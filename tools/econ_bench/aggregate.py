@@ -24,7 +24,8 @@ def load_runs(outdir: Path) -> dict:
 def entity_view(countries: dict, entity: str):
     """Sum the tags that stand for entity (first alternative that exists); None if none exists."""
     for tags in B.ENTITIES[entity]:
-        cs = [countries[t] for t in tags if t in countries and countries[t]["population"] > 0]
+        cs = [countries[k] for k in countries for t in tags
+              if (k == t or k.startswith(t + "~")) and countries[k]["population"] > 0]
         if cs:
             break
     else:

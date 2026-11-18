@@ -227,9 +227,13 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
     out = {}
     for cid, c in countries.items():
         tag = c["tag"]
-        if tag in out:  # duplicate tags (dead/revived): keep the bigger one
-            if out[tag]["gdp"] >= c["gdp"]:
-                continue
+        # Two live countries with one tag are the two sides of a civil war (seen: India 1950). Keep
+        # both: the bigger one under the tag, the other as "TAG~<id>"; entity views add them up.
+        if tag in out:
+            small, big = sorted((out[tag], c), key=lambda x: x["gdp"])
+            out[tag] = big
+            out[f"{tag}~{cid if small is c else 'x'}"] = small
+            continue
         out[tag] = c
     from .geo import extract_geo
     return {"save": path.rsplit("/", 1)[-1], "date": date, "year": int(date.split(".")[0]), "countries": out,
