@@ -30,6 +30,7 @@ Evidence is from the shared 1946-1990 observer run f30e83cd6 unless stated.
 | F3 | Rich treasuries hoard and never borrow. The AI trims spending at an income/expense ratio of 1.0-1.05 with reserves above the 20%-of-GDP limit (excess decays) and zero debt. | USA 1990: 518M cash, 0 debt, 1.6B unused credit, medium taxes. No major economy carried debt in any sampled year. | Defines (cwp_ai.txt) |
 | F4 | Poor states run structural deficits for decades. The construction target's population, kickstart and rank terms don't depend on income, so a state earning a fraction of one sector's upkeep was "critically" short and kept building. | 19-25 states in default in every sample. Afghanistan spends 5-30x income (construction sector 30x income in 1970), in default 1956-1990. | Fix 2: budget terms capped at income/2500 |
 | F5 | Tiny states keep armies costing several times their income while in default. | 1980-90: Kuwait 6-7x income on military, Qatar 7x, Abu Dhabi 6x, Iceland 4-5x, ZZB 14x. | Military thread (army sizing) |
+| F7 | Democracies barely legislate. | 1946-1990 law changes: GBR 0, GER 1, CAN 1, JAP 2, USA 4 (and the USA's are censorship, combination acts, national guard); median country 7. | Politics/history threads (change_law_chance in political strategies) |
 | F6 | Government building PMs lag (admin on filing systems, universities on modern disciplines, railways on steam into the 1980s). | USA 1980: 523 of 1176 railway levels on steam trains. | Not started |
 
 ## Changes
