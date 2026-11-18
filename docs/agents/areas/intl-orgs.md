@@ -109,4 +109,4 @@ Fix: `WEST_BLOC` is now an `identity_military_treaty_organization` with `princip
 
 ## Wording (Jack, 2026-11-18)
 
-Player-visible names and prose use terms from the literature, or plain description; no invented terms or invented quotations. Event flavour lines quote the founding texts (UN Charter preamble and Article 4, North Atlantic Treaty Article 5, the Warsaw and Brussels treaty titles, IMF Articles of Agreement Article I) or state the rule plainly. IMF terms follow Fund usage: stand-by arrangement, Fund-supported programme, conditionality, programme off track.
+Player-visible names and prose use terms from the literature, or plain description; no invented terms or invented quotations. Event flavour lines quote the founding texts (UN Charter preamble and Article 4, North Atlantic Treaty Article 5, the Warsaw and Brussels treaty titles, IMF Articles of Agreement Article I) or state the rule plainly. IMF terms follow Fund usage: stand-by arrangement, Fund-supported program, conditionality, program off track. Loc uses American spelling except in verbatim official titles.
