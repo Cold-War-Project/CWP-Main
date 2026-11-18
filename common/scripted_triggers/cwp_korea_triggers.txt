@@ -86,3 +86,68 @@ cwp_korea_contingent_candidate = {
 	country_rank >= rank_value:minor_power
 	"relations(c:USA)" >= 50
 }
+
+# ---- Chapter 2: the two Koreas ----
+
+# US forces are stationed in the South (start of chapter 2 if they never left, or by button)
+cwp_tkor_us_forces = {
+	has_global_variable = cwp_tkor_usfk
+}
+
+# A US defence treaty or alliance binds the South
+cwp_tkor_us_treaty = {
+	c:USA ?= {
+		any_scope_treaty = {
+			binds = c:STK
+			any_scope_article = {
+				OR = {
+					has_type = defensive_pact
+					has_type = alliance
+				}
+			}
+		}
+	}
+}
+
+# The North has lost its patrons: no Soviet Union, or one hostile to it, and a China that is not friendly either
+cwp_tkor_north_isolated = {
+	OR = {
+		NOT = { exists = c:RUS }
+		c:RUS ?= { "relations(c:NRK)" < 0 }
+	}
+	OR = {
+		NOT = { exists = c:PRC }
+		c:PRC ?= { "relations(c:NRK)" < 20 }
+	}
+}
+
+# The conditions for reunification by agreement, shown as a checklist on the reunification button
+cwp_tkor_reunification_ready = {
+	custom_tooltip = {
+		text = cwp_tkor_cond_summit_tt
+		has_global_variable = cwp_tkor_summit_held
+	}
+	custom_tooltip = {
+		text = cwp_tkor_cond_calm_tt
+		scope:journal_entry ?= { "scripted_bar_progress(cwp_tkor_tension_bar)" < 30 }
+	}
+	custom_tooltip = {
+		text = cwp_tkor_cond_engagement_tt
+		c:NRK ?= { has_modifier = cwp_tkor_engagement }
+	}
+	custom_tooltip = {
+		text = cwp_tkor_cond_superpowers_tt
+		OR = {
+			cwp_tkor_north_isolated = yes
+			AND = {
+				exists = c:USA
+				exists = c:RUS
+				c:USA = { "relations(c:RUS)" >= 50 }
+			}
+		}
+	}
+	custom_tooltip = {
+		text = cwp_tkor_cond_no_bomb_tt
+		NOT = { c:NRK ?= { cwp_is_nuclear_power = yes } }
+	}
+}

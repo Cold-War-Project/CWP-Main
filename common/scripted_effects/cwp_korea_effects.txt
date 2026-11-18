@@ -51,6 +51,16 @@ cwp_korea_start_war_effect = {
 
 # Both Koreas survive: the line becomes a border nobody accepts.
 cwp_korea_divided_peace_effect = {
+	# American troops that are in Korea when the fighting stops stay on (chapter 2)
+	if = {
+		limit = {
+			OR = {
+				NOT = { has_global_variable = cwp_korea_us_withdrawn }
+				c:USA ?= { has_variable = cwp_korea_participant }
+			}
+		}
+		set_global_variable = cwp_tkor_usfk
+	}
 	c:NRK ?= {
 		add_modifier = { name = cwp_korea_dmz days = long_modifier_time }
 		if = {
@@ -125,12 +135,17 @@ cwp_korea_cleanup_effect = {
 # Monthly logic of the situation. Called from cwp_korea_monthly_pulse in the scope of STK (or NRK if STK is gone);
 # the scope only exists so that je: links resolve. Do not use root or this for game logic here.
 cwp_korea_monthly_effect = {
-	# 1. The Joint Commission collapses when its bar reaches 0
+	# 1. The Joint Commission collapses: the question has gone to the UN, or the superpowers are openly hostile
 	if = {
 		limit = {
 			NOT = { has_global_variable = cwp_korea_partition }
-			je:je_cwp_divided_peninsula ?= {
-				"scripted_bar_progress(cwp_korea_commission_bar)" <= 0
+			OR = {
+				has_global_variable = cwp_korea_un_referral
+				AND = {
+					exists = c:USA
+					exists = c:RUS
+					c:USA = { "relations(c:RUS)" <= -50 }
+				}
 			}
 		}
 		set_global_variable = cwp_korea_partition
@@ -138,6 +153,30 @@ cwp_korea_monthly_effect = {
 		c:RUS ?= { trigger_event = { id = cwp_korea.2 popup = yes } }
 		c:STK ?= { trigger_event = { id = cwp_korea.2 popup = yes } }
 		c:NRK ?= { trigger_event = { id = cwp_korea.2 popup = yes } }
+	}
+
+	# 1b. A zone whose government has been formed becomes a state
+	if = {
+		limit = {
+			c:STK ?= {
+				is_subject = yes
+				has_variable = cwp_korea_elections_held
+				NOT = { has_modifier = cwp_korea_state_building }
+			}
+			NOT = { has_global_variable = cwp_korea_war }
+		}
+		cwp_korea_proclaim_rok_effect = yes
+	}
+	if = {
+		limit = {
+			c:NRK ?= {
+				is_subject = yes
+				has_variable = cwp_korea_elections_held
+				NOT = { has_modifier = cwp_korea_state_building }
+			}
+			NOT = { has_global_variable = cwp_korea_war }
+		}
+		cwp_korea_proclaim_dprk_effect = yes
 	}
 
 	# 2. Deterrence: both sovereign, no war, and each side's attack held back by something real
@@ -255,4 +294,114 @@ cwp_korea_join_war_effect = {
 			}
 		}
 	}
+}
+
+
+# ---- Chapter 2: the two Koreas (je_cwp_two_koreas) ----
+
+# Monthly logic. Called in the scope of STK (or NRK) so that je: links resolve.
+cwp_tkor_monthly_effect = {
+	# A renewed war has ended: clear the flag the war events read
+	if = {
+		limit = {
+			has_global_variable = cwp_korea_war
+			cwp_korea_war_running = no
+		}
+		remove_global_variable = cwp_korea_war
+		every_country = {
+			limit = { has_variable = cwp_korea_participant }
+			remove_variable = cwp_korea_participant
+		}
+	}
+	# The North's first nuclear test
+	if = {
+		limit = {
+			NOT = { has_global_variable = cwp_tkor_bomb_noticed }
+			c:NRK ?= { cwp_is_nuclear_power = yes }
+		}
+		set_global_variable = cwp_tkor_bomb_noticed
+		c:STK ?= { trigger_event = { id = cwp_korea.42 popup = yes } }
+		c:USA ?= { trigger_event = { id = cwp_korea.42 popup = yes } }
+	}
+}
+
+# Reunification by agreement: the larger economy absorbs the smaller one.
+cwp_tkor_peaceful_reunification_effect = {
+	if = {
+		limit = {
+			exists = c:STK
+			exists = c:NRK
+			c:STK.gdp >= c:NRK.gdp
+		}
+		c:STK = {
+			annex = c:NRK
+			add_modifier = { name = cwp_korea_unified days = long_modifier_time }
+		}
+	}
+	else_if = {
+		limit = {
+			exists = c:STK
+			exists = c:NRK
+		}
+		c:NRK = {
+			annex = c:STK
+			add_modifier = { name = cwp_korea_unified days = long_modifier_time }
+		}
+	}
+}
+
+cwp_tkor_cleanup_effect = {
+	remove_global_variable = cwp_tkor_active
+	set_global_variable = cwp_tkor_concluded
+	remove_global_variable = cwp_tkor_usfk
+	remove_global_variable = cwp_tkor_summit_held
+	remove_global_variable = cwp_tkor_bomb_noticed
+	remove_global_variable = cwp_korea_war
+	c:USA ?= { remove_modifier = cwp_korea_us_garrison }
+	c:NRK ?= { remove_variable = cwp_tkor_agrees }
+	c:STK ?= { remove_variable = cwp_tkor_agrees }
+	every_country = {
+		limit = { has_variable = cwp_korea_participant }
+		remove_variable = cwp_korea_participant
+	}
+}
+
+# The Republic of Korea is proclaimed (formerly a button; now follows the southern elections)
+cwp_korea_proclaim_rok_effect = {
+	c:STK = {
+		make_independent = yes
+		add_modifier = { name = cwp_korea_new_army days = 365 }
+		if = {
+			limit = { has_global_variable = cwp_korea_un_referral }
+			add_modifier = { name = cwp_korea_un_recognition days = long_modifier_time }
+		}
+	}
+	c:USA ?= {
+		if = {
+			limit = { NOT = { has_global_variable = cwp_korea_us_withdrawn } }
+			add_modifier = { name = cwp_korea_us_garrison }
+		}
+	}
+	c:STK ?= { trigger_event = { id = cwp_korea.3 popup = yes } }
+	c:NRK ?= { trigger_event = { id = cwp_korea.3 popup = yes } }
+	c:USA ?= { trigger_event = { id = cwp_korea.3 popup = yes } }
+	c:RUS ?= { trigger_event = { id = cwp_korea.3 popup = yes } }
+}
+
+# The Democratic People's Republic is proclaimed (follows the northern elections)
+cwp_korea_proclaim_dprk_effect = {
+	c:NRK = {
+		make_independent = yes
+		add_modifier = { name = cwp_korea_new_army days = 365 }
+	}
+	c:RUS ?= {
+		if = {
+			limit = { NOT = { has_global_variable = cwp_korea_soviet_withdrawn } }
+			add_modifier = { name = cwp_korea_soviet_garrison }
+		}
+	}
+	c:STK ?= { trigger_event = { id = cwp_korea.4 popup = yes } }
+	c:NRK ?= { trigger_event = { id = cwp_korea.4 popup = yes } }
+	c:USA ?= { trigger_event = { id = cwp_korea.4 popup = yes } }
+	c:RUS ?= { trigger_event = { id = cwp_korea.4 popup = yes } }
 }

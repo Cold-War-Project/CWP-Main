@@ -1,0 +1,168 @@
+﻿# Cold War Project: Korea chapter 2 - the two Koreas after the armistice (docs/agents/areas/korea.md).
+# Starts when je_cwp_divided_peninsula ends with both Koreas standing. Contextless: NRK, STK, USA, RUS, PRC.
+# Nothing is scheduled. The peninsula can stay divided to 2046 (the historical result so far),
+# reunite by agreement once a list of real conditions holds (no bar: the twist of this chapter is a
+# checklist both governments must work through), or reunite by war or collapse.
+# Activated by cwp_korea_monthly_pulse (common/on_actions/cwp_korea_on_actions.txt).
+
+je_cwp_two_koreas = {
+	icon = "gfx/interface/icons/event_icons/event_map.dds"
+
+	group = je_group_global_international_situations
+
+	activation_description = {
+		always = yes
+	}
+
+	scripted_progress_bar = cwp_tkor_tension_bar
+
+	scripted_button = cwp_tkor_provocation_button
+	scripted_button = cwp_tkor_restrain_button
+	scripted_button = cwp_tkor_station_forces_button
+	scripted_button = cwp_tkor_withdraw_forces_button
+	scripted_button = cwp_tkor_dialogue_button
+	scripted_button = cwp_tkor_engagement_button
+	scripted_button = cwp_tkor_bomb_button
+	scripted_button = cwp_tkor_renew_war_button
+	scripted_button = cwp_tkor_reunification_button
+
+	is_shown_when_inactive = {
+		always = no
+	}
+
+	possible = {
+		exists = c:NRK
+		exists = c:STK
+	}
+
+	should_be_involved = {
+		OR = {
+			c:NRK ?= this
+			c:STK ?= this
+			c:USA ?= this
+			c:RUS ?= this
+			c:PRC ?= this
+			has_variable = cwp_korea_participant
+		}
+	}
+
+	should_show_when_not_involved = {
+		country_rank >= rank_value:great_power
+	}
+
+	immediate = {
+		set_global_variable = cwp_tkor_active
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = cwp_tkor_status_war
+				trigger = { cwp_korea_war_running = yes }
+			}
+			triggered_desc = {
+				desc = cwp_tkor_status_crisis
+				trigger = {
+					scope:journal_entry = { "scripted_bar_progress(cwp_tkor_tension_bar)" >= 75 }
+				}
+			}
+			triggered_desc = {
+				desc = cwp_tkor_status_thaw
+				trigger = {
+					has_global_variable = cwp_tkor_summit_held
+				}
+			}
+			triggered_desc = {
+				desc = cwp_tkor_status_divided
+				trigger = { always = yes }
+			}
+		}
+	}
+
+	map_color = {
+		if = {
+			limit = {
+				owner ?= { c:NRK ?= this }
+			}
+			value = "cwp_korea_north_red"
+		}
+		else_if = {
+			limit = {
+				owner ?= { c:STK ?= this }
+			}
+			value = "cwp_korea_south_blue"
+		}
+	}
+
+	# Reunification by agreement
+	outcome = {
+		header = je_cwp_two_koreas_reunified
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_two_koreas_reunified_desc
+		color = "gold_positive"
+		trigger = {
+			exists = c:NRK
+			exists = c:STK
+			custom_tooltip = {
+				text = cwp_tkor_both_agree_tt
+				c:NRK = { has_variable = cwp_tkor_agrees }
+				c:STK = { has_variable = cwp_tkor_agrees }
+			}
+		}
+		effect = {
+			custom_tooltip = cwp_tkor_reunification_tt
+			hidden_effect = { cwp_tkor_peaceful_reunification_effect = yes }
+			cwp_tkor_cleanup_effect = yes
+		}
+	}
+
+	# One Korea: war, collapse or annexation
+	outcome = {
+		header = je_cwp_two_koreas_one_state
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_two_koreas_one_state_desc
+		color = "gold_positive"
+		trigger = {
+			OR = {
+				AND = {
+					exists = c:NRK
+					NOT = { exists = c:STK }
+				}
+				AND = {
+					exists = c:STK
+					NOT = { exists = c:NRK }
+				}
+			}
+		}
+		effect = {
+			c:NRK ?= {
+				add_modifier = { name = cwp_korea_unified days = long_modifier_time }
+			}
+			c:STK ?= {
+				add_modifier = { name = cwp_korea_unified days = long_modifier_time }
+			}
+			cwp_tkor_cleanup_effect = yes
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_standard_failure_conclusion_desc
+		trigger = {
+			NOT = { exists = c:NRK }
+			NOT = { exists = c:STK }
+		}
+		effect = {
+			cwp_tkor_cleanup_effect = yes
+		}
+	}
+
+	progressbar = no
+
+	weight = 10000
+
+	should_be_pinned_by_default_involved = yes
+	should_be_pinned_by_default_uninvolved_or_context = no
+
+	can_revolution_inherit = yes
+}

@@ -1,0 +1,359 @@
+﻿# Cold War Project: buttons for je_cwp_two_koreas (Korea chapter 2). Root = the country pressing.
+
+cwp_tkor_provocation_button = {
+	name = "cwp_tkor_provocation_button"
+	desc = "cwp_tkor_provocation_button_desc"
+
+	visible = {
+		c:NRK ?= this
+	}
+
+	possible = {
+		is_at_war = no
+		NOT = { has_modifier = cwp_tkor_provocations }
+	}
+
+	effect = {
+		add_modifier = { name = cwp_tkor_provocations days = 365 }
+		c:STK ?= { trigger_event = { id = cwp_korea.40 days = 3 popup = yes } }
+	}
+
+	ai_chance = {
+		value = 6
+		if = {
+			limit = {
+				scope:journal_entry ?= { "scripted_bar_progress(cwp_tkor_tension_bar)" < 50 }
+			}
+			add = 6
+		}
+		if = {
+			limit = { has_modifier = cwp_tkor_dialogue }
+			multiply = 0.3
+		}
+	}
+}
+
+cwp_tkor_restrain_button = {
+	name = "cwp_tkor_restrain_button"
+	desc = "cwp_tkor_restrain_button_desc"
+
+	visible = {
+		OR = {
+			c:RUS ?= this
+			c:PRC ?= this
+		}
+	}
+
+	possible = {
+		c:NRK ?= { NOT = { has_modifier = cwp_tkor_restraint } }
+		custom_tooltip = {
+			text = cwp_tkor_tension_high_tt
+			scope:journal_entry ?= { "scripted_bar_progress(cwp_tkor_tension_bar)" >= 70 }
+		}
+	}
+
+	effect = {
+		c:NRK = {
+			add_modifier = { name = cwp_tkor_restraint days = 730 }
+			change_relations = { country = root value = -10 }
+		}
+	}
+
+	ai_chance = {
+		value = 10
+	}
+}
+
+cwp_tkor_station_forces_button = {
+	name = "cwp_tkor_station_forces_button"
+	desc = "cwp_tkor_station_forces_button_desc"
+
+	visible = {
+		c:USA ?= this
+		NOT = { has_global_variable = cwp_tkor_usfk }
+	}
+
+	possible = {
+		c:STK ?= { is_subject = no }
+		"relations(c:STK)" >= 0
+	}
+
+	effect = {
+		set_global_variable = cwp_tkor_usfk
+		add_modifier = { name = cwp_korea_us_garrison }
+	}
+
+	ai_chance = {
+		value = 5
+		if = {
+			limit = {
+				scope:journal_entry ?= { "scripted_bar_progress(cwp_tkor_tension_bar)" >= 60 }
+			}
+			add = 15
+		}
+	}
+}
+
+cwp_tkor_withdraw_forces_button = {
+	name = "cwp_tkor_withdraw_forces_button"
+	desc = "cwp_tkor_withdraw_forces_button_desc"
+
+	visible = {
+		c:USA ?= this
+		has_global_variable = cwp_tkor_usfk
+	}
+
+	possible = {
+		NOT = { cwp_korea_war_running = yes }
+	}
+
+	effect = {
+		remove_global_variable = cwp_tkor_usfk
+		remove_modifier = cwp_korea_us_garrison
+	}
+
+	ai_chance = {
+		value = 0
+		# Plans to withdraw were drawn up more than once and shelved every time
+		if = {
+			limit = {
+				scope:journal_entry ?= { "scripted_bar_progress(cwp_tkor_tension_bar)" < 30 }
+			}
+			add = 2
+		}
+	}
+}
+
+cwp_tkor_dialogue_button = {
+	name = "cwp_tkor_dialogue_button"
+	desc = "cwp_tkor_dialogue_button_desc"
+
+	visible = {
+		OR = {
+			c:NRK ?= this
+			c:STK ?= this
+		}
+	}
+
+	possible = {
+		is_at_war = no
+		NOT = { has_modifier = cwp_tkor_dialogue }
+		custom_tooltip = {
+			text = cwp_tkor_not_in_crisis_tt
+			scope:journal_entry ?= { "scripted_bar_progress(cwp_tkor_tension_bar)" < 80 }
+		}
+	}
+
+	effect = {
+		add_modifier = { name = cwp_tkor_dialogue days = 730 }
+		if = {
+			limit = {
+				OR = {
+					AND = {
+						c:NRK ?= this
+						c:STK ?= { has_modifier = cwp_tkor_dialogue }
+					}
+					AND = {
+						c:STK ?= this
+						c:NRK ?= { has_modifier = cwp_tkor_dialogue }
+					}
+				}
+			}
+			custom_tooltip = cwp_tkor_summit_tt
+			hidden_effect = {
+				c:NRK = { trigger_event = { id = cwp_korea.41 days = 7 popup = yes } }
+				c:STK = { trigger_event = { id = cwp_korea.41 days = 7 popup = yes } }
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 2
+		if = {
+			limit = {
+				c:STK ?= this
+				scope:journal_entry ?= { "scripted_bar_progress(cwp_tkor_tension_bar)" < 50 }
+			}
+			add = 6
+		}
+		if = {
+			limit = {
+				c:NRK ?= this
+				cwp_tkor_north_isolated = yes
+			}
+			add = 6
+		}
+		# Answering the other side's offer is easier than making one
+		if = {
+			limit = {
+				OR = {
+					AND = {
+						c:NRK ?= this
+						c:STK ?= { has_modifier = cwp_tkor_dialogue }
+					}
+					AND = {
+						c:STK ?= this
+						c:NRK ?= { has_modifier = cwp_tkor_dialogue }
+					}
+				}
+			}
+			add = 8
+		}
+	}
+}
+
+cwp_tkor_engagement_button = {
+	name = "cwp_tkor_engagement_button"
+	desc = "cwp_tkor_engagement_button_desc"
+
+	visible = {
+		c:STK ?= this
+	}
+
+	possible = {
+		is_at_war = no
+		has_modifier = cwp_tkor_dialogue
+		NOT = { has_modifier = cwp_tkor_engagement_cost }
+	}
+
+	effect = {
+		add_modifier = { name = cwp_tkor_engagement_cost days = 1095 }
+		c:NRK ?= {
+			add_modifier = { name = cwp_tkor_engagement days = 1095 }
+		}
+	}
+
+	ai_chance = {
+		value = 4
+	}
+}
+
+cwp_tkor_bomb_button = {
+	name = "cwp_tkor_bomb_button"
+	desc = "cwp_tkor_bomb_button_desc"
+
+	visible = {
+		c:NRK ?= this
+		NOT = { cwp_is_nuclear_power = yes }
+		NOT = { has_variable = cwp_nuc_programme_var }
+	}
+
+	possible = {
+		is_subject = no
+		custom_tooltip = {
+			text = cwp_nuc_bomb_exists_tt
+			any_country = { cwp_is_nuclear_power = yes }
+		}
+	}
+
+	effect = {
+		set_variable = cwp_nuc_programme_var
+		add_journal_entry = { type = je_cwp_nuclear_programme }
+	}
+
+	ai_chance = {
+		value = 0
+		# Abandoned by its patrons and facing American forces, the North looked for a deterrent of its own
+		if = {
+			limit = { cwp_tkor_north_isolated = yes }
+			add = 4
+		}
+		if = {
+			limit = { cwp_tkor_us_forces = yes }
+			add = 1
+		}
+	}
+}
+
+cwp_tkor_renew_war_button = {
+	name = "cwp_tkor_renew_war_button"
+	desc = "cwp_tkor_renew_war_button_desc"
+
+	visible = {
+		OR = {
+			c:NRK ?= this
+			c:STK ?= this
+		}
+	}
+
+	possible = {
+		is_at_war = no
+		c:NRK ?= { is_subject = no }
+		c:STK ?= { is_subject = no }
+		custom_tooltip = {
+			text = cwp_tkor_war_crisis_tt
+			scope:journal_entry ?= { "scripted_bar_progress(cwp_tkor_tension_bar)" >= 80 }
+		}
+		custom_tooltip = {
+			text = cwp_tkor_war_gate_tt
+			OR = {
+				AND = {
+					c:NRK ?= this
+					NOT = { cwp_tkor_us_forces = yes }
+					NOT = { cwp_tkor_us_treaty = yes }
+					c:NRK.army_power_projection > c:STK.army_power_projection
+				}
+				AND = {
+					c:STK ?= this
+					cwp_tkor_north_isolated = yes
+					NOT = { c:NRK ?= { cwp_is_nuclear_power = yes } }
+					c:STK.army_power_projection > c:NRK.army_power_projection
+				}
+			}
+		}
+	}
+
+	effect = {
+		if = {
+			limit = { c:NRK ?= this }
+			cwp_korea_start_war_effect = { TARGET = c:STK }
+			c:USA ?= { trigger_event = { id = cwp_korea.20 popup = yes } }
+		}
+		else = {
+			cwp_korea_start_war_effect = { TARGET = c:NRK }
+		}
+		c:PRC ?= { trigger_event = { id = cwp_korea.21 popup = yes } }
+	}
+
+	ai_chance = {
+		value = 2
+	}
+}
+
+cwp_tkor_reunification_button = {
+	name = "cwp_tkor_reunification_button"
+	desc = "cwp_tkor_reunification_button_desc"
+
+	visible = {
+		OR = {
+			c:NRK ?= this
+			c:STK ?= this
+		}
+		NOT = { has_variable = cwp_tkor_agrees }
+	}
+
+	possible = {
+		is_at_war = no
+		cwp_tkor_reunification_ready = yes
+	}
+
+	effect = {
+		set_variable = cwp_tkor_agrees
+		custom_tooltip = cwp_tkor_agrees_tt
+	}
+
+	ai_chance = {
+		value = 0
+		if = {
+			limit = { c:STK ?= this }
+			add = 30
+		}
+		if = {
+			limit = {
+				c:NRK ?= this
+				cwp_tkor_north_isolated = yes
+			}
+			add = 20
+		}
+	}
+}
