@@ -11,6 +11,11 @@ cwp_ai_construction_backstop = {
 			is_ai = yes
 			in_default = no
 			scaled_debt < 0.25
+			# The queue estimate logs an error when construction speed is zero, so check capacity first.
+			country_has_building_type_levels = {
+				target = bt:building_construction_sector
+				value >= 1
+			}
 			has_sufficient_construction_capacity_for_investment = no
 			construction_queue_private_duration > 26
 			construction_queue_num_queued_government_levels < 25
@@ -50,17 +55,24 @@ cwp_ai_construction_backstop = {
 # pools grew to several times annual GDP. A state can host more construction with more people.
 # Run yearly from on_yearly_pulse_state (root = state).
 cwp_construction_workforce_update = {
-	remove_modifier = cwp_construction_workforce
+	# Only ever raise the bonus. Removing it, even to re-add it at once, lowers the cap for a moment
+	# and the engine demolishes the levels above it; a shrinking population keeps what it built.
 	if = {
-		limit = { state_population >= 400000 }
+		limit = {
+			state_population >= 400000
+			OR = {
+				NOT = { has_variable = cwp_construction_workforce_levels }
+				var:cwp_construction_workforce_levels < cwp_construction_workforce_target
+			}
+		}
+		remove_modifier = cwp_construction_workforce
+		set_variable = {
+			name = cwp_construction_workforce_levels
+			value = cwp_construction_workforce_target
+		}
 		add_modifier = {
 			name = cwp_construction_workforce
-			multiplier = {
-				value = state_population
-				divide = 400000
-				max = 40
-				floor = yes
-			}
+			multiplier = var:cwp_construction_workforce_levels
 		}
 	}
 }
