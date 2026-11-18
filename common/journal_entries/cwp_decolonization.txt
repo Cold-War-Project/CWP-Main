@@ -43,6 +43,24 @@ je_cwp_winds_of_change = {
 
 	scripted_progress_bar = cwp_tide_bar
 
+	# The tally of new nations, against the colonies there were in 1946.
+	current_value = {
+		value = 0
+		if = {
+			limit = { has_global_variable = cwp_free_former_colonies }
+			add = global_var:cwp_free_former_colonies
+		}
+	}
+	goal_add_value = {
+		value = 0
+		if = {
+			limit = { has_global_variable = cwp_colonies_at_start }
+			add = global_var:cwp_colonies_at_start
+		}
+		min = 1
+	}
+	progressbar = yes
+
 	scripted_button = cwp_woc_champion_self_determination_button
 	scripted_button = cwp_woc_guard_allied_empires_button
 	scripted_button = cwp_woc_development_funds_button
@@ -116,6 +134,8 @@ je_cwp_winds_of_change = {
 }
 
 ### India: the Transfer of Power
+# One bar, communal tension (a real continuous quantity the game has no number for). Independence itself reads
+# India's liberty desire: Britain sets a date once India is restless enough, or cannot hold on at 85.
 
 je_cwp_india_transfer_of_power = {
 	group = je_group_cwp_decolonization
@@ -142,7 +162,6 @@ je_cwp_india_transfer_of_power = {
 		c:HND ?= { trigger_event = { id = cwp_india.1 popup = yes } }
 	}
 
-	scripted_progress_bar = cwp_india_self_rule_bar
 	scripted_progress_bar = cwp_india_communal_bar
 
 	scripted_button = cwp_india_cabinet_mission_button
@@ -159,7 +178,7 @@ je_cwp_india_transfer_of_power = {
 			}
 			triggered_desc = {
 				desc = je_cwp_india_transfer_of_power_status_partition
-				trigger = { scope:journal_entry = { "scripted_bar_progress(cwp_india_communal_bar)" >= 60 } }
+				trigger = { scope:journal_entry = { "scripted_bar_progress(cwp_india_communal_bar)" >= 45 } }
 			}
 			triggered_desc = {
 				desc = je_cwp_india_transfer_of_power_status_united
@@ -181,7 +200,7 @@ je_cwp_india_transfer_of_power = {
 				limit = {
 					NOT = { has_global_variable = cwp_india_naval_mutiny_fired }
 					c:GBR ?= { NOT = { has_variable = cwp_india_withdrawal_announced } }
-					scope:journal_entry = { "scripted_bar_progress(cwp_india_self_rule_bar)" >= 80 }
+					c:HND ?= { liberty_desire >= 70 }
 				}
 				set_global_variable = cwp_india_naval_mutiny_fired
 				c:HND ?= { trigger_event = { id = cwp_india.3 popup = yes } }
@@ -197,11 +216,8 @@ je_cwp_india_transfer_of_power = {
 		conclusion_desc = je_cwp_india_united_desc
 		trigger = {
 			c:HND ?= { is_subject_of = c:GBR }
-			OR = {
-				c:GBR ?= { has_variable = cwp_india_withdrawal_announced }
-				scope:journal_entry = { "scripted_bar_progress(cwp_india_self_rule_bar)" >= 100 }
-			}
-			scope:journal_entry = { "scripted_bar_progress(cwp_india_communal_bar)" < 60 }
+			cwp_india_transfer_due = yes
+			scope:journal_entry = { "scripted_bar_progress(cwp_india_communal_bar)" < 45 }
 		}
 		effect = {
 			remove_global_variable = cwp_india_active
@@ -219,11 +235,8 @@ je_cwp_india_transfer_of_power = {
 		conclusion_desc = je_cwp_india_partition_desc
 		trigger = {
 			c:HND ?= { is_subject_of = c:GBR }
-			OR = {
-				c:GBR ?= { has_variable = cwp_india_withdrawal_announced }
-				scope:journal_entry = { "scripted_bar_progress(cwp_india_self_rule_bar)" >= 100 }
-			}
-			scope:journal_entry = { "scripted_bar_progress(cwp_india_communal_bar)" >= 60 }
+			cwp_india_transfer_due = yes
+			scope:journal_entry = { "scripted_bar_progress(cwp_india_communal_bar)" >= 45 }
 		}
 		effect = {
 			remove_global_variable = cwp_india_active
@@ -247,49 +260,11 @@ je_cwp_india_transfer_of_power = {
 		effect = {
 			remove_global_variable = cwp_india_active
 			if = {
-				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_india_communal_bar)" >= 60 } }
+				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_india_communal_bar)" >= 45 } }
 				cwp_india_partition_effect = yes
 			}
 			c:GBR ?= { trigger_event = { id = cwp_india.12 popup = yes } }
 			c:HND ?= { trigger_event = { id = cwp_india.12 popup = yes } }
-		}
-	}
-
-	# The Raj holds, for now
-	outcome = {
-		header = je_standard_failure_header
-		effect_header = je_standard_on_failure_header
-		color = "blue_negative"
-		conclusion_desc = je_cwp_india_raj_holds_desc
-		trigger = {
-			c:HND ?= { is_subject_of = c:GBR }
-			scope:journal_entry = { "scripted_bar_progress(cwp_india_self_rule_bar)" <= 0 }
-		}
-		effect = {
-			remove_global_variable = cwp_india_active
-			set_global_variable = {
-				name = cwp_india_je_cooldown
-				years = 10
-			}
-			c:HND = { add_liberty_desire = -20 }
-			c:GBR = {
-				add_modifier = {
-					name = cwp_india_raj_holds
-					years = 10
-					# money_amount_multiplier_medium reads root.gdp, and a contextless JE has no root
-					multiplier = {
-						value = c:GBR.gdp
-						divide = 100000
-						multiply = 0.25
-						round = yes
-						multiply = 100
-						min = 100
-					}
-				}
-				cwp_decolonization_add_setback = yes
-				trigger_event = { id = cwp_india.13 popup = yes }
-			}
-			c:HND ?= { trigger_event = { id = cwp_india.13 popup = yes } }
 		}
 	}
 
@@ -317,6 +292,10 @@ je_cwp_india_transfer_of_power = {
 }
 
 ### Indonesia: the National Revolution
+# No bar: a mission, then a button. The Republic must survive on Java and Sumatra, Washington must lean on
+# The Hague and the guns must fall silent; then the Netherlands can call the Round Table. The war itself is
+# fought by the engine, with war support shaped by cwp_decolonization_war_support.
+# 1946 start: the Republic (IDS) is independent and at war with the Netherlands, which holds the outer islands.
 
 je_cwp_indonesian_revolution = {
 	group = je_group_cwp_decolonization
@@ -326,7 +305,6 @@ je_cwp_indonesian_revolution = {
 		always = yes
 	}
 
-	# 1946 start: the Republic (IDS) is independent and at war with the Netherlands, which holds the outer islands.
 	should_be_involved = {
 		OR = {
 			c:NET ?= this
@@ -341,12 +319,29 @@ je_cwp_indonesian_revolution = {
 
 	immediate = {
 		set_global_variable = cwp_indonesia_active
-		set_global_variable = { name = cwp_indonesia_bar_level value = 0 }
 		c:NET ?= { trigger_event = { id = cwp_indonesia.1 popup = yes } }
 		c:IDS ?= { trigger_event = { id = cwp_indonesia.1 popup = yes } }
 	}
 
-	scripted_progress_bar = cwp_indonesia_revolution_bar
+	current_value = {
+		value = 0
+		if = {
+			limit = { cwp_indonesia_republic_holds = yes }
+			add = 1
+		}
+		if = {
+			limit = { has_global_variable = cwp_indonesia_us_pressure_applied }
+			add = 1
+		}
+		if = {
+			limit = { cwp_indonesia_ceasefire = yes }
+			add = 1
+		}
+	}
+	goal_add_value = {
+		value = 3
+	}
+	progressbar = yes
 
 	scripted_button = cwp_indonesia_police_action_button
 	scripted_button = cwp_indonesia_talks_button
@@ -367,12 +362,6 @@ je_cwp_indonesian_revolution = {
 		}
 	}
 
-	on_monthly_pulse = {
-		effect = {
-			cwp_indonesia_set_bar_level = yes
-		}
-	}
-
 	# The Dutch hold nothing in Indonesia any more: by war, or by the Round Table.
 	outcome = {
 		header = je_standard_completion_header
@@ -388,7 +377,6 @@ je_cwp_indonesian_revolution = {
 		}
 		effect = {
 			remove_global_variable = cwp_indonesia_active
-			remove_global_variable = cwp_indonesia_bar_level
 			c:IDS = {
 				set_variable = cwp_former_colony
 				if = {
@@ -420,7 +408,6 @@ je_cwp_indonesian_revolution = {
 		}
 		effect = {
 			remove_global_variable = cwp_indonesia_active
-			remove_global_variable = cwp_indonesia_bar_level
 			set_global_variable = {
 				name = cwp_indonesia_je_cooldown
 				years = 10
@@ -447,7 +434,6 @@ je_cwp_indonesian_revolution = {
 		}
 		effect = {
 			remove_global_variable = cwp_indonesia_active
-			remove_global_variable = cwp_indonesia_bar_level
 		}
 	}
 
@@ -457,10 +443,11 @@ je_cwp_indonesian_revolution = {
 }
 
 ### Indochina: the war
-# Modelled on vanilla je_the_first_carlist_war: a slow people's war phase (narrow fighting, war support kept from
-# collapsing), then a general offensive by either side that ends it and gives momentum.
-# 1946 start (history PR #802): DAI independent in Tonkin; VNM, an FRA puppet, holds Annam, the Mekong, Laos and
-# Cambodia; FRA has a dp_make_dominion play against DAI.
+# No bar: territory and war support (vanilla je_the_first_carlist_war for the people's war phase).
+# 1946 start: DAI independent in Tonkin (or a French dominion after the March 1946 accords); VNM, an FRA puppet,
+# holds Annam, the Mekong, Laos and Cambodia. The people's war phase narrows combat and props up war support
+# (cwp_decolonization_war_support); a general offensive ends it. France can seek a settlement once the war turns:
+# its own war support below 40, or the Viet Minh holding Annam or the delta.
 
 je_cwp_indochina_war = {
 	group = je_group_cwp_decolonization
@@ -487,13 +474,10 @@ je_cwp_indochina_war = {
 	immediate = {
 		set_global_variable = cwp_indochina_active
 		set_global_variable = cwp_indochina_peoples_war_phase
-		set_global_variable = { name = cwp_indochina_bar_level value = 0 }
 		set_global_variable = { name = cwp_indochina_months value = 0 }
 		c:FRA ?= { trigger_event = { id = cwp_indochina.1 popup = yes } }
 		c:DAI ?= { trigger_event = { id = cwp_indochina.1 popup = yes } }
 	}
-
-	scripted_progress_bar = cwp_indochina_war_bar
 
 	scripted_button = cwp_indochina_reinforce_button
 	scripted_button = cwp_indochina_french_offensive_button
@@ -504,6 +488,13 @@ je_cwp_indochina_war = {
 
 	status_desc = {
 		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_indochina_war_status_accords
+				trigger = {
+					c:DAI ?= { is_subject_of = c:FRA }
+					NOT = { c:FRA ?= { has_war_with = c:DAI } }
+				}
+			}
 			triggered_desc = {
 				desc = je_cwp_indochina_war_status_peoples_war
 				trigger = { has_global_variable = cwp_indochina_peoples_war_phase }
@@ -537,8 +528,11 @@ je_cwp_indochina_war = {
 					remove_modifier = cwp_indochina_viet_minh_resistance
 				}
 			}
-			cwp_indochina_set_bar_level = yes
-			change_global_variable = { name = cwp_indochina_months add = 1 }
+			if = {
+				limit = { c:FRA ?= { has_war_with = c:DAI } }
+				set_global_variable = cwp_indochina_war_fought
+				change_global_variable = { name = cwp_indochina_months add = 1 }
+			}
 		}
 	}
 
@@ -607,7 +601,7 @@ je_cwp_indochina_war = {
 		}
 	}
 
-	# The Viet Minh are broken
+	# The Viet Minh are broken: the war was fought and ended with the DRV still under France, or destroyed
 	outcome = {
 		header = je_standard_failure_header
 		effect_header = je_standard_on_failure_header
@@ -617,8 +611,9 @@ je_cwp_indochina_war = {
 			OR = {
 				NOT = { exists = c:DAI }
 				AND = {
+					has_global_variable = cwp_indochina_war_fought
 					c:DAI ?= { is_subject_of = c:FRA }
-					scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" <= -50 }
+					NOT = { c:FRA ?= { has_war_with = c:DAI } }
 				}
 			}
 		}
@@ -661,6 +656,9 @@ je_cwp_indochina_war = {
 }
 
 ### Algeria
+# One bar, the insurgency. France's side runs through politics: once the war is going badly, a crisis of the
+# Republic (cwp_algeria.2) lets the Armed Forces impose a strongman, who alone can then offer self-determination
+# from the right; a left-leaning government can offer it too.
 
 je_cwp_algerian_question = {
 	group = je_group_cwp_decolonization
@@ -670,9 +668,6 @@ je_cwp_algerian_question = {
 		always = yes
 	}
 
-	# Algeria was three French departments, so there is no subject whose liberty desire can rise.
-	# The rising waits for the world around it to move (cwp_algeria_can_open): the tide, a lost war in
-	# Indochina, free neighbours.
 	should_be_involved = {
 		c:FRA ?= this
 	}
@@ -683,34 +678,33 @@ je_cwp_algerian_question = {
 
 	immediate = {
 		set_global_variable = cwp_algeria_active
-		set_global_variable = { name = cwp_algeria_insurgency_level value = 0 }
 		c:FRA ?= { trigger_event = { id = cwp_algeria.1 popup = yes } }
 	}
 
 	scripted_progress_bar = cwp_algeria_insurgency_bar
-	scripted_progress_bar = cwp_algeria_will_bar
 
 	scripted_button = cwp_algeria_pacification_button
 	scripted_button = cwp_algeria_constantine_plan_button
 	scripted_button = cwp_algeria_referendum_button
 
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_algerian_question_status_strongman
+				trigger = { c:FRA ?= { has_variable = cwp_algeria_strongman } }
+			}
+			triggered_desc = {
+				desc = je_cwp_algerian_question_status_war
+			}
+		}
+	}
+
 	on_monthly_pulse = {
 		effect = {
 			if = {
-				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_algeria_insurgency_bar)" >= 50 } }
-				set_global_variable = { name = cwp_algeria_insurgency_level value = 2 }
-			}
-			else_if = {
-				limit = { scope:journal_entry = { "scripted_bar_progress(cwp_algeria_insurgency_bar)" >= 25 } }
-				set_global_variable = { name = cwp_algeria_insurgency_level value = 1 }
-			}
-			else = {
-				set_global_variable = { name = cwp_algeria_insurgency_level value = 0 }
-			}
-			if = {
 				limit = {
 					NOT = { has_global_variable = cwp_algeria_crisis_fired }
-					scope:journal_entry = { "scripted_bar_progress(cwp_algeria_will_bar)" <= 30 }
+					scope:journal_entry = { "scripted_bar_progress(cwp_algeria_insurgency_bar)" >= 50 }
 				}
 				set_global_variable = cwp_algeria_crisis_fired
 				c:FRA ?= { trigger_event = { id = cwp_algeria.2 popup = yes } }
@@ -741,39 +735,17 @@ je_cwp_algerian_question = {
 					years = 5
 					is_decaying = yes
 				}
+				# The generals who brought the strongman to power feel betrayed.
+				if = {
+					limit = { has_variable = cwp_algeria_strongman }
+					add_radicals = {
+						value = 0.1
+						interest_group = ig:ig_armed_forces
+					}
+				}
 				trigger_event = { id = cwp_algeria.10 popup = yes }
 			}
 			c:ALD ?= { trigger_event = { id = cwp_algeria.10 popup = yes } }
-		}
-	}
-
-	# France's will breaks first
-	outcome = {
-		header = je_standard_completion_header
-		effect_header = je_standard_on_completion_header
-		color = "gold_positive"
-		conclusion_desc = je_cwp_algeria_will_broken_desc
-		trigger = {
-			NOT = { c:FRA ?= { has_variable = cwp_algeria_self_determination } }
-			scope:journal_entry = { "scripted_bar_progress(cwp_algeria_will_bar)" <= 0 }
-		}
-		effect = {
-			remove_global_variable = cwp_algeria_active
-			cwp_algeria_independence_effect = yes
-			c:FRA = {
-				add_modifier = {
-					name = cwp_algeria_war_weariness
-					years = 5
-					is_decaying = yes
-				}
-				add_modifier = {
-					name = cwp_end_of_empire
-					years = 5
-					is_decaying = yes
-				}
-				trigger_event = { id = cwp_algeria.11 popup = yes }
-			}
-			c:ALD ?= { trigger_event = { id = cwp_algeria.11 popup = yes } }
 		}
 	}
 

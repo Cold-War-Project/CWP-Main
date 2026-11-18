@@ -44,6 +44,11 @@ cwp_decolonization_register_colonies = {
 		overlord = {
 			set_variable = cwp_colonial_power
 		}
+		if = {
+			limit = { NOT = { has_global_variable = cwp_colonies_at_start } }
+			set_global_variable = { name = cwp_colonies_at_start value = 0 }
+		}
+		change_global_variable = { name = cwp_colonies_at_start add = 1 }
 	}
 }
 
@@ -105,6 +110,32 @@ cwp_decolonization_monthly_update = {
 			overlord ?= { has_war_with = prev }
 		}
 		change_global_variable = { name = cwp_colonial_wars add = 1 }
+	}
+
+	# The new states meet (the Bandung pattern): once eight former colonies are free, they hold their first
+	# conference of Asian and African states and the tide jumps.
+	if = {
+		limit = {
+			NOT = { has_global_variable = cwp_woc_afro_asian_conference }
+			global_var:cwp_free_former_colonies >= 8
+		}
+		set_global_variable = cwp_woc_afro_asian_conference
+		scope:journal_entry = {
+			add_progress = {
+				name = cwp_tide_bar
+				value = 8
+			}
+		}
+		every_country = {
+			limit = {
+				OR = {
+					has_variable = cwp_former_colony
+					c:USA ?= this
+					c:RUS ?= this
+				}
+			}
+			trigger_event = { id = cwp_decolonization.4 }
+		}
 	}
 
 	# Tide tier from the bar.
@@ -418,7 +449,6 @@ cwp_indochina_end_peoples_war = {
 # Scope: none. Clears the phase variable and the war modifiers when the JE ends.
 cwp_indochina_cleanup = {
 	remove_global_variable = cwp_indochina_peoples_war_phase
-	remove_global_variable = cwp_indochina_bar_level
 	remove_global_variable = cwp_indochina_months
 	every_country = {
 		limit = { has_modifier = cwp_indochina_peoples_war }
@@ -542,50 +572,4 @@ cwp_indonesia_end_war = {
 	}
 }
 
-# Scope: none, scope:journal_entry set. Monthly: mirrors the bar into cwp_indochina_bar_level (-2..2), which
-# cwp_decolonization_war_support (common/script_values/cwp_decolonization_values.txt) turns into war support.
-cwp_indochina_set_bar_level = {
-	if = {
-		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" >= 40 } }
-		set_global_variable = { name = cwp_indochina_bar_level value = 2 }
-	}
-	else_if = {
-		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" >= 25 } }
-		set_global_variable = { name = cwp_indochina_bar_level value = 1 }
-	}
-	else_if = {
-		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" <= -40 } }
-		set_global_variable = { name = cwp_indochina_bar_level value = -2 }
-	}
-	else_if = {
-		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" <= -25 } }
-		set_global_variable = { name = cwp_indochina_bar_level value = -1 }
-	}
-	else = {
-		set_global_variable = { name = cwp_indochina_bar_level value = 0 }
-	}
-}
 
-# Scope: none, scope:journal_entry set. Monthly: mirrors the bar into cwp_indonesia_bar_level (-2..2), which
-# cwp_decolonization_war_support (common/script_values/cwp_decolonization_values.txt) turns into war support.
-cwp_indonesia_set_bar_level = {
-	if = {
-		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indonesia_revolution_bar)" >= 40 } }
-		set_global_variable = { name = cwp_indonesia_bar_level value = 2 }
-	}
-	else_if = {
-		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indonesia_revolution_bar)" >= 25 } }
-		set_global_variable = { name = cwp_indonesia_bar_level value = 1 }
-	}
-	else_if = {
-		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indonesia_revolution_bar)" <= -40 } }
-		set_global_variable = { name = cwp_indonesia_bar_level value = -2 }
-	}
-	else_if = {
-		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_indonesia_revolution_bar)" <= -25 } }
-		set_global_variable = { name = cwp_indonesia_bar_level value = -1 }
-	}
-	else = {
-		set_global_variable = { name = cwp_indonesia_bar_level value = 0 }
-	}
-}
