@@ -1,4 +1,4 @@
----
+﻿---
 paths:
   - "gui/**"
   - "gfx/**"
@@ -10,6 +10,8 @@ paths:
 ---
 
 # GUI, graphics, audio
+
+**Check every on-screen change in the real GUI** (Jack, 2026-11-18): book an in-game screenshot with `cwp-gui-batch` (`docs/agents/forge-testing.md`) and read it before the change lands, so nothing overflows or overlaps.
 
 ## What the mod ships
 
