@@ -68,6 +68,17 @@ def launch(out: Path, *args):
                               stdin=subprocess.DEVNULL, env=env, timeout=600)
 
 
+def clear_popups(out: Path):
+    """Close desktop popups that steal the game's clicks and keys (the GNOME "Unlock Keyring" prompt
+    after a fresh login swallowed the console `observe` on 2026-11-17). Same as cwp-observe."""
+    r = sh("xdotool", "search", "--name", "Unlock Keyring|Authentication required")
+    for w in r.stdout.split():
+        name = sh("xdotool", "getwindowname", w).stdout.strip()
+        if sh("xdotool", "windowclose", w).returncode != 0:
+            sh("xdotool", "windowkill", w)
+        log(out, f"closed popup: {name}")
+
+
 def sh(*cmd, check=False, **kw):
     env = dict(os.environ, DISPLAY=os.environ.get("DISPLAY", ":0"))
     return subprocess.run(cmd, text=True, capture_output=True, check=check, env=env, **kw)
@@ -168,6 +179,7 @@ def one_run(worktree: Path, out: Path, end_year: int, every: int, max_minutes: f
             steps = START_STEPS
         started = time.time()
         for act, args, wait in steps:
+            clear_popups(out)
             if act == "click":
                 sh("vic-click", *map(str, args))
             elif act == "key":
@@ -279,6 +291,9 @@ def run_batch(worktree: Path, outdir: Path, runs: int, end_year: int, every: int
         meta = one_run(worktree, target, end_year, every, max_minutes, yield_to_queue, pm_tags)
         sessions += 1
         print(json.dumps({"run": target.name, **meta}), flush=True)
-        if meta["status"] in ("no_autosave", "no_lock") or sessions > runs * 6:
+        # A failed start leaves a fresh run with nothing to resume: something is wrong with the start
+        # sequence, so stop. A failed resume keeps its save and is retried (up to the session cap).
+        fresh_fail = meta["status"] == "no_autosave" and not (target / "resume.v3").exists()
+        if fresh_fail or meta["status"] == "no_lock" or sessions > runs * 6:
             break  # the start sequence is broken (or something keeps failing); don't burn more slots
     sh("bash", "-c", "cwp-vic queue | grep -q . || game-mode off")
