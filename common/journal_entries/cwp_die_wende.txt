@@ -14,7 +14,6 @@ je_cwp_die_wende = {
 	}
 
 	scripted_progress_bar = cwp_dw_revolution_bar
-	scripted_progress_bar = cwp_dw_two_plus_four_bar
 
 	scripted_button = cwp_dw_open_wall_button
 	scripted_button = cwp_dw_round_table_button
@@ -50,8 +49,37 @@ je_cwp_die_wende = {
 		}
 	}
 
+	on_monthly_pulse = {
+		effect = {
+			# A revolution that has won, facing a power that blocks unity: count the months of deadlock
+			if = {
+				limit = {
+					scope:journal_entry = { "scripted_bar_progress(cwp_dw_revolution_bar)" >= 100 }
+					any_country = {
+						cwp_dw_is_four_power = yes
+						has_variable = cwp_dw_block
+					}
+				}
+				if = {
+					limit = { NOT = { has_global_variable = cwp_dw_deadlock_months } }
+					set_global_variable = { name = cwp_dw_deadlock_months value = 0 }
+				}
+				change_global_variable = { name = cwp_dw_deadlock_months add = 1 }
+				clamp_global_variable = { name = cwp_dw_deadlock_months min = 0 max = 12 }
+			}
+			else_if = {
+				limit = { has_global_variable = cwp_dw_deadlock_months }
+				remove_global_variable = cwp_dw_deadlock_months
+			}
+		}
+	}
+
 	status_desc = {
 		first_valid = {
+			triggered_desc = {
+				desc = cwp_dw_status_deadlock
+				trigger = { has_global_variable = cwp_dw_deadlock_months }
+			}
 			triggered_desc = {
 				desc = cwp_dw_status_crackdown
 				trigger = { c:DDR ?= { has_modifier = cwp_dw_crackdown } }
@@ -76,11 +104,9 @@ je_cwp_die_wende = {
 		trigger = {
 			custom_tooltip = {
 				text = cwp_dw_outcome_accession_tt
-				scope:journal_entry = {
-					"scripted_bar_progress(cwp_dw_revolution_bar)" >= 100
-					"scripted_bar_progress(cwp_dw_two_plus_four_bar)" >= 100
-				}
+				scope:journal_entry = { "scripted_bar_progress(cwp_dw_revolution_bar)" >= 100 }
 			}
+			cwp_dw_four_powers_consent = yes
 		}
 		effect = {
 			set_global_variable = cwp_dw_concluded
@@ -110,14 +136,8 @@ je_cwp_die_wende = {
 		trigger = {
 			custom_tooltip = {
 				text = cwp_dw_outcome_reformed_tt
-				scope:journal_entry = {
-					"scripted_bar_progress(cwp_dw_revolution_bar)" >= 100
-					"scripted_bar_progress(cwp_dw_two_plus_four_bar)" <= 0
-				}
-				any_country = {
-					cwp_dw_is_four_power = yes
-					has_variable = cwp_dw_block
-				}
+				has_global_variable = cwp_dw_deadlock_months
+				global_var:cwp_dw_deadlock_months >= 12
 			}
 		}
 		effect = {

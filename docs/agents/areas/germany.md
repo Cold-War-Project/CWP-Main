@@ -71,9 +71,8 @@ Contextless, same group as chapter 1. Activates once chapter 1 has left both sta
 | Bar | Start | Up | Down |
 |---|---|---|---|
 | `cwp_tg_legitimacy_bar` GDR Legitimacy | 50 | DDR SoL at least GER's (+1), Soviet backing (DDR in a bloc RUS leads), the closed border, Stasi, consumer socialism, Basic Treaty recognition | Republikflucht (open border and lower SoL), lower SoL than GER, Moscow's guarantee withdrawn (−2), contact ≥ 60 (Western television), radicals ≥ 20% |
-| `cwp_tg_contact_bar` Inner-German Contact | 20 | Ostpolitik, Basic Treaty, Freikauf, détente (US-Soviet relations ≥ 20) | Hallstein Doctrine (set at activation), tension (≤ −20), the closed border without a treaty |
 
-Buttons: DDR closes the border (only while East Germans are leaving for a better-off West; AI at legitimacy ≤ 35), Stasi, consumer socialism; GER Ostpolitik (AI likelier under détente or with the trade unions in government), Basic Treaty offer (contact ≥ 40, the GDR may refuse), Freikauf; RUS withdraws or reaffirms its guarantee (AI weight only when the Soviet Union lives worse than the US under détente, or has many radicals).
+Buttons: DDR closes the border (only while East Germans are leaving for a better-off West; AI at legitimacy ≤ 35), Stasi, consumer socialism; GER Ostpolitik (AI likelier under détente or with the trade unions in government), Basic Treaty offer (a condition list, not a bar: Ostpolitik adopted, détente with US-Soviet relations ≥ 20, the GDR's border closed, Moscow still backing the GDR; the GDR may refuse), Freikauf; RUS withdraws or reaffirms its guarantee (AI weight only when the Soviet Union lives worse than the US under détente, or has many radicals).
 
 While the border is open and the GDR lives worse, DDR carries `cwp_tg_republikflucht` and GER `cwp_tg_refugees`.
 
@@ -86,19 +85,22 @@ Contextless, same group. Activates when chapter 2 ends in the Wende outcome (`cw
 | Bar | Start | Up | Down |
 |---|---|---|---|
 | `cwp_dw_revolution_bar` Peaceful Revolution | 30 | DDR radicals ≥ 10%, the border opened, Moscow's guarantee withdrawn, the Round Table | the crackdown (−3), Soviet troops still guaranteeing the regime (−1) |
-| `cwp_dw_two_plus_four_bar` Two Plus Four | 0 | each of the four powers that consents (+1, the Soviet Union +1.5) | any power blocking (−3), revolution below 60 (−0.5) |
 
 Buttons: DDR opens the border, holds a Round Table, or cracks down (only before the border is open); each of the four powers consents, waits or blocks (stance is a country variable `cwp_dw_consent` / `cwp_dw_block`); GER offers Moscow credits (raises the Soviet AI's weight to consent). AI: the US consents at once, Britain and France once the US has and the revolution is at 70, the Soviet Union mainly once it has withdrawn its guarantee and been paid.
 
-Outcomes: **Unity** (both bars at 100: GER annexes DDR with incorporation, historical), **a democratic GDR** (revolution at 100 but Two Plus Four at 0 with a power blocking: the GDR enacts a parliamentary republic and universal suffrage), **the regime holds** (revolution at 0). Chapter 2 now also sets `cwp_tg_wende` on its Wende outcome.
+Outcomes: **Unity** (revolution at 100 and every existing four power has pressed *Consent*, shown as a checklist: GER annexes DDR with incorporation, historical), **a democratic GDR** (the revolution has won but a power has blocked unity for 12 consecutive months, counted in `cwp_dw_deadlock_months`: the GDR enacts a parliamentary republic and universal suffrage), **the regime holds** (revolution at 0). Chapter 2 now also sets `cwp_tg_wende` on its Wende outcome.
 
 ## Siblings: the Austrian State Treaty and the Saar (`cwp_austria_saar.txt`)
 
-**`je_cwp_austrian_state_treaty`** (contextless: AUS and the four powers). It builds on #794, where AUS owns all Austrian land at start under a Soviet occupation pact, and activates while AUS is a Soviet subject. A State Treaty bar rises with Austria's neutrality pledge, Soviet and US consent, four-power talks (chapter 1's modifier) and a settled German question (FRG sovereign). It falls while the Soviet Union runs the USIA assets and while AUS sits in a power bloc. At 100: AUS becomes independent, and if it pledged neutrality it leaves any bloc and is neutral. The Soviet AI consents once neutrality is pledged and the FRG is proclaimed.
+**`je_cwp_austrian_state_treaty`** (contextless: AUS and the four powers). It builds on #794, where AUS owns all Austrian land at start under a Soviet occupation pact, and activates while AUS is a Soviet subject. **No bar: a checklist.** The treaty is signed when Austria has pledged neutrality, Austria has agreed to buy back the Soviet-held German assets (a mission button after the pledge: payments in oil and goods, which end the USIA modifiers), the Soviet Union and the US have consented, and Austria is in no bloc. Moscow's consent AI rises with the pledge, the buy-back, the FRG proclaimed and four-power talks. On signing, AUS becomes independent and neutral.
 
 **`je_cwp_saar`** (contextless: FRA and GER). It activates once the FRG is proclaimed, and France holds `cwp_saar_economic_union`. The Saar is part of STATE_RHINELAND on the vanilla map (it has no state of its own), so the JE is economic and political only. When both governments press *Agree to a Saar Referendum*, the Saar votes: rejection is weighted 65 (+10 if the FRG is sovereign) and acceptance 35 (+15 if French-German relations ≥ 50). Rejection (historical, 1955) returns the Saar's economy to Germany; acceptance keeps a European statute.
 
 **Parent JE with a chapter widget: not built.** The chapters already follow each other through flags, and a custom widget adds GUI risk (crash-fix rule R9) for little gameplay. It can come later if the dev meeting wants it.
+
+## One twist per situation (Jack's team, 2026-11-18)
+
+Not everything should be bar management. Each situation now has its own shape: chapter 1 is a three-bar tug-of-war with the Berlin crisis on top; chapter 2 has one bar (GDR legitimacy) and the Basic Treaty as a conditions mission; chapter 3 has the revolution bar plus a four-power consent checklist with a deadlock clock; Austria is a pure checklist with a buy-back mission; the Saar is a two-key referendum with no bar.
 
 ## Known gaps and decisions for review
 
