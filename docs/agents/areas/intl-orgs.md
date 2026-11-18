@@ -100,3 +100,9 @@ Not yet: repayment of stand-by loans; quota reviews; the World Bank.
 - The UN admitted nobody in 14 years: some permanent member vetoed every applicant. Fixed: the ideology veto now applies only to applicants already inside a rival power bloc, and each failed application makes a veto less likely (`cwp_io_un_rejected_before` / `_twice`), which is how the 1955 package deal broke the real deadlock.
 - No NATO conference was called (USA and USSR relations never fell to "cold"). The threat condition is now "no better than neutral" toward an eastern-camp bloc leader.
 - The IMF grew from 29 to 46 members by 1960; a stand-by programme ran.
+
+## Power blocs: the Western camp (branch `fix/west-bloc-cohesion`)
+
+Observer run 47f9aa90e (1946-1952): Denmark, Norway, the Netherlands, Portugal and Italy left the USA's `WEST_BLOC` in 1946, Belgium joined another bloc in 1949, and by 1952 the bloc was the USA, Cuba and Mexico. The 1946.9.1 save shows the cause: `WEST_BLOC` cohesion 30 against the Eastern bloc's 91. Its identity was `identity_ideological_union`, whose cohesion subtracts the worst government-type progressiveness gap between members (constitutional monarchies and a presidential republic) and 2 per member, and the AI leaves a bloc when the `invite_to_power_bloc` acceptance score falls below `LEAVE_POWER_BLOC_SCORE_THRESHOLD` (-100), where low cohesion counts 1.5 times.
+
+Fix: `WEST_BLOC` is now an `identity_military_treaty_organization` with `principle_defensive_cooperation_2` (kept: `principle_foreign_investment_1`). Its cohesion comes from the leader's share of the bloc's power projection, which for the USA is overwhelming, minus infamy, poor relations and national-militia members. The Eastern bloc stays an ideological union: its members share the council-republic form, so that identity fits it. NATO itself remains a separate journal entry on top of the camp.
