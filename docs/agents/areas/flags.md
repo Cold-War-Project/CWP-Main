@@ -16,9 +16,9 @@ Design rule: a flag follows the simulation (laws, government type, subject statu
 | `common/coat_of_arms/coat_of_arms/cwp_1946_countries.txt` | Start-date flags (`cwp_<TAG>_1946`) and a few successors. |
 | `common/coat_of_arms/coat_of_arms/cwp_regime_variants.txt` | Regime-change flags (`cwp_<TAG>_<variant>`) and the templates of the generic Islamic flag. |
 | `common/coat_of_arms/coat_of_arms/cwp_more_countries.txt` | Flags for tags that had none, and flags adopted at independence by 1946 colonies. Each entry names the real flag and says where it is simplified. |
-| `common/coat_of_arms/coat_of_arms/cwp_historical_flags.txt` | Historical flag changes after 1946 for countries on the map (UAR, Libya 1969, Yemen 1962, Sudan 1970, Iran 1980, Zaire, Rhodesia, Spain 1977). |
+| `common/coat_of_arms/coat_of_arms/cwp_historical_flags.txt` | Historical flag changes after 1946 for countries on the map (UAR, Libya 1969, Yemen 1962, Sudan 1970, Iran 1980, Zaire, Rhodesia, Spain 1977; round 3: Afghanistan, Ethiopia, Egypt 1984 and the FAR, Iraq, Burma 1974, Cambodia, Mongolia 1992). |
 | `common/coat_of_arms/template_lists/coa_templates.txt` | Same-name overwrite (no BOM on purpose); the mod added the `cwp_islamic` random list. |
-| `common/scripted_triggers/cwp_coa_triggers.txt` | `cwp_coa_<regime>_trigger` (country scope) and `cwp_coa_def_<regime>_flag_trigger` (flag scope) for the CWP government types. |
+| `common/scripted_triggers/cwp_coa_triggers.txt` | `cwp_coa_<regime>_trigger` (country scope) and `cwp_coa_def_<regime>_flag_trigger` (flag scope) for the CWP government types, plus `national_republic` (republic law, no council republic), `democratic_republic` (that, universal suffrage, no military rule), `republican_dictatorship` (that, under autocracy, single party or military rule) and `federation_of_arab_republics`. |
 
 The vanilla `coa_*_trigger`s are remapped to CWP laws in `zz_vanilla_scripted_triggers.txt`; `coa_military_trigger` there means `gov_junta` or `gov_military_dictatorship`.
 
@@ -44,6 +44,7 @@ Each list in the generated file is the tag's CWP definitions from the table, the
 | 1100 | The tag's own communist flag |
 | 1500 | Vanilla communist and fascist flags; start flags of communist countries while they stay communist |
 | 1600 | Communist successor flag after leaving subject status (DDR, North Korea) |
+| 1650 | CWP base flag of a non-communist republic (Egypt 1984, Ethiopia 1974, Afghanistan 1973) that a 1700 variant can still replace |
 | 1700 | CWP national regime variants |
 | 2000 | `DEFAULT`: anarchy |
 
@@ -72,14 +73,14 @@ Then `python3 .claude/tools/check_mod.py common/flag_definitions tools/flags/cwp
 
 ## Not done yet
 
-- **In-game check.** Nothing here has been launched. Watch error.log for lines naming `zzz_cwp_1946_flag_definitions`, `cwp_more_countries`, `cwp_regime_variants`, `cwp_historical_flags`, `coa_templates`, `cwp_islamic` or `cwp_coa_`.
+- **In-game check.** Nothing here has been launched. Watch error.log for lines naming `zzz_cwp_1946_flag_definitions`, `cwp_more_countries`, `cwp_regime_variants`, `cwp_historical_flags`, `cwp_textured_flags`, `coa_templates`, `cwp_islamic`, `cwp_coa_` or `cwp_flag_` (textures). Round 3 adds `is_in_same_power_bloc` (FAR trigger) and `scope:overlord` checks in flag triggers, untested in game.
 - **Contact sheet.** No screenshot of the flags yet. The approximated emblems and the hoist triangles (`ce_rhombus`) need a look.
-- **Independence flags** exist for 36 colonies and protectorates (990, `coa_def_independent_trigger`). Still without one: Namibia and Papua New Guinea (diagonal designs), Cyprus (map emblem), Qatar and Bahrain (their 1946 flag is already the national one), Hong Kong and Macau, Palestine, and the fictional federations EQA and WAU.
+- **Independence flags** exist for the 1946 colonies and protectorates (990, `coa_def_independent_trigger`); round 3 added Sierra Leone, Togo, Cyprus and Palestine, and Hong Kong and Macau (their SAR flags, also when a subject of the PRC). Qatar, Bahrain, Transjordan, Tunisia, Morocco, Cambodia and Laos start with their national flag. Still without one: the fictional federations EQA and WAU (they keep the French tricolour; no historical flag exists). Caribbean and Pacific colonies are not starting tags: their releasable tags already carry the national flag (`cwp_releasable_countries.txt` or vanilla).
 - **USA**: the star count follows incorporated states minus DC (48 in 1946). Vanilla's own counter excluded DC and West Virginia through a variable the mod no longer sets.
 
 ## Historical changes after 1946
 
-Each is a 1700 definition in the table, gated on simulation state:
+Each is a 1700 definition in the table (unless noted), gated on simulation state:
 
 | Tag | Flag | Gate |
 |---|---|---|
@@ -93,8 +94,34 @@ Each is a 1700 definition in the table, gated on simulation state:
 | SPA | democratic Spain (1977) | monarchy law and universal suffrage |
 | TNZ | Tanzania (995) | independent and owns `STATE_ZANZIBAR` |
 | VNM | State of Vietnam / Republic of Vietnam (990) | independent |
+| CAN | Maple Leaf (990) | independent, or a dominion with `law_multicultural`. Canada stays a GBR dominion until the sim cuts the tie (1982 in history), so independence alone would hold the Red Ensign far past 1965; the 1965 flag came out of the same post-war break with a British-only identity as the end of racial immigration rules (1962/67), which is what moving off `law_cultural_exclusion` (the 1946 law) stands for. |
+| SIL, EWE, CYP, PAL | Sierra Leone 1961, Togo 1960, Cyprus 1960, Palestine (990) | independent |
+| HKN, MAO | Hong Kong 1997, Macau 1999 (990) | independent, or `scope:overlord` is the PRC |
+| AFH | Republic 1973 (1650) | `republican_dictatorship` (non-communist republic, autocracy/single party/military) |
+| AFH | DRA 1978 (existing, 1700) | people's republic, overlord not RUS |
+| AFH | DRA 1980, Karmal | communist, overlord RUS, not a people's democracy |
+| AFH | Republic 1987, Najibullah | `gov_cwp_peoples_democracy` (communist-led, other parties allowed: national reconciliation) |
+| AFH | Islamic State 1992 | `gov_cwp_islamic_republic` (the Taliban emirate keeps the no-franchise type). A democratic republic falls back to vanilla `AFG_republic` (910), which is close to the 2004 flag. |
+| ETH, ABI | plain tricolour 1974 (1650) | national republic (Derg, 1991 transitional) |
+| ETH, ABI | PDRE 1987 | people's republic (was vanilla `ETH_republic`, the 1881 red-first order; now dropped) |
+| ETH, ABI | FDRE 1996 | `democratic_republic` |
+| EGY | Arab Republic 1984 eagle (1650) | national republic (also stands for 1953-58, when the green royal flag was kept) |
+| EGY, LBY, SYR | Federation of Arab Republics 1972 | `federation_of_arab_republics`: all three exist as non-communist republics and EGY is in the same power bloc as LBY and SYR (needs power blocs; Egypt must not hold `STATE_SYRIA`, that is the UAR). LBY's 1969 flag and SYR's 1980 flag exclude it. |
+| SYR | two-star flag 1980 (`cwp_EGY_uar`) | `republican_dictatorship` (Ba'ath); democratic Syria keeps the independence flag (as in 1961-63 and from 2024) |
+| IRQ | Qasim 1959 | national republic under military rule |
+| IRQ | 2008 takbir flag | `democratic_republic`; other republics keep vanilla `IRQ_republic` (1963 three stars) at 910 |
+| MYM | Socialist Republic 1974 | independent and `republican_dictatorship` (BSPP one-party state, then the junta to 2010) |
+| CBD | Kingdom (900) | start flag fixed: vanilla `CAM` is a pre-1863 Khmer Empire design |
+| CBD | Khmer Republic 1970 | national republic |
+| CBD | People's Republic of Kampuchea 1979 | communist and `scope:overlord` is DAI or VNM; Democratic Kampuchea is vanilla `CAM_communist` (1500) |
+| MAL | Mali Federation (995) | MAL owns `STATE_SENEGAL`; Mali 1961 (`cwp_MLI`) otherwise |
+| ALB, YUG, MGL | post-communist flags (900) | the start flag is now the plain eagle / plain tricolour / starless Soyombo; the communist flag stays at 1500 while communist (still shown on 1946.1.1) |
+| DDR | black-red-gold (990) | independent and not communist (the GDR emblem flag needs communism now) |
+| GER | black-red-gold (900); GDR flag (1700) while communist | new list for the formed/reunified Germany; vanilla `GER_spartakist` dropped |
 
-Defunct states that have their own tag (BIA Biafra, KTA Katanga, LEV, LNG ...) already have pattern flags in `cwp_releasable_countries.txt`.
+Eastern Bloc after 1989 needs nothing more: Hungary, Romania, Bulgaria, Czechoslovakia and Poland start on their plain flags, which return once the communist definitions stop matching. Romania's 1989 flag with the hole was a revolutionary emblem, not an adopted flag, and no sim state marks "just after the revolution"; Poland's crowned eagle is on the arms, not the plain flag; Hungary 1957-89 (plain, communist) and Romania/Bulgaria under later communist arms are not separated from the people's republic flags.
+
+Defunct states that have their own tag (BIA Biafra with `sun_biafra`, KTA Katanga with `katanga_cross`, LEV, LNG ...) already have pattern flags in `cwp_releasable_countries.txt`; WIN (West Indies Federation) and MAL (Mali Federation) use vanilla's flags. South Vietnam is VNM (990), the Khmer Republic is CBD. The Federation of Arab Republics has no tag (see the FAR row). Not done: Libya's 1977 green flag (JMH is its own tag), Iraq 1991-2004 (takbir with three stars), Burma/Myanmar 2010, the State of Cambodia 1989.
 
 ## Textured flags (Wikimedia Commons SVG -> DDS)
 
@@ -110,14 +137,16 @@ python3 tools/flags/gen_flags.py           # only when the table gained a flag_d
 - Forge has no SVG library; snap Firefox in headless mode (`--screenshot`) is the rasteriser. Snap confinement needs the page, output and profile under `$HOME`, so the work folder is `~/forge/flag-work/` (outside the repo; downloaded SVGs are untrusted data, only shown through an `<img>`).
 - Wikimedia rate-limits downloads (HTTP 429, Retry-After 120 s); `fetch_svg.py` paces itself and is rerunnable, skipping rows already fetched.
 - Credits: every shipped texture is listed under `$TITLE_PROJECT_FLAG_SOURCES$` in `credits.txt` (Commons page and licence). Add a line there with each new texture. Licences were re-checked on Commons on 2026-11-17 (all public domain).
-- Not shipped until cleared: Bulgaria 1948-67 (`cwp_BUL_peoples_republic`), Commons file is CC BY-SA 4.0; it keeps the pattern stand-in. Attribution or share-alike files never ship without Jack's clearance.
+- Not shipped until cleared: Bulgaria 1948-67 (`cwp_BUL_peoples_republic`, Commons file CC BY-SA 4.0) and Ethiopia 1987-91 (`cwp_ETH_pdre`, CC BY-SA 3.0); both keep their pattern stand-ins. Attribution or share-alike files never ship without Jack's clearance.
 - To add a flag: add a row to `sources.tsv` (coa key, tag, label, Commons file page), run the scripts, look at the PNG in `~/forge/flag-work/png/`, and add a `flag_definition` to the table if the coat of arms is new.
 - Textures have one mip level (Pillow); five vanilla flag textures are the same, so the game accepts it. Sharpness at small sizes in game is unchecked.
 
 Status 2026-11-17: 20 flags textured (Belize, Malawi, Ingushetia, Karachay-Cherkessia, Uganda, Kenya, Mozambique, Zimbabwe, Lesotho, Eswatini, Rhodesia 1968, Zaire, Islamic Republic of Iran, Spain (current arms), Malaysia, Kuwait, Tanzania, UAR, Namibia, Papua New Guinea); Namibia and Papua New Guinea also got independence flag definitions. Bulgaria 1948-67 was skipped (Commons file is CC BY-SA 4.0). Romania 1952-65 and Afghanistan 1978-80 followed later (22 in all). Hungary 1949-56 (public domain) is still blocked by the rate limit; rerun `fetch_svg.py cwp_HUN_peoples_republic`.
 
+Round 3 (2026-11-18): 7 more textured (29 in all): Cyprus, Hong Kong, Macau (Commons: PD-MacaoGov / PD-PRC-exempt plus the non-copyright Insignia notice), Afghanistan 1980-87, Egypt 1984, Burma 1974-2010, People's Republic of Kampuchea. Still on pattern stand-ins because every download returned HTTP 429 over three runs (rows are in `sources.tsv`, licence not yet read; rerun `python3 -I tools/flags/fetch_svg.py` then `render.py`, `apply_textures.py`, and add the credits lines): `cwp_HUN_peoples_republic`, `cwp_AFH_republic` (1974-78), `cwp_AFH_1987` (file `(1987–1992,_3-2)`), `cwp_AFH_islamic_state` (`(1992–2001,_3-2)`), `cwp_EGY_far` (Egypt's 1972-84 file; the name under the hawk reads Egypt, LBY and SYR share it). The 1980-87 Afghan file is 1:2 and is stretched to 3:2.
+
 ## Later plan
 
-1. **More historical changes** in the same pattern: Iraq (1959, 1963), Burma's socialist flag (1974), the Federation of Arab Republics (1972), Ghana 1964, Malaysia 1963 (Malaya plus Borneo states). Where JE content sets variables for the event (e.g. the Chinese Civil War), the flag may read them.
+1. **More historical changes** in the same pattern: Ghana 1964, Malaysia 1963 (Malaya plus Borneo states), Libya 1977 (JMH), Iraq 1991, Myanmar 2010, Laos and Cambodia under later regimes, separate FAR flags per member. Where JE content sets variables for the event (e.g. the Chinese Civil War), the flag may read them.
 2. **More textured flags** for defunct states whose flags need more than patterns (South Vietnam variants, Biafra's rising sun, Katanga, the Federation of Arab Republics) through the pipeline above.
 3. **Contact sheet**: a test map or console run that shows every CWP flag and each regime variant in one screenshot, kept with the branch that changes them.
