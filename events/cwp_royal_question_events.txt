@@ -1,0 +1,178 @@
+﻿namespace = cwp_rq
+
+cwp_rq.1 = {
+	type = country_event
+	placement = root
+
+	title = cwp_rq.1.t
+	desc = cwp_rq.1.d
+	flavor = cwp_rq.1.f
+
+	event_image = { video = "votp_monarch_holding_court" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+
+	duration = 3
+
+	option = {
+		name = cwp_rq.1.a
+		default_option = yes
+	}
+}
+
+# The popular consultation.
+cwp_rq.2 = {
+	type = country_event
+	placement = root
+
+	title = cwp_rq.2.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = cwp_rq.2.d.yes
+				trigger = { var:cwp_rq_result_var > 50 }
+			}
+			desc = cwp_rq.2.d.no
+		}
+	}
+	flavor = cwp_rq.2.f
+
+	event_image = { video = "southamerica_election" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_election.dds"
+
+	duration = 3
+
+	trigger = {
+		has_journal_entry = je_cwp_royal_question
+	}
+
+	immediate = {
+		random_list = {
+			20 = { set_variable = { name = cwp_rq_swing_var value = -6 } }
+			20 = { set_variable = { name = cwp_rq_swing_var value = -3 } }
+			20 = { set_variable = { name = cwp_rq_swing_var value = 0 } }
+			20 = { set_variable = { name = cwp_rq_swing_var value = 3 } }
+			20 = { set_variable = { name = cwp_rq_swing_var value = 6 } }
+		}
+		set_variable = { name = cwp_rq_result_var value = cwp_rq_counted_result }
+	}
+
+	option = { # The King comes home
+		name = cwp_rq.2.a
+		trigger = { var:cwp_rq_result_var > 50 }
+		default_option = yes
+		trigger_event = { id = cwp_rq.3 days = 60 popup = yes }
+	}
+
+	option = { # He abdicates
+		name = cwp_rq.2.b
+		trigger = { NOT = { var:cwp_rq_result_var > 50 } }
+		default_option = yes
+		custom_tooltip = cwp_rq_abdication_tt
+		trigger_event = { id = cwp_rq.4 popup = yes }
+	}
+}
+
+# The King is back, and the Walloon unions strike.
+cwp_rq.3 = {
+	type = country_event
+	placement = root
+
+	title = cwp_rq.3.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = cwp_rq.3.d.strikes
+				trigger = { ig:ig_trade_unions ?= { is_powerful = yes } }
+			}
+			desc = cwp_rq.3.d.calm
+		}
+	}
+	flavor = cwp_rq.3.f
+
+	event_image = {
+		video = "votp_barricade"
+	}
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+
+	duration = 3
+
+	trigger = {
+		has_journal_entry = je_cwp_royal_question
+	}
+
+	option = { # Abdicate for his son to save the dynasty
+		name = cwp_rq.3.a
+		trigger = { ig:ig_trade_unions ?= { is_powerful = yes } }
+		default_option = yes
+		custom_tooltip = cwp_rq_abdication_tt
+		trigger_event = { id = cwp_rq.4 popup = yes }
+		ai_chance = { base = 20 }
+	}
+
+	option = { # Stand firm
+		name = cwp_rq.3.b
+		set_variable = cwp_rq_settled_var
+		add_modifier = {
+			name = cwp_rq_king_returns
+			years = 5
+		}
+		if = {
+			limit = { ig:ig_trade_unions ?= { is_powerful = yes } }
+			add_modifier = {
+				name = cwp_rq_divided_kingdom
+				years = 5
+			}
+			add_radicals = {
+				value = 0.15
+				interest_group = ig:ig_trade_unions
+			}
+		}
+		ai_chance = {
+			base = 5
+			modifier = {
+				trigger = { ig:ig_trade_unions ?= { is_powerful = no } }
+				add = 50
+			}
+		}
+	}
+}
+
+# Abdication in favour of the heir.
+cwp_rq.4 = {
+	type = country_event
+	placement = root
+
+	title = cwp_rq.4.t
+	desc = cwp_rq.4.d
+	flavor = cwp_rq.4.f
+
+	event_image = { video = "ip4_abdication" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+
+	duration = 3
+
+	trigger = {
+		has_journal_entry = je_cwp_royal_question
+	}
+
+	option = {
+		name = cwp_rq.4.a
+		default_option = yes
+		set_variable = cwp_rq_settled_var
+		add_modifier = {
+			name = cwp_rq_new_king
+			years = 5
+		}
+		if = {
+			limit = {
+				exists = heir
+				exists = ruler
+			}
+			ruler = { exile_character = yes }
+		}
+	}
+}

@@ -1,0 +1,89 @@
+﻿# Cold War Project: Belgium's Royal Question (1945-1951).
+# Leopold III's conduct in 1940 split the country. Whether he returns, and whether he can stay, follows the
+# Catholic and Flemish vote, the Socialist and liberal opposition, and the strength of the unions. No dates.
+
+je_cwp_royal_question = {
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+	group = je_group_internal_affairs
+
+	activation_description = { always = yes }
+
+	is_shown_when_inactive = {
+		cwp_rq_is_candidate = yes
+	}
+
+	possible = {
+		cwp_rq_is_candidate = yes
+	}
+
+	immediate = {
+		set_variable = { name = cwp_rq_return_current_var value = 50 }
+		trigger_event = { id = cwp_rq.1 popup = yes }
+	}
+
+	scripted_progress_bar = cwp_rq_return_bar
+	scripted_progress_bar = cwp_rq_pressure_bar
+
+	scripted_button = cwp_rq_campaign_return_button
+	scripted_button = cwp_rq_campaign_against_button
+	scripted_button = cwp_rq_abdicate_for_son_button
+
+	on_monthly_pulse = {
+		effect = {
+			set_variable = { name = cwp_rq_return_current_var value = "scope:journal_entry.scripted_bar_progress(cwp_rq_return_bar)" }
+			if = {
+				limit = {
+					scope:journal_entry = {
+						"scripted_bar_progress(cwp_rq_pressure_bar)" >= 100
+					}
+					NOT = { has_variable = cwp_rq_vote_pending_var }
+				}
+				set_variable = cwp_rq_vote_pending_var
+				trigger_event = { id = cwp_rq.2 days = 30 popup = yes }
+			}
+		}
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_royal_question_status_for
+				trigger = { var:cwp_rq_return_current_var > 50 }
+			}
+			desc = je_cwp_royal_question_status_against
+		}
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_royal_question_settled_desc
+		color = "gold_positive"
+		trigger = {
+			has_variable = cwp_rq_settled_var
+		}
+		effect = {
+			remove_variable = cwp_rq_return_current_var
+			remove_variable = cwp_rq_campaign_var
+			remove_variable = cwp_rq_swing_var
+			remove_variable = cwp_rq_vote_pending_var
+			remove_variable = cwp_rq_result_var
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_cwp_royal_question_settled_desc
+		trigger = {
+			country_has_monarchy_law = no
+		}
+		effect = {
+			set_variable = cwp_rq_settled_var
+		}
+	}
+
+	weight = 1000
+	transferable = no
+	can_revolution_inherit = no
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
