@@ -109,7 +109,11 @@ AI: Washington and London drop the accord once Soviet consolidation reaches 25. 
 
 ## One twist per situation (Jack's team, 2026-11-18)
 
-Not everything should be bar management. Each situation now has its own shape: chapter 1 is a two-bar tug-of-war (Western integration against Soviet consolidation) with competing checklists for its ending and the Berlin crisis on top; chapter 2 has one bar (GDR legitimacy) and the Basic Treaty as a conditions mission; chapter 3 has the revolution bar plus a four-power consent checklist with a deadlock clock; Austria is a pure checklist with a buy-back mission; the Saar is a two-key referendum with no bar.
+Not everything should be bar management. Each situation now has its own shape: chapter 1 is a two-bar tug-of-war (Western integration against Soviet consolidation) with competing checklists for its ending and the Berlin crisis on top; chapter 2 has one bar (GDR legitimacy) and a path choice: the Hallstein Doctrine (the default; isolates the GDR abroad, −0.25 legitimacy a month) or Ostpolitik, which adds the sub-entry `je_cwp_ostpolitik` for GER, a mission list of three treaties (Moscow: relations with the Soviet Union at least 0; then Warsaw, accepting the Oder-Neisse line; then the Basic Treaty with its conditions); chapter 3 has the revolution bar plus a four-power consent checklist with a deadlock clock; Austria is a pure checklist with a buy-back mission; the Saar is a two-key referendum with no bar.
+
+## Run 16ccecae3 (2026-11-18, 1946-1960): chapter 1 on schedule
+
+Bizone 1946, the US and Britain drop the four-power accord in 1947, Deutsche Mark, blockade and airlift in 1948, both states proclaimed by October 1949, the Stalin Note in 1950 (rejected), the FRG sovereign in mid-1954 and the GDR in early 1955; chapter 2 then opens. Two fixes followed: Austria never got its treaty, because a subject belongs to its overlord's power bloc, so the "no bloc" condition and the neutrality button's bloc check could never pass (both removed; neutral Austria leaves any bloc on signing). And GDR legitimacy hit 100 by late 1956, so the Wall was never needed: living as well as the West now gives +0.5 (was +1), and one-party rule (`law_single_party_state`) costs −0.5.
 
 ## Known gaps and decisions for review
 
