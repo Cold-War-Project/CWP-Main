@@ -53,6 +53,16 @@ Historical results are likely, not forced: nothing fires on a date, the AI must 
 
 Not yet: an intervention event when a member leaves the Warsaw Pact; France's 1966 withdrawal from the integrated command as its own state; NATO infrastructure or standardization bars.
 
+## The IMF (third slice, branch `feat/intl-orgs-imf`, stacked on `feat/intl-orgs-nato`)
+
+| JE | What |
+|---|---|
+| `je_cwp_imf` | The Fund, active from the start with the 29 members of its 27 December 1945 inaugural that exist in 1946 (the USSR attended Bretton Woods but never ratified). Votes weighted by quota, approximated as `cwp_io_economic_weight` plus 2.5 basic votes; ordinary decisions by 51% of the weighted votes cast. Buttons: request a stand-by arrangement, withdraw (AI only after turning to the eastern camp, as Poland 1950, Czechoslovakia 1954, Cuba 1964 did). |
+| `je_cwp_imf_admission` | Membership votes, applicants from `cwp_imf_apply_decision` (council republics are not offered it). |
+| `je_cwp_imf_loan` | A stand-by arrangement for a member in default, with debt at half its ceiling or under a year from bankruptcy. If the weighted vote passes, the borrower gets 2% of its GDP (`cwp_imf_standby_amount`) and `cwp_imf_conditionality_modifier` for five years (lower government and military wages, cheaper credit), and cannot leave the Fund meanwhile. |
+
+Not yet: repayment of stand-by loans; quota reviews; the World Bank.
+
 ## Not ported from master, and why
 
 - The GUI panels (`gui/international_panel.gui`, `un_panel.gui`, the `information_panel_bar.gui` overwrite) and the scripted GUIs that rebuilt lists while open: 1.5 GUI overwrites, forbidden by R9.
@@ -65,7 +75,7 @@ Not yet: an intervention event when a member leaves the Warsaw Pact; France's 19
 
 1. UN: decolonization resolution (1514), request for UN intervention as a Security Council decision with elected seats, the China seat question.
 2. NATO and the Warsaw Pact: done in `feat/intl-orgs-nato` (above).
-3. IMF with weighted votes (`cwp_io_economic_weight`).
+3. IMF: done in `feat/intl-orgs-imf` (above).
 
 ## Tested on Forge (2026-11-17)
 
