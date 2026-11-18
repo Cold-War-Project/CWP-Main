@@ -48,7 +48,8 @@ So the first job of this content is not to cut the number. It is to give every r
 A country's camp is recomputed every month from the simulation and cached as a country variable (`cwp_cw_east`, `cwp_cw_west`, plus `cwp_cw_core` for the inner ring) so the map and the movement hooks stay cheap.
 
 - **Communist camp** (`cwp_cw_is_communist_state`): council republic, or a single-party state with a command or cooperative economy, or communist leadership with no franchise (`cwp_country_has_communist_leadership`). Core ring: the camp leader, its power bloc and its subjects. Outer ring: communist states outside that bloc (Yugoslavia after a split, an independent China).
-- **Western camp**: not communist, and the camp leader, in its power bloc, a NATO member (`cwp_io_member_nato`), allied or in a defensive pact with it, or a subject of a Western-camp country. Non-communist power-bloc leaders on cordial terms with the camp leader (Britain, France and their empires) count as the outer ring.
+- **Western camp**: not communist, and the camp leader or in its power bloc (core ring), or on cordial terms with the camp leader but not with its rival while leading a bloc or outside any bloc (outer ring: Britain, France, most of Western Europe), or a subject of a Western-camp country. NATO membership (`cwp_io_member_nato`) will join the core ring once the NATO branch lands; reading it before then logs "used but never set".
+- **Revolutionaries**: the insurgent country of a civil war keeps its camp colour on the map but counts as a revolution, not a state; the fall is recorded when the revolution wins.
 - **Non-aligned**: everyone else. Decolonization's new states start here and drift by the same rules.
 - **Camp leaders** are global scopes (`cwp_cw_west_leader`, `cwp_cw_east_leader`), USA and RUS at start, re-chosen by prestige among great-power bloc leaders of the camp if the leader stops qualifying. China can take over the communist camp.
 
@@ -58,7 +59,7 @@ One bar, `cwp_cw_correlation_bar`, 0 (the West dominant) to 100 (socialism domin
 
 - 60% the communist camp's share of the two camps' GDP;
 - 40% its share of the two camps' countries;
-- momentum: +3 for every country that falls to communism, -3 for every one that leaves it, decaying 2% a month;
+- momentum: +1.5 for every country that falls to communism, -1.5 for every one that leaves it, decaying 3% a month (half-life about two years);
 - -5 while the West alone has the bomb (`cwp_is_nuclear_power`).
 
 The JE's status lines show the components, the count of states that fell and left in the run, and the last one to fall and when. Bands name the situation: the West ascendant (below 20), containment holds (20-35), the balance shifts (35-50), the tide favours socialism (50-65), the West is losing (above 65). A run with 35 communist states reads as a high bar, a list of fallen countries and a red map, and the US player can see which of their aid pacts lapsed.
@@ -112,6 +113,10 @@ What follows the end (a unipolar moment, a multipolar order) is a later JE.
 2. Military assistance; revolution causes (the base rate tied to sponsor, war, occupation or very high support instead of 10% support alone), tuned against observer counts.
 3. Theatre JEs, one at a time, each with its own twist.
 4. Post-Cold-War JE.
+
+## Test log
+
+- 2026-11-18, observer run 47f9aa90e (1946-1952, `~/forge/observer/20261118-0602-47f9aa90e`): the JE opens on the first pulse and runs; 69 to 87 countries involved. Bar 21 (1946) to 40 (1952). Communist states 11 to 19, communist revolutions under way 0 to 12, 15 falls counted. Fixes from it: lens icons and the diplomatic-action notification loc keys the engine wants (`_proposal_*`, `_third_party_*`), `is_breaking_hostile` is not a pact field in 1.15 (parse error), momentum was too strong (+23 of the 40 by 1952; now +1.5 a fall, 3% decay), insurgent countries were counted as falls, and Western Europe showed as non-aligned because DEN, NOR, NET, POR and ITA leave the West bloc in 1946 (power bloc history, reported to the coordinator) so the cordial-relations ring now covers countries outside any bloc. Italy went communist in this run.
 
 ## Open questions
 

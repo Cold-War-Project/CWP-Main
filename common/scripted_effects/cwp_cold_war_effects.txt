@@ -75,10 +75,10 @@ cwp_cw_update_camps = {
 	set_global_variable = { name = cwp_cw_west_count value = 0 }
 	set_global_variable = { name = cwp_cw_nonaligned_count value = 0 }
 	set_global_variable = { name = cwp_cw_revolutions value = 0 }
-	# Momentum decays 2% a month.
+	# Momentum decays 3% a month (half-life about two years).
 	if = {
 		limit = { has_global_variable = cwp_cw_momentum }
-		change_global_variable = { name = cwp_cw_momentum multiply = 0.98 }
+		change_global_variable = { name = cwp_cw_momentum multiply = 0.97 }
 	}
 	else = {
 		set_global_variable = { name = cwp_cw_momentum value = 0 }
@@ -111,10 +111,15 @@ cwp_cw_update_camps = {
 				OR = {
 					scope:cw_west ?= this
 					this.power_bloc ?= { scope:cw_west ?= this.power_bloc_leader }
-					has_variable = cwp_io_member_nato
+					# Friends of the camp leader who are not also friends of its rival: other bloc leaders
+					# such as Britain and France, and countries outside any bloc.
 					AND = {
-						is_power_bloc_leader = yes
 						scope:cw_west ?= { relations:prev >= relations_threshold:cordial }
+						NOT = { scope:cw_east ?= { relations:prev >= relations_threshold:cordial } }
+						OR = {
+							is_power_bloc_leader = yes
+							is_in_power_bloc = no
+						}
 					}
 				}
 			}
@@ -124,7 +129,6 @@ cwp_cw_update_camps = {
 					OR = {
 						scope:cw_west ?= this
 						this.power_bloc ?= { scope:cw_west ?= this.power_bloc_leader }
-						has_variable = cwp_io_member_nato
 					}
 				}
 				set_variable = cwp_cw_core
@@ -153,9 +157,13 @@ cwp_cw_update_camps = {
 			set_variable = cwp_cw_west
 		}
 	}
-	# Pass 3: falls, departures and sums.
+	# Pass 3: falls, departures and sums. Revolutionary countries (the insurgents of a civil war) keep their
+	# map colour but are counted as revolutions, not states: a fall is recorded when the revolution wins.
 	every_country = {
-		limit = { NOT = { is_country_type = decentralized } }
+		limit = {
+			NOT = { is_country_type = decentralized }
+			is_revolutionary = no
+		}
 		if = {
 			limit = { has_variable = cwp_cw_east }
 			change_global_variable = { name = cwp_cw_east_gdp add = gdp }
@@ -196,8 +204,7 @@ cwp_cw_update_camps = {
 # Country scope: this country has just become a communist state.
 cwp_cw_record_fall = {
 	change_global_variable = { name = cwp_cw_fallen_count add = 1 }
-	change_global_variable = { name = cwp_cw_momentum add = 3 }
-	set_global_variable = { name = cwp_cw_last_fallen value = this }
+	change_global_variable = { name = cwp_cw_momentum add = 1.5 }
 	save_scope_as = cwp_cw_fallen
 	scope:cw_west ?= { trigger_event = { id = cwp_cold_war.1 } }
 	scope:cw_east ?= { trigger_event = { id = cwp_cold_war.1 } }
@@ -206,8 +213,7 @@ cwp_cw_record_fall = {
 # Country scope: this country has just stopped being a communist state.
 cwp_cw_record_departure = {
 	change_global_variable = { name = cwp_cw_departed_count add = 1 }
-	change_global_variable = { name = cwp_cw_momentum add = -3 }
-	set_global_variable = { name = cwp_cw_last_departed value = this }
+	change_global_variable = { name = cwp_cw_momentum add = -1.5 }
 	save_scope_as = cwp_cw_departed
 	scope:cw_west ?= { trigger_event = { id = cwp_cold_war.2 } }
 	scope:cw_east ?= { trigger_event = { id = cwp_cold_war.2 } }
