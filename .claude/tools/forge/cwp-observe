@@ -26,9 +26,18 @@ clear_popups() { local w; for w in $(xdotool search --name "Unlock Keyring|Authe
   echo "$(date +%T) closed popup: $(xdotool getwindowname "$w")" >> "$OUT/popups.txt"; xdotool windowclose "$w" 2>/dev/null || xdotool windowkill "$w"; done; }
 sleep 170; cwp-vic errors > "$OUT/errors_menu.txt" 2> "$OUT/canary_menu.txt"
 clear_popups
-vic-click 266 284 >/dev/null; sleep 6; clear_popups; vic-click 1086 330 >/dev/null; sleep 100
-clear_popups; vic-click 566 702 >/dev/null; sleep 4; clear_popups; vic-key 5 >/dev/null; vic-key space >/dev/null
-touch "$OUT/.started"
+start_game() {   # main menu -> New Game -> Sandbox card -> (country select) Observe -> speed 5, unpause
+  clear_popups; vic-click 266 284 >/dev/null; sleep 6; clear_popups; vic-click 1086 330 >/dev/null; sleep 100
+  clear_popups; vic-click 566 702 >/dev/null; sleep 4; clear_popups; vic-key 5 >/dev/null; vic-key space >/dev/null
+}
+# The menu can take longer than 170 s on a big build; if no autosave newer than our start shows up
+# within 6 min, back out to the menu and try again (3 tries).
+for try in 1 2 3; do
+  touch "$OUT/.started"; start_game
+  for _ in $(seq 1 36); do sleep 10; f=$(ls -t "$SAVES"/autosave*.v3 2>/dev/null | head -1); [[ -n "$f" && "$f" -nt "$OUT/.started" ]] && break 2; done
+  vic-shot > "$OUT/retry${try}_shot.txt"; echo "$(date +%T) start attempt $try failed, retrying" >> "$OUT/progress.txt"
+  vic-key Escape >/dev/null; sleep 2; vic-key Escape >/dev/null; sleep 5
+done
 MAXS=${CWP_OBSERVE_MAX_SECONDS:-$(( (END - 1946) * 240 + 1800 ))}   # ~4 min per game year at max speed, plus slack
 cwp-vic perf "$MAXS" 30 > "$OUT/perf_path.txt" 2>&1 &
 PERF=$!
