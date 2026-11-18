@@ -1,0 +1,222 @@
+﻿# Cold War Project: the Red Scare. Country scope; scope:journal_entry = je_cwp_red_scare.
+
+# Screen every civil servant for "disloyalty".
+cwp_rs_loyalty_review_button = {
+	name = "cwp_rs_loyalty_review_button"
+	desc = "cwp_rs_loyalty_review_button_desc"
+
+	visible = { always = yes }
+
+	possible = {
+		scope:journal_entry = {
+			custom_tooltip = {
+				text = cwp_rs_fear_20_tt
+				"scripted_bar_progress(cwp_rs_fear_bar)" >= 20
+			}
+		}
+	}
+
+	effect = {
+		ig:ig_bureaucrats ?= {
+			add_modifier = {
+				name = cwp_rs_loyalty_review
+				years = 2
+			}
+		}
+		ig:ig_intelligentsia ?= {
+			add_modifier = {
+				name = cwp_rs_loyalty_review
+				years = 2
+			}
+		}
+		scope:journal_entry = {
+			add_progress = { value = -8 name = cwp_rs_fear_bar }
+		}
+	}
+
+	cooldown = { months = 6 }
+
+	ai_chance = {
+		value = 10
+	}
+}
+
+# Investigate the unions and make their officers swear they are not communists.
+cwp_rs_investigate_unions_button = {
+	name = "cwp_rs_investigate_unions_button"
+	desc = "cwp_rs_investigate_unions_button_desc"
+
+	visible = { always = yes }
+
+	possible = {
+		ig:ig_trade_unions ?= {
+			is_marginal = no
+		}
+		scope:journal_entry = {
+			custom_tooltip = {
+				text = cwp_rs_fear_30_tt
+				"scripted_bar_progress(cwp_rs_fear_bar)" >= 30
+			}
+		}
+	}
+
+	effect = {
+		ig:ig_trade_unions ?= {
+			add_modifier = {
+				name = cwp_rs_unions_investigated
+				years = 3
+			}
+		}
+		ig:ig_industrialists ?= {
+			add_modifier = {
+				name = cwp_rs_business_reassured
+				years = 3
+			}
+		}
+		scope:journal_entry = {
+			add_progress = { value = -6 name = cwp_rs_fear_bar }
+		}
+	}
+
+	cooldown = { months = 12 }
+
+	ai_chance = {
+		value = 8
+		if = {
+			limit = {
+				ig:ig_trade_unions ?= { is_in_government = yes }
+			}
+			multiply = 0.25
+		}
+	}
+}
+
+# Blacklist "fellow travellers" in film, radio, the press and the universities.
+cwp_rs_blacklist_button = {
+	name = "cwp_rs_blacklist_button"
+	desc = "cwp_rs_blacklist_button_desc"
+
+	visible = { always = yes }
+
+	possible = {
+		scope:journal_entry = {
+			custom_tooltip = {
+				text = cwp_rs_fear_30_tt
+				"scripted_bar_progress(cwp_rs_fear_bar)" >= 30
+			}
+		}
+	}
+
+	effect = {
+		ig:ig_intelligentsia ?= {
+			add_modifier = {
+				name = cwp_rs_blacklisted
+				years = 3
+			}
+		}
+		scope:journal_entry = {
+			add_progress = { value = -5 name = cwp_rs_fear_bar }
+		}
+	}
+
+	cooldown = { months = 12 }
+
+	ai_chance = {
+		value = 6
+	}
+}
+
+# Stand up for due process: rein in the investigators.
+cwp_rs_defend_liberties_button = {
+	name = "cwp_rs_defend_liberties_button"
+	desc = "cwp_rs_defend_liberties_button_desc"
+
+	visible = { always = yes }
+
+	possible = {
+		custom_tooltip = {
+			text = cwp_rs_any_measure_tt
+			cwp_rs_measures_in_force >= 1
+		}
+	}
+
+	effect = {
+		ig:ig_intelligentsia ?= {
+			remove_modifier = cwp_rs_blacklisted
+			add_modifier = {
+				name = cwp_rs_liberties_defended
+				years = 2
+			}
+		}
+		ig:ig_bureaucrats ?= { remove_modifier = cwp_rs_loyalty_review }
+		ig:ig_trade_unions ?= { remove_modifier = cwp_rs_unions_investigated }
+		ig:ig_armed_forces ?= {
+			add_modifier = {
+				name = cwp_rs_soft_on_communism
+				years = 2
+			}
+		}
+		scope:journal_entry = {
+			add_progress = { value = 4 name = cwp_rs_fear_bar }
+		}
+	}
+
+	cooldown = { months = 12 }
+
+	ai_chance = {
+		value = 4
+		if = {
+			limit = { cwp_rs_measures_in_force >= 3 }
+			add = 10
+		}
+	}
+}
+
+# Outlaw the Communist Party. Drastic, divisive, and it may not hold up in court.
+cwp_rs_ban_party_button = {
+	name = "cwp_rs_ban_party_button"
+	desc = "cwp_rs_ban_party_button_desc"
+
+	visible = {
+		NOT = { has_variable = cwp_rs_party_banned_var }
+	}
+
+	possible = {
+		scope:journal_entry = {
+			custom_tooltip = {
+				text = cwp_rs_fear_60_tt
+				"scripted_bar_progress(cwp_rs_fear_bar)" >= 60
+			}
+		}
+	}
+
+	effect = {
+		set_variable = cwp_rs_party_banned_var
+		add_modifier = {
+			name = cwp_rs_party_banned
+			years = 5
+		}
+		every_interest_group = {
+			limit = {
+				leader ?= {
+					OR = {
+						has_ideology = ideology:ideology_communist
+						has_ideology = ideology:ideology_vanguardist
+						has_ideology = ideology:ideology_cwp_marxist_leninist
+					}
+				}
+			}
+			add_modifier = {
+				name = cwp_rs_party_banned_ig
+				years = 5
+			}
+		}
+		scope:journal_entry = {
+			add_progress = { value = -25 name = cwp_rs_fear_bar }
+		}
+	}
+
+	ai_chance = {
+		value = 2
+	}
+}
