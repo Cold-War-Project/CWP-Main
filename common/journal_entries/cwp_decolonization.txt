@@ -520,6 +520,23 @@ je_cwp_indochina_war = {
 				limit = { has_global_variable = cwp_indochina_peoples_war_phase }
 				cwp_indochina_peoples_war_pulse = yes
 			}
+			# The DRV inside the French Union (the March 1946 accords) keeps pressing for full independence.
+			c:DAI ?= {
+				if = {
+					limit = {
+						is_subject_of = c:FRA
+						NOT = { has_modifier = cwp_indochina_viet_minh_resistance }
+					}
+					add_modifier = { name = cwp_indochina_viet_minh_resistance }
+				}
+				else_if = {
+					limit = {
+						is_subject = no
+						has_modifier = cwp_indochina_viet_minh_resistance
+					}
+					remove_modifier = cwp_indochina_viet_minh_resistance
+				}
+			}
 			cwp_indochina_set_bar_level = yes
 			change_global_variable = { name = cwp_indochina_months add = 1 }
 		}
@@ -538,6 +555,12 @@ je_cwp_indochina_war = {
 			remove_global_variable = cwp_indochina_active
 			cwp_indochina_end_war = yes
 			cwp_indochina_release_kingdoms = yes
+			c:DAI ?= {
+				if = {
+					limit = { is_subject_of = c:FRA }
+					make_independent = yes
+				}
+			}
 			c:VNM ?= {
 				if = {
 					limit = { is_subject_of = c:FRA }
@@ -593,7 +616,10 @@ je_cwp_indochina_war = {
 		trigger = {
 			OR = {
 				NOT = { exists = c:DAI }
-				c:DAI ?= { is_subject_of = c:FRA }
+				AND = {
+					c:DAI ?= { is_subject_of = c:FRA }
+					scope:journal_entry = { "scripted_bar_progress(cwp_indochina_war_bar)" <= -50 }
+				}
 			}
 		}
 		effect = {
