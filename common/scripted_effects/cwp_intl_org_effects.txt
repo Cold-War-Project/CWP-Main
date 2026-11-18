@@ -6,7 +6,7 @@
 #
 # State, per organization $ORG$:
 #   country var  cwp_io_member_$ORG$        member of the organization
-#   country var  cwp_io_veto_$ORG$          holds a veto (UN Security Council permanent members)
+#   country var  cwp_io_veto_un             holds a UN Security Council veto (permanent members)
 #   country var  cwp_io_applicant_$ORG$     has applied and waits for an admission vote
 #   country var  cwp_io_rejected_$ORG$      application rejected recently (timed)
 #   script value cwp_io_vote_weight_$ORG$   one member's vote weight (1, or GDP plus prestige)
@@ -48,10 +48,6 @@ cwp_io_add_member = {
 
 cwp_io_remove_member = {
 	remove_variable = cwp_io_member_$ORG$
-	if = {
-		limit = { has_variable = cwp_io_veto_$ORG$ }
-		remove_variable = cwp_io_veto_$ORG$
-	}
 }
 
 # Any scope: make the JE's involved countries match the members. Contextless JEs read
@@ -110,7 +106,7 @@ cwp_io_cast_vote = {
 }
 
 # No scope: count the votes. Abstentions do not count toward the share, as in the UN's
-# "present and voting" rule. VETO = yes makes a no vote from a veto holder block the proposal.
+# "present and voting" rule. VETO = the veto check effect (see below).
 cwp_io_tally_votes = {
 	set_global_variable = { name = cwp_io_$PROP$_yes value = 0 }
 	set_global_variable = { name = cwp_io_$PROP$_no value = 0 }
@@ -129,18 +125,15 @@ cwp_io_tally_votes = {
 		else_if = {
 			limit = { var:cwp_io_vote_$PROP$ = flag:no }
 			change_global_variable = { name = cwp_io_$PROP$_no add = cwp_io_vote_weight_$ORG$ }
-			if = {
-				limit = {
-					always = $VETO$
-					has_variable = cwp_io_veto_$ORG$
-				}
-				set_global_variable = { name = cwp_io_$PROP$_vetoed value = 1 }
-			}
 		}
 		else = {
 			change_global_variable = { name = cwp_io_$PROP$_abstain add = cwp_io_vote_weight_$ORG$ }
 		}
 	}
+	# VETO names a scripted effect that sets cwp_io_$PROP$_vetoed: cwp_un_p5_veto_check for
+	# UN Security Council matters, cwp_io_no_veto_check everywhere else. (A literal veto
+	# variable per organization would trip the game's unused-variable checker.)
+	$VETO$ = { PROP = $PROP$ }
 	if = {
 		limit = { global_var:cwp_io_$PROP$_yes > 0 }
 		set_global_variable = {
@@ -257,5 +250,22 @@ cwp_io_queue_admission = {
 			set_global_variable = { name = $TARGET$ value = this }
 		}
 		cwp_io_open_proposal = { PROP = $PROP$ }
+	}
+}
+
+# No scope: veto checks passed as VETO to cwp_io_tally_votes / cwp_io_advance_proposal.
+cwp_io_no_veto_check = {
+	set_global_variable = { name = cwp_io_$PROP$_vetoed value = 0 }
+}
+
+cwp_un_p5_veto_check = {
+	if = {
+		limit = {
+			any_country = {
+				has_variable = cwp_io_veto_un
+				var:cwp_io_vote_$PROP$ ?= flag:no
+			}
+		}
+		set_global_variable = { name = cwp_io_$PROP$_vetoed value = 1 }
 	}
 }

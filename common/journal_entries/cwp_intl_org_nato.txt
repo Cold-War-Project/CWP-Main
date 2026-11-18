@@ -30,6 +30,7 @@ je_cwp_nato_founding = {
 
 	scripted_button = cwp_nato_conf_sign_button
 	scripted_button = cwp_nato_conf_decline_button
+	scripted_progress_bar = cwp_io_support_bar
 
 	current_value = { value = global_var:cwp_io_nato_conf_months }
 	goal_add_value = { value = 6 }
@@ -39,12 +40,19 @@ je_cwp_nato_founding = {
 		effect = {
 			cwp_io_sync_involved = { ORG = nato_conf JE = je_cwp_nato_founding }
 			change_global_variable = { name = cwp_io_nato_conf_months add = 1 }
-			cwp_io_tally_votes = { ORG = nato_conf PROP = nato_conf VETO = no }
+			cwp_io_tally_votes = { ORG = nato_conf PROP = nato_conf VETO = cwp_io_no_veto_check }
+			scope:journal_entry = {
+				set_bar_progress = { name = cwp_io_support_bar value = global_var:cwp_io_nato_conf_share }
+			}
 			if = {
 				limit = { global_var:cwp_io_nato_conf_months >= 6 }
 				if = {
 					# The Brussels Treaty had five parties; the North Atlantic Treaty twelve.
-					limit = { global_var:cwp_io_nato_conf_yes >= 5 }
+					limit = {
+						global_var:cwp_io_nato_conf_yes >= 5
+						global_var:cwp_io_nato_conf_vetoed = 0
+					}
+					set_global_variable = { name = cwp_io_nato_conf_result value = flag:passed }
 					every_country = {
 						limit = { var:cwp_io_vote_nato_conf ?= flag:yes }
 						cwp_io_add_member = { ORG = nato }
@@ -52,6 +60,7 @@ je_cwp_nato_founding = {
 					set_global_variable = cwp_nato_founded
 				}
 				else = {
+					set_global_variable = { name = cwp_io_nato_conf_result value = flag:failed }
 					set_global_variable = { name = cwp_io_nato_conf_cooldown years = 2 }
 				}
 				every_country = {
@@ -155,7 +164,10 @@ je_cwp_nato = {
 			}
 			triggered_desc = {
 				desc = je_cwp_nato_status
-				trigger = { cwp_io_has_rotating_presidency = { ORG = nato } }
+				trigger = {
+					cwp_io_has_rotating_presidency = { ORG = nato }
+					exists = global_var:cwp_io_nato_president
+				}
 			}
 			desc = je_cwp_nato_status_plain
 		}
@@ -198,7 +210,7 @@ je_cwp_nato_admission = {
 	on_monthly_pulse = {
 		effect = {
 			cwp_io_sync_involved = { ORG = nato JE = je_cwp_nato_admission }
-			cwp_io_advance_proposal = { ORG = nato PROP = nato_admission VETO = no MONTHS = 6 COOLDOWN = 30 }
+			cwp_io_advance_proposal = { ORG = nato PROP = nato_admission VETO = cwp_io_no_veto_check MONTHS = 6 COOLDOWN = 30 }
 			scope:journal_entry = {
 				set_bar_progress = { name = cwp_io_support_bar value = global_var:cwp_io_nato_admission_share }
 			}
@@ -239,6 +251,7 @@ je_cwp_wp_founding = {
 
 	scripted_button = cwp_wp_conf_sign_button
 	scripted_button = cwp_wp_conf_decline_button
+	scripted_progress_bar = cwp_io_support_bar
 
 	current_value = { value = global_var:cwp_io_wp_conf_months }
 	goal_add_value = { value = 6 }
@@ -248,11 +261,18 @@ je_cwp_wp_founding = {
 		effect = {
 			cwp_io_sync_involved = { ORG = wp_conf JE = je_cwp_wp_founding }
 			change_global_variable = { name = cwp_io_wp_conf_months add = 1 }
-			cwp_io_tally_votes = { ORG = wp_conf PROP = wp_conf VETO = no }
+			cwp_io_tally_votes = { ORG = wp_conf PROP = wp_conf VETO = cwp_io_no_veto_check }
+			scope:journal_entry = {
+				set_bar_progress = { name = cwp_io_support_bar value = global_var:cwp_io_wp_conf_share }
+			}
 			if = {
 				limit = { global_var:cwp_io_wp_conf_months >= 6 }
 				if = {
-					limit = { global_var:cwp_io_wp_conf_yes >= 4 }
+					limit = {
+						global_var:cwp_io_wp_conf_yes >= 4
+						global_var:cwp_io_wp_conf_vetoed = 0
+					}
+					set_global_variable = { name = cwp_io_wp_conf_result value = flag:passed }
 					every_country = {
 						limit = { var:cwp_io_vote_wp_conf ?= flag:yes }
 						cwp_io_add_member = { ORG = wp }
@@ -260,6 +280,7 @@ je_cwp_wp_founding = {
 					set_global_variable = cwp_wp_founded
 				}
 				else = {
+					set_global_variable = { name = cwp_io_wp_conf_result value = flag:failed }
 					set_global_variable = { name = cwp_io_wp_conf_cooldown years = 2 }
 				}
 				every_country = {
@@ -382,7 +403,7 @@ je_cwp_wp_admission = {
 	on_monthly_pulse = {
 		effect = {
 			cwp_io_sync_involved = { ORG = wp JE = je_cwp_wp_admission }
-			cwp_io_advance_proposal = { ORG = wp PROP = wp_admission VETO = no MONTHS = 6 COOLDOWN = 30 }
+			cwp_io_advance_proposal = { ORG = wp PROP = wp_admission VETO = cwp_io_no_veto_check MONTHS = 6 COOLDOWN = 30 }
 			scope:journal_entry = {
 				set_bar_progress = { name = cwp_io_support_bar value = global_var:cwp_io_wp_admission_share }
 			}
