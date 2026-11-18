@@ -36,7 +36,7 @@ cwp_nf_smallwood_button = {
 	ai_chance = {
 		value = 0
 		if = {
-			limit = { var:cwp_nf_vote_current_var > 40 }
+			limit = { cwp_nf_confederation_pivot > 35 }
 			add = 10
 		}
 	}
@@ -78,30 +78,103 @@ cwp_nf_responsible_government_button = {
 	ai_chance = {
 		value = 0
 		if = {
-			limit = { var:cwp_nf_vote_current_var < 50 }
+			limit = { cwp_nf_confederation_pivot < 50 }
 			add = 10
 		}
 	}
 }
 
-cwp_nf_delegations_button = {
-	name = "cwp_nf_delegations_button"
-	desc = "cwp_nf_delegations_button_desc"
+# The Convention's missions: ask London what a self-governing Newfoundland could expect, and Ottawa what terms it offers.
+cwp_nf_london_delegation_button = {
+	name = "cwp_nf_london_delegation_button"
+	desc = "cwp_nf_london_delegation_button_desc"
 
 	visible = {
-		NOT = { has_variable = cwp_nf_delegation_var }
+		NOT = { has_variable = cwp_nf_london_var }
 	}
 
-	possible = { always = yes }
+	possible = {
+		custom_tooltip = {
+			text = cwp_nf_convention_sat_tt
+			scope:journal_entry = { journal_entry_age >= 120 }
+		}
+	}
 
 	effect = {
-		set_variable = cwp_nf_delegation_var
-		custom_tooltip = cwp_nf_delegations_tt
+		set_variable = cwp_nf_london_var
+		custom_tooltip = cwp_nf_london_tt
 		if = {
 			limit = { NOT = { has_variable = cwp_nf_campaign_var } }
 			set_variable = { name = cwp_nf_campaign_var value = 0 }
 		}
-		change_variable = { name = cwp_nf_campaign_var add = 2 }
+		if = {
+			limit = { overlord ?= { in_default = yes } }
+			change_variable = { name = cwp_nf_campaign_var add = 2 }
+		}
+		else = {
+			change_variable = { name = cwp_nf_campaign_var add = -2 }
+		}
+	}
+
+	ai_chance = { value = 30 }
+}
+
+cwp_nf_ottawa_delegation_button = {
+	name = "cwp_nf_ottawa_delegation_button"
+	desc = "cwp_nf_ottawa_delegation_button_desc"
+
+	visible = {
+		NOT = { has_variable = cwp_nf_ottawa_var }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = cwp_nf_convention_sat_tt
+			scope:journal_entry = { journal_entry_age >= 120 }
+		}
+		custom_tooltip = {
+			text = cwp_nf_canada_listens_tt
+			c:CAN ?= { relations:root >= relations_threshold:cordial }
+		}
+	}
+
+	effect = {
+		set_variable = cwp_nf_ottawa_var
+		custom_tooltip = cwp_nf_ottawa_tt
+		if = {
+			limit = { NOT = { has_variable = cwp_nf_campaign_var } }
+			set_variable = { name = cwp_nf_campaign_var value = 0 }
+		}
+		change_variable = { name = cwp_nf_campaign_var add = 4 }
+	}
+
+	ai_chance = { value = 30 }
+}
+
+# The Convention reports and London sets the ballot.
+cwp_nf_convention_report_button = {
+	name = "cwp_nf_convention_report_button"
+	desc = "cwp_nf_convention_report_button_desc"
+
+	visible = {
+		NOT = { has_variable = cwp_nf_vote_pending_var }
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = cwp_nf_london_done_tt
+			has_variable = cwp_nf_london_var
+		}
+		custom_tooltip = {
+			text = cwp_nf_debate_done_tt
+			scope:journal_entry = { journal_entry_age >= 365 }
+		}
+	}
+
+	effect = {
+		set_variable = cwp_nf_vote_pending_var
+		custom_tooltip = cwp_nf_convention_report_tt
+		trigger_event = { id = cwp_nf.2 days = 60 popup = yes }
 	}
 
 	ai_chance = { value = 20 }
