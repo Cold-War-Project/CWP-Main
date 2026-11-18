@@ -1,0 +1,462 @@
+﻿# Cold War Project: decolonization in Africa (design: docs/agents/areas/decolonization.md)
+# je_cwp_gold_coast         Britain and the Gold Coast: the negotiated road
+# je_cwp_kenya              Britain, the Kenya settlers and Land and Freedom
+# je_cwp_belgian_congo      Belgium and the Congo: preparation or a rushed exit
+# je_cwp_portuguese_africa  the Estado Novo and its overseas provinces
+# Contextless; each is opened by cwp_decolonization_monthly_pulse when its cwp_<x>_can_open trigger holds,
+# sets cwp_<x>_active in immediate and clears it in every outcome. No outcome is scheduled by date.
+
+### Gold Coast
+
+je_cwp_gold_coast = {
+	group = je_group_cwp_decolonization
+	icon = "gfx/interface/icons/event_icons/waving_flag.dds"
+
+	activation_description = {
+		always = yes
+	}
+
+	should_be_involved = {
+		OR = {
+			c:GBR ?= this
+			c:GLC ?= this
+		}
+	}
+
+	should_show_when_not_involved = {
+		capital ?= { is_in_geographic_region = geographic_region_africa }
+	}
+
+	immediate = {
+		set_global_variable = cwp_gold_active
+		c:GBR ?= { trigger_event = { id = cwp_africa.1 popup = yes } }
+		c:GLC ?= { trigger_event = { id = cwp_africa.1 popup = yes } }
+	}
+
+	scripted_progress_bar = cwp_gold_self_rule_bar
+
+	scripted_button = cwp_gold_constitution_button
+	scripted_button = cwp_gold_detentions_button
+	scripted_button = cwp_gold_independence_button
+	scripted_button = cwp_gold_positive_action_button
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_cwp_gold_coast_independence_desc
+		trigger = {
+			c:GLC ?= { is_subject_of = c:GBR }
+			OR = {
+				c:GBR ?= { has_variable = cwp_gold_independence_granted }
+				scope:journal_entry = { "scripted_bar_progress(cwp_gold_self_rule_bar)" >= 100 }
+			}
+		}
+		effect = {
+			remove_global_variable = cwp_gold_active
+			c:GLC = { cwp_decolonization_negotiated_independence = { METROPOLE = c:GBR } }
+			c:GBR ?= { trigger_event = { id = cwp_africa.2 popup = yes } }
+			c:GLC ?= { trigger_event = { id = cwp_africa.2 popup = yes } }
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_cwp_gold_coast_held_desc
+		trigger = {
+			c:GLC ?= { is_subject_of = c:GBR }
+			scope:journal_entry = { "scripted_bar_progress(cwp_gold_self_rule_bar)" <= 0 }
+		}
+		effect = {
+			remove_global_variable = cwp_gold_active
+			set_global_variable = {
+				name = cwp_gold_je_cooldown
+				years = 10
+			}
+			c:GBR = {
+				cwp_decolonization_add_setback = yes
+				trigger_event = { id = cwp_africa.3 popup = yes }
+			}
+			c:GLC ?= { trigger_event = { id = cwp_africa.3 popup = yes } }
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_cwp_decolonization_invalid_desc
+		trigger = {
+			OR = {
+				NOT = { exists = c:GLC }
+				NOT = { exists = c:GBR }
+				c:GLC ?= { NOT = { is_subject_of = c:GBR } }
+			}
+		}
+		effect = {
+			remove_global_variable = cwp_gold_active
+		}
+	}
+
+	transferable = no
+	can_deactivate = no
+	weight = 100
+}
+
+### Kenya
+
+je_cwp_kenya = {
+	group = je_group_cwp_decolonization
+	icon = "gfx/interface/icons/event_icons/event_fire.dds"
+
+	activation_description = {
+		always = yes
+	}
+
+	should_be_involved = {
+		OR = {
+			c:GBR ?= this
+			c:KKY ?= this
+		}
+	}
+
+	should_show_when_not_involved = {
+		capital ?= { is_in_geographic_region = geographic_region_africa }
+	}
+
+	immediate = {
+		set_global_variable = cwp_kenya_active
+		set_global_variable = { name = cwp_kenya_insurgency_level value = 0 }
+	}
+
+	scripted_progress_bar = cwp_kenya_insurgency_bar
+	scripted_progress_bar = cwp_kenya_settler_bar
+
+	scripted_button = cwp_kenya_emergency_button
+	scripted_button = cwp_kenya_land_reform_button
+	scripted_button = cwp_kenya_conference_button
+	scripted_button = cwp_kenya_land_and_freedom_button
+
+	on_monthly_pulse = {
+		effect = {
+			cwp_kenya_set_level = yes
+			# The rising starts: first time Land and Freedom passes 25.
+			if = {
+				limit = {
+					has_global_variable = cwp_kenya_rising_seen
+					NOT = { has_global_variable = cwp_kenya_rising_announced }
+				}
+				set_global_variable = cwp_kenya_rising_announced
+				c:GBR ?= { trigger_event = { id = cwp_africa.10 popup = yes } }
+				c:KKY ?= { trigger_event = { id = cwp_africa.10 popup = yes } }
+			}
+			# The forest fighters are broken once (the Emergency's military victory); politics goes on.
+			if = {
+				limit = {
+					has_global_variable = cwp_kenya_rising_announced
+					NOT = { has_global_variable = cwp_kenya_rising_crushed }
+					scope:journal_entry = { "scripted_bar_progress(cwp_kenya_insurgency_bar)" <= 0 }
+				}
+				set_global_variable = cwp_kenya_rising_crushed
+				c:GBR ?= {
+					cwp_decolonization_add_setback = yes
+					trigger_event = { id = cwp_africa.11 popup = yes }
+				}
+			}
+		}
+	}
+
+	# Lancaster House: majority rule and independence
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_cwp_kenya_independence_desc
+		trigger = {
+			c:KKY ?= { is_subject_of = c:GBR }
+			c:GBR ?= { has_variable = cwp_kenya_conference_held }
+		}
+		effect = {
+			remove_global_variable = cwp_kenya_active
+			c:KKY = { cwp_decolonization_negotiated_independence = { METROPOLE = c:GBR } }
+			c:GBR ?= { trigger_event = { id = cwp_africa.12 popup = yes } }
+			c:KKY ?= { trigger_event = { id = cwp_africa.12 popup = yes } }
+		}
+	}
+
+	# Land and Freedom drives the British out
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_cwp_kenya_won_desc
+		trigger = {
+			c:KKY ?= { is_subject_of = c:GBR }
+			scope:journal_entry = { "scripted_bar_progress(cwp_kenya_insurgency_bar)" >= 100 }
+		}
+		effect = {
+			remove_global_variable = cwp_kenya_active
+			c:KKY = {
+				make_independent = yes
+				add_modifier = {
+					name = cwp_new_nation
+					years = 10
+					is_decaying = yes
+				}
+				change_relations = {
+					country = c:GBR
+					value = -50
+				}
+			}
+			c:GBR ?= { trigger_event = { id = cwp_africa.13 popup = yes } }
+			c:KKY ?= { trigger_event = { id = cwp_africa.13 popup = yes } }
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_cwp_decolonization_invalid_desc
+		trigger = {
+			OR = {
+				NOT = { exists = c:KKY }
+				NOT = { exists = c:GBR }
+				c:KKY ?= { NOT = { is_subject_of = c:GBR } }
+			}
+		}
+		effect = {
+			remove_global_variable = cwp_kenya_active
+		}
+	}
+
+	transferable = no
+	can_deactivate = no
+	weight = 100
+}
+
+### Belgian Congo
+
+je_cwp_belgian_congo = {
+	group = je_group_cwp_decolonization
+	icon = "gfx/interface/icons/event_icons/event_newspaper.dds"
+
+	activation_description = {
+		always = yes
+	}
+
+	should_be_involved = {
+		OR = {
+			c:BEL ?= this
+			c:CNG ?= this
+		}
+	}
+
+	should_show_when_not_involved = {
+		capital ?= { is_in_geographic_region = geographic_region_africa }
+	}
+
+	immediate = {
+		set_global_variable = cwp_congo_active
+		c:BEL ?= { trigger_event = { id = cwp_africa.20 popup = yes } }
+		c:CNG ?= { trigger_event = { id = cwp_africa.20 popup = yes } }
+	}
+
+	scripted_progress_bar = cwp_congo_demands_bar
+
+	scripted_button = cwp_congo_cadres_button
+	scripted_button = cwp_congo_force_publique_button
+	scripted_button = cwp_congo_round_table_button
+	scripted_button = cwp_congo_riots_button
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_cwp_belgian_congo_independence_desc
+		trigger = {
+			c:CNG ?= { is_subject_of = c:BEL }
+			OR = {
+				c:BEL ?= { has_variable = cwp_congo_round_table_held }
+				scope:journal_entry = { "scripted_bar_progress(cwp_congo_demands_bar)" >= 100 }
+			}
+		}
+		effect = {
+			remove_global_variable = cwp_congo_active
+			cwp_congo_independence_effect = yes
+			c:BEL ?= { trigger_event = { id = cwp_africa.21 popup = yes } }
+			c:CNG ?= { trigger_event = { id = cwp_africa.21 popup = yes } }
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_cwp_belgian_congo_held_desc
+		trigger = {
+			c:CNG ?= { is_subject_of = c:BEL }
+			scope:journal_entry = { "scripted_bar_progress(cwp_congo_demands_bar)" <= 0 }
+		}
+		effect = {
+			remove_global_variable = cwp_congo_active
+			set_global_variable = {
+				name = cwp_congo_je_cooldown
+				years = 10
+			}
+			c:BEL = { cwp_decolonization_add_setback = yes }
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_cwp_decolonization_invalid_desc
+		trigger = {
+			OR = {
+				NOT = { exists = c:CNG }
+				NOT = { exists = c:BEL }
+				c:CNG ?= { NOT = { is_subject_of = c:BEL } }
+			}
+		}
+		effect = {
+			remove_global_variable = cwp_congo_active
+		}
+	}
+
+	transferable = no
+	can_deactivate = no
+	weight = 100
+}
+
+### Portuguese Africa
+
+je_cwp_portuguese_africa = {
+	group = je_group_cwp_decolonization
+	icon = "gfx/interface/icons/event_icons/event_military.dds"
+
+	activation_description = {
+		always = yes
+	}
+
+	should_be_involved = {
+		OR = {
+			c:POR ?= this
+			c:OVM ?= this
+			c:MKU ?= this
+			c:GNB ?= this
+		}
+	}
+
+	should_show_when_not_involved = {
+		capital ?= { is_in_geographic_region = geographic_region_africa }
+	}
+
+	immediate = {
+		set_global_variable = cwp_portugal_active
+		set_global_variable = { name = cwp_portugal_war_level value = 0 }
+		c:POR ?= { trigger_event = { id = cwp_africa.30 popup = yes } }
+	}
+
+	scripted_progress_bar = cwp_portugal_war_bar
+	scripted_progress_bar = cwp_portugal_exhaustion_bar
+
+	scripted_button = cwp_portugal_counter_insurgency_button
+	scripted_button = cwp_portugal_colonatos_button
+	scripted_button = cwp_portugal_decolonize_button
+
+	on_monthly_pulse = {
+		effect = {
+			cwp_portugal_set_level = yes
+		}
+	}
+
+	# Lisbon lets the provinces go
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_cwp_portuguese_africa_decolonized_desc
+		trigger = {
+			cwp_portugal_holds_africa = yes
+			c:POR ?= { has_variable = cwp_portugal_decolonize }
+		}
+		effect = {
+			remove_global_variable = cwp_portugal_active
+			c:POR = { remove_variable = cwp_portugal_decolonize }
+			cwp_portugal_release_effect = yes
+			c:POR ?= {
+				trigger_event = { id = cwp_africa.31 popup = yes }
+				add_modifier = {
+					name = cwp_end_of_empire
+					years = 5
+					is_decaying = yes
+				}
+			}
+		}
+	}
+
+	# The colonial wars bring down the regime
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_cwp_portuguese_africa_revolution_desc
+		trigger = {
+			cwp_portugal_holds_africa = yes
+			NOT = { c:POR ?= { has_variable = cwp_portugal_decolonize } }
+			scope:journal_entry = { "scripted_bar_progress(cwp_portugal_exhaustion_bar)" >= 100 }
+		}
+		effect = {
+			remove_global_variable = cwp_portugal_active
+			c:POR = {
+				add_modifier = {
+					name = cwp_portugal_carnation
+					years = 5
+					is_decaying = yes
+				}
+				add_radicals = {
+					value = 0.15
+					interest_group = ig:ig_armed_forces
+				}
+				trigger_event = { id = cwp_africa.32 popup = yes }
+			}
+			cwp_portugal_release_effect = yes
+		}
+	}
+
+	# The liberation movements are crushed, for now
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_cwp_portuguese_africa_held_desc
+		trigger = {
+			cwp_portugal_holds_africa = yes
+			scope:journal_entry = { "scripted_bar_progress(cwp_portugal_war_bar)" <= 0 }
+		}
+		effect = {
+			remove_global_variable = cwp_portugal_active
+			set_global_variable = {
+				name = cwp_portugal_je_cooldown
+				years = 10
+			}
+			c:POR = {
+				cwp_decolonization_add_setback = yes
+				trigger_event = { id = cwp_africa.33 popup = yes }
+			}
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_cwp_decolonization_invalid_desc
+		trigger = {
+			NOT = { cwp_portugal_holds_africa = yes }
+		}
+		effect = {
+			remove_global_variable = cwp_portugal_active
+		}
+	}
+
+	transferable = no
+	can_deactivate = no
+	weight = 100
+}
