@@ -8,7 +8,8 @@
 # The script runs with these helpers and must finish within 4 minutes:
 #   shot <label>           screenshot -> $OUT/<label>.png (full resolution)
 #   console "<command>"    run an in-game console command
-#   click X Y / key KEY... (vic-click / vic-key on 1280x720 screenshot coordinates)
+#   click X Y / key KEY... (vic-click / vic-key on 1280x720 screenshot coordinates). Prefer clicks to
+#                          F-key shortcuts: Xfce grabs F-keys; key() sends them to the game window, which may ignore them.
 # Results: ~/forge/gui-checks/done/<date>-<name>/ (PNGs, log); the booking is moved there too.
 #
 #   cwp-gui-batch run      run all bookings now (takes the game lock with priority; ~15 min)
@@ -37,14 +38,21 @@ for br in $branches; do git -C "$WT" merge -q --no-ff --no-edit -m "gui-batch: $
 cwp-vic link "$WT" >/dev/null && cwp-vic launch >/dev/null 2>&1
 sleep 200
 for w in $(xdotool search --name "Unlock Keyring|Authentication required" 2>/dev/null); do xdotool windowclose "$w"; done
+raise_game() { local w; w=$(xdotool search --name "^Victoria 3" 2>/dev/null | tail -1); [[ -n "$w" ]] && xdotool windowactivate --sync "$w" 2>/dev/null; }
+raise_game; vic-shot >/dev/null
 if [[ -n "$needs_game" ]]; then
-  vic-click 266 284 >/dev/null; sleep 6; vic-click 1086 330 >/dev/null; sleep 100; vic-click 566 702 >/dev/null; sleep 5
+  raise_game; vic-click 266 284 >/dev/null; sleep 6; vic-click 1086 330 >/dev/null; sleep 100; raise_game; vic-shot >/dev/null; vic-click 566 702 >/dev/null; sleep 5; vic-shot > "$D/$stamp-after-observe.txt"
 fi
-shot()    { local f; f=$(vic-shot --full | tail -1); cp "$f" "$OUT/$1.png"; echo "shot $1" >> "$OUT/log.txt"; }
-console() { vic-key grave >/dev/null; sleep 1; vic-key --type "$1" >/dev/null; vic-key Return >/dev/null; sleep 1; vic-key grave >/dev/null; sleep 1; }
-click()   { vic-click "$@" >/dev/null; sleep 1; }
-key()     { vic-key "$@" >/dev/null; sleep 1; }
-export -f shot console click key
+raise_game() { local w; w=$(xdotool search --name "^Victoria 3" 2>/dev/null | tail -1); [[ -n "$w" ]] && xdotool windowactivate --sync "$w" 2>/dev/null; }
+# Full-res PNG for the record, then a scaled shot so later click() coordinates stay on the 1280x720 scale.
+shot()    { raise_game; local f; f=$(vic-shot --full | tail -1); cp "$f" "$OUT/$1.png"; vic-shot >/dev/null; echo "shot $1" >> "$OUT/log.txt"; }
+console() { raise_game; vic-key grave >/dev/null; sleep 1; vic-key --type "$1" >/dev/null; vic-key Return >/dev/null; sleep 1; vic-key grave >/dev/null; sleep 1; }
+click()   { raise_game; vic-click "$@" >/dev/null; sleep 1; }
+# F-keys are grabbed by Xfce (F4 opens the Application Finder): send those straight to the game window.
+key()     { raise_game; local k; for k in "$@"; do
+            if [[ "$k" =~ ^F[0-9]+$ ]]; then xdotool key --window "$(xdotool search --name '^Victoria 3' | tail -1)" "$k"; else vic-key "$k" >/dev/null; fi
+          done; sleep 1; }
+export -f raise_game shot console click key
 for bk in "${books[@]}"; do
   name=$(basename "$bk" .sh); export OUT="$D/$stamp-$name"; mkdir -p "$OUT"; cp "$bk" "$OUT/"
   echo "$(date +%T) start $name" >> "$OUT/log.txt"
