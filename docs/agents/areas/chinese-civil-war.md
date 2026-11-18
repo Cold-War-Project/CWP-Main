@@ -28,7 +28,7 @@ One contextless JE in `je_group_global_international_situations`, involving `PRC
 
 | Term | When | Per beat |
 |---|---|---|
-| People's war | `cwp_ccw_peoples_war_phase` | +5 for both, and the occupation penalty cancelled (observer with 1946 armies: +5 alone let the ROC annex the PRC by Nov 1947) |
+| People's war | `cwp_ccw_peoples_war_phase` | +5 for both, the occupation penalty cancelled, and +10 more while below 50 (Carlist value). Six shared runs on 2026-11-17 with 1946 armies all ended by 1948, two by Nationalist annexation during this phase |
 | The strait | ROC controls Formosa and no mainland state | ROC: cancels the occupation penalty, +2. Lapses by itself once the PRC controls Formosa, so a landing that holds ends the war through the annex war goal |
 | Losing the war | decisive phase, bar >= 25 (ROC, while it still holds mainland) or <= -25 (PRC) | enemy occupation x -1, x -2 at +/-40 |
 
@@ -81,3 +81,8 @@ No date decides anything. The bar starts Nationalist, but hyperinflation (+1 a m
 - Hainan (1950) and the offshore islands (Kinmen, Matsu) are part of mainland states on the vanilla map.
 - Start-state accuracy: the history thread split Beijing, Shandong and Shanxi so the ROC holds the cities (PR #804) and cut the Manchu population (PR #805). Neither changes this JE.
 - To verify in game (advisor): which of `on_revolution_end`, `on_civil_war_won`, `on_capitulation`, `on_war_end` fire on annexation and on `end_play`; whether war support 0 means capitulation; whether `enable_switch_sides` on `dp_revolution` lets backers flip the US and Soviet roles; that the PRC actually takes ground after its offensive.
+
+## Tuning log
+
+- 2026-11-17, round 1 (after #833 gave both Chinas 1946 armies): ROC annexed the PRC by 1947.11. People's war cancels occupation, battles move the bar 0.5, currency reform AI only at bar +10..+25.
+- 2026-11-18, round 2: six shared observer runs (f30e83cd6, e417e7f45, 6464ba36e, 23a3d433d, e638a85ce...) all ended by 1948: three divided Chinas (the PRC accepted an armistice while winning, helped by Soviet restraint), two Nationalist victories during the people's war (PRC war support fell to about 53 from battles and casualties, then the PRC was overrun), no Communist victory. Changes: people's-war occupation -75% (was -50%), PRC `cwp_ccw_base_areas` (defence +25%, morale loss -15%) while the phase lasts, +10 war support below 50 in the phase, and an armistice is refused (+200) by the side the bar favours by 15 or more, with Soviet restraint worth +15 (was +30): Mao did not stop at the Yangtze.
