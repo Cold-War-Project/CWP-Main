@@ -474,6 +474,7 @@ cwp_india_restore_order_button = {
 		}
 		change_infamy = 3
 		c:HND ?= {
+			add_liberty_desire = -10
 			change_relations = {
 				country = root
 				value = -15
@@ -500,7 +501,14 @@ cwp_india_set_date_button = {
 		NOT = { has_variable = cwp_india_withdrawal_announced }
 		custom_tooltip = {
 			text = cwp_india_set_date_button_possible_tt
-			scope:journal_entry ?= { "scripted_bar_progress(cwp_india_self_rule_bar)" >= 75 }
+			OR = {
+				c:HND ?= { liberty_desire >= 60 }
+				AND = {
+					cwp_has_anticolonial_leaning_government = yes
+					has_global_variable = cwp_tide_tier
+					global_var:cwp_tide_tier >= 1
+				}
+			}
 		}
 	}
 
@@ -513,6 +521,7 @@ cwp_india_set_date_button = {
 		value = 5
 		if = { limit = { cwp_has_anticolonial_leaning_government = yes } add = 20 }
 		if = { limit = { scaled_debt > 0.5 } add = 10 }
+		if = { limit = { c:HND ?= { liberty_desire >= 75 } } add = 20 }
 		if = { limit = { cwp_has_imperialist_leaning_government = yes } multiply = 0.25 }
 	}
 }
@@ -526,7 +535,7 @@ cwp_india_quit_india_button = {
 	}
 
 	possible = {
-		always = yes
+		is_subject = yes
 		custom_tooltip = {
 			text = cwp_button_cooldown_tt
 			NOT = { has_variable = cwp_india_quit_india_button_cd }
@@ -538,10 +547,7 @@ cwp_india_quit_india_button = {
 			name = cwp_india_quit_india_button_cd
 			months = 24
 		}
-		set_variable = {
-			name = cwp_india_quit_india
-			months = 12
-		}
+		add_liberty_desire = 10
 		c:GBR ?= {
 			change_relations = {
 				country = root
@@ -598,7 +604,7 @@ cwp_indonesia_police_action_button = {
 	}
 
 	possible = {
-		always = yes
+		c:IDS ?= { has_war_with = root }
 		custom_tooltip = {
 			text = cwp_button_cooldown_tt
 			NOT = { has_variable = cwp_indonesia_police_action_button_cd }
@@ -625,15 +631,6 @@ cwp_indonesia_police_action_button = {
 			change_relations = {
 				country = root
 				value = -15
-			}
-		}
-		c:NET ?= {
-			every_scope_war = {
-				limit = { any_war_participant = { c:IDS ?= this } }
-				add_war_war_support = {
-					target = root
-					value = 10
-				}
 			}
 		}
 	}
@@ -692,6 +689,7 @@ cwp_indonesia_talks_button = {
 	ai_chance = {
 		value = 5
 		if = { limit = { cwp_has_anticolonial_leaning_government = yes } add = 10 }
+		if = { limit = { has_global_variable = cwp_indonesia_us_pressure_applied } add = 10 }
 	}
 }
 
@@ -704,10 +702,7 @@ cwp_indonesia_round_table_button = {
 	}
 
 	possible = {
-		custom_tooltip = {
-			text = cwp_indonesia_round_table_button_possible_tt
-			scope:journal_entry ?= { "scripted_bar_progress(cwp_indonesia_revolution_bar)" >= 35 }
-		}
+		cwp_indonesia_round_table_ready = yes
 	}
 
 	effect = {
@@ -727,10 +722,9 @@ cwp_indonesia_round_table_button = {
 	}
 
 	ai_chance = {
-		value = 5
+		value = 10
 		if = { limit = { cwp_has_anticolonial_leaning_government = yes } add = 15 }
 		if = { limit = { scaled_debt > 0.5 } add = 10 }
-		if = { limit = { scope:journal_entry ?= { "scripted_bar_progress(cwp_indonesia_revolution_bar)" >= 40 } } add = 20 }
 		if = { limit = { cwp_has_imperialist_leaning_government = yes } multiply = 0.25 }
 	}
 }
@@ -744,7 +738,7 @@ cwp_indonesia_guerrilla_button = {
 	}
 
 	possible = {
-		always = yes
+		c:NET ?= { has_war_with = root }
 		custom_tooltip = {
 			text = cwp_button_cooldown_tt
 			NOT = { has_variable = cwp_indonesia_guerrilla_button_cd }
@@ -759,15 +753,6 @@ cwp_indonesia_guerrilla_button = {
 		set_variable = {
 			name = cwp_indonesia_guerrilla
 			months = 6
-		}
-		c:NET ?= {
-			every_scope_war = {
-				limit = { any_war_participant = { c:IDS ?= this } }
-				add_war_war_support = {
-					target = c:NET
-					value = -5
-				}
-			}
 		}
 	}
 
@@ -825,7 +810,10 @@ cwp_indonesia_marshall_pressure_button = {
 	possible = {
 		custom_tooltip = {
 			text = cwp_indonesia_marshall_pressure_button_possible_tt
-			c:NET ?= { has_variable = cwp_indonesia_police_action_taken }
+			OR = {
+				c:NET ?= { has_variable = cwp_indonesia_police_action_taken }
+				c:IDS ?= { has_variable = cwp_indonesia_diplomacy }
+			}
 		}
 		custom_tooltip = {
 			text = cwp_button_cooldown_tt
@@ -842,6 +830,7 @@ cwp_indonesia_marshall_pressure_button = {
 			name = cwp_indonesia_marshall_pressure
 			months = 12
 		}
+		set_global_variable = cwp_indonesia_us_pressure_applied
 		c:NET ?= {
 			add_modifier = {
 				name = cwp_indonesia_marshall_aid_suspended
@@ -872,7 +861,7 @@ cwp_indochina_reinforce_button = {
 	}
 
 	possible = {
-		always = yes
+		c:DAI ?= { has_war_with = root }
 		custom_tooltip = {
 			text = cwp_button_cooldown_tt
 			NOT = { has_variable = cwp_indochina_reinforce_button_cd }
@@ -917,7 +906,13 @@ cwp_indochina_french_offensive_button = {
 		}
 		custom_tooltip = {
 			text = cwp_indochina_french_offensive_button_possible_tt
-			scope:journal_entry ?= { "scripted_bar_progress(cwp_indochina_war_bar)" <= -20 }
+			any_scope_war = {
+				any_war_participant = { c:DAI ?= this }
+				has_war_support = {
+					target = c:DAI
+					value < 50
+				}
+			}
 		}
 	}
 
@@ -928,8 +923,7 @@ cwp_indochina_french_offensive_button = {
 	}
 
 	ai_chance = {
-		value = 10
-		if = { limit = { scope:journal_entry ?= { "scripted_bar_progress(cwp_indochina_war_bar)" <= -30 } } add = 20 }
+		value = 15
 	}
 }
 
@@ -948,7 +942,17 @@ cwp_indochina_general_offensive_button = {
 		}
 		custom_tooltip = {
 			text = cwp_indochina_general_offensive_button_possible_tt
-			scope:journal_entry ?= { "scripted_bar_progress(cwp_indochina_war_bar)" >= 20 }
+			OR = {
+				any_scope_war = {
+					any_war_participant = { c:FRA ?= this }
+					has_war_support = {
+						target = c:FRA
+						value < 50
+					}
+				}
+				has_state_in_state_region = STATE_ANNAM
+				has_state_in_state_region = STATE_MEKONG
+			}
 		}
 	}
 
@@ -959,8 +963,7 @@ cwp_indochina_general_offensive_button = {
 	}
 
 	ai_chance = {
-		value = 10
-		if = { limit = { scope:journal_entry ?= { "scripted_bar_progress(cwp_indochina_war_bar)" >= 30 } } add = 20 }
+		value = 15
 	}
 }
 
@@ -973,7 +976,7 @@ cwp_indochina_american_aid_button = {
 	}
 
 	possible = {
-		always = yes
+		c:FRA ?= { has_war_with = c:DAI }
 		custom_tooltip = {
 			text = cwp_button_cooldown_tt
 			NOT = { has_variable = cwp_indochina_american_aid_button_cd }
@@ -1013,6 +1016,7 @@ cwp_indochina_chinese_aid_button = {
 
 	possible = {
 		is_at_war = no
+		c:FRA ?= { has_war_with = c:DAI }
 		custom_tooltip = {
 			text = cwp_button_cooldown_tt
 			NOT = { has_variable = cwp_indochina_chinese_aid_button_cd }
@@ -1050,10 +1054,8 @@ cwp_indochina_negotiate_button = {
 
 	possible = {
 		NOT = { has_variable = cwp_indochina_negotiations }
-		custom_tooltip = {
-			text = cwp_indochina_negotiate_button_possible_tt
-			scope:journal_entry ?= { "scripted_bar_progress(cwp_indochina_war_bar)" >= 25 }
-		}
+		c:DAI ?= { has_war_with = root }
+		cwp_indochina_war_turned = yes
 	}
 
 	effect = {
@@ -1062,10 +1064,10 @@ cwp_indochina_negotiate_button = {
 	}
 
 	ai_chance = {
-		value = 3
+		value = 5
 		if = { limit = { cwp_has_anticolonial_leaning_government = yes } add = 15 }
 		if = { limit = { scaled_debt > 0.5 } add = 10 }
-		if = { limit = { scope:journal_entry ?= { "scripted_bar_progress(cwp_indochina_war_bar)" >= 40 } } add = 15 }
+		if = { limit = { has_global_variable = cwp_indochina_months global_var:cwp_indochina_months >= 60 } add = 15 }
 		if = { limit = { c:USA ?= { has_variable = cwp_indochina_american_aid } } multiply = 0.5 }
 	}
 }
@@ -1161,9 +1163,10 @@ cwp_algeria_referendum_button = {
 		NOT = { has_variable = cwp_algeria_self_determination }
 		custom_tooltip = {
 			text = cwp_algeria_referendum_button_possible_tt
-			scope:journal_entry ?= {
-				"scripted_bar_progress(cwp_algeria_insurgency_bar)" >= 40
-				"scripted_bar_progress(cwp_algeria_will_bar)" <= 50
+			scope:journal_entry ?= { "scripted_bar_progress(cwp_algeria_insurgency_bar)" >= 40 }
+			OR = {
+				has_variable = cwp_algeria_strongman
+				cwp_has_anticolonial_leaning_government = yes
 			}
 		}
 	}
@@ -1174,9 +1177,9 @@ cwp_algeria_referendum_button = {
 	}
 
 	ai_chance = {
-		value = 3
-		if = { limit = { cwp_has_anticolonial_leaning_government = yes } add = 15 }
-		if = { limit = { scope:journal_entry ?= { "scripted_bar_progress(cwp_algeria_will_bar)" <= 30 } } add = 20 }
-		if = { limit = { cwp_has_imperialist_leaning_government = yes } multiply = 0.5 }
+		value = 5
+		if = { limit = { has_variable = cwp_algeria_strongman } add = 20 }
+		if = { limit = { cwp_has_anticolonial_leaning_government = yes } add = 10 }
+		if = { limit = { scope:journal_entry ?= { "scripted_bar_progress(cwp_algeria_insurgency_bar)" >= 70 } } add = 20 }
 	}
 }

@@ -139,7 +139,7 @@ cwp_gold_election_button = {
 	}
 }
 
-### Kenya: the rising is liberty desire; settler power is the bar
+### Kenya: the rising is liberty desire; the JE is bound to the detained leader
 cwp_kenya_emergency_button = {
 	name = "cwp_kenya_emergency_button"
 	desc = "cwp_kenya_emergency_button_desc"
@@ -164,10 +164,6 @@ cwp_kenya_emergency_button = {
 			name = cwp_kenya_emergency_button_cd
 			months = 12
 		}
-		set_variable = {
-			name = cwp_kenya_emergency
-			months = 12
-		}
 		add_modifier = {
 			name = cwp_kenya_emergency_cost
 			months = 12
@@ -175,6 +171,17 @@ cwp_kenya_emergency_button = {
 		}
 		change_infamy = 3
 		c:KKY ?= { add_liberty_desire = -15 }
+		if = {
+			limit = {
+				NOT = { has_global_variable = cwp_kenya_leader_detained }
+				NOT = { has_global_variable = cwp_kenya_leader_martyred }
+				has_global_variable = cwp_kenya_leader
+				global_var:cwp_kenya_leader ?= { is_character_alive = yes }
+			}
+			custom_tooltip = cwp_kenya_detain_leader_tt
+			set_global_variable = cwp_kenya_leader_detained
+			c:KKY ?= { add_modifier = { name = cwp_kenya_leader_in_detention } }
+		}
 		if = {
 			limit = { NOT = { has_global_variable = cwp_kenya_emergencies } }
 			set_global_variable = { name = cwp_kenya_emergencies value = 0 }
@@ -209,10 +216,6 @@ cwp_kenya_land_reform_button = {
 			name = cwp_kenya_land_reform_button_cd
 			months = 36
 		}
-		set_variable = {
-			name = cwp_kenya_land_reform
-			months = 24
-		}
 		add_modifier = {
 			name = cwp_kenya_land_reform_cost
 			months = 24
@@ -224,6 +227,47 @@ cwp_kenya_land_reform_button = {
 	ai_chance = {
 		value = 10
 		if = { limit = { cwp_has_anticolonial_leaning_government = yes } add = 5 }
+	}
+}
+
+cwp_kenya_release_button = {
+	name = "cwp_kenya_release_button"
+	desc = "cwp_kenya_release_button_desc"
+
+	visible = {
+		c:GBR ?= this
+	}
+
+	possible = {
+		has_global_variable = cwp_kenya_leader_detained
+		custom_tooltip = {
+			text = cwp_kenya_release_button_possible_tt
+			OR = {
+				has_global_variable = cwp_kenya_rising_crushed
+				c:KKY ?= { liberty_desire >= 80 }
+				AND = {
+					has_global_variable = cwp_tide_tier
+					global_var:cwp_tide_tier >= 3
+				}
+			}
+		}
+	}
+
+	effect = {
+		remove_global_variable = cwp_kenya_leader_detained
+		c:KKY ?= {
+			remove_modifier = cwp_kenya_leader_in_detention
+			change_relations = {
+				country = root
+				value = 20
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 5
+		if = { limit = { cwp_has_anticolonial_leaning_government = yes } add = 15 }
+		if = { limit = { has_global_variable = cwp_tide_tier global_var:cwp_tide_tier >= 3 } add = 15 }
 	}
 }
 
@@ -239,9 +283,15 @@ cwp_kenya_conference_button = {
 		NOT = { has_global_variable = cwp_kenya_conference_held }
 		custom_tooltip = {
 			text = cwp_kenya_conference_button_possible_tt
-			scope:journal_entry ?= { "scripted_bar_progress(cwp_kenya_settler_bar)" <= 40 }
+			NOT = { has_global_variable = cwp_kenya_leader_detained }
 			has_global_variable = cwp_tide_tier
 			global_var:cwp_tide_tier >= 3
+			OR = {
+				cwp_has_anticolonial_leaning_government = yes
+				has_global_variable = cwp_kenya_rising_crushed
+				has_global_variable = cwp_kenya_leader_martyred
+				c:KKY ?= { liberty_desire >= 75 }
+			}
 		}
 	}
 
@@ -251,9 +301,9 @@ cwp_kenya_conference_button = {
 	}
 
 	ai_chance = {
-		value = 5
+		value = 10
 		if = { limit = { cwp_has_anticolonial_leaning_government = yes } add = 20 }
-		if = { limit = { scope:journal_entry ?= { "scripted_bar_progress(cwp_kenya_settler_bar)" <= 25 } } add = 15 }
+		if = { limit = { c:KKY ?= { liberty_desire >= 75 } } add = 15 }
 	}
 }
 
@@ -300,7 +350,6 @@ cwp_congo_cadres_button = {
 	possible = {
 		custom_tooltip = {
 			text = cwp_congo_cadres_button_possible_tt
-			has_global_variable = cwp_congo_cadres
 			global_var:cwp_congo_cadres < 3
 		}
 		custom_tooltip = {
@@ -455,16 +504,17 @@ cwp_portugal_counter_insurgency_button = {
 			name = cwp_portugal_counter_insurgency_button_cd
 			months = 12
 		}
-		set_variable = {
-			name = cwp_portugal_counter_insurgency
-			months = 12
-		}
 		add_modifier = {
 			name = cwp_portugal_counter_insurgency_cost
 			months = 12
 			multiplier = money_amount_multiplier_medium
 		}
 		change_infamy = 2
+		if = {
+			limit = { NOT = { has_global_variable = cwp_portugal_campaigns } }
+			set_global_variable = { name = cwp_portugal_campaigns value = 0 }
+		}
+		change_global_variable = { name = cwp_portugal_campaigns add = 1 }
 		every_country = {
 			limit = {
 				OR = {
@@ -541,12 +591,9 @@ cwp_portugal_decolonize_button = {
 		NOT = { has_variable = cwp_portugal_decolonize }
 		custom_tooltip = {
 			text = cwp_portugal_decolonize_button_possible_tt
-			OR = {
-				NOR = {
-					has_law = law_type:law_autocracy
-					has_law = law_type:law_single_party_state
-				}
-				scope:journal_entry ?= { "scripted_bar_progress(cwp_portugal_exhaustion_bar)" >= 60 }
+			NOR = {
+				has_law = law_type:law_autocracy
+				has_law = law_type:law_single_party_state
 			}
 		}
 	}
@@ -567,6 +614,100 @@ cwp_portugal_decolonize_button = {
 			}
 			add = 30
 		}
-		if = { limit = { scope:journal_entry ?= { "scripted_bar_progress(cwp_portugal_exhaustion_bar)" >= 80 } } add = 20 }
+		if = { limit = { has_global_variable = cwp_portugal_fronts global_var:cwp_portugal_fronts >= 2 } add = 20 }
+	}
+}
+
+### Katanga
+cwp_katanga_un_button = {
+	name = "cwp_katanga_un_button"
+	desc = "cwp_katanga_un_button_desc"
+
+	visible = {
+		c:CNG ?= this
+	}
+
+	possible = {
+		custom_tooltip = {
+			text = cwp_button_cooldown_tt
+			NOT = { has_variable = cwp_katanga_un_button_cd }
+		}
+	}
+
+	effect = {
+		set_variable = {
+			name = cwp_katanga_un_button_cd
+			months = 36
+		}
+		add_modifier = {
+			name = cwp_katanga_un_mission
+			months = 24
+		}
+	}
+
+	ai_chance = {
+		value = 15
+	}
+}
+
+cwp_katanga_back_button = {
+	name = "cwp_katanga_back_button"
+	desc = "cwp_katanga_back_button_desc"
+
+	visible = {
+		c:BEL ?= this
+	}
+
+	possible = {
+		c:KTA ?= { is_subject = no }
+		custom_tooltip = {
+			text = cwp_button_cooldown_tt
+			NOT = { has_variable = cwp_katanga_back_button_cd }
+		}
+	}
+
+	effect = {
+		set_variable = {
+			name = cwp_katanga_back_button_cd
+			months = 36
+		}
+		change_infamy = 3
+		c:KTA ?= {
+			add_modifier = {
+				name = cwp_katanga_belgian_backing
+				months = 24
+			}
+			change_relations = {
+				country = root
+				value = 20
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 5
+		if = { limit = { cwp_has_imperialist_leaning_government = yes } add = 10 }
+	}
+}
+
+cwp_katanga_recognise_button = {
+	name = "cwp_katanga_recognise_button"
+	desc = "cwp_katanga_recognise_button_desc"
+
+	visible = {
+		c:CNG ?= this
+	}
+
+	possible = {
+		NOT = { has_variable = cwp_katanga_recognised }
+	}
+
+	effect = {
+		set_variable = cwp_katanga_recognised
+		custom_tooltip = cwp_katanga_recognise_button_effect_tt
+	}
+
+	ai_chance = {
+		value = 1
 	}
 }

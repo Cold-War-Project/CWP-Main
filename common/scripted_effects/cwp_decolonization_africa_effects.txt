@@ -1,7 +1,33 @@
 ﻿# Cold War Project: decolonization in Africa, scripted effects
 
-# Scope: none. Monthly while the Portuguese JE runs: the guerrillas' foreign bases raise each colony's liberty desire.
+# Scope: none. Monthly while the Portuguese JE runs: the guerrillas' foreign bases raise each colony's liberty
+# desire; every colony at 50+ is a front, and each front sours Portugal's Armed Forces.
 cwp_portugal_fronts_pulse = {
+	set_global_variable = { name = cwp_portugal_fronts value = 0 }
+	every_country = {
+		limit = {
+			OR = {
+				c:OVM ?= this
+				c:MKU ?= this
+				c:GNB ?= this
+			}
+			is_subject_of = c:POR
+			liberty_desire >= 50
+		}
+		change_global_variable = { name = cwp_portugal_fronts add = 1 }
+	}
+	c:POR ?= {
+		ig:ig_armed_forces ?= {
+			remove_modifier = cwp_portugal_officers_discontent
+			if = {
+				limit = { global_var:cwp_portugal_fronts > 0 }
+				add_modifier = {
+					name = cwp_portugal_officers_discontent
+					multiplier = global_var:cwp_portugal_fronts
+				}
+			}
+		}
+	}
 	if = {
 		limit = { c:CNG ?= { is_subject = no } }
 		c:OVM ?= {
@@ -91,5 +117,12 @@ cwp_portugal_release_effect = {
 		}
 		cwp_decolonization_negotiated_independence = { METROPOLE = c:POR }
 		trigger_event = { id = cwp_africa.31 popup = yes }
+	}
+}
+
+# Scope: none. Clears the officers' modifier when the Portuguese JE ends.
+cwp_portugal_cleanup = {
+	c:POR ?= {
+		ig:ig_armed_forces ?= { remove_modifier = cwp_portugal_officers_discontent }
 	}
 }

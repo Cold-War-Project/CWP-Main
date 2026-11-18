@@ -1,9 +1,7 @@
 ﻿# Cold War Project: decolonization war support, added to war_support_from_journal_entries
 # (common/script_values/zz_vanilla_script_values.txt). Root = the country whose war support changes,
 # scope:war = the war; the result is part of the per-beat war support change and shows in its tooltip.
-# Global variables set by the journal entries' monthly pulses:
-#   cwp_indochina_bar_level / cwp_indonesia_bar_level  -2..2 from the JE bar (+/-25 = 1, +/-40 = 2)
-#   cwp_indochina_peoples_war_phase                    the Indochina people's war phase is running
+# Since the 2026-11-18 rework the JEs have no war bars: the buttons and the state of the war act here directly.
 # War support runs 0-100 (red band at 25); native per-beat factors reach -5 (occupation), so these are sized to match.
 
 cwp_decolonization_war_support = {
@@ -12,7 +10,7 @@ cwp_decolonization_war_support = {
 	# Indochina: France and the Viet Minh state
 	if = {
 		limit = {
-			has_global_variable = cwp_indochina_bar_level
+			has_global_variable = cwp_indochina_active
 			OR = {
 				c:FRA ?= this
 				c:DAI ?= this
@@ -41,23 +39,53 @@ cwp_decolonization_war_support = {
 		if = {
 			limit = {
 				c:FRA ?= this
-				global_var:cwp_indochina_bar_level > 0
+				has_variable = cwp_indochina_reinforcements
 			}
 			add = {
-				value = global_var:cwp_indochina_bar_level
-				multiply = -1.5
-				desc = "cwp_war_support_indochina_balance"
+				value = 1
+				desc = "cwp_war_support_indochina_reinforcements"
+			}
+		}
+		if = {
+			limit = {
+				c:FRA ?= this
+				c:USA ?= { has_variable = cwp_indochina_american_aid }
+			}
+			add = {
+				value = 1
+				desc = "cwp_war_support_indochina_american_aid"
+			}
+		}
+		if = {
+			limit = {
+				c:FRA ?= this
+				has_global_variable = cwp_indochina_months
+				global_var:cwp_indochina_months >= 36
+			}
+			add = {
+				value = -1
+				desc = "cwp_war_support_indochina_dirty_war"
+			}
+		}
+		if = {
+			limit = {
+				c:FRA ?= this
+				has_global_variable = cwp_indochina_months
+				global_var:cwp_indochina_months >= 72
+			}
+			add = {
+				value = -1
+				desc = "cwp_war_support_indochina_endless_war"
 			}
 		}
 		if = {
 			limit = {
 				c:DAI ?= this
-				global_var:cwp_indochina_bar_level < 0
+				c:PRC ?= { has_variable = cwp_indochina_chinese_aid }
 			}
 			add = {
-				value = global_var:cwp_indochina_bar_level
-				multiply = 1.5
-				desc = "cwp_war_support_indochina_balance"
+				value = 1
+				desc = "cwp_war_support_indochina_chinese_aid"
 			}
 		}
 	}
@@ -65,7 +93,7 @@ cwp_decolonization_war_support = {
 	# Indonesia: the Netherlands and the Republic
 	if = {
 		limit = {
-			has_global_variable = cwp_indonesia_bar_level
+			has_global_variable = cwp_indonesia_active
 			OR = {
 				c:NET ?= this
 				c:IDS ?= this
@@ -80,7 +108,7 @@ cwp_decolonization_war_support = {
 		if = {
 			limit = {
 				c:IDS ?= this
-				global_var:cwp_indonesia_bar_level > -1
+				cwp_indonesia_republic_holds = yes
 				scope:war = { has_war_support = { target = root value < 30 } }
 			}
 			add = {
@@ -90,24 +118,42 @@ cwp_decolonization_war_support = {
 		}
 		if = {
 			limit = {
-				c:NET ?= this
-				global_var:cwp_indonesia_bar_level > 0
+				c:IDS ?= this
+				has_variable = cwp_indonesia_guerrilla
 			}
 			add = {
-				value = global_var:cwp_indonesia_bar_level
-				multiply = -1.5
+				value = 1
+				desc = "cwp_war_support_indonesia_guerrilla"
+			}
+		}
+		if = {
+			limit = {
+				c:NET ?= this
+				has_variable = cwp_indonesia_police_action
+			}
+			add = {
+				value = 2
+				desc = "cwp_war_support_indonesia_police_action"
+			}
+		}
+		if = {
+			limit = {
+				c:NET ?= this
+				c:USA ?= { has_variable = cwp_indonesia_marshall_pressure }
+			}
+			add = {
+				value = -2
 				desc = "cwp_war_support_indonesia_pressure"
 			}
 		}
 		if = {
 			limit = {
-				c:IDS ?= this
-				global_var:cwp_indonesia_bar_level < 0
+				c:NET ?= this
+				scaled_debt > 0.5
 			}
 			add = {
-				value = global_var:cwp_indonesia_bar_level
-				multiply = 1.5
-				desc = "cwp_war_support_indonesia_pressure"
+				value = -1
+				desc = "cwp_war_support_metropole_debt"
 			}
 		}
 	}

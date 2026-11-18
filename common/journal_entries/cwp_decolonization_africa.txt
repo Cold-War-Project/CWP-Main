@@ -3,6 +3,7 @@
 # je_cwp_kenya              Britain, the Kenya settlers and Land and Freedom
 # je_cwp_belgian_congo      Belgium and the Congo: preparation or a rushed exit
 # je_cwp_portuguese_africa  the Estado Novo and its overseas provinces
+# je_cwp_katanga            the secession of Katanga after a rushed Congolese independence
 # Contextless; each is opened by cwp_decolonization_monthly_pulse when its cwp_<x>_can_open trigger holds,
 # sets cwp_<x>_active in immediate and clears it in every outcome. No outcome is scheduled by date.
 
@@ -139,19 +140,34 @@ je_cwp_kenya = {
 
 	immediate = {
 		set_global_variable = cwp_kenya_active
+		# The JE is bound to the nationalist leader (history template KKY_jomo_kenyatta).
+		c:KKY ?= {
+			random_scope_character = {
+				limit = { has_template = KKY_jomo_kenyatta }
+				set_global_variable = {
+					name = cwp_kenya_leader
+					value = this
+				}
+			}
+		}
 	}
 
-	# One bar, settler power. The rising is Kenya's own liberty desire: it breaks out at 40 and becomes the
-	# engine's independence war at 90; three Emergencies break the forest fighters, but not the politics.
-	scripted_progress_bar = cwp_kenya_settler_bar
+	# No bar. The rising is Kenya's own liberty desire: it breaks out at 40 and becomes the engine's
+	# independence war at 90. The first Emergency detains the nationalist leader; the conference on majority
+	# rule cannot meet while he is held, and if he dies in detention he becomes a martyr.
 
 	scripted_button = cwp_kenya_emergency_button
+	scripted_button = cwp_kenya_release_button
 	scripted_button = cwp_kenya_land_reform_button
 	scripted_button = cwp_kenya_conference_button
 	scripted_button = cwp_kenya_forests_button
 
 	status_desc = {
 		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_kenya_status_detained
+				trigger = { has_global_variable = cwp_kenya_leader_detained }
+			}
 			triggered_desc = {
 				desc = je_cwp_kenya_status_crushed
 				trigger = { has_global_variable = cwp_kenya_rising_crushed }
@@ -191,6 +207,22 @@ je_cwp_kenya = {
 					trigger_event = { id = cwp_africa.11 popup = yes }
 				}
 			}
+			# The leader dies in detention.
+			if = {
+				limit = {
+					has_global_variable = cwp_kenya_leader_detained
+					has_global_variable = cwp_kenya_leader
+					global_var:cwp_kenya_leader ?= { is_character_alive = no }
+				}
+				remove_global_variable = cwp_kenya_leader_detained
+				set_global_variable = cwp_kenya_leader_martyred
+				c:KKY ?= {
+					remove_modifier = cwp_kenya_leader_in_detention
+					add_liberty_desire = 20
+				}
+				c:GBR ?= { trigger_event = { id = cwp_africa.14 popup = yes } }
+				c:KKY ?= { trigger_event = { id = cwp_africa.14 popup = yes } }
+			}
 		}
 	}
 
@@ -206,7 +238,10 @@ je_cwp_kenya = {
 		}
 		effect = {
 			remove_global_variable = cwp_kenya_active
-			c:KKY = { cwp_decolonization_negotiated_independence = { METROPOLE = c:GBR } }
+			c:KKY = {
+				remove_modifier = cwp_kenya_leader_in_detention
+				cwp_decolonization_negotiated_independence = { METROPOLE = c:GBR }
+			}
 			c:GBR ?= { trigger_event = { id = cwp_africa.12 popup = yes } }
 			c:KKY ?= { trigger_event = { id = cwp_africa.12 popup = yes } }
 		}
@@ -278,7 +313,10 @@ je_cwp_belgian_congo = {
 		c:CNG ?= { add_modifier = { name = cwp_congo_paternalism } }
 	}
 
-	# No bar: a race. The counter is how much Belgium has prepared a Congolese administration; the clock is the
+	# No bar: a race, then pressure with a cost (vanilla je_tenpo_crisis): once the tide frees the Congo from
+	# paternalism, Belgium's legitimacy bleeds a little more every month until it calls the Round Table.
+	# A secession of Katanga continues in je_cwp_katanga.
+	# The race: The counter is how much Belgium has prepared a Congolese administration; the clock is the
 	# outside world (Ghana free, the tide, the Congo's own liberty desire), which decides when Belgium must go.
 	current_value = {
 		value = 0
@@ -318,8 +356,26 @@ je_cwp_belgian_congo = {
 					c:CNG ?= { has_modifier = cwp_congo_paternalism }
 				}
 				c:CNG = { remove_modifier = cwp_congo_paternalism }
+				set_global_variable = { name = cwp_congo_crisis_months value = 0 }
 				c:BEL ?= { trigger_event = { id = cwp_africa.20 popup = yes } }
 				c:CNG ?= { trigger_event = { id = cwp_africa.20 popup = yes } }
+			}
+			# Once the Congo is awake, every month without a settlement costs Belgium more.
+			if = {
+				limit = { has_global_variable = cwp_congo_crisis_months }
+				change_global_variable = { name = cwp_congo_crisis_months add = 1 }
+				c:BEL ?= {
+					remove_modifier = cwp_congo_crisis
+					add_modifier = {
+						name = cwp_congo_crisis
+						multiplier = {
+							value = global_var:cwp_congo_crisis_months
+							divide = 6
+							min = 1
+							max = 10
+						}
+					}
+				}
 			}
 		}
 	}
@@ -335,6 +391,8 @@ je_cwp_belgian_congo = {
 		}
 		effect = {
 			remove_global_variable = cwp_congo_active
+			remove_global_variable = cwp_congo_crisis_months
+			c:BEL ?= { remove_modifier = cwp_congo_crisis }
 			c:CNG = { remove_modifier = cwp_congo_paternalism }
 			cwp_congo_independence_effect = yes
 			c:BEL ?= { trigger_event = { id = cwp_africa.21 popup = yes } }
@@ -354,6 +412,8 @@ je_cwp_belgian_congo = {
 		}
 		effect = {
 			remove_global_variable = cwp_congo_active
+			remove_global_variable = cwp_congo_crisis_months
+			c:BEL ?= { remove_modifier = cwp_congo_crisis }
 			c:CNG ?= { remove_modifier = cwp_congo_paternalism }
 		}
 	}
@@ -391,13 +451,26 @@ je_cwp_portuguese_africa = {
 		c:POR ?= { trigger_event = { id = cwp_africa.30 popup = yes } }
 	}
 
-	# One bar, Portugal's exhaustion, fed by every colony actually in revolt (liberty desire 50+). The liberation
-	# wars themselves are the colonies' liberty desire, raised by bases abroad (cwp_portugal_fronts_pulse).
-	scripted_progress_bar = cwp_portugal_exhaustion_bar
+	# No bar: competing checklists (vanilla je_danubian_federation_observer). The liberation wars are the
+	# colonies' liberty desire, raised by bases abroad; every colony at 50+ is a front, and every front sours
+	# the Armed Forces in Lisbon (cwp_portugal_fronts_pulse). Either Lisbon changes its regime and lets go, or
+	# the officers, after years of campaigns, overthrow it (cwp_portugal_coup_ready).
 
 	scripted_button = cwp_portugal_counter_insurgency_button
 	scripted_button = cwp_portugal_colonatos_button
 	scripted_button = cwp_portugal_decolonize_button
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_portuguese_africa_status_officers
+				trigger = { c:POR ?= { ig:ig_armed_forces ?= { ig_approval < 0 } } }
+			}
+			triggered_desc = {
+				desc = je_cwp_portuguese_africa_status_war
+			}
+		}
+	}
 
 	on_monthly_pulse = {
 		effect = {
@@ -417,6 +490,7 @@ je_cwp_portuguese_africa = {
 		}
 		effect = {
 			remove_global_variable = cwp_portugal_active
+			cwp_portugal_cleanup = yes
 			c:POR = { remove_variable = cwp_portugal_decolonize }
 			cwp_portugal_release_effect = yes
 			c:POR ?= {
@@ -439,10 +513,11 @@ je_cwp_portuguese_africa = {
 		trigger = {
 			cwp_portugal_holds_africa = yes
 			NOT = { c:POR ?= { has_variable = cwp_portugal_decolonize } }
-			scope:journal_entry = { "scripted_bar_progress(cwp_portugal_exhaustion_bar)" >= 100 }
+			cwp_portugal_coup_ready = yes
 		}
 		effect = {
 			remove_global_variable = cwp_portugal_active
+			cwp_portugal_cleanup = yes
 			c:POR = {
 				add_modifier = {
 					name = cwp_portugal_carnation
@@ -473,6 +548,7 @@ je_cwp_portuguese_africa = {
 		}
 		effect = {
 			remove_global_variable = cwp_portugal_active
+			cwp_portugal_cleanup = yes
 		}
 	}
 
@@ -484,6 +560,7 @@ je_cwp_portuguese_africa = {
 		}
 		effect = {
 			remove_global_variable = cwp_portugal_active
+			cwp_portugal_cleanup = yes
 		}
 	}
 
@@ -491,3 +568,95 @@ je_cwp_portuguese_africa = {
 	can_deactivate = no
 	weight = 100
 }
+
+### Katanga: the secession (target-scoped follow-up of je_cwp_belgian_congo)
+# Opens when KTA exists as an independent state. It ends when the Congo holds Katanga again, or when the
+# Congo recognises the secession. The fighting is the engine's: the Congo has a claim on the state.
+
+je_cwp_katanga = {
+	group = je_group_cwp_decolonization
+	icon = "gfx/interface/icons/event_icons/event_map.dds"
+
+	activation_description = {
+		always = yes
+	}
+
+	should_be_involved = {
+		OR = {
+			c:CNG ?= this
+			c:KTA ?= this
+			c:BEL ?= this
+		}
+	}
+
+	should_show_when_not_involved = {
+		capital ?= { is_in_geographic_region = geographic_region_africa }
+	}
+
+	immediate = {
+		set_global_variable = cwp_katanga_active
+	}
+
+	scripted_button = cwp_katanga_un_button
+	scripted_button = cwp_katanga_back_button
+	scripted_button = cwp_katanga_recognise_button
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_cwp_katanga_reunified_desc
+		trigger = {
+			custom_tooltip = {
+				text = cwp_katanga_reunified_tt
+				OR = {
+					NOT = { exists = c:KTA }
+					c:CNG ?= { has_state_in_state_region = STATE_KATANGA }
+				}
+			}
+		}
+		effect = {
+			remove_global_variable = cwp_katanga_active
+			set_global_variable = cwp_katanga_concluded
+			c:CNG ?= { trigger_event = { id = cwp_africa.23 popup = yes } }
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		color = "blue_negative"
+		conclusion_desc = je_cwp_katanga_recognised_desc
+		trigger = {
+			c:CNG ?= { has_variable = cwp_katanga_recognised }
+		}
+		effect = {
+			remove_global_variable = cwp_katanga_active
+			set_global_variable = cwp_katanga_concluded
+			c:KTA ?= {
+				change_relations = {
+					country = c:CNG
+					value = 30
+				}
+			}
+			c:KTA ?= { trigger_event = { id = cwp_africa.24 popup = yes } }
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_cwp_decolonization_invalid_desc
+		trigger = {
+			NOT = { exists = c:CNG }
+		}
+		effect = {
+			remove_global_variable = cwp_katanga_active
+			set_global_variable = cwp_katanga_concluded
+		}
+	}
+
+	transferable = no
+	can_deactivate = no
+	weight = 100
+}
+
