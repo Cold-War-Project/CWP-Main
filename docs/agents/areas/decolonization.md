@@ -49,6 +49,10 @@ Partition and release use fixed vanilla 1.15.1 state regions: Pakistan = STATE_P
 
 All of this depends on the 1946 start state (governments, debt, subject types) and on AI weights, so the observer run is what confirms it.
 
+## Naming
+
+Player-visible names use established terms from the historical and strategic literature where one exists (Jack, 2026-11-18), otherwise plain description, in American spelling except verbatim titles and party names (Labour). Built on the quality audit's wording (fix/scholarly-prose, 2026-11-18). Examples: the Transfer of Power, the Cabinet Mission, police actions, the Round Table, protracted war and the general counter-offensive (Giap's stages), the Constantine Plan, the pieds-noirs, the Coussey Committee, the Mau Mau uprising, ONUC, the colonatos, the Afro-Asian Conference, the Tydings-McDuffie Act. The global bar is shown as "Anti-Colonial Nationalism" (the scripts still call it the tide).
+
 ## Tuning log
 
 - 2026-11-17, shared observer run def84bda6 (1946-1956, first run with the JEs opening): India's self-rule fell from 60 to 0 by 1949 because colonies' liberty desire sank to about 20 and Britain's AI restored order; Indochina hit -50 for France within a year; Algeria opened in 1948 and was crushed within a year; Indonesia reached +50 in late 1947 and transferred sovereignty about a year early; Japan was counted as a former colony. Changes: tide tier worth +0.2 liberty desire a week, colonies registered once, India gets a +1 'Congress mass movement' base and a weaker restore-order button and AI, Indochina's Viet Minh base +1, Chinese sanctuary/aid +1/+2, French delta -0.5, reinforcements -1.25, US aid -1, plus French war weariness at 3 and 6 years of war (counter `cwp_indochina_months`), Algeria opens at tide tier 2 with insurgency 25, FLN base +0.75, pacification -1, Constantine plan -0.5.
