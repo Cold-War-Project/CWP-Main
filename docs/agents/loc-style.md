@@ -32,13 +32,14 @@ Never hard-code anything the simulation can change.
 - **Leaders and office-holders** come from scopes (`GetRuler.GetFullName`, `GetHeir`, a saved character) or are named by role ("the prime minister", "the Congress leadership"). Never write "Attlee", "Rhee" or "Kim Il Sung" in present-tense text: someone else may hold the job.
 - **Conditional history.** If a fact in the text depends on a variable or a branch (UN-observed elections, a party winning, a war's result), either use the scope/variable through custom localization or leave the fact out. Read the script that fires the text before writing it.
 - **Hard-coding is fine** for past-tense facts from before 1946.1.1 (the 38th parallel, the Atlantic Charter, the 1945 elections), place names and geography, and attributions of real quotations.
+- **Nothing after the start date is settled fact** (Jack, 2026-11-18). Do not mention anything that happened after 1946.1.1 in our history (the Truman Doctrine, NATO, the Partition of India, the Korean War) as if it has happened, unless the text can only appear because the content chain made it happen in the game (the event is gated on it, or fired by it). This covers quotations too: a quote from 1952 only belongs on content that fires after the thing it talks about happened in-game. Background before 1946.1.1 is safe.
 - **Long-running JEs age.** A `_reason` shown in 1970 must not say "France has only just been liberated". Put start-date background in the past tense.
 
 ## Quotations
 
 - `.f` flavor lines are the best place for real period voices: speeches, treaties, constitutions, resolutions, court opinions, party programs, newspaper headlines.
 - **Never invent a quotation.** A line in quotation marks must be a real, checked quotation with an attribution: `"..."\n— Jawaharlal Nehru`. Mark it "(attributed)" when the attribution is uncertain. An unattributed sentence in quote marks reads as a fake quote; if it isn't real, drop the quote marks or replace it.
-- Prefer sources from before 1946.1.1, or sources whose content can't contradict the simulation (founding charters, constitutions, laws). For post-start quotes, attribute without a year when the in-game date may differ ("Constitution of the Republic of Korea, Article 4").
+- Use sources from before 1946.1.1, or post-start sources only where the content chain guarantees the thing they describe happened (a proclaimed state's constitution on its proclamation event). For those, attribute without a year when the in-game date may differ ("Constitution of the Republic of Korea, Article 4").
 - Public-domain primary sources (US government documents and court opinions, treaties, UN resolutions) can be quoted freely but briefly. Speeches and books still in copyright: a short quote (one sentence) with attribution. Never paste long passages from Wikipedia or a modern book; paraphrase in our own words.
 - Verbatim quotes keep their original spelling ("centre", "programme"). Everything else is American spelling.
 
