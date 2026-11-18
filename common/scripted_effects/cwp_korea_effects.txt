@@ -51,6 +51,16 @@ cwp_korea_start_war_effect = {
 
 # Both Koreas survive: the line becomes a border nobody accepts.
 cwp_korea_divided_peace_effect = {
+	# American troops that are in Korea when the fighting stops stay on (chapter 2)
+	if = {
+		limit = {
+			OR = {
+				NOT = { has_global_variable = cwp_korea_us_withdrawn }
+				c:USA ?= { has_variable = cwp_korea_participant }
+			}
+		}
+		set_global_variable = cwp_tkor_usfk
+	}
 	c:NRK ?= {
 		add_modifier = { name = cwp_korea_dmz days = long_modifier_time }
 		if = {
@@ -254,5 +264,75 @@ cwp_korea_join_war_effect = {
 				side = $SIDE$
 			}
 		}
+	}
+}
+
+
+# ---- Chapter 2: the two Koreas (je_cwp_two_koreas) ----
+
+# Monthly logic. Called in the scope of STK (or NRK) so that je: links resolve.
+cwp_tkor_monthly_effect = {
+	# A renewed war has ended: clear the flag the war events read
+	if = {
+		limit = {
+			has_global_variable = cwp_korea_war
+			cwp_korea_war_running = no
+		}
+		remove_global_variable = cwp_korea_war
+		every_country = {
+			limit = { has_variable = cwp_korea_participant }
+			remove_variable = cwp_korea_participant
+		}
+	}
+	# The North's first nuclear test
+	if = {
+		limit = {
+			NOT = { has_global_variable = cwp_tkor_bomb_noticed }
+			c:NRK ?= { cwp_is_nuclear_power = yes }
+		}
+		set_global_variable = cwp_tkor_bomb_noticed
+		c:STK ?= { trigger_event = { id = cwp_korea.42 popup = yes } }
+		c:USA ?= { trigger_event = { id = cwp_korea.42 popup = yes } }
+	}
+}
+
+# Reunification by agreement: the larger economy absorbs the smaller one.
+cwp_tkor_peaceful_reunification_effect = {
+	if = {
+		limit = {
+			exists = c:STK
+			exists = c:NRK
+			c:STK.gdp >= c:NRK.gdp
+		}
+		c:STK = {
+			annex = c:NRK
+			add_modifier = { name = cwp_korea_unified days = long_modifier_time }
+		}
+	}
+	else_if = {
+		limit = {
+			exists = c:STK
+			exists = c:NRK
+		}
+		c:NRK = {
+			annex = c:STK
+			add_modifier = { name = cwp_korea_unified days = long_modifier_time }
+		}
+	}
+}
+
+cwp_tkor_cleanup_effect = {
+	remove_global_variable = cwp_tkor_active
+	set_global_variable = cwp_tkor_concluded
+	remove_global_variable = cwp_tkor_usfk
+	remove_global_variable = cwp_tkor_summit
+	remove_global_variable = cwp_tkor_bomb_noticed
+	remove_global_variable = cwp_korea_war
+	c:USA ?= { remove_modifier = cwp_korea_us_garrison }
+	c:NRK ?= { remove_variable = cwp_tkor_agrees }
+	c:STK ?= { remove_variable = cwp_tkor_agrees }
+	every_country = {
+		limit = { has_variable = cwp_korea_participant }
+		remove_variable = cwp_korea_participant
 	}
 }

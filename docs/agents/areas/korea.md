@@ -51,13 +51,23 @@ The first CWP2 staging save had the war start on 1947-08-15. The gates held (bot
 - The US intervened with a UN mandate, and Colombia, India, Mexico and Japan sent contingents. The PRC had pledged volunteers but never entered, because the Chinese Civil War was still running in that game and the entry check needed the PRC to be at peace. The South won, and a united Korea (`KOR`, formable) existed by 1952-08.
 - Change: the Chinese entry check now allows a PRC whose only war is against the ROC. Its AI is much less likely to choose entry while that war lasts (-40).
 
+## Chapter 2: the two Koreas (`je_cwp_two_koreas`)
+
+Opens when chapter 1 ends with both Koreas standing (armistice or the line holds), and never times out: a peninsula still divided in 2046 is a valid, historical result.
+- **Tension on the DMZ** (0 to 100, starts 60). It rises with northern provocations, southern retaliation, the North's nuclear programme and bomb, and the South having no American guarantee. It falls slowly by itself, and faster with patron restraint, talks and southern engagement. At 80 either Korea may renew the war, but only with its gate open: for the North, no US forces or treaty and a stronger army; for the South, a North abandoned by its patrons, without the bomb, and a weaker army.
+- **Reconciliation** (0 to 100). It rises with talks (fastest when both sides talk), engagement, summits, superpower détente (USA-RUS relations at 50 or more) and a North that has lost its patrons. It falls with provocations and crises. At 100 each government can agree to reunify; once both agree, the larger economy absorbs the smaller.
+- **US forces** (`cwp_tkor_usfk`) start stationed if the US fought in the war or never withdrew. The AI almost never withdraws them.
+- **The North's bomb**: `cwp_tkor_bomb_button` opens the shared `je_cwp_nuclear_programme` for NRK, bypassing that programme's major-power gate. Its AI weight is near zero unless the North has lost its patrons. The first test fires sanctions events for the South and the USA.
+- Events: DMZ incident (cwp_korea.40), inter-Korean summit (.41), northern bomb test (.42).
+- Endings: reunification by agreement, one Korea (war, collapse or annexation), and a hidden invalid ending.
+
 ## Files
 
-`common/journal_entries/cwp_korea_divided_peninsula.txt`, `common/scripted_progress_bars/cwp_korea_bars.txt`, `common/scripted_buttons/cwp_korea_buttons.txt`, `common/scripted_effects/cwp_korea_effects.txt`, `common/scripted_triggers/cwp_korea_triggers.txt`, `common/static_modifiers/cwp_korea_modifiers.txt`, `common/diplomatic_plays/cwp_korea_war_play.txt`, `common/named_colors/cwp_korea_colors.txt`, `common/on_actions/cwp_korea_on_actions.txt`, `events/cwp_korea_events.txt`, `localization/english/cwp/journal/cwp_korea_l_english.yml`.
+`common/journal_entries/cwp_korea_divided_peninsula.txt`, `common/journal_entries/cwp_korea_two_koreas.txt`, `common/scripted_progress_bars/cwp_korea_two_koreas_bars.txt`, `common/scripted_buttons/cwp_korea_two_koreas_buttons.txt`, `common/scripted_progress_bars/cwp_korea_bars.txt`, `common/scripted_buttons/cwp_korea_buttons.txt`, `common/scripted_effects/cwp_korea_effects.txt`, `common/scripted_triggers/cwp_korea_triggers.txt`, `common/static_modifiers/cwp_korea_modifiers.txt`, `common/diplomatic_plays/cwp_korea_war_play.txt`, `common/named_colors/cwp_korea_colors.txt`, `common/on_actions/cwp_korea_on_actions.txt`, `events/cwp_korea_events.txt`, `localization/english/cwp/journal/cwp_korea_l_english.yml`.
 
 ## Not built yet / to tune
 
 - Every bar rate, threshold and AI weight is a first guess; tune from observer runs.
 - No Inchon event: amphibious landings are left to the war system.
-- Follow-up rivalry content after the armistice (Pueblo 1968, South Korean democratisation, the nuclear question) can test `cwp_korea_concluded` with both Koreas existing.
+- South Korean democratisation is left to the politics simulation; no scripted events yet.
 - Occupation-era names for `STK`/`NRK` (history thread).
