@@ -38,6 +38,21 @@ A **proposal** is its own contextless JE, active only while its vote is open (`p
 
 Historical results are likely, not forced: nothing fires on a date, the AI must table and vote, and a deadlocked admission (the 1946-1955 pattern, where each camp's permanent members vetoed the other's applicants) emerges from the veto weights.
 
+## NATO and the Warsaw Pact (second slice, branch `feat/intl-orgs-nato`)
+
+| JE | What |
+|---|---|
+| `je_cwp_nato_founding` | A founding conference, opened by `cwp_nato_call_conference_decision`: possible from 1948 (the Brussels Treaty) for a major power in Europe or North America outside the eastern camp, when an eastern-camp bloc leader is cold or hostile to it. Every eligible country is invited and signs or declines within six months; five signatures found NATO. Neutrals outside any power bloc tend to decline. Failure means a two-year cooldown. |
+| `je_cwp_nato` | The alliance. Consensus rule (`THRESHOLD = 100`: one vote against blocks, abstentions don't), rotating North Atlantic Council chair (`cwp_io_rotate_presidency`, yearly, fewest terms first), `cwp_nato_member_modifier`. **Article 5**: when a member is the target of a war by a non-member (`cwp_nato_under_attack`), the others get a button to join its wars (`join_war`); each decides, as the treaty says. Withdrawal button. |
+| `je_cwp_nato_admission` | Accession votes, one applicant at a time, applicants from `cwp_nato_apply_decision`. Members of the eastern camp are voted down. Each enlargement counts in `cwp_nato_enlargements`. |
+| `je_cwp_wp_founding` | The eastern answer: `cwp_wp_call_conference_decision` for a power bloc leader of the eastern camp, only once NATO exists **and has enlarged** (historically the FRG in 1955). Eastern-camp countries in Europe are invited; four signatures found the Pact. |
+| `je_cwp_wp` | The Pact. Votes weighted by `cwp_io_economic_weight`, majority 51%, so the strongest member decides. Withdrawal button (Hungary 1956, Albania 1968): AI leaves only after moving away from council-republic rule or falling out with the bloc leader. |
+| `je_cwp_wp_admission` | Accession votes. |
+
+"Eastern camp" (`cwp_io_in_eastern_camp`) is read from laws and power blocs, never from tags: a council republic, or a member of a power bloc led by one. Power blocs stay the camps; the organizations sit on top of them and can cut across them (Britain and France lead their own blocs and can still sign the North Atlantic Treaty).
+
+Not yet: an intervention event when a member leaves the Warsaw Pact; France's 1966 withdrawal from the integrated command as its own state; NATO infrastructure or standardization bars.
+
 ## Not ported from master, and why
 
 - The GUI panels (`gui/international_panel.gui`, `un_panel.gui`, the `information_panel_bar.gui` overwrite) and the scripted GUIs that rebuilt lists while open: 1.5 GUI overwrites, forbidden by R9.
@@ -49,7 +64,7 @@ Historical results are likely, not forced: nothing fires on a date, the AI must 
 ## Next slices
 
 1. UN: decolonization resolution (1514), request for UN intervention as a Security Council decision with elected seats, the China seat question.
-2. NATO on the template, with rotating presidency and defensive pacts with members; the Warsaw Pact as the Soviet answer; membership rules against the power bloc camps (events PRs #764/#765).
+2. NATO and the Warsaw Pact: done in `feat/intl-orgs-nato` (above).
 3. IMF with weighted votes (`cwp_io_economic_weight`).
 
 ## Tested on Forge (2026-11-17)
