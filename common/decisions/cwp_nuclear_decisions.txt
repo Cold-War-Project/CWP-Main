@@ -19,26 +19,41 @@ cwp_nuc_start_programme_decision = {
 
 	ai_chance = {
 		value = 0
-		# A superpower facing a nuclear power outside its bloc builds at once (the USSR in 1945). Other great
-		# powers outside anyone's umbrella sometimes decide to (Britain 1947, France 1954); sheltered allies rarely do.
+		# Bomb programmes follow bloc leadership and threat, not rank (the rank checks proved unreliable):
+		# - a bloc leader facing a nuclear power outside its bloc that is not on good terms builds at once (USSR 1945);
+		# - a bloc leader facing only friendly nuclear powers sometimes wants an independent deterrent (Britain, France);
+		# - a great power outside every bloc facing a hostile nuclear power may build (China after the split, India);
+		# - bloc members and everyone else leave it to their bloc leader.
 		if = {
 			limit = {
-				country_rank >= rank_value:superpower
-				cwp_nuc_faces_outside_nuclear_power = yes
+				is_power_bloc_leader = yes
+				any_country = {
+					NOT = { this = root }
+					cwp_is_nuclear_power = yes
+					NOT = { is_in_same_power_bloc = root }
+					relations:root < relations_threshold:cordial
+				}
 			}
 			add = 100
 		}
 		else_if = {
 			limit = {
-				country_rank >= rank_value:great_power
+				is_power_bloc_leader = yes
 				cwp_nuc_faces_outside_nuclear_power = yes
-				cwp_nuc_under_nuclear_umbrella = no
 			}
-			add = 5
+			add = 3
 		}
-		if = {
-			limit = { cwp_nuc_under_nuclear_umbrella = yes }
-			multiply = 0
+		else_if = {
+			limit = {
+				is_in_power_bloc = no
+				country_rank >= rank_value:great_power
+				any_country = {
+					NOT = { this = root }
+					cwp_is_nuclear_power = yes
+					relations:root <= relations_threshold:poor
+				}
+			}
+			add = 20
 		}
 	}
 }
