@@ -109,7 +109,7 @@ AI: Washington and London drop the accord once Soviet consolidation reaches 25. 
 
 ## One twist per situation (Jack's team, 2026-11-18)
 
-Not everything should be bar management. Each situation now has its own shape: chapter 1 is a two-bar tug-of-war (Western integration against Soviet consolidation) with competing checklists for its ending and the Berlin crisis on top; chapter 2 has one bar (GDR legitimacy) and the Basic Treaty as a conditions mission; chapter 3 has the revolution bar plus a four-power consent checklist with a deadlock clock; Austria is a pure checklist with a buy-back mission; the Saar is a two-key referendum with no bar.
+Not everything should be bar management. Each situation now has its own shape: chapter 1 is a two-bar tug-of-war (Western integration against Soviet consolidation) with competing checklists for its ending and the Berlin crisis on top; chapter 2 has one bar (GDR legitimacy) and a path choice: the Hallstein Doctrine (the default; isolates the GDR abroad, −0.25 legitimacy a month) or Ostpolitik, which adds the sub-entry `je_cwp_ostpolitik` for GER, a mission list of three treaties (Moscow: relations with the Soviet Union at least 0; then Warsaw, accepting the Oder-Neisse line; then the Basic Treaty with its conditions); chapter 3 has the revolution bar plus a four-power consent checklist with a deadlock clock; Austria is a pure checklist with a buy-back mission; the Saar is a two-key referendum with no bar.
 
 ## Known gaps and decisions for review
 
