@@ -62,7 +62,7 @@ One bar, `cwp_cw_correlation_bar`, 0 (the West dominant) to 100 (socialism domin
 - momentum: +1.5 for every country that falls to communism, -1.5 for every one that leaves it, decaying 3% a month (half-life about two years);
 - -5 while the West alone has the bomb (`cwp_is_nuclear_power`).
 
-The JE's status lines show the components, the count of states that fell and left in the run, and the last one to fall and when. Bands name the situation: the West ascendant (below 20), containment holds (20-35), the balance shifts (35-50), the tide favours socialism (50-65), the West is losing (above 65). A run with 35 communist states reads as a high bar, a list of fallen countries and a red map, and the US player can see which of their aid pacts lapsed.
+The JE's status lines show the components, the count of states that fell and left in the run, and the last one to fall and when. Bands use terms from the scholarship rather than invented ones (Jack, 2026-11-18): A Preponderance of Power (below 20; Leffler's title for US postwar dominance), Bipolar Stability (20-35; Waltz), Strategic Parity (35-50; the 1970s arms-control term), A Shift in the Correlation of Forces (50-65; the Soviet doctrinal phrase), Socialist Preponderance (above 65). Outcome modifiers likewise borrow established titles: The End of History (Fukuyama), The God That Failed (1949 essay collection), The Wave of the Future (Lindbergh, 1940), The Decline of the West (Spengler). A run with 35 communist states reads as a high bar, a list of fallen countries and a red map, and the US player can see which of their aid pacts lapsed.
 
 Each fall also fires a news event to both camp leaders, naming the country and the movement that won.
 
