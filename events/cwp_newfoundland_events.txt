@@ -21,7 +21,7 @@ cwp_nf.1 = {
 	}
 }
 
-# The referendum.
+# The first ballot: Commission, Responsible Government or Confederation.
 cwp_nf.2 = {
 	type = country_event
 	placement = root
@@ -33,7 +33,11 @@ cwp_nf.2 = {
 				desc = cwp_nf.2.d.confederation
 				trigger = { var:cwp_nf_result_var > 50 }
 			}
-			desc = cwp_nf.2.d.responsible
+			triggered_desc = {
+				desc = cwp_nf.2.d.responsible
+				trigger = { var:cwp_nf_rg_result_var > 50 }
+			}
+			desc = cwp_nf.2.d.runoff
 		}
 	}
 	flavor = cwp_nf.2.f
@@ -57,26 +61,96 @@ cwp_nf.2 = {
 			20 = { set_variable = { name = cwp_nf_swing_var value = 6 } }
 		}
 		set_variable = { name = cwp_nf_result_var value = cwp_nf_counted_result }
+		set_variable = { name = cwp_nf_cm_result_var value = cwp_nf_commission_share }
+		set_variable = { name = cwp_nf_rg_result_var value = cwp_nf_rg_counted_result }
 		save_scope_as = cwp_nf_newfoundland
 	}
 
-	option = { # Confederation: Ottawa must agree the terms
+	option = { # Confederation wins outright
 		name = cwp_nf.2.a
 		trigger = { var:cwp_nf_result_var > 50 }
 		default_option = yes
 		custom_tooltip = cwp_nf_terms_of_union_tt
+		set_variable = cwp_nf_settled_var
 		c:CAN ?= {
 			trigger_event = { id = cwp_nf.3 days = 30 popup = yes }
 		}
-		set_variable = cwp_nf_settled_var
 	}
 
-	option = { # Responsible Government restored
+	option = { # Responsible Government wins outright
 		name = cwp_nf.2.b
-		trigger = { NOT = { var:cwp_nf_result_var > 50 } }
+		trigger = { var:cwp_nf_rg_result_var > 50 }
 		default_option = yes
-		change_subject_type = subject_type_dominion
 		set_variable = cwp_nf_settled_var
+		change_subject_type = subject_type_dominion
+	}
+
+	option = { # No majority: the Commission drops out, runoff
+		name = cwp_nf.2.c
+		trigger = {
+			NOT = { var:cwp_nf_result_var > 50 }
+			NOT = { var:cwp_nf_rg_result_var > 50 }
+		}
+		default_option = yes
+		custom_tooltip = cwp_nf_runoff_tt
+		trigger_event = { id = cwp_nf.4 days = 45 popup = yes }
+	}
+}
+
+# The runoff: Confederation against Responsible Government.
+cwp_nf.4 = {
+	type = country_event
+	placement = root
+
+	title = cwp_nf.4.t
+	desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = cwp_nf.4.d.confederation
+				trigger = { var:cwp_nf_runoff_var > 50 }
+			}
+			desc = cwp_nf.4.d.responsible
+		}
+	}
+	flavor = cwp_nf.4.f
+
+	event_image = { video = "southamerica_election" }
+	on_created_soundeffect = "event:/SFX/UI/Alerts/event_appear"
+	icon = "gfx/interface/icons/event_icons/event_election.dds"
+
+	duration = 3
+
+	trigger = {
+		has_journal_entry = je_cwp_newfoundland_future
+	}
+
+	immediate = {
+		random_list = {
+			25 = { set_variable = { name = cwp_nf_swing2_var value = -3 } }
+			50 = { set_variable = { name = cwp_nf_swing2_var value = 0 } }
+			25 = { set_variable = { name = cwp_nf_swing2_var value = 3 } }
+		}
+		set_variable = { name = cwp_nf_runoff_var value = cwp_nf_runoff_result }
+		save_scope_as = cwp_nf_newfoundland
+	}
+
+	option = {
+		name = cwp_nf.2.a
+		trigger = { var:cwp_nf_runoff_var > 50 }
+		default_option = yes
+		custom_tooltip = cwp_nf_terms_of_union_tt
+		set_variable = cwp_nf_settled_var
+		c:CAN ?= {
+			trigger_event = { id = cwp_nf.3 days = 30 popup = yes }
+		}
+	}
+
+	option = {
+		name = cwp_nf.2.b
+		trigger = { NOT = { var:cwp_nf_runoff_var > 50 } }
+		default_option = yes
+		set_variable = cwp_nf_settled_var
+		change_subject_type = subject_type_dominion
 	}
 }
 
