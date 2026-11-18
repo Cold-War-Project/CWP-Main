@@ -1,11 +1,18 @@
 #!/usr/bin/env bash
 # cwp-observe: one shared long observer game, with periodic state dumps for every area to tune from.
 #   cwp-observe <mod worktree> [END_YEAR=1956] [OUT=~/forge/observer/<date>-<sha>]
+#   CWP_OBSERVE_REBUILD=1 rebuilds the integration tree from the staging queue right after taking the lock.
 # Takes the game lock, starts a new game in observer mode at max speed, and every ~2 minutes copies the
 # newest autosave and dumps it with cwp-save-dump (journal entries, bars, wars, cwp_ flags, key tags).
 # Stops at END_YEAR, writes errors + per-PR attribution + perf CSV, unlocks. Clicks assume 1920x1080.
 set -u
 WT=$(readlink -f "${1:?usage: cwp-observe <worktree> [end_year] [outdir]}"); END=${2:-1956}
+export CWP_VIC_MAX_HOLD=${CWP_VIC_MAX_HOLD:-$(( (END - 1946) * 240 + 3600 ))}   # hold long enough for the whole run
+cwp-vic lock --owner-pid $$ --wait "${CWP_OBSERVE_WAIT:-14400}" ${CWP_OBSERVE_PRIORITY:+--priority} "observer: shared run $(basename "$WT") to $END" || exit 1
+trap 'cwp-vic unlock >/dev/null' EXIT
+# CWP_OBSERVE_REBUILD=1: rebuild the integration tree from the staging queue only once the game is ours,
+# so the round tests the newest heads no matter how long it waited in line.
+[[ -n "${CWP_OBSERVE_REBUILD:-}" ]] && cwp-integrate build > "$HOME/forge/jobs/last-rebuild.txt" 2>&1
 SHA=$(git -C "$WT" rev-parse --short HEAD)
 OUT=${3:-$HOME/forge/observer/$(date +%Y%m%d-%H%M)-$SHA}; mkdir -p "$OUT/saves"
 { echo "tree: $WT"; echo "build: $SHA ($(git -C "$WT" rev-parse --abbrev-ref HEAD))"; echo "started: $(date '+%F %T %Z')"
@@ -13,9 +20,6 @@ OUT=${3:-$HOME/forge/observer/$(date +%Y%m%d-%H%M)-$SHA}; mkdir -p "$OUT/saves"
 } > "$OUT/BUILD.txt"
 export DISPLAY=:0 CWP_AGENT=${CWP_AGENT:-observer}
 U="$HOME/.local/share/Paradox Interactive/Victoria 3"; SAVES="$U/save games"
-export CWP_VIC_MAX_HOLD=${CWP_VIC_MAX_HOLD:-$(( (END - 1946) * 240 + 3600 ))}   # hold long enough for the whole run
-cwp-vic lock --owner-pid $$ --wait "${CWP_OBSERVE_WAIT:-14400}" ${CWP_OBSERVE_PRIORITY:+--priority} "observer: shared run $SHA to $END" || exit 1
-trap 'cwp-vic unlock >/dev/null' EXIT
 cwp-vic link "$WT" >/dev/null && cwp-vic launch > "$OUT/launch.out" 2>&1
 # Desktop popups (e.g. "Unlock Keyring" after a re-login) steal focus and swallow the clicks below.
 clear_popups() { local w; for w in $(xdotool search --name "Unlock Keyring|Authentication required" 2>/dev/null); do
