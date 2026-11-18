@@ -1,0 +1,214 @@
+﻿# Cold War Project: the global Cold War (je_cwp_cold_war). See docs/agents/areas/cold-war.md.
+# Contextless: run from the JE pulse or the cwp_cold_war on_action.
+
+# Re-choose a camp leader only when the current one stops qualifying.
+cwp_cw_update_leaders = {
+	if = {
+		limit = {
+			NOT = {
+				global_var:cwp_cw_west_leader ?= {
+					NOT = { cwp_cw_is_communist_state = yes }
+					is_power_bloc_leader = yes
+				}
+			}
+		}
+		if = {
+			limit = {
+				any_country = {
+					NOT = { cwp_cw_is_communist_state = yes }
+					is_power_bloc_leader = yes
+					country_rank >= rank_value:great_power
+				}
+			}
+			ordered_country = {
+				limit = {
+					NOT = { cwp_cw_is_communist_state = yes }
+					is_power_bloc_leader = yes
+					country_rank >= rank_value:great_power
+				}
+				order_by = prestige
+				set_global_variable = { name = cwp_cw_west_leader value = this }
+			}
+		}
+		else = {
+			remove_global_variable = cwp_cw_west_leader
+		}
+	}
+	if = {
+		limit = {
+			NOT = {
+				global_var:cwp_cw_east_leader ?= {
+					cwp_cw_is_communist_state = yes
+				}
+			}
+		}
+		if = {
+			limit = {
+				any_country = {
+					cwp_cw_is_communist_state = yes
+					country_rank >= rank_value:major_power
+				}
+			}
+			ordered_country = {
+				limit = {
+					cwp_cw_is_communist_state = yes
+					country_rank >= rank_value:major_power
+				}
+				order_by = prestige
+				set_global_variable = { name = cwp_cw_east_leader value = this }
+			}
+		}
+		else = {
+			remove_global_variable = cwp_cw_east_leader
+		}
+	}
+}
+
+# Cache every country's camp, count falls and departures, and sum the camps' GDP.
+cwp_cw_update_camps = {
+	cwp_cw_update_leaders = yes
+	global_var:cwp_cw_west_leader ?= { save_scope_as = cw_west }
+	global_var:cwp_cw_east_leader ?= { save_scope_as = cw_east }
+	set_global_variable = { name = cwp_cw_east_gdp value = 0 }
+	set_global_variable = { name = cwp_cw_west_gdp value = 0 }
+	set_global_variable = { name = cwp_cw_east_count value = 0 }
+	set_global_variable = { name = cwp_cw_west_count value = 0 }
+	set_global_variable = { name = cwp_cw_nonaligned_count value = 0 }
+	set_global_variable = { name = cwp_cw_revolutions value = 0 }
+	# Momentum decays 2% a month.
+	if = {
+		limit = { has_global_variable = cwp_cw_momentum }
+		change_global_variable = { name = cwp_cw_momentum multiply = 0.98 }
+	}
+	else = {
+		set_global_variable = { name = cwp_cw_momentum value = 0 }
+	}
+
+	# Pass 1: independent countries (top of their subject tree).
+	every_country = {
+		limit = {
+			NOT = { is_country_type = decentralized }
+			is_subject = no
+		}
+		remove_variable = cwp_cw_east
+		remove_variable = cwp_cw_west
+		remove_variable = cwp_cw_core
+		if = {
+			limit = { cwp_cw_is_communist_state = yes }
+			set_variable = cwp_cw_east
+			if = {
+				limit = {
+					OR = {
+						scope:cw_east ?= this
+						this.power_bloc ?= { scope:cw_east ?= this.power_bloc_leader }
+					}
+				}
+				set_variable = cwp_cw_core
+			}
+		}
+		else_if = {
+			limit = {
+				OR = {
+					scope:cw_west ?= this
+					this.power_bloc ?= { scope:cw_west ?= this.power_bloc_leader }
+					has_variable = cwp_io_member_nato
+					AND = {
+						is_power_bloc_leader = yes
+						scope:cw_west ?= { relations:prev >= relations_threshold:cordial }
+					}
+				}
+			}
+			set_variable = cwp_cw_west
+			if = {
+				limit = {
+					OR = {
+						scope:cw_west ?= this
+						this.power_bloc ?= { scope:cw_west ?= this.power_bloc_leader }
+						has_variable = cwp_io_member_nato
+					}
+				}
+				set_variable = cwp_cw_core
+			}
+		}
+	}
+	# Pass 2: subjects follow their top overlord unless their own regime says otherwise.
+	every_country = {
+		limit = {
+			NOT = { is_country_type = decentralized }
+			is_subject = yes
+		}
+		remove_variable = cwp_cw_east
+		remove_variable = cwp_cw_west
+		remove_variable = cwp_cw_core
+		if = {
+			limit = { cwp_cw_is_communist_state = yes }
+			set_variable = cwp_cw_east
+			if = {
+				limit = { top_overlord ?= { has_variable = cwp_cw_east } }
+				set_variable = cwp_cw_core
+			}
+		}
+		else_if = {
+			limit = { top_overlord ?= { has_variable = cwp_cw_west } }
+			set_variable = cwp_cw_west
+		}
+	}
+	# Pass 3: falls, departures and sums.
+	every_country = {
+		limit = { NOT = { is_country_type = decentralized } }
+		if = {
+			limit = { has_variable = cwp_cw_east }
+			change_global_variable = { name = cwp_cw_east_gdp add = gdp }
+			change_global_variable = { name = cwp_cw_east_count add = 1 }
+			if = {
+				limit = { NOT = { has_variable = cwp_cw_was_east } }
+				set_variable = cwp_cw_was_east
+				if = {
+					limit = { has_global_variable = cwp_cw_initialised }
+					cwp_cw_record_fall = yes
+				}
+			}
+		}
+		else = {
+			if = {
+				limit = { has_variable = cwp_cw_west }
+				change_global_variable = { name = cwp_cw_west_gdp add = gdp }
+				change_global_variable = { name = cwp_cw_west_count add = 1 }
+			}
+			else = {
+				change_global_variable = { name = cwp_cw_nonaligned_count add = 1 }
+			}
+			if = {
+				limit = { has_variable = cwp_cw_was_east }
+				remove_variable = cwp_cw_was_east
+				cwp_cw_record_departure = yes
+			}
+		}
+		if = {
+			limit = { cwp_cw_communist_revolution_under_way = yes }
+			change_global_variable = { name = cwp_cw_revolutions add = 1 }
+		}
+	}
+	set_global_variable = { name = cwp_cw_initialised value = yes }
+	set_global_variable = { name = cwp_cw_correlation value = cwp_cw_correlation_value }
+}
+
+# Country scope: this country has just become a communist state.
+cwp_cw_record_fall = {
+	change_global_variable = { name = cwp_cw_fallen_count add = 1 }
+	change_global_variable = { name = cwp_cw_momentum add = 3 }
+	set_global_variable = { name = cwp_cw_last_fallen value = this }
+	save_scope_as = cwp_cw_fallen
+	scope:cw_west ?= { trigger_event = { id = cwp_cold_war.1 } }
+	scope:cw_east ?= { trigger_event = { id = cwp_cold_war.1 } }
+}
+
+# Country scope: this country has just stopped being a communist state.
+cwp_cw_record_departure = {
+	change_global_variable = { name = cwp_cw_departed_count add = 1 }
+	change_global_variable = { name = cwp_cw_momentum add = -3 }
+	set_global_variable = { name = cwp_cw_last_departed value = this }
+	save_scope_as = cwp_cw_departed
+	scope:cw_west ?= { trigger_event = { id = cwp_cold_war.2 } }
+	scope:cw_east ?= { trigger_event = { id = cwp_cold_war.2 } }
+}

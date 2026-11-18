@@ -1,0 +1,255 @@
+﻿# Cold War Project: the global Cold War (design: docs/agents/areas/cold-war.md)
+# je_cwp_cold_war   The Correlation of Forces: the world-wide balance, its map mode and how the Cold War ends.
+# Opened by cwp_cold_war_monthly_pulse (common/on_actions/cwp_cold_war_on_actions.txt). Camps are derived
+# from the simulation each month (cwp_cw_update_camps); nothing here is scheduled by date.
+
+je_cwp_cold_war = {
+	group = je_group_cwp_cold_war
+	context = none
+	icon = "gfx/interface/icons/event_icons/event_revolutionary_flag.dds"
+
+	activation_description = {
+		always = yes
+	}
+
+	should_be_involved = {
+		OR = {
+			has_variable = cwp_cw_east
+			has_variable = cwp_cw_west
+		}
+	}
+
+	should_show_when_not_involved = {
+		always = yes
+	}
+
+	should_be_pinned_by_default_involved = no
+	should_be_pinned_by_default_uninvolved_or_context = no
+
+	weight = 10000
+	can_revolution_inherit = yes
+
+	scripted_progress_bar = cwp_cw_correlation_bar
+
+	immediate = {
+		set_global_variable = cwp_cw_active
+		set_global_variable = { name = cwp_cw_fallen_count value = 0 }
+		set_global_variable = { name = cwp_cw_departed_count value = 0 }
+		c:USA ?= { set_global_variable = { name = cwp_cw_west_leader value = this } }
+		c:RUS ?= { set_global_variable = { name = cwp_cw_east_leader value = this } }
+		cwp_cw_update_camps = yes
+		scope:journal_entry ?= {
+			set_bar_progress = { name = cwp_cw_correlation_bar value = global_var:cwp_cw_correlation }
+		}
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			cwp_cw_update_camps = yes
+			scope:journal_entry ?= {
+				set_bar_progress = { name = cwp_cw_correlation_bar value = global_var:cwp_cw_correlation }
+			}
+			every_country = {
+				limit = {
+					OR = {
+						has_variable = cwp_cw_east
+						has_variable = cwp_cw_west
+					}
+					NOT = { is_involved_in_journal_entry = je_cwp_cold_war }
+				}
+				scope:journal_entry ?= { add_involved_country = prev }
+			}
+		}
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_cold_war_status_4
+				trigger = { global_var:cwp_cw_correlation >= 65 }
+			}
+			triggered_desc = {
+				desc = je_cwp_cold_war_status_3
+				trigger = { global_var:cwp_cw_correlation >= 50 }
+			}
+			triggered_desc = {
+				desc = je_cwp_cold_war_status_2
+				trigger = { global_var:cwp_cw_correlation >= 35 }
+			}
+			triggered_desc = {
+				desc = je_cwp_cold_war_status_1
+				trigger = { global_var:cwp_cw_correlation >= 20 }
+			}
+			triggered_desc = {
+				desc = je_cwp_cold_war_status_0
+			}
+		}
+	}
+
+	map_color = {
+		if = {
+			limit = { owner ?= { has_variable = cwp_cw_east has_variable = cwp_cw_core } }
+			value = "cwp_cw_east_core"
+		}
+		else_if = {
+			limit = { owner ?= { has_variable = cwp_cw_east } }
+			value = "cwp_cw_east_outer"
+		}
+		else_if = {
+			limit = { owner ?= { has_variable = cwp_cw_west has_variable = cwp_cw_core } }
+			value = "cwp_cw_west_core"
+		}
+		else_if = {
+			limit = { owner ?= { has_variable = cwp_cw_west } }
+			value = "cwp_cw_west_outer"
+		}
+		else = {
+			value = "cwp_cw_nonaligned"
+		}
+	}
+
+	map_color_second = {
+		if = {
+			limit = {
+				is_in_revolt = yes
+				owner ?= { cwp_cw_communist_revolution_under_way = yes }
+			}
+			value = "cwp_cw_revolution"
+		}
+		else_if = {
+			limit = {
+				owner ?= {
+					NOT = { has_variable = cwp_cw_east }
+					cwp_cw_communist_movement_support = { VALUE = 0.25 }
+				}
+			}
+			value = "cwp_cw_red_movement"
+		}
+		else_if = {
+			limit = {
+				owner ?= {
+					NOT = { has_variable = cwp_cw_east }
+					modifier:country_cwp_cw_communist_appeal_mult < 0
+				}
+			}
+			value = "cwp_cw_aid"
+		}
+	}
+
+	map_tooltip = {
+		owner ?= {
+			save_scope_as = cwp_cw_map_country
+			if = {
+				limit = { has_variable = cwp_cw_east has_variable = cwp_cw_core }
+				custom_tooltip_no_bullet = cwp_cw_map_east_core
+			}
+			else_if = {
+				limit = { has_variable = cwp_cw_east }
+				custom_tooltip_no_bullet = cwp_cw_map_east_outer
+			}
+			else_if = {
+				limit = { has_variable = cwp_cw_west has_variable = cwp_cw_core }
+				custom_tooltip_no_bullet = cwp_cw_map_west_core
+			}
+			else_if = {
+				limit = { has_variable = cwp_cw_west }
+				custom_tooltip_no_bullet = cwp_cw_map_west_outer
+			}
+			else = {
+				custom_tooltip_no_bullet = cwp_cw_map_nonaligned
+			}
+			if = {
+				limit = {
+					NOT = { has_variable = cwp_cw_east }
+					any_political_movement = { cwp_cw_is_communist_movement = yes }
+				}
+				ordered_political_movement = {
+					limit = { cwp_cw_is_communist_movement = yes }
+					order_by = political_movement_support
+					save_scope_as = cwp_cw_map_movement
+				}
+				custom_tooltip_no_bullet = cwp_cw_map_movement_support
+			}
+			if = {
+				limit = { modifier:country_cwp_cw_communist_appeal_mult < 0 }
+				custom_tooltip_no_bullet = cwp_cw_map_appeal_down
+			}
+			else_if = {
+				limit = { modifier:country_cwp_cw_communist_appeal_mult > 0 }
+				custom_tooltip_no_bullet = cwp_cw_map_appeal_up
+			}
+			if = {
+				limit = { cwp_cw_communist_revolution_under_way = yes }
+				custom_tooltip_no_bullet = cwp_cw_map_revolution
+			}
+		}
+	}
+
+	# The socialist camp collapses: no communist great power leads a power bloc.
+	outcome = {
+		header = je_cwp_cold_war_west_header
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_cold_war_west_desc
+		color = "gold_positive"
+		trigger = {
+			custom_tooltip = {
+				text = je_cwp_cold_war_east_collapsed_tt
+				cwp_cw_east_camp_has_collapsed = yes
+			}
+		}
+		effect = {
+			set_global_variable = cwp_cw_outcome_west
+			remove_global_variable = cwp_cw_active
+			custom_tooltip = je_cwp_cold_war_west_effect_tt
+			hidden_effect = {
+				every_country = {
+					limit = { NOT = { is_country_type = decentralized } }
+					add_modifier = { name = cwp_cw_end_of_history years = 20 is_decaying = yes }
+					if = {
+						limit = { has_variable = cwp_cw_west }
+						add_modifier = { name = cwp_cw_free_world_victorious years = 10 }
+					}
+					if = {
+						limit = { cwp_cw_is_communist_state = yes }
+						add_modifier = { name = cwp_cw_god_that_failed years = 10 is_decaying = yes }
+					}
+					trigger_event = { id = cwp_cold_war.3 }
+				}
+			}
+		}
+	}
+
+	# The capitalist camp collapses: no non-communist great power leads a power bloc.
+	outcome = {
+		header = je_cwp_cold_war_east_header
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_cold_war_east_desc
+		color = "red_outcome"
+		trigger = {
+			custom_tooltip = {
+				text = je_cwp_cold_war_west_collapsed_tt
+				cwp_cw_west_camp_has_collapsed = yes
+			}
+		}
+		effect = {
+			set_global_variable = cwp_cw_outcome_east
+			remove_global_variable = cwp_cw_active
+			custom_tooltip = je_cwp_cold_war_east_effect_tt
+			hidden_effect = {
+				every_country = {
+					limit = { NOT = { is_country_type = decentralized } }
+					add_modifier = { name = cwp_cw_wave_of_the_future years = 20 is_decaying = yes }
+					if = {
+						limit = { cwp_cw_is_communist_state = yes }
+						add_modifier = { name = cwp_cw_socialist_camp_victorious years = 10 }
+					}
+					if = {
+						limit = { has_variable = cwp_cw_west }
+						add_modifier = { name = cwp_cw_free_world_in_retreat years = 10 is_decaying = yes }
+					}
+					trigger_event = { id = cwp_cold_war.4 }
+				}
+			}
+		}
+	}
+}
