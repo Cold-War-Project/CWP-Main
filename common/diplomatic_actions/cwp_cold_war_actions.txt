@@ -1,0 +1,242 @@
+﻿# Cold War Project: the global Cold War's containment lever. See docs/agents/areas/cold-war.md.
+# Both pacts give the target country_cwp_cw_communist_appeal_mult, which the communist movements read.
+
+# Economic aid: a Western-camp power pays, weighted to the poor; communist appeal falls while it runs.
+cwp_cw_economic_aid = {
+	groups = { general }
+	requires_approval = yes
+	should_notify_third_parties = yes
+
+	selectable = {
+		NOT = { is_country_type = decentralized }
+		is_revolutionary = no
+		cwp_cw_in_west = yes
+		is_subject = no
+		country_rank >= rank_value:major_power
+	}
+
+	potential = {
+		scope:target_country = {
+			NOT = { is_country_type = decentralized }
+			is_revolutionary = no
+			NOT = { cwp_cw_is_communist_state = yes }
+		}
+	}
+
+	possible = {
+		NOT = { has_war_with = scope:target_country }
+		country_rank > scope:target_country.country_rank
+	}
+
+	pact = {
+		cost = 50
+		is_two_sided_pact = no
+		show_in_outliner = yes
+		forced_duration = 12
+
+		second_modifier = {
+			country_cwp_cw_communist_appeal_mult = -0.25
+		}
+
+		# A quarter of the recipient's tax income, capped at 3% of the donor's.
+		income_transfer = 0.25
+		max_paying_country_income_to_transfer = 0.03
+		second_country_gets_income_transfer = yes
+		income_transfer_based_on_second_country = yes
+		income_transfer_to_pops = {
+			allow_non_fully_accepted = yes
+			upper_strata_pops = { value = 0.1 }
+			middle_strata_pops = { value = 0.3 }
+			lower_strata_pops = { value = 0.6 }
+		}
+
+		requirement_to_maintain = {
+			trigger = {
+				custom_tooltip = {
+					text = cwp_cw_target_not_communist_tt
+					scope:target_country = { NOT = { cwp_cw_is_communist_state = yes } }
+				}
+			}
+		}
+		requirement_to_maintain = {
+			trigger = {
+				custom_tooltip = {
+					text = "DIPLOMATIC_PACT_REQUIREMENT_AT_PEACE"
+					NOT = { has_war_with = scope:target_country }
+				}
+			}
+		}
+		requirement_to_maintain = {
+			trigger = {
+				in_default = no
+			}
+		}
+	}
+
+	ai = {
+		max_influence_spending_fraction = 0.25
+		evaluation_chance = {
+			value = 0.1
+			if = {
+				limit = { cwp_cw_is_west_leader = yes }
+				add = 0.4
+			}
+		}
+		propose_score = {
+			value = 10
+			if = {
+				limit = { scope:target = { cwp_cw_communist_revolution_under_way = yes } }
+				add = 40
+			}
+			if = {
+				limit = { scope:target = { cwp_cw_communist_movement_support = { VALUE = 0.2 } } }
+				add = 20
+			}
+			# Allies first: the Marshall Plan went to friends, not to strangers.
+			if = {
+				limit = { scope:target = { cwp_cw_in_west = yes } }
+				add = 15
+			}
+		}
+		will_propose = {
+			is_at_war = no
+			scaled_debt <= 0.25
+			net_fixed_income > 0
+			num_income_transfer_pacts < 4
+			scope:target = {
+				OR = {
+					cwp_cw_communist_revolution_under_way = yes
+					cwp_cw_communist_movement_support = { VALUE = 0.15 }
+				}
+			}
+		}
+		will_break = {
+			OR = {
+				scaled_debt > 0.5
+				net_fixed_income < 0
+				scope:target = {
+					NOR = {
+						cwp_cw_communist_revolution_under_way = yes
+						cwp_cw_communist_movement_support = { VALUE = 0.08 }
+					}
+				}
+			}
+		}
+		accept_score = {
+			value = 10
+			if = {
+				limit = { cwp_cw_communist_revolution_under_way = yes }
+				add = 30
+			}
+			if = {
+				limit = { cwp_cw_in_east = yes }
+				add = -100
+			}
+			if = {
+				limit = { scope:target.relations:root < relations_threshold:neutral }
+				add = -30
+			}
+		}
+	}
+}
+
+# Fraternal support: a communist-camp power funds the comrades in a non-communist country.
+cwp_cw_fraternal_support = {
+	groups = { general }
+	requires_approval = no
+	is_hostile = yes
+	should_notify_third_parties = yes
+
+	selectable = {
+		NOT = { is_country_type = decentralized }
+		is_revolutionary = no
+		cwp_cw_in_east = yes
+		is_subject = no
+		country_rank >= rank_value:major_power
+	}
+
+	potential = {
+		scope:target_country = {
+			NOT = { is_country_type = decentralized }
+			NOT = { cwp_cw_is_communist_state = yes }
+		}
+	}
+
+	possible = {
+		scope:target_country = {
+			custom_tooltip = {
+				text = cwp_cw_target_has_comrades_tt
+				any_political_movement = { cwp_cw_is_communist_movement = yes }
+			}
+		}
+	}
+
+	pact = {
+		cost = 50
+		is_two_sided_pact = no
+		show_in_outliner = yes
+
+		second_modifier = {
+			country_cwp_cw_communist_appeal_mult = 0.5
+		}
+
+		monthly_effect = {
+			change_relations = { country = scope:target_country value = -2 }
+		}
+
+		requirement_to_maintain = {
+			trigger = {
+				custom_tooltip = {
+					text = cwp_cw_target_not_communist_tt
+					scope:target_country = { NOT = { cwp_cw_is_communist_state = yes } }
+				}
+			}
+		}
+		requirement_to_maintain = {
+			trigger = {
+				custom_tooltip = {
+					text = cwp_cw_target_has_comrades_tt
+					scope:target_country = { any_political_movement = { cwp_cw_is_communist_movement = yes } }
+				}
+			}
+		}
+	}
+
+	ai = {
+		max_influence_spending_fraction = 0.25
+		evaluation_chance = {
+			value = 0.05
+			if = {
+				limit = { cwp_cw_is_east_leader = yes }
+				add = 0.3
+			}
+		}
+		propose_score = {
+			value = 10
+			if = {
+				limit = { scope:target = { cwp_cw_communist_movement_support = { VALUE = 0.2 } } }
+				add = 30
+			}
+			if = {
+				limit = { scope:target = { cwp_cw_in_west = yes } }
+				add = 10
+			}
+		}
+		will_propose = {
+			is_at_war = no
+			scaled_debt <= 0.25
+			net_fixed_income > 0
+			scope:target = {
+				cwp_cw_communist_movement_support = { VALUE = 0.15 }
+				NOT = { is_subject_of = root }
+				country_rank < root.country_rank
+			}
+		}
+		will_break = {
+			OR = {
+				scaled_debt > 0.5
+				net_fixed_income < 0
+			}
+		}
+	}
+}

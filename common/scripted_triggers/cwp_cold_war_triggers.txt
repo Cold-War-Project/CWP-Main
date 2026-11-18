@@ -1,0 +1,74 @@
+﻿# Cold War Project: the global Cold War (je_cwp_cold_war). See docs/agents/areas/cold-war.md.
+
+# A Marxist-Leninist state: council republic, or a single-party state running a command or cooperative economy,
+# or communist leadership with no franchise.
+cwp_cw_is_communist_state = {
+	OR = {
+		has_law_or_variant = law_type:law_council_republic
+		AND = {
+			has_law_or_variant = law_type:law_single_party_state
+			OR = {
+				has_law_or_variant = law_type:law_command_economy
+				has_law_or_variant = law_type:law_cooperative_ownership
+			}
+		}
+		cwp_country_has_communist_leadership = yes
+	}
+}
+
+# Cached camp (set monthly by cwp_cw_update_camps). Cheap: use these in map modes, movements and AI.
+cwp_cw_in_east = { has_variable = cwp_cw_east }
+cwp_cw_in_west = { has_variable = cwp_cw_west }
+
+# A communist movement (the ones the Cold War layer reads), in a political movement scope.
+cwp_cw_is_communist_movement = {
+	OR = {
+		is_political_movement_type = movement_cwp_orthodox_communist
+		is_political_movement_type = movement_cwp_peasant_revolutionary
+		is_political_movement_type = movement_communist
+	}
+}
+
+# Country scope: a communist revolution is under way against this government.
+cwp_cw_communist_revolution_under_way = {
+	any_civil_war = {
+		is_civil_war_type = revolution
+		political_movement ?= { cwp_cw_is_communist_movement = yes }
+	}
+}
+
+# Country scope: a communist movement has at least the given support.
+cwp_cw_communist_movement_support = {
+	any_political_movement = {
+		cwp_cw_is_communist_movement = yes
+		political_movement_support >= $VALUE$
+	}
+}
+
+# Country scope: the West's camp leader (power-bloc leader of the Western camp).
+cwp_cw_is_west_leader = {
+	global_var:cwp_cw_west_leader ?= this
+}
+cwp_cw_is_east_leader = {
+	global_var:cwp_cw_east_leader ?= this
+}
+
+# Outcomes (contextless, no scope).
+cwp_cw_east_camp_has_collapsed = {
+	NOT = {
+		any_country = {
+			cwp_cw_is_communist_state = yes
+			is_power_bloc_leader = yes
+			country_rank >= rank_value:great_power
+		}
+	}
+}
+cwp_cw_west_camp_has_collapsed = {
+	NOT = {
+		any_country = {
+			NOT = { cwp_cw_is_communist_state = yes }
+			is_power_bloc_leader = yes
+			country_rank >= rank_value:great_power
+		}
+	}
+}
