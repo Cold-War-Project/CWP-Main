@@ -98,9 +98,18 @@ Outcomes: **Unity** (revolution at 100 and every existing four power has pressed
 
 **Parent JE with a chapter widget: not built.** The chapters already follow each other through flags, and a custom widget adds GUI risk (crash-fix rule R9) for little gameplay. It can come later if the dev meeting wants it.
 
+## Chapter 1 rework: the four-power accord as a checklist (2026-11-18)
+
+Following `docs/agents/je-design-patterns.md` (pattern 2, competing checklists), `cwp_gq_unity_bar` is gone. Each occupier has a stance: the *All-German Government* button toggles `cwp_gq_backs_central_government` on the country. Potsdam sets the starting stances: the US, Britain and the Soviet Union back central administrations, and France (not a Potsdam party) does not. Two lists now compete:
+
+- **An all-German government** (an outcome, its trigger shown as a checklist): all four powers back it, Germany still has one currency, and neither German state has been proclaimed. Germany is then united and neutral (event .21: the core zone proclaims, annexes the DDR and stays out of the blocs).
+- **The Basic Law** (milestone): the accord has broken down, the Deutsche Mark is in, the Trizone exists (or there is no French zone), and Western integration is at 60 or more.
+
+AI: Washington and London drop the accord once Soviet consolidation reaches 25. Paris rarely joins it (weight 0.2, and only after its reservations end). Moscow keeps backing it. The Bizone, Marshall aid and currency-reform AI now read the accord and the Soviet bar, not unity. Austria's Soviet-consent AI reads Moscow's stance.
+
 ## One twist per situation (Jack's team, 2026-11-18)
 
-Not everything should be bar management. Each situation now has its own shape: chapter 1 is a three-bar tug-of-war with the Berlin crisis on top; chapter 2 has one bar (GDR legitimacy) and the Basic Treaty as a conditions mission; chapter 3 has the revolution bar plus a four-power consent checklist with a deadlock clock; Austria is a pure checklist with a buy-back mission; the Saar is a two-key referendum with no bar.
+Not everything should be bar management. Each situation now has its own shape: chapter 1 is a two-bar tug-of-war (Western integration against Soviet consolidation) with competing checklists for its ending and the Berlin crisis on top; chapter 2 has one bar (GDR legitimacy) and the Basic Treaty as a conditions mission; chapter 3 has the revolution bar plus a four-power consent checklist with a deadlock clock; Austria is a pure checklist with a buy-back mission; the Saar is a two-key referendum with no bar.
 
 ## Known gaps and decisions for review
 

@@ -31,14 +31,13 @@ cwp_gq_merge_zones_button = {
 	effect = {
 		set_variable = cwp_gq_agreed_bizone
 		custom_tooltip = cwp_gq_merge_zones_button_tt
-		cwp_gq_shift_bar = { BAR = cwp_gq_unity_bar VALUE = -5 }
 	}
 
 	ai_chance = {
 		value = 1
 		if = {
 			limit = {
-				scope:journal_entry ?= { "scripted_bar_progress(cwp_gq_unity_bar)" <= 45 }
+				NOT = { cwp_gq_four_power_accord = yes }
 			}
 			add = 10
 		}
@@ -131,7 +130,7 @@ cwp_gq_marshall_aid_button = {
 		value = 1
 		if = {
 			limit = {
-				scope:journal_entry ?= { "scripted_bar_progress(cwp_gq_unity_bar)" <= 35 }
+				scope:journal_entry ?= { "scripted_bar_progress(cwp_gq_soviet_bar)" >= 20 }
 			}
 			add = 10
 		}
@@ -157,7 +156,6 @@ cwp_gq_currency_reform_button = {
 
 	effect = {
 		set_global_variable = cwp_gq_currency_reform
-		cwp_gq_shift_bar = { BAR = cwp_gq_unity_bar VALUE = -5 }
 		hidden_effect = {
 			c:RUS ?= { trigger_event = { id = cwp_german_question.4 days = 7 popup = yes } }
 		}
@@ -167,7 +165,7 @@ cwp_gq_currency_reform_button = {
 		value = 1
 		if = {
 			limit = {
-				scope:journal_entry ?= { "scripted_bar_progress(cwp_gq_unity_bar)" <= 40 }
+				NOT = { has_variable = cwp_gq_backs_central_government }
 			}
 			add = 5
 		}
@@ -212,43 +210,67 @@ cwp_gq_self_government_button = {
 	}
 }
 
-# Any occupying power: take the German question back to the Council of Foreign Ministers
-cwp_gq_four_power_talks_button = {
-	name = "cwp_gq_four_power_talks_button"
-	desc = "cwp_gq_four_power_talks_button_desc"
+# Any occupying power: back, or stop backing, central German administrations and an all-German
+# government (Potsdam). If all four back it before the zones split, Germany is united and neutral.
+cwp_gq_central_government_button = {
+	name = "cwp_gq_central_government_button"
+	desc = "cwp_gq_central_government_button_desc"
 
 	visible = {
 		cwp_gq_is_occupier = yes
 		NOT = { has_global_variable = cwp_gq_frg_proclaimed }
+		NOT = { has_global_variable = cwp_gq_gdr_proclaimed }
 	}
 
 	possible = {
-		NOT = { has_modifier = cwp_gq_four_power_talks }
+		always = yes
 	}
 
 	selected = {
-		has_modifier = cwp_gq_four_power_talks
+		has_variable = cwp_gq_backs_central_government
 	}
 
 	effect = {
-		add_modifier = {
-			name = cwp_gq_four_power_talks
-			days = very_short_modifier_time
+		if = {
+			limit = { has_variable = cwp_gq_backs_central_government }
+			remove_variable = cwp_gq_backs_central_government
+			custom_tooltip = cwp_gq_central_government_withdraw_tt
+		}
+		else = {
+			set_variable = cwp_gq_backs_central_government
+			custom_tooltip = cwp_gq_central_government_back_tt
 		}
 	}
 
-	# Mostly Moscow, pressing for four-power control while the West integrates its zones
+	# Pressing it toggles the stance. Washington and London give up on four-power government once the
+	# Soviet zone is being remade; Paris rarely accepts a central German authority; Moscow keeps backing it.
 	ai_chance = {
-		value = 0.5
+		value = 0
 		if = {
 			limit = {
-				c:RUS ?= this
-				scope:journal_entry ?= {
-					"scripted_bar_progress(cwp_gq_western_bar)" >= 30
-					"scripted_bar_progress(cwp_gq_unity_bar)" < 50
+				has_variable = cwp_gq_backs_central_government
+				OR = {
+					c:USA ?= this
+					c:GBR ?= this
 				}
+				scope:journal_entry ?= { "scripted_bar_progress(cwp_gq_soviet_bar)" >= 25 }
 			}
-			add = 2
+			add = 10
+		}
+		if = {
+			limit = {
+				NOT = { has_variable = cwp_gq_backs_central_government }
+				c:FRA ?= this
+				NOT = { has_global_variable = cwp_gq_french_reservations }
+			}
+			add = 0.2
+		}
+		if = {
+			limit = {
+				NOT = { has_variable = cwp_gq_backs_central_government }
+				c:RUS ?= this
+			}
+			add = 5
 		}
 	}
 }
@@ -310,7 +332,6 @@ cwp_gq_sed_merger_button = {
 
 	effect = {
 		set_global_variable = cwp_gq_sed_formed
-		cwp_gq_shift_bar = { BAR = cwp_gq_unity_bar VALUE = -3 }
 		hidden_effect = {
 			c:DDR = { trigger_event = { id = cwp_german_question.9 days = 3 popup = yes } }
 		}
@@ -419,7 +440,6 @@ cwp_gq_blockade_button = {
 	effect = {
 		set_global_variable = cwp_gq_blockade
 		set_global_variable = { name = cwp_gq_blockade_months value = 0 }
-		cwp_gq_shift_bar = { BAR = cwp_gq_unity_bar VALUE = -5 }
 		hidden_effect = {
 			if = {
 				limit = { exists = c:USA }
