@@ -38,3 +38,19 @@ The 1946-1960 shared run (e638a85ce) showed two structural faults, both fixed in
 
 - **Satellites stalled** at 20-55% control for fourteen years: occupier and ministries exactly balanced the opposition. The opposition drag now shrinks with control (`cwp_sov_opposition_drag` times the share of the state not yet held), and above 50% the party consolidates by +1 a month, so the bar tips one way or the other.
 - **The USSR never built a bomb**: the AI looked for a nuclear power with `cold` relations, and US-Soviet relations start at -22 and warm up. Programmes now follow bloc rivalry (`cwp_nuc_faces_outside_nuclear_power`) and protection (`cwp_nuc_under_nuclear_umbrella`): a superpower starts at once, an unsheltered great power sometimes, a sheltered ally never. National pace is slower, and foreign help needs the overlord or a friendly nuclear bloc leader.
+
+## Each JE has its own shape (team feedback, 2026-11-18)
+
+Not every JE is bar management. Current shapes:
+
+| JE | Shape |
+|---|---|
+| Institutional Question | Vote bar against a pressure bar. Soviet-zone governments can rig the count or force an abdication instead |
+| Japan's constitution | Race between Japanese reformers and the occupier's patience. Three drafts (cabinet, occupier, home-grown), each ending in a different amendment |
+| French constituent assemblies | Up to three referendums; every rejected draft returns more balanced |
+| Newfoundland | A convention, then a vote, then a second country (Canada) decides whether to accept |
+| People's Democracy | Tug of war between control and resistance that tips once either side passes the middle |
+| Ending the Occupation (Japan) | No bar: a checklist of the occupier's conditions, then a treaty request that can be refused |
+| Royal Question (Belgium) | No bar: a checklist (Catholics in government, a year of regency, a won consultation with the poll shown in the status text, then a country that accepts it) |
+| Nuclear programme | Two parallel tracks (fissile material, weapon design), helped by espionage or an ally, then the government's call to test |
+| Spain's Law of Succession | A single decision |
