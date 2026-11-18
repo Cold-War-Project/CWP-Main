@@ -1,6 +1,6 @@
 ﻿# Cold War Project: the energy crisis. A generic situation for any country whose market pays far more than the
-# base price for refined fuel. Nothing is scheduled: it opens when fuel is dear, public anger follows the price,
-# and it ends when the price falls back or the anger boils over.
+# base price for refined fuel. Nothing is scheduled. There is no bar: the crisis is the fuel price in our own market,
+# and each outcome is a list of conditions the player can see and work toward.
 
 je_cwp_energy_crisis = {
 	icon = "gfx/interface/icons/event_icons/event_industry.dds"
@@ -17,17 +17,28 @@ je_cwp_energy_crisis = {
 	}
 
 	immediate = {
+		set_variable = { name = cwp_ec_months value = 0 }
+		set_variable = { name = cwp_ec_eased_months value = 0 }
 		trigger_event = { id = cwp_ec.1 popup = yes }
 	}
-
-	scripted_progress_bar = cwp_ec_anger_bar
 
 	scripted_button = cwp_ec_conservation_button
 	scripted_button = cwp_ec_rationing_button
 	scripted_button = cwp_ec_price_controls_button
 	scripted_button = cwp_ec_diversify_button
+	scripted_button = cwp_ec_declare_independence_button
 
 	on_monthly_pulse = {
+		effect = {
+			change_variable = { name = cwp_ec_months add = 1 }
+			if = {
+				limit = { cwp_ec_fuel_pricier = { PCT = 0.5 } }
+				set_variable = { name = cwp_ec_eased_months value = 0 }
+			}
+			else = {
+				change_variable = { name = cwp_ec_eased_months add = 1 }
+			}
+		}
 		random_events = {
 			100 = 0
 			10 = cwp_ec.2
@@ -45,7 +56,7 @@ je_cwp_energy_crisis = {
 			}
 			triggered_desc = {
 				desc = je_cwp_energy_crisis_status_high
-				trigger = { cwp_ec_fuel_pricier = { PCT = 0.25 } }
+				trigger = { cwp_ec_fuel_pricier = { PCT = 0.5 } }
 			}
 			desc = je_cwp_energy_crisis_status_easing
 		}
@@ -64,41 +75,78 @@ je_cwp_energy_crisis = {
 			}
 		}
 		effect = {
-			set_variable = {
-				name = cwp_ec_cooldown_var
-				years = 5
-			}
-			if = {
-				limit = { has_variable = cwp_ec_diversify_var }
-				remove_variable = cwp_ec_diversify_var
-				add_modifier = {
-					name = cwp_ec_energy_diversified
-					years = 10
-				}
-			}
+			cwp_ec_conclude = yes
 			trigger_event = { id = cwp_ec.20 popup = yes }
 		}
 	}
 
-	# Anger boils over into the streets.
+	# Fuel is still dear, but the crisis level has passed for two years: the economy has adapted.
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_energy_crisis_adapted_desc
+		color = "gold_positive"
+		trigger = {
+			custom_tooltip = {
+				text = cwp_ec_adapted_tt
+				has_variable = cwp_ec_eased_months
+				var:cwp_ec_eased_months >= 24
+			}
+		}
+		effect = {
+			cwp_ec_conclude = yes
+			trigger_event = { id = cwp_ec.20 popup = yes }
+		}
+	}
+
+	# Mission complete: the programme is built and the government declares the country free of the oil shock.
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_energy_crisis_independence_desc
+		color = "gold_positive"
+		trigger = {
+			custom_tooltip = {
+				text = cwp_ec_independence_declared_tt
+				has_variable = cwp_ec_independence_declared_var
+			}
+		}
+		effect = {
+			remove_variable = cwp_ec_independence_declared_var
+			add_modifier = {
+				name = cwp_ec_energy_diversified
+				years = 10
+			}
+			cwp_ec_conclude = yes
+			trigger_event = { id = cwp_ec.22 popup = yes }
+		}
+	}
+
+	# Fuel riots: a year into the crisis, fuel at twice its price, a government that has lost the public's trust,
+	# and nothing shielding consumers.
 	outcome = {
 		header = je_standard_failure_header
 		effect_header = je_standard_on_failure_header
 		conclusion_desc = je_cwp_energy_crisis_riots_desc
 		color = "blue_negative"
 		trigger = {
-			scope:journal_entry = {
-				custom_tooltip = {
-					text = cwp_ec_anger_full_tt
-					"scripted_bar_progress(cwp_ec_anger_bar)" >= 100
-				}
+			custom_tooltip = {
+				text = cwp_ec_year_of_crisis_tt
+				has_variable = cwp_ec_months
+				var:cwp_ec_months >= 12
+			}
+			custom_tooltip = {
+				text = cwp_ec_price_doubled_tt
+				cwp_ec_fuel_pricier = { PCT = 1 }
+			}
+			government_legitimacy < 50
+			custom_tooltip = {
+				text = cwp_ec_no_price_controls_tt
+				NOT = { has_modifier = cwp_ec_price_controls }
 			}
 		}
 		effect = {
-			set_variable = {
-				name = cwp_ec_cooldown_var
-				years = 5
-			}
+			cwp_ec_conclude = yes
 			add_modifier = {
 				name = cwp_ec_fuel_riots
 				years = 3
