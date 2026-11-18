@@ -135,12 +135,17 @@ cwp_korea_cleanup_effect = {
 # Monthly logic of the situation. Called from cwp_korea_monthly_pulse in the scope of STK (or NRK if STK is gone);
 # the scope only exists so that je: links resolve. Do not use root or this for game logic here.
 cwp_korea_monthly_effect = {
-	# 1. The Joint Commission collapses when its bar reaches 0
+	# 1. The Joint Commission collapses: the question has gone to the UN, or the superpowers are openly hostile
 	if = {
 		limit = {
 			NOT = { has_global_variable = cwp_korea_partition }
-			je:je_cwp_divided_peninsula ?= {
-				"scripted_bar_progress(cwp_korea_commission_bar)" <= 0
+			OR = {
+				has_global_variable = cwp_korea_un_referral
+				AND = {
+					exists = c:USA
+					exists = c:RUS
+					c:USA = { "relations(c:RUS)" <= -50 }
+				}
 			}
 		}
 		set_global_variable = cwp_korea_partition
@@ -148,6 +153,30 @@ cwp_korea_monthly_effect = {
 		c:RUS ?= { trigger_event = { id = cwp_korea.2 popup = yes } }
 		c:STK ?= { trigger_event = { id = cwp_korea.2 popup = yes } }
 		c:NRK ?= { trigger_event = { id = cwp_korea.2 popup = yes } }
+	}
+
+	# 1b. A zone whose government has been formed becomes a state
+	if = {
+		limit = {
+			c:STK ?= {
+				is_subject = yes
+				has_variable = cwp_korea_elections_held
+				NOT = { has_modifier = cwp_korea_state_building }
+			}
+			NOT = { has_global_variable = cwp_korea_war }
+		}
+		cwp_korea_proclaim_rok_effect = yes
+	}
+	if = {
+		limit = {
+			c:NRK ?= {
+				is_subject = yes
+				has_variable = cwp_korea_elections_held
+				NOT = { has_modifier = cwp_korea_state_building }
+			}
+			NOT = { has_global_variable = cwp_korea_war }
+		}
+		cwp_korea_proclaim_dprk_effect = yes
 	}
 
 	# 2. Deterrence: both sovereign, no war, and each side's attack held back by something real
@@ -335,4 +364,44 @@ cwp_tkor_cleanup_effect = {
 		limit = { has_variable = cwp_korea_participant }
 		remove_variable = cwp_korea_participant
 	}
+}
+
+# The Republic of Korea is proclaimed (formerly a button; now follows the southern elections)
+cwp_korea_proclaim_rok_effect = {
+	c:STK = {
+		make_independent = yes
+		add_modifier = { name = cwp_korea_new_army days = 365 }
+		if = {
+			limit = { has_global_variable = cwp_korea_un_referral }
+			add_modifier = { name = cwp_korea_un_recognition days = long_modifier_time }
+		}
+	}
+	c:USA ?= {
+		if = {
+			limit = { NOT = { has_global_variable = cwp_korea_us_withdrawn } }
+			add_modifier = { name = cwp_korea_us_garrison }
+		}
+	}
+	c:STK ?= { trigger_event = { id = cwp_korea.3 popup = yes } }
+	c:NRK ?= { trigger_event = { id = cwp_korea.3 popup = yes } }
+	c:USA ?= { trigger_event = { id = cwp_korea.3 popup = yes } }
+	c:RUS ?= { trigger_event = { id = cwp_korea.3 popup = yes } }
+}
+
+# The Democratic People's Republic is proclaimed (follows the northern elections)
+cwp_korea_proclaim_dprk_effect = {
+	c:NRK = {
+		make_independent = yes
+		add_modifier = { name = cwp_korea_new_army days = 365 }
+	}
+	c:RUS ?= {
+		if = {
+			limit = { NOT = { has_global_variable = cwp_korea_soviet_withdrawn } }
+			add_modifier = { name = cwp_korea_soviet_garrison }
+		}
+	}
+	c:STK ?= { trigger_event = { id = cwp_korea.4 popup = yes } }
+	c:NRK ?= { trigger_event = { id = cwp_korea.4 popup = yes } }
+	c:USA ?= { trigger_event = { id = cwp_korea.4 popup = yes } }
+	c:RUS ?= { trigger_event = { id = cwp_korea.4 popup = yes } }
 }
