@@ -177,6 +177,14 @@ cmd_launch() {
   # lines (another worktree's files) would otherwise show up as leaks.
   local f; for f in "$(dirname "$ERRLOG")"/{debug,game}.log; do [[ -f "$f" ]] && : > "$f"; done
   rm -f "$(dirname "$ERRLOG")"/{debug,game}.[0-9].log
+  # A CWP game needs ~7 GB RAM. Launching on a short machine sends the kernel OOM killer after the
+  # game or the desktop session (2026-11-17 16:19: the desktop died and Forge sat at the login screen).
+  local need="${CWP_VIC_MIN_FREE_MB:-7000}" avail; avail=$(awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo)
+  if (( avail < need )); then
+    echo "cwp-vic: only ${avail} MB RAM available (need ${need}); waiting up to 10 min for memory to free up..." >&2
+    for _ in $(seq 1 60); do sleep 10; avail=$(awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo); (( avail >= need )) && break; done
+    (( avail >= need )) || die "not enough free RAM to launch safely (${avail} MB < ${need} MB). Close something or set CWP_VIC_MIN_FREE_MB."
+  fi
   vic-launch "$@"; local rc=$?
   game_pids | head -1 > "$GAMEPID"
   return $rc
