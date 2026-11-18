@@ -44,6 +44,12 @@ Evidence is from the shared 1946-1990 observer run f30e83cd6 unless stated.
    weeks of reserves (vanilla 20/40), and construction becomes a must-have at 26 weeks of idle pool
    (vanilla 52).
 
+4. (branch `fix/ai-construction-backstop`, stage 2, untested) `common/scripted_effects/cwp_ai_effects.txt`
+   `cwp_ai_construction_backstop`, run monthly for AI countries from `common/on_actions/cwp_ai_on_actions.txt`:
+   when `has_sufficient_construction_capacity_for_investment = no`, the private queue is over 26 weeks long,
+   the state isn't in default and debt is under 25% of the ceiling, queue a construction sector level in the most
+   populous incorporated state (and the second, for countries over 40M people). At most 25 queued government levels.
+
 ## Workshop AI mods
 
 - Anbeeld's Revision of AI (MIT, last for 1.3.6) switches off vanilla money spending, tax changes
