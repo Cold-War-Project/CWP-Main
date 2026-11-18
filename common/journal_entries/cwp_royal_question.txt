@@ -1,0 +1,125 @@
+﻿# Cold War Project: Belgium's Royal Question (1945-1951).
+# A checklist, not a bar: the King's supporters must get the Catholic party into government, win the popular
+# consultation, and then survive the unions' answer. The outcomes are condition lists, shown as such in the JE.
+
+je_cwp_royal_question = {
+	icon = "gfx/interface/icons/event_icons/event_portrait.dds"
+	group = je_group_internal_affairs
+
+	activation_description = { always = yes }
+
+	is_shown_when_inactive = {
+		cwp_rq_is_candidate = yes
+	}
+
+	possible = {
+		cwp_rq_is_candidate = yes
+	}
+
+	immediate = {
+		trigger_event = { id = cwp_rq.1 popup = yes }
+	}
+
+	scripted_button = cwp_rq_campaign_return_button
+	scripted_button = cwp_rq_campaign_against_button
+	scripted_button = cwp_rq_consultation_button
+	scripted_button = cwp_rq_abdicate_for_son_button
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_royal_question_status_returned
+				trigger = { has_variable = cwp_rq_king_back_var }
+			}
+			triggered_desc = {
+				desc = je_cwp_royal_question_status_for
+				trigger = { cwp_rq_return_pivot > 50 }
+			}
+			desc = je_cwp_royal_question_status_against
+		}
+	}
+
+	# The King reigns again: he won the vote and the country accepted it.
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_royal_question_reigns_desc
+		color = "gold_positive"
+		trigger = {
+			custom_tooltip = {
+				text = cwp_rq_king_back_tt
+				has_variable = cwp_rq_king_back_var
+			}
+			custom_tooltip = {
+				text = cwp_rq_unions_not_powerful_tt
+				NOT = { ig:ig_trade_unions ?= { is_powerful = yes } }
+			}
+			legitimacy >= 50
+		}
+		effect = {
+			set_variable = cwp_rq_settled_var
+			add_modifier = {
+				name = cwp_rq_king_returns
+				years = 5
+			}
+			cwp_rq_cleanup = yes
+		}
+	}
+
+	# The King gave way to his son.
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_royal_question_abdication_desc
+		color = "gold_positive"
+		trigger = {
+			custom_tooltip = {
+				text = cwp_rq_abdicated_tt
+				has_variable = cwp_rq_abdicated_var
+			}
+		}
+		effect = {
+			set_variable = cwp_rq_settled_var
+			cwp_rq_cleanup = yes
+		}
+	}
+
+	# The King stayed against a general strike: the crown survives, the country splits.
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		conclusion_desc = je_cwp_royal_question_divided_desc
+		color = "blue_negative"
+		trigger = {
+			custom_tooltip = {
+				text = cwp_rq_stood_firm_tt
+				has_variable = cwp_rq_stood_firm_var
+			}
+		}
+		effect = {
+			set_variable = cwp_rq_settled_var
+			add_modifier = {
+				name = cwp_rq_divided_kingdom
+				years = 5
+			}
+			cwp_rq_cleanup = yes
+		}
+	}
+
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_cwp_royal_question_abdication_desc
+		trigger = {
+			country_has_monarchy_law = no
+		}
+		effect = {
+			set_variable = cwp_rq_settled_var
+			cwp_rq_cleanup = yes
+		}
+	}
+
+	weight = 1000
+	transferable = no
+	can_revolution_inherit = no
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}
