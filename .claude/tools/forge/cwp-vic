@@ -9,6 +9,9 @@
 #                                   --priority jumps normal requests, coordinator-approved only)
 #   cwp-vic queue                   list waiting requests in the order they will be served
 #   cwp-vic bump <pid|text>         move a waiting request to the front (coordinator's call)
+#   cwp-vic job <name> -- <cmd...>  run a game job under systemd --user (survives Claude session restarts);
+#                                   log in ~/forge/jobs/<name>.log. Use this for every observer/bench run.
+#   lock --owner-pid PID            release the lock as soon as PID (the runner) exits
 #   cwp-vic link <worktree>         enable that worktree as the only mod (content_load.json)  (needs lock)
 #   cwp-vic vanilla                 disable the mod for a vanilla baseline run               (needs lock)
 #   cwp-vic launch [game args]      clear error.log and start the game in debug mode         (needs lock)
@@ -66,9 +69,10 @@ queue_clean() { local t; for t in "$QUEUE"/*; do [[ -e "$t" ]] || continue
 queue_first() { queue_clean; ls "$QUEUE" 2>/dev/null | sort | head -1; }
 
 cmd_lock() {
-  local wait="${CWP_VIC_WAIT:-14400}" prio=5
+  local wait="${CWP_VIC_WAIT:-14400}" prio=5 owner_pid="${CWP_VIC_OWNER_PID:-0}"
   while [[ "${1:-}" == --* ]]; do
-    case "$1" in --wait) wait="$2"; shift 2 ;; --priority) prio=1; shift ;; *) die "unknown option $1" ;; esac
+    case "$1" in --wait) wait="$2"; shift 2 ;; --priority) prio=1; shift ;; --owner-pid) owner_pid="$2"; shift 2 ;;
+      *) die "unknown option $1" ;; esac
   done
   local note="${*:-${CWP_AGENT:-$(basename "$PWD")}}"
   holder_alive && echo "lock is held by: $(cat "$OWNER" 2>/dev/null); queueing behind it"
@@ -93,13 +97,20 @@ cmd_lock() {
       if [[ "$(queue_first)" == "$ticket" ]] && ! holder_alive && flock -n "$LOCK" true 2>/dev/null; then
         # Our turn: the child takes the flock on fd 9, records itself as holder and becomes a sleep that keeps
         # fd 9 open. Holder files are only written by whoever has the flock, so waiters never clobber them.
-        setsid bash -c 'exec 9>>"$1"; flock -w "$2" 9 || exit 1; echo $$ > "$3"; printf "%s\n" "$5" > "$4"; exec sleep "$6"' \
-          _ "$LOCK" "$((deadline - SECONDS + 1))" "$HOLDER" "$OWNER" "$stamp" "$MAX_HOLD" </dev/null >/dev/null 2>&1 &
+        # With --owner-pid, the holder gives the lock back as soon as that process (the runner) is gone,
+        # so a runner killed by a restart cannot keep the game slot for hours.
+        setsid bash -c 'exec 9>>"$1"; flock -w "$2" 9 || exit 1; echo $$ > "$3"; printf "%s\n" "$5" > "$4"
+          if [ "$7" -gt 0 ]; then end=$(( $(date +%s) + $6 )); while kill -0 "$7" 2>/dev/null && [ "$(date +%s)" -lt "$end" ]; do sleep 5; done
+          else exec sleep "$6"; fi' \
+          _ "$LOCK" "$((deadline - SECONDS + 1))" "$HOLDER" "$OWNER" "$stamp" "$MAX_HOLD" "$owner_pid" </dev/null >/dev/null 2>&1 &
         child=$!
       fi
     else
       if [[ "$(cat "$OWNER" 2>/dev/null)" == "$stamp" ]] && holder_alive; then
-        taken=1; rm -f "$QUEUE/$ticket"; echo "lock taken: $note"; return 0
+        taken=1; rm -f "$QUEUE/$ticket"; echo "lock taken: $note"
+        # Nobody else can be using the game now: a game still running is an orphan of a dead runner.
+        if [[ -n "$(game_pids)" ]]; then echo "orphaned Victoria 3 found (pids $(game_pids | tr '\n' ' ')): stopping it"; cmd_stop --all; fi
+        return 0
       fi
       kill -0 "$child" 2>/dev/null || break
     fi
@@ -114,6 +125,23 @@ cmd_bump() {   # move a waiting request (by pid or text in its note) to the fron
   [[ -n "$t" ]] || die "no queued request matches '$m'"
   mv "$QUEUE/$t" "$QUEUE/0$(date +%s%N)-${t##*-}"; echo "moved to front: $(cat "$QUEUE"/0*-"${t##*-}")"
   echo "note: only requests made with cwp-vic from 2026-11-17 on follow a bump; an older waiting request would stall the line" >&2
+}
+
+cmd_job() {   # run a game job outside the Claude process tree, so it survives session restarts
+  local name="${1:?usage: cwp-vic job <name> -- <command...>}"; shift; [[ "${1:-}" == "--" ]] && shift
+  (( $# )) || die "usage: cwp-vic job <name> -- <command...>"
+  mkdir -p "$FORGE/jobs"; local log="$FORGE/jobs/$name.log"
+  if command -v systemd-run >/dev/null && systemctl --user show-environment >/dev/null 2>&1; then
+    # A systemd unit starts with an almost empty environment; the game needs this session's display,
+    # X auth, runtime dir and graphics (Vulkan) variables, so the unit replays the caller's exported env.
+    export DISPLAY="${DISPLAY:-:0}"; local envf="$FORGE/jobs/$name.env"; export -p > "$envf"
+    systemd-run --user --collect --unit="cwp-job-$name" -p WorkingDirectory="$PWD" \
+      bash -c 'set -a; . "$1"; set +a; shift; exec "$@" >>"$0" 2>&1' "$log" "$envf" "$@" || die "systemd-run failed"
+    echo "job cwp-job-$name started (systemd --user). log: $log   status: systemctl --user status cwp-job-$name"
+  else
+    setsid nohup "$@" >>"$log" 2>&1 </dev/null & disown
+    echo "job $name started (setsid, pid $!). log: $log"
+  fi
 }
 
 cmd_queue() { queue_clean; local t; for t in $(ls "$QUEUE" 2>/dev/null | sort); do echo "  $t  $(cat "$QUEUE/$t")"; done; }
@@ -149,6 +177,14 @@ cmd_launch() {
   # lines (another worktree's files) would otherwise show up as leaks.
   local f; for f in "$(dirname "$ERRLOG")"/{debug,game}.log; do [[ -f "$f" ]] && : > "$f"; done
   rm -f "$(dirname "$ERRLOG")"/{debug,game}.[0-9].log
+  # A CWP game needs ~7 GB RAM. Launching on a short machine sends the kernel OOM killer after the
+  # game or the desktop session (2026-11-17 16:19: the desktop died and Forge sat at the login screen).
+  local need="${CWP_VIC_MIN_FREE_MB:-7000}" avail; avail=$(awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo)
+  if (( avail < need )); then
+    echo "cwp-vic: only ${avail} MB RAM available (need ${need}); waiting up to 10 min for memory to free up..." >&2
+    for _ in $(seq 1 60); do sleep 10; avail=$(awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo); (( avail >= need )) && break; done
+    (( avail >= need )) || die "not enough free RAM to launch safely (${avail} MB < ${need} MB). Close something or set CWP_VIC_MIN_FREE_MB."
+  fi
   vic-launch "$@"; local rc=$?
   game_pids | head -1 > "$GAMEPID"
   return $rc
@@ -214,6 +250,7 @@ case "${1:-status}" in
   status)  cmd_status; echo "queue:"; cmd_queue ;;
   queue)   cmd_queue ;;
   bump)    shift; cmd_bump "$@" ;;
+  job)     shift; cmd_job "$@" ;;
   lock)    shift; cmd_lock "$@" ;;
   link)    shift; cmd_link "$@" ;;
   vanilla) cmd_vanilla ;;
