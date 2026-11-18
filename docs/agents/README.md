@@ -11,6 +11,7 @@ Start with [`AGENTS.md`](../../AGENTS.md) at the repo root, then the file for yo
 | [landing-work.md](landing-work.md) | Getting your branch tested and onto CWP2 (local branches, staging queue, no PRs) |
 | [advisor.md](advisor.md) | You hit an ambiguous call and want a second opinion or an audit |
 | [instruction-changes.md](instruction-changes.md) | You work the old Windows way, or wonder why `CLAUDE.md` / `.claude/` differ from Maddie's originals |
+| [je-design-patterns.md](je-design-patterns.md) | Designing a journal entry: shapes beyond bars, condition lists, missions, twists |
 | [rebuild-crash-fix.md](rebuild-crash-fix.md) | Before your first PR: what the rebuild changed to stop the crash, and what must not be undone (written by the crash-fix thread) |
 | `areas/<area>.md` | Your area's port inventory and decisions (one per area thread: politics, history-setup, economy, military, tech, events-logic, gui-art, characters) |
 | `areas/economy-benchmarks.md` | Historical economy ranges for observer runs, and the `tools/econ_bench` tool that measures runs against them |
