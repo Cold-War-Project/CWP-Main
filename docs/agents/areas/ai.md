@@ -31,6 +31,7 @@ Evidence is from the shared 1946-1990 observer run f30e83cd6 unless stated.
 | F4 | Poor states run structural deficits for decades. The construction target's population, kickstart and rank terms don't depend on income, so a state earning a fraction of one sector's upkeep was "critically" short and kept building. | 19-25 states in default in every sample. Afghanistan spends 5-30x income (construction sector 30x income in 1970), in default 1956-1990. | Fix 2: budget terms capped at income/2500 |
 | F5 | Tiny states keep armies costing several times their income while in default. | 1980-90: Kuwait 6-7x income on military, Qatar 7x, Abu Dhabi 6x, Iceland 4-5x, ZZB 14x. | Military thread (army sizing) |
 | F7 | Democracies barely legislate. | 1946-1990 law changes: GBR 0, GER 1, CAN 1, JAP 2, USA 4 (and the USA's are censorship, combination acts, national guard); median country 7. | Politics/history threads (change_law_chance in political strategies) |
+| F8 | Construction capacity hits a flat per-state level cap (tech: 15, 30 by ~1960, 40 later), so big economies can't add construction however much capital waits. | 16ccecae3 staging run 1960: every US state's construction sector at 30 levels; UK investment pool 0.99B vs GDP 0.48B. F1's brick share follows engineer shortages in rural states, not cost. | Fix 5: +1 level per 400k people (max 40) |
 | F6 | Government building PMs lag (admin on filing systems, universities on modern disciplines, railways on steam into the 1980s). | USA 1980: 523 of 1176 railway levels on steam trains. | Not started |
 
 ## Changes
@@ -49,6 +50,13 @@ Evidence is from the shared 1946-1990 observer run f30e83cd6 unless stated.
    when `has_sufficient_construction_capacity_for_investment = no`, the private queue is over 26 weeks long,
    the state isn't in default and debt is under 25% of the ceiling, queue a construction sector level in the most
    populous incorporated state (and the second, for countries over 40M people). At most 25 queued government levels.
+
+5. (stage 2) `cwp_construction_workforce` state modifier (+1 construction sector max level per 400k people,
+   max 40), recomputed yearly from `on_yearly_pulse_state`. The backstop only builds where
+   `can_construct_building = building_construction_sector`.
+6. (stage 2) `wanted_construction_output`: an extra income/12500 term above 1M/week income, since
+   vanilla's income term caps at 200 (1M/week), which every major power passes in 1946. USSR 1960
+   (d84f9452d): 194M idle cash, income 16% above spending, construction flat.
 
 ## Workshop AI mods
 
