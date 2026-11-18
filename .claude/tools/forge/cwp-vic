@@ -94,6 +94,19 @@ cmd_lock() {
       # higher-priority ticket is not overtaken by a taker already blocked inside flock.
       # Find our ticket by pid each time: `cwp-vic bump` may have renamed it to reorder the queue.
       local mine; mine=$(ls "$QUEUE" 2>/dev/null | grep -- "-$$\$" | head -1); [[ -n "$mine" ]] && ticket=$mine
+      # Stale holder: the first in line releases a lock whose holder has had no game running for
+      # CWP_VIC_STALE seconds (default 30 min), e.g. a runner that died or forgot to unlock.
+      if [[ "$(queue_first)" == "$ticket" ]] && holder_alive; then
+        if [[ -n "$(game_pids)" ]]; then rm -f "$FORGE/.vic3.idle-since"
+        else
+          [[ -f "$FORGE/.vic3.idle-since" ]] || date +%s > "$FORGE/.vic3.idle-since"
+          if (( $(date +%s) - $(cat "$FORGE/.vic3.idle-since") > ${CWP_VIC_STALE:-1800} )); then
+            echo "$(date '+%F %T') released stale lock of: $(cat "$OWNER" 2>/dev/null) (no game for ${CWP_VIC_STALE:-1800}s; next: $note)" \
+              | tee -a "$FORGE/jobs/stale-releases.log" >&2
+            local hp; hp=$(cat "$HOLDER" 2>/dev/null); rm -f "$HOLDER" "$OWNER" "$FORGE/.vic3.idle-since"; kill "$hp" 2>/dev/null
+          fi
+        fi
+      fi
       if [[ "$(queue_first)" == "$ticket" ]] && ! holder_alive && flock -n "$LOCK" true 2>/dev/null; then
         # Our turn: the child takes the flock on fd 9, records itself as holder and becomes a sleep that keeps
         # fd 9 open. Holder files are only written by whoever has the flock, so waiters never clobber them.
@@ -107,7 +120,7 @@ cmd_lock() {
       fi
     else
       if [[ "$(cat "$OWNER" 2>/dev/null)" == "$stamp" ]] && holder_alive; then
-        taken=1; rm -f "$QUEUE/$ticket"; echo "lock taken: $note"
+        taken=1; rm -f "$QUEUE/$ticket" "$FORGE/.vic3.idle-since"; echo "lock taken: $note"
         # Nobody else can be using the game now: a game still running is an orphan of a dead runner.
         if [[ -n "$(game_pids)" ]]; then echo "orphaned Victoria 3 found (pids $(game_pids | tr '\n' ' ')): stopping it"; cmd_stop --all; fi
         return 0
