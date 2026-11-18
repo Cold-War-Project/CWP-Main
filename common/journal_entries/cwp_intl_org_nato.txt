@@ -30,7 +30,6 @@ je_cwp_nato_founding = {
 
 	scripted_button = cwp_nato_conf_sign_button
 	scripted_button = cwp_nato_conf_decline_button
-	scripted_progress_bar = cwp_io_support_bar
 
 	current_value = { value = global_var:cwp_io_nato_conf_months }
 	goal_add_value = { value = 6 }
@@ -41,17 +40,10 @@ je_cwp_nato_founding = {
 			cwp_io_sync_involved = { ORG = nato_conf JE = je_cwp_nato_founding }
 			change_global_variable = { name = cwp_io_nato_conf_months add = 1 }
 			cwp_io_tally_votes = { ORG = nato_conf PROP = nato_conf VETO = cwp_io_no_veto_check }
-			scope:journal_entry = {
-				set_bar_progress = { name = cwp_io_support_bar value = global_var:cwp_io_nato_conf_share }
-			}
 			if = {
 				limit = { global_var:cwp_io_nato_conf_months >= 6 }
 				if = {
-					# The Brussels Treaty had five parties; the North Atlantic Treaty twelve.
-					limit = {
-						global_var:cwp_io_nato_conf_yes >= 5
-						global_var:cwp_io_nato_conf_vetoed = 0
-					}
+					limit = { cwp_nato_conf_succeeds = yes }
 					set_global_variable = { name = cwp_io_nato_conf_result value = flag:passed }
 					every_country = {
 						limit = { var:cwp_io_vote_nato_conf ?= flag:yes }
@@ -62,6 +54,19 @@ je_cwp_nato_founding = {
 				else = {
 					set_global_variable = { name = cwp_io_nato_conf_result value = flag:failed }
 					set_global_variable = { name = cwp_io_nato_conf_cooldown years = 2 }
+					# Without the North Americans, the Europeans who signed may still bind
+					# themselves to each other: a Western Union, as in the 1948 Brussels Treaty.
+					if = {
+						limit = { cwp_nato_conf_western_union = yes }
+						every_country = {
+							limit = {
+								var:cwp_io_vote_nato_conf ?= flag:yes
+								capital ?= { is_in_geographic_region = geographic_region_europe }
+							}
+							add_modifier = { name = cwp_weu_member_modifier }
+							trigger_event = { id = cwp_intl_org_nato.5 popup = yes }
+						}
+					}
 				}
 				every_country = {
 					limit = { has_variable = cwp_io_member_nato_conf }
@@ -81,6 +86,7 @@ je_cwp_nato_founding = {
 		color = "gold_positive"
 		flags = { historical }
 		trigger = {
+			cwp_nato_conf_succeeds = yes
 			custom_tooltip = {
 				text = cwp_nato_founding_passes_tt
 				has_global_variable = cwp_nato_founded
@@ -251,10 +257,10 @@ je_cwp_wp_founding = {
 
 	scripted_button = cwp_wp_conf_sign_button
 	scripted_button = cwp_wp_conf_decline_button
-	scripted_progress_bar = cwp_io_support_bar
+	scripted_button = cwp_wp_conf_proclaim_button
 
 	current_value = { value = global_var:cwp_io_wp_conf_months }
-	goal_add_value = { value = 6 }
+	goal_add_value = { value = 12 }
 	progressbar = yes
 
 	on_monthly_pulse = {
@@ -262,32 +268,12 @@ je_cwp_wp_founding = {
 			cwp_io_sync_involved = { ORG = wp_conf JE = je_cwp_wp_founding }
 			change_global_variable = { name = cwp_io_wp_conf_months add = 1 }
 			cwp_io_tally_votes = { ORG = wp_conf PROP = wp_conf VETO = cwp_io_no_veto_check }
-			scope:journal_entry = {
-				set_bar_progress = { name = cwp_io_support_bar value = global_var:cwp_io_wp_conf_share }
-			}
+			# The caller must proclaim the treaty within a year, or the conference lapses.
 			if = {
-				limit = { global_var:cwp_io_wp_conf_months >= 6 }
-				if = {
-					limit = {
-						global_var:cwp_io_wp_conf_yes >= 4
-						global_var:cwp_io_wp_conf_vetoed = 0
-					}
-					set_global_variable = { name = cwp_io_wp_conf_result value = flag:passed }
-					every_country = {
-						limit = { var:cwp_io_vote_wp_conf ?= flag:yes }
-						cwp_io_add_member = { ORG = wp }
-					}
-					set_global_variable = cwp_wp_founded
-				}
-				else = {
-					set_global_variable = { name = cwp_io_wp_conf_result value = flag:failed }
-					set_global_variable = { name = cwp_io_wp_conf_cooldown years = 2 }
-				}
-				every_country = {
-					limit = { has_variable = cwp_io_member_wp_conf }
-					remove_variable = cwp_io_member_wp_conf
-				}
-				cwp_io_close_proposal = { PROP = wp_conf }
+				limit = { global_var:cwp_io_wp_conf_months >= 12 }
+				set_global_variable = { name = cwp_io_wp_conf_result value = flag:failed }
+				set_global_variable = { name = cwp_io_wp_conf_cooldown years = 2 }
+				cwp_wp_end_conference = yes
 			}
 		}
 	}

@@ -180,8 +180,8 @@ je_cwp_imf_loan = {
 				global_var:cwp_imf_loan_target ?= {
 					remove_variable = cwp_io_applicant_imf_loan
 					add_treasury = cwp_imf_standby_amount
-					add_modifier = { name = cwp_imf_conditionality_modifier years = 5 }
 					set_variable = { name = cwp_io_rejected_imf_loan years = 5 }
+					add_journal_entry = { type = je_cwp_imf_programme }
 					trigger_event = { id = cwp_intl_org_imf.3 popup = yes }
 				}
 				cwp_io_close_proposal = { PROP = imf_loan }
@@ -202,4 +202,72 @@ je_cwp_imf_loan = {
 	weight = 60
 	transferable = no
 	should_be_pinned_by_default_uninvolved_or_context = yes
+}
+
+# The borrower's side of a stand-by arrangement: a programme with conditions, not a bar.
+# Success: out of default and debt brought down after the first review (two years).
+# Failure: still in default after the grace year. Timeout: the arrangement simply expires.
+je_cwp_imf_programme = {
+	icon = "gfx/interface/icons/cwp_icons/imf.dds"
+	group = je_group_cwp_international_organizations
+	context = country
+
+	immediate = {
+		set_variable = { name = cwp_imf_programme_review days = 730 }
+		set_variable = { name = cwp_imf_programme_grace days = 365 }
+	}
+
+	modifiers_while_active = {
+		cwp_imf_conditionality_modifier
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_imf_programme_done_desc
+		color = "gold_positive"
+		trigger = {
+			custom_tooltip = {
+				text = cwp_imf_programme_review_tt
+				NOT = { has_variable = cwp_imf_programme_review }
+			}
+			in_default = no
+			scaled_debt < 0.25
+		}
+		effect = {
+			add_modifier = { name = cwp_imf_credit_restored_modifier years = 5 }
+		}
+	}
+
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		conclusion_desc = je_cwp_imf_programme_failed_desc
+		color = "blue_negative"
+		trigger = {
+			custom_tooltip = {
+				text = cwp_imf_programme_grace_tt
+				NOT = { has_variable = cwp_imf_programme_grace }
+			}
+			in_default = yes
+		}
+		effect = {
+			add_modifier = { name = cwp_imf_programme_suspended_modifier years = 5 }
+		}
+	}
+
+	outcome = {
+		header = JOURNAL_ENTRY_TIMEOUT
+		effect_header = JOURNAL_ENTRY_ON_TIMEOUT
+		conclusion_desc = je_cwp_imf_programme_expired_desc
+		flags = { timeout }
+		effect = {
+			custom_tooltip = cwp_imf_programme_expired_tt
+		}
+	}
+
+	timeout = 1825
+	weight = 80
+	transferable = no
+	should_be_pinned_by_default = yes
 }

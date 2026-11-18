@@ -42,10 +42,10 @@ Historical results are likely, not forced: nothing fires on a date, the AI must 
 
 | JE | What |
 |---|---|
-| `je_cwp_nato_founding` | A founding conference, opened by `cwp_nato_call_conference_decision`: possible from 1948 (the Brussels Treaty) for a major power in Europe or North America outside the eastern camp, when an eastern-camp bloc leader is cold or hostile to it. Every eligible country is invited and signs or declines within six months; five signatures found NATO. Neutrals outside any power bloc tend to decline. Failure means a two-year cooldown. |
+| `je_cwp_nato_founding` | A founding conference, opened by `cwp_nato_call_conference_decision`: possible from 1948 (the Brussels Treaty) for a major power in Europe or North America (dominions included, for Canada) outside the eastern camp, when an eastern-camp bloc leader is cold or hostile to it. Every eligible country signs or declines within six months. **No bar: a checklist** (`cwp_nato_conf_succeeds`): at least five signatures, most of those answering signed, a North American signatory, a European great power. If it fails but three Europeans signed, they form a **Western Union** instead (`cwp_weu_member_modifier`), and NATO can be tried again after two years. Neutrals outside any power bloc tend to decline. |
 | `je_cwp_nato` | The alliance. Consensus rule (`THRESHOLD = 100`: one vote against blocks, abstentions don't), rotating North Atlantic Council chair (`cwp_io_rotate_presidency`, yearly, fewest terms first), `cwp_nato_member_modifier`. **Article 5**: when a member is the target of a war by a non-member (`cwp_nato_under_attack`), the others get a button to join its wars (`join_war`); each decides, as the treaty says. Withdrawal button. |
 | `je_cwp_nato_admission` | Accession votes, one applicant at a time, applicants from `cwp_nato_apply_decision`. Members of the eastern camp are voted down. Each enlargement counts in `cwp_nato_enlargements`. |
-| `je_cwp_wp_founding` | The eastern answer: `cwp_wp_call_conference_decision` for a power bloc leader of the eastern camp, only once NATO exists **and has enlarged** (historically the FRG in 1955). Eastern-camp countries in Europe are invited; four signatures found the Pact. |
+| `je_cwp_wp_founding` | The eastern answer: `cwp_wp_call_conference_decision` for a power bloc leader of the eastern camp, only once NATO exists **and has enlarged** (historically the FRG in 1955). Eastern-camp countries in Europe are invited. **The caller proclaims the treaty** with a button once four have signed and most of those answering signed; the conference lapses after a year. |
 | `je_cwp_wp` | The Pact. Votes weighted by `cwp_io_economic_weight`, majority 51%, so the strongest member decides. Withdrawal button (Hungary 1956, Albania 1968): AI leaves only after moving away from council-republic rule or falling out with the bloc leader. |
 | `je_cwp_wp_admission` | Accession votes. |
 
@@ -53,13 +53,16 @@ Historical results are likely, not forced: nothing fires on a date, the AI must 
 
 Not yet: an intervention event when a member leaves the Warsaw Pact; France's 1966 withdrawal from the integrated command as its own state; NATO infrastructure or standardization bars.
 
+Each organization's founding has its own shape (Jack's team, 2026-11-18: not every JE should be bar management): the UN exists from the start and works through votes; NATO's conference is a checklist with a Western Union fallback; the Warsaw Pact is proclaimed by its leading member; the IMF's loans become a country programme judged on the borrower's own accounts.
+
 ## The IMF (third slice, branch `feat/intl-orgs-imf`, stacked on `feat/intl-orgs-nato`)
 
 | JE | What |
 |---|---|
 | `je_cwp_imf` | The Fund, active from the start with the 29 members of its 27 December 1945 inaugural that exist in 1946 (the USSR attended Bretton Woods but never ratified). Votes weighted by quota, approximated as `cwp_io_economic_weight` plus 2.5 basic votes; ordinary decisions by 51% of the weighted votes cast. Buttons: request a stand-by arrangement, withdraw (AI only after turning to the eastern camp, as Poland 1950, Czechoslovakia 1954, Cuba 1964 did). |
 | `je_cwp_imf_admission` | Membership votes, applicants from `cwp_imf_apply_decision` (council republics are not offered it). |
-| `je_cwp_imf_loan` | A stand-by arrangement for a member in default, with debt at half its ceiling or under a year from bankruptcy. If the weighted vote passes, the borrower gets 2% of its GDP (`cwp_imf_standby_amount`) and `cwp_imf_conditionality_modifier` for five years (lower government and military wages, cheaper credit), and cannot leave the Fund meanwhile. |
+| `je_cwp_imf_loan` | A stand-by arrangement for a member in default, with debt at half its ceiling or under a year from bankruptcy. If the weighted vote passes, the borrower gets 2% of its GDP (`cwp_imf_standby_amount`) and a programme. |
+| `je_cwp_imf_programme` | Country JE on the borrower, **conditions, not a bar**: conditionality (lower government and military wages, cheaper credit) while it runs. Completed after the two-year review if out of default with debt under a quarter of the ceiling (credit restored for five years); suspended if still in default after the grace year (dearer credit, prestige loss); otherwise expires after five years. No leaving the Fund meanwhile. |
 
 Not yet: repayment of stand-by loans; quota reviews; the World Bank.
 
