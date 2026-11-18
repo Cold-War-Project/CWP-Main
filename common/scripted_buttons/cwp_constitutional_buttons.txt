@@ -290,46 +290,44 @@ cwp_iq_force_abdication_button = {
 
 # Japan
 
-cwp_jap_reform_campaign_button = {
-	name = "cwp_jap_reform_campaign_button"
-	desc = "cwp_jap_reform_campaign_button_desc"
+# The Emperor renounces his divinity and his powers: the throne becomes a symbol (the occupier's first demand).
+cwp_jap_redefine_throne_button = {
+	name = "cwp_jap_redefine_throne_button"
+	desc = "cwp_jap_redefine_throne_button_desc"
 
-	visible = { always = yes }
+	visible = {
+		NOT = { has_variable = cwp_jap_throne_redefined_var }
+	}
 
 	possible = {
 		custom_tooltip = {
-			text = cwp_iq_campaign_cap_tt
-			OR = {
-				NOT = { has_variable = cwp_jap_reform_campaign_var }
-				var:cwp_jap_reform_campaign_var < 15
-			}
+			text = cwp_jap_army_not_powerful_tt
+			NOT = { ig:ig_armed_forces ?= { is_powerful = yes } }
 		}
 	}
 
 	effect = {
-		if = {
-			limit = { NOT = { has_variable = cwp_jap_reform_campaign_var } }
-			set_variable = { name = cwp_jap_reform_campaign_var value = 0 }
+		set_variable = cwp_jap_throne_redefined_var
+		custom_tooltip = cwp_jap_redefine_throne_tt
+		ig:ig_armed_forces ?= {
+			add_modifier = {
+				name = cwp_iq_campaigned_against
+				years = 2
+			}
 		}
-		change_variable = { name = cwp_jap_reform_campaign_var add = 5 }
-		custom_tooltip = cwp_jap_reform_campaign_tt
 		ig:ig_landowners ?= {
 			add_modifier = {
 				name = cwp_iq_campaigned_against
-				years = 1
+				years = 2
 			}
 		}
 	}
 
-	cooldown = { months = 3 }
-
 	ai_chance = {
 		value = 0
 		if = {
-			limit = {
-				ig:ig_intelligentsia ?= { is_in_government = yes }
-			}
-			add = 15
+			limit = { cwp_occupied_by_democracy = yes }
+			add = 30
 		}
 	}
 }
@@ -341,6 +339,7 @@ cwp_jap_submit_government_draft_button = {
 
 	visible = {
 		NOT = { has_variable = cwp_jap_draft_pending_var }
+		NOT = { has_variable = cwp_jap_matsumoto_rejected_var }
 	}
 
 	possible = {
@@ -358,34 +357,26 @@ cwp_jap_submit_government_draft_button = {
 	ai_chance = {
 		value = 0
 		if = {
-			limit = { var:cwp_jap_reform_current_var < 60 }
+			limit = { cwp_jap_scap_demands_met = no }
 			add = 10
 		}
 	}
 }
 
-# A democratic draft written by the Japanese themselves, once reformers are strong enough to carry it.
-cwp_jap_adopt_own_draft_button = {
-	name = "cwp_jap_adopt_own_draft_button"
-	desc = "cwp_jap_adopt_own_draft_button_desc"
+# Promulgate the new constitution once the occupier's demands are met.
+cwp_jap_promulgate_button = {
+	name = "cwp_jap_promulgate_button"
+	desc = "cwp_jap_promulgate_button_desc"
 
-	visible = {
-		NOT = { has_variable = cwp_jap_draft_pending_var }
-	}
+	visible = { always = yes }
 
 	possible = {
-		custom_tooltip = {
-			text = cwp_jap_reform_majority_tt
-			var:cwp_jap_reform_current_var >= 60
-		}
+		cwp_jap_scap_demands_met = yes
 	}
 
 	effect = {
-		set_variable = cwp_jap_draft_pending_var
 		trigger_event = { id = cwp_jap_constitution.4 popup = yes }
 	}
 
-	ai_chance = {
-		value = 50
-	}
+	ai_chance = { value = 50 }
 }
