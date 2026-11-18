@@ -45,6 +45,10 @@ l_english:
 
 Data function names are engine-defined. Copy the exact chain from a vanilla line that does the same thing; a wrong function name prints an error in `error.log` every time the text is shown. Scope names in `sCountry('...')` must match a `save_scope_as` in the event/JE.
 
+## Wording
+
+- Use terms from the academic, historical and strategic literature; do not invent them (Jack, 2026-11-18). Journal entry titles, bar names, status lines, event titles, modifier names and buttons should use the phrase historians, political scientists or strategists actually use (Wikipedia-level sources are fine: "containment", "salami tactics", "positive neutralism", "decolonization", "chilling effect"), or a real period slogan or quotation. Avoid invented, AI-sounding phrases such as "Containment holds", "The Line Holds", "The Tide Rises" or "China at the Crossroads". When no established term exists, describe the situation plainly. See [`AGENTS.md`](../../AGENTS.md) and `docs/agents/je-design-patterns.md`.
+
 ## Which keys an object needs
 
 Derived from vanilla; when unsure, grep vanilla loc for a sibling object's key and mirror every suffix found.
