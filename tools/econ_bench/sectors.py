@@ -66,3 +66,15 @@ def shares(buildings: dict) -> dict:
     out = {s: sum(v for b, v in va.items() if smap[b] == s) / total for s in SECTORS}
     out["by_building"] = {b: v / total for b, v in va.items()}
     return out
+
+
+@lru_cache(maxsize=None)
+def goods_list(mod_root: str = MOD_ROOT) -> list:
+    """[(good, base cost)] in definition order, which is the order of goods ids in a save."""
+    out = []
+    for f in sorted(glob.glob(os.path.join(mod_root, "common/goods/*.txt"))):
+        t = open(f, encoding="utf-8-sig", errors="replace").read()
+        for m in re.finditer(r"^(\w+)\s*=\s*\{(.*?)^\}", t, re.M | re.S):
+            c = re.search(r"\bcost\s*=\s*([\d.]+)", m.group(2))
+            out.append((m.group(1), float(c.group(1)) if c else None))
+    return out

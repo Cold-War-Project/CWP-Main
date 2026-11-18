@@ -208,8 +208,24 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
     by_gdp = sorted(countries, key=lambda k: -countries[k]["gdp"])
     want_pm = {cid for cid in by_gdp[:pm_top]} | {cid for cid, c in countries.items() if c["tag"] in set(pm_tags)}
 
+    # World market proxies: a good's price from every single-output building (sales / quantity, weighted
+    # by quantity), and how many buildings are short of inputs. The save stores no price per good.
+    price_num, price_qty = {}, {}
+    shortage_n = shortage_total = 0
     for _, body in db_entries(top_section(text, "building_manager")):
         btype = field(body, "building")
+        sh_v = field(body, "input_goods_shortage")
+        if sh_v is not None:  # the field is only written for buildings that buy inputs
+            shortage_total += 1
+            if float(sh_v) > 0.05:
+                shortage_n += 1
+        og = sub_block(body, "output_goods")
+        outs = re.findall(r"(\d+)=\{\s*value=([\d.]+)", og)
+        sales = fnum(body, "goods_sales")
+        if len(outs) == 1 and sales > 0 and float(outs[0][1]) > 0:
+            g, q = outs[0][0], float(outs[0][1])
+            price_num[g] = price_num.get(g, 0.0) + sales
+            price_qty[g] = price_qty.get(g, 0.0) + q
         cid = state_owner.get(field(body, "state", default=""))
         if not btype or cid not in countries:
             continue
@@ -239,6 +255,13 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
             out[f"{tag}~{cid if small is c else 'x'}"] = small
             continue
         out[tag] = c
+    from .sectors import goods_list
+    names = goods_list()
+    market = {"shortage_buildings": shortage_n, "buildings_with_inputs": shortage_total,
+              "prices": {(names[int(g)][0] if int(g) < len(names) else g):
+                         {"price": price_num[g] / price_qty[g],
+                          "base": names[int(g)][1] if int(g) < len(names) else None}
+                         for g in price_num}}
     from .geo import extract_geo
-    return {"save": path.rsplit("/", 1)[-1], "date": date, "year": int(date.split(".")[0]), "countries": out,
+    return {"save": path.rsplit("/", 1)[-1], "date": date, "year": int(date.split(".")[0]), "countries": out, "market": market,
             "geo": extract_geo(text, tag_of, owned)}
