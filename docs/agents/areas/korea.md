@@ -51,6 +51,12 @@ The first CWP2 staging save had the war start on 1947-08-15. The gates held (bot
 - The US intervened with a UN mandate, and Colombia, India, Mexico and Japan sent contingents. The PRC had pledged volunteers but never entered, because the Chinese Civil War was still running in that game and the entry check needed the PRC to be at peace. The South won, and a united Korea (`KOR`, formable) existed by 1952-08.
 - Change: the Chinese entry check now allows a PRC whose only war is against the ROC. Its AI is much less likely to choose entry while that war lasts (-40).
 
+## Staging run d84f9452d (2026-11-18)
+
+- The Nationalists won the Chinese Civil War by 1947-08, so there was no PRC and no Chinese entry. That is correct behaviour.
+- With no war, the balance drifted to -50 (South) by 1949: the US troop and aid factors outweighed a Soviet Union that rarely armed the North. Both sides were deterred (the North by the South's lead, the South by Soviet troops), so "the line holds" fired in 1950.
+- Change: US troops -2 to -1 and US aid -1.5 to -1 per month. Soviet arms AI 25 to 40, +20 while the balance favours the South. Historically the KPA was clearly the stronger army by 1950.
+
 ## Chapter 2: the two Koreas (`je_cwp_two_koreas`)
 
 Opens when chapter 1 ends with both Koreas standing (armistice or the line holds), and never times out: a peninsula still divided in 2046 is a valid, historical result.
