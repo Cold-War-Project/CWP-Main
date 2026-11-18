@@ -1,0 +1,260 @@
+﻿# Cold War Project: reaction events (namespace cwp_rx). See docs/agents/areas/reactions.md.
+#
+# How it works: cwp_rx_detect (monthly, from cwp_reactions_on_actions.txt) watches the state other content already
+# sets (a country's first bomb, the Chinese civil war's outcome globals, the Korean war global, a colony becoming
+# independent, the Berlin blockade, NATO's founding). The first month it sees a new one, it calls the matching
+# cwp_rx_fire_* effect, which sends a reaction event to the countries that would care. Each happening reacts once.
+#
+# Owners do not need to call anything. If a content thread wants a reaction to fire at once rather than within a
+# month, it can call the cwp_rx_fire_* effect itself (with the scopes it documents) and set the matching
+# "cwp_rx_<key>_done" global, so the monthly detector skips it.
+
+# Anti-spam: a country that has just had a reaction event skips the lesser ones for half a year.
+cwp_rx_mark_recent = {
+	set_variable = { name = cwp_rx_recent days = 180 }
+}
+
+# Put a decaying five-year mood modifier on one interest group, if it exists.
+cwp_rx_ig_mood = {
+	ig:$IG$ ?= {
+		add_modifier = { name = $MOD$ days = normal_modifier_time is_decaying = yes }
+	}
+}
+
+# A country's first atomic test. scope:cwp_rx_tester = the tester.
+cwp_rx_fire_bomb = {
+	every_country = {
+		limit = {
+			cwp_rx_can_react = yes
+			cwp_is_nuclear_power = yes
+			cwp_rx_is_rival_of = { WHO = cwp_rx_tester }
+		}
+		trigger_event = { id = cwp_rx.1 days = 14 popup = yes }
+	}
+	every_country = {
+		limit = {
+			cwp_rx_can_react = yes
+			NOT = { cwp_is_nuclear_power = yes }
+			country_rank >= rank_value:major_power
+			cwp_rx_is_rival_of = { WHO = cwp_rx_tester }
+		}
+		trigger_event = { id = cwp_rx.3 days = 21 popup = yes }
+	}
+	if = {
+		limit = { scope:cwp_rx_tester = { cwp_cw_is_communist_state = yes } }
+		every_country = {
+			limit = {
+				cwp_rx_can_react = yes
+				country_rank >= rank_value:minor_power
+				cwp_rx_has_communists = { VALUE = 0.05 }
+			}
+			trigger_event = { id = cwp_rx.2 days = 30 popup = yes }
+		}
+	}
+}
+
+# The Communists win the mainland (outcome communist or standoff).
+cwp_rx_fire_china_communist = {
+	global_var:cwp_cw_west_leader ?= {
+		trigger_event = { id = cwp_rx.10 days = 30 popup = yes }
+	}
+	every_country = {
+		limit = {
+			cwp_rx_can_react = yes
+			cwp_rx_in_monsoon_asia = yes
+			NOT = { cwp_rx_is_china = yes }
+			cwp_rx_has_communists = { VALUE = 0.03 }
+		}
+		trigger_event = { id = cwp_rx.11 days = 45 popup = yes }
+	}
+}
+
+# The Nationalists destroy the Communist state.
+cwp_rx_fire_china_nationalist = {
+	every_country = {
+		limit = {
+			cwp_rx_can_react = yes
+			cwp_rx_in_monsoon_asia = yes
+			NOT = { cwp_rx_is_china = yes }
+			cwp_rx_has_communists = { VALUE = 0.03 }
+		}
+		trigger_event = { id = cwp_rx.12 days = 45 popup = yes }
+	}
+}
+
+# War breaks out in Korea.
+cwp_rx_fire_korean_war = {
+	every_country = {
+		limit = {
+			cwp_rx_can_react = yes
+			cwp_cw_in_west = yes
+			NOT = { c:STK ?= this }
+			country_rank >= rank_value:major_power
+		}
+		trigger_event = { id = cwp_rx.20 days = 30 popup = yes }
+	}
+}
+
+# A great colony becomes independent. scope:cwp_rx_new_state = the new state.
+cwp_rx_fire_independence = {
+	every_country = {
+		limit = {
+			cwp_rx_can_react = yes
+			cwp_rx_colony_watches_independence = yes
+		}
+		trigger_event = { id = cwp_rx.30 days = 30 popup = yes }
+	}
+	every_country = {
+		limit = {
+			cwp_rx_can_react = yes
+			cwp_rx_metropole_watches_independence = yes
+		}
+		trigger_event = { id = cwp_rx.31 days = 21 popup = yes }
+	}
+}
+
+# The Soviet zone closes the roads to Berlin.
+cwp_rx_fire_berlin_blockade = {
+	every_country = {
+		limit = {
+			cwp_rx_can_react = yes
+			cwp_cw_in_west = yes
+			cwp_rx_in_europe = yes
+			is_subject = no
+			NOR = {
+				c:USA ?= this
+				c:GBR ?= this
+				c:FRA ?= this
+			}
+			cwp_rx_has_communists = { VALUE = 0.03 }
+		}
+		trigger_event = { id = cwp_rx.40 days = 21 popup = yes }
+	}
+}
+
+# The North Atlantic Treaty is signed.
+cwp_rx_fire_nato = {
+	every_country = {
+		limit = {
+			cwp_rx_can_react = yes
+			has_variable = cwp_io_member_nato
+			cwp_rx_has_communists = { VALUE = 0.05 }
+		}
+		trigger_event = { id = cwp_rx.50 days = 30 popup = yes }
+	}
+}
+
+# Monthly detector (no scope). Each block fires once per happening.
+cwp_rx_detect = {
+	# First pulse: whatever is already true at the start (or when the mod is added to a save) is not news.
+	if = {
+		limit = { NOT = { has_global_variable = cwp_rx_initialized } }
+		set_global_variable = cwp_rx_initialized
+		every_country = {
+			limit = { cwp_is_nuclear_power = yes }
+			set_variable = cwp_rx_bomb_noted
+		}
+		if = {
+			limit = { OR = { has_global_variable = cwp_ccw_outcome_communist has_global_variable = cwp_ccw_outcome_standoff has_global_variable = cwp_ccw_outcome_nationalist } }
+			set_global_variable = cwp_rx_china_done
+		}
+		if = {
+			limit = { has_global_variable = cwp_korea_war }
+			set_global_variable = cwp_rx_korean_war_done
+		}
+		if = {
+			limit = { c:HND ?= { is_subject = no } }
+			set_global_variable = cwp_rx_india_done
+		}
+		if = {
+			limit = { c:GLC ?= { is_subject = no } }
+			set_global_variable = cwp_rx_gold_coast_done
+		}
+		if = {
+			limit = { has_global_variable = cwp_gq_blockade }
+			set_global_variable = cwp_rx_berlin_done
+		}
+		if = {
+			limit = { has_global_variable = cwp_nato_founded }
+			set_global_variable = cwp_rx_nato_done
+		}
+	}
+	else = {
+		# First atomic tests
+		every_country = {
+			limit = {
+				cwp_is_nuclear_power = yes
+				NOT = { has_variable = cwp_rx_bomb_noted }
+			}
+			set_variable = cwp_rx_bomb_noted
+			save_scope_as = cwp_rx_tester
+			cwp_rx_fire_bomb = yes
+		}
+		# The Chinese civil war ends
+		if = {
+			limit = {
+				NOT = { has_global_variable = cwp_rx_china_done }
+				OR = {
+					has_global_variable = cwp_ccw_outcome_communist
+					has_global_variable = cwp_ccw_outcome_standoff
+				}
+			}
+			set_global_variable = cwp_rx_china_done
+			cwp_rx_fire_china_communist = yes
+		}
+		else_if = {
+			limit = {
+				NOT = { has_global_variable = cwp_rx_china_done }
+				has_global_variable = cwp_ccw_outcome_nationalist
+			}
+			set_global_variable = cwp_rx_china_done
+			cwp_rx_fire_china_nationalist = yes
+		}
+		# War in Korea
+		if = {
+			limit = {
+				NOT = { has_global_variable = cwp_rx_korean_war_done }
+				has_global_variable = cwp_korea_war
+			}
+			set_global_variable = cwp_rx_korean_war_done
+			cwp_rx_fire_korean_war = yes
+		}
+		# India and the Gold Coast become independent
+		if = {
+			limit = {
+				NOT = { has_global_variable = cwp_rx_india_done }
+				c:HND ?= { is_subject = no }
+			}
+			set_global_variable = cwp_rx_india_done
+			c:HND = { save_scope_as = cwp_rx_new_state }
+			cwp_rx_fire_independence = yes
+		}
+		if = {
+			limit = {
+				NOT = { has_global_variable = cwp_rx_gold_coast_done }
+				c:GLC ?= { is_subject = no }
+			}
+			set_global_variable = cwp_rx_gold_coast_done
+			c:GLC = { save_scope_as = cwp_rx_new_state }
+			cwp_rx_fire_independence = yes
+		}
+		# The Berlin blockade
+		if = {
+			limit = {
+				NOT = { has_global_variable = cwp_rx_berlin_done }
+				has_global_variable = cwp_gq_blockade
+			}
+			set_global_variable = cwp_rx_berlin_done
+			cwp_rx_fire_berlin_blockade = yes
+		}
+		# NATO
+		if = {
+			limit = {
+				NOT = { has_global_variable = cwp_rx_nato_done }
+				has_global_variable = cwp_nato_founded
+			}
+			set_global_variable = cwp_rx_nato_done
+			cwp_rx_fire_nato = yes
+		}
+	}
+}
