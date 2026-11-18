@@ -1,0 +1,157 @@
+﻿# Cold War Project: the Red Scare. A generic situation for any country with a free vote that faces a communist
+# power abroad and communists at home. Nothing is scheduled: it opens when both threats are present and fear moves
+# with them. One bar (fear); the purges are not a bar but the repressive measures actually in force, as modifiers
+# on interest groups and the country. All four at once is a witch hunt.
+
+je_cwp_red_scare = {
+	icon = "gfx/interface/icons/event_icons/event_protest.dds"
+	group = je_group_internal_affairs
+
+	activation_description = { always = yes }
+
+	is_shown_when_inactive = {
+		cwp_rs_is_candidate = yes
+	}
+
+	possible = {
+		cwp_rs_is_candidate = yes
+	}
+
+	immediate = {
+		trigger_event = { id = cwp_rs.1 popup = yes }
+	}
+
+	scripted_progress_bar = cwp_rs_fear_bar
+
+	scripted_button = cwp_rs_loyalty_review_button
+	scripted_button = cwp_rs_investigate_unions_button
+	scripted_button = cwp_rs_blacklist_button
+	scripted_button = cwp_rs_defend_liberties_button
+	scripted_button = cwp_rs_ban_party_button
+
+	on_monthly_pulse = {
+		random_events = {
+			120 = 0
+			10 = cwp_rs.2
+			10 = cwp_rs.3
+			10 = cwp_rs.4
+			10 = cwp_rs.5
+			10 = cwp_rs.6
+			10 = cwp_rs.7
+			10 = cwp_rs.8
+		}
+	}
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_red_scare_status_hysteria
+				trigger = {
+					scope:journal_entry = { "scripted_bar_progress(cwp_rs_fear_bar)" >= 60 }
+				}
+			}
+			triggered_desc = {
+				desc = je_cwp_red_scare_status_purge
+				trigger = { cwp_rs_measures_in_force >= 2 }
+			}
+			desc = je_cwp_red_scare_status_unease
+		}
+	}
+
+	# The fear fades. How the country comes out of it depends on what is still in force.
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_red_scare_subsided_desc
+		color = "gold_positive"
+		trigger = {
+			scope:journal_entry = {
+				custom_tooltip = {
+					text = cwp_rs_fear_low_tt
+					"scripted_bar_progress(cwp_rs_fear_bar)" <= 5
+				}
+			}
+		}
+		effect = {
+			cwp_rs_conclude = yes
+		}
+	}
+
+	# The accusers have been discredited in public and the measures lifted: the fever breaks early.
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		conclusion_desc = je_cwp_red_scare_discredited_desc
+		color = "gold_positive"
+		trigger = {
+			custom_tooltip = {
+				text = cwp_rs_accusers_discredited_tt
+				has_variable = cwp_rs_accusers_discredited_var
+			}
+			custom_tooltip = {
+				text = cwp_rs_no_measures_tt
+				cwp_rs_measures_in_force < 1
+			}
+			scope:journal_entry = {
+				custom_tooltip = {
+					text = cwp_rs_fear_below_30_tt
+					"scripted_bar_progress(cwp_rs_fear_bar)" < 30
+				}
+			}
+		}
+		effect = {
+			cwp_rs_conclude = yes
+		}
+	}
+
+	# Every repressive measure is in force at once: a witch hunt.
+	outcome = {
+		header = je_standard_failure_header
+		effect_header = je_standard_on_failure_header
+		conclusion_desc = je_cwp_red_scare_witch_hunt_desc
+		color = "blue_negative"
+		trigger = {
+			custom_tooltip = {
+				text = cwp_rs_loyalty_review_active_tt
+				cwp_rs_loyalty_review_active = yes
+			}
+			custom_tooltip = {
+				text = cwp_rs_unions_investigated_active_tt
+				cwp_rs_unions_investigated_active = yes
+			}
+			custom_tooltip = {
+				text = cwp_rs_blacklist_active_tt
+				cwp_rs_blacklist_active = yes
+			}
+			custom_tooltip = {
+				text = cwp_rs_party_banned_active_tt
+				cwp_rs_party_banned_active = yes
+			}
+		}
+		effect = {
+			set_variable = cwp_rs_done_var
+			add_modifier = {
+				name = cwp_rs_witch_hunt
+				years = 5
+			}
+			trigger_event = { id = cwp_rs.21 popup = yes }
+		}
+	}
+
+	# The free vote is gone: this situation no longer applies.
+	outcome = {
+		flags = { hidden invalid_outcome }
+		conclusion_desc = je_cwp_red_scare_witch_hunt_desc
+		trigger = {
+			cwp_rs_is_open_society = no
+		}
+		effect = {
+			set_variable = cwp_rs_done_var
+		}
+	}
+
+	weight = 900
+	transferable = no
+	can_revolution_inherit = no
+	should_be_pinned_by_default_uninvolved_or_context = yes
+}

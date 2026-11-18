@@ -1,0 +1,10 @@
+# Area notes: the Red Scare (generic Cold War situation)
+
+Audit item 12 (generic situations for every country), first slice. Built 2026-11-18, reworked the same day for the "not everything is a bar" direction.
+
+- JE `je_cwp_red_scare` ("The Enemy Within"), `common/journal_entries/cwp_red_scare.txt`. Prefix `cwp_rs_`.
+- **Opens** for any country with a free vote that is not communist, when a communist country of at least major-power rank has diplomatic relevance to it, and communists are active at home: a communist or orthodox-communist movement at 5% support or more, or a communist leading a non-marginal IG (`cwp_rs_is_candidate`). Once per country (`cwp_rs_done_var`). No dates.
+- **The twist: one bar, and the purges are real things.** Fear of Subversion is the only bar (starts 30; +1 a month for communists at home, +1 for a communist rival, +1 at war, -1.5 fading, -0.5 with protected speech). The repression is not a second bar: it is the four measures in force, each a visible modifier: Loyalty Review on the bureaucrats, Investigation on the trade unions, Blacklist on the intelligentsia, and the Communist Party ban on the country (`cwp_rs_measures_in_force`, `common/script_values/cwp_red_scare_values.txt`). Measures expire (2 to 5 years) unless renewed.
+- **Outcomes:** fear falls to 5 (subsided); the accusers are censured in public (event `cwp_rs.8`), no measure is in force and fear is under 30 (discredited, early end); all four measures in force at once (witch hunt, a condition-list failure). The good endings give a legitimacy bonus if nothing repressive is still in force, otherwise "A Chilled Society".
+- **Buttons:** Loyalty Review Program, Investigate the Unions, Blacklist the Fellow Travellers, Defend Civil Liberties (lifts the three IG measures), Ban the Communist Party (one-time, fear 60+).
+- **Events** `cwp_rs.2`-`.8` from the monthly pulse; `.8` (hearings backfire) needs two measures in force. Event options move fear through `cwp_rs_move_fear = { FEAR = x }`, guarded by `has_journal_entry` (staging d84f9452d: an AI resolved an event after the JE had concluded and `je:` was unset).
