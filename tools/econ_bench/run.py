@@ -23,7 +23,8 @@ from pathlib import Path
 
 from .save import extract, SaveError
 
-MIN_PLAY = 30  # minutes a benchmark run plays before yielding to another benchmark run
+MIN_PLAY = 30      # minutes a benchmark run plays before yielding to another benchmark run
+MIN_PLAY_DEV = 15  # ... before yielding to other (non-priority) work
 USER = Path.home() / ".local/share/Paradox Interactive/Victoria 3"
 SAVES = USER / "save games"
 FORGE = Path(os.environ.get("FORGE", Path.home() / "forge"))
@@ -91,13 +92,18 @@ def log(out: Path, msg: str):
         f.write(line + "\n")
 
 
-def queue_waiting() -> list[str]:
-    """Live tickets in the cwp-vic FIFO (other threads waiting for the game)."""
+def queue_waiting(with_priority: bool = False) -> list:
+    """Live tickets in the cwp-vic FIFO (other threads waiting for the game): their notes, or
+    (note, is_priority) pairs. A --priority ticket's name starts with 1, a normal one with 5."""
     out = []
     for t in sorted(QUEUE.glob("*")) if QUEUE.exists() else []:
         pid = t.name.rsplit("-", 1)[-1]
         if pid.isdigit() and Path(f"/proc/{pid}").exists():
-            out.append(t.read_text().strip())
+            try:
+                note = t.read_text().strip()
+            except FileNotFoundError:
+                continue
+            out.append((note, t.name.startswith("1")) if with_priority else note)
     return out
 
 
@@ -227,14 +233,19 @@ def one_run(worktree: Path, out: Path, end_year: int, every: int, max_minutes: f
                     if last_year is not None and last_year >= end_year:
                         status = "done"
                         break
-                    waiting = queue_waiting()
-                    # Yield at once to development work. Two benchmark runners yielding to each other
-                    # after one sample each would make no progress (seen 2026-11-17), so another
-                    # econ_bench run only gets the game after this one has played MIN_PLAY minutes.
-                    dev = [w for w in waiting if "econ_bench" not in w]
-                    if yield_to_queue and (dev or (waiting and (time.time() - started) / 60 >= MIN_PLAY)):
+                    waiting = queue_waiting(with_priority=True)
+                    played = (time.time() - started) / 60
+                    # Loading costs ~8 minutes, so a run plays a while before giving the game up:
+                    # --priority tickets at once, other work after MIN_PLAY_DEV minutes, another
+                    # benchmark run after MIN_PLAY (two runners yielding to each other after one
+                    # sample each made no progress, 2026-11-17). Agreed with the coordinator 2026-11-18.
+                    prio = [n for n, p in waiting if p]
+                    dev = [n for n, p in waiting if not p and "econ_bench" not in n]
+                    bench = [n for n, p in waiting if not p and "econ_bench" in n]
+                    due = prio or (dev if played >= MIN_PLAY_DEV else []) or (bench if played >= MIN_PLAY else [])
+                    if yield_to_queue and due:
                         status = "yielded"
-                        log(out, f"yielding the game to: {(dev or waiting)[0]}")
+                        log(out, f"yielding the game to: {due[0]} (after {played:.0f} min of play)")
                         break
             if (time.time() - t0) / 60 > max_minutes:
                 status = "time_limit"
