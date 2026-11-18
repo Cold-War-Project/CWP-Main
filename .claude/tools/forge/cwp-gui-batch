@@ -22,15 +22,17 @@ case "${1:-list}" in
   run) ;;
   *) sed -n '2,20p' "$0"; exit 1 ;;
 esac
-mapfile -t books < <(ls -1 "$B"/*.sh 2>/dev/null)
-(( ${#books[@]} )) || { echo "no bookings"; exit 0; }
+(( $(ls -1 "$B"/*.sh 2>/dev/null | wc -l) )) || { echo "no bookings"; exit 0; }
 stamp=$(date +%Y%m%d-%H%M)
-branches=$(grep -h '^# branch:' "${books[@]}" | awk '{print $3}' | awk '!s[$0]++')
-needs_game=$(grep -lh '^# needs-game: yes' "${books[@]}" | head -1)
 WT=~/forge/worktrees/gui-batch
 if [[ ! -d $WT ]]; then git -C ~/forge/CWP-Main worktree add -q --detach "$WT" origin/CWP2; fi
-cwp-vic lock --owner-pid $$ --priority "gui-batch: ${#books[@]} screenshot checks (~15 min)" || exit 1
+cwp-vic lock --owner-pid $$ --priority "gui-batch: screenshot checks (~15 min)" || exit 1
 trap 'cwp-vic unlock >/dev/null' EXIT
+# Bookings and branch heads are read only now that the game is ours, so late bookings and new commits count.
+mapfile -t books < <(ls -1 "$B"/*.sh 2>/dev/null)
+(( ${#books[@]} )) || { echo "no bookings"; exit 0; }
+branches=$(grep -h '^# branch:' "${books[@]}" | awk '{print $3}' | awk '!s[$0]++')
+needs_game=$(grep -lh '^# needs-game: yes' "${books[@]}" | head -1)
 git -C ~/forge/CWP-Main fetch -q origin CWP2
 git -C "$WT" checkout -q --detach origin/CWP2
 for br in $branches; do git -C "$WT" merge -q --no-ff --no-edit -m "gui-batch: $br" "$br" >/dev/null 2>&1 \
@@ -40,8 +42,21 @@ sleep 200
 for w in $(xdotool search --name "Unlock Keyring|Authentication required" 2>/dev/null); do xdotool windowclose "$w"; done
 raise_game() { local w; w=$(xdotool search --name "^Victoria 3" 2>/dev/null | tail -1); [[ -n "$w" ]] && xdotool windowactivate --sync "$w" 2>/dev/null; }
 raise_game; vic-shot >/dev/null
+SAVES="$HOME/.local/share/Paradox Interactive/Victoria 3/save games"
 if [[ -n "$needs_game" ]]; then
-  raise_game; vic-click 266 284 >/dev/null; sleep 6; vic-click 1086 330 >/dev/null; sleep 100; raise_game; vic-shot >/dev/null; vic-click 566 702 >/dev/null; sleep 5; vic-shot > "$D/$stamp-after-observe.txt"
+  # New Game -> Sandbox -> Observe, unpaused at speed 2; confirm with a fresh autosave, retry once.
+  for try in 1 2; do
+    touch "$D/.$stamp-start"
+    raise_game; vic-shot >/dev/null; vic-click 266 284 >/dev/null; sleep 8
+    raise_game; vic-shot >/dev/null; vic-click 1086 330 >/dev/null; sleep 100
+    raise_game; vic-shot >/dev/null; vic-click 566 702 >/dev/null; sleep 5
+    raise_game; vic-key 2 >/dev/null; vic-key space >/dev/null
+    for _ in $(seq 1 24); do sleep 10; f=$(ls -t "$SAVES"/autosave*.v3 2>/dev/null | head -1)
+      [[ -n "$f" && "$f" -nt "$D/.$stamp-start" ]] && break 2; done
+    echo "game start attempt $try failed" | tee -a "$D/$stamp-batch.log"; vic-shot --full | tail -1 >> "$D/$stamp-batch.log"
+    raise_game; vic-key Escape >/dev/null; sleep 2; vic-key Escape >/dev/null; sleep 5
+  done
+  raise_game; vic-key space >/dev/null   # pause for the checks
 fi
 raise_game() { local w; w=$(xdotool search --name "^Victoria 3" 2>/dev/null | tail -1); [[ -n "$w" ]] && xdotool windowactivate --sync "$w" 2>/dev/null; }
 # Full-res PNG for the record, then a scaled shot so later click() coordinates stay on the 1280x720 scale.
