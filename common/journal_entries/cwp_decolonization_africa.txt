@@ -33,12 +33,51 @@ je_cwp_gold_coast = {
 		c:GLC ?= { trigger_event = { id = cwp_africa.1 popup = yes } }
 	}
 
-	scripted_progress_bar = cwp_gold_self_rule_bar
+	# No bar: three milestones (constitution, a won election, the Asian precedent), then Britain decides.
+	current_value = {
+		value = 0
+		if = {
+			limit = { has_global_variable = cwp_gold_constitution_adopted }
+			add = 1
+		}
+		if = {
+			limit = { has_global_variable = cwp_gold_election_won }
+			add = 1
+		}
+		if = {
+			limit = {
+				c:HND ?= { is_subject = no }
+				has_global_variable = cwp_tide_tier
+				global_var:cwp_tide_tier >= 2
+			}
+			add = 1
+		}
+	}
+	goal_add_value = {
+		value = 3
+	}
+	progressbar = yes
 
 	scripted_button = cwp_gold_constitution_button
+	scripted_button = cwp_gold_election_button
 	scripted_button = cwp_gold_detentions_button
 	scripted_button = cwp_gold_independence_button
-	scripted_button = cwp_gold_positive_action_button
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_gold_coast_status_ready
+				trigger = { cwp_gold_milestones_met = yes }
+			}
+			triggered_desc = {
+				desc = je_cwp_gold_coast_status_campaign
+				trigger = { has_global_variable = cwp_gold_campaign_running }
+			}
+			triggered_desc = {
+				desc = je_cwp_gold_coast_status_waiting
+			}
+		}
+	}
 
 	outcome = {
 		header = je_standard_completion_header
@@ -47,39 +86,13 @@ je_cwp_gold_coast = {
 		conclusion_desc = je_cwp_gold_coast_independence_desc
 		trigger = {
 			c:GLC ?= { is_subject_of = c:GBR }
-			OR = {
-				c:GBR ?= { has_variable = cwp_gold_independence_granted }
-				scope:journal_entry = { "scripted_bar_progress(cwp_gold_self_rule_bar)" >= 100 }
-			}
+			has_global_variable = cwp_gold_independence_granted
 		}
 		effect = {
 			remove_global_variable = cwp_gold_active
 			c:GLC = { cwp_decolonization_negotiated_independence = { METROPOLE = c:GBR } }
 			c:GBR ?= { trigger_event = { id = cwp_africa.2 popup = yes } }
 			c:GLC ?= { trigger_event = { id = cwp_africa.2 popup = yes } }
-		}
-	}
-
-	outcome = {
-		header = je_standard_failure_header
-		effect_header = je_standard_on_failure_header
-		color = "blue_negative"
-		conclusion_desc = je_cwp_gold_coast_held_desc
-		trigger = {
-			c:GLC ?= { is_subject_of = c:GBR }
-			scope:journal_entry = { "scripted_bar_progress(cwp_gold_self_rule_bar)" <= 0 }
-		}
-		effect = {
-			remove_global_variable = cwp_gold_active
-			set_global_variable = {
-				name = cwp_gold_je_cooldown
-				years = 10
-			}
-			c:GBR = {
-				cwp_decolonization_add_setback = yes
-				trigger_event = { id = cwp_africa.3 popup = yes }
-			}
-			c:GLC ?= { trigger_event = { id = cwp_africa.3 popup = yes } }
 		}
 	}
 
@@ -126,38 +139,53 @@ je_cwp_kenya = {
 
 	immediate = {
 		set_global_variable = cwp_kenya_active
-		set_global_variable = { name = cwp_kenya_insurgency_level value = 0 }
 	}
 
-	scripted_progress_bar = cwp_kenya_insurgency_bar
+	# One bar, settler power. The rising is Kenya's own liberty desire: it breaks out at 40 and becomes the
+	# engine's independence war at 90; three Emergencies break the forest fighters, but not the politics.
 	scripted_progress_bar = cwp_kenya_settler_bar
 
 	scripted_button = cwp_kenya_emergency_button
 	scripted_button = cwp_kenya_land_reform_button
 	scripted_button = cwp_kenya_conference_button
-	scripted_button = cwp_kenya_land_and_freedom_button
+	scripted_button = cwp_kenya_forests_button
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_kenya_status_crushed
+				trigger = { has_global_variable = cwp_kenya_rising_crushed }
+			}
+			triggered_desc = {
+				desc = je_cwp_kenya_status_rising
+				trigger = { has_global_variable = cwp_kenya_rising }
+			}
+			triggered_desc = {
+				desc = je_cwp_kenya_status_quiet
+			}
+		}
+	}
 
 	on_monthly_pulse = {
 		effect = {
-			cwp_kenya_set_level = yes
-			# The rising starts: first time Land and Freedom passes 25.
 			if = {
 				limit = {
-					has_global_variable = cwp_kenya_rising_seen
-					NOT = { has_global_variable = cwp_kenya_rising_announced }
+					NOT = { has_global_variable = cwp_kenya_rising }
+					c:KKY ?= { liberty_desire >= 40 }
 				}
-				set_global_variable = cwp_kenya_rising_announced
+				set_global_variable = cwp_kenya_rising
 				c:GBR ?= { trigger_event = { id = cwp_africa.10 popup = yes } }
 				c:KKY ?= { trigger_event = { id = cwp_africa.10 popup = yes } }
 			}
-			# The forest fighters are broken once (the Emergency's military victory); politics goes on.
 			if = {
 				limit = {
-					has_global_variable = cwp_kenya_rising_announced
+					has_global_variable = cwp_kenya_rising
 					NOT = { has_global_variable = cwp_kenya_rising_crushed }
-					scope:journal_entry = { "scripted_bar_progress(cwp_kenya_insurgency_bar)" <= 0 }
+					has_global_variable = cwp_kenya_emergencies
+					global_var:cwp_kenya_emergencies >= 3
 				}
 				set_global_variable = cwp_kenya_rising_crushed
+				c:KKY ?= { add_liberty_desire = -20 }
 				c:GBR ?= {
 					cwp_decolonization_add_setback = yes
 					trigger_event = { id = cwp_africa.11 popup = yes }
@@ -174,7 +202,7 @@ je_cwp_kenya = {
 		conclusion_desc = je_cwp_kenya_independence_desc
 		trigger = {
 			c:KKY ?= { is_subject_of = c:GBR }
-			c:GBR ?= { has_variable = cwp_kenya_conference_held }
+			has_global_variable = cwp_kenya_conference_held
 		}
 		effect = {
 			remove_global_variable = cwp_kenya_active
@@ -184,30 +212,17 @@ je_cwp_kenya = {
 		}
 	}
 
-	# Land and Freedom drives the British out
+	# The forest war (the engine's independence war at liberty desire 90) drives Britain out
 	outcome = {
 		header = je_standard_completion_header
 		effect_header = je_standard_on_completion_header
 		color = "gold_positive"
 		conclusion_desc = je_cwp_kenya_won_desc
 		trigger = {
-			c:KKY ?= { is_subject_of = c:GBR }
-			scope:journal_entry = { "scripted_bar_progress(cwp_kenya_insurgency_bar)" >= 100 }
+			c:KKY ?= { is_subject = no }
 		}
 		effect = {
 			remove_global_variable = cwp_kenya_active
-			c:KKY = {
-				make_independent = yes
-				add_modifier = {
-					name = cwp_new_nation
-					years = 10
-					is_decaying = yes
-				}
-				change_relations = {
-					country = c:GBR
-					value = -50
-				}
-			}
 			c:GBR ?= { trigger_event = { id = cwp_africa.13 popup = yes } }
 			c:KKY ?= { trigger_event = { id = cwp_africa.13 popup = yes } }
 		}
@@ -220,7 +235,10 @@ je_cwp_kenya = {
 			OR = {
 				NOT = { exists = c:KKY }
 				NOT = { exists = c:GBR }
-				c:KKY ?= { NOT = { is_subject_of = c:GBR } }
+				c:KKY ?= {
+					is_subject = yes
+					NOT = { is_subject_of = c:GBR }
+				}
 			}
 		}
 		effect = {
@@ -256,16 +274,55 @@ je_cwp_belgian_congo = {
 
 	immediate = {
 		set_global_variable = cwp_congo_active
-		c:BEL ?= { trigger_event = { id = cwp_africa.20 popup = yes } }
-		c:CNG ?= { trigger_event = { id = cwp_africa.20 popup = yes } }
+		set_global_variable = { name = cwp_congo_cadres value = 0 }
+		c:CNG ?= { add_modifier = { name = cwp_congo_paternalism } }
 	}
 
-	scripted_progress_bar = cwp_congo_demands_bar
+	# No bar: a race. The counter is how much Belgium has prepared a Congolese administration; the clock is the
+	# outside world (Ghana free, the tide, the Congo's own liberty desire), which decides when Belgium must go.
+	current_value = {
+		value = 0
+		if = {
+			limit = { has_global_variable = cwp_congo_cadres }
+			add = global_var:cwp_congo_cadres
+		}
+	}
+	goal_add_value = {
+		value = 3
+	}
+	progressbar = yes
 
 	scripted_button = cwp_congo_cadres_button
 	scripted_button = cwp_congo_force_publique_button
 	scripted_button = cwp_congo_round_table_button
 	scripted_button = cwp_congo_riots_button
+
+	status_desc = {
+		first_valid = {
+			triggered_desc = {
+				desc = je_cwp_belgian_congo_status_awake
+				trigger = { NOT = { c:CNG ?= { has_modifier = cwp_congo_paternalism } } }
+			}
+			triggered_desc = {
+				desc = je_cwp_belgian_congo_status_paternalism
+			}
+		}
+	}
+
+	on_monthly_pulse = {
+		effect = {
+			if = {
+				limit = {
+					has_global_variable = cwp_tide_tier
+					global_var:cwp_tide_tier >= 2
+					c:CNG ?= { has_modifier = cwp_congo_paternalism }
+				}
+				c:CNG = { remove_modifier = cwp_congo_paternalism }
+				c:BEL ?= { trigger_event = { id = cwp_africa.20 popup = yes } }
+				c:CNG ?= { trigger_event = { id = cwp_africa.20 popup = yes } }
+			}
+		}
+	}
 
 	outcome = {
 		header = je_standard_completion_header
@@ -274,35 +331,14 @@ je_cwp_belgian_congo = {
 		conclusion_desc = je_cwp_belgian_congo_independence_desc
 		trigger = {
 			c:CNG ?= { is_subject_of = c:BEL }
-			OR = {
-				c:BEL ?= { has_variable = cwp_congo_round_table_held }
-				scope:journal_entry = { "scripted_bar_progress(cwp_congo_demands_bar)" >= 100 }
-			}
+			has_global_variable = cwp_congo_round_table_held
 		}
 		effect = {
 			remove_global_variable = cwp_congo_active
+			c:CNG = { remove_modifier = cwp_congo_paternalism }
 			cwp_congo_independence_effect = yes
 			c:BEL ?= { trigger_event = { id = cwp_africa.21 popup = yes } }
 			c:CNG ?= { trigger_event = { id = cwp_africa.21 popup = yes } }
-		}
-	}
-
-	outcome = {
-		header = je_standard_failure_header
-		effect_header = je_standard_on_failure_header
-		color = "blue_negative"
-		conclusion_desc = je_cwp_belgian_congo_held_desc
-		trigger = {
-			c:CNG ?= { is_subject_of = c:BEL }
-			scope:journal_entry = { "scripted_bar_progress(cwp_congo_demands_bar)" <= 0 }
-		}
-		effect = {
-			remove_global_variable = cwp_congo_active
-			set_global_variable = {
-				name = cwp_congo_je_cooldown
-				years = 10
-			}
-			c:BEL = { cwp_decolonization_add_setback = yes }
 		}
 	}
 
@@ -318,6 +354,7 @@ je_cwp_belgian_congo = {
 		}
 		effect = {
 			remove_global_variable = cwp_congo_active
+			c:CNG ?= { remove_modifier = cwp_congo_paternalism }
 		}
 	}
 
@@ -351,11 +388,11 @@ je_cwp_portuguese_africa = {
 
 	immediate = {
 		set_global_variable = cwp_portugal_active
-		set_global_variable = { name = cwp_portugal_war_level value = 0 }
 		c:POR ?= { trigger_event = { id = cwp_africa.30 popup = yes } }
 	}
 
-	scripted_progress_bar = cwp_portugal_war_bar
+	# One bar, Portugal's exhaustion, fed by every colony actually in revolt (liberty desire 50+). The liberation
+	# wars themselves are the colonies' liberty desire, raised by bases abroad (cwp_portugal_fronts_pulse).
 	scripted_progress_bar = cwp_portugal_exhaustion_bar
 
 	scripted_button = cwp_portugal_counter_insurgency_button
@@ -364,7 +401,7 @@ je_cwp_portuguese_africa = {
 
 	on_monthly_pulse = {
 		effect = {
-			cwp_portugal_set_level = yes
+			cwp_portugal_fronts_pulse = yes
 		}
 	}
 
@@ -422,26 +459,20 @@ je_cwp_portuguese_africa = {
 		}
 	}
 
-	# The liberation movements are crushed, for now
+	# The colonies have won their own wars
 	outcome = {
-		header = je_standard_failure_header
-		effect_header = je_standard_on_failure_header
-		color = "blue_negative"
-		conclusion_desc = je_cwp_portuguese_africa_held_desc
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_cwp_portuguese_africa_won_desc
 		trigger = {
-			cwp_portugal_holds_africa = yes
-			scope:journal_entry = { "scripted_bar_progress(cwp_portugal_war_bar)" <= 0 }
+			custom_tooltip = {
+				text = cwp_portugal_no_colonies_tt
+				NOT = { cwp_portugal_holds_africa = yes }
+			}
 		}
 		effect = {
 			remove_global_variable = cwp_portugal_active
-			set_global_variable = {
-				name = cwp_portugal_je_cooldown
-				years = 10
-			}
-			c:POR = {
-				cwp_decolonization_add_setback = yes
-				trigger_event = { id = cwp_africa.33 popup = yes }
-			}
 		}
 	}
 
@@ -449,7 +480,7 @@ je_cwp_portuguese_africa = {
 		flags = { hidden invalid_outcome }
 		conclusion_desc = je_cwp_decolonization_invalid_desc
 		trigger = {
-			NOT = { cwp_portugal_holds_africa = yes }
+			NOT = { exists = c:POR }
 		}
 		effect = {
 			remove_global_variable = cwp_portugal_active

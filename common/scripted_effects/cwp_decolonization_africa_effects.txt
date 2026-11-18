@@ -1,39 +1,38 @@
 ﻿# Cold War Project: decolonization in Africa, scripted effects
 
-# Scope: none, scope:journal_entry set. Mirrors Kenya's insurgency bar into cwp_kenya_insurgency_level (0..2).
-cwp_kenya_set_level = {
+# Scope: none. Monthly while the Portuguese JE runs: the guerrillas' foreign bases raise each colony's liberty desire.
+cwp_portugal_fronts_pulse = {
 	if = {
-		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_kenya_insurgency_bar)" >= 50 } }
-		set_global_variable = { name = cwp_kenya_insurgency_level value = 2 }
-		set_global_variable = cwp_kenya_rising_seen
+		limit = { c:CNG ?= { is_subject = no } }
+		c:OVM ?= {
+			if = {
+				limit = { is_subject_of = c:POR }
+				add_liberty_desire = 1
+			}
+		}
 	}
-	else_if = {
-		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_kenya_insurgency_bar)" >= 25 } }
-		set_global_variable = { name = cwp_kenya_insurgency_level value = 1 }
-		set_global_variable = cwp_kenya_rising_seen
-	}
-	else = {
-		set_global_variable = { name = cwp_kenya_insurgency_level value = 0 }
-	}
-}
-
-# Scope: none, scope:journal_entry set. Mirrors Portugal's war bar into cwp_portugal_war_level (0..2).
-cwp_portugal_set_level = {
 	if = {
-		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_portugal_war_bar)" >= 50 } }
-		set_global_variable = { name = cwp_portugal_war_level value = 2 }
+		limit = { c:TNZ ?= { is_subject = no } }
+		c:MKU ?= {
+			if = {
+				limit = { is_subject_of = c:POR }
+				add_liberty_desire = 1
+			}
+		}
 	}
-	else_if = {
-		limit = { scope:journal_entry = { "scripted_bar_progress(cwp_portugal_war_bar)" >= 25 } }
-		set_global_variable = { name = cwp_portugal_war_level value = 1 }
-	}
-	else = {
-		set_global_variable = { name = cwp_portugal_war_level value = 0 }
+	if = {
+		limit = { c:GLC ?= { is_subject = no } }
+		c:GNB ?= {
+			if = {
+				limit = { is_subject_of = c:POR }
+				add_liberty_desire = 0.5
+			}
+		}
 	}
 }
 
 # Scope: none. The Congo becomes independent. The less Belgium trained an African administration
-# (cwp_congo_cadres on BEL, one per press of the cadres button), the more unprepared the new state, and
+# (global cwp_congo_cadres, one per press of the cadres button), the more unprepared the new state, and
 # with fewer than two rounds of training Katanga breaks away.
 cwp_congo_independence_effect = {
 	c:CNG = {
@@ -44,10 +43,7 @@ cwp_congo_independence_effect = {
 			is_decaying = yes
 			multiplier = {
 				value = 3
-				if = {
-					limit = { c:BEL ?= { has_variable = cwp_congo_cadres } }
-					subtract = c:BEL.var:cwp_congo_cadres
-				}
+				subtract = global_var:cwp_congo_cadres
 				min = 0
 			}
 		}
@@ -56,12 +52,7 @@ cwp_congo_independence_effect = {
 		limit = {
 			NOT = { exists = c:KTA }
 			exists = s:STATE_KATANGA.region_state:CNG
-			NOT = {
-				c:BEL ?= {
-					has_variable = cwp_congo_cadres
-					var:cwp_congo_cadres >= 2
-				}
-			}
+			global_var:cwp_congo_cadres < 2
 		}
 		create_country = {
 			tag = KTA
