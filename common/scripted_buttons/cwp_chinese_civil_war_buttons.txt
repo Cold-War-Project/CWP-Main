@@ -3,6 +3,53 @@
 
 ### Communists
 
+cwp_ccw_strategic_offensive_button = {
+	name = "cwp_ccw_strategic_offensive_button"
+	desc = "cwp_ccw_strategic_offensive_button_desc"
+
+	visible = {
+		cwp_ccw_is_belligerent = yes
+		has_global_variable = cwp_ccw_peoples_war_phase
+	}
+
+	possible = {
+		cwp_ccw_war_running = yes
+		trigger_if = {
+			limit = { c:PRC ?= this }
+			custom_tooltip = {
+				text = cwp_ccw_balance_communist_25_tt
+				global_var:cwp_ccw_balance >= 25
+			}
+		}
+		trigger_else = {
+			custom_tooltip = {
+				text = cwp_ccw_balance_nationalist_25_tt
+				global_var:cwp_ccw_balance <= -25
+			}
+		}
+	}
+
+	effect = {
+		if = {
+			limit = { c:PRC ?= this }
+			cwp_ccw_end_peoples_war = {
+				ATTACKER = c:PRC
+				DEFENDER = c:ROC
+			}
+		}
+		else = {
+			cwp_ccw_end_peoples_war = {
+				ATTACKER = c:ROC
+				DEFENDER = c:PRC
+			}
+		}
+	}
+
+	ai_chance = {
+		value = 50
+	}
+}
+
 cwp_ccw_land_reform_button = {
 	name = "cwp_ccw_land_reform_button"
 	desc = "cwp_ccw_land_reform_button_desc"
@@ -28,65 +75,7 @@ cwp_ccw_land_reform_button = {
 	}
 }
 
-cwp_ccw_pla_offensive_button = {
-	name = "cwp_ccw_pla_offensive_button"
-	desc = "cwp_ccw_pla_offensive_button_desc"
-
-	visible = {
-		c:PRC ?= this
-		has_global_variable = cwp_ccw_peoples_war_phase
-	}
-
-	possible = {
-		cwp_ccw_war_running = yes
-		custom_tooltip = {
-			text = cwp_ccw_balance_communist_25_tt
-			global_var:cwp_ccw_balance >= 25
-		}
-	}
-
-	effect = {
-		cwp_ccw_end_peoples_war = {
-			ATTACKER = c:PRC
-			DEFENDER = c:ROC
-		}
-	}
-
-	ai_chance = {
-		value = 50
-	}
-}
-
 ### Nationalists
-
-cwp_ccw_nra_offensive_button = {
-	name = "cwp_ccw_nra_offensive_button"
-	desc = "cwp_ccw_nra_offensive_button_desc"
-
-	visible = {
-		c:ROC ?= this
-		has_global_variable = cwp_ccw_peoples_war_phase
-	}
-
-	possible = {
-		cwp_ccw_war_running = yes
-		custom_tooltip = {
-			text = cwp_ccw_balance_nationalist_25_tt
-			global_var:cwp_ccw_balance <= -25
-		}
-	}
-
-	effect = {
-		cwp_ccw_end_peoples_war = {
-			ATTACKER = c:ROC
-			DEFENDER = c:PRC
-		}
-	}
-
-	ai_chance = {
-		value = 50
-	}
-}
 
 cwp_ccw_currency_reform_button = {
 	name = "cwp_ccw_currency_reform_button"
@@ -637,45 +626,6 @@ cwp_ccw_break_ceasefire_button = {
 
 ### Soviet Union
 
-cwp_ccw_strip_manchuria_button = {
-	name = "cwp_ccw_strip_manchuria_button"
-	desc = "cwp_ccw_strip_manchuria_button_desc"
-
-	visible = {
-		c:RUS ?= this
-		cwp_ccw_soviets_in_manchuria = yes
-	}
-
-	possible = {
-		NOT = { has_global_variable = cwp_ccw_manchuria_stripped }
-	}
-
-	selected = {
-		has_global_variable = cwp_ccw_manchuria_stripped
-	}
-
-	effect = {
-		set_global_variable = cwp_ccw_manchuria_stripped
-		add_modifier = {
-			name = cwp_ccw_manchurian_reparations
-			years = 5
-			is_decaying = yes
-		}
-		every_scope_state = {
-			limit = { cwp_ccw_is_manchurian_state = yes }
-			add_modifier = {
-				name = cwp_ccw_stripped_industry
-				years = 10
-				is_decaying = yes
-			}
-		}
-	}
-
-	ai_chance = {
-		value = 50
-	}
-}
-
 cwp_ccw_soviet_withdrawal_button = {
 	name = "cwp_ccw_soviet_withdrawal_button"
 	desc = "cwp_ccw_red_army_withdrawal_desc"
@@ -693,17 +643,30 @@ cwp_ccw_soviet_withdrawal_button = {
 	}
 
 	effect = {
+		# The Red Army takes the Japanese-built industry with it as war booty before it leaves
+		if = {
+			limit = { NOT = { has_global_variable = cwp_ccw_manchuria_stripped } }
+			set_global_variable = cwp_ccw_manchuria_stripped
+			add_modifier = {
+				name = cwp_ccw_manchurian_reparations
+				years = 5
+				is_decaying = yes
+			}
+			every_scope_state = {
+				limit = { cwp_ccw_is_manchurian_state = yes }
+				add_modifier = {
+					name = cwp_ccw_stripped_industry
+					years = 10
+					is_decaying = yes
+				}
+			}
+		}
 		trigger_event = { id = cwp_ccw.2 popup = yes }
 	}
 
-	# Once the industry is gone the garrison only costs influence (cwp_ccw_manchurian_garrison).
-	# Observer run 2026-11-17: weight 27 never fired in five years, so the stripped state now dominates.
+	# Holding Manchuria costs influence every month (cwp_ccw_manchurian_garrison); the Red Army left by May 1946
 	ai_chance = {
 		value = 5
-		if = {
-			limit = { has_global_variable = cwp_ccw_manchuria_stripped }
-			add = 200
-		}
 		if = {
 			limit = { has_modifier = cwp_ccw_manchurian_garrison }
 			add = 50
@@ -748,41 +711,6 @@ cwp_ccw_soviet_aid_button = {
 			limit = { global_var:cwp_ccw_balance < 0 }
 			add = 15
 		}
-	}
-}
-
-cwp_ccw_counsel_restraint_button = {
-	name = "cwp_ccw_counsel_restraint_button"
-	desc = "cwp_ccw_counsel_restraint_button_desc"
-
-	visible = {
-		c:RUS ?= this
-		NOT = { has_global_variable = cwp_ccw_peoples_war_phase }
-	}
-
-	possible = {
-		cwp_ccw_war_running = yes
-		NOT = { has_global_variable = cwp_ccw_soviet_restraint }
-		custom_tooltip = {
-			text = cwp_ccw_balance_communist_20_tt
-			global_var:cwp_ccw_balance >= 20
-		}
-	}
-
-	selected = {
-		has_global_variable = cwp_ccw_soviet_restraint
-	}
-
-	effect = {
-		set_global_variable = cwp_ccw_soviet_restraint
-		custom_tooltip = cwp_ccw_soviet_restraint_tt
-		c:PRC = {
-			change_relations = { country = c:RUS value = -20 }
-		}
-	}
-
-	ai_chance = {
-		value = 3
 	}
 }
 
