@@ -33,3 +33,5 @@ Only display names and four descriptions changed. Law positions, the 48-characte
 | Sankarist | Revolutionary Egalitarian |
 
 The eight interest-group ideologies and eight movement ideologies already use generic institutional or program names and retain those labels. The [full character roster](character_roster.md) lists all 48 current names.
+
+> **Reversed (November 2026):** Jack set a standing rule that player-visible names use established terms from academic, historical or strategic literature rather than invented labels. The in-game names above went back to the literature terms (Marxist-Leninist, Maoist, Gaullist, Ba'athist, Kemalist), and Monarchic Modernizer became Modernizing Monarchist. The rest of this table is historical.
