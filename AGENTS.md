@@ -20,6 +20,8 @@ Victoria 3 total conversion set 1946 to 2046, targeting game **1.15.1**. Most de
 
 **No "it is date X, so Y happens."** Every outcome comes from the simulation: progress bars, politics, economy, interest groups, characters, agitators, movements, wars, diplomacy. Journal entries may steer toward a specific historical outcome (make it more likely, reward pursuing it), but they **never force it**. Dates may gate when something becomes *possible* (an ideology from 1960, a technology era), never decide *what happens* (Jack, 2026-11-16). When porting content that forces an outcome by date, flag it in your PR and rework it into a mechanic, or ask the advisor.
 
+**Popup events should offer a real choice** (Jack, 2026-11-18). Aim for vanilla's spread: of 2,313 visible vanilla 1.15.1 events, 53% have two options, 23% three and 18% one (median 2, mean 2.2). Options need different consequences but need not be good; a choice between two bad options is fine. One option is acceptable when the event only formalizes something that has already happened (a state proclaimed, a treaty signed); it is not acceptable for "X happened, so now Y happens" when Y is a decision the player could plausibly make. Details: [docs/agents/loc-style.md](docs/agents/loc-style.md) and `.claude/rules/events.md`.
+
 ## What belongs in the mod
 
 The setting is **1946 to 2046**. Countries, formables and other content that did not exist in that period, and had no nationalist or revival movement in it (even a minor one), are dropped. **Rule of cool overrides this:** if playing as it would be fun, it can stay (Jack, 2026-11-16).

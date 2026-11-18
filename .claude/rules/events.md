@@ -10,6 +10,8 @@ paths:
 **Core design rule (AGENTS.md):** no event fires *because* a date arrived. Events react to simulation state (bars, laws, interest groups, characters, wars, economy); a date may only be one gate among those conditions.
 ## Event files
 
+- **Popup events should offer a real choice** (Jack, 2026-11-18). Aim for vanilla's spread: of 2,313 visible vanilla 1.15.1 events, 53% have two options, 23% three and 18% one (median 2, mean 2.2). Options need different consequences but need not be good; a choice between two bad options is fine. One option is acceptable when the event only formalizes something that has already happened (a state proclaimed, a treaty signed); it is not acceptable for "X happened, so now Y happens" when Y is a decision the player could plausibly make. Information-only events belong in a notification or a journal entry update, not a popup.
+
 - One `namespace = name` line at the top; every event id is `name.<number>`. A file may declare several namespaces. Ids must be unique across the whole game, mod included.
 - Vanilla 1.15 uses only two types: `country_event` (root = country, nearly all events) and `state_event` (root = state, a handful).
 - **Events have no database keywords.** To change a vanilla event the whole file is overwritten by a mod file with the same path. This mod overwrites nearly all of vanilla's event files this way, mostly as hidden stubs; the few it does not overwrite still load and fire. The mod's own events live in `cwp_` files and folders (`find events -name 'cwp_*'`).
