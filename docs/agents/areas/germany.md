@@ -13,7 +13,7 @@ A contextless journal entry in vanilla's `je_group_global_international_situatio
 | Bar | Start | Pushed up by | Pushed down by |
 |---|---|---|---|
 | `cwp_gq_western_bar` Western Integration | 0 | Bizone, Trizone, Marshall aid, Deutsche Mark, Länder elections, western SoL above the Soviet zone's, Soviet consolidation ≥ 50, the airlift, the western allies agreeing (US relations with GBR and FRA ≥ 50) | French reservations, Britain or France hostile to the US, four-power unity ≥ 60, the Occupation Statute (after the Basic Law), Berlin given up, radicals ≥ 20% |
-| `cwp_gq_soviet_bar` Soviet Consolidation | 0 | land reform, the SED, dismantling, antifascist bloc, trade unions in government, the western currency, the blockade | radicals ≥ 20% in the zone, the zone no longer a Soviet subject |
+| `cwp_gq_soviet_bar` Sovietization | 0 | land reform, the SED, dismantling, antifascist bloc, trade unions in government, the western currency, the blockade | radicals ≥ 20% in the zone, the zone no longer a Soviet subject |
 | `cwp_gq_unity_bar` Four-Power Unity | 50 | four-power talks, US-Soviet relations ≥ 50 | US-Soviet relations below 20 (−0.25) or below −20 (−0.5), Bizone, currency reform, blockade, reparations quarrels |
 
 ### Milestones (checked monthly; each is an event the country can refuse)
@@ -114,6 +114,10 @@ Not everything should be bar management. Each situation now has its own shape: c
 ## Run 16ccecae3 (2026-11-18, 1946-1960): chapter 1 on schedule
 
 Bizone 1946, the US and Britain drop the four-power accord in 1947, Deutsche Mark, blockade and airlift in 1948, both states proclaimed by October 1949, the Stalin Note in 1950 (rejected), the FRG sovereign in mid-1954 and the GDR in early 1955; chapter 2 then opens. Two fixes followed: Austria never got its treaty, because a subject belongs to its overlord's power bloc, so the "no bloc" condition and the neutrality button's bloc check could never pass (both removed; neutral Austria leaves any bloc on signing). And GDR legitimacy hit 100 by late 1956, so the Wall was never needed: living as well as the West now gives +0.5 (was +1), and one-party rule (`law_single_party_state`) costs −0.5.
+
+## Names come from the literature (Jack, 2026-11-18)
+
+Player-visible names use established terms from the historical and political literature, or plain description, never invented coinages. Applied here: the Soviet bar is *Sovietization*; Moscow's buttons are the *Sinatra* and *Brezhnev Doctrines*; flavour lines use period terms (Stunde Null, Bizonia, Trizonesia, Luftbrücke, Zwangsvereinigung, Arbeiter-und-Bauern-Staat, Bonn Republic, Paris Agreements, Volksaufstand, Systemkonkurrenz, Wandel durch Annäherung, Mauerfall, the Chinese solution, the third way, die kleine Wiedervereinigung) or sourced quotations.
 
 ## Known gaps and decisions for review
 
