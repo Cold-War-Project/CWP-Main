@@ -49,6 +49,14 @@ Partition and release use fixed vanilla 1.15.1 state regions: Pakistan = STATE_P
 
 All of this depends on the 1946 start state (governments, debt, subject types) and on AI weights, so the observer run is what confirms it.
 
+## Colonial wars as real wars (2026-11-18)
+
+The military thread's 1946-49 runs showed the DRV defaulting in June 1946 and the Indonesian Republic in October 1946, their armies collapsing. Changes (branch feat/decolonization-guerrilla):
+- `cwp_guerrilla_war` (military wages and goods -50%, loan interest -50%, supply consumption -50%, morale loss -15%, army defense +10%) on DAI and IDS while their JEs run, and on any tracked colony at war with its overlord (Winds of Change monthly update; removed when the war ends).
+- Chinese aid also puts `cwp_foreign_military_aid` on DAI (military goods -25%, army offense +5%, 12 months).
+- Escalation in Indochina: once the DRV is a French subject with liberty desire 75+ and not at war, `cwp_indochina.3` (the accords break down; Ho Chi Minh's Appeal for National Resistance) lets it open a `dp_independence` play on France, the vanilla Raj pattern, or return to talks (-10 liberty desire). At most once a year (`cwp_indochina_haiphong_cd`). The AI goes to war mostly from liberty desire 85 or with Chinese aid.
+- To check in an observer run: neither insurgent state defaults by 1948; a France-DRV war exists by about 1947 in a median run.
+
 ## Naming
 
 Player-visible names use established terms from the historical and strategic literature where one exists (Jack, 2026-11-18), otherwise plain description, in American spelling except verbatim titles and party names (Labour). Built on the quality audit's wording (fix/scholarly-prose, 2026-11-18). Examples: the Transfer of Power, the Cabinet Mission, police actions, the Round Table, protracted war and the general counter-offensive (Giap's stages), the Constantine Plan, the pieds-noirs, the Coussey Committee, the Mau Mau uprising, ONUC, the colonatos, the Afro-Asian Conference, the Tydings-McDuffie Act. The global bar is shown as "Anti-Colonial Nationalism" (the scripts still call it the tide).
