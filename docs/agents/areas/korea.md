@@ -1,4 +1,4 @@
-# Korea: the Divided Peninsula (proposal option B)
+# Korea: the Korean Question (proposal option B)
 
 Design brief for `je_cwp_divided_peninsula`, built from [the Korea proposal](../proposals/korea.md), option B (Jack, 2026-11-17).
 
@@ -77,3 +77,7 @@ Opens when chapter 1 ends with both Koreas standing (armistice or the line holds
 - No Inchon event: amphibious landings are left to the war system.
 - South Korean democratisation is left to the politics simulation; no scripted events yet.
 - Occupation-era names for `STK`/`NRK` (history thread).
+
+## Player-visible terms (Jack, 2026-11-18)
+
+Use names from the historical and strategic literature, not invented ones. Applied: "The Korean Question" (UN usage, 1947), "Inter-Korean Military Balance", "Mutual Deterrence", "Neutralization of Korea", "Reunification by Force", "Inter-Korean Tension", "Armed Provocation", "Alliance Restraint", "Engagement Policy" (the Sunshine Policy is named in the description), "Inter-Korean Economic Cooperation", "Lost Credibility", "Communist Insurgency", "Rejection of the Armistice". "The Two Koreas" is Oberdorfer's title and the common term. Script keys are unchanged.
