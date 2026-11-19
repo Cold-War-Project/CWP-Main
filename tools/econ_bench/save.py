@@ -213,6 +213,7 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
     price_num, price_qty = {}, {}
     shortage_n = shortage_total = 0
     shortage_vals, real_vals = [], []
+    by_type = {}
     unstaffed_n = 0
     for _, body in db_entries(top_section(text, "building_manager")):
         btype = field(body, "building")
@@ -228,6 +229,13 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
                 unstaffed_n += 1
             elif x > 0.05 and staffed:
                 real_vals.append(x)
+                # Which inputs: the save keeps no shortage per good, only the building's input
+                # demand by good, so record what short buildings of each type buy (and how short).
+                bt = by_type.setdefault(btype, {"n": 0, "short": [], "inputs": {}})
+                bt["n"] += 1
+                bt["short"].append(x)
+                for g, v in re.findall(r"(\d+)=\{\s*value=([\d.]+)", sub_block(body, "input_goods")):
+                    bt["inputs"][g] = bt["inputs"].get(g, 0.0) + float(v)
             shortage_vals.append(x)
             if float(sh_v) > 0.05:
                 shortage_n += 1
@@ -276,6 +284,11 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
               "real_shortage": len(real_vals),
               "real_shortage_median": sorted(real_vals)[len(real_vals) // 2] if real_vals else None,
               "unstaffed": unstaffed_n,
+              "short_by_type": {
+                  bt: {"n": v["n"], "median_shortage": sorted(v["short"])[len(v["short"]) // 2],
+                       "inputs": {(names[int(g)][0] if int(g) < len(names) else g): round(q, 2)
+                                  for g, q in sorted(v["inputs"].items(), key=lambda kv: -kv[1])}}
+                  for bt, v in sorted(by_type.items(), key=lambda kv: -kv[1]["n"])[:25]},
               "prices": {(names[int(g)][0] if int(g) < len(names) else g):
                          {"price": price_num[g] / price_qty[g],
                           "base": names[int(g)][1] if int(g) < len(names) else None}
