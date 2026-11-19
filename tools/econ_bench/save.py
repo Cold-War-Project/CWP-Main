@@ -174,8 +174,13 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
             countries[cid.group(1)]["rank"] = rk.group(1)
 
     state_owner = {}
+    over_infra = states_n = 0
     for sid, body in db_entries(top_section(text, "states")):
         c = field(body, "country")
+        inf, use = field(body, "infrastructure"), field(body, "infrastructure_usage")
+        if inf is not None and use is not None:
+            states_n += 1
+            over_infra += float(use) > float(inf)
         if c:
             state_owner[sid] = c
             # Population from the states: the country-level pop_statistics can lag badly (India read
@@ -284,6 +289,8 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
               "real_shortage": len(real_vals),
               "real_shortage_median": sorted(real_vals)[len(real_vals) // 2] if real_vals else None,
               "unstaffed": unstaffed_n,
+              "short_at_half": sum(1 for x in real_vals if abs(x - 0.5) < 1e-6),
+              "states_over_infrastructure": over_infra, "states": states_n,
               "short_by_type": {
                   bt: {"n": v["n"], "median_shortage": sorted(v["short"])[len(v["short"]) // 2],
                        "inputs": {(names[int(g)][0] if int(g) < len(names) else g): round(q, 2)
