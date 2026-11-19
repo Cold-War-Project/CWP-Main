@@ -80,30 +80,11 @@ cwp_construction_workforce_update = {
 # wage. A state-owned enterprise in that condition is a write-off, so AI governments close it.
 # Run yearly from on_yearly_pulse_state (root = state). Only government-owned (at least half the
 # levels) production buildings; infrastructure, military, government and subsistence buildings
-# are never touched. A building must be found empty at three yearly checks in a row (2+ years).
+# are never touched. The building must be empty at three yearly checks in a row (2+ years).
+# Buildings can't hold variables, so the count is a state variable per building type.
 cwp_ai_empty_building_cleanup = {
 	if = {
 		limit = { owner = { is_ai = yes } }
-		every_scope_building = {
-			limit = { is_subsistence_building = no }
-			if = {
-				limit = {
-					occupancy < 0.05
-					country_ownership_fraction >= 0.5
-				}
-				if = {
-					limit = { has_variable = cwp_empty_years }
-					change_variable = { name = cwp_empty_years add = 1 }
-				}
-				else = {
-					set_variable = { name = cwp_empty_years value = 1 }
-				}
-			}
-			else_if = {
-				limit = { has_variable = cwp_empty_years }
-				remove_variable = cwp_empty_years
-			}
-		}
 		cwp_ai_close_empty_building = { TYPE = building_aircraft_manufactories }
 		cwp_ai_close_empty_building = { TYPE = building_aluminum_refinery }
 		cwp_ai_close_empty_building = { TYPE = building_automobile_manufactories }
@@ -177,10 +158,25 @@ cwp_ai_close_empty_building = {
 		limit = {
 			any_scope_building = {
 				is_building_type = $TYPE$
-				has_variable = cwp_empty_years
-				var:cwp_empty_years >= 3
+				occupancy < 0.05
+				country_ownership_fraction >= 0.5
 			}
 		}
-		remove_building = $TYPE$
+		if = {
+			limit = { has_variable = cwp_empty_$TYPE$ }
+			change_variable = { name = cwp_empty_$TYPE$ add = 1 }
+		}
+		else = {
+			set_variable = { name = cwp_empty_$TYPE$ value = 1 }
+		}
+		if = {
+			limit = { var:cwp_empty_$TYPE$ >= 3 }
+			remove_building = $TYPE$
+			remove_variable = cwp_empty_$TYPE$
+		}
+	}
+	else_if = {
+		limit = { has_variable = cwp_empty_$TYPE$ }
+		remove_variable = cwp_empty_$TYPE$
 	}
 }
