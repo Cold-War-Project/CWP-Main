@@ -40,14 +40,67 @@
 	on_character_ig_membership = {  }
 
 	pop_potential = {
-		NOR = {
-			is_pop_type = peasants
-			is_pop_type = soldiers
+		NOT = { is_pop_type = soldiers }
+		OR = {
+			NOT = { is_pop_type = peasants }
+			# Cold War: collective-farm peasants are administered by the apparatus
+			owner = { has_law_or_variant = law_type:law_collectivized_agriculture }
 		}
 	}
 
 	pop_weight = {
 		value = 0
+
+		# Cold War: in a party-state (council republic or single-party state) office staff, technical
+		# cadres and academics are part of the party-state apparatus (the nomenklatura system).
+		add = {
+			desc = "PARTY_STATE_APPARATUS"
+			if = {
+				limit = { owner = { cwp_is_party_state = yes } }
+				if = {
+					limit = { is_pop_type = clerks }
+					value = 150
+				}
+				else_if = {
+					limit = { is_pop_type = engineers }
+					value = 75
+				}
+				else_if = {
+					limit = { is_pop_type = academics }
+					value = 50
+				}
+				else_if = {
+					limit = { is_pop_type = officers }
+					value = 25
+				}
+			}
+		}
+
+		# Cold War: under collectivized agriculture the farm is run by appointed chairmen, procurement
+		# quotas and the machine-tractor stations, so part of the countryside answers to the apparatus.
+		add = {
+			desc = "COLLECTIVE_FARM_ADMINISTRATION"
+			if = {
+				limit = {
+					owner = { has_law_or_variant = law_type:law_collectivized_agriculture }
+					OR = {
+						is_pop_type = peasants
+						AND = {
+							OR = {
+								is_pop_type = farmers
+								is_pop_type = laborers
+							}
+							OR = {
+								pop_employment_building_group = bg_agriculture
+								pop_employment_building_group = bg_ranching
+								pop_employment_building_group = bg_plantations
+							}
+						}
+					}
+				}
+				value = 100
+			}
+		}
 
 		# Academics: 50 if working in a nationalized building
 		add = {

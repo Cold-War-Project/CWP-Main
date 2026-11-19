@@ -45,6 +45,14 @@
 			is_pop_type = clergymen
 			is_pop_type = officers
 			is_pop_type = farmers
+			# Cold War: tenants, serfs and plantation labour follow their landlord (clientelism)
+			AND = {
+				OR = {
+					is_pop_type = peasants
+					is_pop_type = laborers
+				}
+				cwp_pop_under_rural_patronage = yes
+			}
 		}
 	}
 
@@ -90,6 +98,53 @@
 				if = {
 					limit = { state = { is_slave_state = yes } }
 					multiply = 4
+				}
+			}
+		}
+
+		# Cold War: rural clientelism. Where land is held by landlords (serfdom, tenancy, latifundia) or
+		# worked as plantations, illiterate peasants and farm labour are delivered to the landlord's
+		# politics. Literacy breaks the tie, so this fades as schools spread.
+		add = {
+			desc = "RURAL_CLIENTELISM"
+			if = {
+				limit = {
+					OR = {
+						is_pop_type = peasants
+						is_pop_type = laborers
+					}
+					cwp_pop_under_rural_patronage = yes
+				}
+				if = {
+					limit = {
+						owner = {
+							OR = {
+								has_law_or_variant = law_type:law_serfdom
+								has_law_or_variant = law_type:law_manorialism
+							}
+						}
+					}
+					value = 300
+				}
+				else_if = {
+					limit = {
+						owner = {
+							OR = {
+								has_law_or_variant = law_type:law_tenant_farmers
+								has_law_or_variant = law_type:law_latifundias
+								has_law_or_variant = law_type:law_expanded_latifundias
+							}
+						}
+					}
+					value = 150
+				}
+				else = {
+					value = 75 # plantation labour under other land laws
+				}
+				multiply = {
+					value = 1
+					subtract = literacy_rate
+					min = 0.1
 				}
 			}
 		}
