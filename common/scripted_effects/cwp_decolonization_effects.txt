@@ -96,6 +96,37 @@ cwp_decolonization_monthly_update = {
 		}
 	}
 
+	# Colonial wars are real wars: a colony fighting its overlord gets the guerrilla war modifier, which keeps
+	# an insurgent army in the field without bankrupting it. DAI and IDS get it from their own JEs.
+	every_country = {
+		limit = {
+			cwp_is_tracked_colony = yes
+			is_at_war = yes
+			overlord ?= { has_war_with = prev }
+			NOT = { has_modifier = cwp_guerrilla_war }
+		}
+		add_modifier = { name = cwp_guerrilla_war }
+	}
+	every_country = {
+		limit = {
+			has_modifier = cwp_guerrilla_war
+			NOT = {
+				overlord ?= { has_war_with = prev }
+			}
+			NOR = {
+				AND = {
+					c:DAI ?= this
+					has_global_variable = cwp_indochina_active
+				}
+				AND = {
+					c:IDS ?= this
+					has_global_variable = cwp_indonesia_active
+				}
+			}
+		}
+		remove_modifier = cwp_guerrilla_war
+	}
+
 	# Standing counts the tide bar reads.
 	set_global_variable = { name = cwp_free_former_colonies value = 0 }
 	every_country = {
@@ -433,6 +464,7 @@ cwp_indochina_peoples_war_pulse = {
 # Scope: none. Ends the people's war phase. $ATTACKER$ launched the offensive and gains momentum.
 cwp_indochina_end_peoples_war = {
 	remove_global_variable = cwp_indochina_peoples_war_phase
+	remove_global_variable = cwp_indochina_open_months
 	every_country = {
 		limit = { has_modifier = cwp_indochina_peoples_war }
 		remove_modifier = cwp_indochina_peoples_war
@@ -448,6 +480,7 @@ cwp_indochina_end_peoples_war = {
 
 # Scope: none. Clears the phase variable and the war modifiers when the JE ends.
 cwp_indochina_cleanup = {
+	c:DAI ?= { remove_modifier = cwp_guerrilla_war }
 	remove_global_variable = cwp_indochina_peoples_war_phase
 	remove_global_variable = cwp_indochina_months
 	every_country = {
