@@ -17,6 +17,7 @@ The two guide folders were not changed.
 | `replace_paths` changes were "a design decision for the user" | They are Jack's decision, after reading `docs/agents/rebuild-crash-fix.md`. | Narrower `replace_paths` is the likely crash fix. |
 | Workshop upload: "leave the agent folders out if a clean package matters" | They are `export-ignore` in `.gitattributes`; `.claude/tools/forge/cwp-package` builds the package with `git archive`. | Makes the clean package the default, not a manual step. |
 | `localization/english/CWP/` and `cwp/` both in use | Everything in `cwp/` (separate PR `fix/loc-folder-case`). | Folders that differ only in case merge into one on Windows and stay split on Linux. |
+| Sub-agent review and planning were optional ("can be handed to sub-agents") | Required: an independent subagent checks every piece of work before it is reported, queued or landed, and major content starts with several independent plans and a judge agent that picks one (`AGENTS.md` working rule 6, `CLAUDE.md` "Sub-agents"). | An agent shouldn't grade its own work (Jack, 2026-11-19). |
 | Every change reaches `CWP2` through a reviewed GitHub PR | Work stays local on Forge; tested commits are landed on `CWP2` by `cwp-integrate land`; no new PRs, PR comments or edits. | Other devs get an email per PR event (Jack, 2026-11-17). |
 
 New, not replacing anything: `AGENTS.md`, `docs/agents/`, `.claude/tools/forge/cwp-vic`, `.claude/tools/forge/cwp-package`. `CLAUDE.md` now imports `AGENTS.md`.
