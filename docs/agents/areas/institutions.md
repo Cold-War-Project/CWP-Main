@@ -80,6 +80,13 @@ So the AI's only capacity sense is the bureaucracy it has left over. There's no 
 | Low-capacity states under-invest and stagnate | **Mostly from start data.** The mechanic exists, but nothing makes the gap *self-reinforcing*: capacity doesn't make further capacity cheaper (except elected bureaucrats), and institutions work equally well in a district with no administration |
 | Established bureaucracies invest and pull ahead | **Not observed.** Western democracies don't raise voting from 3 by 1952 *(run)*; whether they raise anything is unmeasured |
 
+## Jack's decisions (2026-11-19)
+
+- **Do:** track institution levels, bureaucracy and authority in observer runs (proposal 1); a 1946 capacity tier for each country (2); AI investment by capacity, administration first. The AI is the top priority (5).
+- **Compounding comes from funding, not discounts.** Drop proposal 3. Bureaucracy begets bureaucracy because higher institution levels raise the state's ability to fund more: Economic System makes companies more profitable, Administration raises tax capacity, and so on. Tune those revenue effects rather than cost discounts.
+- **No staffed-administration gate** (drop 4). The incorporated/unincorporated divide already covers it. Make some states unincorporated at the 1946 start for certain countries, but use that sparingly.
+- **Keep the authority gap** (6). Democracies having less direct control over their citizens is an intended trade-off.
+
 ## Proposals
 
 In order. 1 and 2 are cheap and unlock the rest.
