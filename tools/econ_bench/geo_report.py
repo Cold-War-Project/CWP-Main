@@ -58,7 +58,14 @@ def evaluate(runs: dict) -> dict:
             "ccw": ", ".join(k for k, v in g.get("global_vars", {}).items() if k.startswith("cwp_ccw_outcome") and v) or "-",
             "wars": len(g["wars"]),
         })
-    return {"figures_by_year": figs, "years": years, "checks": checks, "counts": counts, "first_nuclear": first, "outcomes": outcomes}
+    who = {}
+    for rn, r in runs.items():
+        ys = [y for y in sorted(r) if "geo" in r[y]]
+        if ys and any("igs" in c for c in r[ys[-1]]["geo"]["countries"].values()):
+            gc = r[ys[-1]]["geo"]["countries"]
+            who = {t: gc[t] for t in ("USA", "RUS", "GBR", "FRA", "GER", "DDR", "ITA", "JAP", "PRC", "ROC", "HND", "PAK", "IDS", "EGY", "TUR", "BRZ", "ARG", "MEX") if t in gc}
+            break
+    return {"who_rules": who, "figures_by_year": figs, "years": years, "checks": checks, "counts": counts, "first_nuclear": first, "outcomes": outcomes}
 
 
 def markdown(ev: dict) -> list[str]:
@@ -78,6 +85,15 @@ def markdown(ev: dict) -> list[str]:
     if ev.get("figures_by_year"):
         md += ["Historical figure pool (living characters with the `cwp_fig` variable, most in any run): "
                + ", ".join(f"{y}: {n}" for y, n in ev["figures_by_year"].items()), ""]
+    if ev.get("who_rules"):
+        md += ["## Who governs at the last sample (first run with data)", "",
+               "IGs in government, ruling parties, and the three IGs with the most clout.", "",
+               "| country | government | IGs in government | ruling parties | top clout |", "|---|---|---|---|---|"]
+        for t, c in ev["who_rules"].items():
+            md.append(f"| {t} | {(c.get('government') or '').replace('gov_', '')} | {', '.join(c.get('government_igs', []))} "
+                      f"| {', '.join(c.get('ruling_parties', [])) or '-'} | "
+                      + ", ".join(f"{g['ig']} {g['clout'] * 100:.0f}%" for g in c.get("igs", [])[:3]) + " |")
+        md.append("")
     md += ["## Outcomes at the last sample, per run", "",
            "| run | year | Germany | Korea | China | blocs | wars |", "|---|---|---|---|---|---|---|"]
     for o in ev["outcomes"]:

@@ -58,6 +58,33 @@ def extract_geo(text: str, tag_of: dict, owned: set) -> dict:
                 c["techs_nuclear"] = [t for t in acq.group(1).split() if NUCLEAR_RX.search(t)]
                 c["tech_count"] = len(acq.group(1).split())
 
+    # Interest groups and parties: who governs, who has clout (Jack's per-run plausibility check).
+    ig_by_id = {}
+    for iid, b in db_entries(top_section(text, "interest_groups")):
+        c = countries.get(field(b, "country"))
+        if not c or field(b, "dead") == "yes":
+            continue
+        g = {"ig": (field(b, "definition") or "").replace("ig_", ""), "clout": round(float(field(b, "clout") or 0), 4),
+             "in_government": field(b, "in_government") == "yes", "party": None}
+        ig_by_id[iid] = g
+        c.setdefault("igs", []).append(g)
+    for pid, b in db_entries(top_section(text, "parties")):
+        c = countries.get(field(b, "country"))
+        mem = re.search(r"\bmembers=\{([^}]*)\}", b)
+        if not c or not mem or not mem.group(1).split():
+            continue
+        name = (field(b, "definition") or "").replace("_party", "")
+        members = [ig_by_id[i] for i in mem.group(1).split() if i in ig_by_id]
+        for g in members:
+            g["party"] = name
+        c.setdefault("parties", []).append({"party": name, "members": [g["ig"] for g in members],
+                                            "votes": int(float(field(b, "votes") or 0)),
+                                            "in_government": any(g["in_government"] for g in members)})
+    for c in countries.values():
+        c["igs"] = sorted(c.get("igs", []), key=lambda g: -g["clout"])
+        c["government_igs"] = [g["ig"] for g in c["igs"] if g["in_government"]]
+        c["ruling_parties"] = [p["party"] for p in c.get("parties", []) if p["in_government"]]
+
     subjects = []
     for _, b in db_entries(top_section(text, "pacts")):
         act = field(b, "action")
