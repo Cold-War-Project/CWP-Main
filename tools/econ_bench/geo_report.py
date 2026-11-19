@@ -58,6 +58,20 @@ def evaluate(runs: dict) -> dict:
             "ccw": ", ".join(k for k, v in g.get("global_vars", {}).items() if k.startswith("cwp_ccw_outcome") and v) or "-",
             "wars": len(g["wars"]),
         })
+    from . import ig_reference as IR
+    igcheck = {}
+    for r in runs.values():
+        for y, smp in r.items():
+            if not (IR.WINDOW[0] <= y <= IR.WINDOW[1]) or "geo" not in smp:
+                continue
+            for tag, c in smp["geo"]["countries"].items():
+                res = IR.check(tag, c)
+                if res:
+                    e = igcheck.setdefault(tag, {"n": 0, "govern": 0, "top": 0, "never": 0, "largest": {}})
+                    e["n"] += 1
+                    for k in ("govern", "top", "never"):
+                        e[k] += res[k]
+                    e["largest"][res["largest"]] = e["largest"].get(res["largest"], 0) + 1
     who = {}
     for rn, r in runs.items():
         ys = [y for y in sorted(r) if "geo" in r[y]]
@@ -65,7 +79,7 @@ def evaluate(runs: dict) -> dict:
             gc = r[ys[-1]]["geo"]["countries"]
             who = {t: gc[t] for t in ("USA", "RUS", "GBR", "FRA", "GER", "DDR", "ITA", "JAP", "PRC", "ROC", "HND", "PAK", "IDS", "EGY", "TUR", "BRZ", "ARG", "MEX") if t in gc}
             break
-    return {"who_rules": who, "figures_by_year": figs, "years": years, "checks": checks, "counts": counts, "first_nuclear": first, "outcomes": outcomes}
+    return {"ig_check": igcheck, "who_rules": who, "figures_by_year": figs, "years": years, "checks": checks, "counts": counts, "first_nuclear": first, "outcomes": outcomes}
 
 
 def markdown(ev: dict) -> list[str]:
@@ -93,6 +107,16 @@ def markdown(ev: dict) -> list[str]:
             md.append(f"| {t} | {(c.get('government') or '').replace('gov_', '')} | {', '.join(c.get('government_igs', []))} "
                       f"| {', '.join(c.get('ruling_parties', [])) or '-'} | "
                       + ", ".join(f"{g['ig']} {g['clout'] * 100:.0f}%" for g in c.get("igs", [])[:3]) + " |")
+        md.append("")
+    if ev.get("ig_check"):
+        md += ["## Who governs vs history, 1946-1950 (share of samples)", "",
+               "Loose check against ~/forge/ig-reference.md: govern = 2+ expected IGs in government; top = an expected IG in the "
+               "top 3 by clout; never = the largest IG is not one that historically never led.", "",
+               "| tag | samples | govern | top | never | usual largest IG |", "|---|---|---|---|---|---|"]
+        for t, e in sorted(ev["ig_check"].items(), key=lambda kv: (kv[1]["govern"] + kv[1]["top"] + kv[1]["never"]) / kv[1]["n"]):
+            n = e["n"]
+            md.append(f"| {t} | {n} | {e['govern'] / n * 100:.0f}% | {e['top'] / n * 100:.0f}% | {e['never'] / n * 100:.0f}% | "
+                      f"{max(e['largest'], key=e['largest'].get)} |")
         md.append("")
     md += ["## Outcomes at the last sample, per run", "",
            "| run | year | Germany | Korea | China | blocs | wars |", "|---|---|---|---|---|---|---|"]
