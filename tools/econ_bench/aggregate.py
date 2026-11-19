@@ -37,6 +37,7 @@ def entity_view(countries: dict, entity: str):
         for k, b in c["buildings"].items():
             x = bld.setdefault(k, {"levels": 0.0, "va": 0.0, "profit": 0.0, "sales": 0.0})
             x["sales"] += b["sales"] * 52
+            x["ppp_va"] = x.get("ppp_va", 0.0) + (b.get("out_base", 0.0) - b.get("in_base", 0.0)) * 52
             x["levels"] += b["levels"]
             x["va"] += (b["sales"] - b["inputs"]) * 52
             x["profit"] += b["profit"] * 52
@@ -49,8 +50,10 @@ def entity_view(countries: dict, entity: str):
     from .sectors import shares as _shares
     sec = _shares(bld)
     sol = [c["sol"] for c in cs if c["sol"] is not None]
+    ppp = sum(x.get("ppp_va", 0.0) for x in bld.values())
+    subs = sum(x["sales"] for k, x in bld.items() if k.startswith("building_subsistence"))
     return {
-        "tags": [c["tag"] for c in cs], "gdp": gdp, "population": pop, "gdppc": gdp / pop if pop else 0,
+        "tags": [c["tag"] for c in cs], "gdp": gdp, "ppp_gdp": ppp, "gdp_ex_subsistence": gdp - subs, "population": pop, "gdppc": gdp / pop if pop else 0,
         "sol": sum(s * c["population"] for s, c in zip(sol, cs)) / pop if sol and pop else None,
         "debt": sum(c["debt"] for c in cs), "credit": sum(c["credit"] for c in cs),
         "money": sum(c["money"] for c in cs),
@@ -86,6 +89,9 @@ def per_run_series(runs: dict) -> dict:
                 if usa:
                     v["gdp_vs_usa"] = v["gdp"] / usa["gdp"] if usa["gdp"] else None
                     v["gdppc_vs_usa"] = v["gdppc"] / usa["gdppc"] if usa["gdppc"] else None
+                    v["ppp_vs_usa"] = v["ppp_gdp"] / usa["ppp_gdp"] if usa.get("ppp_gdp") else None
+                    v["ppppc_vs_usa"] = ((v["ppp_gdp"] / v["population"]) / (usa["ppp_gdp"] / usa["population"])
+                                         if usa.get("ppp_gdp") and v["population"] and usa["population"] else None)
                 if year == 1950:
                     base[e] = v["gdp"]
                 v["growth_since_1950"] = v["gdp"] / base[e] if base.get(e) else None
@@ -116,7 +122,7 @@ def summary(vals):
 
 
 METRICS = ["gdp", "population", "gdppc", "sol", "debt_ratio", "military_share",
-           "gdp_vs_usa", "gdppc_vs_usa", "growth_since_1950", "primary_share", "secondary_share", "tertiary_share", "investment_pool_share", "famine_deaths", "unemployment", "radicals_share", "loyalists_share"]
+           "gdp_vs_usa", "gdppc_vs_usa", "growth_since_1950", "primary_share", "secondary_share", "tertiary_share", "investment_pool_share", "famine_deaths", "unemployment", "radicals_share", "loyalists_share", "ppp_gdp", "ppp_vs_usa", "ppppc_vs_usa", "gdp_ex_subsistence"]
 
 
 def aggregate(series: dict) -> dict:

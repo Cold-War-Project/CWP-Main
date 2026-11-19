@@ -132,3 +132,8 @@ SECTOR_SHARES = {
 }
 TABLES["primary_share"] = ("Primary sector share of value added", SECTOR_SHARES["primary"])
 TABLES["secondary_share"] = ("Manufacturing and utilities share of value added", SECTOR_SHARES["secondary"])
+
+# The same historical ranges, read against the PPP-style view (value added at base prices), which is
+# the closer match to Maddison's international dollars (economy thread, 2026-11-19).
+TABLES["ppp_vs_usa"] = ("PPP-style GDP (base prices) relative to the USA", GDP_VS_USA)
+TABLES["ppppc_vs_usa"] = ("PPP-style GDP per capita relative to the USA", GDPPC_VS_USA)

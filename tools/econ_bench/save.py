@@ -128,6 +128,11 @@ def sub_values(block: str, name: str) -> dict:
     return {k: float(v) for k, v in re.findall(r"(\w+)=" + NUM, m.group(1))}
 
 
+def goods_base() -> dict:
+    from .sectors import goods_list
+    return {i: c for i, (_, c) in enumerate(goods_list())}
+
+
 def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
     text = read_text(path)
     date = re.search(r"^date=([\d.]+)", text, re.M).group(1)
@@ -266,6 +271,16 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
         b["sales"] += fnum(body, "goods_sales")
         b["inputs"] += fnum(body, "goods_cost")
         b["profit"] += fnum(body, "profit_after_reserves")
+        # PPP-style value added: output minus inputs, both at base prices (common/goods cost), for
+        # producing buildings. Market prices make cheap subsistence food read low against Maddison.
+        if outs or og.strip():
+            base = goods_base()
+            ob = sum(float(q) * (base.get(int(g)) or 0) for g, q in re.findall(r"(\d+)=\{\s*value=([\d.]+)", og))
+            ib = sum(float(q) * (base.get(int(g)) or 0) for g, q in
+                     re.findall(r"(\d+)=\{\s*value=([\d.]+)", sub_block(body, "input_goods")))
+            if ob > 0:
+                b["out_base"] = b.get("out_base", 0.0) + ob
+                b["in_base"] = b.get("in_base", 0.0) + ib
         if cid in want_pm:
             pms = re.search(r"^\tproduction_methods=\{([^}]*)\}", body, re.M)
             if pms:
