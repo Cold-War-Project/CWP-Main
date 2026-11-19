@@ -212,13 +212,23 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
     # by quantity), and how many buildings are short of inputs. The save stores no price per good.
     price_num, price_qty = {}, {}
     shortage_n = shortage_total = 0
-    shortage_vals = []
+    shortage_vals, real_vals = [], []
+    unstaffed_n = 0
     for _, body in db_entries(top_section(text, "building_manager")):
         btype = field(body, "building")
         sh_v = field(body, "input_goods_shortage")
         if sh_v is not None:  # the field is only written for buildings that buy inputs
             shortage_total += 1
-            shortage_vals.append(float(sh_v))
+            x = float(sh_v)
+            lv = fnum(body, "levels")
+            staffed = lv > 0 and fnum(body, "staffing") / lv > 0.5
+            # 0.05 is a floor (the building buys 100-120% of its inputs); 0.75 means unstaffed
+            # (economy thread, 2026-11-18). Real shortage: in between, at a staffed building.
+            if x >= 0.75:
+                unstaffed_n += 1
+            elif x > 0.05 and staffed:
+                real_vals.append(x)
+            shortage_vals.append(x)
             if float(sh_v) > 0.05:
                 shortage_n += 1
         og = sub_block(body, "output_goods")
@@ -263,6 +273,9 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
     market = {"shortage_buildings": shortage_n, "buildings_with_inputs": shortage_total,
               "shortage_median": sv[len(sv) // 2] if sv else None,
               "shortage_over_half": sum(1 for x in sv if x > 0.5),
+              "real_shortage": len(real_vals),
+              "real_shortage_median": sorted(real_vals)[len(real_vals) // 2] if real_vals else None,
+              "unstaffed": unstaffed_n,
               "prices": {(names[int(g)][0] if int(g) < len(names) else g):
                          {"price": price_num[g] / price_qty[g],
                           "base": names[int(g)][1] if int(g) < len(names) else None}
