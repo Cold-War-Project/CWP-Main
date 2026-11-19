@@ -55,7 +55,9 @@ The military thread's 1946-49 runs showed the DRV defaulting in June 1946 and th
 - `cwp_guerrilla_war` (military wages and goods -50%, loan interest -50%, supply consumption -50%, morale loss -15%, army defense +10%) on DAI and IDS while their JEs run, and on any tracked colony at war with its overlord (Winds of Change monthly update; removed when the war ends).
 - Chinese aid also puts `cwp_foreign_military_aid` on DAI (military goods -25%, army offense +5%, 12 months).
 - Escalation in Indochina: once the DRV is a French subject with liberty desire 75+ and not at war, `cwp_indochina.3` (the accords break down; Ho Chi Minh's Appeal for National Resistance) lets it open a `dp_independence` play on France, the vanilla Raj pattern, or return to talks (-10 liberty desire). At most once a year (`cwp_indochina_haiphong_cd`). The AI goes to war mostly from liberty desire 85 or with Chinese aid.
-- To check in an observer run: neither insurgent state defaults by 1948; a France-DRV war exists by about 1947 in a median run.
+- The accords breakdown also fires when the DRV is independent and the 1946 confrontation has stayed a play for 6 months (military thread's combined run, 2026-11-19: no fighting by 1958). Then the DRV ends the play and opens a `dp_return_state` war on VNM for Annam; France joins as overlord.
+- Indonesia won independence on 1946-06-20 in that run, before any fighting, through the Round Table. The Round Table now also needs a Dutch police action and 18 months of war (`cwp_indonesia_war_months`), and US pressure needs a police action first (the Republic's diplomacy only makes Washington more willing).
+- To check in an observer run: neither insurgent state defaults by 1948; a France-DRV war exists by about 1947 and Indonesian independence comes no earlier than about 1948 in a median run.
 
 ## Naming
 
