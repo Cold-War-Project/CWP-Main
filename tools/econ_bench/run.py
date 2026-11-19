@@ -23,6 +23,8 @@ from pathlib import Path
 
 from .save import extract, SaveError
 
+# Years whose sampled save is kept next to the JSON (env ECON_KEEP_YEARS="1948,1950").
+KEEP_YEARS = {int(y) for y in os.environ.get("ECON_KEEP_YEARS", "").split(",") if y.strip().isdigit()}
 MIN_PLAY = 30      # minutes a benchmark run plays before yielding to another benchmark run
 MIN_PLAY_DEV = 15  # ... before yielding to other (non-priority) work
 USER = Path.home() / ".local/share/Paradox Interactive/Victoria 3"
@@ -221,6 +223,8 @@ def one_run(worktree: Path, out: Path, end_year: int, every: int, max_minutes: f
                     try:
                         shutil.copy2(newest, tmp)  # autosaves rotate; the file can vanish mid-copy
                         data = extract(str(tmp), pm_tags=pm_tags)
+                        if d[0] in KEEP_YEARS:  # other threads asked for this save
+                            shutil.copy2(tmp, out / f"{d[0]:04d}-{d[1]:02d}-{d[2]:02d}.v3")
                         name = f"{d[0]:04d}-{d[1]:02d}-{d[2]:02d}.json"
                         (out / name).write_text(json.dumps(data, separators=(",", ":")))
                         last_year = d[0]
