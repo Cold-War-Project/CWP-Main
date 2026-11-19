@@ -90,8 +90,9 @@ Naming: new mod-only files are prefixed `cwp_`; files in `replace_paths` folders
 4. Look up every engine name you write (rule 2) as you write it, not afterwards.
 5. After editing, run `python ".claude/tools/check_mod.py" <paths you touched>` (BOM, brace balance, loc syntax, duplicate keys), then check by hand that every new key has loc and every referenced key exists in the mod (`Grep` it). For content, also run the content checker (see "Guide tools on this mod").
 6. Launch the game and read `logs/error.log`; fix what the change introduced. On Forge, do it yourself with `cwp-vic` under the shared lock ([docs/agents/forge-testing.md](docs/agents/forge-testing.md)). Where the game cannot be run (Windows session without game access), ask the user, say plainly that the change is untested in game, and name anything that rests on a guide statement marked [WIKI] or [VERIFY].
+7. Before reporting or queuing the work, have an independent subagent review it (`AGENTS.md` working rule 6).
 
-Research, bulk lookups, log triage, review and batch edits can be handed to sub-agents at any of these steps: see "Sub-agents".
+Research, bulk lookups, log triage and batch edits can be handed to sub-agents at any of these steps; the review cannot be skipped. See "Sub-agents".
 
 ## Guide folders
 
@@ -185,14 +186,15 @@ The user has authorised sub-agents (the Agent tool) in this project. Start them 
 | Vanilla research: how vanilla builds a feature, a model of the same shape, every use of a key across vanilla or the mod | `Explore` | Paths with line numbers and the structure worth copying |
 | Bulk name checks: a list of effects, triggers, links or modifier types to confirm in the guide reference | `Explore` | Per name: exists or not, scopes, usage line, where found |
 | Historical research for a content task (design guide step 2) | `general-purpose` | A research brief: facts with certainty marks, quotations with sources |
-| Design of large content (size L and up) or a risky restructuring: **required**, several `Plan` agents drafting independently, then a judge | `Plan` (drafts), `general-purpose` told not to edit (judge) | Each draft: object list, file list, order of work, risks. The judge: which plan wins and why, scored against `AGENTS.md`'s design rules |
+| Design of major content (size L and up): **required**, several `Plan` agents drafting independently, then a judge | `Plan` (drafts), `general-purpose` told not to edit (judge) | Each draft: object list, file list, order of work, risks. The judge: which plan wins and why, scored against `AGENTS.md`'s design rules |
+| A risky restructuring | `Plan` | Object list, file list, order of work, risks |
 | error.log triage on a long log | `general-purpose` | Lines grouped by cause with counts, the mod file and line behind each, a proposed fix; lines on the ignore list in `.claude/reference/debugging.md` left out |
-| Review of finished work by an agent that did not write it: **required** before reporting, queuing or landing. Scopes, key references, loc coverage, the design rules, the checklists in content guide chapter 11 and modding guide chapter 14 | `general-purpose`, told not to edit | Findings with path and line |
+| Independent review of finished work (**required** before reporting it or queuing it): scopes, key references, loc, the design rules, the checklists in content guide ch. 11 and modding guide ch. 14 | `general-purpose`, told not to edit | Findings with path and line |
 | Batch edits or building several independent objects, where each agent owns a separate set of files | `general-purpose` | The files written and what could not be verified |
 
 The two **required** rows are Jack's rule (2026-11-19): no agent grades its own work (`AGENTS.md`, working rule 6). Brief the reviewer with the goal, the diff and the rules, not your conclusion, so it reads the work fresh. Planners for major content each get the same brief and do not see each other's drafts; the judge gets the brief and all drafts, unlabelled by author.
 
-Run independent agents in parallel, in one message. Do the work directly when it is one or two searches, when the next step depends on having read the material yourself, or when it turns on a decision the user has to make. The independent review is never skipped.
+Run independent agents in parallel, in one message. Do the work directly when it is one or two searches, when the next step depends on having read the material yourself, or when it turns on a decision the user has to make.
 
 **Brief every agent completely.** It starts with none of this conversation and may not have this file in view. Each prompt gives:
 

@@ -20,7 +20,7 @@ Commit as you go. Do not `git push`.
 3. Every new key has localization, and every key it references exists in the mod (grep).
 4. Your own quick launch with `cwp-vic` if you need one: main menu reached, no new lines in `cwp-vic errors`, canary clean ([forge-testing.md](forge-testing.md)).
 5. The crash-fix "do not undo" list in [rebuild-crash-fix.md](rebuild-crash-fix.md) checked.
-6. An independent subagent reviewed the branch and its findings are fixed or answered (AGENTS.md, working rule 6). Say so in the queue note.
+6. An independent subagent reviewed the branch and its findings are fixed or answered ([AGENTS.md](../../AGENTS.md), working rule 6). Say so in the queue note.
 7. `python3 .claude/tools/check_doc_facts.py` passes; your area doc (`docs/agents/areas/<area>.md`) says what this branch adds, what is still missing and what was dropped.
 
 ## 3. Queue it for staging
