@@ -63,6 +63,13 @@ Evidence is from the shared 1946-1990 observer run f30e83cd6 unless stated.
    final floor 2 (branch `fix/ai-microstate-construction`). Stage 2 landed on CWP2 as cd22bb759;
    `fix/ai-backstop-queue-check` swaps the backstop's queue-duration test for a queued-levels count.
 
+8. `cwp_ai_empty_building_cleanup` (yearly, from `on_yearly_pulse_state`): AI governments remove a
+   production building type (64 types; no infrastructure, military, government or subsistence) that is
+   at least half state-owned and under 5% occupancy at three yearly checks in a row. The count is a
+   state variable `cwp_empty_<type>` because buildings can't hold variables. Test 1946-52
+   (observer/ai-empty-b3ff8e3a7): buildings under 10% staffed 2,258 (1949.3) to 1,611 (1951.7);
+   baseline runs 2,200-2,700 at 1948-50.
+
 ## Workshop AI mods
 
 - Anbeeld's Revision of AI (MIT, last for 1.3.6) switches off vanilla money spending, tax changes

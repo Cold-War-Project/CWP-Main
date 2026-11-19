@@ -73,3 +73,111 @@ cwp_construction_workforce_update = {
 		}
 	}
 }
+
+# Empty-building clean-up. Buildings that start empty (mostly 1946 start levels) can sit at the
+# minimum hiring rate with no output and no profit for years: in observer runs about 2,200 such
+# buildings were still under 10% staffed in 1950, although most paid above the local subsistence
+# wage. A state-owned enterprise in that condition is a write-off, so AI governments close it.
+# Run yearly from on_yearly_pulse_state (root = state). Only government-owned (at least half the
+# levels) production buildings; infrastructure, military, government and subsistence buildings
+# are never touched. The building must be empty at three yearly checks in a row (2+ years).
+# Buildings can't hold variables, so the count is a state variable per building type.
+cwp_ai_empty_building_cleanup = {
+	if = {
+		limit = { owner = { is_ai = yes } }
+		cwp_ai_close_empty_building = { TYPE = building_aircraft_manufactories }
+		cwp_ai_close_empty_building = { TYPE = building_aluminum_refinery }
+		cwp_ai_close_empty_building = { TYPE = building_automobile_manufactories }
+		cwp_ai_close_empty_building = { TYPE = building_beverage_industries }
+		cwp_ai_close_empty_building = { TYPE = building_biofuel_refineries }
+		cwp_ai_close_empty_building = { TYPE = building_chemical_plants }
+		cwp_ai_close_empty_building = { TYPE = building_cement_plants }
+		cwp_ai_close_empty_building = { TYPE = building_computer_manufactories }
+		cwp_ai_close_empty_building = { TYPE = building_consumer_electronics_manufactories }
+		cwp_ai_close_empty_building = { TYPE = building_electronic_components_manufactories }
+		cwp_ai_close_empty_building = { TYPE = building_semiconductor_fabs }
+		cwp_ai_close_empty_building = { TYPE = building_explosives_industry }
+		cwp_ai_close_empty_building = { TYPE = building_food_industry }
+		cwp_ai_close_empty_building = { TYPE = building_furniture_manufactories }
+		cwp_ai_close_empty_building = { TYPE = building_glassworks }
+		cwp_ai_close_empty_building = { TYPE = building_motor_industry }
+		cwp_ai_close_empty_building = { TYPE = building_munitions_plants }
+		cwp_ai_close_empty_building = { TYPE = building_oil_refineries }
+		cwp_ai_close_empty_building = { TYPE = building_plastic_refineries }
+		cwp_ai_close_empty_building = { TYPE = building_paper_manufactories }
+		cwp_ai_close_empty_building = { TYPE = building_pharmaceutical_industry }
+		cwp_ai_close_empty_building = { TYPE = building_shipyard }
+		cwp_ai_close_empty_building = { TYPE = building_small_arms_manufactories }
+		cwp_ai_close_empty_building = { TYPE = building_steelworks }
+		cwp_ai_close_empty_building = { TYPE = building_synthetics_plant }
+		cwp_ai_close_empty_building = { TYPE = building_tank_factory }
+		cwp_ai_close_empty_building = { TYPE = building_textile_manufactories }
+		cwp_ai_close_empty_building = { TYPE = building_tool_manufactories }
+		cwp_ai_close_empty_building = { TYPE = building_livestock_ranch }
+		cwp_ai_close_empty_building = { TYPE = building_maize_farm }
+		cwp_ai_close_empty_building = { TYPE = building_millet_farm }
+		cwp_ai_close_empty_building = { TYPE = building_rice_farm }
+		cwp_ai_close_empty_building = { TYPE = building_rye_farm }
+		cwp_ai_close_empty_building = { TYPE = building_wheat_farm }
+		cwp_ai_close_empty_building = { TYPE = building_bauxite_mine }
+		cwp_ai_close_empty_building = { TYPE = building_coal_mine }
+		cwp_ai_close_empty_building = { TYPE = building_copper_mine }
+		cwp_ai_close_empty_building = { TYPE = building_gold_mine }
+		cwp_ai_close_empty_building = { TYPE = building_iron_mine }
+		cwp_ai_close_empty_building = { TYPE = building_lead_mine }
+		cwp_ai_close_empty_building = { TYPE = building_sulfur_mine }
+		cwp_ai_close_empty_building = { TYPE = building_rare_earth_elements_mine }
+		cwp_ai_close_empty_building = { TYPE = building_uranium_mine }
+		cwp_ai_close_empty_building = { TYPE = building_banana_plantation }
+		cwp_ai_close_empty_building = { TYPE = building_coffee_plantation }
+		cwp_ai_close_empty_building = { TYPE = building_cotton_plantation }
+		cwp_ai_close_empty_building = { TYPE = building_sugar_plantation }
+		cwp_ai_close_empty_building = { TYPE = building_tea_plantation }
+		cwp_ai_close_empty_building = { TYPE = building_tobacco_plantation }
+		cwp_ai_close_empty_building = { TYPE = building_vineyard }
+		cwp_ai_close_empty_building = { TYPE = building_combustion_plant }
+		cwp_ai_close_empty_building = { TYPE = building_solar_farm }
+		cwp_ai_close_empty_building = { TYPE = building_wind_farm }
+		cwp_ai_close_empty_building = { TYPE = building_hydroelectric_power_plant }
+		cwp_ai_close_empty_building = { TYPE = building_media_industry }
+		cwp_ai_close_empty_building = { TYPE = building_service_sectors }
+		cwp_ai_close_empty_building = { TYPE = building_hotels }
+		cwp_ai_close_empty_building = { TYPE = building_nuclear_power_plant }
+		cwp_ai_close_empty_building = { TYPE = building_telecommunications }
+		cwp_ai_close_empty_building = { TYPE = building_fishing_wharf }
+		cwp_ai_close_empty_building = { TYPE = building_logging_camp }
+		cwp_ai_close_empty_building = { TYPE = building_natural_gas_well }
+		cwp_ai_close_empty_building = { TYPE = building_oil_platform }
+		cwp_ai_close_empty_building = { TYPE = building_oil_rig }
+	}
+}
+
+# $TYPE$: building type. remove_building takes a literal key, hence one call per type.
+cwp_ai_close_empty_building = {
+	if = {
+		limit = {
+			any_scope_building = {
+				is_building_type = $TYPE$
+				level >= 1	# ownership triggers error on buildings with no built levels yet
+				occupancy < 0.05
+				country_ownership_fraction >= 0.5
+			}
+		}
+		if = {
+			limit = { has_variable = cwp_empty_$TYPE$ }
+			change_variable = { name = cwp_empty_$TYPE$ add = 1 }
+		}
+		else = {
+			set_variable = { name = cwp_empty_$TYPE$ value = 1 }
+		}
+		if = {
+			limit = { var:cwp_empty_$TYPE$ >= 3 }
+			remove_building = $TYPE$
+			remove_variable = cwp_empty_$TYPE$
+		}
+	}
+	else_if = {
+		limit = { has_variable = cwp_empty_$TYPE$ }
+		remove_variable = cwp_empty_$TYPE$
+	}
+}
