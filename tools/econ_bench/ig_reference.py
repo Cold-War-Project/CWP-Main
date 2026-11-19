@@ -21,7 +21,7 @@ ROWS = {
     ("PAK",): ([L, D, B, A], [L, D], [U]),
     ("IDS",): ([I, D, A], [R, D, A], [N]),
     ("EGY",): ([L, D], [L, D], [U]),
-    ("IRN",): ([L, D, A], [L, D], [U]),
+    ("PER", "IRN"): ([L, D, A], [L, D], [U]),
     ("TUR",): ([B, A, I], [B, A, R], [U]),
     ("SAU",): ([L, D], [D, L], [U]),
     ("ETH",): ([L, D, A], [L, D], [U]),
