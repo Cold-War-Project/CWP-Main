@@ -68,6 +68,13 @@ def entity_view(countries: dict, entity: str):
         "famine_deaths": sum(c.get("famine_deaths", 0) for c in cs),
         "military_share": sum(c["military_spend"] for c in cs) * 52 / gdp if gdp else 0,
         "rank": cs[0].get("rank"),
+        # State capacity (capacity.py); None for saves extracted before these fields existed.
+        "institution_sum": sum(c["institution_sum"] for c in cs) if all("institution_sum" in c for c in cs) else None,
+        "authority": sum(c["authority"] for c in cs) if all("authority" in c for c in cs) else None,
+        "bureaucracy_produced": sum(c.get("bureaucracy_produced", 0) for c in cs) if any("bureaucracy_produced" in c for c in cs) else None,
+        "bureaucracy_used": sum(c.get("bureaucracy_used", 0) for c in cs) if any("bureaucracy_used" in c for c in cs) else None,
+        "tax_share": (sum(c["tax_take"] for c in cs) * 52 / gdp) if gdp and all("tax_take" in c for c in cs) else None,
+        "tax_waste_share": (lambda w, t: w / (w + t) if w + t > 0 else None)(sum(c.get("tax_waste", 0) for c in cs), sum(c.get("tax_take", 0) for c in cs)) if all("tax_take" in c for c in cs) else None,
         "buildings": bld, "production_methods": pms,
         "primary_share": sec.get("primary"), "secondary_share": sec.get("secondary"),
         "tertiary_share": sec.get("tertiary"), "va_shares": sec.get("by_building", {}),
@@ -122,7 +129,8 @@ def summary(vals):
 
 
 METRICS = ["gdp", "population", "gdppc", "sol", "debt_ratio", "military_share",
-           "gdp_vs_usa", "gdppc_vs_usa", "growth_since_1950", "primary_share", "secondary_share", "tertiary_share", "investment_pool_share", "famine_deaths", "unemployment", "radicals_share", "loyalists_share", "ppp_gdp", "ppp_vs_usa", "ppppc_vs_usa", "gdp_ex_subsistence"]
+           "gdp_vs_usa", "gdppc_vs_usa", "growth_since_1950", "primary_share", "secondary_share", "tertiary_share", "investment_pool_share", "famine_deaths", "unemployment", "radicals_share", "loyalists_share", "ppp_gdp", "ppp_vs_usa", "ppppc_vs_usa", "gdp_ex_subsistence",
+           "institution_sum", "authority", "bureaucracy_produced", "bureaucracy_used", "tax_share", "tax_waste_share"]
 
 
 def aggregate(series: dict) -> dict:

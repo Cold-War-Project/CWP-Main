@@ -133,6 +133,55 @@ def goods_base() -> dict:
     return {i: c for i, (_, c) in enumerate(goods_list())}
 
 
+# weekly_income slots that are taxes (1.15.1, read off a 1951 USA save against
+# country_building_budget.incomes: 1 = income tax, 4 = dividends tax, 7 = consumption tax; 0, 2, 3, 5, 6
+# are the other tax kinds, zero in that save). 8 (minting), 9 (tariffs) and 10 (government share
+# dividends) are left out. The slot meanings other than 1, 4, 7, 9, 10 are inferred, not documented.
+TAX_SLOTS = (0, 1, 2, 3, 4, 5, 6, 7)
+
+
+def extract_capacity(text: str, countries: dict) -> None:
+    """State-capacity fields per country (institutions-as-state-capacity thread, 2026-11-19):
+    institutions {key: level} and institution_sum, authority (total) and authority_free,
+    bureaucracy_produced / bureaucracy_used (weekly), tax_take (weekly taxes), tax_waste (tax lost
+    over tax capacity, weekly) and tax_waste_share. Tax capacity itself isn't in the save; the
+    waste share is its observable: a state taxing past its capacity loses the excess."""
+    for _, b in db_entries(top_section(text, "institutions")):
+        cid, key = field(b, "country"), field(b, "institution")
+        if cid in countries and key:
+            lv = fnum(b, "investment")
+            c = countries[cid]
+            c.setdefault("institutions", {})[key.replace("institution_", "")] = lv
+            c["institution_sum"] = c.get("institution_sum", 0.0) + lv
+    # The AI's spending_variables carry authority and bureaucracy. Country ids there are typed
+    # (0x2000000 + the country_manager id).
+    ai = top_section(text, "ai")
+    for m in re.finditer(r"spending_variables=\{", ai):
+        sv = ai[m.end():match_brace(ai, m.end() - 1) - 1]
+        cid = field(sv, "country", 2)
+        if cid is None:
+            continue
+        cid = str(int(cid) & 0xFFFFFF)
+        if cid not in countries:
+            continue
+        c = countries[cid]
+        c["authority"] = fnum(sv, "authority", 2)
+        c["authority_free"] = fnum(sv, "authority_balance", 2)
+        c["bureaucracy_produced"] = fnum(sv, "bureaucracy_income", 2)
+        c["bureaucracy_used"] = fnum(sv, "bureaucracy_expenses", 2)
+        c["population_incorporated_share"] = (fnum(sv, "population_incorporated", 2) / fnum(sv, "population_total", 2)
+                                              if fnum(sv, "population_total", 2) else None)
+
+
+def _tax_fields(budget: str) -> dict:
+    wi = re.search(r"weekly_income=\{([^}]*)\}", budget)
+    vals = [float(x.split("=")[-1]) for x in wi.group(1).split()] if wi else []
+    take = sum(v for i, v in enumerate(vals) if i in TAX_SLOTS)
+    waste = fnum(budget, "building_tax_waste", 2)
+    return {"tax_take": take, "tax_waste": waste,
+            "tax_waste_share": waste / (take + waste) if take + waste > 0 else None}
+
+
 def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
     text = read_text(path)
     date = re.search(r"^date=([\d.]+)", text, re.M).group(1)
@@ -174,7 +223,10 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
             "stat_vars": {k: int(v) / 100000 for k, v in re.findall(
                 r"flag=(cwp_stat_\w+)\s*data=\{\s*type=value\s*identity=(-?\d+)", sub_block(body, "variables"))},
             "buildings": {},
+            **_tax_fields(budget),
         }
+
+    extract_capacity(text, countries)
 
     for entry in re.findall(r"\{([^{}]*)\}", top_section(text, "country_rankings")):
         rk, cid = re.search(r"\brank=(\w+)", entry), re.search(r"\bcountry=(\d+)", entry)

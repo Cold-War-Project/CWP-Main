@@ -79,7 +79,8 @@ def evaluate(runs: dict) -> dict:
             gc = r[ys[-1]]["geo"]["countries"]
             who = {t: gc[t] for t in ("USA", "RUS", "GBR", "FRA", "GER", "DDR", "ITA", "JAP", "PRC", "ROC", "HND", "PAK", "IDS", "EGY", "TUR", "BRZ", "ARG", "MEX") if t in gc}
             break
-    return {"ig_check": igcheck, "who_rules": who, "figures_by_year": figs, "years": years, "checks": checks, "counts": counts, "first_nuclear": first, "outcomes": outcomes}
+    from . import capacity as CAP
+    return {"capacity": CAP.evaluate(runs), "ig_check": igcheck, "who_rules": who, "figures_by_year": figs, "years": years, "checks": checks, "counts": counts, "first_nuclear": first, "outcomes": outcomes}
 
 
 def markdown(ev: dict) -> list[str]:
@@ -118,6 +119,9 @@ def markdown(ev: dict) -> list[str]:
             md.append(f"| {t} | {n} | {e['govern'] / n * 100:.0f}% | {e['top'] / n * 100:.0f}% | {e['never'] / n * 100:.0f}% | "
                       f"{max(e['largest'], key=e['largest'].get)} |")
         md.append("")
+    if ev.get("capacity"):
+        from . import capacity as CAP
+        md += CAP.markdown(ev["capacity"])
     md += ["## Outcomes at the last sample, per run", "",
            "| run | year | Germany | Korea | China | blocs | wars |", "|---|---|---|---|---|---|---|"]
     for o in ev["outcomes"]:
