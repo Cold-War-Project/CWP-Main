@@ -165,6 +165,9 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
             "military_spend": mil,
             "construction": cons,
             "government": field(body, "government"),
+            # Recorder variables from a probe on_action (cwp_stat_sol, cwp_stat_exp_sol, ...), if the build has one.
+            "stat_vars": {k: int(v) / 100000 for k, v in re.findall(
+                r"flag=(cwp_stat_\w+)\s*data=\{\s*type=value\s*identity=(-?\d+)", sub_block(body, "variables"))},
             "buildings": {},
         }
 
@@ -189,7 +192,8 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
             if c in countries:
                 countries[c]["_state_pop"] = countries[c].get("_state_pop", 0.0) + sum(
                     fnum(ps, k, 2) for k in ("population_lower_strata", "population_middle_strata", "population_upper_strata"))
-                for k, name in (("population_unemployed_workforce", "unemployed"),
+                for k, name in (("population_radicals", "radicals"), ("population_loyalists", "loyalists"),
+                                ("population_unemployed_workforce", "unemployed"),
                                 ("population_subsisting_workforce", "subsisting"),
                                 ("population_salaried_workforce", "salaried")):
                     countries[c][name] = countries[c].get(name, 0.0) + fnum(ps, k, 2)
