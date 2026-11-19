@@ -212,11 +212,13 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
     # by quantity), and how many buildings are short of inputs. The save stores no price per good.
     price_num, price_qty = {}, {}
     shortage_n = shortage_total = 0
+    shortage_vals = []
     for _, body in db_entries(top_section(text, "building_manager")):
         btype = field(body, "building")
         sh_v = field(body, "input_goods_shortage")
         if sh_v is not None:  # the field is only written for buildings that buy inputs
             shortage_total += 1
+            shortage_vals.append(float(sh_v))
             if float(sh_v) > 0.05:
                 shortage_n += 1
         og = sub_block(body, "output_goods")
@@ -257,7 +259,10 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
         out[tag] = c
     from .sectors import goods_list
     names = goods_list()
+    sv = sorted(shortage_vals)
     market = {"shortage_buildings": shortage_n, "buildings_with_inputs": shortage_total,
+              "shortage_median": sv[len(sv) // 2] if sv else None,
+              "shortage_over_half": sum(1 for x in sv if x > 0.5),
               "prices": {(names[int(g)][0] if int(g) < len(names) else g):
                          {"price": price_num[g] / price_qty[g],
                           "base": names[int(g)][1] if int(g) < len(names) else None}
