@@ -34,6 +34,7 @@ LOCK="$FORGE/.vic3.lock"
 HOLDER="$FORGE/.vic3.lock.holder"      # pid of the sleep that holds the flock
 OWNER="$FORGE/.vic3.lock.owner"        # free-text note: who and why, since when
 GAMEPID="$FORGE/.vic3.game.pid"        # pid of the game started by the current lock holder
+OWNERPID="$FORGE/.vic3.lock.ownerpid"  # --owner-pid of the holder (0 if none); vic-guard lets only its descendants drive the game
 USERDIR="$HOME/.local/share/Paradox Interactive/Victoria 3"
 CONTENT="$USERDIR/content_load.json"   # what the game mounts when started without the launcher
 ERRLOG="$USERDIR/logs/error.log"
@@ -94,16 +95,20 @@ cmd_lock() {
       # higher-priority ticket is not overtaken by a taker already blocked inside flock.
       # Find our ticket by pid each time: `cwp-vic bump` may have renamed it to reorder the queue.
       local mine; mine=$(ls "$QUEUE" 2>/dev/null | grep -- "-$$\$" | head -1); [[ -n "$mine" ]] && ticket=$mine
-      # Stale holder: the first in line releases a lock whose holder has had no game running for
-      # CWP_VIC_STALE seconds (default 30 min), e.g. a runner that died or forgot to unlock.
-      if [[ "$(queue_first)" == "$ticket" ]] && holder_alive; then
+      # Stale holder (OFF unless CWP_VIC_STALE is set): the first in line releases a lock whose holder has
+      # had no game running for CWP_VIC_STALE seconds, e.g. a session that forgot to unlock. Never applies to
+      # an --owner-pid holder whose runner is alive (those free the lock themselves when the runner dies).
+      # Caveat: the released session is not told, and its later cwp-vic stop/unlock would act on the new holder.
+      local op; op=$(cat "$OWNERPID" 2>/dev/null)
+      if (( ${CWP_VIC_STALE:-0} > 0 )) && [[ "$(queue_first)" == "$ticket" ]] && holder_alive \
+         && ! { [[ "$op" =~ ^[0-9]+$ ]] && (( op > 0 )) && kill -0 "$op" 2>/dev/null; }; then
         if [[ -n "$(game_pids)" ]]; then rm -f "$FORGE/.vic3.idle-since"
         else
-          [[ -f "$FORGE/.vic3.idle-since" ]] || date +%s > "$FORGE/.vic3.idle-since"
-          if (( $(date +%s) - $(cat "$FORGE/.vic3.idle-since") > ${CWP_VIC_STALE:-1800} )); then
-            echo "$(date '+%F %T') released stale lock of: $(cat "$OWNER" 2>/dev/null) (no game for ${CWP_VIC_STALE:-1800}s; next: $note)" \
+          [[ "$(cut -d" " -f1 "$FORGE/.vic3.idle-since" 2>/dev/null)" == "$(cat "$HOLDER")" ]] || echo "$(cat "$HOLDER") $(date +%s)" > "$FORGE/.vic3.idle-since"
+          if (( $(date +%s) - $(cut -d" " -f2 "$FORGE/.vic3.idle-since") > CWP_VIC_STALE )); then
+            echo "$(date '+%F %T') released stale lock of: $(cat "$OWNER" 2>/dev/null) (no game for ${CWP_VIC_STALE}s; next: $note)" \
               | tee -a "$FORGE/jobs/stale-releases.log" >&2
-            local hp; hp=$(cat "$HOLDER" 2>/dev/null); rm -f "$HOLDER" "$OWNER" "$FORGE/.vic3.idle-since"; kill "$hp" 2>/dev/null
+            local hp; hp=$(cat "$HOLDER" 2>/dev/null); rm -f "$HOLDER" "$OWNER" "$OWNERPID" "$FORGE/.vic3.idle-since"; kill "$hp" 2>/dev/null
           fi
         fi
       fi
@@ -112,10 +117,10 @@ cmd_lock() {
         # fd 9 open. Holder files are only written by whoever has the flock, so waiters never clobber them.
         # With --owner-pid, the holder gives the lock back as soon as that process (the runner) is gone,
         # so a runner killed by a restart cannot keep the game slot for hours.
-        setsid bash -c 'exec 9>>"$1"; flock -w "$2" 9 || exit 1; echo $$ > "$3"; printf "%s\n" "$5" > "$4"
+        setsid bash -c 'exec 9>>"$1"; flock -w "$2" 9 || exit 1; echo "$7" > "$8"; echo $$ > "$3"; printf "%s\n" "$5" > "$4"
           if [ "$7" -gt 0 ]; then end=$(( $(date +%s) + $6 )); while kill -0 "$7" 2>/dev/null && [ "$(date +%s)" -lt "$end" ]; do sleep 5; done
           else exec sleep "$6"; fi' \
-          _ "$LOCK" "$((deadline - SECONDS + 1))" "$HOLDER" "$OWNER" "$stamp" "$MAX_HOLD" "$owner_pid" </dev/null >/dev/null 2>&1 &
+          _ "$LOCK" "$((deadline - SECONDS + 1))" "$HOLDER" "$OWNER" "$stamp" "$MAX_HOLD" "$owner_pid" "$OWNERPID" </dev/null >/dev/null 2>&1 &
         child=$!
       fi
     else
@@ -180,6 +185,7 @@ cmd_link() {
 cmd_vanilla() { need_lock; [[ -n "$(game_pids)" ]] && die "stop the game first"; write_content_load ""; echo "mod disabled; next launch is vanilla"; }
 
 cmd_launch() {
+  rm -f "$FORGE/.vic3.idle-since"   # a launch resets the stale-holder idle clock
   need_lock
   [[ -n "$(game_pids)" ]] && die "a Victoria 3 is already running (pids $(game_pids | tr '\n' ' ')). Find its owner (cwp-vic status) before stopping it."
   # error.log rotates by size (~512 KB) into error.1..5.log within one session; clear them all so
@@ -215,12 +221,12 @@ cmd_stop() {   # stops the game this lock holder launched; --all stops every Vic
 }
 
 cmd_unlock() {
-  holder_alive || { echo "lock was not held"; rm -f "$HOLDER" "$OWNER"; return 0; }
+  holder_alive || { echo "lock was not held"; rm -f "$HOLDER" "$OWNER" "$OWNERPID"; return 0; }
   if [[ "${1:-}" != "--force" && -n "${CWP_AGENT:-}" ]] && ! grep -qF "$CWP_AGENT" "$OWNER" 2>/dev/null; then
     die "lock belongs to: $(cat "$OWNER"). Use --force only if that thread is gone."
   fi
   cmd_stop
-  local hp; hp=$(cat "$HOLDER"); rm -f "$HOLDER" "$OWNER"   # remove first: the next holder rewrites them
+  local hp; hp=$(cat "$HOLDER"); rm -f "$HOLDER" "$OWNER" "$OWNERPID"   # remove first: the next holder rewrites them
   kill "$hp" 2>/dev/null
   echo "lock released (run 'game-mode off' if nobody else needs the game)"
 }

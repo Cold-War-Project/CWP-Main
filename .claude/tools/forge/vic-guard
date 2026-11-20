@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# vic-guard: installed as a copy in ~/.local/bin/vic-guard, with ~/.local/bin/vic-click and vic-key symlinked to it, ahead of
+# /usr/local/bin in PATH. While a game job holds the lock with --owner-pid (cwp-observe, cwp-gui-batch),
+# only that job and its child processes may click or type into the game; a stray vic-click or
+# console command from another session is refused instead of pausing or derailing the run.
+# VIC_GUARD_OFF=1 skips the check (for Jack, or a deliberate rescue).
+name=$(basename "$0"); real="/usr/local/bin/$name"
+F="$HOME/forge"; H="$F/.vic3.lock.holder"; P="$F/.vic3.lock.ownerpid"
+if [[ "${VIC_GUARD_OFF:-0}" != 1 && -s "$H" && -s "$P" ]] && kill -0 "$(cat "$H")" 2>/dev/null; then
+  owner=$(cat "$P")
+  if [[ "$owner" =~ ^[0-9]+$ ]] && (( owner > 0 )) && kill -0 "$owner" 2>/dev/null; then
+    p=$$; ok=0
+    while (( p > 1 )); do [[ $p == "$owner" ]] && { ok=1; break; }; p=$(awk '/^PPid:/{print $2}' "/proc/$p/status" 2>/dev/null); [[ $p =~ ^[0-9]+$ ]] || p=1; done
+    if (( ok == 0 )); then
+      echo "$name refused: the game belongs to another job ($(cat "$F/.vic3.lock.owner" 2>/dev/null)). Take the lock with cwp-vic first, or set VIC_GUARD_OFF=1 for a deliberate rescue." >&2
+      echo "$(date '+%F %T') refused $name $* from pid $$ ($(tr '\0\n' '  ' < /proc/$PPID/cmdline 2>/dev/null | cut -c1-120))" >> "$F/jobs/vic-guard-refusals.log"
+      exit 3
+    fi
+  fi
+fi
+exec "$real" "$@"
