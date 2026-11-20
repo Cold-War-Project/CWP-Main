@@ -2,7 +2,8 @@
 """Generate the 1946 character roster from tools/character_roster/roster/*.txt.
 
 Rows: TAG | given | family | birth | culture | religion | roles | IG | ideology | traits | note
-roles: R ruler, H heir, L IG leader, G1-5 general, A1-5 admiral, X agitator, F woman.
+roles: R ruler, H heir, L IG leader, G1-5 general, A1-5 admiral, X agitator, F woman;
+  parliamentary crowns (PM is the ruler): M monarch, MH heir to the throne, RG regent, GG governor-general.
 Writes common/character_templates/cwp_1946_<tag>.txt, common/history/characters/<tag> - <name>.txt and
 localization/english/cwp/characters/cwp_character_names_l_english.yml. Validates ruler/IG-leader rules per
 government type (tags.py), one leader per IG, ideology leader triggers, keys and dates first.
@@ -68,6 +69,8 @@ for root in (V+'/localization/english',M+'/localization/english'):
             if m and not p.endswith('cwp_figure_pool_names_l_english.yml'): loc[m.group(1)]=(m.group(2),p)
 DISP=json.load(open(os.path.dirname(os.path.abspath(__file__))+'/display.json',encoding='utf-8')) if os.path.exists(os.path.dirname(os.path.abspath(__file__))+'/display.json') else {}
 def fold(s): return unicodedata.normalize('NFKD',s).encode('ascii','ignore').decode()
+CROWNROLE={'M':('character_role_cwp_monarch','cwp_monarch_var'),'MH':('character_role_cwp_crown_heir','cwp_crown_heir_var'),
+ 'RG':('character_role_cwp_regent','cwp_crown_regent_var'),'GG':('character_role_cwp_governor_general','cwp_gg_var')}
 rows=[];errs=[];warns=[]
 for p in sorted(glob.glob(os.path.dirname(os.path.abspath(__file__))+'/roster/*.txt')):
     for ln,line in enumerate(open(p,encoding='utf-8'),1):
@@ -94,6 +97,7 @@ for r in rows:
     if k in keys: E(r,'dup key '+k)
     keys.add(k); r['key']=k
     ro=r['roles']; r['R']='R' in ro; r['L']='L' in ro; r['H']='H' in ro; r['X']='X' in ro; r['F']='F' in ro
+    r['CR']=next((x for x in ro if x in CROWNROLE),None)
     r['G']=next((x for x in ro if re.match(r'G\d',x)),None); r['A']=next((x for x in ro if re.match(r'A\d',x)),None)
     if r['L'] and r['ig'] in IGS and r['ide'] in IDEO:
         igk=IGS[r['ig']]; idk=IDEO[r['ide']]
@@ -117,6 +121,13 @@ for t,rs in bytag.items():
         if tr.startswith('parliamentary'): E(r,'no scripted ruler under parliamentary elective')
         if '|junta' in tr and r['L']: W(r,'ruler is IG leader; error if the junta government type applies')
     if any(r['H'] for r in rs) and tr!='hereditary': W(rs[0],'heir in non-hereditary country '+tr)
+    for r in rs:
+        if r['CR'] and (r['R'] or r['H'] or r['L'] or r['G'] or r['A'] or r['X']): E(r,'crown role '+r['CR']+' cannot be combined with R/H/L/G/A/X')
+        if r['CR'] and not tr.startswith('parliamentary('): E(r,'crown role '+r['CR']+' needs a parliamentary crown country (tags.py CROWN/DOMINION), not '+tr)
+    for code in CROWNROLE:
+        if len([r for r in rs if r['CR']==code])>1: E(rs[0],'two '+code)
+    if tr=='parliamentary(crown)' and not any(r['CR']=='M' for r in rs): E(rs[0],'parliamentary crown without a monarch (M)')
+    if tr=='parliamentary(dominion)' and not any(r['CR']=='GG' for r in rs): E(rs[0],'dominion without a governor-general (GG)')
     if not R and not tr.startswith('parliamentary'): W(rs[0],f'no ruler ({tr})')
 print('\n'.join('ERR '+e for e in errs)); print('\n'.join('WARN '+w for w in warns))
 print(len(rows),'rows',len(errs),'errors',len(warns),'warnings')
@@ -141,6 +152,7 @@ def block(r):
     L.append("\thistorical = yes")
     L.append(f"\tbirth_date = {r['birth']}")
     L.append(f"\tfemale = {'yes' if r['F'] else 'no'}")
+    if r['CR']: L.append(f"\trole = {CROWNROLE[r['CR']][0]}")
     if r['R']: L.append("\truler = yes")
     if r['H']: L.append("\their = yes")
     if r['L']: L.append("\tig_leader = yes")
@@ -164,13 +176,17 @@ if WRITE or CHECK:
     def emit(path,text): OUT[path]=text
     BOM='﻿'
     hc=M+'/common/history/characters'; ct=M+'/common/character_templates'
-    order=lambda r:(0 if r['R'] else 1 if r['H'] else 2 if r['L'] else 3 if (r['G'] or r['A']) else 4)
+    order=lambda r:(0 if (r['R'] or r['CR']) else 1 if r['H'] else 2 if r['L'] else 3 if (r['G'] or r['A']) else 4)
     for t in sorted(bytag):
         rs=sorted(bytag[t],key=order)
         name=re.sub(r'[^A-Za-z0-9 ]','',fold(tagname[t])).strip().lower() or t.lower()
         emit(f"{ct}/cwp_1946_{t.lower()}.txt", BOM+f"# {tagname[t]} ({t}): historical characters present on 1 January 1946. Placed by common/history/characters.\n# Government at start: {TR[t]} (see docs/agents/areas/characters.md for the ruler and IG-leader rules).\n\n"+'\n\n'.join(block(r) for r in rs)+'\n')
         lines=[BOM+'CHARACTERS = {', f'\tc:{t} ?= {{']
-        for r in rs: lines.append(f'\t\tcreate_character = {{ template = {r["key"]} }}')
+        for r in rs:
+            if r['CR']:
+                var=CROWNROLE[r['CR']][1]
+                lines+=[f'\t\tcreate_character = {{ # {r["CR"]}: background {CROWNROLE[r["CR"]][0]}',f'\t\t\ttemplate = {r["key"]}','\t\t\ton_created = {',f'\t\t\t\tc:{t} ?= {{ set_variable = {{ name = {var} value = PREV }} }}','\t\t\t}','\t\t}']
+            else: lines.append(f'\t\tcreate_character = {{ template = {r["key"]} }}')
         lines+=['\t}','}','']
         emit(f"{hc}/{t.lower()} - {name}.txt", '\n'.join(lines))
     emit(OWNLOC, BOM+'l_english:\n  # Names of the 1946 historical characters (common/character_templates/cwp_1946_*.txt). Keys that vanilla already defines are not repeated here.\n'+''.join(f'  {k}: "{newloc[k]}"\n' for k in sorted(newloc,key=str.lower)))

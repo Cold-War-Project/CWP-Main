@@ -43,9 +43,16 @@ def last(L,group):
 def info(tag):
     d=laws.get(tag,{}); L=d.get('laws',[])
     return dict(tag=tag,pkg=d.get('pkg'), gov=last(L,GOV), dist=last(L,DIST), army=last(L,ARMY), subj=subj.get(tag))
-GG={'CAN','AST','NZL','SAF','HND','NEW','MYM','SRI','MTB','NAM'}
+GG={'HND','NEW','MYM','SRI','NAM'}
+# Parliamentary crowns (docs/agents/areas/constitutional-monarchy.md): the Prime Minister is the ruler, the
+# monarch (M) or governor-general (GG) is a background character. Must match cwp_crown_start_var in country
+# history and the gov types in common/government_types/cwp_00_monarchies.txt / cwp_0000_dominion_governors.txt.
+CROWN={'GBR','DEN','NOR','SWE','NET','BEL','LUX','ITA','GRE','ROM','BUL','THA','JAP','PER'}
+DOMINION={'CAN','AST','NZL','SAF','MTB'}
 def transfer(i):
     g,d,a,s=i['gov'],i['dist'],i['army'],i['subj']
+    if g=='law_monarchy' and i.get('tag') in DOMINION: return 'parliamentary(dominion)'
+    if g=='law_monarchy' and i.get('tag') in CROWN: return 'parliamentary(crown)'
     if s and 'occupation' in s[0]: return 'dictatorial(occupation)'
     if g=='law_colonial_administration':
         if s and s[0] in ('dominion','protectorate'): return 'parl?(dominion,franchise)' if d not in ('law_autocracy','law_oligarchy','law_technocracy','law_single_party_state','law_elder_council') else 'dictatorial'

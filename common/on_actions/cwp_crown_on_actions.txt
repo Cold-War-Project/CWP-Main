@@ -1,0 +1,132 @@
+﻿# Cold War Project: parliamentary crowns (common/scripted_effects/cwp_crown_effects.txt).
+# Chained into the code on_actions, so no shared file changes.
+
+on_character_death = {
+	on_actions = { cwp_crown_on_character_death }
+}
+
+on_law_activated = {
+	on_actions = { cwp_crown_on_law_activated }
+}
+
+on_character_became_adult = {
+	on_actions = { cwp_crown_on_character_became_adult }
+}
+
+on_monthly_pulse_country = {
+	on_actions = { cwp_crown_monthly_pulse_country }
+}
+
+on_yearly_pulse_country = {
+	on_actions = { cwp_crown_yearly_pulse_country }
+}
+
+# Root = character
+cwp_crown_on_character_death = {
+	trigger = {
+		OR = {
+			has_role = character_role_cwp_monarch
+			has_role = character_role_cwp_crown_heir
+			has_role = character_role_cwp_regent
+			has_role = character_role_cwp_governor_general
+		}
+		exists = owner
+	}
+	effect = {
+		save_scope_as = cwp_crown_scope_dead
+		owner = {
+			if = {
+				limit = { var:cwp_monarch_var ?= scope:cwp_crown_scope_dead }
+				cwp_crown_succession = yes
+			}
+			else_if = {
+				limit = { var:cwp_crown_heir_var ?= scope:cwp_crown_scope_dead }
+				remove_variable = cwp_crown_heir_var
+				cwp_crown_ensure_heir = yes
+			}
+			else_if = {
+				limit = { var:cwp_crown_regent_var ?= scope:cwp_crown_scope_dead }
+				remove_variable = cwp_crown_regent_var
+				if = {
+					limit = { var:cwp_monarch_var ?= { age < 18 } }
+					cwp_crown_appoint_regent = yes
+				}
+			}
+			else_if = {
+				limit = { var:cwp_gg_var ?= scope:cwp_crown_scope_dead }
+				remove_variable = cwp_gg_var
+				cwp_crown_appoint_gg = yes
+			}
+		}
+	}
+}
+
+# Root = law, owner = country
+cwp_crown_on_law_activated = {
+	trigger = {
+		owner = {
+			OR = {
+				has_variable = cwp_monarch_var
+				has_variable = cwp_gg_var
+			}
+			NOT = { has_law_or_variant = law_type:law_monarchy }
+		}
+	}
+	effect = {
+		owner = { cwp_crown_depose = yes }
+	}
+}
+
+# Root = character: a minor monarch comes of age and the regency ends.
+cwp_crown_on_character_became_adult = {
+	trigger = {
+		has_role = character_role_cwp_monarch
+		exists = owner
+		owner = {
+			var:cwp_monarch_var ?= ROOT
+			exists = var:cwp_crown_regent_var
+			NOT = { has_variable = cwp_monarch_absent_var }
+		}
+	}
+	effect = {
+		owner = {
+			cwp_crown_end_regency = yes
+			if = {
+				limit = { is_player = yes }
+				trigger_event = { id = cwp_crown.2 popup = yes }
+			}
+		}
+	}
+}
+
+# Root = country
+cwp_crown_monthly_pulse_country = {
+	trigger = {
+		OR = {
+			has_variable = cwp_monarch_var
+			has_variable = cwp_crown_start_var
+		}
+	}
+	effect = {
+		cwp_crown_sync = yes
+	}
+}
+
+# Root = country: fallback governor-general term if career_length does not apply to the background role.
+cwp_crown_yearly_pulse_country = {
+	trigger = {
+		has_variable = cwp_gg_var
+	}
+	effect = {
+		if = {
+			limit = {
+				NOT = { var:cwp_gg_var ?= { is_character_alive = yes owner ?= ROOT } }
+			}
+			cwp_crown_appoint_gg = yes
+		}
+		else_if = {
+			limit = { NOT = { cwp_crown_is_dominion_realm = yes } }
+			cwp_crown_depose = yes
+		}
+	}
+}
