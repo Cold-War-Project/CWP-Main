@@ -77,6 +77,15 @@ Evidence is from the shared 1946-1990 observer run f30e83cd6 unless stated.
    score logic itself (`institution_scores`, capacity-conditional) lives in `00_default_strategy.txt`; see
    [institutions.md](institutions.md).
 
+9. Admin overbuilding (NK, Iceland, Albania 1946-52): `fix/ai-admin-reconciled` (landed a2ca070f2) gates
+   admin `should_auto_expand` and the institutions thread's admin `ai_value` bonuses on the owner not being in
+   default or borrowing with debt >= 25%. Rejected after tests: a `building_has_goods_shortage` gate (froze US
+   admin at 267; most CWP markets run some paper shortage) and a lower `MONEY_SPENDING_BUREAUCRACY_CRITICAL_THRESHOLD`
+   (0.9 stalled US admin at 271 vs 308). Below a bureaucracy ratio of 1.0 the engine still builds admin
+   regardless of money, so `cwp_ai_institution_austerity` (monthly, branch `fix/ai-institution-austerity`)
+   trims one institution level per half year for broke states short of bureaucracy, least essential first,
+   never administration, skipping institutions the AI is expanding.
+
 ## Workshop AI mods
 
 - Anbeeld's Revision of AI (MIT, last for 1.3.6) switches off vanilla money spending, tax changes
