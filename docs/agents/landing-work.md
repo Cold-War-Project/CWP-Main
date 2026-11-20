@@ -25,7 +25,7 @@ Commit as you go. Do not `git push`.
 
 ## 3. Queue it for staging
 
-Add one line to `~/forge/staging-queue.txt`: `<branch>  # area, note` (order matters for branches that build on each other). Tell the coordinator. Don't commit to that branch while it is in a staging run, or the run tests an older commit.
+Add one line to `~/forge/staging-queue.txt`: `<branch>  # area, note` (order matters for branches that build on each other). Tell the coordinator. Each queued line is an implicit `smoke` request for `cwp-runs` ([run-requests.md](run-requests.md)); submit an `observe` or `measure` request as well if you need a specific end year or an A/B number. Don't commit to that branch while it is in a staging run, or the run tests an older commit.
 
 ## 4. Staging run (integration owner)
 
