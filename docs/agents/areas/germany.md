@@ -27,8 +27,8 @@ A contextless journal entry in vanilla's `je_group_global_international_situatio
 | Basic Law | Western ≥ 60, Trizone (or no FOZ), unity < 50, GER does not exist | the core western zone (a player's zone, else AOZ) | the other western zones are annexed with incorporation; the core takes tag GER, becomes `recognized`, capital North Rhine if held |
 | GDR | Soviet zone held, Soviet ≥ 60 and a Federal Republic exists, or Soviet ≥ 90 | DDR | the Soviet zone takes the GDR name |
 | Stalin Note | RUS button, Western ≥ 70, FRG not yet sovereign | GER: reject (AI 85%) or accept | accept: GER annexes DDR, leaves its bloc, neutral |
-| FRG sovereignty | Western = 100 | GER's occupier | occupation ends; GER chooses the Western bloc or non-alignment |
-| GDR sovereignty | Soviet = 100 | RUS (more likely once the FRG is sovereign) | occupation ends; DDR stays in or joins the Eastern bloc |
+| FRG sovereignty | Western ≥ 99 | GER's occupier | occupation ends; GER chooses the Western bloc or non-alignment |
+| GDR sovereignty | Soviet ≥ 99 (and the FRG sovereign) | RUS (more likely once the FRG is sovereign) | occupation ends; DDR stays in or joins the Eastern bloc |
 | June uprising | GDR proclaimed, DDR radicals ≥ 15%, DDR SoL below GER's | DDR | tanks (Soviet +10) or concessions (Soviet −15) |
 
 ### Outcomes
@@ -118,6 +118,12 @@ Bizone 1946, the US and Britain drop the four-power accord in 1947, Deutsche Mar
 ## Names come from the literature (Jack, 2026-11-18)
 
 Player-visible names use established terms from the historical and political literature, or plain description, never invented coinages. Applied here: the Soviet bar is *Sovietization*; Moscow's buttons are the *Sinatra* and *Brezhnev Doctrines*; flavour lines use period terms (Stunde Null, Bizonia, Trizonesia, Luftbrücke, Zwangsvereinigung, Arbeiter-und-Bauern-Staat, Bonn Republic, Paris Agreements, Volksaufstand, Systemkonkurrenz, Wandel durch Annäherung, Mauerfall, the Chinese solution, the third way, die kleine Wiedervereinigung) or sourced quotations.
+
+## Occupations that never ended (2026-11-20, history-divergence review)
+
+In runs to 1962 the FRG stayed occupied in 2 of 3 runs, Austria in 2 of 3, and the GDR with it, since its sovereignty waits for the FRG's. Causes and fixes:
+- **FRG.** The −2 a month Occupation Statute cancelled the always-on factors (Bizone, Trizone, Deutsche Mark: +1.5) once Marshall aid and the airlift ended, so the bar stalled near 97 below its threshold of 100. The statute now scales with Bonn's legitimacy: −1.25 below 40, −1 from 40 to 60, −0.5 at 60 or more. Saves show GER's legitimacy at 92 to 98 in the 1950s, so in practice it is −0.5. Sovereignty and the GDR's both trigger at 99, so neither bar has to sit at its clamp.
+- **Austria.** Moscow and Washington consent through their buttons (seen in run 16ccecae3), but AI Austria, a Soviet subject, never pressed *Pledge Neutrality* or *Buy Back the German Assets*. The journal entry's monthly pulse now offers an AI Austria the same two choices under the buttons' conditions (neutrality once the FRG exists, the buy-back once Moscow consents), at 10% a month each. A player Austria still decides by button. The buy-back effect moved to `cwp_at_buy_back_assets` (`common/scripted_effects/cwp_austria_saar_effects.txt`), which both paths share. Button AI weights were raised as well.
 
 ## Known gaps and decisions for review
 
