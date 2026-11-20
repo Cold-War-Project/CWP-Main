@@ -71,7 +71,7 @@ Evidence is from the shared 1946-1990 observer run f30e83cd6 unless stated.
    baseline runs 2,200-2,700 at 1948-50.
 
 9. (institutions thread, branch `feat/institution-capacity`) `common/defines/cwp_ai.txt`:
-   `MAX_INSTITUTION_SPENDING_BASE` 0.015 -> 0.15 and `MAX_INSTITUTION_SPENDING_PER_INSTITUTION` 0.005 -> 0.05.
+   `MAX_INSTITUTION_SPENDING_BASE` 0.015 -> 0.45 and `MAX_INSTITUTION_SPENDING_PER_INSTITUTION` 0.005 -> 0.15 (x10 on `feat/institution-capacity`, x30 on `feat/institution-capacity-2` for the USSR).
    At vanilla values the cap (share of weekly GDP the AI spends on institutions) sat below what every developed
    state already spent, so the AI never raised an institution and cut about 65 levels a year. The institution
    score logic itself (`institution_scores`, capacity-conditional) lives in `00_default_strategy.txt`; see
