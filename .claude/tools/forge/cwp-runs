@@ -585,10 +585,13 @@ def reevaluate(cat, quiet=False):
                 write_json(req_path(req["id"]), req)
                 continue
             sha = resolve_request_sha(req)
-            if sha != req["sha"] or req.get("buildid", game_buildid()) != game_buildid():
-                if req.get("buildid", game_buildid()) != game_buildid():
+            updated = req["kind"] == "measure" and req.get("buildid", "pre-buildid") != game_buildid()
+            if sha != req["sha"] or updated:
+                if updated:
                     req["rehash_note"] = (f"the game was updated (build {req.get('buildid')} -> {game_buildid()}); "
-                                          "only runs on the new build count")
+                                          "only runs on the new build count"
+                                          + (" (the accepted proxy baseline keeps its old hash)"
+                                             if str(req.get("baseline") or "").startswith("accept:") else ""))
                 req["sha"], req["gh"], req["buildid"] = sha, gameplay_hash(sha), game_buildid()
                 if req["kind"] == "measure" and not str(req.get("baseline") or "").startswith("accept:"):
                     fill_baseline(req)
@@ -712,7 +715,8 @@ def cmd_submit(a):
           f"{len(files)} changed files ({len(req['gameplay_files'])} gameplay)")
     if measure:
         print(f"  treatment runs already in the catalog: {len(detail['treatment'])}/{reps}")
-        print(f"  baseline (gh {req['baseline_gh']}) runs already in the catalog: {len(detail['baseline'])}/{reps}")
+        print(f"  baseline (gh {req['baseline_gh']}) runs already in the catalog: "
+              f"{len(detail['baseline'])}/{req.get('replicates_baseline', reps)}")
     reevaluate(cat)
     req = load_request(rid)
     if req["state"] == "done":
@@ -920,8 +924,11 @@ def clear_started(cat):
         done = any(r["status"] != "partial" or r["source"] == "observer" for r in rows)
         age = now() - parse_iso(rec["started_at"])
         stale = age > dt.timedelta(hours=36)
-        gone = (not rows and not Path(rec["outdir"]).exists() and age > dt.timedelta(hours=1)
-                and not job_active(rec["token"]))
+        # Its job has ended: no output after 6 h (time to launch the printed command), or a partial row
+        # (an econ session that yielded) whose job is no longer there to resume it.
+        gone = (not job_active(rec["token"]) and
+                ((not rows and not Path(rec["outdir"]).exists() and age > dt.timedelta(hours=6))
+                 or (rows and age > dt.timedelta(minutes=30))))
         if done or stale or gone:
             rec["closed"] = ("catalogued" if done else "stale (36 h without a finished run)" if stale
                              else "its job is not running and produced no output folder")
@@ -1233,6 +1240,8 @@ def main(argv=None):
     elif a.cmd == "start":
         return cmd_start(a)
     elif a.cmd == "unstart":
+        if not re.fullmatch(r"[0-9a-z-]+", a.token):
+            die("a token looks like 1120142117-695c666fc-81b5 (see cwp-runs plan)")
         f = RUNS / "started" / f"{a.token}.json"
         if not f.exists():
             die(f"no started step {a.token} (cwp-runs plan lists the ones in flight)")

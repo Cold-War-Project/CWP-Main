@@ -79,7 +79,7 @@ cwp-runs done <outdir>        # when the job has finished: catalog it, keep its 
 - **Always `start` a step before running it.** Steps in flight are subtracted from the next plan, so the same run isn't booked twice. Step numbers change once a step is in flight, so run `plan` again before the next `start`.
 - A step leaves the in-flight list in four cases:
   - its run is catalogued as finished (an econ_bench session that yielded the game and will resume still counts as in flight);
-  - its `cwp-vic job` unit has ended without creating the output folder (checked after an hour);
+  - its `cwp-vic job` unit is not running and either never created the output folder after 6 hours (launch the printed job promptly) or left only a partial run;
   - it is 36 hours old;
   - you drop it with `cwp-runs unstart <token>`.
 - **Only one batch at a time.** All batches share the integration tree, so while one is in flight the plan lists the next one as waiting.
