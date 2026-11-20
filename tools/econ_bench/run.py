@@ -156,7 +156,7 @@ def one_run(worktree: Path, out: Path, end_year: int, every: int, max_minutes: f
     note = f"{agent}: econ_bench observer run {out.name} to {end_year}" + (" (resume)" if resuming else "")
     # Popen, so that if this process is stopped while waiting, the waiting `cwp-vic lock` goes too
     # (otherwise it takes the lock later for nobody and holds it for two hours).
-    lock = subprocess.Popen(["cwp-vic", "lock", "--wait", "86400", note], text=True,
+    lock = subprocess.Popen(["cwp-vic", "lock", "--wait", "86400", "--owner-pid", str(os.getpid()), note], text=True,
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
         _, err = lock.communicate()
