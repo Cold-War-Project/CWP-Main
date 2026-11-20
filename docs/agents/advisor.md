@@ -10,7 +10,7 @@ You decide what is ambiguous. Typical cases:
 - a port seems to need a `replace_paths` change, a same-name overwrite, or deleting content (all of which may undo the crash fix);
 - an error.log line or a crash you cannot trace after a reasonable attempt;
 - a design question where the content design guide and the existing mod disagree;
-- an audit of a finished slice before you mark the PR ready, especially a large or shared-file PR.
+- an audit of a finished slice before you queue it, especially a large or shared-file branch. It comes on top of the required subagent review (`AGENTS.md` working rule 6), not instead of it.
 
 Do not ask for lookups you can grep, or for decisions only Jack can make (goals, `replace_paths`, dropping whole features). For those, ask Jack through the coordinator, ideally with the advisor's view attached.
 
