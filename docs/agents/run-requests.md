@@ -39,7 +39,7 @@ cwp-runs submit --thread econ --kind measure --branch econ/y --until 1956     # 
 
 - `submit` prints how many runs of each arm already exist. If they already cover the request, the result is written at once and nothing is queued.
 - **What you changed is computed from git, never declared.** `submit` also warns when a branch touches only files the game never reads; such a branch needs no game at all.
-- Smoke and observe requests must name a local branch and follow its head: a run serves them only if it tested that head or a later commit of the branch, or any build with the same gameplay hash (so a branch already in `CWP2` is served by any `CWP2` run since). Smoke also needs a run that finished normally, since only that has the end-of-run error capture. Measure requests are pinned to their sha.
+- Smoke and observe requests must name a local branch and follow its head. Only an observer run whose built tree contains that head serves them: a batch that merged it, or any `CWP2` run once the branch has landed. A run of an older head never counts, and neither does a run that merely has the same gameplay hash: a localization change still has to be loaded to show its error lines. Smoke also needs a run that finished normally, since only that has the end-of-run error capture. Measure requests are pinned to their sha.
 - A measure request whose branch has the same gameplay hash as its baseline is refused, because there is nothing to measure. A proxy baseline (`accept:<GH>`) is accepted only if enough runs of it already exist; cwp-runs can't schedule a build it doesn't have.
 - Requests expire after 48 hours (measure: 7 days). Use `cwp-runs renew <id>` to keep one alive and `cwp-runs cancel <id>` when you no longer need it.
 - **Staging branches are requests already.** A line in `~/forge/staging-queue.txt` is an implicit smoke request ([landing-work.md](landing-work.md)). Add an `observe` request only when you also need a specific end year or want a result file.
@@ -76,7 +76,13 @@ cwp-runs done <outdir>        # when the job has finished: catalog it, keep its 
                               # write results, print the notifications
 ```
 
-- **Always `start` a step before running it.** Steps in flight are subtracted from the next plan, so the same run isn't booked twice. A started step that never produces a catalogued run drops out after 36 hours.
+- **Always `start` a step before running it.** Steps in flight are subtracted from the next plan, so the same run isn't booked twice. Step numbers change once a step is in flight, so run `plan` again before the next `start`.
+- A step leaves the in-flight list in four cases:
+  - its run is catalogued as finished (an econ_bench session that yielded the game and will resume still counts as in flight);
+  - its `cwp-vic job` unit has ended without creating the output folder (checked after an hour);
+  - it is 36 hours old;
+  - you drop it with `cwp-runs unstart <token>`.
+- **Only one batch at a time.** All batches share the integration tree, so while one is in flight the plan lists the next one as waiting.
 - Measure arms run in a detached worktree `~/forge/worktrees/runs-<sha9>` that `start` tells you to create. Nobody edits it, so the game never hot-reloads. Econ-only arms use `econ_bench run`, each in its own output folder. Every other arm uses `cwp-observe`.
 - `CWP_AGENT=observer` matters: `cwp-observe` unlocks under its own note, and a thread name there makes `cwp-vic unlock` refuse, leaving the game running.
 
@@ -91,6 +97,7 @@ cwp-runs done <outdir>        # when the job has finished: catalog it, keep its 
 `~/forge/runs/`:
 
 - `requests/<id>.json`: one request per file.
+- `started/<token>.json`: steps handed out by `start`, with the step and its output folder.
 - `results/<id>.md`: one result per request.
 - `catalog.jsonl`: one row per run. Append-only; the newest row for an output folder wins.
 - `builds/<run>/.integration/`: the build state kept for landing.
