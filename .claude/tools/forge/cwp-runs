@@ -299,7 +299,7 @@ def parse_build_txt(d):
 
 def index_observer(d, running_ok=False):
     """Catalog row for a cwp-observe output folder, or None (still running, or no resolvable commit)."""
-    ended = any((d / f).exists() for f in ("errors_end.txt", "CRASH", "FAILED"))
+    ended = any((d / f).exists() for f in ("errors_end.txt", "CRASH", "FAILED", "DISKFULL"))
     if not ended and not running_ok:
         newest = max((p.stat().st_mtime for p in [d, d / "saves", d / "progress.txt"] if p.exists()), default=0)
         if time.time() - newest < RUNNING_GRACE:
@@ -332,6 +332,8 @@ def index_observer(d, running_ok=False):
         status = "crash"
     elif (d / "FAILED").exists():
         status = "stalled" if nudges else "failed"   # the watchdog gave up (or the game never started)
+    elif (d / "DISKFULL").exists():
+        status = "partial"   # stopped for low disk, not the branch's fault: samples count up to `years`
     elif (d / "errors_end.txt").exists():
         status = "ok"
     else:
@@ -862,7 +864,7 @@ def in_progress_observer_dirs():
         return []
     out = []
     for d in OBSERVER.iterdir():
-        if d.is_dir() and not any((d / f).exists() for f in ("errors_end.txt", "CRASH", "FAILED")):
+        if d.is_dir() and not any((d / f).exists() for f in ("errors_end.txt", "CRASH", "FAILED", "DISKFULL")):
             newest = max((p.stat().st_mtime for p in [d, d / "saves", d / "progress.txt"] if p.exists()), default=0)
             if time.time() - newest < RUNNING_GRACE:
                 out.append(d)
@@ -1105,6 +1107,8 @@ def cmd_plan(a):
     if a.json:
         print(json.dumps({"in_flight": inflight, "steps": steps}, indent=1))
         return
+    if free_gb() < MIN_FREE_GB:
+        print(f"WARNING: only {free_gb():.1f} GB free on the Forge disk; `start` refuses below {MIN_FREE_GB:g} GB\n")
     for rec in inflight:
         print(f"in flight since {rec['started_at']}: {rec['token']} -> {rec['outdir']}")
         for line in describe("-", rec["step"]):
@@ -1125,7 +1129,17 @@ def cmd_start(a):
         return start_locked(a)
 
 
+MIN_FREE_GB = float(os.environ.get("CWP_RUNS_MIN_FREE_GB", "20"))   # an observer run writes 1-3 GB of saves and dumps
+
+
+def free_gb(path=os.path.expanduser("~/forge")):
+    return shutil.disk_usage(path).free / 1e9
+
+
 def start_locked(a):
+    if free_gb() < MIN_FREE_GB:
+        die(f"only {free_gb():.1f} GB free on the Forge disk (need {MIN_FREE_GB:g}; CWP_RUNS_MIN_FREE_GB): "
+            "free space first (landed, clean worktrees; caches), never by deleting run outputs")
     cat, steps = fresh_plan()
     if not 1 <= a.step <= len(steps):
         die(f"no step {a.step} in the current plan ({len(steps)} steps)")
