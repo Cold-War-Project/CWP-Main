@@ -20,29 +20,33 @@ import sys
 
 # Content of added lines and commit messages.
 LINE_PATTERNS = [
-    ("home path", re.compile(r"/home/(?!(?:user|username|you|me|runner)\b)[a-z_][a-z0-9_-]*")),
-    ("home path", re.compile(r"(?<![\w.])/Users/(?!(?:user|username|you|Shared)\b)[A-Za-z][\w.-]*")),
+    ("home path", re.compile(r"/home/(?!(?:user|username|you|me|runner)\b)[A-Za-z_][\w-]*")),
+    ("home path", re.compile(r"/Users/(?!(?:user|username|you|Shared)\b)[A-Za-z][\w.-]*")),
     ("home path", re.compile(r"\b[A-Za-z]:[\\/]+Users[\\/]+(?!(?:user|username|you|Public)\b)[A-Za-z][\w.-]*", re.I)),
     ("Claude session link", re.compile(r"claude\.ai/(?:code|chat|project)/\S+")),
     ("Claude session id", re.compile(r"\b(?:session|cmsg|chan|user)_01[A-Za-z0-9]{16,}")),
     ("GitHub token", re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,})")),
     ("API key", re.compile(r"\bsk-(?:ant-)?[A-Za-z0-9_-]{24,}")),
     ("AWS key", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
+    ("Google API key", re.compile(r"\bAIza[0-9A-Za-z_-]{35}\b")),
+    ("password or secret", re.compile(r"(?i)\b(?:password|passwd|api_?key|secret_?key|auth_?token|access_?token)\b[\"']?\s*[:=]\s*[\"'][^\"'\s]{6,}")),
     ("Slack token", re.compile(r"\bxox[abprs]-[0-9A-Za-z-]{10,}")),
     ("private key", re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----")),
     ("private IP", re.compile(r"\b(?:192\.168|10\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])|100\.(?:6[4-9]|[7-9]\d|1[01]\d|12[0-7]))\.\d{1,3}\.\d{1,3}\b")),
     ("email address", re.compile(r"\b[\w.+-]+@[\w-]+(?:\.[\w-]+)*\.[A-Za-z]{2,}\b")),
 ]
 # Only in commit messages: trailers that agent harnesses may add.
-MESSAGE_PATTERNS = [("session trailer", re.compile(r"^Claude-Session:", re.M))]
-OK_EMAIL = re.compile(r"(?:noreply@anthropic\.com|@users\.noreply\.github\.com|^noreply@github\.com|@example\.(?:com|org)|@paradoxplaza\.com)$", re.I)
-SKIP_FILES = re.compile(r"\.(?:dds|png|tga|jpg|jpeg|gif|webp|ttf|otf|fnt|mesh|anim|wav|ogg|bank|v3|pyc)$", re.I)
+MESSAGE_PATTERNS = [("session trailer", re.compile(r"^Claude-Session\S*:", re.M | re.I))]
+OK_EMAIL = re.compile(r"(?:^git@github\.com|noreply@anthropic\.com|@users\.noreply\.github\.com|^noreply@github\.com|@example\.(?:com|org)|@paradoxplaza\.com|\.(?:png|jpe?g|gif|svg|dds|webp|tga))$", re.I)
+SKIP_FILES = re.compile(r"\.(?:dds|png|tga|jpg|jpeg|gif|webp|ttf|otf|fnt|mesh|anim|wav|ogg|bank|pyc)$", re.I)
 ALLOW_MARK = "privacy-ok"
 ZERO = "0" * 40
 
 
 def git(*args, check=True):
-    r = subprocess.run(["git", *args], capture_output=True, text=True, errors="replace")
+    # Fixed diff/path settings so a user's git config cannot hide paths from the parser.
+    cfg = ["-c", "core.quotePath=false", "-c", "diff.noprefix=false", "-c", "diff.mnemonicPrefix=false"]
+    r = subprocess.run(["git", *cfg, *args], capture_output=True, text=True, errors="replace")
     if check and r.returncode:
         sys.exit(f"privacy_check: git {' '.join(args)} failed: {r.stderr.strip()}")
     return r.stdout
@@ -62,7 +66,7 @@ def line_hits(text):
 
 def known_emails():
     """Author emails already public in origin's history are not new exposure."""
-    return set(git("log", "--remotes=origin", "--format=%ae%n%ce").split())
+    return {e.lower() for e in git("log", "--remotes=origin", "--format=%ae%n%ce").split()}
 
 
 def scan_commits(rev_args):
@@ -71,26 +75,41 @@ def scan_commits(rev_args):
     if not shas:
         return findings
     public = known_emails()
+    if len(shas) > 200:
+        print(f"privacy_check: scanning {len(shas)} commits, this can take a minute or two", file=sys.stderr)
     for sha in shas:
         short = sha[:9]
         meta = git("show", "-s", "--format=%ae%n%ce%n%B", sha)
         ae, ce, msg = meta.split("\n", 2)
         for who, email in (("author", ae), ("committer", ce)):
-            if email and not OK_EMAIL.search(email) and email not in public:
+            if email and not OK_EMAIL.search(email) and email.lower() not in public:
                 findings.append((short, f"<{who} email>", f"{who} email", email))
         for name, pat in MESSAGE_PATTERNS:
             for m in pat.finditer(msg):
                 findings.append((short, "<commit message>", name, m.group(0)))
         for ln in msg.splitlines():
             for name, hit in line_hits(ln):
-                if name == "email address" and hit in public:
+                if name == "email address" and hit.lower() in public:
                     continue  # Co-Authored-By of a known contributor
                 findings.append((short, "<commit message>", name, hit))
-        diff = git("show", "--format=", "--no-color", "--no-ext-diff", "-U0", "--first-parent", sha)
-        path = None
+        parents = len(git("rev-list", "--parents", "-n", "1", sha).split()) - 1
+        # A merge shows only what its resolution added (--remerge-diff): commits it brings in
+        # are scanned one by one above, or are already public.
+        diff = git("show", "--format=", "--no-color", "--no-ext-diff", "--no-relative", "-U0",
+                   "--src-prefix=a/", "--dst-prefix=b/", *(["--remerge-diff"] if parents > 1 else []), sha)
+        path, header = None, False
         for ln in diff.splitlines():
-            if ln.startswith("+++ "):
-                path = ln[6:] if ln.startswith("+++ b/") else None
+            if ln.startswith("diff --git ") or ln.startswith("diff --cc ") or ln.startswith("diff --combined "):
+                path, header = None, True
+                continue
+            if header:
+                if ln.startswith("+++ "):
+                    p = ln[4:].split("\t")[0].strip()
+                    if p.startswith('"') and p.endswith('"'):
+                        p = p[1:-1]
+                    path = p[2:] if p.startswith("b/") else None  # None: /dev/null (deleted file)
+                elif ln.startswith("@@"):
+                    header = False
                 continue
             if path is None or not ln.startswith("+") or SKIP_FILES.search(path):
                 continue

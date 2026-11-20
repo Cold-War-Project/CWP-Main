@@ -5,19 +5,21 @@
 #
 # Install once per clone (hooks live in the shared .git, so this covers every worktree):
 #   .claude/tools/forge/pre-push --install
-# Uses the checker from the worktree being pushed when it has one, else the copy installed
-# next to this hook, so worktrees on older branches are checked too.
+# Uses the checker installed next to this hook, so a branch cannot weaken its own check and
+# worktrees on older branches are covered. After changing privacy_check.py, run --install again.
 set -euo pipefail
 if [[ "${1:-}" == "--install" ]]; then
   src=$(cd "$(dirname "$0")" && pwd)
-  hooks="$(git rev-parse --git-common-dir)/hooks"
+  hooks="$(git rev-parse --path-format=absolute --git-common-dir)/hooks"
+  if [[ -f "$hooks/pre-push" ]] && ! grep -q privacy_check "$hooks/pre-push"; then
+    mv "$hooks/pre-push" "$hooks/pre-push.before-privacy"; echo "kept the old hook as $hooks/pre-push.before-privacy (not chained)"
+  fi
   install -m 755 "$src/pre-push" "$hooks/pre-push"
   install -m 644 "$src/../privacy_check.py" "$hooks/privacy_check.py"
   echo "installed pre-push hook and checker in $hooks"
   exit 0
 fi
-top=$(git rev-parse --show-toplevel)
-checker="$top/.claude/tools/privacy_check.py"
-[[ -f "$checker" ]] || checker="$(git rev-parse --git-common-dir)/hooks/privacy_check.py"
+checker="$(git rev-parse --path-format=absolute --git-common-dir)/hooks/privacy_check.py"
+[[ -f "$checker" ]] || checker="$(git rev-parse --show-toplevel)/.claude/tools/privacy_check.py"
 [[ -f "$checker" ]] || { echo "pre-push: privacy_check.py not found; refusing to push unchecked" >&2; exit 1; }
 exec python3 -I "$checker" --pre-push "$@"
