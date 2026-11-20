@@ -330,18 +330,36 @@ cwp_ai_institution_austerity = {
 	}
 }
 
-# Superpower-led blocs hold together (cwp_superpower_bloc). Monthly from on_monthly_pulse_country
-# (root = country, AI or not): granted for a year whenever it is missing, so it applies from the first
-# month and lapses within a year of the leader losing superpower rank.
+# Superpower-led blocs hold together (cwp_superpower_bloc). "Superpower" here means a bloc leader of
+# great-power rank or above locked in rivalry with another bloc leader: the two camps of the Cold War.
+# (The engine's superpower rank is prestige-based and in CWP runs only the USA reaches it; the USSR sits
+# at great power.) Refreshed monthly for two months, and removed as soon as the leader no longer
+# qualifies, so there is no yearly gap and no lingering bonus. Monthly from on_monthly_pulse_country
+# (root = country, AI or not).
 cwp_ai_superpower_bloc_update = {
 	if = {
-		limit = {
-			is_power_bloc_leader = yes
-			country_rank = rank_value:superpower
-			power_bloc ?= { NOT = { has_modifier = cwp_superpower_bloc } }
-		}
+		limit = { is_power_bloc_leader = yes }
 		power_bloc = {
-			add_modifier = { name = cwp_superpower_bloc years = 1 }
+			if = {
+				limit = { has_modifier = cwp_superpower_bloc }
+				remove_modifier = cwp_superpower_bloc
+			}
+		}
+		if = {
+			limit = {
+				country_rank >= rank_value:great_power
+				any_country = {
+					is_power_bloc_leader = yes
+					NOT = { this = root }
+					OR = {
+						has_diplomatic_pact = { who = root type = rivalry }
+						root = { has_diplomatic_pact = { who = prev type = rivalry } }
+					}
+				}
+			}
+			power_bloc = {
+				add_modifier = { name = cwp_superpower_bloc months = 2 }
+			}
 		}
 	}
 }
