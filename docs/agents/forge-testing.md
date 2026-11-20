@@ -64,6 +64,8 @@ A crash to desktop leaves files in `<user folder>/crashes/` and `exceptions/`; n
 
 ## Observer runs
 
+**Request runs, don't queue them** (Jack, 2026-11-20). For a smoke check, an observer look or an A/B measurement, submit a request with `cwp-runs` ([run-requests.md](run-requests.md)). The staging thread merges requests into as few games as possible and reuses existing runs as baselines. Drive a game by hand, as below, only for interactive work (screenshots, console tests); keep it short, and never as a multi-year run.
+
 For anything that changes gameplay over time (economy, politics, AI, events):
 
 1. `cwp-vic lock`, `link`, `launch`; from the main menu start a single-player game as any country.
@@ -122,7 +124,7 @@ Every GUI-facing change is screenshot-checked in game before it lands (Jack, 202
 
 ## Shared long observer runs and state dumps
 
-One shared run serves every area; don't queue your own multi-year run on the same code.
+One shared run serves every area; don't queue your own multi-year run on the same code. Ask for a run with `cwp-runs submit` ([run-requests.md](run-requests.md)); finished runs are catalogued by gameplay hash, so check `cwp-runs baselines <branch>` first.
 
 ```bash
 cwp-observe ~/forge/worktrees/<tree> 1956      # lock, new game, observe at max speed to 1956, unlock

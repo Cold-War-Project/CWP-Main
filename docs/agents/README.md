@@ -8,6 +8,7 @@ Start with [`AGENTS.md`](../../AGENTS.md) at the repo root, then the file for yo
 | [repo-layout.md](repo-layout.md) | You need to find something |
 | [worktrees.md](worktrees.md) | Starting work: branches, your worktree, reading dev and master |
 | [forge-testing.md](forge-testing.md) | Launching the game, error.log, observer runs, performance, baselines |
+| [run-requests.md](run-requests.md) | You need a test run (smoke, observe or A/B measure): request it with `cwp-runs` instead of queueing your own game |
 | [landing-work.md](landing-work.md) | Getting your branch tested and onto CWP2 (local branches, staging queue, no PRs) |
 | [advisor.md](advisor.md) | You hit an ambiguous call and want a second opinion or an audit |
 | [instruction-changes.md](instruction-changes.md) | You work the old Windows way, or wonder why `CLAUDE.md` / `.claude/` differ from Maddie's originals |
