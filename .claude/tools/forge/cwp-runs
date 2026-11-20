@@ -1105,6 +1105,8 @@ def cmd_plan(a):
     if a.json:
         print(json.dumps({"in_flight": inflight, "steps": steps}, indent=1))
         return
+    if free_gb() < MIN_FREE_GB:
+        print(f"WARNING: only {free_gb():.1f} GB free on the Forge disk; `start` refuses below {MIN_FREE_GB:g} GB\n")
     for rec in inflight:
         print(f"in flight since {rec['started_at']}: {rec['token']} -> {rec['outdir']}")
         for line in describe("-", rec["step"]):
@@ -1125,7 +1127,17 @@ def cmd_start(a):
         return start_locked(a)
 
 
+MIN_FREE_GB = float(os.environ.get("CWP_RUNS_MIN_FREE_GB", "20"))   # an observer run writes 1-3 GB of saves and dumps
+
+
+def free_gb(path=os.path.expanduser("~/forge")):
+    return shutil.disk_usage(path).free / 1e9
+
+
 def start_locked(a):
+    if free_gb() < MIN_FREE_GB:
+        die(f"only {free_gb():.1f} GB free on the Forge disk (need {MIN_FREE_GB:g}; CWP_RUNS_MIN_FREE_GB): "
+            "free space first (landed, clean worktrees; caches), never by deleting run outputs")
     cat, steps = fresh_plan()
     if not 1 <= a.step <= len(steps):
         die(f"no step {a.step} in the current plan ({len(steps)} steps)")
