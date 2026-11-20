@@ -189,3 +189,24 @@ Open:
 - Japan's SoL falls in the test run (19.3->17.4). It's a known Japan problem (economy thread); here it may be run noise.
 - Tax/GDP from the save looks high for Brazil and Turkey (30-40%). That's for the economy thread.
 
+
+## Follow-up (branch `feat/institution-capacity-2`, 2026-11-20)
+
+**USSR barely investing.** At the x10 cap the USSR neither raised nor cut after 1948 (64 -> 61 by 1960, 34k bureaucracy spare). Its laws allow more: Judiciary is held at 3 by puppet judiciary (intended), but Police (militarized police +2, telephone +5) and Schools (compulsory primary +2, academia +5) could reach 5. Its political strategy (egalitarian agenda) scores Schools 150, the highest it has room for. The cause is the GDP-scaled cap again. The USSR runs all its institutions near 5 over 200M people on a quarter of US GDP, so it sits between 1x the cap (needed to raise) and 2x (where the AI cuts). Countries with a similar measured ratio still raised; the engine's own GDP figure evidently differs from the save's `gdp` channel, so read the ratio loosely. At x30 (0.45 / 0.15) the USSR raises Police and Schools to 5 (64 -> 68 by 1958) and keeps 67k bureaucracy spare. Rich democracies change little, because they are limited by the one-level-a-year growth rate rather than the cap.
+
+Run `observer/20261119-2009-4e901e214` (this branch, which also contains `local/history-1946-governments`), 1946-1960.6:
+
+| | x10 (f17eaa062) 1960 | x30 (4e901e214) 1960 | base 1960 |
+|---|---|---|---|
+| Quintile gap (1946: ~53) | 58.2 | 57.5 | 40.9 |
+| Spearman vs 1946 tier / vs GDP per capita | 0.67 / 0.81 | 0.65 / 0.78 | 0.80 / 0.81 |
+| AI levels raised / cut | +1084 / -475 | +1119 / -494 | +186 / -927 |
+| USSR levels | 61 | 68 | 48 |
+| Japan levels | 61 | 70 | 41 |
+| UK / Sweden / France levels | 74 / 71 / 69 | 73 / 74 / 58 | 53 / 46 / 43 |
+| USA levels, GDP (M), SoL | 61, 2199, 25.8 | 61, 1916, 19.6 | 51, 1944, 18.6 |
+| World GDP (M) | 7220 | 6973 | 6661 |
+
+France ends bureaucracy-bound (35.6k made, 35.5k used) and trades levels. The USA's lower GDP and SoL than the x10 run come from a build that also changes 1946 governments (history-1946-governments, the USA's included), on one game each, so they're not attributed to the cap; worth watching in the next staging run. Error lines: menu 6, end 36, none from changed files, all kinds seen in other runs.
+
+**Institution wipes after bankruptcy are engine behaviour, not the AI.** In every bankrupt country (ICL, ALB, NRK, YUG, LEB, SWI, NET...) all institutions sit at exactly 1 within months of declaring bankruptcy (SWI: 1949.2 levels 3-5, bankrupt 1949.6.18, 1949.11 all 1), with no `target`/`growth` on the reset ones. AI cuts go through target/growth at about a level a year, slowed a further 95% by `declared_bankruptcy`. The wipes also happen unchanged at the x30 cap. No script, define or on_action in vanilla or the mod does it, so raising `INSTITUTION_SPENDING_DECREASE_SPENDING_RATIO` would not help, and I left it at 2.0. The only softening would be scripted (record levels on `on_country_default`, restore part after), which the coordinator preferred not to do. Fewer early bankruptcies is the real lever (economy thread). Bankrupt by 1949: x10 run XIN, DAI, LEB, ROC, ALB, ICL, NRK, SWI, NET, YUG; base XIN, ICL, YUG, NRK, DAI, ALB, YEM, SWI, PRC.
