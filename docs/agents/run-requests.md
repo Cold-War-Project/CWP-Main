@@ -2,7 +2,7 @@
 
 Forge has one game slot. A thread that queues its own observer game makes everyone behind it wait, and small changes used to get whole 10-year runs to themselves. **Don't queue your own multi-year run. Submit a request**, and the staging thread turns all requests into as few games as possible (Jack, 2026-11-20).
 
-`cwp-runs` is on `PATH` (`~/.local/bin/cwp-runs`; source `.claude/tools/forge/cwp-runs`, reinstall with `install -m 755 .claude/tools/forge/cwp-runs ~/.local/bin/`). It never takes the game lock, launches a game, or moves or deletes run folders.
+`cwp-runs` is on `PATH` (`~/.local/bin/cwp-runs`, installed 20 Nov 2026; source `.claude/tools/forge/cwp-runs`, reinstall with `install -m 755 .claude/tools/forge/cwp-runs ~/.local/bin/`). It never takes the game lock, launches a game, or moves or deletes run folders.
 
 ## Pick the kind of request
 
@@ -39,7 +39,8 @@ cwp-runs submit --thread econ --kind measure --branch econ/y --until 1956     # 
 
 - `submit` prints how many runs of each arm already exist. If they already cover the request, the result is written at once and nothing is queued.
 - **What you changed is computed from git, never declared.** `submit` also warns when a branch touches only files the game never reads; such a branch needs no game at all.
-- Smoke and observe requests follow the branch head until served (`--pin` freezes the sha). Measure requests are pinned.
+- Smoke and observe requests must name a local branch and follow its head: a run serves them only if it tested that head or a later commit of the branch, or any build with the same gameplay hash (so a branch already in `CWP2` is served by any `CWP2` run since). Smoke also needs a run that finished normally, since only that has the end-of-run error capture. Measure requests are pinned to their sha.
+- A measure request whose branch has the same gameplay hash as its baseline is refused, because there is nothing to measure. A proxy baseline (`accept:<GH>`) is accepted only if enough runs of it already exist; cwp-runs can't schedule a build it doesn't have.
 - Requests expire after 48 hours (measure: 7 days). Use `cwp-runs renew <id>` to keep one alive and `cwp-runs cancel <id>` when you no longer need it.
 - **Staging branches are requests already.** A line in `~/forge/staging-queue.txt` is an implicit smoke request ([landing-work.md](landing-work.md)). Add an `observe` request only when you also need a specific end year or want a result file.
 
@@ -49,33 +50,39 @@ You only wake on messages and on processes you started. After submitting, start 
 
 ```bash
 cwp-runs wait <id>                  # exit 0 when served, 3 when a run including it crashed, 2 on timeout (~2 h): run it again
-cwp-runs wait <id> --year 1948      # return as soon as a running build with your branch reaches 1948
+cwp-runs wait <id> --year 1948      # also returns as soon as a live build that tested your commit reaches 1948
 ```
 
 The result is `~/forge/runs/results/<id>.md`. It holds the run folders (dumps, errors, perf, econ data), the tested sha, the error lines attributed to your branch, the co-tenants, the replicates per arm and the `compare.py` command for measure requests. The staging thread also messages the session named in `--session`. `cwp-runs show [<id>]` lists every request and its progress.
 
 ## Order of runs
 
-`cwp-runs plan` prints the next runs and the exact commands to start them. It is a pure function of the requests, the catalog and the staging queue:
+`cwp-runs plan` prints the next runs. It is deterministic: it follows from the requests, the catalog, the staging queue and the steps already in flight. Before planning it refreshes the catalog and marks requests served or expired.
 
 1. **Econ measure arms first** (Jack's rule). The econ thread can pass `--yield-ok` to let the batch go ahead.
-2. **The staging batch.** This is `CWP2` plus every staging-queue branch plus every pending smoke and observe request, built with explicit items. It runs to the latest `until` requested, capped at 1962. Longer observe requests get a solo run.
-3. **Other measure arms, oldest first.** The two arms of one test alternate. When two requests need the same build (for example both need a `CWP2` baseline), one run serves both and runs to the later year.
+2. **The staging batch.** This is `CWP2` plus every staging-queue branch plus every pending smoke and observe request, built with explicit items. It runs to the latest `until` requested, and to at least 1952 while there are staging branches (a staging round's usual length), capped at 1962. Longer observe requests get a solo run.
+3. **Other measure arms, oldest first.** The two arms of one test alternate. When two requests need the same build (for example both need a `CWP2` baseline), one run serves both. A cwp-observe run then extends to the later year. An econ-priority econ_bench run is shared with a non-econ request only if that doesn't make it longer; it then runs as cwp-observe, so both threads get their data.
 
 ## For the staging thread (v1: run the plan by hand)
 
 Until the dispatcher exists (below), the staging thread runs each step itself:
 
 ```bash
-cwp-runs plan                                   # the steps, with commands
-cwp-integrate build <items from the plan>       # explicit items: a bare `build` also merges open GitHub PRs
-CWP_AGENT=integration cwp-vic job staging-rNN -- cwp-observe ~/forge/worktrees/integration <until>
-cwp-runs done ~/forge/observer/<run folder>     # catalog it, keep its build state, ingest econ data, write results
+cwp-runs plan                 # the steps, and what is already in flight
+cwp-runs start 2              # records step 2 as in flight and prints its commands, each with its own output folder:
+#   cwp-integrate build <items>       explicit items only: a bare `build` also merges open GitHub PRs
+#   CWP_AGENT=observer cwp-vic job runs-<token> -- cwp-observe ~/forge/worktrees/integration <until> <outdir>
+cwp-runs done <outdir>        # when the job has finished: catalog it, keep its build state, ingest econ data,
+                              # write results, print the notifications
 ```
 
-- `cwp-runs done` keeps a copy of the build's `.integration/` state in `~/forge/runs/builds/<run>/`. A later rebuild of the integration tree then can't change what gets landed: `CWP_INTEGRATION=~/forge/runs/builds/<run> cwp-integrate land <items>` lands exactly that run's tested shas.
-- `done` prints `notify <session>: <id> ...` for each newly served or failed request, and appends the same lines to `~/forge/runs/notify.txt`. Send each requester its line.
-- `done` with no folder re-indexes everything. Use it after econ_bench batches and other runs the staging thread didn't start.
+- **Always `start` a step before running it.** Steps in flight are subtracted from the next plan, so the same run isn't booked twice. A started step that never produces a catalogued run drops out after 36 hours.
+- Measure arms run in a detached worktree `~/forge/worktrees/runs-<sha9>` that `start` tells you to create. Nobody edits it, so the game never hot-reloads. Econ-only arms use `econ_bench run`, each in its own output folder. Every other arm uses `cwp-observe`.
+- `CWP_AGENT=observer` matters: `cwp-observe` unlocks under its own note, and a thread name there makes `cwp-vic unlock` refuse, leaving the game running.
+
+- `cwp-runs done` keeps a copy of the build's `.integration/` state in `~/forge/runs/builds/<run>/`. A later rebuild of the integration tree then can't change what gets landed: `CWP_INTEGRATION=~/forge/runs/builds/<run> cwp-integrate land <items>` lands exactly that run's tested shas. Run `done` **before** the next `cwp-integrate build`; once the tree has been rebuilt there is nothing left to copy, and `done` says nothing.
+- `done` ends by printing `notify <session>: <id> ...` for every result not yet passed on, whoever's command found it (`cwp-runs notify` prints the same). Send each requester its line. A log is kept in `~/forge/runs/notify.txt`.
+- `done` with no folder re-indexes everything without ingesting. Use it after econ_bench batches and other runs the staging thread didn't start. Ingest happens only for the folders you name.
 - To override the order: `cwp-runs hold <id>` / `release <id>`, or `cwp-vic bump` for an already-queued game.
 - When a batch crashes, check the attribution first. If it names a branch, take that branch out and re-run the rest. Otherwise split the batch in halves once, then run the branches solo.
 
@@ -94,10 +101,12 @@ What gets indexed:
 
 - **Observer runs:** every finished `~/forge/observer/*` folder, with the sha from `BUILD.txt` or else from the folder name.
 - **econ_bench runs:** `~/forge/econ-runs/<batch>/run-NNN` folders that have a `meta.json`. Folders without one are skipped: they are ingests of observer runs, or runs still going.
-- **Status:** `ok` (finished normally), `partial` (stopped early; still counts up to the year it reached), `crash`, `failed`, `stalled` (3 or more watchdog nudges). Only `ok` and `partial` count as samples.
+- **Status:** `ok` (finished normally), `partial` (stopped early; still counts up to the year it reached), `crash`, `failed`, `stalled` (the watchdog gave up). Only `ok` and `partial` count as samples. Crashed runs are left out entirely, so a treatment that crashes often looks better than it is: report the crashes next to the numbers.
+- **Caveats for backfilled runs:** the sha of a run started before 20 Nov 2026 is what BUILD.txt or econ_bench's `meta.json` recorded. econ_bench writes `meta.json` at the end of each session, so a run that resumed in a worktree someone committed to in the meantime is filed under the later commit, and nobody recorded dirty trees. Runs started through `cwp-runs start` use clean detached worktrees and don't have this problem.
+- **A run keeps the gameplay hash from its first indexing**, which includes the game's Steam build id. Runs played before a game update don't mix with runs played after it.
 
 ## Not built yet
 
-- **`cwp-runs serve`**, a dispatcher running the plan unattended as a `cwp-vic job`. It would be one ordinary lock client with at most one ticket, and would need a `CWP_OBSERVE_ITEMS` hook in `cwp-observe` so that the batch is composed after the lock is taken.
+- **`cwp-runs serve`**, a dispatcher running the plan unattended as a `cwp-vic job`. It would be one ordinary lock client with at most one ticket, and would need a `CWP_OBSERVE_ITEMS` hook in `cwp-observe` so that the batch is composed after the lock is taken. Until then the batch is built when `start` is run, so requests that arrive while it waits in the lock queue go into the next batch.
 - **An arm-spread table** (min/median/max per metric) in measure results.
 - **GUI bookings riding on batch games.** `cwp-gui-batch` stays separate.
