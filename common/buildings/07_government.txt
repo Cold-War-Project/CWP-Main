@@ -11,6 +11,16 @@
 
 	should_auto_expand = {
 		occupancy >= 0.8
+		# CWP AI: don't expand when the treasury can't carry it. In observer runs North Korea went from
+		# 8 to 17 levels by 1952 while spending 6-12x its income, and defaulted. (A goods-shortage gate
+		# was tried and dropped: most CWP markets run some paper shortage, so it froze US admin.)
+		owner = {
+			in_default = no
+			OR = {
+				taking_loans = no
+				scaled_debt < 0.25
+			}
+		}
 		OR = {
 			state.tax_capacity < state.tax_capacity_usage
 			owner = {
@@ -29,16 +39,28 @@
 
 	# State scope. Vanilla's weight without its Victorian journal entry (institutions thread, 2026-11-19):
 	# build administration first where the state taxes past its capacity, and more so while the
-	# country is short of bureaucracy.
+	# country is short of bureaucracy. Only while the country can afford it: the same money checks as
+	# should_auto_expand above (AI thread), so the AI doesn't favour building offices into a default.
 	ai_value = {
 		value = 1000
 		if = {
-			limit = { tax_capacity < tax_capacity_usage }
-			add = 1000
-		}
-		if = {
-			limit = { owner ?= { bureaucracy < 0 } }
-			add = 500
+			limit = {
+				owner ?= {
+					in_default = no
+					OR = {
+						taking_loans = no
+						scaled_debt < 0.25
+					}
+				}
+			}
+			if = {
+				limit = { tax_capacity < tax_capacity_usage }
+				add = 1000
+			}
+			if = {
+				limit = { owner ?= { bureaucracy < 0 } }
+				add = 500
+			}
 		}
 	}
 
