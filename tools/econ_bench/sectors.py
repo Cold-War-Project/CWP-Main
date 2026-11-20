@@ -78,3 +78,16 @@ def goods_list(mod_root: str = MOD_ROOT) -> list:
             c = re.search(r"\bcost\s*=\s*([\d.]+)", m.group(2))
             out.append((m.group(1), float(c.group(1)) if c else None))
     return out
+
+
+@lru_cache(maxsize=None)
+def law_groups(mod_root: str = MOD_ROOT) -> dict:
+    """{law: law group} from the mod's common/laws."""
+    out = {}
+    for f in glob.glob(os.path.join(mod_root, "common/laws/*.txt")):
+        t = open(f, encoding="utf-8-sig", errors="replace").read()
+        for m in re.finditer(r"^(law_\w+)\s*=\s*\{(.*?)^\}", t, re.M | re.S):
+            g = re.search(r"\bgroup\s*=\s*(\w+)", m.group(2))
+            if g:
+                out[m.group(1)] = g.group(1)
+    return out

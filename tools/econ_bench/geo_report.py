@@ -100,6 +100,23 @@ def markdown(ev: dict) -> list[str]:
     if ev.get("figures_by_year"):
         md += ["Historical figure pool (living characters with the `cwp_fig` variable, most in any run): "
                + ", ".join(f"{y}: {n}" for y, n in ev["figures_by_year"].items()), ""]
+    if ev.get("politics"):
+        pol = ev["politics"]
+        yrs = sorted({y for t in pol.values() for y in t if y % 10 == 0 or y == 1952})
+        md += ["## Politics: rulers and key laws (first run with data)", "",
+               "Ruler (their IG), the year they first appear as ruler in this run, IGs in government; key laws on the next line.", ""]
+        for t, by in pol.items():
+            md.append(f"**{t}**")
+            for y in yrs:
+                x = by.get(y)
+                if x:
+                    md.append(f"- {y}: {x['ruler']} ({x['ig']}, since {x['since']}); government {', '.join(x['gov']) or '-'}; "
+                              + ", ".join(f"{k} {v}" for k, v in sorted(x['laws'].items())))
+            md.append("")
+        md += ["Ruler's IG across runs (count of runs):", ""]
+        for (t, y), d in sorted(ev["ruler_ig"].items()):
+            md.append(f"- {t} {y}: " + ", ".join(f"{k} {v}" for k, v in sorted(d.items(), key=lambda kv: -kv[1])))
+        md.append("")
     if ev.get("who_rules"):
         md += ["## Who governs at the last sample (first run with data)", "",
                "IGs in government, ruling parties, and the three IGs with the most clout.", "",

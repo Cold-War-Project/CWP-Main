@@ -10,6 +10,9 @@ from .save import db_entries, field, sub_block, top_section
 
 SUBJECT_TYPES = {"puppet", "dominion", "protectorate", "personal_union", "chartered_company", "tributary",
                  "vassal", "colony", "crown_land", "military_occupation"}
+KEY_LAW_GROUPS = {"lawgroup_governance_principles", "lawgroup_distribution_of_power", "lawgroup_economic_system",
+                  "lawgroup_trade_policy", "lawgroup_land_reform", "lawgroup_labour_associations", "lawgroup_free_speech",
+                  "lawgroup_citizenship"}
 NUCLEAR_RX = re.compile(r"nuclear|atomic", re.I)
 
 
@@ -58,6 +61,19 @@ def extract_geo(text: str, tag_of: dict, owned: set) -> dict:
                 c["techs_nuclear"] = [t for t in acq.group(1).split() if NUCLEAR_RX.search(t)]
                 c["tech_count"] = len(acq.group(1).split())
 
+    # Rulers: name, IG, ideology (Jack's politics check: who rules, for how long).
+    ruler_of = {cid: field(b, "ruler") for cid, b in db_entries(top_section(text, "country_manager")) if cid in countries}
+    want_chars = {r: cid for cid, r in ruler_of.items() if r and r != "4294967295"}
+    ig_def = {iid: (field(b, "definition") or "").replace("ig_", "")
+              for iid, b in db_entries(top_section(text, "interest_groups"))}
+    for chid, b in db_entries(top_section(text, "character_manager")):
+        cid = want_chars.get(chid)
+        if cid:
+            countries[cid]["ruler"] = {
+                "id": chid, "name": f"{field(b, 'first_name') or ''} {field(b, 'last_name') or ''}".strip(),
+                "ig": ig_def.get(field(b, "interest_group") or ""), "ideology": (field(b, "ideology") or "").replace("ideology_", ""),
+                "born": field(b, "birth_date")}
+
     # Interest groups and parties: who governs, who has clout (Jack's per-run plausibility check).
     ig_by_id = {}
     for iid, b in db_entries(top_section(text, "interest_groups")):
@@ -83,6 +99,9 @@ def extract_geo(text: str, tag_of: dict, owned: set) -> dict:
     for c in countries.values():
         c["igs"] = sorted(c.get("igs", []), key=lambda g: -g["clout"])
         c["government_igs"] = [g["ig"] for g in c["igs"] if g["in_government"]]
+        from .sectors import law_groups
+        lg = law_groups()
+        c["key_laws"] = {lg[l].replace("lawgroup_", ""): l.replace("law_", "") for l in c.get("laws", []) if l in lg and lg[l] in KEY_LAW_GROUPS}
         c["ruling_parties"] = [p["party"] for p in c.get("parties", []) if p["in_government"]]
 
     subjects = []
