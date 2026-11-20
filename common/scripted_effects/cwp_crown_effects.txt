@@ -49,6 +49,10 @@ cwp_crown_change_to_parliamentary = {
 					limit = { is_heir_of_own_country = yes }
 					disinherit_character = yes
 				}
+				if = {
+					limit = { is_interest_group_leader = yes }
+					remove_as_interest_group_leader = yes
+				}
 				add_character_role = character_role_cwp_monarch
 			}
 		}
@@ -90,18 +94,50 @@ cwp_crown_post_change_to_parliamentary = {
 	}
 }
 
+# Into the governor-general type (a realm of the shared crown without an elected parliament, or occupied):
+# the governor-general takes the ruler slot.
+cwp_crown_post_change_to_governor = {
+	if = {
+		limit = {
+			cwp_crown_is_dominion_realm = yes
+			var:cwp_gg_var ?= { is_character_alive = yes }
+		}
+		var:cwp_gg_var = {
+			if = {
+				limit = { is_interest_group_leader = yes }
+				remove_as_interest_group_leader = yes
+			}
+			set_character_as_ruler = yes
+		}
+	}
+	else = {
+		post_change_to_dictatorial = yes
+	}
+}
+
 # Into a type where the monarch rules: seat the background monarch, as country_restore_japanese_emperor does.
 cwp_crown_change_to_monarch_rule = {
+	save_scope_as = cwp_crown_scope_realm
 	if = {
 		limit = {
 			NOT = { government_transfer_of_power = hereditary }
 			var:cwp_monarch_var ?= {
 				is_character_alive = yes
-				owner ?= ROOT
+				owner ?= scope:cwp_crown_scope_realm
 				is_ruler_of_own_country = no
 			}
 		}
 		set_variable = { name = cwp_crown_restore_var value = var:cwp_monarch_var }
+	}
+	else_if = {
+		# Restoration: the exiled pretender comes home to reign and rule.
+		limit = {
+			NOT = { exists = var:cwp_monarch_var }
+			var:cwp_crown_pretender_var ?= { is_character_alive = yes }
+		}
+		var:cwp_crown_pretender_var = { cwp_crown_bring_home = yes }
+		set_variable = { name = cwp_crown_restore_var value = var:cwp_crown_pretender_var }
+		remove_variable = cwp_crown_pretender_var
 	}
 	else = {
 		change_to_hereditary = yes
@@ -120,12 +156,11 @@ cwp_crown_post_change_to_monarch_rule = {
 			set_character_as_ruler = yes
 		}
 		var:cwp_crown_heir_var ?= {
-			save_scope_as = cwp_crown_scope_heir
 			remove_character_role = character_role_cwp_crown_heir
 		}
 		if = {
-			limit = { exists = scope:cwp_crown_scope_heir }
-			set_heir = scope:cwp_crown_scope_heir
+			limit = { var:cwp_crown_heir_var ?= { is_character_alive = yes } }
+			set_heir = var:cwp_crown_heir_var
 		}
 		var:cwp_crown_regent_var ?= {
 			remove_character_role = character_role_cwp_regent
@@ -137,6 +172,9 @@ cwp_crown_post_change_to_monarch_rule = {
 		remove_variable = cwp_crown_restore_var
 		remove_variable = cwp_crown_heir_var
 		remove_variable = cwp_crown_regent_var
+		# The engine now handles the ruling monarch and his heirs (on_actions keep the variable in step).
+		remove_variable = cwp_monarch_var
+		remove_variable = cwp_monarch_absent_var
 	}
 	else = {
 		post_change_to_hereditary = yes
@@ -150,6 +188,7 @@ cwp_crown_post_change_to_monarch_rule = {
 # The reigning monarch has died or abdicated: the heir accedes, or a member of the house is found.
 cwp_crown_succession = {
 	remove_variable = cwp_monarch_var
+	remove_variable = cwp_monarch_absent_var
 	if = {
 		limit = {
 			var:cwp_crown_heir_var ?= { is_character_alive = yes }
@@ -168,7 +207,7 @@ cwp_crown_succession = {
 	cwp_crown_ensure_heir = yes
 	var:cwp_monarch_var ?= {
 		if = {
-			limit = { age < 18 }
+			limit = { is_adult = no }
 			owner = { cwp_crown_appoint_regent = yes }
 		}
 	}
@@ -180,6 +219,7 @@ cwp_crown_succession = {
 
 # Make sure a living monarch exists (restoration from a republic, or a broken line).
 cwp_crown_ensure_monarch = {
+	save_scope_as = cwp_crown_scope_realm
 	if = {
 		limit = {
 			NOT = { var:cwp_monarch_var ?= { is_character_alive = yes } }
@@ -191,11 +231,7 @@ cwp_crown_ensure_monarch = {
 				var:cwp_crown_pretender_var ?= { is_character_alive = yes }
 			}
 			var:cwp_crown_pretender_var = {
-				if = {
-					limit = { is_in_exile_pool = yes }
-					free_from_exile_effect = yes
-				}
-				transfer_character = ROOT
+				cwp_crown_bring_home = yes
 				save_scope_as = cwp_crown_scope_new
 			}
 		}
@@ -292,6 +328,7 @@ cwp_crown_end_regency = {
 # A new governor-general for a realm that shares the crown. As self-government grows (liberty desire),
 # the appointment goes more often to a local figure, as it did in Australia (1931), Canada (1952) and New Zealand (1967).
 cwp_crown_appoint_gg = {
+	save_scope_as = cwp_crown_scope_realm
 	var:cwp_gg_var ?= {
 		if = {
 			limit = { has_role = character_role_cwp_governor_general }
@@ -342,8 +379,8 @@ cwp_crown_appoint_gg = {
 	}
 	scope:cwp_crown_scope_gg ?= {
 		if = {
-			limit = { NOT = { owner ?= ROOT } }
-			transfer_character = ROOT
+			limit = { NOT = { owner ?= scope:cwp_crown_scope_realm } }
+			transfer_character = scope:cwp_crown_scope_realm
 		}
 		add_character_role = character_role_cwp_governor_general
 	}
@@ -471,13 +508,21 @@ cwp_crown_set_house_name = {
 		limit = { scope:cwp_crown_scope_house_country ?= { c:PER ?= this } }
 		set_last_name = Pahlavi
 	}
+	else_if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { c:BUL ?= this } }
+		set_last_name = of_Saxe-Coburg-Gotha
+	}
+	else_if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { c:THA ?= this } }
+		set_last_name = Mahidol
+	}
 }
 
 ############################################################
 # Start of game and upkeep (country scope)
 ############################################################
 
-# Idempotent: repair the crown variables and roles. Runs on game start and monthly in PM-led monarchies.
+# Idempotent: repair the crown variables and roles. Runs monthly (cwp_crown_monthly_pulse_country).
 cwp_crown_sync = {
 	if = {
 		limit = {
@@ -506,5 +551,20 @@ cwp_crown_sync = {
 			cwp_crown_amendment = yes
 		}
 		remove_variable = cwp_crown_start_var
+	}
+}
+
+# Character, an exiled member of the royal house: return to scope:cwp_crown_scope_realm (transfer first, as
+# vanilla does, so the exile clean-up runs with an owner).
+cwp_crown_bring_home = {
+	if = {
+		limit = { is_in_exile_pool = yes }
+		set_variable = cwp_crown_was_exiled_var
+	}
+	transfer_character = scope:cwp_crown_scope_realm
+	if = {
+		limit = { has_variable = cwp_crown_was_exiled_var }
+		remove_variable = cwp_crown_was_exiled_var
+		free_from_exile_effect = yes
 	}
 }

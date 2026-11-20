@@ -8,13 +8,13 @@ Vanilla `gov_shogunate` (hereditary) seats the Shogun. The Emperor holds `charac
 
 ## Who counts
 
-A country is a **parliamentary crown** (`cwp_country_has_parliamentary_crown`, `common/scripted_triggers/cwp_crown_triggers.txt`) when it has `law_monarchy`, any voting franchise, and the amendment `cwp_amendment_constitutional_monarchy` or `cwp_amendment_symbol_emperor`. The 1946 country history sets `cwp_crown_start_var` to bridge the start, before `common/history/global` adds the amendments; the monthly pulse removes it once the amendment is there (Japan keeps it until the Symbol Emperor amendment). Without the amendment the monarch governs (`gov_cwp_executive_monarchy`). Interest groups can sponsor or repeal the amendment, so who governs follows the politics, not the calendar.
+A country is a **parliamentary crown** (`cwp_country_has_parliamentary_crown`, `common/scripted_triggers/cwp_crown_triggers.txt`) when it has `law_monarchy`, any voting franchise, and the amendment `cwp_amendment_constitutional_monarchy` or `cwp_amendment_symbol_emperor`. The 1946 country history sets `cwp_crown_start_var` (first line of the block, before the law package) to bridge the start, before `common/history/global` adds the amendments; the monthly pulse removes it once the amendment is there (Japan keeps it until the Symbol Emperor amendment). Without the amendment the monarch governs (`gov_cwp_executive_monarchy`). Interest groups can sponsor or repeal the amendment, so who governs follows the politics, not the calendar.
 
 | 1946 | Countries |
 |---|---|
 | PM rules, monarch in the background | GBR DEN NOR SWE NET BEL LUX ITA GRE THA PER |
 | PM rules under occupation (`gov_cwp_occupied_constitutional_monarchy`) | JAP ROM BUL when they are military-occupation subjects |
-| PM rules, governor-general in the background (`gov_cwp_dominion`) | CAN AST NZL SAF MTB (`cwp_shared_crown_var` = GBR) |
+| PM rules, governor-general in the background (`gov_cwp_dominion`; MTB `gov_cwp_self_governing_colony`) | CAN AST NZL SAF MTB (`cwp_shared_crown_var` = GBR). A realm of the shared crown that loses its elected parliament or is occupied falls to the governor-general type, and the governor-general takes the ruler slot |
 | Governor rules (unchanged, dictatorial) | HND MYM SRI NAM NEW |
 | Monarch rules | EGY IRQ EOT MOR TUN (executive or limited types), all autocracies |
 
@@ -28,7 +28,7 @@ Jack's calls with defaults (2026-11-20, open for his verdict): dominion governor
 - **Effects** `common/scripted_effects/cwp_crown_effects.txt`: succession (heir accedes, else a member of the house is generated; a regent for a minor), `cwp_crown_depose` (abolition: royal family exiled, pretender remembered), `cwp_crown_abdicate`, `cwp_crown_save_monarch_scope = { NAME = x }` (use this, not `ruler`, when content means the monarch), `cwp_crown_set_house_name`, `cwp_crown_sync`.
 - **On_actions** `common/on_actions/cwp_crown_on_actions.txt`: death of a crown character, abolition (`on_law_activated`), coming of age (regency ends), monthly sync, yearly governor-general check.
 - **Events** `events/cwp_crown_events.txt`: `cwp_crown.1` accession, `cwp_crown.2` end of regency (player only, one option each: they formalise a fact).
-- **Roster**: codes `M`, `MH`, `RG`, `GG` in `tools/character_roster/gen.py`; tags in `tags.py` (`CROWN`, `DOMINION`). The 1946 ruling IG sets were checked so the strongest ruling IG is led by the real Prime Minister (Attlee now leads the Trade Unions; Shidehara the Bureaucrats). New characters: Baudouin (BEL), Crown Prince Paul (GRE), Todor Pavlov (BUL regency council).
+- **Roster**: codes `M`, `MH`, `RG`, `GG` in `tools/character_roster/gen.py`; tags in `tags.py` (`CROWN`, `DOMINION`). The 1946 ruling IG sets were chosen (CAN Liberals only, NET adds the intelligentsia) so the strongest ruling IG is led by the real Prime Minister (Attlee now leads the Trade Unions; Shidehara the Bureaucrats). New characters: Baudouin (BEL), Crown Prince Paul (GRE), Todor Pavlov (BUL regency council).
 
 ## Content that means "the monarch"
 
@@ -37,6 +37,7 @@ Uses of `ruler`/`heir` that meant the monarch were changed: the institutional qu
 ## Open
 
 - Engine checks pending in the first test: start-up order of the bridge variable, the type flipping on an amendment change with no law change, who `parliamentary_elective` seats in coalitions (BEL ITA NET LUX ROM BUL), survival of characters that hold only an `other` role, `career_length` on an `other` role (the yearly pulse is the fallback).
+- Royal marriages (vanilla diplomatic action and `royal_wedding` events) still use `ruler`/`heir` under any monarchy law, so a PM could be married into a royal house; `can_resign_alert` still hides the resign alert under monarchy laws. Both are vanilla shared files, left for a follow-up.
 - Nepal's Rana regime (vanilla's Shogun pattern: hereditary Rana PM ruling, the King in the background) is a possible follow-up.
 - A head-of-state portrait in the politics panel would need an override of the vanilla `politics_panel_overview.gui`.
 - Decolonization: when a colony becomes a dominion that keeps the crown (India 1947, Pakistan, Ceylon), set `cwp_shared_crown_var` so it gets `gov_cwp_dominion` and a governor-general.
