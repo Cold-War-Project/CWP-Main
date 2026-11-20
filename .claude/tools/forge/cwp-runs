@@ -299,7 +299,7 @@ def parse_build_txt(d):
 
 def index_observer(d, running_ok=False):
     """Catalog row for a cwp-observe output folder, or None (still running, or no resolvable commit)."""
-    ended = any((d / f).exists() for f in ("errors_end.txt", "CRASH", "FAILED"))
+    ended = any((d / f).exists() for f in ("errors_end.txt", "CRASH", "FAILED", "DISKFULL"))
     if not ended and not running_ok:
         newest = max((p.stat().st_mtime for p in [d, d / "saves", d / "progress.txt"] if p.exists()), default=0)
         if time.time() - newest < RUNNING_GRACE:
@@ -332,6 +332,8 @@ def index_observer(d, running_ok=False):
         status = "crash"
     elif (d / "FAILED").exists():
         status = "stalled" if nudges else "failed"   # the watchdog gave up (or the game never started)
+    elif (d / "DISKFULL").exists():
+        status = "partial"   # stopped for low disk, not the branch's fault: samples count up to `years`
     elif (d / "errors_end.txt").exists():
         status = "ok"
     else:
@@ -862,7 +864,7 @@ def in_progress_observer_dirs():
         return []
     out = []
     for d in OBSERVER.iterdir():
-        if d.is_dir() and not any((d / f).exists() for f in ("errors_end.txt", "CRASH", "FAILED")):
+        if d.is_dir() and not any((d / f).exists() for f in ("errors_end.txt", "CRASH", "FAILED", "DISKFULL")):
             newest = max((p.stat().st_mtime for p in [d, d / "saves", d / "progress.txt"] if p.exists()), default=0)
             if time.time() - newest < RUNNING_GRACE:
                 out.append(d)

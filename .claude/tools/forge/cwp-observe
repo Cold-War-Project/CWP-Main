@@ -11,9 +11,11 @@ export CWP_VIC_MAX_HOLD=${CWP_VIC_MAX_HOLD:-$(( (END - 1946) * 240 + 3600 ))}   
 cwp-vic lock --owner-pid $$ --wait "${CWP_OBSERVE_WAIT:-14400}" ${CWP_OBSERVE_PRIORITY:+--priority} "observer: shared run $(basename "$WT") to $END" || exit 1
 trap 'cwp-vic unlock >/dev/null' EXIT
 # Disk guard: a run writes 1-3 GB (save copies, dumps) and the game's own autosaves fail on a full disk.
-free_gb() { df -P --block-size=1G "$HOME/forge" | awk 'NR==2{print $4}'; }
+free_gb() { local v; v=$(df -P --block-size=1G "$HOME/forge" 2>/dev/null | awk 'NR==2{print $4}'); [[ $v =~ ^[0-9]+$ ]] && echo "$v" || echo 999; }
 if (( $(free_gb) < ${CWP_OBSERVE_MIN_FREE_GB:-10} )); then
-  echo "cwp-observe: only $(free_gb) GB free (need ${CWP_OBSERVE_MIN_FREE_GB:-10}); not starting. Free space first, never by deleting run outputs." >&2; exit 4; fi
+  echo "cwp-observe: only $(free_gb) GB free (need ${CWP_OBSERVE_MIN_FREE_GB:-10}); not starting. Free space first, never by deleting run outputs." >&2
+  [[ -n "${3:-}" ]] && { mkdir -p "$3"; echo "not started: low disk" > "$3/DISKFULL"; }   # closes a cwp-runs booking at once
+  exit 4; fi
 # CWP_OBSERVE_REBUILD=1: rebuild the integration tree from the staging queue only once the game is ours,
 # so the round tests the newest heads no matter how long it waited in line.
 [[ -n "${CWP_OBSERVE_REBUILD:-}" ]] && cwp-integrate build > "$HOME/forge/jobs/last-rebuild.txt" 2>&1
@@ -53,7 +55,7 @@ last=""; t0=$SECONDS
 while (( SECONDS - t0 < MAXS )); do
   sleep 120
   cwp-vic status | grep -q "game:    pid" || { echo "GAME NOT RUNNING (crash?) at $((SECONDS-t0))s" | tee "$OUT/CRASH"; break; }
-  (( $(free_gb) < 3 )) && { echo "DISK NEARLY FULL ($(free_gb) GB free): stopping the run before saves fail" | tee "$OUT/FAILED"; break; }
+  (( $(free_gb) < 3 )) && { echo "DISK NEARLY FULL ($(free_gb) GB free): stopping the run before saves fail" | tee "$OUT/DISKFULL"; break; }
   clear_popups
   f=$(ls -t "$SAVES"/autosave*.v3 2>/dev/null | head -1)
   # No autosave newer than our game start after 8 minutes: the game never started (popup, wrong click).
