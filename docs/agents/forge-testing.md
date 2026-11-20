@@ -1,6 +1,6 @@
 # Testing on Forge: launch, error.log, observer runs, performance
 
-Forge is the Ubuntu machine with Victoria 3 1.15.1 installed (GTX 1080, 8 GB, X11 `:0`). Agents launch the game themselves; nobody needs to ask Jack to test. Only **one** Victoria 3 may run at a time, and many agents share the machine, so every game session goes through the lock.
+Forge is the shared Linux test machine with Victoria 3 1.15.1 installed (one GPU, X11 display `:0`). Agents launch the game themselves; nobody needs to ask Jack to test. Only **one** Victoria 3 may run at a time, and many agents share the machine, so every game session goes through the lock.
 
 ## Paths on Forge
 
@@ -30,7 +30,7 @@ cwp-vic unlock                                   # stops the game you launched, 
 
 Rules:
 
-- **Never write the mod path with a trailing slash.** (The two New Game crashes to desktop on 16 Nov 2026 were this: with replace_paths ignored, vanilla's 1836 military formations and government types ran against CWP tags and the game segfaulted. With the mod loaded correctly, New Game starts fine.) With `"path": "/home/jack/forge/worktrees/x/"` the mod still mounts, but its `replace_paths` are silently ignored: vanilla files load beside the mod's and error.log fills with thousands of lines (2026-11-16: 11,602 lines with the slash, 18 without, same commit). `cwp-vic link` writes the path correctly, and the canary at the end of `cwp-vic errors` catches it.
+- **Never write the mod path with a trailing slash.** (The two New Game crashes to desktop on 16 Nov 2026 were this: with replace_paths ignored, vanilla's 1836 military formations and government types ran against CWP tags and the game segfaulted. With the mod loaded correctly, New Game starts fine.) With `"path": "<home>/forge/worktrees/x/"` the mod still mounts, but its `replace_paths` are silently ignored: vanilla files load beside the mod's and error.log fills with thousands of lines (2026-11-16: 11,602 lines with the slash, 18 without, same commit). `cwp-vic link` writes the path correctly, and the canary at the end of `cwp-vic errors` catches it.
 
 - **Economy runs come first** (Jack's rule). `econ_bench` runners (from `tools/econ-bench` 637e0a82f) play at least 15 minutes after their game starts before yielding to a normal ticket (about 5 to 7 game years), and yield to another econ run only after 30 minutes. So a normal staging round can wait about 25 minutes behind a fresh econ run. `--priority` preempts at once: use it only for genuinely urgent work and never to jump an econ run without the econ thread agreeing.
 - Requests are served **first come, first served** (`cwp-vic queue` lists them). `--priority` jumps the normal line; use it only when the coordinator asks. Killing a waiting `cwp-vic lock` removes its place in line cleanly. To move someone's request forward, use `cwp-vic bump <pid|text>`; never rename queue files by hand (a waiter that can't find its ticket stalls the whole line).

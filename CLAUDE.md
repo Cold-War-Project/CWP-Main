@@ -8,7 +8,7 @@ Total-overhaul mod for **Victoria 3 1.15.1**. Campaign runs **1946.1.1 to 2046.1
 
 ## Paths
 
-Forge (Ubuntu, where agents work) and Windows (the original setup, still used by human devs):
+Forge (the Linux test machine where agents work) and Windows (the original setup, still used by human devs):
 
 | What | Forge | Windows |
 |---|---|---|

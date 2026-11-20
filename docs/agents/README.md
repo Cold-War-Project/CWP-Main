@@ -10,6 +10,7 @@ Start with [`AGENTS.md`](../../AGENTS.md) at the repo root, then the file for yo
 | [forge-testing.md](forge-testing.md) | Launching the game, error.log, observer runs, performance, baselines |
 | [run-requests.md](run-requests.md) | You need a test run (smoke, observe or A/B measure): request it with `cwp-runs` instead of queueing your own game |
 | [landing-work.md](landing-work.md) | Getting your branch tested and onto CWP2 (local branches, staging queue, no PRs) |
+| [privacy.md](privacy.md) | Before your first commit: what must never reach the public repo, and the pre-push check |
 | [advisor.md](advisor.md) | You hit an ambiguous call and want a second opinion or an audit |
 | [instruction-changes.md](instruction-changes.md) | You work the old Windows way, or wonder why `CLAUDE.md` / `.claude/` differ from Maddie's originals |
 | [je-design-patterns.md](je-design-patterns.md) | Designing a journal entry: shapes beyond bars, condition lists, missions, twists |
