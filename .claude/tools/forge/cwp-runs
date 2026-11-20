@@ -58,7 +58,7 @@ STAGING_UNTIL = int(os.environ.get("CWP_RUNS_STAGING_UNTIL", 1952))   # a stagin
 BATCH_CAP = int(os.environ.get("CWP_RUNS_BATCH_CAP", 1962))           # longer requests get their own run
 # A probe this short (game years) goes first; --quick is allowed up to QUICK_MAX_YEARS. Both stay below a
 # staging round's length, so a quick build can never pass for one.
-QUICK_MAX_YEARS = min(int(os.environ.get("CWP_RUNS_QUICK_MAX_YEARS", 4)), STAGING_UNTIL - 1 - 1946)
+QUICK_MAX_YEARS = min(int(os.environ.get("CWP_RUNS_QUICK_MAX_YEARS", 4)), STAGING_UNTIL - 1 - START_YEAR)
 QUICK_YEARS = min(int(os.environ.get("CWP_RUNS_QUICK_YEARS", 2)), QUICK_MAX_YEARS)
 RUNNING_GRACE = 20 * 60   # an observer folder without an end marker, touched this recently, is still running
 
@@ -820,7 +820,10 @@ def cmd_done(a):
         if not row:
             print(f"cwp-runs: {d} is not finished (or has no resolvable commit); not indexed", file=sys.stderr)
             continue
-        snap = snapshot_integration(row)
+        quick_build = any(rec.get("step", {}).get("quick") and rec["outdir"] == str(d) for rec in all_started())
+        snap = None if quick_build else snapshot_integration(row)
+        if quick_build and row.get("kind") == "batch":
+            print("quick build: not a staging round, so its build state is not kept for landing")
         if snap:
             print(f"build state kept: CWP_INTEGRATION={snap} cwp-integrate land <items>")
         if not a.no_ingest:
@@ -911,6 +914,17 @@ def cmd_show(a):
 
 # ---------------------------------------------------------------- planning
 
+def all_started():
+    d = RUNS / "started"
+    out = []
+    for f in sorted(d.glob("*.json")) if d.exists() else []:
+        try:
+            out.append(json.loads(f.read_text()))
+        except ValueError:
+            pass
+    return out
+
+
 def load_started():
     """Steps handed out by `cwp-runs start` whose run has not been catalogued yet (in flight)."""
     d = RUNS / "started"
@@ -970,11 +984,13 @@ def plan(cat, inflight=None):
 
     quick_end = START_YEAR + QUICK_YEARS
 
-    def flying(gh, until):
-        # A long run in flight doesn't count for a short probe: the probe would wait for it.
+    def flying(gh, until, quick=None):
+        # A long run in flight doesn't count for a probe: the probe would wait for it.
+        quick = until <= quick_end if quick is None else quick
+        limit = START_YEAR + QUICK_MAX_YEARS
         return sum(1 for rec in inflight if rec["step"]["type"] in ("arm", "solo") and rec["step"].get("gh") == gh
                    and rec["step"]["until"] >= until
-                   and (until > quick_end or rec["step"]["until"] <= quick_end)
+                   and (not quick or rec["step"]["until"] <= limit)
                    and not any(o == rec["outdir"] or o.startswith(rec["outdir"] + "/")
                                for o in counted if (cat[o].get("years_reached") or 0) >= until))
 
@@ -1040,12 +1056,13 @@ def plan(cat, inflight=None):
     # solo (a detached tree of its branch head), since the tree is busy.
     quick = [r for r in riders if is_quick(r) and resolve(f"refs/heads/{r['branch']}")]
     riders = [r for r in riders if r not in quick]
-    quick = [r for r in quick if not flying(r["gh"], r["until"])]   # already running solo
+    quick = [r for r in quick if not flying(r["gh"], r["until"], quick=True)]   # already running solo
     staging_due = [br for br, _ in staging if not in_flight_batch(br, full_only=True)]
     quick_steps = []
     # The integration tree goes to a quick batch only when no full batch is due (no staging branch or other
     # rider waiting), so probes never hold back a staging round and a quick build never holds a staging branch.
-    if quick and not fly_batches and not staging_due and not [r for r in riders if r["until"] <= BATCH_CAP]:
+    if quick and not fly_batches and not staging_due and not [r for r in riders if r["until"] <= BATCH_CAP
+                                                              and resolve(f"refs/heads/{r['branch']}")]:
         qitems = list(dict.fromkeys(r["branch"] for r in quick))
         quick_steps.append({"type": "batch", "items": qitems, "until": max(r["until"] for r in quick),
                             "serves": [r["id"] for r in quick], "staging": [], "quick": True})
