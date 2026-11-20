@@ -150,19 +150,28 @@ ai_strategy_default = {
 			# Capacity first (institutions thread, 2026-11-19): Administration is the tax capacity that
 			# funds every other institution, so a state that has little of it or is short of bureaucracy
 			# puts it at the top of the list and cuts it last. Political strategies add 100 on top.
+			# Only where another level buys revenue (a state taxes past its capacity) and the budget can
+			# carry it (2026-11-20): a broke, populous state paid ~13k bureaucracy, about 15% of its income
+			# in offices, per level with no tax gain (PRC 1959-61) and kept defaulting.
 			value = 10
 			if = {
-				limit = { institution_investment_level = { institution = institution_administration value < 3 } }
-				add = 300
-			}
-			if = {
 				limit = {
-					OR = {
-						approaching_bureaucracy_shortage = yes
-						bureaucracy < 0
-					}
+					cwp_ai_state_affordable = yes
+					cwp_ai_tax_capacity_binds = yes
 				}
-				add = 150
+				if = {
+					limit = { institution_investment_level = { institution = institution_administration value < 3 } }
+					add = 300
+				}
+				if = {
+					limit = {
+						OR = {
+							approaching_bureaucracy_shortage = yes
+							bureaucracy < 0
+						}
+					}
+					add = 150
+				}
 			}
 		}
 		institution_judiciary = {
@@ -1183,6 +1192,16 @@ ai_strategy_default = {
 			max = {
 				value = income
 				divide = 2500
+			}
+			# In default or borrowing past a quarter of the credit limit, the budget terms may claim about a
+			# quarter of income, not all of it (institutions thread, 2026-11-20): the PRC spent 0.9-1.2x its
+			# income on construction sectors while in debt and defaulted five times by 1962.
+			if = {
+				limit = { cwp_ai_state_affordable = no }
+				max = {
+					value = income
+					divide = 10000
+				}
 			}
 			min = 0
 		}
