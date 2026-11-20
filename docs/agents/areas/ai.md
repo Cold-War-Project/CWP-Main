@@ -70,6 +70,13 @@ Evidence is from the shared 1946-1990 observer run f30e83cd6 unless stated.
    (observer/ai-empty-b3ff8e3a7): buildings under 10% staffed 2,258 (1949.3) to 1,611 (1951.7);
    baseline runs 2,200-2,700 at 1948-50.
 
+9. (institutions thread, branch `feat/institution-capacity`) `common/defines/cwp_ai.txt`:
+   `MAX_INSTITUTION_SPENDING_BASE` 0.015 -> 0.15 and `MAX_INSTITUTION_SPENDING_PER_INSTITUTION` 0.005 -> 0.05.
+   At vanilla values the cap (share of weekly GDP the AI spends on institutions) sat below what every developed
+   state already spent, so the AI never raised an institution and cut about 65 levels a year. The institution
+   score logic itself (`institution_scores`, capacity-conditional) lives in `00_default_strategy.txt`; see
+   [institutions.md](institutions.md).
+
 ## Workshop AI mods
 
 - Anbeeld's Revision of AI (MIT, last for 1.3.6) switches off vanilla money spending, tax changes
