@@ -162,6 +162,9 @@ cmd_land() {
     fi
   done
   (( ${#landed[@]} )) || { echo "nothing landed"; return 0; }
+  # The repo is public: refuse to publish home paths, session trailers, tokens (docs/agents/privacy.md).
+  ( cd "$LANDWT" && python3 -I .claude/tools/privacy_check.py ) \
+    || die "privacy check failed: fix the branch's commits, rebuild, then land again"
   git -C "$LANDWT" push -q origin "HEAD:refs/heads/$BASE" || die "push to $BASE failed ($BASE moved? rerun land)"
   echo "landed on $BASE: ${landed[*]} (now $(git -C "$LANDWT" rev-parse --short HEAD))"
 }

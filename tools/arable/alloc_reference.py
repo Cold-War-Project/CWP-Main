@@ -1,8 +1,9 @@
-import json,re,sys,collections; sys.path.insert(0,'/home/jack/forge/worktrees/econ-bench-ai')
+# Usage: python3 alloc_reference.py <base 1946.11.1.v3 save>  (reads region_map.json and cropland_adj.json from the current folder)
+import json,re,sys,collections,os; sys.path.insert(0,os.path.join(os.path.dirname(os.path.abspath(__file__)),"..",".."))
 from tools.econ_bench import save as s
 d=json.load(open('region_map.json')); C=json.load(open('cropland_adj.json')); orig=d['orig']; M=d['map']
 # need from base save (original arable)
-t=s.read_text('/home/jack/forge/observer/sol-base-c5ba29089/saves/1946.11.1.v3')
+t=s.read_text(sys.argv[1])  # e.g. ~/forge/observer/sol-base-c5ba29089/saves/1946.11.1.v3
 reg={}
 for i,b in s.db_entries(s.top_section(t,'states')):
   r=re.search(r'\n\tregion="?(STATE_\w+)',b); reg[i]=r.group(1) if r else None
