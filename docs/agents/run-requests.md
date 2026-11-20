@@ -59,6 +59,10 @@ The result is `~/forge/runs/results/<id>.md`. It holds the run folders (dumps, e
 
 `cwp-runs plan` prints the next runs. It is deterministic: it follows from the requests, the catalog, the staging queue and the steps already in flight. Before planning it refreshes the catalog and marks requests served or expired.
 
+0. **Quick probes go first** (standing rule from 20 Nov 2026, after a one-year probe had to be placed by hand ahead of about 30 long runs). A probe is a request that ends 2 game years or less after the 1946 start (`--until 1948` or earlier, any kind), or a smoke or observe request submitted with `--quick` (allowed up to `--until 1950`).
+   - **Smoke and observe probes** share a short batch of their own (`CWP2` plus their branches, run to the latest probe year) while the integration tree is free. While a batch is in flight, each probe runs solo on a detached tree of its branch head. A quick batch is not a staging round: its staging branches stay in the next full batch.
+   - **Short measure arms** move to the front too. They are never merged into a long arm of the same build, and a long arm never stretches them.
+   - This fits the econ_bench agreement of 18 Nov 2026 (benchmark runs yield the game to other work after 15 minutes of play), since a probe costs about 15 minutes including the load.
 1. **Econ measure arms first** (Jack's rule). The econ thread can pass `--yield-ok` to let the batch go ahead.
 2. **The staging batch.** This is `CWP2` plus every staging-queue branch plus every pending smoke and observe request, built with explicit items. It runs to the latest `until` requested, and to at least 1952 while there are staging branches (a staging round's usual length), capped at 1962. Longer observe requests get a solo run.
 3. **Other measure arms, oldest first.** The two arms of one test alternate. When two requests need the same build (for example both need a `CWP2` baseline), one run serves both. A cwp-observe run then extends to the later year. An econ-priority econ_bench run is shared with a non-econ request only if that doesn't make it longer; it then runs as cwp-observe, so both threads get their data.
