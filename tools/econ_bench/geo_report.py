@@ -80,7 +80,28 @@ def evaluate(runs: dict) -> dict:
             who = {t: gc[t] for t in ("USA", "RUS", "GBR", "FRA", "GER", "DDR", "ITA", "JAP", "PRC", "ROC", "HND", "PAK", "IDS", "EGY", "TUR", "BRZ", "ARG", "MEX") if t in gc}
             break
     from . import capacity as CAP
-    return {"capacity": CAP.evaluate(runs), "ig_check": igcheck, "who_rules": who, "figures_by_year": figs, "years": years, "checks": checks, "counts": counts, "first_nuclear": first, "outcomes": outcomes}
+    # Politics: ruler (with how long they have ruled), governing IGs, key laws, per key country.
+    KEY = ("USA", "RUS", "GBR", "FRA", "GER", "ITA", "JAP", "PRC", "ROC", "HND", "PAK", "IDS", "EGY", "TUR", "PER", "BRZ", "ARG", "MEX")
+    politics, ruler_ig = {}, {}
+    for rn, r in runs.items():
+        since, rows = {}, {}
+        for y in sorted(r):
+            g = r[y].get("geo", {}).get("countries", {})
+            for t in KEY:
+                c = g.get(t)
+                if not c or not c.get("ruler"):
+                    continue
+                ru = c["ruler"]
+                if since.get(t, (None,))[0] != ru["id"]:
+                    since[t] = (ru["id"], y)
+                rows.setdefault(t, {})[y] = {"ruler": ru["name"], "ig": ru["ig"], "since": since[t][1],
+                                             "gov": c.get("government_igs", []), "laws": c.get("key_laws", {})}
+                if y % 10 == 0 or y == 1952:
+                    d = ruler_ig.setdefault((t, y), {})
+                    d[ru["ig"]] = d.get(ru["ig"], 0) + 1
+        if rows and not politics:
+            politics = rows
+    return {"politics": politics, "ruler_ig": ruler_ig, "capacity": CAP.evaluate(runs), "ig_check": igcheck, "who_rules": who, "figures_by_year": figs, "years": years, "checks": checks, "counts": counts, "first_nuclear": first, "outcomes": outcomes}
 
 
 def markdown(ev: dict) -> list[str]:
