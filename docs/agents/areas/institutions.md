@@ -164,7 +164,7 @@ Test `observer/20261119-1726-f17eaa062` (this branch) against baseline `observer
 | Spearman, level sum vs GDP per capita | 0.64 | 0.81 | 0.72 | 0.81 |
 | Top-minus-bottom quintile gap (levels) | 53.5 | **40.9** (closing) | 52.7 | **58.2** (widening) |
 | GDP per capita, top fifth / bottom fifth | 33.6 | 50.0 | 35.6 | 53.1 |
-| AI levels raised / cut, 1946-60 | | +186 / -927 | | +1084 / -495 |
+| AI levels raised / cut, 1946-60 | | +186 / -927 | | +1084 / -475 |
 | World GDP (M) | 3403 | 6661 | 3349 | 7220 |
 
 | Country, 1946 -> 1960 | base: levels, GDP, SoL | test: levels, GDP, SoL |
