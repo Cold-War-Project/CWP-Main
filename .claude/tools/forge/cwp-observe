@@ -41,6 +41,10 @@ done
 MAXS=${CWP_OBSERVE_MAX_SECONDS:-$(( (END - 1946) * 240 + 1800 ))}   # ~4 min per game year at max speed, plus slack
 cwp-vic perf "$MAXS" 30 > "$OUT/perf_path.txt" 2>&1 &
 PERF=$!
+# Stall watchdog: a stray click or key from another session can open a panel or pause the game.
+# Autosaves come every 15-30 s at speed 5, so none for STALL seconds means the game is stuck:
+# screenshot it, then try a different nudge every 2 min (close a panel, toggle pause); give up after 8.
+STALL=${CWP_OBSERVE_STALL_SECONDS:-600}; nudges=0
 last=""; t0=$SECONDS
 while (( SECONDS - t0 < MAXS )); do
   sleep 120
@@ -51,6 +55,15 @@ while (( SECONDS - t0 < MAXS )); do
   if [[ ! -f "$OUT/.last" ]] && (( SECONDS - t0 > 480 )) && ! [[ -n "$f" && "$f" -nt "$OUT/.started" ]]; then
     vic-shot > "$OUT/nostart_shot.txt"; echo "GAME DID NOT START: no autosave after 8 min (see nostart_shot.txt)" | tee "$OUT/FAILED"; break; fi
   [[ -z "$f" || ! "$f" -nt "$OUT/.started" ]] && continue
+  if [[ -f "$OUT/.last" ]] && (( $(date +%s) - $(stat -c %Y "$f") > STALL )); then
+    nudges=$((nudges + 1)); vic-shot > "$OUT/stall${nudges}_shot.txt"
+    if (( nudges > 8 )); then echo "GAME STALLED: no new autosave for ${STALL}s after 8 nudges (see stall*_shot.txt)" | tee "$OUT/FAILED"; break; fi
+    case $(( (nudges - 1) % 4 )) in 0) keys="Escape space" ;; 1) keys="space" ;; 2) keys="Escape" ;; *) keys="Escape space" ;; esac
+    for k in $keys; do vic-key "$k" >/dev/null; sleep 1; done
+    echo "$(date +%T) STALL: no new autosave for $(( $(date +%s) - $(stat -c %Y "$f") ))s; nudge $nudges ($keys)" | tee -a "$OUT/STALLS" >> "$OUT/progress.txt"
+    continue
+  fi
+  nudges=0
   [[ "$f" == "$last" && ! "$f" -nt "$OUT/.last" ]] && continue
   touch "$OUT/.last"; last=$f
   d=$(head -c 4000 "$f" | grep -m1 -o 'game_date=[0-9.]*' | cut -d= -f2); [[ -z "$d" ]] && d=$(grep -m1 -o '^date=[0-9.]*' "$f" | cut -d= -f2)

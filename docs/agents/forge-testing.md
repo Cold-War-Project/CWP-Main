@@ -108,6 +108,10 @@ systemctl --user status cwp-job-my-run                                 # is it s
 
 Safety nets in `cwp-vic`: a runner that takes the lock with `--owner-pid $$` (cwp-observe does) releases it the moment the runner dies, and whoever takes the lock next stops any game still running, since it can only be an orphan.
 
+While such a runner holds the lock, `vic-click` and `vic-key` refuse to act for any process outside it (they are a guard, `vic-guard`, in front of the `/usr/local/bin` tools). So never drive the game without the lock: a stray click or console command pauses or derails another thread's run. `VIC_GUARD_OFF=1` overrides it for a deliberate rescue. Refusals are logged in `~/forge/jobs/vic-guard-refusals.log`.
+
+`cwp-observe` also has a stall watchdog. If no new autosave appears for 10 minutes (`CWP_OBSERVE_STALL_SECONDS`), it takes a screenshot and tries closing a panel and toggling pause, with a different nudge every two minutes. Each nudge is logged in `STALLS` in the run folder. After eight nudges it gives up and writes `FAILED`.
+
 ## GUI screenshot checks (batched)
 
 Every GUI-facing change is screenshot-checked in game before it lands (Jack, 2026-11-18). To keep game slots for economy runs, checks share one launch:
