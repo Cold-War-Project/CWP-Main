@@ -11,7 +11,7 @@ and turns requests into as few runs as possible:
   measure  quantitative A/B (GDP, debt, war counts)          -> solo arms, >=3 runs each, existing runs reused
 
 Commands (docs: docs/agents/run-requests.md):
-  cwp-runs submit --thread T --kind K --branch B --until Y [--replicates N] [--baseline auto|<sha>|accept:<GH>:<why>]
+  cwp-runs submit --thread T --kind K --branch B --until Y [--quick] [--replicates N] [--baseline auto|<sha>|accept:<GH>:<why>]
                   [--session ID] [--note TEXT] [--pin|--no-pin] [--underpowered] [--yield-ok] [--hours H]
   cwp-runs baselines <branch|sha> [--until Y]   runs that already sample the branch's base (CWP2 merge-base)
   cwp-runs runs [--gh GH | --sha SHA | --branch B]  catalog rows
@@ -53,11 +53,13 @@ QUEUEF = Path(os.environ.get("CWP_STAGING_QUEUE", FORGE / "staging-queue.txt"))
 ECON_BENCH = Path(os.environ.get("CWP_ECON_BENCH", FORGE / "worktrees/econ-bench"))
 INTEGRATION = Path(os.environ.get("CWP_INTEGRATION", FORGE / "worktrees/integration"))
 APPMANIFEST = Path.home() / ".steam/steam/steamapps/appmanifest_529340.acf"
+START_YEAR = 1946
 STAGING_UNTIL = int(os.environ.get("CWP_RUNS_STAGING_UNTIL", 1952))   # a staging round's usual end year
 BATCH_CAP = int(os.environ.get("CWP_RUNS_BATCH_CAP", 1962))           # longer requests get their own run
-START_YEAR = 1946
-QUICK_YEARS = int(os.environ.get("CWP_RUNS_QUICK_YEARS", 2))     # a probe this short (game years) goes first
-QUICK_MAX_YEARS = int(os.environ.get("CWP_RUNS_QUICK_MAX_YEARS", 4))  # --quick is allowed up to this length
+# A probe this short (game years) goes first; --quick is allowed up to QUICK_MAX_YEARS. Both stay below a
+# staging round's length, so a quick build can never pass for one.
+QUICK_MAX_YEARS = min(int(os.environ.get("CWP_RUNS_QUICK_MAX_YEARS", 4)), STAGING_UNTIL - 1 - 1946)
+QUICK_YEARS = min(int(os.environ.get("CWP_RUNS_QUICK_YEARS", 2)), QUICK_MAX_YEARS)
 RUNNING_GRACE = 20 * 60   # an observer folder without an end marker, touched this recently, is still running
 
 # Paths that cannot change the simulation. Everything else (common/, events/, history via common/history,
@@ -903,7 +905,8 @@ def cmd_show(a):
         prog = (f"t {len(d['treatment'])}/{req['replicates']} b {len(d['baseline'])}/"
                 f"{req.get('replicates_baseline', req['replicates'])}"
                 if req["kind"] == "measure" else f"{len(d['served'])} run(s)")
-        print(f"{req['state']:9} {req['kind']:8} {req['until']}  {req['id']:32} {req['branch']:34} {prog}")
+        q = " quick" if is_quick(req) else ""
+        print(f"{req['state']:9} {req['kind']:8} {req['until']}  {req['id']:32} {req['branch']:34} {prog}{q}")
 
 
 # ---------------------------------------------------------------- planning
@@ -965,9 +968,13 @@ def plan(cat, inflight=None):
 
     counted = {o for o, r in cat.items() if sample_ok(r, 0)}
 
+    quick_end = START_YEAR + QUICK_YEARS
+
     def flying(gh, until):
+        # A long run in flight doesn't count for a short probe: the probe would wait for it.
         return sum(1 for rec in inflight if rec["step"]["type"] in ("arm", "solo") and rec["step"].get("gh") == gh
                    and rec["step"]["until"] >= until
+                   and (until > quick_end or rec["step"]["until"] <= quick_end)
                    and not any(o == rec["outdir"] or o.startswith(rec["outdir"] + "/")
                                for o in counted if (cat[o].get("years_reached") or 0) >= until))
 
@@ -1033,15 +1040,17 @@ def plan(cat, inflight=None):
     # solo (a detached tree of its branch head), since the tree is busy.
     quick = [r for r in riders if is_quick(r) and resolve(f"refs/heads/{r['branch']}")]
     riders = [r for r in riders if r not in quick]
+    quick = [r for r in quick if not flying(r["gh"], r["until"])]   # already running solo
+    staging_due = [br for br, _ in staging if not in_flight_batch(br, full_only=True)]
     quick_steps = []
-    if quick and not fly_batches:
+    # The integration tree goes to a quick batch only when no full batch is due (no staging branch or other
+    # rider waiting), so probes never hold back a staging round and a quick build never holds a staging branch.
+    if quick and not fly_batches and not staging_due and not [r for r in riders if r["until"] <= BATCH_CAP]:
         qitems = list(dict.fromkeys(r["branch"] for r in quick))
         quick_steps.append({"type": "batch", "items": qitems, "until": max(r["until"] for r in quick),
                             "serves": [r["id"] for r in quick], "staging": [], "quick": True})
     else:
         for r in quick:
-            if flying(r["gh"], r["until"]):
-                continue
             quick_steps.append({"type": "solo", "serves": [(r["id"], "solo")], "thread": r["thread"],
                                 "sha": resolve_request_sha(r), "gh": r["gh"], "branch": r["branch"],
                                 "until": r["until"], "econ_only": False, "econ_priority": False, "quick": True})
@@ -1059,8 +1068,7 @@ def plan(cat, inflight=None):
             items.append(r["branch"])
             seen.add(r["branch"])
         serves.append(r["id"])
-    tree_busy = fly_batches or any(st["type"] == "batch" for st in quick_steps)
-    if items and tree_busy:   # one integration tree: the next batch waits until this one is catalogued
+    if items and fly_batches:   # one integration tree: the next batch waits until this one is catalogued
         steps.append({"type": "wait-batch", "items": items, "serves": serves})
     elif items:
         end = max([STAGING_UNTIL] * bool(set(items) & {b for b, _ in staging}) + [r["until"] for r in fit if r["id"] in serves])
@@ -1115,7 +1123,7 @@ def step_commands(st, token, outdir):
 def describe(i, st):
     q = " [quick]" if st.get("quick") else ""
     if st["type"] == "wait-batch":
-        return [f"{i}. NEXT BATCH (after the batch before it is done; one integration tree): " + ", ".join(st["items"])]
+        return [f"{i}. NEXT BATCH (after the batch in flight is done; one integration tree): " + ", ".join(st["items"])]
     if st["type"] == "batch":
         lines = [f"{i}. BATCH{q} to {st['until']}: {BASE} + {len(st['items'])} branch(es)"]
         lines += [f"     {b}" + ("   [staging]" if b in st["staging"] else "") for b in st["items"]]
