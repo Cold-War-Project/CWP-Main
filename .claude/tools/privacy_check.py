@@ -20,9 +20,9 @@ import sys
 
 # Content of added lines and commit messages.
 LINE_PATTERNS = [
-    ("home path", re.compile(r"/home/(?!(?:user|username|you|me|runner)\b)[A-Za-z_][\w-]*")),
-    ("home path", re.compile(r"/Users/(?!(?:user|username|you|Shared)\b)[A-Za-z][\w.-]*")),
-    ("home path", re.compile(r"\b[A-Za-z]:[\\/]+Users[\\/]+(?!(?:user|username|you|Public)\b)[A-Za-z][\w.-]*", re.I)),
+    ("home path", re.compile(r"/home/(?!(?:user|username|you|me|runner)(?![\w.-]))[A-Za-z_][\w-]*")),
+    ("home path", re.compile(r"/Users/(?!(?:user|username|you|Shared)(?![\w.-]))[A-Za-z][\w.-]*", re.I)),
+    ("home path", re.compile(r"\b[A-Za-z]:[\\/]+Users[\\/]+(?!(?:user|username|you|Public)(?![\w.-]))[A-Za-z][\w.-]*", re.I)),
     ("Claude session link", re.compile(r"claude\.ai/(?:code|chat|project)/\S+")),
     ("Claude session id", re.compile(r"\b(?:session|cmsg|chan|user)_01[A-Za-z0-9]{16,}")),
     ("GitHub token", re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,})")),
@@ -39,13 +39,16 @@ LINE_PATTERNS = [
 MESSAGE_PATTERNS = [("session trailer", re.compile(r"^Claude-Session\S*:", re.M | re.I))]
 OK_EMAIL = re.compile(r"(?:^git@github\.com|noreply@anthropic\.com|@users\.noreply\.github\.com|^noreply@github\.com|@example\.(?:com|org)|@paradoxplaza\.com|\.(?:png|jpe?g|gif|svg|dds|webp|tga))$", re.I)
 SKIP_FILES = re.compile(r"\.(?:dds|png|tga|jpg|jpeg|gif|webp|ttf|otf|fnt|mesh|anim|wav|ogg|bank|pyc)$", re.I)
+# Not generated as text at all (big binaries, no paths inside); SKIP_FILES drops any that slip by.
+MEDIA_EXCLUDE = [f":(top,exclude,glob)**/*.{e}" for e in ("dds", "png", "tga", "jpg", "jpeg", "gif", "webp", "ttf", "otf",
+                                                       "fnt", "mesh", "anim", "wav", "ogg", "bank", "bin", "bmp", "pyc")]
 ALLOW_MARK = "privacy-ok"
 ZERO = "0" * 40
 
 
 def git(*args, check=True):
     # Fixed diff/path settings so a user's git config cannot hide paths from the parser.
-    cfg = ["-c", "core.quotePath=false", "-c", "diff.noprefix=false", "-c", "diff.mnemonicPrefix=false"]
+    cfg = ["-c", "core.quotePath=false", "-c", "diff.noprefix=false", "-c", "diff.mnemonicPrefix=false", "-c", "log.showSignature=false"]
     r = subprocess.run(["git", *cfg, *args], capture_output=True, text=True, errors="replace")
     if check and r.returncode:
         sys.exit(f"privacy_check: git {' '.join(args)} failed: {r.stderr.strip()}")
@@ -95,8 +98,11 @@ def scan_commits(rev_args):
         parents = len(git("rev-list", "--parents", "-n", "1", sha).split()) - 1
         # A merge shows only what its resolution added (--remerge-diff): commits it brings in
         # are scanned one by one above, or are already public.
-        diff = git("show", "--format=", "--no-color", "--no-ext-diff", "--no-relative", "-U0",
-                   "--src-prefix=a/", "--dst-prefix=b/", *(["--remerge-diff"] if parents > 1 else []), sha)
+        if parents > 2:
+            findings.append((short, "<octopus merge>", "not checked", "split it into two-parent merges"))
+            continue
+        diff = git("show", "--format=", "--no-color", "--no-ext-diff", "--text", "--no-textconv", "--no-relative", "-U0",
+                   "--src-prefix=a/", "--dst-prefix=b/", *(["--remerge-diff"] if parents > 1 else []), sha, "--", ":/", *MEDIA_EXCLUDE)
         path, header = None, False
         for ln in diff.splitlines():
             if ln.startswith("diff --git ") or ln.startswith("diff --cc ") or ln.startswith("diff --combined "):
@@ -120,7 +126,8 @@ def scan_commits(rev_args):
 
 def scan_tree(ref, paths):
     findings = []
-    out = git("grep", "-I", "-n", "-E", "-e", ".", ref, "--", *paths, check=False)
+    # -I: text files only (the audit view; pushes are checked with binaries as text).
+    out = git("grep", "-I", "-n", "-E", "-e", ".", ref, "--", *(paths or ["."]), check=False)
     prefix = f"{ref}:"
     for ln in out.splitlines():
         if ln.startswith(prefix):

@@ -20,7 +20,7 @@ Names of historical people in game content are content, not personal data.
 
 `.claude/tools/privacy_check.py` scans what a push would publish: added lines, commit messages and author emails (an address already in origin's history is not new exposure). It runs:
 
-- as a git **pre-push hook** in the shared clone on Forge (`.git/hooks/pre-push` with its own copy of the checker), so every worktree and every push is covered once it is installed. Install it, and re-install after any change to `privacy_check.py`, with `.claude/tools/forge/pre-push --install` from a worktree that has the file;
+- as a git **pre-push hook** in the shared clone on Forge (`.git/hooks/pre-push` with its own copy of the checker), so every push from any worktree is checked once it is installed (octopus merges are refused, not checked). Install it, and re-install after any change to `privacy_check.py`, with `.claude/tools/forge/pre-push --install` from a worktree that has the file;
 - in `cwp-integrate land` before it pushes `CWP2` (it uses the installed copy; the installed `~/.local/bin/cwp-integrate` needs updating to get this step);
 - by hand before you queue a branch: `python3 -I .claude/tools/privacy_check.py` (unpushed commits on HEAD), `--range A..B`, or `--tree [REF] [paths]` to audit files at a ref.
 
