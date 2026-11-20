@@ -11,7 +11,7 @@ and turns requests into as few runs as possible:
   measure  quantitative A/B (GDP, debt, war counts)          -> solo arms, >=3 runs each, existing runs reused
 
 Commands (docs: docs/agents/run-requests.md):
-  cwp-runs submit --thread T --kind K --branch B --until Y [--replicates N] [--baseline auto|<sha>|accept:<GH>:<why>]
+  cwp-runs submit --thread T --kind K --branch B --until Y [--quick] [--replicates N] [--baseline auto|<sha>|accept:<GH>:<why>]
                   [--session ID] [--note TEXT] [--pin|--no-pin] [--underpowered] [--yield-ok] [--hours H]
   cwp-runs baselines <branch|sha> [--until Y]   runs that already sample the branch's base (CWP2 merge-base)
   cwp-runs runs [--gh GH | --sha SHA | --branch B]  catalog rows
@@ -53,8 +53,13 @@ QUEUEF = Path(os.environ.get("CWP_STAGING_QUEUE", FORGE / "staging-queue.txt"))
 ECON_BENCH = Path(os.environ.get("CWP_ECON_BENCH", FORGE / "worktrees/econ-bench"))
 INTEGRATION = Path(os.environ.get("CWP_INTEGRATION", FORGE / "worktrees/integration"))
 APPMANIFEST = Path.home() / ".steam/steam/steamapps/appmanifest_529340.acf"
+START_YEAR = 1946
 STAGING_UNTIL = int(os.environ.get("CWP_RUNS_STAGING_UNTIL", 1952))   # a staging round's usual end year
 BATCH_CAP = int(os.environ.get("CWP_RUNS_BATCH_CAP", 1962))           # longer requests get their own run
+# A probe this short (game years) goes first; --quick is allowed up to QUICK_MAX_YEARS. Both stay below a
+# staging round's length, so a quick build can never pass for one.
+QUICK_MAX_YEARS = min(int(os.environ.get("CWP_RUNS_QUICK_MAX_YEARS", 4)), STAGING_UNTIL - 1 - START_YEAR)
+QUICK_YEARS = min(int(os.environ.get("CWP_RUNS_QUICK_YEARS", 2)), QUICK_MAX_YEARS)
 RUNNING_GRACE = 20 * 60   # an observer folder without an end marker, touched this recently, is still running
 
 # Paths that cannot change the simulation. Everything else (common/, events/, history via common/history,
@@ -664,6 +669,9 @@ def cmd_submit(a):
     reps = a.replicates or (3 if measure else 1)
     if measure and reps < 3 and not a.underpowered:
         die("a measurement needs at least 3 runs per arm (AI runs vary); pass --underpowered to accept fewer")
+    if a.quick and (measure or a.until > START_YEAR + QUICK_MAX_YEARS):
+        die(f"--quick is for smoke/observe probes of at most {QUICK_MAX_YEARS} game years "
+            f"(--until {START_YEAR + QUICK_MAX_YEARS} or earlier); probes of {QUICK_YEARS} years or less go first anyway")
     if not measure and a.pin:
         die("--pin is for measure requests: a smoke/observe request rides the batch, which merges the branch head")
     pin = measure if a.pin is None else a.pin
@@ -681,7 +689,7 @@ def cmd_submit(a):
     req = {"id": rid, "thread": a.thread, "session": a.session, "kind": a.kind, "branch": a.branch,
            "sha": sha, "pin": pin, "until": a.until, "replicates": reps,
            "baseline": a.baseline if measure else None, "underpowered": bool(a.underpowered and reps < 3),
-           "yield_ok": a.yield_ok, "note": a.note, "state": "pending", "created": iso(),
+           "yield_ok": a.yield_ok, "quick": bool(a.quick), "note": a.note, "state": "pending", "created": iso(),
            "expires": iso(now() + dt.timedelta(hours=a.hours or (168 if measure else 48))),
            "base_sha": mb, "gh": gameplay_hash(sha), "buildid": game_buildid(), "changed": len(files),
            "gameplay_files": [f for f in files if not is_inert(f)][:200],
@@ -812,7 +820,10 @@ def cmd_done(a):
         if not row:
             print(f"cwp-runs: {d} is not finished (or has no resolvable commit); not indexed", file=sys.stderr)
             continue
-        snap = snapshot_integration(row)
+        quick_build = any(rec.get("step", {}).get("quick") and rec["outdir"] == str(d) for rec in all_started())
+        snap = None if quick_build else snapshot_integration(row)
+        if quick_build and row.get("kind") == "batch":
+            print("quick build: not a staging round, so its build state is not kept for landing")
         if snap:
             print(f"build state kept: CWP_INTEGRATION={snap} cwp-integrate land <items>")
         if not a.no_ingest:
@@ -897,10 +908,22 @@ def cmd_show(a):
         prog = (f"t {len(d['treatment'])}/{req['replicates']} b {len(d['baseline'])}/"
                 f"{req.get('replicates_baseline', req['replicates'])}"
                 if req["kind"] == "measure" else f"{len(d['served'])} run(s)")
-        print(f"{req['state']:9} {req['kind']:8} {req['until']}  {req['id']:32} {req['branch']:34} {prog}")
+        q = " quick" if is_quick(req) else ""
+        print(f"{req['state']:9} {req['kind']:8} {req['until']}  {req['id']:32} {req['branch']:34} {prog}{q}")
 
 
 # ---------------------------------------------------------------- planning
+
+def all_started():
+    d = RUNS / "started"
+    out = []
+    for f in sorted(d.glob("*.json")) if d.exists() else []:
+        try:
+            out.append(json.loads(f.read_text()))
+        except ValueError:
+            pass
+    return out
+
 
 def load_started():
     """Steps handed out by `cwp-runs start` whose run has not been catalogued yet (in flight)."""
@@ -959,9 +982,15 @@ def plan(cat, inflight=None):
 
     counted = {o for o, r in cat.items() if sample_ok(r, 0)}
 
-    def flying(gh, until):
+    quick_end = START_YEAR + QUICK_YEARS
+
+    def flying(gh, until, quick=None):
+        # A long run in flight doesn't count for a probe: the probe would wait for it.
+        quick = until <= quick_end if quick is None else quick
+        limit = START_YEAR + QUICK_MAX_YEARS
         return sum(1 for rec in inflight if rec["step"]["type"] in ("arm", "solo") and rec["step"].get("gh") == gh
                    and rec["step"]["until"] >= until
+                   and (not quick or rec["step"]["until"] <= limit)
                    and not any(o == rec["outdir"] or o.startswith(rec["outdir"] + "/")
                                for o in counted if (cat[o].get("years_reached") or 0) >= until))
 
@@ -988,6 +1017,9 @@ def plan(cat, inflight=None):
             def fits(st):
                 if req["id"] in {x for x, _ in st["serves"]}:
                     return False
+                # A quick probe (<= QUICK_YEARS) never rides a long run, and never stretches into one.
+                if (req["until"] <= START_YEAR + QUICK_YEARS) != (st["until"] <= START_YEAR + QUICK_YEARS):
+                    return False
                 return not st["econ_only"] or econ or req["until"] <= st["until"]
             reuse = next((st for st in planned.get(gh, []) if fits(st)), None)
             if reuse:
@@ -1013,16 +1045,36 @@ def plan(cat, inflight=None):
 
     # The batch: the staging queue plus every pending smoke/observe request that fits under the cap,
     # minus what a batch already in flight covers.
-    def in_flight_batch(branch, created=None):
+    def in_flight_batch(branch, created=None, full_only=False):
         return any(branch in rec["step"]["items"] and (created is None or parse_iso(created) <= parse_iso(rec["started_at"]))
-                   for rec in fly_batches)
+                   and not (full_only and rec["step"].get("quick")) for rec in fly_batches)
 
     riders = [r for r in sorted(reqs, key=lambda r: r["created"]) if r["kind"] in ("smoke", "observe")
               and not evaluate(r, cat)[0] and not in_flight_batch(r["branch"], r["created"])]
+    # Quick probes (<= QUICK_YEARS game years, or --quick) don't wait behind long runs. With the integration
+    # tree free they share a short batch of their own, which runs first; with a batch in flight each runs
+    # solo (a detached tree of its branch head), since the tree is busy.
+    quick = [r for r in riders if is_quick(r) and resolve(f"refs/heads/{r['branch']}")]
+    riders = [r for r in riders if r not in quick]
+    quick = [r for r in quick if not flying(r["gh"], r["until"], quick=True)]   # already running solo
+    staging_due = [br for br, _ in staging if not in_flight_batch(br, full_only=True)]
+    quick_steps = []
+    # The integration tree goes to a quick batch only when no full batch is due (no staging branch or other
+    # rider waiting), so probes never hold back a staging round and a quick build never holds a staging branch.
+    if quick and not fly_batches and not staging_due and not [r for r in riders if r["until"] <= BATCH_CAP
+                                                              and resolve(f"refs/heads/{r['branch']}")]:
+        qitems = list(dict.fromkeys(r["branch"] for r in quick))
+        quick_steps.append({"type": "batch", "items": qitems, "until": max(r["until"] for r in quick),
+                            "serves": [r["id"] for r in quick], "staging": [], "quick": True})
+    else:
+        for r in quick:
+            quick_steps.append({"type": "solo", "serves": [(r["id"], "solo")], "thread": r["thread"],
+                                "sha": resolve_request_sha(r), "gh": r["gh"], "branch": r["branch"],
+                                "until": r["until"], "econ_only": False, "econ_priority": False, "quick": True})
     fit = [r for r in riders if r["until"] <= BATCH_CAP]
     items, seen = [], set()
-    for br, _ in staging:
-        if br not in seen and not in_flight_batch(br):
+    for br, _ in staging:   # a quick batch is no staging round: its staging branches stay in the full batch
+        if br not in seen and not in_flight_batch(br, full_only=True):
             items.append(br)
             seen.add(br)
     serves = []
@@ -1049,7 +1101,16 @@ def plan(cat, inflight=None):
     for r in measures:
         if r not in econ_first:
             steps += arm_steps(r)
-    return steps
+    # Quick steps go first: the quick batch or solos, then measure arms no longer than QUICK_YEARS,
+    # in the order they were planned (econ first, then by age). Everything else keeps its order.
+    for st in steps:
+        if st["type"] == "arm" and st["until"] <= START_YEAR + QUICK_YEARS:
+            st["quick"] = True
+    return quick_steps + [st for st in steps if st.get("quick")] + [st for st in steps if not st.get("quick")]
+
+
+def is_quick(req):
+    return bool(req.get("quick")) or req["until"] <= START_YEAR + QUICK_YEARS
 
 
 def step_outdir(st, token):
@@ -1077,10 +1138,11 @@ def step_commands(st, token, outdir):
 
 
 def describe(i, st):
+    q = " [quick]" if st.get("quick") else ""
     if st["type"] == "wait-batch":
         return [f"{i}. NEXT BATCH (after the batch in flight is done; one integration tree): " + ", ".join(st["items"])]
     if st["type"] == "batch":
-        lines = [f"{i}. BATCH to {st['until']}: {BASE} + {len(st['items'])} branch(es)"]
+        lines = [f"{i}. BATCH{q} to {st['until']}: {BASE} + {len(st['items'])} branch(es)"]
         lines += [f"     {b}" + ("   [staging]" if b in st["staging"] else "") for b in st["items"]]
         if st["serves"]:
             lines.append(f"   serves requests: {', '.join(st['serves'])}")
@@ -1088,7 +1150,7 @@ def describe(i, st):
     who = ", ".join(f"{side} of {rid}" for rid, side in st["serves"])
     kind = "SOLO observe" if st["type"] == "solo" else "ARM"
     runner = "econ_bench" if st["econ_only"] else "cwp-observe"
-    return [f"{i}. {kind} {st['sha'][:9]} (gh {st['gh']}) to {st['until']} via {runner}"
+    return [f"{i}. {kind}{q} {st['sha'][:9]} (gh {st['gh']}) to {st['until']} via {runner}"
             f"{' [econ priority]' if st['econ_priority'] else ''}: {who}"]
 
 
@@ -1183,6 +1245,8 @@ def main(argv=None):
     s.add_argument("--pin", dest="pin", action="store_true", default=None)
     s.add_argument("--no-pin", dest="pin", action="store_false")
     s.add_argument("--underpowered", action="store_true")
+    s.add_argument("--quick", action="store_true",
+                   help=f"smoke/observe up to {QUICK_MAX_YEARS} game years: run ahead of long runs (a short probe)")
     s.add_argument("--yield-ok", action="store_true", help="econ measure only: don't jump ahead of the staging batch")
     s.add_argument("--hours", type=float, help="expiry (default 48 h, measure 7 days)")
     b = sub.add_parser("baselines")

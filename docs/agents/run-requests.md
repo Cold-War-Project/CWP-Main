@@ -8,7 +8,7 @@ Forge has one game slot. A thread that queues its own observer game makes everyo
 
 | Kind | The question | What happens |
 |---|---|---|
-| `smoke` | Does it load? New error lines? Does my event or JE fire? | Rides the next staging batch |
+| `smoke` | Does it load? New error lines? Does my event or JE fire? | Rides the next staging batch (a probe of 2 game years or less, or `--quick`, goes first: see "Order of runs") |
 | `observe` | Qualitative: what did the AI do, did the mechanic trigger? | Rides the next staging batch; your result lists the other gameplay branches in that build |
 | `measure` | Quantitative A/B: does it move GDP, debt, war counts? | Solo runs of your branch against its base, **at least 3 runs per arm**; runs that already exist are reused |
 
@@ -35,6 +35,7 @@ Commit first. Requests test commits, never a dirty tree.
 cwp-runs submit --thread politics --kind observe --branch feat/x --until 1948 --session <your session id> \
   --note "PM-as-ruler fires in GBR by 1948"
 cwp-runs submit --thread econ --kind measure --branch econ/y --until 1956     # 3 runs per arm by default
+cwp-runs submit --thread korea --kind smoke --quick --branch fix/y --until 1950    # a short probe: runs ahead of long runs
 ```
 
 - `submit` prints how many runs of each arm already exist. If they already cover the request, the result is written at once and nothing is queued.
@@ -59,6 +60,10 @@ The result is `~/forge/runs/results/<id>.md`. It holds the run folders (dumps, e
 
 `cwp-runs plan` prints the next runs. It is deterministic: it follows from the requests, the catalog, the staging queue and the steps already in flight. Before planning it refreshes the catalog and marks requests served or expired.
 
+0. **Quick probes go first** (standing rule from 20 Nov 2026, after a one-year probe had to be placed by hand ahead of about 30 long runs). A probe is a request that ends 2 game years or less after the 1946 start (`--until 1948` or earlier, any kind), or a smoke or observe request submitted with `--quick` (allowed up to `--until 1950`).
+   - **Smoke and observe probes** normally run solo, on a detached tree of their branch head. That tree is the branch as committed, not merged onto the current `CWP2`, so rebase a branch that is far behind before probing it. Probes share a short batch of their own (`CWP2` plus their branches, run to the latest probe year) only when no full batch is due: no staging branch or other rider waiting and no batch in flight. So probes never hold back a staging round, and a quick build never contains a staging branch (it can't be landed from).
+   - **Short measure arms** move to the front too, ahead of econ-priority arms. They are never merged into a long arm of the same build, a long arm never stretches them, and a long arm in flight doesn't count toward them. The price: a short and a long request on the same build get separate sets of runs.
+   - This fits the econ_bench agreement of 18 Nov 2026 (benchmark runs yield the game to other work after 15 minutes of play), since a probe costs about 15 minutes including the load.
 1. **Econ measure arms first** (Jack's rule). The econ thread can pass `--yield-ok` to let the batch go ahead.
 2. **The staging batch.** This is `CWP2` plus every staging-queue branch plus every pending smoke and observe request, built with explicit items. It runs to the latest `until` requested, and to at least 1952 while there are staging branches (a staging round's usual length), capped at 1962. Longer observe requests get a solo run.
 3. **Other measure arms, oldest first.** The two arms of one test alternate. When two requests need the same build (for example both need a `CWP2` baseline), one run serves both. A cwp-observe run then extends to the later year. An econ-priority econ_bench run is shared with a non-econ request only if that doesn't make it longer; it then runs as cwp-observe, so both threads get their data.
@@ -76,7 +81,7 @@ cwp-runs done <outdir>        # when the job has finished: catalog it, keep its 
                               # write results, print the notifications
 ```
 
-- **Always `start` a step before running it.** Steps in flight are subtracted from the next plan, so the same run isn't booked twice. Step numbers change once a step is in flight, so run `plan` again before the next `start`.
+- **Always `start` a step before running it.** Steps in flight are subtracted from the next plan, so the same run isn't booked twice. Step numbers change once a step is in flight or a probe is submitted (probes jump to the front), so run `plan` again before every `start`.
 - A step leaves the in-flight list in four cases:
   - its run is catalogued as finished (an econ_bench session that yielded the game and will resume still counts as in flight);
   - its `cwp-vic job` unit is not running and either never created the output folder after 6 hours (launch the printed job promptly) or left only a partial run;
