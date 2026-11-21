@@ -12,8 +12,8 @@ A contextless journal entry in vanilla's `je_group_global_international_situatio
 
 | Bar | Start | Pushed up by | Pushed down by |
 |---|---|---|---|
-| `cwp_gq_western_bar` Western Integration | 0 | Bizone, Trizone, Marshall aid, Deutsche Mark, Länder elections, western SoL above the Soviet zone's, Soviet consolidation ≥ 50, the airlift, the western allies agreeing (US relations with GBR and FRA ≥ 50) | French reservations, Britain or France hostile to the US, four-power unity ≥ 60, the Occupation Statute (after the Basic Law), Berlin given up, radicals ≥ 20% |
-| `cwp_gq_soviet_bar` Soviet Consolidation | 0 | land reform, the SED, dismantling, antifascist bloc, trade unions in government, the western currency, the blockade | radicals ≥ 20% in the zone, the zone no longer a Soviet subject |
+| `cwp_gq_western_bar` Western Integration | 0 | Bizone, Trizone, Marshall aid, Deutsche Mark, Länder elections, western SoL above the Soviet zone's, Soviet consolidation ≥ 50, the airlift, the western allies agreeing (US relations with GBR and FRA ≥ 50) | French reservations, Britain or France hostile to the US, four-power unity ≥ 60,  Berlin given up, radicals ≥ 20% |
+| `cwp_gq_soviet_bar` Sovietization | 0 | land reform, the SED, dismantling, antifascist bloc, trade unions in government, the western currency, the blockade | radicals ≥ 20% in the zone, the zone no longer a Soviet subject |
 | `cwp_gq_unity_bar` Four-Power Unity | 50 | four-power talks, US-Soviet relations ≥ 50 | US-Soviet relations below 20 (−0.25) or below −20 (−0.5), Bizone, currency reform, blockade, reparations quarrels |
 
 ### Milestones (checked monthly; each is an event the country can refuse)
@@ -27,8 +27,8 @@ A contextless journal entry in vanilla's `je_group_global_international_situatio
 | Basic Law | Western ≥ 60, Trizone (or no FOZ), unity < 50, GER does not exist | the core western zone (a player's zone, else AOZ) | the other western zones are annexed with incorporation; the core takes tag GER, becomes `recognized`, capital North Rhine if held |
 | GDR | Soviet zone held, Soviet ≥ 60 and a Federal Republic exists, or Soviet ≥ 90 | DDR | the Soviet zone takes the GDR name |
 | Stalin Note | RUS button, Western ≥ 70, FRG not yet sovereign | GER: reject (AI 85%) or accept | accept: GER annexes DDR, leaves its bloc, neutral |
-| FRG sovereignty | Western = 100 | GER's occupier | occupation ends; GER chooses the Western bloc or non-alignment |
-| GDR sovereignty | Soviet = 100 | RUS (more likely once the FRG is sovereign) | occupation ends; DDR stays in or joins the Eastern bloc |
+| FRG sovereignty | Western ≥ 99 | GER's occupier | occupation ends; GER chooses the Western bloc or non-alignment |
+| GDR sovereignty | Soviet ≥ 99 (and the FRG sovereign) | RUS (more likely once the FRG is sovereign) | occupation ends; DDR stays in or joins the Eastern bloc |
 | June uprising | GDR proclaimed, DDR radicals ≥ 15%, DDR SoL below GER's | DDR | tanks (Soviet +10) or concessions (Soviet −15) |
 
 ### Outcomes
@@ -92,7 +92,7 @@ Outcomes: **Unity** (revolution at 100 and every existing four power has pressed
 
 ## Siblings: the Austrian State Treaty and the Saar (`cwp_austria_saar.txt`)
 
-**`je_cwp_austrian_state_treaty`** (contextless: AUS and the four powers). It builds on #794, where AUS owns all Austrian land at start under a Soviet occupation pact, and activates while AUS is a Soviet subject. **No bar: a checklist.** The treaty is signed when Austria has pledged neutrality, Austria has agreed to buy back the Soviet-held German assets (a mission button after the pledge: payments in oil and goods, which end the USIA modifiers), the Soviet Union and the US have consented, and Austria is in no bloc. Moscow's consent AI rises with the pledge, the buy-back, the FRG proclaimed and four-power talks. On signing, AUS becomes independent and neutral.
+**`je_cwp_austrian_state_treaty`** (contextless: AUS and the four powers). It builds on #794, where AUS owns all Austrian land at start under a Soviet occupation pact, and activates while AUS is a Soviet subject. **No bar: a checklist.** The treaty is signed when Austria has pledged neutrality, Austria has agreed to buy back the Soviet-held German assets (a mission button after the pledge: payments in oil and goods, which end the USIA modifiers), the Soviet Union and the US have consented. Moscow's consent AI waits for the pledge and the FRG's sovereignty (see "Occupations that never ended"). On signing, AUS becomes independent and neutral.
 
 **`je_cwp_saar`** (contextless: FRA and GER). It activates once the FRG is proclaimed, and France holds `cwp_saar_economic_union`. The Saar is part of STATE_RHINELAND on the vanilla map (it has no state of its own), so the JE is economic and political only. When both governments press *Agree to a Saar Referendum*, the Saar votes: rejection is weighted 65 (+10 if the FRG is sovereign) and acceptance 35 (+15 if French-German relations ≥ 50). Rejection (historical, 1955) returns the Saar's economy to Germany; acceptance keeps a European statute.
 
@@ -105,7 +105,7 @@ Following `docs/agents/je-design-patterns.md` (pattern 2, competing checklists),
 - **An all-German government** (an outcome, its trigger shown as a checklist): all four powers back it, Germany still has one currency, and neither German state has been proclaimed. Germany is then united and neutral (event .21: the core zone proclaims, annexes the DDR and stays out of the blocs).
 - **The Basic Law** (milestone): the accord has broken down, the Deutsche Mark is in, the Trizone exists (or there is no French zone), and Western integration is at 60 or more.
 
-AI: Washington and London drop the accord once Soviet consolidation reaches 25. Paris rarely joins it (weight 0.2, and only after its reservations end). Moscow keeps backing it. The Bizone, Marshall aid and currency-reform AI now read the accord and the Soviet bar, not unity. Austria's Soviet-consent AI reads Moscow's stance.
+AI: Washington and London drop the accord once Soviet consolidation reaches 25. Paris rarely joins it (weight 0.2, and only after its reservations end). Moscow keeps backing it. The Bizone, Marshall aid and currency-reform AI now read the accord and the Soviet bar, not unity.
 
 ## One twist per situation (Jack's team, 2026-11-18)
 
@@ -114,6 +114,22 @@ Not everything should be bar management. Each situation now has its own shape: c
 ## Run 16ccecae3 (2026-11-18, 1946-1960): chapter 1 on schedule
 
 Bizone 1946, the US and Britain drop the four-power accord in 1947, Deutsche Mark, blockade and airlift in 1948, both states proclaimed by October 1949, the Stalin Note in 1950 (rejected), the FRG sovereign in mid-1954 and the GDR in early 1955; chapter 2 then opens. Two fixes followed: Austria never got its treaty, because a subject belongs to its overlord's power bloc, so the "no bloc" condition and the neutrality button's bloc check could never pass (both removed; neutral Austria leaves any bloc on signing). And GDR legitimacy hit 100 by late 1956, so the Wall was never needed: living as well as the West now gives +0.5 (was +1), and one-party rule (`law_single_party_state`) costs −0.5.
+
+## Names come from the literature (Jack, 2026-11-18)
+
+Player-visible names use established terms from the historical and political literature, or plain description, never invented coinages. Applied here: the Soviet bar is *Sovietization*; Moscow's buttons are the *Sinatra* and *Brezhnev Doctrines*; flavour lines use period terms (Stunde Null, Bizonia, Trizonesia, Luftbrücke, Zwangsvereinigung, Arbeiter-und-Bauern-Staat, Bonn Republic, Paris Agreements, Volksaufstand, Systemkonkurrenz, Wandel durch Annäherung, Mauerfall, the Chinese solution, the third way, die kleine Wiedervereinigung) or sourced quotations.
+
+## Occupations that never ended (2026-11-20/21, history-divergence review)
+
+In runs to 1962 the FRG stayed occupied in 2 of 3 runs, Austria in 2 of 3, and the GDR with it, since its sovereignty waits for the FRG's. In those runs the −2 a month Occupation Statute cancelled the always-on factors (Bizone, Trizone and Deutsche Mark, +1.5) and the bar stalled near 97 below its threshold of 100.
+
+**First fix** (f7b5bdc8e): the statute was graded by Bonn's legitimacy, and the buttons' AI weights were raised. Batch run 1120211108-batch-1f23 overshot. Saves show GER's legitimacy at 92 to 98, so the light −0.5 statute applied; the FRG was sovereign in October 1950 and the GDR in February 1952. Raising the button weights had Austria pledge, buy back the assets and sign in 1946, because Moscow's consent no longer waited for anything. So the AI does press these buttons, and the earlier stall came from weights that were too low.
+
+**Third shape** (after batch d204: with the second fix the bar fell from 58 to 13 between 1952 and 1958, because radicals and allied quarrels outweighed the always-on inputs; France also joined the Trizone only in 1950):
+- **FRG.** The western bar has two phases. Before the Basic Law, the zones' integration drives it: the Bizone, Trizone, Deutsche Mark, Marshall aid, Länder governments and recovery count only in this phase. At the Basic Law the bar is set to 60. After it, the bar measures the occupiers' readiness to end the Occupation Statute (the bar's tooltip says so). The inputs then are: a stable Bonn democracy +0.5 (GER legitimacy at least 50; a shaky Bonn gets nothing, so the bar stalls rather than reverses), fear of Soviet expansion +0.25 (Sovietization at least 50; it carries on from the first phase, as Korea and the rearmament debate did), allies agreeing +0.25, European integration +0.25 (relations with France at least 25), and an airlift +0.5 if a blockade comes late. Against them: radicals −0.25, allied quarrels −0.25, an abandoned Berlin −1, and the one-off events (Stalin Note rejected +5 but only from 70, sovereignty refused −20). The net is best +1.25 (about 32 months from 60 to 99), typical +0.5 to +0.75 (52 to 78 months, so 1953 to 1956 for a 1949 Basic Law), +0.25 in the state run d204 showed (stable Bonn, fear, radicals, quarrel), and 0 with an unstable Bonn and no other inputs. Both sovereignty milestones fire at 99.
+- **France** joins the Trizone (AI) once western integration is at least 15 and Sovietization at least 30, down from 25.
+- **Austria.** Moscow's consent AI is +15 once Austria has pledged neutrality and either the FRG is sovereign or Germany was unified as a neutral state, the 1955 sequence. There is a +0.02 long-run fallback after the pledge. Washington's weight is 15. Austria's neutrality weight is 1, or 6 once the FRG exists, and the pulse shim (10% a month for an AI Austria, under the buttons' conditions) is in practice the main path. The buy-back is 0.5, or 20.5 once Moscow consents. The treaty is expected within months of the FRG's sovereignty.
+- **GDR legitimacy** still reached 100 by 1954 because the East's SoL is at or above the West's (economy divergence 8). Consumer socialism now gives +0.5 instead of +1. The SoL inversion itself belongs to the economy thread.
 
 ## Known gaps and decisions for review
 
