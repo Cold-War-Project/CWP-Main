@@ -65,7 +65,8 @@ if [[ -n "$needs_game" ]]; then
 fi
 raise_game() { local w; w=$(xdotool search --name "^Victoria 3" 2>/dev/null | tail -1); [[ -n "$w" ]] && xdotool windowactivate --sync "$w" 2>/dev/null; }
 # Full-res PNG for the record, then a scaled shot so later click() coordinates stay on the 1280x720 scale.
-shot()    { raise_game; local f; f=$(vic-shot --full | tail -1); cp "$f" "$OUT/$1.png"; vic-shot >/dev/null; echo "shot $1" >> "$OUT/log.txt"; }
+shot()    { raise_game; menu_open && { echo "pause menu was open before shot $1: closed it" >> "$OUT/log.txt"; esc; }
+            local f; f=$(vic-shot --full | tail -1); cp "$f" "$OUT/$1.png"; vic-shot >/dev/null; echo "shot $1" >> "$OUT/log.txt"; }
 console() { raise_game; vic-key grave >/dev/null; sleep 1; vic-key --type "$1" >/dev/null; vic-key Return >/dev/null; sleep 1; vic-key grave >/dev/null; sleep 1; }
 click()   { raise_game; vic-click "$@" >/dev/null; sleep 1; }
 # F-keys are grabbed by Xfce (F4 opens the Application Finder): send those straight to the game window.
@@ -79,12 +80,17 @@ menu_open() { local f; f=$(vic-shot --full | tail -1); vic-shot >/dev/null
   python3 -I -c 'import sys
 from PIL import Image, ImageChops, ImageStat
 t = Image.open(sys.argv[1]); im = Image.open(sys.argv[2]).convert("L")
-sys.exit(0 if im.size == (1920, 1080) and ImageStat.Stat(ImageChops.difference(t, im.crop((290, 300, 645, 350)))).mean[0] < 5 else 1)' "$TEMPLATE" "$f"; }
+d = ImageStat.Stat(ImageChops.difference(t, im.crop((290, 300, 645, 350)))).mean[0] if im.size == (1920, 1080) else 999
+print(f"menu check {d:.1f} {im.size}", file=sys.stderr)
+sys.exit(0 if d < 5 else 1)' "$TEMPLATE" "$f" 2>> "$D/$stamp-ui.log"; }
 # Leave the game on the map: one Escape closes a panel left open, and if that Escape opened the pause menu instead, close it.
 # Escape until the pause menu shows (every panel is closed by then), then close it: covers nested panels.
-ui_reset() { raise_game; menu_open && { vic-key Escape >/dev/null; sleep 2; }
-             local i; for i in 1 2 3 4; do vic-key Escape >/dev/null; sleep 2; menu_open && { vic-key Escape >/dev/null; sleep 2; break; }; done; return 0; }
-export -f raise_game shot console click key menu_open ui_reset
+esc()      { raise_game; vic-key Escape >/dev/null; sleep 2; }
+ui_reset() { echo "$(date +%T) ui_reset" >> "$D/$stamp-ui.log"; menu_open && esc
+             local i; for i in 1 2 3 4; do esc; menu_open && { esc; break; }; done
+             menu_open && esc; return 0; }
+export -f raise_game shot console click key menu_open ui_reset esc
+export D stamp
 for bk in "${books[@]}"; do
   name=$(basename "$bk" .sh); export OUT="$D/$stamp-$name"; mkdir -p "$OUT"; cp "$bk" "$OUT/"
   ui_reset; echo "$(date +%T) start $name" >> "$OUT/log.txt"
