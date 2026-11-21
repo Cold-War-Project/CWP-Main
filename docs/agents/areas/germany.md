@@ -133,7 +133,7 @@ In runs to 1962 the FRG stayed occupied in 2 of 3 runs, Austria in 2 of 3, and t
 
 ## The Saar never voted (run 8c95, 2026-11-21)
 
-In batch 8c95 (1946-1962) the Saar journal entry was active from 1948 but neither France nor the FRG ever pressed *Agree to a Saar Referendum*. Their AI weights were 1 plus 5, and in these runs no button with a weight below about 10 was ever acted on; every button the AI did press carried 11 or more. Both now weigh 1 plus 15 once the FRG is sovereign, the Paris Agreements' pairing of sovereignty with a Saar statute. **Rule of thumb for this mod: an AI button weight under about 10 does not fire, so put the full weight on the condition that should trigger it.** The chapter 2 buttons (Stasi 5, consumer socialism 2+5, Freikauf 3) are probably dormant for the same reason; check them in a run that reaches the 1960s.
+In batch 8c95 (1946-1962) the Saar journal entry was active from 1948 but neither France nor the FRG ever pressed *Agree to a Saar Referendum*. Their AI weights were 1 plus 5, and in these runs no button with a weight below about 10 was ever acted on; every button the AI did press carried 11 or more. Both now weigh 1 plus 15 once the FRG is sovereign (the Paris Agreements paired sovereignty with a Saar statute) or Germany was unified as a neutral state. **Observed in these runs, not an engine rule we have confirmed:** buttons weighted under about 10 were not acted on, so put the full weight on the condition that should trigger a button. The chapter 2 buttons (Stasi 5, consumer socialism 2+5, Freikauf 3) are probably dormant for the same reason; check them in a run that reaches the 1960s.
 
 ## Known gaps and decisions for review
 
