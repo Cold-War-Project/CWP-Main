@@ -5,7 +5,7 @@ paths:
 
 # History: the 1946.1.1 start state
 
-Files under `common/history/<folder>/` are **effect scripts** run once when a new game is set up. Each file wraps its content in a fixed upper-case block named after the folder; inside it the normal effect language applies. Nearly every history folder is in `replace_paths`, so the mod's files are the whole truth (not replaced: `government_setup` with wrapper `GOVERNMENT_SETUP`, and `governments` with wrapper `GOVERNMENT`, whose vanilla files name vanilla tags and parties). Vanilla's `governments` files (BEL, FRA, GBR, SPA, USA) therefore still run on this mod's tags at start, e.g. `c:GBR ?= { py:liberal_party ?= { set_ruling_party = yes } }`; override them with same-name files if they misfire.
+Files under `common/history/<folder>/` are **effect scripts** run once when a new game is set up. Each file wraps its content in a fixed upper-case block named after the folder; inside it the normal effect language applies. Nearly every history folder is in `replace_paths`, so the mod's files are the whole truth (not replaced: `government_setup`, wrapper `GOVERNMENT_SETUP`). `governments` (wrapper `GOVERNMENT`) is replaced too, so vanilla's 1836 files for BEL, FRA, GBR and SPA no longer override the 1946 ruling parties.
 
 Encoding: UTF-8 with BOM; LF line endings except three CRLF files (`population/fin - finland.txt`, `population/fra - france.txt`, `diplomatic_plays/chinese_civil_war.txt`). Keep each file's existing endings.
 
