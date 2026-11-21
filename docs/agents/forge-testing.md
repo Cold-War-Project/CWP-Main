@@ -14,11 +14,11 @@ Forge is the shared Linux test machine with Victoria 3 1.15.1 installed (one GPU
 | Game lock | `~/forge/.vic3.lock` |
 | Perf CSVs | `~/forge/perf/` |
 
-**Run the Forge tools from PATH** (`cwp-vic`, `cwp-observe`, `cwp-runs`, `cwp-integrate`, `cwp-gui-batch`, `vic-*`). The copies in `~/.local/bin` are the installed versions. A worktree's `.claude/tools/forge/` copy can be older than the installed one, and running it has corrupted shared state before (cwp-runs request hashes, 21 Nov 2026). Only the integration owner reinstalls them, after a landing.
+**Run the Forge tools from PATH** (`cwp-vic`, `cwp-observe`, `cwp-runs`, `cwp-integrate`, `cwp-gui-batch`, `cwp-save-dump`, `vic-*`). Installed copies live in `~/.local/bin` (`vic-*` in `/usr/local/bin`, with `vic-click` and `vic-key` guarded through `~/.local/bin`). Tools with no PATH copy, such as `cwp-package` and `pre-push`, run from the worktree. A worktree's `.claude/tools/forge/` copy can be older than the installed one, and running it has corrupted shared state before (cwp-runs request hashes, 21 Nov 2026). Only the integration owner reinstalls them, after a landing.
 
 ## The session: `cwp-vic`
 
-`cwp-vic` is on `PATH` (`~/.local/bin/cwp-vic`; source in `.claude/tools/forge/cwp-vic`, reinstall with `install -m 755 .claude/tools/forge/cwp-vic ~/.local/bin/`). Set `CWP_AGENT=<area>` in your shell commands so `unlock` cannot release someone else's lock.
+`cwp-vic` is on `PATH` (`~/.local/bin/cwp-vic`; source in `.claude/tools/forge/cwp-vic`; the integration owner reinstalls with `install -m 755 .claude/tools/forge/cwp-vic ~/.local/bin/`). Set `CWP_AGENT=<area>` in your shell commands so `unlock` cannot release someone else's lock.
 
 ```bash
 export CWP_AGENT=politics
