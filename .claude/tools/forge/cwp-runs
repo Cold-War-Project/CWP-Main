@@ -710,15 +710,22 @@ def reevaluate(cat, quiet=False):
             except RuntimeError:   # the commit is gone from the repo (pruned): leave the request as it is
                 stale = False
             if sha != req["sha"] or updated or stale:
-                if stale and not updated and sha == req["sha"]:
-                    req["rehash_note"] = None   # an older cwp-runs wrote the hash; nothing about the game changed
+                if (stale and not updated and sha == req["sha"]
+                        and str(req.get("rehash_note") or "").startswith("the game was updated (build")):
+                    req["rehash_note"] = None   # the pre-21-Nov buildid note an older cwp-runs wrote: not a real update
                 if updated and req["kind"] == "measure":   # smoke/observe match by commit, not by hash
                     req["rehash_note"] = (f"the game was updated ({req.get('game_version') or 'version unrecorded'} -> "
                                           f"{game_version()}); "
                                           "only runs on the new build count")
-                req["sha"], req["gh"], req["game_version"] = sha, gameplay_hash(sha), game_version()
-                if req["kind"] == "measure" and not str(req.get("baseline") or "").startswith("accept:"):
-                    fill_baseline(req)
+                before = dict(req)
+                try:
+                    req["sha"], req["gh"], req["game_version"] = sha, gameplay_hash(sha), game_version()
+                    if req["kind"] == "measure" and not str(req.get("baseline") or "").startswith("accept:"):
+                        fill_baseline(req)
+                except RuntimeError as e:   # commit pruned from the repo: keep the request as it was
+                    print(f"cwp-runs: cannot re-hash {req['id']}: {e}", file=sys.stderr)
+                    req.clear()
+                    req.update(before)
             served, detail = evaluate(req, cat)
             failed_now = [r["outdir"] for r, _ in detail.get("failed", [])]
             if served or failed_now != req.get("failed_runs", []):
@@ -973,7 +980,11 @@ def cmd_done(a):
 
 def cmd_wait(a):
     deadline = time.time() + a.timeout
-    seen = set(load_request(a.id).get("failed_runs") or [])   # failures already known when we started
+    # Failures already known when we started (carried across a re-exec, so none is swallowed by it).
+    try:
+        seen = set(json.loads(os.environ["CWP_RUNS_WAIT_SEEN"]))
+    except (KeyError, ValueError):
+        seen = set(load_request(a.id).get("failed_runs") or [])
     me = Path(os.path.realpath(sys.argv[0]))
     try:
         my_mtime = me.stat().st_mtime
@@ -982,7 +993,11 @@ def cmd_wait(a):
     while True:
         # cwp-runs was reinstalled while we waited: carry on in the new code, never rewrite requests with the old.
         try:
-            if my_mtime is not None and me.stat().st_mtime != my_mtime:
+            mt = me.stat().st_mtime
+            # A reinstall in progress: wait until the file has been still for 5 s and compiles.
+            if (my_mtime is not None and mt != my_mtime and time.time() - mt > 5
+                    and compiles(me)):
+                os.environ["CWP_RUNS_WAIT_SEEN"] = json.dumps(sorted(seen))
                 left = max(60, int(deadline - time.time()))
                 args = [x for x in sys.argv[1:]]
                 if "--timeout" in args:
@@ -1019,6 +1034,14 @@ def cmd_wait(a):
             print(f"{a.id}: still {req['state']} (timeout; run wait again)")
             return 2
         time.sleep(max(1, min(60, deadline - time.time())))
+
+
+def compiles(path):
+    try:
+        compile(path.read_text(), str(path), "exec")
+        return True
+    except (OSError, SyntaxError, ValueError):
+        return False
 
 
 def in_progress_observer_dirs():
