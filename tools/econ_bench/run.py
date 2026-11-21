@@ -96,7 +96,7 @@ def log(out: Path, msg: str):
 
 def queue_waiting(with_priority: bool = False) -> list:
     """Live tickets in the cwp-vic FIFO (other threads waiting for the game): their notes, or
-    (note, is_priority) pairs. A --priority ticket's name starts with 1, a normal one with 5."""
+    (note, is_priority, pid) tuples. A --priority ticket's name starts with 1, a normal one with 5."""
     out = []
     for t in sorted(QUEUE.glob("*")) if QUEUE.exists() else []:
         pid = t.name.rsplit("-", 1)[-1]
@@ -105,7 +105,7 @@ def queue_waiting(with_priority: bool = False) -> list:
                 note = t.read_text().strip()
             except FileNotFoundError:
                 continue
-            out.append((note, t.name.startswith("1")) if with_priority else note)
+            out.append((note, t.name.startswith("1"), pid) if with_priority else note)
     return out
 
 
@@ -243,13 +243,17 @@ def one_run(worktree: Path, out: Path, end_year: int, every: int, max_minutes: f
                     # --priority tickets at once, other work after MIN_PLAY_DEV minutes, another
                     # benchmark run after MIN_PLAY (two runners yielding to each other after one
                     # sample each made no progress, 2026-11-17). Agreed with the coordinator 2026-11-18.
-                    prio = [n for n, p in waiting if p]
-                    dev = [n for n, p in waiting if not p and "econ_bench" not in n]
-                    bench = [n for n, p in waiting if not p and "econ_bench" in n]
+                    prio = [(n, pid) for n, p, pid in waiting if p]
+                    dev = [(n, pid) for n, p, pid in waiting if not p and "econ_bench" not in n]
+                    bench = [(n, pid) for n, p, pid in waiting if not p and "econ_bench" in n]
                     due = prio or (dev if played >= MIN_PLAY_DEV else []) or (bench if played >= MIN_PLAY else [])
                     if yield_to_queue and due:
                         status = "yielded"
-                        log(out, f"yielding the game to: {due[0]} (after {played:.0f} min of play)")
+                        log(out, f"yielding the game to: {due[0][0]} (after {played:.0f} min of play)")
+                        if not prio and dev:
+                            # The lock is FIFO: without this, the game goes to whichever benchmark
+                            # resume queued first, not the job we yielded for (staging thread, 2026-11-21).
+                            sh("cwp-vic", "bump", due[0][1])
                         break
             if (time.time() - t0) / 60 > max_minutes:
                 status = "time_limit"
