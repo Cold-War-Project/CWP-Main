@@ -1,12 +1,13 @@
 # Testing on Forge: launch, error.log, observer runs, performance
 
-Forge is the shared Linux test machine with Victoria 3 1.15.1 installed (one GPU, X11 display `:0`). Agents launch the game themselves; nobody needs to ask Jack to test. Only **one** Victoria 3 may run at a time, and many agents share the machine, so every game session goes through the lock.
+Forge is the shared Linux test machine with Victoria 3 1.15.2 installed (Steam auto-updated from 1.15.1 on 20 Nov 2026) (one GPU, X11 display `:0`). Agents launch the game themselves; nobody needs to ask Jack to test. Only **one** Victoria 3 may run at a time, and many agents share the machine, so every game session goes through the lock.
 
 ## Paths on Forge
 
 | What | Where |
 |---|---|
 | Game install (read only) | `~/.steam/steam/steamapps/common/Victoria 3/game` |
+| Vanilla text snapshots, one git tag per version (read only) | `~/forge/vanilla` (`git -C ~/forge/vanilla diff v1.15.2 v1.15.3 -- game/common`); see [areas/vanilla-updates.md](areas/vanilla-updates.md) |
 | User folder | `~/.local/share/Paradox Interactive/Victoria 3` |
 | Logs | `<user folder>/logs/error.log`, rotated `error.1.log`..`error.5.log` (also `debug.log`, `game.log`, `warning.log`) |
 | Which mod the game loads | `<user folder>/content_load.json` (written by `cwp-vic link`; do not edit by hand) |

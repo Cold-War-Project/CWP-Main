@@ -1,6 +1,6 @@
 ﻿# Cold War Project: agent entry point
 
-Victoria 3 total conversion set 1946 to 2046, targeting game **1.15.1**. Most development is done by agents; humans review and decide. Read this file, then [`docs/agents/plan.md`](docs/agents/plan.md).
+Victoria 3 total conversion set 1946 to 2046, targeting game **1.15.2** (1.15.1 until Steam's update of 20 Nov 2026; see [docs/agents/areas/vanilla-updates.md](docs/agents/areas/vanilla-updates.md)). Most development is done by agents; humans review and decide. Read this file, then [`docs/agents/plan.md`](docs/agents/plan.md).
 
 ## Ground truth
 

@@ -83,10 +83,10 @@ Merge order, because later areas reference earlier keys: **tech and politics, th
 ### Phase 3. Harmonize with Victoria 3 1.15 (overlapping phase 2)
 
 - Adopt 1.15 systems the mod currently stubs or ignores where they fit the period (for example power blocs, amendments, companies, harvest conditions), each as a small design note first.
-- Re-diff every same-name overwrite against vanilla 1.15.1 and record which vanilla changes it hides.
+- Re-diff every same-name overwrite against the installed vanilla version and record which vanilla changes it hides (1.15.2 done 21 Nov 2026: [areas/vanilla-updates.md](areas/vanilla-updates.md)).
 - Regenerate the guide references (`build_reference.py` etc.) from 1.15.1 `script_docs` on Forge, so engine lookups are verified against the installed game.
 - Option, Jack to decide later: bring back a custom map (dev's or a new one). It touches `map_data`, `gfx/map`, history and state regions at once, so it would be its own project with a design note first, not part of a port.
-- Patch policy: on each new game patch, one thread re-runs the baseline, re-diffs overwrites and refreshes references before any other work merges.
+- Patch policy: on each new game patch, one thread re-runs the baseline, re-diffs overwrites and refreshes references before any other work merges. The procedure and the vanilla snapshot repo are in [areas/vanilla-updates.md](areas/vanilla-updates.md).
 
 ### Phase 4. Stabilize and release
 
