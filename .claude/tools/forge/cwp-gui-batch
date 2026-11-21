@@ -73,15 +73,17 @@ key()     { raise_game; local k; for k in "$@"; do
             if [[ "$k" =~ ^F[0-9]+$ ]]; then xdotool key --window "$(xdotool search --name '^Victoria 3' | tail -1)" "$k"; else vic-key "$k" >/dev/null; fi
           done; sleep 1; }
 # The pause menu sits at a fixed place: compare the "Return to Game" button with a template (diff < 5 = open).
-TEMPLATE="${CWP_PAUSE_TEMPLATE:-$HOME/.local/bin/pause_menu_template.png}"
+TEMPLATE="${CWP_PAUSE_TEMPLATE:-$(dirname "$(readlink -f "$0")")/pause_menu_template.png}"; export TEMPLATE
+[[ -r "$TEMPLATE" ]] || echo "WARNING: no pause-menu template at $TEMPLATE; menu detection off" | tee -a "$D/$stamp-batch.log"
 menu_open() { local f; f=$(vic-shot --full | tail -1); vic-shot >/dev/null
   python3 -I -c 'import sys
 from PIL import Image, ImageChops, ImageStat
 t = Image.open(sys.argv[1]); im = Image.open(sys.argv[2]).convert("L")
 sys.exit(0 if im.size == (1920, 1080) and ImageStat.Stat(ImageChops.difference(t, im.crop((290, 300, 645, 350)))).mean[0] < 5 else 1)' "$TEMPLATE" "$f"; }
 # Leave the game on the map: one Escape closes a panel left open, and if that Escape opened the pause menu instead, close it.
-ui_reset() { raise_game; menu_open && { vic-key Escape >/dev/null; sleep 2; }; vic-key Escape >/dev/null; sleep 2
-             menu_open && { vic-key Escape >/dev/null; sleep 2; }; return 0; }
+# Escape until the pause menu shows (every panel is closed by then), then close it: covers nested panels.
+ui_reset() { raise_game; menu_open && { vic-key Escape >/dev/null; sleep 2; }
+             local i; for i in 1 2 3 4; do vic-key Escape >/dev/null; sleep 2; menu_open && { vic-key Escape >/dev/null; sleep 2; break; }; done; return 0; }
 export -f raise_game shot console click key menu_open ui_reset
 for bk in "${books[@]}"; do
   name=$(basename "$bk" .sh); export OUT="$D/$stamp-$name"; mkdir -p "$OUT"; cp "$bk" "$OUT/"
