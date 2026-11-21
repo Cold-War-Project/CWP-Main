@@ -308,7 +308,11 @@ cwp_crown_end_regency = {
 	var:cwp_crown_regent_var ?= {
 		remove_character_role = character_role_cwp_regent
 		if = {
-			limit = { NOT = { has_role = character_role_politician } }
+			limit = {
+				NOT = { has_role = character_role_politician }
+				exists = owner
+				is_in_exile_pool = no
+			}
 			add_character_role = character_role_politician
 		}
 	}
@@ -506,6 +510,16 @@ cwp_crown_sync = {
 			cwp_crown_amendment = yes
 		}
 		remove_variable = cwp_crown_start_var
+	}
+	# A regency outlives its purpose once the reigning monarch is an adult and at home (an adult accession,
+	# or a regency that began before the monarch came of age without the coming-of-age hook firing).
+	if = {
+		limit = {
+			exists = var:cwp_crown_regent_var
+			NOT = { has_variable = cwp_monarch_absent_var }
+			var:cwp_monarch_var ?= { is_adult = yes }
+		}
+		cwp_crown_end_regency = yes
 	}
 }
 
