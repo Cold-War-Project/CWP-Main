@@ -68,7 +68,7 @@ Run batch-d204 (1946-1962): the tide was historical (tier 3 in 1957, tier 4 in 1
 
 ## DRV war of independence starts as a war (2026-11-21)
 
-Run r22 (7830ccc5e): the DRV sat at liberty desire 100 as a French dominion from 1947, then became a puppet in 1948 with no FRA-DAI war. The accords event's dp_independence play was a plain play; the DRV AI backed down and France's reduce_autonomy war goal was enforced without a shot. The play now has `war = yes`, as the independent-DRV branch of the same event already had (branch fix/indochina-war-yes).
+Run r22 (7830ccc5e): the DRV sat at liberty desire 100 as a French dominion from 1947, then became a puppet in 1948 with no FRA-DAI war. The accords event's dp_independence play was a plain play; the DRV AI backed down and France's reduce_autonomy war goal was enforced without a shot. The play now has `war = yes`, as the independent-DRV branch of the same event already had (branch fix/indochina-war-yes). After an independent review the option also checks `can_start_play_against_overlord` and peace, and a DRV already reduced to a puppet (which vanilla `dp_independence` refuses while `can_increase_autonomy` holds) first fights a `dp_increase_autonomy` war, so the struggle can resume after a lost round.
 
 ## Naming
 
