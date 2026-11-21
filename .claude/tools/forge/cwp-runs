@@ -691,7 +691,13 @@ def reevaluate(cat, quiet=False):
                     write_json(req_path(req["id"]), req)
                     newly.append((req, Path(req["result"])))
                     continue
-            if sha != req["sha"] or updated:
+            # Self-healing: a request whose stored hash isn't the hash of its commit on the installed game
+            # (made by an older cwp-runs, hand-edited, or re-hashed half-way) is re-hashed. Cheap: cached.
+            stale = game_version() != "unknown" and (
+                req.get("gh") != gameplay_hash(sha)
+                or (req["kind"] == "measure" and req.get("baseline_sha")
+                    and req.get("baseline_gh") != gameplay_hash(req["baseline_sha"])))
+            if sha != req["sha"] or updated or stale:
                 if updated and req["kind"] == "measure":   # smoke/observe match by commit, not by hash
                     req["rehash_note"] = (f"the game was updated ({req.get('game_version') or 'version unrecorded'} -> "
                                           f"{game_version()}); "

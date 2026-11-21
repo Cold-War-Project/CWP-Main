@@ -119,6 +119,7 @@ What gets indexed:
   - The gameplay hash includes the version the run was played on, so a 1.15.1 run is never a sample for a 1.15.2 request, and requests are re-hashed for the installed version.
   - A run whose samples span two versions (an econ_bench run resumed after an update) is marked `straddled`. Its hash matches no request, so it never counts as an arm. It can still serve smoke and observe requests, which match by commit.
   - A proxy baseline (`accept:<GH>`) must name runs on the installed version, none of them straddled; `submit` refuses anything else. After an update, a pending proxy request is cancelled and its requester notified, because no run of the old build exists on the new version: resubmit. Hashes from before 21 Nov 2026 are stale. `cwp-runs runs --sha <sha>` lists each run's hash, game version and straddle flag.
+  - **After reinstalling `cwp-runs`, restart your background `cwp-runs wait`.** A long-running `wait` keeps the old code and rewrites requests with it. On 21 Nov 2026 a pre-update `wait` re-hashed two new requests the old way, so their finished runs never matched. Every `cwp-runs` command now re-hashes any request whose stored hash doesn't match its commit on the installed game.
   - Versions read from files are cached in `~/forge/runs/version-cache-v2.json`; versions guessed from file times are not, so a corrected `BUILD_CHANGES` applies at once.
 
 ## Not built yet
