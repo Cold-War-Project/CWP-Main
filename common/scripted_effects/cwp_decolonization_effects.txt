@@ -240,7 +240,7 @@ cwp_decolonization_add_setback = {
 # $METROPOLE$ = the former overlord.
 cwp_decolonization_negotiated_independence = {
 	make_independent = yes
-	cwp_new_state_constitution = yes
+	cwp_new_state_constitution = { METROPOLE = $METROPOLE$ }
 	add_modifier = {
 		name = cwp_new_nation
 		years = 10
@@ -286,11 +286,22 @@ cwp_india_partition_effect = {
 		}
 	}
 	# Pakistan is created from British India and inherits its laws, including law_monarchy with no crown of its
-	# own: it would otherwise become a home-grown monarchy. Historically a dominion until 1956; without the
-	# shared-Crown mechanic it starts as a parliamentary republic.
+	# own. Where India became a dominion under the shared Crown, Pakistan does too (a dominion until 1956);
+	# otherwise it starts as a parliamentary republic rather than a home-grown monarchy.
 	c:PAK ?= {
 		if = {
-			limit = { has_law = law_type:law_monarchy }
+			limit = {
+				has_law = law_type:law_monarchy
+				NOT = { has_variable = cwp_shared_crown_var }
+				c:HND ?= { has_variable = cwp_shared_crown_var }
+			}
+			set_variable = { name = cwp_shared_crown_var value = c:GBR }
+		}
+		else_if = {
+			limit = {
+				has_law = law_type:law_monarchy
+				NOT = { has_variable = cwp_shared_crown_var }
+			}
 			activate_law = law_type:law_parliamentary_republic
 		}
 	}
@@ -616,8 +627,9 @@ cwp_indonesia_end_war = {
 }
 
 # Country scope (a state that just became independent). A colony governed by colonial administration,
-# or a dominion whose crown (and ruler) belonged to the metropole, does not keep that constitution:
-# it becomes a parliamentary republic (India's Viceroy otherwise ruled on as a dynasty). Native
+# or a monarchy whose crown (and ruler) belonged to the metropole, does not keep that constitution: from
+# Britain it becomes a Commonwealth dominion under the shared Crown, otherwise a parliamentary republic
+# (India's Viceroy otherwise ruled on as a dynasty). Native
 # monarchies keep or regain theirs (Morocco and Tunisia already have law_monarchy; Libya, Malaya, Basutoland,
 # Swaziland, Zanzibar and Brunei are under colonial administration and get law_monarchy). Called in the
 # new state's scope (root is the metropole), hence the saved scope.
@@ -640,16 +652,25 @@ cwp_new_state_constitution = {
 		activate_law = law_type:law_monarchy
 	}
 	else_if = {
-		limit = {
-			OR = {
-				has_law = law_type:law_colonial_administration
-				AND = {
-					has_law = law_type:law_monarchy
-					ruler ?= { culture = { NOT = { is_primary_culture_of = scope:cwp_new_state } } }
-				}
-			}
-		}
+		limit = { has_law = law_type:law_colonial_administration }
 		activate_law = law_type:law_parliamentary_republic
 	}
+	else_if = {
+		limit = {
+			has_law = law_type:law_monarchy
+			ruler ?= { culture = { NOT = { is_primary_culture_of = scope:cwp_new_state } } }
+		}
+		if = {
+			limit = { $METROPOLE$ = { c:GBR ?= this } }
+			# A Commonwealth dominion under the shared Crown (India 1947-50, Pakistan to 1956, Ceylon to 1972):
+			# gov_cwp_dominion from feat/constitutional-monarchy; the PM rules and a Governor-General is
+			# appointed. Enacting a republic law later retires the Governor-General.
+			set_variable = { name = cwp_shared_crown_var value = $METROPOLE$ }
+		}
+		else = {
+			activate_law = law_type:law_parliamentary_republic
+		}
+	}
 }
+
 
