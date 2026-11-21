@@ -1207,22 +1207,23 @@ ai_strategy_default = {
 		# CWP AI: a state going into debt builds less. With private ownership (d457b9b30) GDP and the
 		# investment pool grew faster than tax revenue; the pool-funded term kept rising while revenue did
 		# not, and Norway, New Zealand and Egypt defaulted in 3 of 3 runs (Norway's construction spending
-		# 46k -> 91k a week on unchanged ~96k income, 1947-50). Construction is cut while borrowing, hard
-		# above 30% of the debt ceiling, and harder in default.
+		# 46k -> 91k a week on unchanged ~96k income, 1947-50). The target shrinks smoothly with debt
+		# (x0.85 at 10% of the ceiling, x0.55 at 30%, x0.25 from 50%) and is x0.25 in default. Continuous
+		# rather than stepped, so a state paying down debt doesn't see its target jump back (review).
 		if = {
 			limit = { in_default = yes }
 			multiply = 0.25
 		}
-		else_if = {
-			limit = { scaled_debt >= 0.3 }
-			multiply = 0.5
-		}
-		else_if = {
-			limit = {
-				taking_loans = yes
-				scaled_debt >= 0.1
+		else = {
+			multiply = {
+				value = 1
+				subtract = {
+					value = scaled_debt
+					multiply = 1.5
+				}
+				min = 0.25
+				max = 1
 			}
-			multiply = 0.75
 		}
 		min = 2
 	}
