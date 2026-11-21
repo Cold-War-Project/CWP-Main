@@ -119,11 +119,16 @@ Bizone 1946, the US and Britain drop the four-power accord in 1947, Deutsche Mar
 
 Player-visible names use established terms from the historical and political literature, or plain description, never invented coinages. Applied here: the Soviet bar is *Sovietization*; Moscow's buttons are the *Sinatra* and *Brezhnev Doctrines*; flavour lines use period terms (Stunde Null, Bizonia, Trizonesia, Luftbrücke, Zwangsvereinigung, Arbeiter-und-Bauern-Staat, Bonn Republic, Paris Agreements, Volksaufstand, Systemkonkurrenz, Wandel durch Annäherung, Mauerfall, the Chinese solution, the third way, die kleine Wiedervereinigung) or sourced quotations.
 
-## Occupations that never ended (2026-11-20, history-divergence review)
+## Occupations that never ended (2026-11-20/21, history-divergence review)
 
-In runs to 1962 the FRG stayed occupied in 2 of 3 runs, Austria in 2 of 3, and the GDR with it, since its sovereignty waits for the FRG's. Causes and fixes:
-- **FRG.** The −2 a month Occupation Statute cancelled the always-on factors (Bizone, Trizone, Deutsche Mark: +1.5) once Marshall aid and the airlift ended, so the bar stalled near 97 below its threshold of 100. The statute now scales with Bonn's legitimacy: −1.25 below 40, −1 from 40 to 60, −0.5 at 60 or more. Saves show GER's legitimacy at 92 to 98 in the 1950s, so in practice it is −0.5. Sovereignty and the GDR's both trigger at 99, so neither bar has to sit at its clamp.
-- **Austria.** Moscow and Washington consent through their buttons (seen in run 16ccecae3), but AI Austria, a Soviet subject, never pressed *Pledge Neutrality* or *Buy Back the German Assets*. The journal entry's monthly pulse now offers an AI Austria the same two choices under the buttons' conditions (neutrality once the FRG exists, the buy-back once Moscow consents), at 10% a month each. A player Austria still decides by button. The buy-back effect moved to `cwp_at_buy_back_assets` (`common/scripted_effects/cwp_austria_saar_effects.txt`), which both paths share. Button AI weights were raised as well.
+In runs to 1962 the FRG stayed occupied in 2 of 3 runs, Austria in 2 of 3, and the GDR with it, since its sovereignty waits for the FRG's. In those runs the −2 a month Occupation Statute cancelled the always-on factors (Bizone, Trizone and Deutsche Mark, +1.5) and the bar stalled near 97 below its threshold of 100.
+
+**First fix** (f7b5bdc8e): the statute was graded by Bonn's legitimacy, and the buttons' AI weights were raised. Batch run 1120211108-batch-1f23 overshot. Saves show GER's legitimacy at 92 to 98, so the light −0.5 statute applied; the FRG was sovereign in October 1950 and the GDR in February 1952. Raising the button weights had Austria pledge, buy back the assets and sign in 1946, because Moscow's consent no longer waited for anything. So the AI does press these buttons, and the earlier stall came from weights that were too low.
+
+**Second fix:**
+- **FRG.** The statute is −1.75, or −1.5 once Bonn's legitimacy is at least 50. Marshall aid feeds the bar only until the Basic Law, because the US could re-press it until sovereignty. A new factor, European integration (+0.25 while GER's relations with France are at least 25), gives the post-1949 years a positive input from the simulation. After the Basic Law that nets about 0 to +1.25 a month (always-on +1.5, the conditional factors and Europe up to +1.25, minus the statute), which points at sovereignty in the mid-1950s. Both sovereignty milestones fire at 99.
+- **Austria.** Moscow's consent AI is +15 only once Austria has pledged neutrality and the FRG is sovereign, the 1955 sequence (+0.5 for an early consent after the pledge). Washington's is 15. Austria's neutrality AI is 1, or 6 once the FRG exists, and its buy-back is 0.5, or 20.5 once Moscow consents. The pulse shim, a 10% monthly chance for an AI Austria under the buttons' conditions, stays as a fallback.
+- **GDR legitimacy** still reached 100 by 1954, because the East's SoL is at or above the West's (economy divergence 8). Consumer socialism now gives +0.5 instead of +1. The SoL inversion itself belongs to the economy thread.
 
 ## Known gaps and decisions for review
 
