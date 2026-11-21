@@ -57,11 +57,11 @@ For a single event, steps 3, 6 and 10 shrink to a few lines. Do not skip steps 2
 | File | What it holds |
 |---|---|
 | `01-from-history-to-design.md` | The method: research, finding the game in the history, mapping, the design brief, build order |
-| `02-choosing-the-tools.md` | What each tool is for; a decision flow; the five roles of events; the nine shapes of vanilla journal entries with a model for each; how objects are wired together |
+| `02-choosing-the-tools.md` | What each tool is for; a decision flow; the five roles of events; the nine shapes of vanilla journal entries with a model for each; the ledger, a shape vanilla does not have; how objects are wired together |
 | `03-history-to-mechanics.md` | The lever catalogue: for each historical phenomenon, the triggers that read it and the effects and modifiers that change it, with vanilla usage counts |
 | `04-journal-entries.md` | Activation, goals, outcomes, timeouts, pulses, presentation, text keys, checklist |
 | `05-events.md` | Anatomy, option design, AI weights, chains, text variants, a picture picker by scene, icons, checklist |
-| `06-buttons-bars-decisions.md` | The four kinds of button, three bar designs and their numbers, when a decision is the right tool |
+| `06-buttons-bars-decisions.md` | The four kinds of button, three bar designs and their numbers, when a decision is the right tool; custom panels: parts, ten layout rules, sizes, the AI (tested in game) |
 | `07-modifiers-and-rewards.md` | Sizes, durations, money, icons, and how to balance a piece of content |
 | `08-writing-localization.md` | The text budget, the voice of each kind of text, period voice, generic text, key naming |
 | `09-gating-ai-and-robustness.md` | Tag, culture, place or condition; dates and eras; the AI; what breaks and how to guard it; test plan |
@@ -86,12 +86,14 @@ For a single event, steps 3, 6 and 10 shrink to a few lines. Do not skip steps 2
 | **[STATS]** | Counted from the 1.15.1 game files by `tools/build_design_reference.py` or a one-off script. A description of what vanilla does, not a rule of the engine |
 | **[ADVICE]** | Design judgement drawn from reading vanilla content. Sound defaults, open to the user's taste |
 | **[VERIFY]** | Not confirmed |
+| **[GAME, tested …]** | Run in the game on the date given, result read from the screen or the logs. The firmest mark |
 
 Unmarked statements in chapters 01, 02, 04 to 09 and 11 are [ADVICE] unless they carry a count, in which case
 they are [STATS]. Script names in chapter 03 and in every code block were checked by machine against the
 modding guide's reference files and the game folder.
 
-**Nothing in this guide was run in the game.** The example mod passes the static checkers; its thresholds and
+**Only the passages marked "tested" were run in the game**: custom panels (chapters 02, 06, 08, 09), from the
+test mod `mod/CWP Scripted GUI Test` on 2026-11-21. Nothing else was. The example mod passes the static checkers; its thresholds and
 sizes are marked for tuning in chapter 10. Say the same about any content built with this guide until the
 user has tested it.
 

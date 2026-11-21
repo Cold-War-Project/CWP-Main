@@ -1,0 +1,135 @@
+﻿# CWP scripted GUI test: test data. Country scope (the player).
+#
+# Country variables on the player:   cwp_sgt_ready, cwp_sgt_counter, cwp_sgt_stance, cwp_sgt_tranches,
+#                                    cwp_sgt_flag_result, cwp_sgt_lvl_<good>, cwp_sgt_months_<good>
+# Country variable lists on the player: cwp_sgt_members (countries), cwp_sgt_goods (goods),
+#                                    cwp_sgt_ration_standard, cwp_sgt_ration_tight, cwp_sgt_ration_cd (goods)
+# Country variables on each member:  cwp_sgt_recovery, cwp_sgt_alignment, cwp_sgt_answer, cwp_sgt_pokes
+# Global:                            cwp_sgt_world_members (list), cwp_sgt_holder, cwp_sgt_confidence,
+#                                    cwp_sgt_liquidity, cwp_sgt_ai_uses, cwp_sgt_ai_only
+
+cwp_sgt_setup = {
+	# Start from nothing, so the decision can be taken again to reset the test.
+	if = {
+		limit = { has_variable_list = cwp_sgt_members }
+		clear_variable_list = cwp_sgt_members
+	}
+	if = {
+		limit = { has_variable_list = cwp_sgt_goods }
+		clear_variable_list = cwp_sgt_goods
+	}
+	if = {
+		limit = { has_variable_list = cwp_sgt_ration_standard }
+		clear_variable_list = cwp_sgt_ration_standard
+	}
+	if = {
+		limit = { has_variable_list = cwp_sgt_ration_tight }
+		clear_variable_list = cwp_sgt_ration_tight
+	}
+	if = {
+		limit = { has_variable_list = cwp_sgt_ration_cd }
+		clear_variable_list = cwp_sgt_ration_cd
+	}
+	if = {
+		limit = { has_global_variable_list = cwp_sgt_world_members }
+		clear_global_variable_list = cwp_sgt_world_members
+	}
+
+	# The player's own numbers.
+	set_variable = { name = cwp_sgt_ready value = yes }
+	set_variable = { name = cwp_sgt_counter value = 0 }
+	set_variable = { name = cwp_sgt_stance value = 2 }
+	set_variable = { name = cwp_sgt_tranches value = 2 }
+	set_variable = { name = cwp_sgt_flag_result value = 0 }
+	set_variable = { name = cwp_sgt_seed value = 0 }
+	set_variable = { name = cwp_sgt_lvl_grain value = 2 }
+	set_variable = { name = cwp_sgt_lvl_meat value = 0 }
+	set_variable = { name = cwp_sgt_months_grain value = 14 }
+	set_variable = { name = cwp_sgt_months_meat value = 9 }
+	set_variable = { name = cwp_sgt_months_sugar value = 5 }
+	set_variable = { name = cwp_sgt_months_tea value = 2 }
+	set_variable = { name = cwp_sgt_months_coffee value = 0 }
+	set_variable = { name = cwp_sgt_months_tobacco value = 0 }
+
+	# The player is a row of the world ledger too.
+	set_variable = { name = cwp_sgt_recovery value = 50 }
+	set_variable = { name = cwp_sgt_alignment value = 50 }
+	set_variable = { name = cwp_sgt_answer value = 0 }
+	set_variable = { name = cwp_sgt_pokes value = 0 }
+
+	# World numbers.
+	set_global_variable = { name = cwp_sgt_holder value = root }
+	set_global_variable = { name = cwp_sgt_confidence value = 70 }
+	set_global_variable = { name = cwp_sgt_liquidity value = 40 }
+	if = {
+		limit = { NOT = { has_global_variable = cwp_sgt_ai_uses } }
+		set_global_variable = { name = cwp_sgt_ai_uses value = 0 }
+		set_global_variable = { name = cwp_sgt_ai_only value = 0 }
+	}
+	add_to_global_variable_list = { name = cwp_sgt_world_members target = root }
+
+	# Sixteen members: the largest economies other than the player. Sixteen rows are enough to need a scroll bar.
+	ordered_country = {
+		limit = {
+			NOT = { this = root }
+		}
+		order_by = gdp
+		max = 16
+		check_range_bounds = no
+
+		save_temporary_scope_as = cwp_sgt_new_member
+		root = {
+			change_variable = { name = cwp_sgt_seed add = 1 }
+			add_to_variable_list = { name = cwp_sgt_members target = scope:cwp_sgt_new_member }
+		}
+		set_variable = {
+			name = cwp_sgt_recovery
+			value = {
+				value = root.var:cwp_sgt_seed
+				multiply = 6
+			}
+		}
+		set_variable = {
+			name = cwp_sgt_alignment
+			value = {
+				value = 100
+				subtract = {
+					value = root.var:cwp_sgt_seed
+					multiply = 5
+				}
+			}
+		}
+		set_variable = { name = cwp_sgt_answer value = 0 }
+		set_variable = { name = cwp_sgt_pokes value = 0 }
+		add_to_global_variable_list = { name = cwp_sgt_world_members target = scope:cwp_sgt_new_member }
+	}
+
+	# The ration book: six goods. Grain starts tight, sugar and tea standard, the rest free.
+	add_to_variable_list = { name = cwp_sgt_goods target = g:grain }
+	add_to_variable_list = { name = cwp_sgt_goods target = g:meat }
+	add_to_variable_list = { name = cwp_sgt_goods target = g:sugar }
+	add_to_variable_list = { name = cwp_sgt_goods target = g:tea }
+	add_to_variable_list = { name = cwp_sgt_goods target = g:coffee }
+	add_to_variable_list = { name = cwp_sgt_goods target = g:tobacco }
+	add_to_variable_list = { name = cwp_sgt_ration_tight target = g:grain }
+	add_to_variable_list = { name = cwp_sgt_ration_standard target = g:sugar }
+	add_to_variable_list = { name = cwp_sgt_ration_standard target = g:tea }
+
+	if = {
+		limit = { NOT = { has_journal_entry = cwp_sgt_je } }
+		add_journal_entry = { type = cwp_sgt_je }
+	}
+
+	debug_log = "CWP_SGT SETUP;[THIS.GetCountry.GetNameNoFormatting];seed=[THIS.GetCountry.MakeScope.Var('cwp_sgt_seed').GetValue|0]"
+}
+
+# One step of the hand-written "index" rows: scope:action 1 lowers the level, anything else raises it.
+cwp_sgt_idx_step = {
+	if = {
+		limit = { scope:action = 1 }
+		change_variable = { name = $VAR$ subtract = 1 }
+	}
+	else = {
+		change_variable = { name = $VAR$ add = 1 }
+	}
+}

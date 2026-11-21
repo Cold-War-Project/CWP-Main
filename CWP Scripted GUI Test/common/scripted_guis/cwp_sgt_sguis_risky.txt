@@ -1,0 +1,71 @@
+﻿# CWP scripted GUI test: the fields scripted_guis.md lists but no vanilla scripted GUI uses.
+# Their format is worked out from the one-line doc and from what the game does with each try.
+# If error.log names this file again, send the lines: the rest of the test lives in cwp_sgt_sguis.txt.
+#
+# Try 1 (2026-11-21), all three rejected at load:
+#   confirm_title = { first_valid = { triggered_desc = { ... } } }   "Unexpected token: first_valid"
+#   ai_chance = { value = 100 }                                      "unknown command 'value' for MTTH"
+#   ai_frequency = { value = 1 }                                     "Malformed token: {"
+# Try 2 (same day):
+#   ai_chance = { base = 100 } and ai_frequency = 1                  WORK. Seven great powers pressed the
+#                                                                    scripted GUI every 25 or 26 days.
+#   confirm_title = { desc = key }                                   "Unexpected token: desc". The window
+#       opened with "{" as its title: the field takes one word, and the brace was that word. The "}"
+#       that followed closed the whole scripted GUI, so its effect was lost and Ok did nothing.
+# Try 3 (below): confirm_title and confirm_text as plain localization keys.          WORKS (run 3): title and
+#       text show, Ok runs the effect, Cancel does not.
+
+### T30: confirmation window before the effect runs
+
+cwp_sgt_confirm_sgui = {
+	scope = country
+
+	is_valid = {
+		has_variable = cwp_sgt_counter
+	}
+
+	confirm_title = cwp_sgt_confirm_title
+
+	confirm_text = cwp_sgt_confirm_text
+
+	effect = {
+		change_variable = { name = cwp_sgt_counter add = 100 }
+		debug_log = "CWP_SGT T30 confirm;[THIS.GetCountry.GetNameNoFormatting];counter=[THIS.GetCountry.MakeScope.Var('cwp_sgt_counter').GetValue|0]"
+	}
+}
+
+### T31: does the AI press a scripted GUI that no window shows it?
+# Doc: ai_is_valid (trigger, default false), ai_chance ("script value between 1 and 100", in fact read
+# as a base / modifier block), ai_frequency (in months).
+# Great powers only, and only while the player has switched the test on, so debug.log stays readable.
+
+cwp_sgt_ai_sgui = {
+	scope = country
+
+	is_valid = {
+		has_global_variable = cwp_sgt_ai_uses
+	}
+
+	effect = {
+		# No [TimeKeeper...] in this debug_log: on the player's own press it logged
+		# "Assertion failed: NGameState::GameStateAccess..." once (run 2). The AI's presses did not.
+		change_global_variable = { name = cwp_sgt_ai_uses add = 1 }
+		if = {
+			limit = { is_ai = yes }
+			change_global_variable = { name = cwp_sgt_ai_only add = 1 }
+		}
+		debug_log = "CWP_SGT T31 ai sgui;[THIS.GetCountry.GetNameNoFormatting];uses=[GetGlobalVariable('cwp_sgt_ai_uses').GetValue|0];by_ai=[GetGlobalVariable('cwp_sgt_ai_only').GetValue|0]"
+	}
+
+	ai_is_valid = {
+		has_global_variable = cwp_sgt_ai_on
+		has_global_variable = cwp_sgt_ai_uses
+		country_rank >= rank_value:great_power
+	}
+
+	ai_chance = {
+		base = 100
+	}
+
+	ai_frequency = 1
+}

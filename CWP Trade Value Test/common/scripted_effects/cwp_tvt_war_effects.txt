@@ -1,0 +1,137 @@
+﻿# CWP war-end test: can script end an ordinary war and freeze the front where it stands?
+# Country scope (the player), called from the decisions in cwp_tvt_war_decisions.txt.
+# No tags or database keys are used here; the province ids are in cwp_tvt_war_scan.txt.
+
+# One province of the scan. Counts provinces whose controller is at war with their owner
+# (root on either side), and hands them to the controller while root has the variable cwp_tvt_war_take.
+cwp_tvt_war_province = {
+	p:$P$ = {
+		if = {
+			limit = { owner = root }
+			root = { change_variable = { name = cwp_tvt_war_owned add = 1 } }
+		}
+		# Second half of "end first, then hand over": the war is over, so nothing is occupied any more,
+		# and the province goes to the country recorded for it while the war was still on.
+		if = {
+			limit = {
+				root = { has_variable = cwp_tvt_war_restore }
+				has_global_variable = cwp_tvt_war_ctrl_$P$
+			}
+			state.state_region = {
+				set_owner_of_provinces = {
+					country = global_var:cwp_tvt_war_ctrl_$P$
+					provinces = { $P$ }
+				}
+			}
+			remove_global_variable = cwp_tvt_war_ctrl_$P$
+			root = { change_variable = { name = cwp_tvt_war_moved add = 1 } }
+		}
+		if = {
+			limit = {
+				controller = {
+					NOT = { this = prev.owner }
+					has_war_with = prev.owner
+				}
+				OR = {
+					owner = root
+					controller = root
+				}
+			}
+			if = {
+				limit = { controller = root }
+				root = { change_variable = { name = cwp_tvt_war_held add = 1 } }
+			}
+			else = {
+				root = { change_variable = { name = cwp_tvt_war_lost add = 1 } }
+			}
+			if = {
+				limit = {
+					root = { has_variable = cwp_tvt_war_take }
+				}
+				controller = {
+					save_temporary_scope_as = cwp_tvt_war_taker
+					prev.state.state_region = {
+						set_owner_of_provinces = {
+							country = scope:cwp_tvt_war_taker
+							provinces = { $P$ }
+						}
+					}
+				}
+				root = { change_variable = { name = cwp_tvt_war_moved add = 1 } }
+			}
+			# First half of "end first, then hand over": remember the occupier, change nothing yet.
+			else_if = {
+				limit = {
+					root = { has_variable = cwp_tvt_war_record }
+				}
+				controller = {
+					set_global_variable = { name = cwp_tvt_war_ctrl_$P$ value = this }
+				}
+			}
+		}
+	}
+}
+
+cwp_tvt_war_reset = {
+	set_variable = { name = cwp_tvt_war_owned value = 0 }
+	set_variable = { name = cwp_tvt_war_held value = 0 }
+	set_variable = { name = cwp_tvt_war_lost value = 0 }
+	set_variable = { name = cwp_tvt_war_moved value = 0 }
+	set_variable = { name = cwp_tvt_war_wars value = 0 }
+	set_variable = { name = cwp_tvt_war_stalemates value = 0 }
+	set_variable = { name = cwp_tvt_war_enemies value = 0 }
+	set_variable = { name = cwp_tvt_war_truces value = 0 }
+}
+
+# Counts everything again and writes one STATE row, one ENEMY row per enemy and one TRUCE row per truce.
+cwp_tvt_war_report = {
+	cwp_tvt_war_reset = yes
+	every_scope_war = {
+		root = { change_variable = { name = cwp_tvt_war_wars add = 1 } }
+		if = {
+			limit = { war_is_in_stalemate = yes }
+			root = { change_variable = { name = cwp_tvt_war_stalemates add = 1 } }
+		}
+	}
+	every_country = {
+		limit = { has_war_with = root }
+		root = { change_variable = { name = cwp_tvt_war_enemies add = 1 } }
+		debug_log = "CWP_TVT WAR ENEMY;[THIS.GetCountry.GetNameNoFormatting]"
+	}
+	every_country = {
+		limit = { has_truce_with = root }
+		root = { change_variable = { name = cwp_tvt_war_truces add = 1 } }
+		debug_log = "CWP_TVT WAR TRUCE;[THIS.GetCountry.GetNameNoFormatting]"
+	}
+	cwp_tvt_war_scan = yes
+	debug_log = "CWP_TVT WAR STATE;[TimeKeeper.GetCurrentDate.GetString];[THIS.GetCountry.GetNameNoFormatting];wars=[THIS.GetCountry.MakeScope.Var('cwp_tvt_war_wars').GetValue|0];stalemates=[THIS.GetCountry.MakeScope.Var('cwp_tvt_war_stalemates').GetValue|0];enemies=[THIS.GetCountry.MakeScope.Var('cwp_tvt_war_enemies').GetValue|0];truces=[THIS.GetCountry.MakeScope.Var('cwp_tvt_war_truces').GetValue|0];provinces_i_own=[THIS.GetCountry.MakeScope.Var('cwp_tvt_war_owned').GetValue|0];enemy_provinces_i_hold=[THIS.GetCountry.MakeScope.Var('cwp_tvt_war_held').GetValue|0];my_provinces_enemy_holds=[THIS.GetCountry.MakeScope.Var('cwp_tvt_war_lost').GetValue|0];provinces_handed_over=[THIS.GetCountry.MakeScope.Var('cwp_tvt_war_moved').GetValue|0]"
+}
+
+# Hands every occupied province in the scan to its occupier. The war goes on.
+cwp_tvt_war_freeze = {
+	set_variable = cwp_tvt_war_take
+	cwp_tvt_war_report = yes
+	remove_variable = cwp_tvt_war_take
+}
+
+# Remembers who occupies what (nothing changes hands), for cwp_tvt_war_restore after the war has been ended.
+cwp_tvt_war_record = {
+	set_variable = cwp_tvt_war_record
+	cwp_tvt_war_report = yes
+	remove_variable = cwp_tvt_war_record
+}
+
+cwp_tvt_war_restore = {
+	set_variable = cwp_tvt_war_restore
+	cwp_tvt_war_report = yes
+	remove_variable = cwp_tvt_war_restore
+}
+
+# Ends every war the country is in, through the war's diplomatic play.
+cwp_tvt_war_end_all = {
+	every_scope_war = {
+		diplomatic_play = {
+			end_play = yes
+		}
+	}
+}

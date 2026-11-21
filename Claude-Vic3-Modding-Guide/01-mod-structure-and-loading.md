@@ -240,7 +240,8 @@ that other mods' injects still apply. A compatibility patch is a third mod loade
 | `localization/**/*.yml` | UTF-8 **with BOM** | All 2,009 files have a BOM. Without it the file is ignored or mis-read and every key shows raw in game. |
 | `events/**/*.txt` | UTF-8 with BOM | All 348 files have a BOM. |
 | `common/**/*.txt`, `map_data/state_regions/*.txt` | UTF-8 with BOM | 3,170 of 3,192 files in `common/` have a BOM (the exceptions are coat-of-arms files). |
-| `gui/*.gui` | UTF-8 **without** BOM | Vanilla `.gui` files start directly with content. |
+| `gui/**/*.gui` | UTF-8, BOM optional | 185 of 207 vanilla `.gui` files have no BOM, 22 have one. A mod's files without a BOM load and work [GAME, tested in 1.15.2 on 2026-11-21]. |
+| `gui/scripted_widgets/*.txt` | UTF-8 with BOM | Vanilla ships none. Without a BOM the file works but logs "should be in utf8-bom encoding" [GAME, tested in 1.15.2 on 2026-11-21]. |
 | `.metadata/metadata.json` | UTF-8 without BOM | [VERIFY] |
 
 Claude Code's `Write` tool writes UTF-8 **without** a BOM. After creating files, add the BOM with the helper:

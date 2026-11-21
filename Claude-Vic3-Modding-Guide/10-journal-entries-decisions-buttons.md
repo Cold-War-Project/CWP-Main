@@ -204,7 +204,7 @@ order declared.
 | `should_be_pinned_by_default_uninvolved_or_context`, `should_be_pinned_by_default_involved` | Pinned in the outliner by default. |
 | `should_be_involved`, `should_show_when_not_involved`, `on_become_involved_after_activation`, `on_no_longer_involved` | Contextless JEs: which countries take part. |
 | `map_color`, `map_color_second`, `map_tooltip` | Optional JE map mode (root: state). |
-| `widget = { gui = … name = … container = … }` | Custom GUI widget inside the JE panel. |
+| `widget = { gui = … name = … container = … }` | Custom GUI widget inside the JE panel. Repeatable. Tested with a mod's own `.gui` file and `container = "custom_widget_container_3"` [GAME, tested in 1.15.2 on 2026-11-21]; chapter 13 lists the containers and what a widget can do, recipe 17 is a working panel. |
 | `how_tutorial`, `why_tutorial`, `dlc`, `is_shown_in_lobby` | Tutorial links, DLC badge, lobby display. |
 
 `journal_entries.md` documents every one of these with examples.
@@ -367,6 +367,12 @@ script: `add_journal_entry = { type = … objective_subgoal = … }`, `complete_
 | Repeatable player action tied to a goal | scripted button on a journal entry |
 | Narrative moment or a forced choice | event |
 | Invisible recurring logic | on-action |
+| The same action on many things (one row per good, per member country), standing switches, a ledger to read | custom panel inside a journal entry, or a standalone window, driven by scripted GUIs (chapter 13, "Tested in game"; recipes 17 and 18) |
 
 Journal entries with pulses are also the cleanest way to run logic *only while something is going on*: the
 pulses stop when the entry ends, with no cleanup needed. They are the only source of a **weekly** pulse.
+
+Scripted buttons and custom panels differ in one way that decides between them: a scripted button knows only
+its journal entry and country, so twelve members times three answers is 36 button definitions; a panel row
+hands its member and an answer number to **one** scripted GUI [GAME, tested in 1.15.2 on 2026-11-21]. Up to about six fixed
+actions, use scripted buttons: they need no GUI file.

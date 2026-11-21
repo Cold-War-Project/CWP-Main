@@ -14,6 +14,7 @@ Counts are **[STATS]** from vanilla 1.15.1 (`reference/generated/vanilla_statist
 | **Event** | A window with a picture, a description, a flavor text and 1 to 4 choices | A moment: a turning point, a choice, a piece of colour | 2,402 |
 | **Scripted button** | A button inside a journal entry | A deliberate action the government takes *within* that process, with a cost | 269 (on 106 entries) |
 | **Scripted progress bar** | A bar inside a journal entry with a list of what moves it | A quantity the player pushes or resists, when several factors move it | 61 (on 53 entries) |
+| **Custom panel** | A table inside a journal entry, or a window of its own with tabs: a row per item, figures, bars and buttons on every row | The same action taken on many things (a ration level per good, an answer per member country), standing switches, a ledger to read | none in vanilla with buttons per row; vanilla's five journal entry widget files only display. Proven in a test mod [GAME, tested in 1.15.2 on 2026-11-21] |
 | **Decision** | An entry in the Journal's decision list | A one-time act the player chooses when to take, outside any process; often the door into a journal entry | 61 |
 | **Static modifier** | A named, icon-bearing effect on a country, state, interest group, character or building | Every lasting consequence | about 4,350 applied by content |
 | **Variable** | Nothing | Memory: what happened, which choice was made, which stage is reached | everywhere |
@@ -42,6 +43,12 @@ Answer in order; stop at the first "yes".
 8. **Do several countries share it?**
    → A contextless journal entry (`should_be_involved`), one per world. Vanilla: `je_the_hungry_forties`,
    `je_springtime_of_the_peoples`, `je_paris_commune`.
+
+9. **Is the same action taken on many things, or does the player keep a table in order over years?** (A
+   level for each of fourteen goods; approve, trim or reject for each of sixteen members.)
+   → A custom panel: rows built from a list, one scripted GUI behind all of them. In a journal entry while
+   it belongs to one process; in a window of its own when it lasts the campaign or needs tabs. See "A shape
+   vanilla does not have" below and chapter 06, "Custom panels".
 
 Add tools only when the step above them is not enough. Each bar and button is another thing to balance,
 explain, localize and teach the AI.
@@ -148,6 +155,34 @@ One contextless entry that several countries are involved in.
   `je_paris_commune`.
 * Use for: pandemics, continental revolutions, world fairs, depressions.
 
+## A shape vanilla does not have: the ledger
+
+**What it is.** A table the player works through: one row per good, member country, state or loan, each with
+its figures and its own buttons. Vanilla has no player-facing example, because scripted buttons cannot do
+it: a scripted button knows its journal entry and country and nothing else, so "Approve" for each of
+sixteen members would be sixteen buttons, and three answers forty-eight. A panel row hands its own item to
+**one** scripted GUI.
+
+**It works** [GAME, tested in 1.15.2 on 2026-11-21]: rows from a variable list (countries or goods), bars and coloured state words per
+row, buttons that grey or disappear per row, cooldowns per row, tooltips per row, a scroll list, and the AI
+pressing the same scripted GUIs by itself. A separate window with tabs and its own opener button works too.
+The test mod `mod/CWP Scripted GUI Test` is the model, in look and in script; the syntax is in the modding
+guide, chapter 13 ("Tested in game") and chapter 16 (recipes 17 and 18).
+
+**When to use it.**
+
+| Situation | Tool |
+|---|---|
+| Up to about six actions, each a different act | scripted buttons; no GUI file needed |
+| One act chosen for one target now and then | an event with an option per target (up to four), or a decision |
+| The same two or three acts on six or more items, repeatedly | **a panel in the journal entry** |
+| A standing system the player returns to all campaign, several views of it | **a window with tabs**, the journal entry a short pointer to it |
+| The player only needs to read the table | a list written as text in the journal entry's description (a scripted GUI's effect printed with `ExecuteTooltip`); no GUI file |
+
+**What it costs.** A `.gui` file, which nothing checks before the game runs; a round of screenshots to get
+the layout right; text for every column title, state word and tooltip; root-only scripted GUIs for the AI.
+Size it as one step larger than the same content with buttons.
+
 ## Composition patterns
 
 How the objects are wired together. Each line is "this starts that".
@@ -159,6 +194,8 @@ journal entry: immediate ──► opener event
 journal entry: on_monthly_pulse ──random_events──► pulse events ──► bar progress / modifiers / variables
 journal entry: on_monthly_pulse ──effect + if──► staged choice event (guarded by a variable so it fires once)
 scripted button ──effect──► bar progress + cost modifier (+ event)
+panel row button ──scripted GUI (row's item as a saved scope)──► variables and lists (+ event)
+scripted GUI with ai_is_valid ──monthly, no window──► the AI's version of the same act
 journal entry: outcome ──effect──► ending event ──option──► reward modifier (+ next journal entry)
 ```
 
@@ -191,3 +228,6 @@ Rules of composition:
 * Mandatory events with one option and no effect. If it has nothing to offer, cut it or make it a
   notification (`post_notification`).
 * More than four options. Of 2,345 visible vanilla events, 2,207 have one to three options.
+* A custom panel for a handful of different actions: that is what scripted buttons are for.
+* A window of its own for something that lives and dies with one journal entry.
+* A panel that only the player can work. Every row action needs an AI route (chapter 09).

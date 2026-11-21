@@ -1,0 +1,64 @@
+﻿# CWP Trade Value Test: two repeatable, player-only decisions.
+# Every line they write to debug.log starts with CWP_TVT and uses ; as the column separator.
+
+# 1. Own country: an event with the totals, and one debug.log row per good of the player's market.
+cwp_tvt_own_market_decision = {
+	is_shown = {
+		is_player = yes
+	}
+
+	possible = {
+		is_player = yes
+	}
+
+	when_taken = {
+		debug_log = "CWP_TVT ==== OWN MARKET;[TimeKeeper.GetCurrentDate.GetString];[THIS.GetCountry.GetNameNoFormatting]"
+		debug_log = "CWP_TVT TOTALS;A_exports=[THIS.GetCountry.MakeScope.ScriptValue('cwp_tvt_a_exports')|3];A_imports=[THIS.GetCountry.MakeScope.ScriptValue('cwp_tvt_a_imports')|3];A_trade=[THIS.GetCountry.MakeScope.ScriptValue('cwp_tvt_a_trade')|3];B_exports_base=[THIS.GetCountry.MakeScope.ScriptValue('cwp_tvt_b_exports_base')|3];B_imports_base=[THIS.GetCountry.MakeScope.ScriptValue('cwp_tvt_b_imports_base')|3];B_exports_est=[THIS.GetCountry.MakeScope.ScriptValue('cwp_tvt_b_exports_est')|3];B_imports_est=[THIS.GetCountry.MakeScope.ScriptValue('cwp_tvt_b_imports_est')|3]"
+		debug_log = "CWP_TVT GOODHEAD;good;exports;imports;treaty_exports;treaty_imports;base_price;pricier;cheaper;price_est;engine_price"
+		market ?= {
+			every_market_goods = {
+				debug_log = "CWP_TVT GOOD;[THIS.GetMarketGoods.GetGoods.GetNameNoFormatting];[THIS.GetMarketGoods.MakeScope.ScriptValue('cwp_tvt_mg_exports')|3];[THIS.GetMarketGoods.MakeScope.ScriptValue('cwp_tvt_mg_imports')|3];[THIS.GetMarketGoods.MakeScope.ScriptValue('cwp_tvt_mg_treaty_exports')|3];[THIS.GetMarketGoods.MakeScope.ScriptValue('cwp_tvt_mg_treaty_imports')|3];[THIS.GetMarketGoods.MakeScope.ScriptValue('cwp_tvt_mg_base_price')|3];[THIS.GetMarketGoods.MakeScope.ScriptValue('cwp_tvt_mg_pricier')|3];[THIS.GetMarketGoods.MakeScope.ScriptValue('cwp_tvt_mg_cheaper')|3];[THIS.GetMarketGoods.MakeScope.ScriptValue('cwp_tvt_mg_price_est')|3];[THIS.GetMarketGoods.GetGoods.GetMarketPrice|3]"
+			}
+		}
+		debug_log = "CWP_TVT ==== END OWN MARKET"
+		trigger_event = { id = cwp_tvt.1 }
+	}
+
+	ai_chance = {
+		value = 0
+	}
+}
+
+# 2. Every country: one debug.log row each, with its trade against the player's country.
+cwp_tvt_all_countries_decision = {
+	is_shown = {
+		is_player = yes
+	}
+
+	possible = {
+		is_player = yes
+	}
+
+	when_taken = {
+		debug_log = "CWP_TVT ==== ALL COUNTRIES;[TimeKeeper.GetCurrentDate.GetString];seen from [THIS.GetCountry.GetNameNoFormatting]"
+		debug_log = "CWP_TVT COUNTRYHEAD;country;market;junior_in_customs_union;A_exports;A_imports;A_trade;B_exports_base;B_imports_base;B_exports_est;B_imports_est;mutual_with_player;gdp;income"
+		every_country = {
+			limit = {
+				NOT = { is_country_type = decentralized }
+			}
+			set_variable = { name = cwp_tvt_mutual value = 0 }
+			if = {
+				limit = {
+					NOT = { this = root }
+				}
+				set_variable = { name = cwp_tvt_mutual value = "mutual_trade_value_with_country(root)" }
+			}
+			debug_log = "CWP_TVT COUNTRY;[THIS.GetCountry.GetNameNoFormatting];[THIS.GetCountry.GetMarket.GetNameNoFormatting];[THIS.GetCountry.MakeScope.ScriptValue('cwp_tvt_is_junior')|0];[THIS.GetCountry.MakeScope.ScriptValue('cwp_tvt_a_exports')|3];[THIS.GetCountry.MakeScope.ScriptValue('cwp_tvt_a_imports')|3];[THIS.GetCountry.MakeScope.ScriptValue('cwp_tvt_a_trade')|3];[THIS.GetCountry.MakeScope.ScriptValue('cwp_tvt_b_exports_base')|3];[THIS.GetCountry.MakeScope.ScriptValue('cwp_tvt_b_imports_base')|3];[THIS.GetCountry.MakeScope.ScriptValue('cwp_tvt_b_exports_est')|3];[THIS.GetCountry.MakeScope.ScriptValue('cwp_tvt_b_imports_est')|3];[THIS.GetCountry.MakeScope.Var('cwp_tvt_mutual').GetValue|3];[THIS.GetCountry.MakeScope.ScriptValue('cwp_tvt_gdp')|0];[THIS.GetCountry.MakeScope.ScriptValue('cwp_tvt_income')|0]"
+		}
+		debug_log = "CWP_TVT ==== END ALL COUNTRIES"
+	}
+
+	ai_chance = {
+		value = 0
+	}
+}

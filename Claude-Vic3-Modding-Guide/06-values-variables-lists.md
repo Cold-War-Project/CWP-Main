@@ -235,6 +235,22 @@ every_in_global_list = { variable = mm_global_list ... }
 (The docs print the size comparison key of `variable_list_size` as `target`; other list triggers use `value`.
 If one logs an error, try the other. See chapter 15.)
 
+What a variable list can hold and do [GAME, tested in 1.15.2 on 2026-11-21]:
+
+* **Goods are valid entries**, not only countries, states and characters: `target = g:grain`. So are the
+  results of `ordered_country` and friends, through a saved scope.
+* **A timed entry is a cooldown per item.** `add_to_variable_list = { name = l target = scope:good months = 2 }`
+  leaves the list by itself when the time is up, and survives save and load. A timed variable
+  (`set_variable = { name = x value = yes days = 60 }`) does the same for one object.
+* **A list as a state.** "Which goods are at level two" works as a list per level, tested with
+  `is_target_in_variable_list`; guard it with `has_variable_list`, because an emptied list no longer exists.
+* **A GUI can show a list directly**, one row per entry, and pass the entry back to script (chapter 13).
+* **Per-item numbers have no home in a list.** Keep them in variables named by the item's key
+  (`mm_months_grain`); script must then switch on the item to reach the right one, since a variable name
+  cannot be built from a scope in script (a GUI can build it: chapter 13).
+* A variable or list that only a GUI reads is reported as "set but never used" at load: read it once in
+  script as well.
+
 ## Variable maps
 
 Key-value storage on an object: each key (a scope or flag) maps to a value.

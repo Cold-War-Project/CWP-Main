@@ -352,6 +352,25 @@ does not use. War goal types and what each needs are documented in `common/war_g
 Diplomatic play scope: `add_war_goal`, `remove_war_goal`, `add_escalation`, `add_initiator_backers`,
 `add_target_backers`, `end_play`, `resolve_play_for`, `set_war`. War scope: `add_war_war_support`, `join_war`.
 
+Ending a running war from script [GAME: tested in 1.15 on 2026-11-21, vanilla, Brazil against Piratini and
+Para, two ordinary `dp_annex_war` wars]: from a country,
+`every_scope_war = { diplomatic_play = { end_play = yes } }` ends the war in the same tick. Every occupied
+province goes back to its owner at once, no war goal is enforced, and the engine sets a truce between the
+former enemies by itself. To keep a front line, change ownership with `set_owner_of_provinces`: it works on
+occupied provinces while the war is on, and the new owner keeps them when the war is then ended, but handing
+over an occupied province logs the engine assertion "Trying to remove occupation data without returning the
+occupied provinces to the owner of the removed state" (once per game session). The clean order, tested the
+same day in a fresh session: **record, end, hand over.** While the war is on, store each occupied province's
+controller (`p:xHEX = { controller = { set_global_variable = { name = line_xHEX value = this } } }`); call
+`end_play`; then, for each recorded province,
+`state.state_region = { set_owner_of_provinces = { country = global_var:line_xHEX provinces = { xHEX } } }`.
+No assertion was logged in that order. Both orders need one literal block per province (a generated scripted
+effect). After two of four hand-overs, vanilla logged "Event target link 'owner' returned an invalid object" at
+a building's `ai_value` (`common/buildings/04_plantations.txt:99`, an unguarded `owner = { }`) a few seconds
+later: write `owner ?= { }` in building `ai_value` blocks of a mod that moves provinces by script.
+`add_war_war_support = { target = <war leader> value = -200 }` on both leaders does not end a war quickly: it
+only starts the stalemate countdown.
+
 Treaties: `create_treaty` (any scope) with `first_country`, `second_country`, `binding_period`, and
 `articles_to_create`; `withdraw` on a treaty scope. The `create_treaty` entry in the reference shows the full
 structure with examples.

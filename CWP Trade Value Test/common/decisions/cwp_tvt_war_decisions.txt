@@ -1,0 +1,163 @@
+﻿# CWP war-end test: five repeatable, player-only decisions.
+# Every line they write to debug.log starts with CWP_TVT WAR.
+# Suggested run on vanilla: play Brazil from 1836 (at war with Piratini and Para from day one), let two or three
+# months pass, take "Show", save the game, then try one of the other four from that save and take "Show" again
+# a week later. The scan only knows the provinces listed in cwp_tvt_war_scan.txt.
+
+cwp_tvt_war_show_decision = {
+	is_shown = {
+		is_player = yes
+	}
+
+	possible = {
+		is_player = yes
+	}
+
+	when_taken = {
+		debug_log = "CWP_TVT WAR ==== SHOW"
+		cwp_tvt_war_report = yes
+		trigger_event = { id = cwp_tvt_war.1 }
+	}
+
+	ai_chance = {
+		value = 0
+	}
+}
+
+# Test 1: end_play alone. What happens to the war, the occupied provinces and the truce?
+cwp_tvt_war_end_decision = {
+	is_shown = {
+		is_player = yes
+	}
+
+	possible = {
+		is_at_war = yes
+	}
+
+	when_taken = {
+		debug_log = "CWP_TVT WAR ==== END_PLAY, before"
+		cwp_tvt_war_report = yes
+		cwp_tvt_war_end_all = yes
+		debug_log = "CWP_TVT WAR ==== END_PLAY, after"
+		cwp_tvt_war_report = yes
+		trigger_event = { id = cwp_tvt_war.1 }
+	}
+
+	ai_chance = {
+		value = 0
+	}
+}
+
+# Test 2: hand occupied provinces to their occupiers while the war goes on.
+cwp_tvt_war_freeze_decision = {
+	is_shown = {
+		is_player = yes
+	}
+
+	possible = {
+		is_at_war = yes
+	}
+
+	when_taken = {
+		debug_log = "CWP_TVT WAR ==== FREEZE, handing over"
+		cwp_tvt_war_freeze = yes
+		debug_log = "CWP_TVT WAR ==== FREEZE, after"
+		cwp_tvt_war_report = yes
+		trigger_event = { id = cwp_tvt_war.1 }
+	}
+
+	ai_chance = {
+		value = 0
+	}
+}
+
+# Test 3: the whole armistice. Hand over, end the wars, five-year truce with every enemy.
+cwp_tvt_war_armistice_decision = {
+	is_shown = {
+		is_player = yes
+	}
+
+	possible = {
+		is_at_war = yes
+	}
+
+	when_taken = {
+		every_country = {
+			limit = { has_war_with = root }
+			root = {
+				add_to_variable_list = { name = cwp_tvt_war_enemy_list target = prev }
+			}
+		}
+		debug_log = "CWP_TVT WAR ==== ARMISTICE, handing over"
+		cwp_tvt_war_freeze = yes
+		cwp_tvt_war_end_all = yes
+		every_in_list = {
+			variable = cwp_tvt_war_enemy_list
+			root = {
+				create_bidirectional_truce = { country = prev months = 60 }
+			}
+		}
+		clear_variable_list = cwp_tvt_war_enemy_list
+		debug_log = "CWP_TVT WAR ==== ARMISTICE, after"
+		cwp_tvt_war_report = yes
+		trigger_event = { id = cwp_tvt_war.1 }
+	}
+
+	ai_chance = {
+		value = 0
+	}
+}
+
+# Test 5: the armistice in the other order. Record the occupiers, end the wars (the engine hands the
+# occupied provinces back and sets its own truces), then give each recorded province to its occupier.
+# Written after the first run: test 2 logged the engine assertion "Trying to remove occupation data
+# without returning the occupied provinces to the owner of the removed state".
+cwp_tvt_war_armistice_late_decision = {
+	is_shown = {
+		is_player = yes
+	}
+
+	possible = {
+		is_at_war = yes
+	}
+
+	when_taken = {
+		debug_log = "CWP_TVT WAR ==== ARMISTICE LATE, recording"
+		cwp_tvt_war_record = yes
+		cwp_tvt_war_end_all = yes
+		debug_log = "CWP_TVT WAR ==== ARMISTICE LATE, wars ended, handing over"
+		cwp_tvt_war_restore = yes
+		debug_log = "CWP_TVT WAR ==== ARMISTICE LATE, after"
+		cwp_tvt_war_report = yes
+		trigger_event = { id = cwp_tvt_war.1 }
+	}
+
+	ai_chance = {
+		value = 0
+	}
+}
+
+# Test 4, the fallback: push both war leaders' war support to the floor and let the game end the war itself.
+cwp_tvt_war_exhaust_decision = {
+	is_shown = {
+		is_player = yes
+	}
+
+	possible = {
+		is_at_war = yes
+	}
+
+	when_taken = {
+		debug_log = "CWP_TVT WAR ==== EXHAUST"
+		every_scope_war = {
+			add_war_war_support = { target = attacker_warleader value = -200 }
+			add_war_war_support = { target = defender_warleader value = -200 }
+		}
+		cwp_tvt_war_report = yes
+		trigger_event = { id = cwp_tvt_war.1 }
+	}
+
+	ai_chance = {
+		value = 0
+	}
+}

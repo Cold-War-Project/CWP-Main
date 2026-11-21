@@ -32,9 +32,10 @@ Replaced whole (`replace_paths`): `gfx/map/army_dioramas`, `fleet_dioramas`, `fl
 
 The mod has none; if that changes:
 - `.gui` files define widget trees with `types Name { type my_widget = base_widget { ... } }`, `blockoverride "name" { }`, and data bindings in `"[...]"` strings. Same-name files replace vanilla files entirely, which makes every game patch a merge job. Prefer small new files and `scripted_widgets` over editing vanilla windows.
-- `gui/scripted_widgets/*.txt`: lines `gui/my_file.gui = my_widget_name` create that widget at startup without touching vanilla GUI. All mods' files load.
+- `gui/scripted_widgets/*.txt`: lines `gui/my_file.gui = my_widget_name` create that widget at startup without touching vanilla GUI. All mods' files load. Tested in game 2026-11-21: it works; the `.txt` wants a BOM (rule 4 applies), the `.gui` files do not need one; the widget exists from startup, so give it `using = hud_visibility` or the same three conditions.
 - Scripted GUIs (`common/scripted_guis`) are the script side of buttons/toggles/dynamic lists: see `journal-and-content.md`.
 - Journal entries can embed custom widgets (`widget = { gui = "gui/x.gui" name = "..." container = "custom_widget_container_N" }`).
+- **Proven patterns to copy** (tested on vanilla 2026-11-21): the test mod `mod/CWP Scripted GUI Test` holds a working journal entry panel, ledger rows from variable lists, per-row buttons through one scripted GUI, a standalone tabbed window with its own opener, and AI use. It was restyled the same day into the visual model for this mod's panels (vanilla tab bar with its five-tab limit, header bars, fixed button slots, coloured state words, clock icons, a tooltip on every button); the layout rules are in content guide chapter 06, "Custom panels". Its `README.md` lists the results; modding guide chapter 13, "Tested in game", gives the exact forms. For this mod: every variable a panel reads also needs one read in script, and the GUI passes numbers, not flags, or error.log gains lines.
 - GUI errors go to `logs/error.log` and `logs/gui.log`. Data functions cannot be guessed: copy from vanilla `.gui` files that show the same data. Reload is automatic in debug mode when a `.gui` file is saved.
 
 ## Map graphics (`gfx/map`)

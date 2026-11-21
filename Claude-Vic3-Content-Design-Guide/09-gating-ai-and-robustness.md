@@ -95,6 +95,7 @@ Most countries that receive the content are run by the AI. Design so that it is 
 | The AI takes a decision at a bad time | Start from `value = 0`; add only when affordable; multiply by 0 when at war or in a diplomatic play (the Suez pattern) |
 | The AI does not work towards a goal | Do not assume it will. Give the entry a timeout whose penalty an AI country can absorb |
 | The AI ends up with a different outcome than history in every game | Weight the historical option: `base = 10` against `base = 1`, more if the content depends on it |
+| The content is worked through a custom panel | The AI cannot click rows. Give each row action a root-only scripted GUI with `ai_is_valid`, `ai_chance = { base = N modifier = { … } }` and `ai_frequency = N` (months) that picks its target in script. The AI presses these with no window open, about every 25 days at frequency 1 [GAME, tested in 1.15.2 on 2026-11-21]. Note the weight form: `base =`, not the `value =` a button's `ai_chance` takes |
 | A player-only experience is wanted | `is_player = yes` in `is_shown` (6 vanilla decisions do this); use sparingly, it makes the world feel empty |
 
 Write one line in the brief for each choice point: "AI: pays unless in default", "AI: never", "AI: 80%
@@ -125,6 +126,15 @@ Check the design against each row. The right-hand column is the standard answer.
 | Two countries qualify | Two copies of a "unique" story | If it must be unique: test and set a global variable in the opener's `immediate` |
 | The event's follow-up fails its trigger | The chain stops silently | Fire staged events from the journal entry pulse, which can retry |
 
+For a custom panel, three more:
+
+| What changes | What breaks | Guard |
+|---|---|---|
+| A country or good in the panel's list ceases to exist or no longer belongs | A row for nothing; buttons that act on it [VERIFY: not tested] | Remove it from the list in the monthly pass; `exists = scope:member` in every row scripted GUI's `is_shown` |
+| The game is saved and loaded | Nothing: lists, timed entries and timed variables survive [GAME, tested in 1.15.2 on 2026-11-21]. Only the window's open state and tab are forgotten | none needed |
+| The panel's data does not exist yet (before the opening event, in a save from before the content) | Every figure reads as an error or zero, each frame | Show the panel only when a "ready" variable exists; say what to do instead |
+| Multiplayer | Unknown: a scripted GUI press was never tested with two players | State it in the hand-over |
+
 Three habits prevent most of these:
 
 1. **`?=` and `exists`** on every reference to a tag, a stored scope, an interest group, a ruler.
@@ -137,6 +147,9 @@ Three habits prevent most of these:
   cheapest, most excluding test first (a variable, a tag, a technology), and iterators last.
 * Avoid `every_country` and `every_scope_pop` in pulses. Use the weekly pulse only when a week matters; 74
   vanilla entries use it, against 183 monthly.
+* A custom panel evaluates every `visible`, `enabled` and text expression of every row on every frame while
+  it is on screen (vanilla's `scripted_guis.md` says so). Keep the `is_shown` and `is_valid` of row scripted
+  GUIs to variable and list checks; work out anything expensive in a monthly pulse and store it.
 * Random event lists check each listed event's trigger. A long list of events with expensive triggers on a
   monthly pulse adds up across countries.
 
@@ -166,4 +179,6 @@ them (console commands are in the modding guide, chapter 14 and `../Claude-Vic3-
 | The bar | Factors tick and untick as the game state changes; fill time is as planned |
 | The AI | Observe an AI country with the entry for a few years (`tag` to switch and look) |
 | Robustness | Change tag, move the capital, lose the state while the entry is active |
-| The error log | Clean after each of the above |
+| A custom panel | Every row state shows its word and colour; each button's tooltip matches its effect; a locked row shows its clock and unlocks on time; the list scrolls; open, close, Escape menu; save and reload |
+| The panel's AI route | Run three months as an observer or another country; the AI's scripted GUIs fire (a `debug_log` line in each) |
+| The error log | Clean after each of the above. After a panel test read `error.1.log` too: a per-frame error rotates the log within a minute |

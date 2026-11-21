@@ -66,6 +66,11 @@ Documents/Paradox Interactive/Victoria 3/logs/error.log
   and compare, or simply filter by the mod's paths and prefix.
 * Fix from the **top**: one unbalanced brace or bad key produces a cascade of later errors.
 * The log is rewritten on every launch. Read it before restarting.
+* **The logs rotate at about 512 KB** [GAME, tested in 1.15.2 on 2026-11-21]: `error.log` becomes `error.1.log`, then `.2` up to
+  `.5`; `debug.log` does the same. An error that repeats every frame (a failing GUI expression under the
+  cursor wrote 340 lines in a few seconds) fills a file in under a minute, and the load-time errors are
+  then in a rotated file. When `error.log` holds only one repeated message, read `error.1.log` and
+  `error.2.log` for the rest.
 
 Typical messages and what they mean:
 
@@ -80,6 +85,11 @@ Typical messages and what they mean:
 | file encoding / BOM | file not UTF-8 with BOM |
 | variable … not set / not found | reading a variable before it was set, or on the wrong object |
 | a parse error near the **end** of a file | an unclosed `{` somewhere above |
+| `Promote '…' returned nullptr, in '…'` with `PdxDataFetchLocalizedData failed` and `FetchData failed`, many times | a GUI or localization data expression that parses but returns nothing (e.g. `Scope.Self` handed to `AddScope`); logged every frame while the widget is visible or hovered |
+| `Variable '…' is set but is never used` / `Flag '…' is used but is never set` | the other half is missing, **or it exists only in a `.gui` or localization file**, which this check does not read |
+| `unknown command '…' for MTTH` | a weight block (`ai_chance` and the like) written with `value =` where the field wants `base =` and `modifier = { }` |
+| `Unexpected token: …` right after a field's `{`, or `Malformed token: {` | the field takes a single word or number, not a block |
+| `should be in utf8-bom encoding (will try to use it anyways)` | a `.txt` file without a BOM; it still loaded |
 
 ### 4. Test behaviour in game
 

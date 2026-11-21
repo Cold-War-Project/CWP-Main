@@ -1,0 +1,146 @@
+﻿# CWP Trade Value Test: can trade be measured in money?
+# No goods keys are used, so the file works on vanilla and on Cold War Project - Rebuild.
+
+# ---- Route A: engine totals. Country scope.
+
+cwp_tvt_a_exports = {
+	value = total_export_value
+}
+
+cwp_tvt_a_imports = {
+	value = total_import_value
+}
+
+cwp_tvt_a_trade = {
+	value = total_trade_value
+}
+
+cwp_tvt_a_balance = {
+	value = total_export_value
+	subtract = total_import_value
+}
+
+# ---- Scale references. Country scope.
+
+cwp_tvt_gdp = {
+	value = gdp
+}
+
+cwp_tvt_income = {
+	value = income
+}
+
+# 1 when the country is a junior member of a customs union.
+cwp_tvt_is_junior = {
+	value = 0
+	if = {
+		limit = { is_junior_in_customs_union = yes }
+		add = 1
+	}
+}
+
+# ---- Route B, one good. Market goods scope.
+
+cwp_tvt_mg_exports = {
+	value = market_goods_exports
+}
+
+cwp_tvt_mg_imports = {
+	value = market_goods_imports
+}
+
+cwp_tvt_mg_treaty_exports = {
+	value = treaty_exports
+}
+
+cwp_tvt_mg_treaty_imports = {
+	value = treaty_imports
+}
+
+cwp_tvt_mg_base_price = {
+	value = goods.base_price
+}
+
+cwp_tvt_mg_pricier = {
+	value = market_goods_pricier
+}
+
+cwp_tvt_mg_cheaper = {
+	value = market_goods_cheaper
+}
+
+# Market price rebuilt from script. Tested in game 2026-11-21: market_goods_pricier is signed
+# (price / base price - 1, negative when the good is cheap) and market_goods_cheaper is its negative.
+cwp_tvt_mg_price_est = {
+	value = 1
+	add = market_goods_pricier
+	multiply = goods.base_price
+}
+
+# Exports and imports without treaty goods transfers (market_goods_imports includes them).
+cwp_tvt_mg_free_exports = {
+	value = market_goods_exports
+	subtract = treaty_exports
+}
+
+cwp_tvt_mg_free_imports = {
+	value = market_goods_imports
+	subtract = treaty_imports
+}
+
+# ---- Route B, summed over the country's market. Country scope.
+# every_market_goods works inside a script value (tested). Read goods.base_price through a nested
+# script value: written directly in the loop it logs "Invalid scope types for event target link" at load.
+
+cwp_tvt_b_exports_base = {
+	value = 0
+	market ?= {
+		every_market_goods = {
+			add = {
+				value = market_goods_exports
+				multiply = cwp_tvt_mg_base_price
+			}
+		}
+	}
+}
+
+cwp_tvt_b_imports_base = {
+	value = 0
+	market ?= {
+		every_market_goods = {
+			add = {
+				value = market_goods_imports
+				multiply = cwp_tvt_mg_base_price
+			}
+		}
+	}
+}
+
+cwp_tvt_b_exports_est = {
+	value = 0
+	market ?= {
+		every_market_goods = {
+			add = {
+				value = cwp_tvt_mg_free_exports
+				multiply = cwp_tvt_mg_price_est
+			}
+		}
+	}
+}
+
+cwp_tvt_b_imports_est = {
+	value = 0
+	market ?= {
+		every_market_goods = {
+			add = {
+				value = cwp_tvt_mg_free_imports
+				multiply = cwp_tvt_mg_price_est
+			}
+		}
+	}
+}
+
+cwp_tvt_b_balance_est = {
+	value = cwp_tvt_b_exports_est
+	subtract = cwp_tvt_b_imports_est
+}

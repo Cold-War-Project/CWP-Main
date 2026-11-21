@@ -31,7 +31,7 @@ Total-overhaul mod for **Victoria 3 1.15.1**. Campaign runs **1946.1.1 to 2046.1
 6. **No Victorian leftovers.** References to vanilla-only content (1836 countries, journal entries, techs, buildings, laws, DLC flavour) are removed or remapped to mod content, not kept alive.
 7. **Clean error.log is the acceptance test.** A change is not done until a game launch shows no new lines. See `.claude/reference/debugging.md` for the triage workflow and the list of engine-side lines to ignore.
 8. **Back up before bulk edits** (more than a handful of files, or any scripted rewrite) into `_cold_war_backups/`. Make bulk-edit scripts rerunnable and keep them in the scratchpad, not in the mod.
-9. **Binary map files are off limits** (`provinces.png`, `heightmap.*`, `rivers.png`, `nodes.dat`, `*.bin`). They are edited in the in-game map editor. Text map data is fine.
+9. **Binary map files need a yes for each job** (`provinces.png`, `heightmap.*`, `rivers.png`, `nodes.dat`, `*.bin`). Before editing one, put it to the user (or whoever is directing the work) as a question with an option to allow and an option to decline, naming the file and the change. An allow covers that job only. On a decline, leave the file alone and plan around the existing map; the in-game map editor remains the other way to change these files. Back up the file before an allowed edit (rule 8). Text map data is fine.
 10. **Ask before deleting whole entries or files** that other content may reference, and remove the references with them (list entries, loc, history, on_actions).
 
 ## How this mod overrides vanilla
@@ -126,7 +126,7 @@ The generated reference files are large (`triggers.md` is 200 KB, the modifier l
 
 ### Trust marks
 
-Both guides mark their statements. In order of trust: **[GAME]** (checked in the 1.15.1 files), **[DOCS]** (from `script_docs`), **[WIKI x.y]** (wiki, last verified for that version), **[VERIFY]** (unconfirmed). The content guide adds **[STATS]** (counted from vanilla: what vanilla does, not an engine rule) and **[ADVICE]** (design judgement, which a stated preference of the user overrides). Nothing in either guide was run in the game.
+Both guides mark their statements. In order of trust: **[GAME]** (checked in the 1.15.1 files), **[DOCS]** (from `script_docs`), **[WIKI x.y]** (wiki, last verified for that version), **[VERIFY]** (unconfirmed). The content guide adds **[STATS]** (counted from vanilla: what vanilla does, not an engine rule) and **[ADVICE]** (design judgement, which a stated preference of the user overrides). The guides as first written were not run in the game; passages marked "tested" with a date were (e.g. `[GAME, tested in 1.15.2 on 2026-11-21]`: scripted GUIs and custom panels, the province count ceiling, ending a war from script) and are the firmest statements in them.
 
 When the game, the error.log or a vanilla file proves a guide wrong, correct the chapter so the mistake is not repeated. Facts about the engine go in the guide; facts about how this mod does things go in `.claude/rules/`.
 

@@ -28,6 +28,10 @@ use the companion guide in `../Claude-Vic3-Content-Design-Guide/` together with 
 | **[WIKI x.y]** | From the Victoria 3 wiki, on a page the wiki marks as last verified for game version x.y (`?` = unknown). Not confirmable from the 1.15.1 files. Better than a guess, but older than the game: test before relying on it. |
 | **[VERIFY]** | Not confirmed by any source. Usually right, but test before relying on it. |
 
+A [GAME] mark that says **tested** and gives a date (`[GAME, tested in 1.15.2 on 2026-11-21]`) means more
+than "vanilla writes it this way": the statement was run in the game and its result read from the screen or
+the logs. Those are the firmest statements in the guide.
+
 Order of trust: [GAME], then [DOCS], then [WIKI], then [VERIFY]. Unmarked statements in a chapter carry the
 mark given in that chapter's opening lines.
 
@@ -87,10 +91,10 @@ When this guide and a vanilla file disagree, **the vanilla file wins**. Fix the 
 | 10 | [10-journal-entries-decisions-buttons.md](10-journal-entries-decisions-buttons.md) | Journal entries, decisions, scripted buttons and progress bars |
 | 11 | [11-game-data-types.md](11-game-data-types.md) | Buildings, production methods, goods, laws, technologies, countries, cultures, history setup, and the rest of `common/` |
 | 12 | [12-localization.md](12-localization.md) | `.yml` format, formatting, data functions, custom localization |
-| 13 | [13-gui-gfx-map.md](13-gui-gfx-map.md) | Short orientation on GUI, graphics and map modding |
+| 13 | [13-gui-gfx-map.md](13-gui-gfx-map.md) | Orientation on GUI, graphics and map modding; **scripted GUIs and custom panels, tested in game** |
 | 14 | [14-debugging-and-validation.md](14-debugging-and-validation.md) | Debug mode, logs, console, validation checklist |
 | 15 | [15-pitfalls-and-doc-errata.md](15-pitfalls-and-doc-errata.md) | Common mistakes; known errors in the game's own docs |
-| 16 | [16-recipes.md](16-recipes.md) | Worked examples for common modding tasks |
+| 16 | [16-recipes.md](16-recipes.md) | Worked examples for common modding tasks, including a journal entry ledger (17) and a tabbed window (18) |
 
 ### Reference generated from the script docs (`reference/`)
 
@@ -201,8 +205,11 @@ Keep mod-specific facts (prefix, design notes, load-order requirements, what has
   1.13, an unknown version, and "timeless". They are used only where the first two sources are silent, and
   are marked [WIKI]. Wiki
   text is licensed CC BY-SA 3.0 (Victoria 3 Wiki contributors); `reference/wiki/` gives page and revision.
-* Nothing in this guide was tested by running the game. Statements marked [GAME] describe what vanilla files
-  contain, which is strong evidence of what works but is not a test of every variation.
+* The guide as first written was not tested by running the game. Statements marked [GAME] describe what
+  vanilla files contain, which is strong evidence of what works but is not a test of every variation.
+  Passages marked "tested" with a date were added later from in-game tests: ending a war from script
+  (chapter 05), the province count ceiling (chapter 13), and scripted GUIs, custom panels and windows
+  (chapters 06, 10, 12 to 16).
 * The user's `mod` and `logs` folders were not read.
 * Counts quoted here come from 1.15 and will drift after a patch; the generated files always carry their own
   current counts and the game version they were built from.

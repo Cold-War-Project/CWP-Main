@@ -1,4 +1,4 @@
-# 06 — Designing scripted buttons, progress bars and decisions
+# 06 — Designing scripted buttons, progress bars, decisions and custom panels
 
 Syntax is in the modding guide, chapter 10, and in the shipped `scripted_buttons.md` and
 `scripted_progress_bars.md`. This chapter is about when to add each and how to make it worth having.
@@ -186,6 +186,88 @@ Vanilla decisions have exactly these two keys. The tooltip is assembled by the g
 `possible` checklist and the `when_taken` effects (`DECISION_TOOLTIP_FORMAT`), so the effects must read well
 by themselves: use `custom_tooltip` for anything indirect.
 
+## Custom panels
+
+A panel is a table with a row per item and buttons on every row, inside a journal entry or in a window of its
+own. Chapter 02 says when one is the right tool. Everything in this section was built and looked at in the
+game [GAME, tested in 1.15.2 on 2026-11-21] in the test mod `mod/CWP Scripted GUI Test`: what works is [GAME]; how it should
+look is [ADVICE] that was applied there and checked by screenshot over three rounds. Syntax: modding guide,
+chapter 13 ("Tested in game") and chapter 16 (recipes 17 and 18). Copy the test mod's row types before writing
+new ones.
+
+### The parts
+
+| Part | In the journal entry panel | In a window |
+|---|---|---|
+| Section header | a bar with a title on the left and one figure on the right ("Tight 3  Standard 5", "16 members") | the same |
+| Column titles | a thin dark strip, small grey text, each title starting exactly where its column starts | the same |
+| Rows | fixed height, same columns on every row | the same |
+| Key | up to three small lines saying what the state words mean | the same |
+| Hint | one small line with the rule the player will otherwise trip over ("cannot be changed again for two months") | the same |
+| Tabs | none | vanilla's tab bar: **five tabs at most**; a tab may exist only while something is true |
+| Opening | part of the entry | a button in the entry, and a small button of its own near the top of the screen |
+
+### Layout rules
+
+1. **One width.** Rows 520 wide everywhere (the journal entry takes 544 with a scroll bar); the same row type in
+   the entry and in the window, so they look alike.
+2. **A fixed place for everything.** Fixed-width columns, and fixed slots for buttons: a slot stays empty when
+   its button is not offered. In the tested ration book *Ease* and *Ration* share slot one (they never appear
+   together) and *Tighten* has slot two, so buttons form straight columns. Before this rule the buttons sat
+   wherever the text before them ended, and no two rows matched.
+3. **A word and a colour for every state**, never a bare number or a code: Tight (red), Standard (gold), Free
+   (green); Approved, Trimmed, Rejected with an icon; "Awaiting an answer" in grey before any answer. Red is the
+   harsh or dangerous state, green the relaxed one, gold the middle.
+4. **A figure belongs to its bar.** Put the label and the number inside the bar ("Recovery 28"), not beside it.
+5. **An icon for waiting.** A clock with a tooltip while a row is locked, and the row's buttons greyed. Never
+   "(cd)".
+6. **A tooltip on every button**: a heading, what it does, what it changes with signed coloured numbers. And a
+   tooltip on the row for the detail that does not fit.
+7. **No instructions on screen.** A header, column titles, one key, one hint. Everything else is a tooltip.
+8. **A window keeps its shape.** One fixed content size for all tabs; a tab with more than fits scrolls. Size it
+   for the fullest player-facing tab, not for the emptiest.
+9. **Filled and empty slots for a count out of a few** (six tranches: six coins, faint until received), with the
+   figure beside them.
+10. **Test controls are not part of the panel.** Keep them folded away or in another file.
+
+### Numbers that fitted [GAME, tested in 1.15.2 on 2026-11-21]
+
+| Thing | Size |
+|---|---|
+| Row, one line (icon, name, state word, a figure, two button slots) | 520 x 38 |
+| Row, two lines (flag, name, status / two labelled bars, three buttons) | 520 x 64 |
+| Text button | 56 to 70 wide, 24 to 26 high; the entry's one main action 300 x 34 in the primary style |
+| Rows visible before scrolling | four in the journal entry (list 268 high), five in a window (336) |
+| Rows tested | 16 countries, 6 goods; more than about twenty not tried |
+| Window content | 548 x 400; wider is possible, the window is not bound to the entry's width |
+| Columns in a 520 row | about four fixed columns plus the buttons; a row asked to carry more needs a second line, a detail box under the list, or a wider window |
+
+### Behaviour
+
+* **Requirements and cost** follow the rules for buttons above: every row action has a requirement beyond money
+  and a felt cost, shown in its tooltip. A row's buttons grey (`is_valid`) with the reason findable; a button
+  that makes no sense for the row's state is absent (`is_shown`), not greyed.
+* **Cooldowns** are per row: a timed variable on the row's country, or a timed entry in a list for goods. They
+  expire by themselves and survive save and load [GAME, tested in 1.15.2 on 2026-11-21]. The engine offers no "time left" figure
+  that was found; if the player must see it, keep a counter.
+* **Confirmation.** A scripted GUI can ask first (Cancel / Ok). Use it for acts that cannot be undone within
+  the cooldown, not for routine row answers: the tested ledger has sixteen rows, and sixteen confirmations a
+  year is a chore.
+* **Three-way switches** (a money stance): three buttons side by side, the chosen one highlighted, one line
+  under them saying what the chosen setting does, all three locked for the cooldown.
+* **Opening and closing a window**: it closes with its X, hides when the Escape menu opens and stays closed
+  afterwards. Which tab was open is not saved.
+
+### The AI and the log
+
+* The AI presses scripted GUIs by itself, with no window open, about once a month at `ai_frequency = 1`
+  [GAME, tested in 1.15.2 on 2026-11-21]. It is given the country only, never a row [VERIFY: inference]. So each row action
+  gets a second, root-only scripted GUI for the AI that picks its target in script, with the same effect.
+  Weights are a `base` / `modifier` block (`ai_chance = { base = 100 }`), not the `value =` form buttons use.
+* Every variable the panel shows must also be read once in script, or the game logs "set but never used" at
+  load. The panel passes numbers to script, not flags. A broken expression in a row logs every frame: after a
+  first look at a new panel, read `error.log` before anything else.
+
 ## Checklist for buttons, bars and decisions
 
 1. Each button has a requirement beyond money, a felt cost, a stated effect and an `ai_chance`.
@@ -196,3 +278,8 @@ by themselves: use `custom_tooltip` for anything indirect.
 5. Bar changes from buttons and events carry a `custom_tooltip`.
 6. The decision hides itself once taken, costs something, starts something, and has `ai_chance`.
 7. Variables set by buttons and decisions are removed by the entry's cleanup.
+8. A panel follows the ten layout rules: one width, fixed columns and slots, a word and a colour per state,
+   figures inside bars, a clock for waiting, a tooltip on every button, no instructions on screen.
+9. Every row action has an AI route: a root-only scripted GUI with `ai_is_valid`, `ai_chance`, `ai_frequency`.
+10. Every variable the panel shows is read once in script; the panel sends numbers, not flags.
+11. The panel was looked at in the game, and `error.log` (and `error.1.log`) read afterwards.

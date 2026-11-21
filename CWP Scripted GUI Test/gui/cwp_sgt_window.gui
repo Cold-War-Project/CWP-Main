@@ -1,0 +1,1518 @@
+# CWP scripted GUI test: shared types, the opener button and the standalone window.
+# The opener and the window are created at startup by gui/scripted_widgets/cwp_sgt_widgets.txt.
+# No vanilla .gui file is overwritten.
+#
+# Restyled 2026-11-21 as a visual prototype for the Cold War Project's panels. Layout rules it follows:
+#   - one width everywhere (rows 520, window content 548), so nothing jumps between tabs;
+#   - a header on every section, column titles over every table;
+#   - fixed-width columns and fixed button slots, so the same thing is in the same place on every row;
+#   - a word and a colour for every state (never a bare number), an icon with a tooltip for a cooldown;
+#   - a tooltip on every button saying what it does.
+# Written by a rerunnable script; the version before the restyle is in
+# _cold_war_backups/2026-11-21_sgt_before_restyle.
+
+types cwp_sgt_types
+{
+	### A text button. "cwp_sgt_button_selected" switches on a paper highlight,
+	### "cwp_sgt_button_style" swaps the vanilla button look.
+	type cwp_sgt_button = button {
+		block "cwp_sgt_button_style" {
+			using = default_button
+		}
+		size = { 70 26 }
+
+		widget = {
+			size = { 100% 100% }
+
+			block "cwp_sgt_button_selected" {
+				visible = no
+			}
+
+			background = {
+				using = paper_bg
+			}
+		}
+
+		textbox = {
+			parentanchor = center
+			autoresize = yes
+			align = center|nobaseline
+			fontsize = 14
+
+			block "cwp_sgt_button_text" {
+				raw_text = "?"
+			}
+		}
+	}
+
+	### Body text.
+	type cwp_sgt_line = textbox {
+		autoresize = yes
+		multiline = yes
+		maximumsize = { 520 -1 }
+		align = left|nobaseline
+	}
+
+	### A quiet explanatory line under a table.
+	type cwp_sgt_note = textbox {
+		autoresize = yes
+		multiline = yes
+		maximumsize = { 520 -1 }
+		align = left|nobaseline
+		default_format = "#title"
+		using = fontsize_small
+	}
+
+	### A column title.
+	type cwp_sgt_colhead = textbox {
+		align = left|nobaseline
+		default_format = "#title"
+		using = fontsize_small
+	}
+
+	### A section header: a title on the left, a figure on the right. Vanilla's header bar.
+	type cwp_sgt_header = default_header_2texts_clean {
+		blockoverride "size" {
+			block "cwp_sgt_header_size" {
+				size = { 520 34 }
+			}
+		}
+	}
+
+	### A member row. The list item is a Scope holding a country.
+	### Root of every scripted GUI is the player; the row's country travels as scope:member.
+	type cwp_sgt_member_row = widget {
+		size = { 520 64 }
+		datacontext = "[Scope.GetCountry]"
+		tooltip = "[GetScriptedGui('cwp_sgt_member_tt_sgui').ExecuteTooltip(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('member', Scope.GetCountry.MakeScope).End)]"
+
+		background = {
+			using = entry_bg_simple
+		}
+
+		# line 1, left: who
+		flowcontainer = {
+			position = { 8 6 }
+			spacing = 8
+
+			tiny_flag = {
+				parentanchor = vcenter
+			}
+
+			textbox = {
+				size = { 250 22 }
+				parentanchor = vcenter
+				align = left|nobaseline
+				elide = right
+				raw_text = "#b [Country.GetNameNoFormatting]#!"
+			}
+		}
+
+		# line 1, right: where the request stands
+		flowcontainer = {
+			parentanchor = right
+			position = { -10 6 }
+			spacing = 6
+			ignoreinvisible = yes
+
+			icon = {
+				visible = "[Scope.Var('cwp_sgt_answer_cd').IsSet]"
+				size = { 20 20 }
+				parentanchor = vcenter
+				texture = "gfx/interface/icons/generic_icons/clock.dds"
+				tooltip = "cwp_sgt_member_cd_tt"
+			}
+
+			textbox = {
+				visible = "[EqualTo_CFixedPoint(Scope.Var('cwp_sgt_answer').GetValue, '(CFixedPoint)0')]"
+				autoresize = yes
+				parentanchor = vcenter
+				align = nobaseline
+				default_format = "#title"
+				text = "cwp_sgt_status_waiting"
+			}
+
+			flowcontainer = {
+				visible = "[EqualTo_CFixedPoint(Scope.Var('cwp_sgt_answer').GetValue, '(CFixedPoint)1')]"
+				spacing = 4
+
+				icon = {
+					size = { 20 20 }
+					parentanchor = vcenter
+					texture = "gfx/interface/icons/generic_icons/approval_icon.dds"
+				}
+
+				textbox = {
+					autoresize = yes
+					parentanchor = vcenter
+					align = nobaseline
+					text = "cwp_sgt_status_approved"
+				}
+			}
+
+			flowcontainer = {
+				visible = "[EqualTo_CFixedPoint(Scope.Var('cwp_sgt_answer').GetValue, '(CFixedPoint)2')]"
+				spacing = 4
+
+				icon = {
+					size = { 20 20 }
+					parentanchor = vcenter
+					texture = "gfx/interface/icons/generic_icons/maybe_icon.dds"
+				}
+
+				textbox = {
+					autoresize = yes
+					parentanchor = vcenter
+					align = nobaseline
+					text = "cwp_sgt_status_trimmed"
+				}
+			}
+
+			flowcontainer = {
+				visible = "[EqualTo_CFixedPoint(Scope.Var('cwp_sgt_answer').GetValue, '(CFixedPoint)3')]"
+				spacing = 4
+
+				icon = {
+					size = { 20 20 }
+					parentanchor = vcenter
+					texture = "gfx/interface/icons/generic_icons/disapproval_icon.dds"
+				}
+
+				textbox = {
+					autoresize = yes
+					parentanchor = vcenter
+					align = nobaseline
+					text = "cwp_sgt_status_rejected"
+				}
+			}
+		}
+
+		# line 2, left: the two bars, each with its own figure
+		flowcontainer = {
+			position = { 8 34 }
+			spacing = 6
+
+			default_progressbar_horizontal = {
+				size = { 148 22 }
+				parentanchor = vcenter
+
+				blockoverride "values" {
+					value = "[FixedPointToFloat(Scope.Var('cwp_sgt_recovery').GetValue)]"
+					min = 0
+					max = 100
+				}
+
+				textbox = {
+					parentanchor = center
+					autoresize = yes
+					align = center|nobaseline
+					fontsize = 13
+					raw_text = "Recovery [Scope.Var('cwp_sgt_recovery').GetValue|0]"
+				}
+			}
+
+			gold_progressbar_horizontal = {
+				size = { 148 22 }
+				parentanchor = vcenter
+
+				blockoverride "values" {
+					value = "[FixedPointToFloat(Scope.Var('cwp_sgt_alignment').GetValue)]"
+					min = 0
+					max = 100
+				}
+
+				textbox = {
+					parentanchor = center
+					autoresize = yes
+					align = center|nobaseline
+					fontsize = 13
+					raw_text = "Alignment [Scope.Var('cwp_sgt_alignment').GetValue|0]"
+				}
+			}
+		}
+
+		# line 2, right: one scripted GUI, three answers
+		flowcontainer = {
+			parentanchor = right
+			position = { -8 33 }
+			spacing = 4
+
+			cwp_sgt_button = {
+				size = { 70 24 }
+				enabled = "[GetScriptedGui('cwp_sgt_answer_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('member', Scope.GetCountry.MakeScope).AddScope('answer', MakeScopeValue('(CFixedPoint)1')).End)]"
+				onclick = "[GetScriptedGui('cwp_sgt_answer_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('member', Scope.GetCountry.MakeScope).AddScope('answer', MakeScopeValue('(CFixedPoint)1')).End)]"
+				tooltip = "cwp_sgt_answer_approve_tt"
+
+				blockoverride "cwp_sgt_button_text" {
+					text = "cwp_sgt_answer_approve"
+				}
+			}
+
+			cwp_sgt_button = {
+				size = { 56 24 }
+				enabled = "[GetScriptedGui('cwp_sgt_answer_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('member', Scope.GetCountry.MakeScope).AddScope('answer', MakeScopeValue('(CFixedPoint)2')).End)]"
+				onclick = "[GetScriptedGui('cwp_sgt_answer_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('member', Scope.GetCountry.MakeScope).AddScope('answer', MakeScopeValue('(CFixedPoint)2')).End)]"
+				tooltip = "cwp_sgt_answer_trim_tt"
+
+				blockoverride "cwp_sgt_button_text" {
+					text = "cwp_sgt_answer_trim"
+				}
+			}
+
+			cwp_sgt_button = {
+				size = { 60 24 }
+				enabled = "[GetScriptedGui('cwp_sgt_answer_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('member', Scope.GetCountry.MakeScope).AddScope('answer', MakeScopeValue('(CFixedPoint)3')).End)]"
+				onclick = "[GetScriptedGui('cwp_sgt_answer_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('member', Scope.GetCountry.MakeScope).AddScope('answer', MakeScopeValue('(CFixedPoint)3')).End)]"
+				tooltip = "cwp_sgt_answer_reject_tt"
+
+				blockoverride "cwp_sgt_button_text" {
+					text = "cwp_sgt_answer_reject"
+				}
+			}
+		}
+	}
+
+	### A scrolling list of member rows.
+	type cwp_sgt_member_list = scrollarea {
+		block "cwp_sgt_list_size" {
+			size = { 544 330 }
+		}
+		scrollbarpolicy_horizontal = always_off
+
+		scrollwidget = {
+			flowcontainer = {
+				direction = vertical
+				spacing = 3
+
+				block "cwp_sgt_list_datamodel" {}
+
+				item = {
+					cwp_sgt_member_row = {}
+				}
+			}
+		}
+
+		scrollbar_vertical = {
+			using = vertical_scrollbar
+		}
+	}
+
+	### Header, list and hint of the member ledger. Used by the journal entry and by the window.
+	type cwp_sgt_member_ledger = flowcontainer {
+		direction = vertical
+		spacing = 4
+
+		cwp_sgt_header = {
+			blockoverride "text1" {
+				text = "cwp_sgt_members_title"
+			}
+
+			blockoverride "text2" {
+				block "cwp_sgt_ledger_count" {
+					raw_text = ""
+				}
+			}
+		}
+
+		cwp_sgt_member_list = {}
+
+		cwp_sgt_note = {
+			text = "cwp_sgt_members_note"
+		}
+	}
+
+	### Column titles of the ration book. Widths match cwp_sgt_goods_row.
+	type cwp_sgt_goods_head = widget {
+		size = { 520 22 }
+
+		background = {
+			using = dark_area
+			alpha = 0.4
+		}
+
+		flowcontainer = {
+			parentanchor = left|vcenter
+			position = { 8 0 }
+			spacing = 6
+
+			widget = {
+				size = { 28 20 }
+			}
+
+			cwp_sgt_colhead = {
+				size = { 120 20 }
+				text = "cwp_sgt_col_good"
+			}
+
+			cwp_sgt_colhead = {
+				size = { 96 20 }
+				text = "cwp_sgt_col_level"
+			}
+
+			cwp_sgt_colhead = {
+				size = { 100 20 }
+				text = "cwp_sgt_col_months"
+			}
+		}
+
+		# starts exactly over the first button slot of cwp_sgt_goods_row (two slots of 70, 4 apart, 8 from the edge)
+		cwp_sgt_colhead = {
+			parentanchor = right|vcenter
+			position = { -8 0 }
+			size = { 144 20 }
+			text = "cwp_sgt_col_actions"
+		}
+	}
+
+	### A ration-book row. The list item is a Scope holding a good, which travels as scope:good.
+	type cwp_sgt_goods_row = widget {
+		size = { 520 38 }
+		datacontext = "[Scope.GetGoods]"
+		tooltip = "[GetScriptedGui('cwp_sgt_good_tt_sgui').ExecuteTooltip(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('good', Scope.GetGoods.MakeScope).End)]"
+
+		background = {
+			using = entry_bg_simple
+		}
+
+		flowcontainer = {
+			parentanchor = left|vcenter
+			position = { 8 0 }
+			spacing = 6
+			ignoreinvisible = yes
+
+			icon = {
+				size = { 28 28 }
+				parentanchor = vcenter
+				texture = "[Goods.GetTexture]"
+			}
+
+			textbox = {
+				size = { 120 22 }
+				parentanchor = vcenter
+				align = left|nobaseline
+				elide = right
+				raw_text = "#b [Goods.GetNameNoFormatting]#!"
+			}
+
+			# the level as a word in its own colour, always in the same column
+			widget = {
+				size = { 96 22 }
+				parentanchor = vcenter
+
+				textbox = {
+					visible = "[GetScriptedGui('cwp_sgt_level_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('good', Scope.GetGoods.MakeScope).AddScope('level', MakeScopeValue('(CFixedPoint)2')).End)]"
+					size = { 100% 100% }
+					align = left|nobaseline
+					text = "cwp_sgt_level_tight"
+				}
+
+				textbox = {
+					visible = "[GetScriptedGui('cwp_sgt_level_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('good', Scope.GetGoods.MakeScope).AddScope('level', MakeScopeValue('(CFixedPoint)1')).End)]"
+					size = { 100% 100% }
+					align = left|nobaseline
+					text = "cwp_sgt_level_standard"
+				}
+
+				textbox = {
+					visible = "[GetScriptedGui('cwp_sgt_level_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('good', Scope.GetGoods.MakeScope).AddScope('level', MakeScopeValue('(CFixedPoint)0')).End)]"
+					size = { 100% 100% }
+					align = left|nobaseline
+					text = "cwp_sgt_level_free"
+				}
+			}
+
+			# how long, shown only while the good is on the ration
+			textbox = {
+				visible = "[Not(GetScriptedGui('cwp_sgt_level_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('good', Scope.GetGoods.MakeScope).AddScope('level', MakeScopeValue('(CFixedPoint)0')).End))]"
+				size = { 100 22 }
+				parentanchor = vcenter
+				align = left|nobaseline
+				raw_text = "[GetPlayer.MakeScope.Var(Concatenate('cwp_sgt_months_', Goods.GetKey)).GetValue|0] months"
+			}
+		}
+
+		# Fixed slots, so a button is in the same place on every row:
+		# the clock, then Ease or Ration (never both), then Tighten.
+		flowcontainer = {
+			parentanchor = right|vcenter
+			position = { -8 0 }
+			spacing = 4
+
+			widget = {
+				size = { 22 22 }
+				parentanchor = vcenter
+
+				icon = {
+					visible = "[GetScriptedGui('cwp_sgt_good_cd_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('good', Scope.GetGoods.MakeScope).End)]"
+					size = { 100% 100% }
+					texture = "gfx/interface/icons/generic_icons/clock.dds"
+					tooltip = "cwp_sgt_good_cd_tt"
+				}
+			}
+
+			widget = {
+				size = { 70 26 }
+				parentanchor = vcenter
+
+				cwp_sgt_button = {
+					size = { 100% 100% }
+					visible = "[GetScriptedGui('cwp_sgt_ration_sgui').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('good', Scope.GetGoods.MakeScope).AddScope('action', MakeScopeValue('(CFixedPoint)1')).End)]"
+					enabled = "[GetScriptedGui('cwp_sgt_ration_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('good', Scope.GetGoods.MakeScope).AddScope('action', MakeScopeValue('(CFixedPoint)1')).End)]"
+					onclick = "[GetScriptedGui('cwp_sgt_ration_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('good', Scope.GetGoods.MakeScope).AddScope('action', MakeScopeValue('(CFixedPoint)1')).End)]"
+					tooltip = "cwp_sgt_ration_ease_tt"
+
+					blockoverride "cwp_sgt_button_text" {
+						text = "cwp_sgt_ration_ease"
+					}
+				}
+
+				cwp_sgt_button = {
+					size = { 100% 100% }
+					visible = "[GetScriptedGui('cwp_sgt_ration_sgui').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('good', Scope.GetGoods.MakeScope).AddScope('action', MakeScopeValue('(CFixedPoint)3')).End)]"
+					enabled = "[GetScriptedGui('cwp_sgt_ration_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('good', Scope.GetGoods.MakeScope).AddScope('action', MakeScopeValue('(CFixedPoint)3')).End)]"
+					onclick = "[GetScriptedGui('cwp_sgt_ration_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('good', Scope.GetGoods.MakeScope).AddScope('action', MakeScopeValue('(CFixedPoint)3')).End)]"
+					tooltip = "cwp_sgt_ration_ration_tt"
+
+					blockoverride "cwp_sgt_button_text" {
+						text = "cwp_sgt_ration_ration"
+					}
+				}
+			}
+
+			widget = {
+				size = { 70 26 }
+				parentanchor = vcenter
+
+				cwp_sgt_button = {
+					size = { 100% 100% }
+					visible = "[GetScriptedGui('cwp_sgt_ration_sgui').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('good', Scope.GetGoods.MakeScope).AddScope('action', MakeScopeValue('(CFixedPoint)2')).End)]"
+					enabled = "[GetScriptedGui('cwp_sgt_ration_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('good', Scope.GetGoods.MakeScope).AddScope('action', MakeScopeValue('(CFixedPoint)2')).End)]"
+					onclick = "[GetScriptedGui('cwp_sgt_ration_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('good', Scope.GetGoods.MakeScope).AddScope('action', MakeScopeValue('(CFixedPoint)2')).End)]"
+					tooltip = "cwp_sgt_ration_tighten_tt"
+
+					blockoverride "cwp_sgt_button_text" {
+						text = "cwp_sgt_ration_tighten"
+					}
+				}
+			}
+		}
+	}
+
+	### Header, column titles, rows and hint of the ration book. Used by the journal entry and by the window.
+	type cwp_sgt_ration_book = flowcontainer {
+		direction = vertical
+		spacing = 3
+
+		cwp_sgt_header = {
+			blockoverride "text1" {
+				text = "cwp_sgt_ration_title"
+			}
+
+			blockoverride "text2" {
+				text = "cwp_sgt_ration_counts"
+			}
+		}
+
+		cwp_sgt_goods_head = {}
+
+		flowcontainer = {
+			direction = vertical
+			spacing = 3
+			datamodel = "[GetPlayer.MakeScope.GetList('cwp_sgt_goods')]"
+
+			item = {
+				cwp_sgt_goods_row = {}
+			}
+		}
+
+		# a key to the three levels, then the hint
+		cwp_sgt_note = {
+			text = "cwp_sgt_ration_legend"
+		}
+
+		cwp_sgt_note = {
+			text = "cwp_sgt_ration_note"
+		}
+	}
+
+	### A hand-written row for the engine tests: literal names and numbers only.
+	type cwp_sgt_idx_row = widget {
+		size = { 520 34 }
+
+		background = {
+			using = entry_bg_simple
+		}
+
+		flowcontainer = {
+			parentanchor = left|vcenter
+			position = { 8 0 }
+			spacing = 6
+
+			icon = {
+				size = { 26 26 }
+				parentanchor = vcenter
+
+				block "cwp_sgt_idx_icon" {}
+			}
+
+			textbox = {
+				size = { 120 22 }
+				parentanchor = vcenter
+				align = left|nobaseline
+
+				block "cwp_sgt_idx_name" {
+					raw_text = "?"
+				}
+			}
+
+			textbox = {
+				size = { 120 22 }
+				parentanchor = vcenter
+				align = left|nobaseline
+
+				block "cwp_sgt_idx_level" {
+					raw_text = "?"
+				}
+			}
+		}
+
+		flowcontainer = {
+			parentanchor = right|vcenter
+			position = { -8 0 }
+			spacing = 4
+
+			cwp_sgt_button = {
+				size = { 40 24 }
+
+				block "cwp_sgt_idx_minus" {}
+
+				blockoverride "cwp_sgt_button_text" {
+					raw_text = "-"
+				}
+			}
+
+			cwp_sgt_button = {
+				size = { 40 24 }
+
+				block "cwp_sgt_idx_plus" {}
+
+				blockoverride "cwp_sgt_button_text" {
+					raw_text = "+"
+				}
+			}
+		}
+	}
+}
+
+### The opener. A small window, so it can be dragged by the icon on its left.
+window = {
+	name = "cwp_sgt_opener"
+	using = hud_visibility
+	parentanchor = top|right
+	widgetanchor = top|right
+	position = { -380 4 }
+	size = { 200 36 }
+	movable = yes
+	layer = layer_minimap
+
+	background = {
+		using = default_background
+	}
+
+	icon = {
+		size = { 24 24 }
+		position = { 6 0 }
+		parentanchor = left|vcenter
+		alwaystransparent = yes
+		texture = "gfx/interface/icons/generic_icons/world_market.dds"
+	}
+
+	cwp_sgt_button = {
+		parentanchor = right|vcenter
+		position = { -4 0 }
+		size = { 160 28 }
+		tooltip = "cwp_sgt_opener_tt"
+		onclick = "[GetVariableSystem.Toggle('cwp_sgt_window_open')]"
+
+		blockoverride "cwp_sgt_button_selected" {
+			visible = "[GetVariableSystem.Exists('cwp_sgt_window_open')]"
+		}
+
+		blockoverride "cwp_sgt_button_text" {
+			text = "cwp_sgt_opener"
+		}
+	}
+}
+
+### The window. Vanilla's default_popup, the way location_finder.gui uses it.
+default_popup = {
+	name = "cwp_sgt_window"
+	# The first three conditions are vanilla's hud_visibility template. With IsInGame alone the window
+	# stayed on screen over the Escape menu.
+	visible = "[And(And(IsInGame, And(Not(IsPauseMenuShown), Not(IsGameOverScreenShown))), GetVariableSystem.Exists('cwp_sgt_window_open'))]"
+
+	# Whatever hides the window also closes it: without this it came back by itself when the
+	# Escape menu was closed. "_hide" is the state vanilla runs when a widget goes invisible.
+	state = {
+		name = _hide
+		on_start = "[GetVariableSystem.Clear('cwp_sgt_window_open')]"
+	}
+
+	# default_popup plays its sound when it is created, which here is at startup.
+	blockoverride "sound" {}
+
+	blockoverride "window_header_name" {
+		text = "cwp_sgt_window_title"
+	}
+
+	blockoverride "header_close_button_visibility" {
+		visible = yes
+	}
+
+	# Our own close button: vanilla's carries the Escape shortcut, which a hidden window should not hold.
+	blockoverride "minimize" {
+		close_button_large = {
+			parentanchor = center
+			onclick = "[GetVariableSystem.Clear('cwp_sgt_window_open')]"
+		}
+	}
+
+	blockoverride "entire_scrollarea" {
+		flowcontainer = {
+			direction = vertical
+			spacing = 8
+			ignoreinvisible = yes
+
+			# Before the decision is taken there is nothing to show.
+			widget = {
+				visible = "[Not(GetScriptedGui('cwp_sgt_ready_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+				size = { 548 80 }
+
+				cwp_sgt_line = {
+					parentanchor = center
+					align = center|nobaseline
+					text = "cwp_sgt_not_ready"
+				}
+			}
+
+			### Tab bar: vanilla's own, the way country_panel.gui uses it.
+			### A tab is two widgets, a button while unselected and a plate while selected.
+			widget = {
+				visible = "[GetScriptedGui('cwp_sgt_ready_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				size = { 548 44 }
+
+				tab_buttons = {
+					size = { 100% 100% }
+
+					blockoverride "first_button" {
+						text = "cwp_sgt_tab_world"
+					}
+
+					blockoverride "first_button_selected" {
+						text = "cwp_sgt_tab_world_selected"
+					}
+
+					blockoverride "first_button_tooltip" {
+						tooltip = "cwp_sgt_tab_world_tt"
+					}
+
+					blockoverride "first_button_click" {
+						onclick = "[GetVariableSystem.Set('cwp_sgt_tab', 'world')]"
+					}
+
+					blockoverride "first_button_visibility" {
+						visible = "[Or(Or(Not(GetVariableSystem.Exists('cwp_sgt_tab')), GetVariableSystem.HasValue('cwp_sgt_tab', 'world')), And(GetVariableSystem.HasValue('cwp_sgt_tab', 'conference'), Not(GetScriptedGui('cwp_sgt_conference_on_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).End))))]"
+					}
+
+					blockoverride "first_button_visibility_checked" {
+						visible = "[Not(Or(Or(Not(GetVariableSystem.Exists('cwp_sgt_tab')), GetVariableSystem.HasValue('cwp_sgt_tab', 'world')), And(GetVariableSystem.HasValue('cwp_sgt_tab', 'conference'), Not(GetScriptedGui('cwp_sgt_conference_on_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).End)))))]"
+					}
+
+					blockoverride "second_button" {
+						text = "cwp_sgt_tab_ledger"
+					}
+
+					blockoverride "second_button_selected" {
+						text = "cwp_sgt_tab_ledger_selected"
+					}
+
+					blockoverride "second_button_tooltip" {
+						tooltip = "cwp_sgt_tab_ledger_tt"
+					}
+
+					blockoverride "second_button_click" {
+						onclick = "[GetVariableSystem.Set('cwp_sgt_tab', 'ledger')]"
+					}
+
+					blockoverride "second_button_visibility" {
+						visible = "[GetVariableSystem.HasValue('cwp_sgt_tab', 'ledger')]"
+					}
+
+					blockoverride "second_button_visibility_checked" {
+						visible = "[Not(GetVariableSystem.HasValue('cwp_sgt_tab', 'ledger'))]"
+					}
+
+					blockoverride "third_button" {
+						text = "cwp_sgt_tab_country"
+					}
+
+					blockoverride "third_button_selected" {
+						text = "cwp_sgt_tab_country_selected"
+					}
+
+					blockoverride "third_button_tooltip" {
+						tooltip = "cwp_sgt_tab_country_tt"
+					}
+
+					blockoverride "third_button_click" {
+						onclick = "[GetVariableSystem.Set('cwp_sgt_tab', 'country')]"
+					}
+
+					blockoverride "third_button_visibility" {
+						visible = "[GetVariableSystem.HasValue('cwp_sgt_tab', 'country')]"
+					}
+
+					blockoverride "third_button_visibility_checked" {
+						visible = "[Not(GetVariableSystem.HasValue('cwp_sgt_tab', 'country'))]"
+					}
+
+					blockoverride "fourth_button" {
+						text = "cwp_sgt_tab_ration"
+					}
+
+					blockoverride "fourth_button_selected" {
+						text = "cwp_sgt_tab_ration_selected"
+					}
+
+					blockoverride "fourth_button_tooltip" {
+						tooltip = "cwp_sgt_tab_ration_tt"
+					}
+
+					blockoverride "fourth_button_click" {
+						onclick = "[GetVariableSystem.Set('cwp_sgt_tab', 'ration')]"
+					}
+
+					blockoverride "fourth_button_visibility" {
+						visible = "[GetVariableSystem.HasValue('cwp_sgt_tab', 'ration')]"
+					}
+
+					blockoverride "fourth_button_visibility_checked" {
+						visible = "[Not(GetVariableSystem.HasValue('cwp_sgt_tab', 'ration'))]"
+					}
+
+					blockoverride "fifth_button" {
+						text = "cwp_sgt_tab_conference"
+					}
+
+					blockoverride "fifth_button_selected" {
+						text = "cwp_sgt_tab_conference_selected"
+					}
+
+					blockoverride "fifth_button_tooltip" {
+						tooltip = "cwp_sgt_tab_conference_tt"
+					}
+
+					blockoverride "fifth_button_click" {
+						onclick = "[GetVariableSystem.Set('cwp_sgt_tab', 'conference')]"
+					}
+
+					blockoverride "fifth_button_visibility" {
+						visible = "[And(GetVariableSystem.HasValue('cwp_sgt_tab', 'conference'), GetScriptedGui('cwp_sgt_conference_on_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+					}
+
+					blockoverride "fifth_button_visibility_checked" {
+						visible = "[And(GetScriptedGui('cwp_sgt_conference_on_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).End), Not(GetVariableSystem.HasValue('cwp_sgt_tab', 'conference')))]"
+					}
+				}
+			}
+
+			### Tab content. One fixed size, so the window keeps its shape from tab to tab.
+			### 400 high: five ledger rows with a little air, and the ration book with its key.
+			widget = {
+				visible = "[GetScriptedGui('cwp_sgt_ready_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+				size = { 548 400 }
+
+				### TAB 1: World
+				flowcontainer = {
+					visible = "[Or(Or(Not(GetVariableSystem.Exists('cwp_sgt_tab')), GetVariableSystem.HasValue('cwp_sgt_tab', 'world')), And(GetVariableSystem.HasValue('cwp_sgt_tab', 'conference'), Not(GetScriptedGui('cwp_sgt_conference_on_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).End))))]"
+					parentanchor = hcenter
+					direction = vertical
+					spacing = 8
+					ignoreinvisible = yes
+
+					cwp_sgt_header = {
+						blockoverride "text1" {
+							text = "cwp_sgt_world_title"
+						}
+
+						blockoverride "text2" {
+							text = "cwp_sgt_world_members"
+						}
+					}
+
+					# a label, a bar with its figure, and the buttons that move it
+					flowcontainer = {
+						spacing = 8
+						tooltip = "cwp_sgt_world_confidence_tt"
+
+						textbox = {
+							size = { 110 22 }
+							parentanchor = vcenter
+							align = left|nobaseline
+							text = "cwp_sgt_world_confidence"
+						}
+
+						default_progressbar_horizontal = {
+							size = { 270 22 }
+							parentanchor = vcenter
+
+							blockoverride "values" {
+								value = "[FixedPointToFloat(GetGlobalVariable('cwp_sgt_confidence').GetValue)]"
+								min = 0
+								max = 100
+							}
+
+							textbox = {
+								parentanchor = center
+								autoresize = yes
+								align = center|nobaseline
+								fontsize = 14
+								raw_text = "[GetGlobalVariable('cwp_sgt_confidence').GetValue|1] / 100"
+							}
+						}
+
+						cwp_sgt_button = {
+							size = { 52 24 }
+							enabled = "[GetScriptedGui('cwp_sgt_world_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('direction', MakeScopeValue('(CFixedPoint)2')).AddScope('amount', MakeScopeValue('(CFixedPoint)10')).End)]"
+							onclick = "[GetScriptedGui('cwp_sgt_world_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('direction', MakeScopeValue('(CFixedPoint)2')).AddScope('amount', MakeScopeValue('(CFixedPoint)10')).End)]"
+							tooltip = "cwp_sgt_world_minus_tt"
+
+							blockoverride "cwp_sgt_button_text" {
+								raw_text = "- 10"
+							}
+						}
+
+						cwp_sgt_button = {
+							size = { 52 24 }
+							enabled = "[GetScriptedGui('cwp_sgt_world_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('direction', MakeScopeValue('(CFixedPoint)1')).AddScope('amount', MakeScopeValue('(CFixedPoint)10')).End)]"
+							onclick = "[GetScriptedGui('cwp_sgt_world_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('direction', MakeScopeValue('(CFixedPoint)1')).AddScope('amount', MakeScopeValue('(CFixedPoint)10')).End)]"
+							tooltip = "cwp_sgt_world_plus_tt"
+
+							blockoverride "cwp_sgt_button_text" {
+								raw_text = "+ 10"
+							}
+						}
+					}
+
+					flowcontainer = {
+						spacing = 8
+						tooltip = "cwp_sgt_world_liquidity_tt"
+
+						textbox = {
+							size = { 110 22 }
+							parentanchor = vcenter
+							align = left|nobaseline
+							text = "cwp_sgt_world_liquidity"
+						}
+
+						gold_progressbar_horizontal = {
+							size = { 270 22 }
+							parentanchor = vcenter
+
+							blockoverride "values" {
+								value = "[FixedPointToFloat(GetGlobalVariable('cwp_sgt_liquidity').GetValue)]"
+								min = 0
+								max = 100
+							}
+
+							textbox = {
+								parentanchor = center
+								autoresize = yes
+								align = center|nobaseline
+								fontsize = 14
+								raw_text = "[GetGlobalVariable('cwp_sgt_liquidity').GetValue|1] / 100"
+							}
+						}
+					}
+
+					flowcontainer = {
+						spacing = 8
+						tooltip = "cwp_sgt_world_gold_tt"
+
+						textbox = {
+							size = { 110 26 }
+							parentanchor = vcenter
+							align = left|nobaseline
+							text = "cwp_sgt_world_gold"
+						}
+
+						textbox = {
+							autoresize = yes
+							parentanchor = vcenter
+							align = nobaseline
+							using = fontsize_xl
+							raw_text = "#v [GetPlayer.MakeScope.ScriptValue('cwp_sgt_curve')|2]#!"
+						}
+					}
+
+					cwp_sgt_note = {
+						text = "cwp_sgt_world_note"
+					}
+
+					widget = {
+						size = { 520 6 }
+					}
+
+					cwp_sgt_header = {
+						blockoverride "text1" {
+							text = "cwp_sgt_conference_title"
+						}
+
+						blockoverride "text2" {
+							raw_text = ""
+						}
+					}
+
+					flowcontainer = {
+						spacing = 10
+						ignoreinvisible = yes
+
+						cwp_sgt_button = {
+							size = { 190 28 }
+							enabled = "[GetScriptedGui('cwp_sgt_conference_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							onclick = "[GetScriptedGui('cwp_sgt_conference_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							tooltip = "cwp_sgt_conference_call_tt"
+							visible = "[Not(GetScriptedGui('cwp_sgt_conference_on_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+
+							blockoverride "cwp_sgt_button_text" {
+								text = "cwp_sgt_conference_call"
+							}
+						}
+
+						cwp_sgt_button = {
+							size = { 190 28 }
+							enabled = "[GetScriptedGui('cwp_sgt_conference_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							onclick = "[GetScriptedGui('cwp_sgt_conference_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							tooltip = "cwp_sgt_conference_close_tt"
+							visible = "[GetScriptedGui('cwp_sgt_conference_on_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+
+							blockoverride "cwp_sgt_button_text" {
+								text = "cwp_sgt_conference_close"
+							}
+						}
+
+						textbox = {
+							visible = "[Not(GetScriptedGui('cwp_sgt_conference_on_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+							autoresize = yes
+							parentanchor = vcenter
+							align = nobaseline
+							text = "cwp_sgt_conference_off"
+						}
+
+						textbox = {
+							visible = "[GetScriptedGui('cwp_sgt_conference_on_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+							autoresize = yes
+							parentanchor = vcenter
+							align = nobaseline
+							text = "cwp_sgt_conference_on"
+						}
+					}
+				}
+
+				### TAB 2: Ledger. The world-wide list, one row per member.
+				cwp_sgt_member_ledger = {
+					visible = "[GetVariableSystem.HasValue('cwp_sgt_tab', 'ledger')]"
+					parentanchor = hcenter
+
+					blockoverride "cwp_sgt_ledger_count" {
+						raw_text = "[GetDataModelSize(GetGlobalList('cwp_sgt_world_members'))] members"
+					}
+
+					blockoverride "cwp_sgt_list_size" {
+						size = { 544 336 }
+					}
+
+					blockoverride "cwp_sgt_list_datamodel" {
+						datamodel = "[GetGlobalList('cwp_sgt_world_members')]"
+					}
+				}
+
+				### TAB 3: My country. A scroll area, so the engine tests can unfold inside the window.
+				scrollarea = {
+					visible = "[GetVariableSystem.HasValue('cwp_sgt_tab', 'country')]"
+					size = { 548 400 }
+					scrollbarpolicy_horizontal = always_off
+					scrollbarpolicy_vertical = as_needed
+
+					scrollwidget = {
+						flowcontainer = {
+							margin_left = 14
+							direction = vertical
+							spacing = 6
+							ignoreinvisible = yes
+
+							cwp_sgt_header = {
+								blockoverride "text1" {
+									text = "cwp_sgt_stance_title"
+								}
+
+								blockoverride "text2" {
+									raw_text = ""
+								}
+							}
+
+							# a three-way switch: the chosen one is highlighted, a clock explains the lock
+							flowcontainer = {
+								spacing = 6
+								ignoreinvisible = yes
+
+								cwp_sgt_button = {
+									size = { 120 30 }
+									enabled = "[GetScriptedGui('cwp_sgt_stance_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('stance', MakeScopeValue('(CFixedPoint)1')).End)]"
+									onclick = "[GetScriptedGui('cwp_sgt_stance_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('stance', MakeScopeValue('(CFixedPoint)1')).End)]"
+									tooltip = "cwp_sgt_stance_easy_tt"
+									blockoverride "cwp_sgt_button_selected" {
+										visible = "[EqualTo_CFixedPoint(GetPlayer.MakeScope.Var('cwp_sgt_stance').GetValue, '(CFixedPoint)1')]"
+									}
+
+									blockoverride "cwp_sgt_button_text" {
+										text = "cwp_sgt_stance_easy"
+									}
+								}
+
+								cwp_sgt_button = {
+									size = { 120 30 }
+									enabled = "[GetScriptedGui('cwp_sgt_stance_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('stance', MakeScopeValue('(CFixedPoint)2')).End)]"
+									onclick = "[GetScriptedGui('cwp_sgt_stance_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('stance', MakeScopeValue('(CFixedPoint)2')).End)]"
+									tooltip = "cwp_sgt_stance_neutral_tt"
+									blockoverride "cwp_sgt_button_selected" {
+										visible = "[EqualTo_CFixedPoint(GetPlayer.MakeScope.Var('cwp_sgt_stance').GetValue, '(CFixedPoint)2')]"
+									}
+
+									blockoverride "cwp_sgt_button_text" {
+										text = "cwp_sgt_stance_neutral"
+									}
+								}
+
+								cwp_sgt_button = {
+									size = { 120 30 }
+									enabled = "[GetScriptedGui('cwp_sgt_stance_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('stance', MakeScopeValue('(CFixedPoint)3')).End)]"
+									onclick = "[GetScriptedGui('cwp_sgt_stance_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('stance', MakeScopeValue('(CFixedPoint)3')).End)]"
+									tooltip = "cwp_sgt_stance_tight_tt"
+									blockoverride "cwp_sgt_button_selected" {
+										visible = "[EqualTo_CFixedPoint(GetPlayer.MakeScope.Var('cwp_sgt_stance').GetValue, '(CFixedPoint)3')]"
+									}
+
+									blockoverride "cwp_sgt_button_text" {
+										text = "cwp_sgt_stance_tight"
+									}
+								}
+
+								icon = {
+									visible = "[GetPlayer.MakeScope.Var('cwp_sgt_stance_cd').IsSet]"
+									size = { 22 22 }
+									parentanchor = vcenter
+									texture = "gfx/interface/icons/generic_icons/clock.dds"
+									tooltip = "cwp_sgt_stance_cd_tt"
+								}
+
+								textbox = {
+									visible = "[GetPlayer.MakeScope.Var('cwp_sgt_stance_cd').IsSet]"
+									autoresize = yes
+									parentanchor = vcenter
+									align = nobaseline
+									default_format = "#title"
+									text = "cwp_sgt_stance_locked"
+								}
+							}
+
+							cwp_sgt_note = {
+								visible = "[EqualTo_CFixedPoint(GetPlayer.MakeScope.Var('cwp_sgt_stance').GetValue, '(CFixedPoint)1')]"
+								text = "cwp_sgt_stance_easy_desc"
+							}
+
+							cwp_sgt_note = {
+								visible = "[EqualTo_CFixedPoint(GetPlayer.MakeScope.Var('cwp_sgt_stance').GetValue, '(CFixedPoint)2')]"
+								text = "cwp_sgt_stance_neutral_desc"
+							}
+
+							cwp_sgt_note = {
+								visible = "[EqualTo_CFixedPoint(GetPlayer.MakeScope.Var('cwp_sgt_stance').GetValue, '(CFixedPoint)3')]"
+								text = "cwp_sgt_stance_tight_desc"
+							}
+
+							widget = {
+								size = { 520 4 }
+							}
+
+							cwp_sgt_header = {
+								blockoverride "text1" {
+									text = "cwp_sgt_tranches_title"
+								}
+
+								blockoverride "text2" {
+									text = "cwp_sgt_tranches_count"
+								}
+							}
+
+							# six slots: a faint coin for one still to come, a full coin for one received
+							flowcontainer = {
+								spacing = 6
+
+								widget = {
+									size = { 30 30 }
+									parentanchor = vcenter
+
+									icon = {
+										size = { 100% 100% }
+										alpha = 0.2
+										texture = "gfx/interface/icons/generic_icons/money.dds"
+									}
+
+									icon = {
+										visible = "[GreaterThanOrEqualTo_CFixedPoint(GetPlayer.MakeScope.Var('cwp_sgt_tranches').GetValue, '(CFixedPoint)1')]"
+										size = { 100% 100% }
+										texture = "gfx/interface/icons/generic_icons/money.dds"
+									}
+								}
+
+								widget = {
+									size = { 30 30 }
+									parentanchor = vcenter
+
+									icon = {
+										size = { 100% 100% }
+										alpha = 0.2
+										texture = "gfx/interface/icons/generic_icons/money.dds"
+									}
+
+									icon = {
+										visible = "[GreaterThanOrEqualTo_CFixedPoint(GetPlayer.MakeScope.Var('cwp_sgt_tranches').GetValue, '(CFixedPoint)2')]"
+										size = { 100% 100% }
+										texture = "gfx/interface/icons/generic_icons/money.dds"
+									}
+								}
+
+								widget = {
+									size = { 30 30 }
+									parentanchor = vcenter
+
+									icon = {
+										size = { 100% 100% }
+										alpha = 0.2
+										texture = "gfx/interface/icons/generic_icons/money.dds"
+									}
+
+									icon = {
+										visible = "[GreaterThanOrEqualTo_CFixedPoint(GetPlayer.MakeScope.Var('cwp_sgt_tranches').GetValue, '(CFixedPoint)3')]"
+										size = { 100% 100% }
+										texture = "gfx/interface/icons/generic_icons/money.dds"
+									}
+								}
+
+								widget = {
+									size = { 30 30 }
+									parentanchor = vcenter
+
+									icon = {
+										size = { 100% 100% }
+										alpha = 0.2
+										texture = "gfx/interface/icons/generic_icons/money.dds"
+									}
+
+									icon = {
+										visible = "[GreaterThanOrEqualTo_CFixedPoint(GetPlayer.MakeScope.Var('cwp_sgt_tranches').GetValue, '(CFixedPoint)4')]"
+										size = { 100% 100% }
+										texture = "gfx/interface/icons/generic_icons/money.dds"
+									}
+								}
+
+								widget = {
+									size = { 30 30 }
+									parentanchor = vcenter
+
+									icon = {
+										size = { 100% 100% }
+										alpha = 0.2
+										texture = "gfx/interface/icons/generic_icons/money.dds"
+									}
+
+									icon = {
+										visible = "[GreaterThanOrEqualTo_CFixedPoint(GetPlayer.MakeScope.Var('cwp_sgt_tranches').GetValue, '(CFixedPoint)5')]"
+										size = { 100% 100% }
+										texture = "gfx/interface/icons/generic_icons/money.dds"
+									}
+								}
+
+								widget = {
+									size = { 30 30 }
+									parentanchor = vcenter
+
+									icon = {
+										size = { 100% 100% }
+										alpha = 0.2
+										texture = "gfx/interface/icons/generic_icons/money.dds"
+									}
+
+									icon = {
+										visible = "[GreaterThanOrEqualTo_CFixedPoint(GetPlayer.MakeScope.Var('cwp_sgt_tranches').GetValue, '(CFixedPoint)6')]"
+										size = { 100% 100% }
+										texture = "gfx/interface/icons/generic_icons/money.dds"
+									}
+								}
+
+								widget = {
+									size = { 12 30 }
+								}
+
+								cwp_sgt_button = {
+									size = { 170 28 }
+									enabled = "[GetScriptedGui('cwp_sgt_tranche_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+									onclick = "[GetScriptedGui('cwp_sgt_tranche_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+									tooltip = "cwp_sgt_tranche_button_tt"
+									parentanchor = vcenter
+
+									blockoverride "cwp_sgt_button_text" {
+										text = "cwp_sgt_tranche_button"
+									}
+								}
+							}
+
+							widget = {
+								size = { 520 4 }
+							}
+
+							### The plain engine tests, folded away until asked for.
+							section_header_button = {
+								blockoverride "layout" {
+									size = { 520 34 }
+								}
+
+								blockoverride "left_text" {
+									text = "cwp_sgt_tests_title"
+								}
+
+								blockoverride "onclick" {
+									onclick = "[GetVariableSystem.Toggle('cwp_sgt_tests_open')]"
+								}
+
+								blockoverride "onclick_showmore" {
+									visible = "[Not(GetVariableSystem.Exists('cwp_sgt_tests_open'))]"
+								}
+
+								blockoverride "onclick_showless" {
+									visible = "[GetVariableSystem.Exists('cwp_sgt_tests_open')]"
+								}
+							}
+
+							flowcontainer = {
+								visible = "[GetVariableSystem.Exists('cwp_sgt_tests_open')]"
+								direction = vertical
+								spacing = 5
+								ignoreinvisible = yes
+
+								flowcontainer = {
+									spacing = 6
+									ignoreinvisible = yes
+
+									textbox = {
+										size = { 150 22 }
+										parentanchor = vcenter
+										align = left|nobaseline
+										text = "cwp_sgt_tests_counter"
+									}
+
+									cwp_sgt_button = {
+										size = { 60 24 }
+										enabled = "[GetScriptedGui('cwp_sgt_counter_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+										onclick = "[GetScriptedGui('cwp_sgt_counter_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+										tooltip = "cwp_sgt_counter_tt"
+
+										blockoverride "cwp_sgt_button_text" {
+											raw_text = "+ 1"
+										}
+									}
+
+									cwp_sgt_button = {
+										size = { 70 24 }
+										visible = "[GetScriptedGui('cwp_sgt_counter_reset_sgui').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+										enabled = "[GetScriptedGui('cwp_sgt_counter_reset_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+										onclick = "[GetScriptedGui('cwp_sgt_counter_reset_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+										tooltip = "cwp_sgt_reset_tt"
+
+										blockoverride "cwp_sgt_button_text" {
+											raw_text = "Reset"
+										}
+									}
+
+									cwp_sgt_button = {
+										size = { 140 24 }
+										enabled = "[GetScriptedGui('cwp_sgt_confirm_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+										onclick = "[GetScriptedGui('cwp_sgt_confirm_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+										tooltip = "cwp_sgt_confirm_tt"
+
+										blockoverride "cwp_sgt_button_text" {
+											raw_text = "+ 100, ask first"
+										}
+									}
+								}
+
+								flowcontainer = {
+									spacing = 6
+
+									textbox = {
+										size = { 150 22 }
+										parentanchor = vcenter
+										align = left|nobaseline
+										text = "cwp_sgt_tests_flag"
+									}
+
+									cwp_sgt_button = {
+										size = { 110 24 }
+										onclick = "[GetScriptedGui('cwp_sgt_flag_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('action', MakeScopeFlag('ease')).End)]"
+										tooltip = "cwp_sgt_tests_flag_tt"
+
+										blockoverride "cwp_sgt_button_text" {
+											raw_text = "Send ease"
+										}
+									}
+
+									cwp_sgt_button = {
+										size = { 110 24 }
+										onclick = "[GetScriptedGui('cwp_sgt_flag_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('action', MakeScopeFlag('tighten')).End)]"
+										tooltip = "cwp_sgt_tests_flag_tt"
+
+										blockoverride "cwp_sgt_button_text" {
+											raw_text = "Send tighten"
+										}
+									}
+								}
+
+								flowcontainer = {
+									spacing = 6
+
+									textbox = {
+										size = { 150 22 }
+										parentanchor = vcenter
+										align = left|nobaseline
+										text = "cwp_sgt_tests_ai"
+									}
+
+									cwp_sgt_button = {
+										size = { 110 24 }
+										onclick = "[GetScriptedGui('cwp_sgt_ai_toggle_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+										tooltip = "cwp_sgt_tests_ai_tt"
+
+										blockoverride "cwp_sgt_button_selected" {
+											visible = "[GetScriptedGui('cwp_sgt_ai_on_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+										}
+
+										blockoverride "cwp_sgt_button_text" {
+											raw_text = "AI test on / off"
+										}
+									}
+
+									cwp_sgt_button = {
+										size = { 130 24 }
+										enabled = "[GetScriptedGui('cwp_sgt_ai_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+										onclick = "[GetScriptedGui('cwp_sgt_ai_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+										tooltip = "cwp_sgt_tests_ai_tt"
+
+										blockoverride "cwp_sgt_button_text" {
+											raw_text = "Press it myself"
+										}
+									}
+								}
+
+								cwp_sgt_note = {
+									text = "cwp_sgt_tests_lists"
+								}
+
+								cwp_sgt_idx_row = {
+									blockoverride "cwp_sgt_idx_icon" {
+										texture = "[GetGoods('grain').GetTexture]"
+									}
+
+									blockoverride "cwp_sgt_idx_name" {
+										raw_text = "#b [GetGoods('grain').GetNameNoFormatting]#!"
+									}
+
+									blockoverride "cwp_sgt_idx_level" {
+										raw_text = "Level #v [GetPlayer.MakeScope.Var('cwp_sgt_lvl_grain').GetValue|0]#! of 2"
+									}
+
+									blockoverride "cwp_sgt_idx_minus" {
+										enabled = "[GetScriptedGui('cwp_sgt_idx_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('idx', MakeScopeValue('(CFixedPoint)1')).AddScope('action', MakeScopeValue('(CFixedPoint)1')).End)]"
+										onclick = "[GetScriptedGui('cwp_sgt_idx_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('idx', MakeScopeValue('(CFixedPoint)1')).AddScope('action', MakeScopeValue('(CFixedPoint)1')).End)]"
+									}
+
+									blockoverride "cwp_sgt_idx_plus" {
+										enabled = "[GetScriptedGui('cwp_sgt_idx_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('idx', MakeScopeValue('(CFixedPoint)1')).AddScope('action', MakeScopeValue('(CFixedPoint)2')).End)]"
+										onclick = "[GetScriptedGui('cwp_sgt_idx_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('idx', MakeScopeValue('(CFixedPoint)1')).AddScope('action', MakeScopeValue('(CFixedPoint)2')).End)]"
+									}
+								}
+
+								cwp_sgt_idx_row = {
+									blockoverride "cwp_sgt_idx_icon" {
+										texture = "[GetGoods('meat').GetTexture]"
+									}
+
+									blockoverride "cwp_sgt_idx_name" {
+										raw_text = "#b [GetGoods('meat').GetNameNoFormatting]#!"
+									}
+
+									blockoverride "cwp_sgt_idx_level" {
+										raw_text = "Level #v [GetPlayer.MakeScope.Var('cwp_sgt_lvl_meat').GetValue|0]#! of 2"
+									}
+
+									blockoverride "cwp_sgt_idx_minus" {
+										enabled = "[GetScriptedGui('cwp_sgt_idx_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('idx', MakeScopeValue('(CFixedPoint)2')).AddScope('action', MakeScopeValue('(CFixedPoint)1')).End)]"
+										onclick = "[GetScriptedGui('cwp_sgt_idx_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('idx', MakeScopeValue('(CFixedPoint)2')).AddScope('action', MakeScopeValue('(CFixedPoint)1')).End)]"
+									}
+
+									blockoverride "cwp_sgt_idx_plus" {
+										enabled = "[GetScriptedGui('cwp_sgt_idx_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('idx', MakeScopeValue('(CFixedPoint)2')).AddScope('action', MakeScopeValue('(CFixedPoint)2')).End)]"
+										onclick = "[GetScriptedGui('cwp_sgt_idx_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('idx', MakeScopeValue('(CFixedPoint)2')).AddScope('action', MakeScopeValue('(CFixedPoint)2')).End)]"
+									}
+								}
+							}
+						}
+					}
+
+					scrollbar_vertical = {
+						using = vertical_scrollbar
+					}
+				}
+
+				### TAB 4: Ration book
+				cwp_sgt_ration_book = {
+					visible = "[GetVariableSystem.HasValue('cwp_sgt_tab', 'ration')]"
+					parentanchor = hcenter
+				}
+
+				### TAB 5: Conference. Exists only while one sits.
+				flowcontainer = {
+					visible = "[And(GetVariableSystem.HasValue('cwp_sgt_tab', 'conference'), GetScriptedGui('cwp_sgt_conference_on_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).End))]"
+					parentanchor = hcenter
+					direction = vertical
+					spacing = 6
+
+					cwp_sgt_header = {
+						blockoverride "text1" {
+							text = "cwp_sgt_conference_members"
+						}
+
+						blockoverride "text2" {
+							raw_text = "[GetDataModelSize(GetPlayer.MakeScope.GetList('cwp_sgt_members'))] delegations"
+						}
+					}
+
+					# a list written out as text by a scripted GUI
+					cwp_sgt_line = {
+						text = "[GetScriptedGui('cwp_sgt_list_sgui').ExecuteTooltip(GuiScope.SetRoot(GetPlayer.MakeScope).End)]"
+					}
+				}
+			}
+		}
+	}
+}

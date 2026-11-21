@@ -2,7 +2,7 @@
 
 Each block is one design element from the chapters, with the `mm_` placeholder prefix. Replace the prefix,
 the keys and the conditions. Every trigger, effect and modifier type here was checked against the reference
-files for 1.15.1; none of the blocks was run in the game. Full field lists are in the modding guide,
+files for 1.15.1; none of the blocks was run in the game, except those under "Custom panels". Full field lists are in the modding guide,
 chapters 08 and 10. A complete, connected set is in `examples/great_stink/`.
 
 ## Journal entry pieces
@@ -373,6 +373,172 @@ mm_reform_button = {
 		value = 100
 	}
 }
+```
+
+## Custom panels (chapter 06)
+
+These blocks were run in the game [GAME, tested in 1.15.2 on 2026-11-21] in `mod/CWP Scripted GUI Test`, under that mod's
+names; here they carry the `mm_` prefix. Whole files, including the `.gui` side: modding guide, chapter 16,
+recipes 17 and 18.
+
+### One scripted GUI for every row and every action
+
+```
+# Root: the player's country. scope:good is the row's good, scope:action is 1 (ease), 2 (tighten), 3 (ration).
+mm_ration_sgui = {
+	scope = country
+	saved_scopes = { good action }
+
+	is_shown = {                                   # which buttons this row offers
+		trigger_if = {
+			limit = { scope:action = 1 }
+			OR = {
+				mm_good_is_tight = yes
+				mm_good_is_standard = yes
+			}
+		}
+		trigger_else_if = {
+			limit = { scope:action = 2 }
+			mm_good_is_standard = yes
+		}
+		trigger_else = {
+			mm_good_is_tight = no
+			mm_good_is_standard = no
+		}
+	}
+
+	is_valid = {                                   # greyed while the row is locked
+		mm_good_on_cooldown = no
+	}
+
+	effect = {
+		if = {
+			limit = { scope:action = 3 }
+			add_to_variable_list = { name = mm_ration_standard target = scope:good }
+		}
+		# … the other actions move the good between the level lists …
+		add_to_variable_list = { name = mm_ration_cooldown target = scope:good months = 2 }   # leaves by itself
+	}
+}
+```
+
+```
+# common/scripted_triggers: a level is a list; an emptied list no longer exists, hence the first line
+mm_good_is_tight = {
+	has_variable_list = mm_ration_tight
+	is_target_in_variable_list = { name = mm_ration_tight target = scope:good }
+}
+```
+
+The row's button in the `.gui` file, the same expression three times:
+
+```
+visible = "[GetScriptedGui('mm_ration_sgui').IsShown(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('good', Scope.GetGoods.MakeScope).AddScope('action', MakeScopeValue('(CFixedPoint)1')).End)]"
+enabled = "[GetScriptedGui('mm_ration_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('good', Scope.GetGoods.MakeScope).AddScope('action', MakeScopeValue('(CFixedPoint)1')).End)]"
+onclick = "[GetScriptedGui('mm_ration_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('good', Scope.GetGoods.MakeScope).AddScope('action', MakeScopeValue('(CFixedPoint)1')).End)]"
+```
+
+### The AI's route for a row action
+
+```
+# No saved scopes: the AI is given the country only, so the target is picked in script.
+mm_ration_ai_sgui = {
+	scope = country
+
+	is_valid = { has_variable_list = mm_ration_goods }
+
+	effect = {
+		random_in_list = {
+			variable = mm_ration_goods
+			limit = { … }                              # the good the design says to ration first
+			save_scope_as = good
+		}
+		# … the same effect as the player's button, on scope:good …
+	}
+
+	ai_is_valid = {                                # default is no
+		has_variable_list = mm_ration_goods
+	}
+	ai_chance = {                                  # base / modifier, as in an event option; "value =" is rejected
+		base = 10
+		modifier = {
+			trigger = { is_at_war = yes }
+			add = 40
+		}
+	}
+	ai_frequency = 3                               # months, a bare number
+}
+```
+
+The `random_in_list` and `save_scope_as` lines were not part of the test [VERIFY]; the AI fields were.
+
+### A confirmation before a costly act
+
+```
+mm_devalue_sgui = {
+	scope = country
+	confirm_title = mm_devalue_confirm_title       # plain localization keys, not blocks
+	confirm_text = mm_devalue_confirm_text
+	effect = { … }
+}
+```
+
+### A row's tooltip, and a list as text
+
+```
+# The effect is described, never run. Lines at root level: lines inside "scope:member = { }" gain a heading.
+mm_member_tt_sgui = {
+	scope = country
+	saved_scopes = { member }
+
+	effect = {
+		custom_tooltip_no_bullet = mm_member_tt_head       # "#header [SCOPE.sCountry('member').GetName]#!"
+		if = {
+			limit = { scope:member = { has_variable = mm_answer_cooldown } }
+			custom_tooltip = mm_member_tt_locked
+		}
+	}
+}
+
+# One line per list entry; print it anywhere with
+# [GetScriptedGui('mm_member_list_sgui').ExecuteTooltip(GuiScope.SetRoot(GetPlayer.MakeScope).End)]
+mm_member_list_sgui = {
+	scope = country
+
+	effect = {
+		if = {
+			limit = { has_variable_list = mm_members }
+			every_in_list = {
+				variable = mm_members
+				custom_tooltip = mm_member_list_entry      # "[THIS.GetCountry.GetName]"
+			}
+		}
+		else = {
+			custom_tooltip = mm_member_list_empty
+		}
+	}
+}
+```
+
+### Text for one table (chapter 08)
+
+```yaml
+ mm_ration_title: "The Ration Book"
+ mm_col_good: "Good"
+ mm_col_level: "Level"
+ mm_col_months: "On the ration"
+ mm_col_actions: "Change"
+ mm_level_tight: "#N #bold Tight#!#!"
+ mm_level_standard: "#gold #bold Standard#!#!"
+ mm_level_free: "#P Free#!"
+ mm_ration_ease: "Ease"
+ mm_ration_ease_tt: "#header Ease#!
+One step towards free: from tight to standard, or from standard to free."
+ mm_good_cd_tt: "Changed within the last two months. It can be changed again when that time has passed."
+ mm_ration_legend: "#P Free#!  sold without limit
+#gold Standard#!  a fixed share for everyone
+#N Tight#!  a smaller share, for hard times"
+ mm_ration_note: "Hover a row for details. After a change, a good cannot be changed again for two months."
 ```
 
 ## Decisions (chapter 06)

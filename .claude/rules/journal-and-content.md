@@ -69,8 +69,18 @@ je_cwp_example = {
 - Scopes: `root` = owning country (country context) or none (contextless); `scope:journal_entry`; `scope:target` when added with `add_journal_entry = { type = x target = <scope> }`. Contextless JEs use `should_be_involved`, `should_show_when_not_involved`, `immediate_all_involved`, `effect_all_involved`, `on_become_involved_after_activation`, `on_no_longer_involved`.
 - `disable_evaluation = { }` permanently drops the JE for a country; use only cheap, permanent identity checks.
 - Variables set on the JE itself are read with `je:je_key ?= { has_variable = x }` or `scope:journal_entry`.
-- Map colouring (`map_color`, `map_color_second`, `map_tooltip`) and custom widgets (`widget = { gui = "gui/x.gui" name = "..." container = "custom_widget_container_1" }`) are optional; the full reference is vanilla `common/journal_entries/journal_entries.md`.
+- Map colouring (`map_color`, `map_color_second`, `map_tooltip`) and custom widgets (`widget = { gui = "gui/x.gui" name = "..." container = "custom_widget_container_1" }`; tested in game with `custom_widget_container_3`, see "Scripted GUIs" below) are optional; the full reference is vanilla `common/journal_entries/journal_entries.md`.
 - Loc: `<key>`, `<key>_reason`, `<key>_goal`, and whatever `conclusion_desc`/`status_desc` name; add `<key>_concluded` if the name uses scoped data.
+- Lessons from the Newfoundland Referendum log (2026-11-18):
+  - `effect_header` text must contain `$EFFECT$` (vanilla: `"#title If completed:#!\n$EFFECT$"`), or the outcome shows only the header. Wrap `has_variable` outcome triggers in `custom_tooltip = { text = ... }`, or the panel prints "has the variable in question".
+  - `should_be_pinned_by_default` does not exist; only `should_be_pinned_by_default_uninvolved_or_context`.
+  - Every JE needs `activation_description = { always = yes }` (logged otherwise).
+  - `map_color` with a raw colour (`value = { 58 121 176 }` inside an `if`) logged "Unsupported scope operator ''", and the failed block made the parser reject every later field of the JE. Removing `?=` did not help. Define the colour in `common/named_colors` (`colors = { name = rgb{ r g b } }`) and write `value = "name"`, as vanilla does in every JE (fix untested at time of writing).
+  - Static modifiers go in `common/static_modifiers`; there is no `common/modifiers` folder.
+  - Scripted buttons have no `effect_desc` field (put a `custom_tooltip` in `effect`); money is `gold_reserves`, not `treasury`.
+  - Event icons `event_political/diplomacy/money.dds` do not exist; see vanilla `gfx/interface/icons/event_icons/`.
+  - Progress bar conditions (and JE description triggers) are evaluated before the JE's `immediate` has run, so `var:x >= N` there logs "Failed to fetch variable ... not being set" hundreds of times. Guard every read: `has_variable = x var:x >= N`.
+  - A progress bar's `desc` is the left-hand label on the bar: keep it short, value goes in `second_desc`.
 - Groups: `je_group_x = { context = country/none  illustration = "..."  themed = yes  updates_strategic_region_stances = yes }`.
 - Deleting a JE means removing: `has_journal_entry`, `add_journal_entry`, `je:` reads, objective `associated_journal_entries`, tutorial links, AI helper triggers (`ai_has_enact_weight_modifier_journal_entries`), movement `forced_tags` triggers and loc.
 
@@ -84,7 +94,15 @@ je_cwp_example = {
 
 ## Scripted GUIs
 
-`key = { scope = country  saved_scopes = { target }  is_shown = { }  is_valid = { }  effect = { }  ai_is_valid = { }  ai_chance = { }  ai_frequency = N }`. Called from `.gui` files (`GetScriptedGui('key')`) or used in loc to build dynamic lists (`ExecuteTooltip`). They evaluate every frame while visible: keep them light.
+`key = { scope = country  saved_scopes = { target }  is_shown = { }  is_valid = { }  effect = { }  confirm_title = loc_key  confirm_text = loc_key  ai_is_valid = { }  ai_chance = { base = N }  ai_frequency = N }`. Called from `.gui` files (`GetScriptedGui('key')`) or used in loc to build dynamic lists (`ExecuteTooltip`). They evaluate every frame while visible: keep them light.
+
+All of this was run in the game on vanilla 1.15.2 on 2026-11-21 (test mod `mod/CWP Scripted GUI Test`); the exact forms are in modding guide chapter 13, "Tested in game", and recipes 17 and 18, the design rules in content guide chapter 06, "Custom panels". What matters most when writing one for this mod:
+
+- `confirm_title`, `confirm_text` and `ai_frequency` take one word, not a block (vanilla's `scripted_guis.md` shows `{}`; a block silently cuts the scripted GUI off before its `effect`). `ai_chance` is a `base` / `modifier` block, not `value =`.
+- A list row is passed with `AddScope('member', Scope.GetCountry.MakeScope)` or `Scope.GetGoods.MakeScope`, a choice with `MakeScopeValue('(CFixedPoint)1')`; one scripted GUI then serves every row and action. `Scope.Self` fails and floods error.log.
+- The AI presses scripted GUIs by itself (about every 25 days at `ai_frequency = 1`) but is given the root only, so each row action needs a root-only scripted GUI of its own for the AI.
+- **Clean error.log (rule 7):** a variable that only a `.gui` or localization file reads logs "set but never used": read it once in script (a `has_variable` in the scripted GUI's `is_valid` is enough). A flag sent with `MakeScopeFlag` logs "used but never set": send numbers.
+- The three designs that use panels (`cwp_uk_rationing.md` 4.4, `cwp_marshall_plan.md` 5.9, `cwp_bretton_woods.md` 15) each carry a "tested interface facts" part naming the test mod's types to copy.
 
 ## Decisions (`common/decisions`)
 

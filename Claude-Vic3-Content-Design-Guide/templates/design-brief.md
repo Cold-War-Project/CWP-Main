@@ -62,7 +62,8 @@ Vanilla model read (same shape): *journal entry key and file*
 
 ## 6. Shape and flow
 
-> *One line: activation, bar, buttons, outcomes, events by role, decision.*
+> *One line: activation, bar, buttons, outcomes, events by role, decision. If a custom panel: where it lives
+> (journal entry or window), what a row is, the columns, the row actions, and the AI's route for each.*
 
 ```
 <flow diagram in text: what starts what>
@@ -82,6 +83,8 @@ Vanilla model read (same shape): *journal entry key and file*
 | Journal entry | | |
 | Bar | | |
 | Button | | |
+| Panel (`.gui` file, row type) | | rows from which list |
+| Scripted GUI | | row action / state check / tooltip / AI route |
 | Decision | | |
 | Event (role) | | |
 | Scripted effect | | |

@@ -547,3 +547,388 @@ When asked for "something like vanilla feature X":
 4. Reproduce the structure under your own prefix, changing only what the design needs.
 
 This is faster and far more reliable than composing an unfamiliar object type from documentation.
+
+## 17. A ledger in a journal entry: one row per member, buttons on every row
+
+Every technique here was run in the game [GAME, tested in 1.15.2 on 2026-11-21] in `mod/CWP Scripted GUI Test`; this
+recipe is that mod's member ledger cut down and renamed, and the cut-down text itself was not run. Four files
+besides localization. The journal entry is added by script; the list `mm_members` is filled by script with
+`add_to_variable_list`, and each member carries a variable `mm_recovery` (0 to 100) and `mm_answer` (0 none,
+1 approved, 2 rejected).
+
+```
+# common/journal_entries/mm_journal_entries.txt
+mm_je_programme = {
+	icon = "gfx/interface/icons/event_icons/event_trade.dds"
+	group = je_group_internal_affairs
+	activation_description = { always = yes }
+
+	widget = {
+		gui = "gui/journal_entry_widgets/mm_widgets.gui"
+		name = "mm_programme_panel"
+		container = "custom_widget_container_3"
+	}
+
+	outcome = {
+		header = je_standard_completion_header
+		effect_header = je_standard_on_completion_header
+		color = "gold_positive"
+		conclusion_desc = je_standard_completion_conclusion_desc
+		trigger = { has_variable = mm_programme_over }
+		effect = { remove_variable = mm_programme_over }
+	}
+}
+```
+
+```
+# common/scripted_guis/mm_sguis.txt
+# Root is the player's country. scope:member is the row's country, scope:answer is 1 or 2.
+mm_answer_sgui = {
+	scope = country
+	saved_scopes = { member answer }
+
+	is_valid = {                                   # greys the row's buttons
+		scope:member = {
+			has_variable = mm_recovery             # also the script read that keeps error.log quiet
+			has_variable = mm_answer
+			NOT = { has_variable = mm_answer_cooldown }
+		}
+	}
+
+	effect = {
+		scope:member = {
+			set_variable = { name = mm_answer value = scope:answer }
+			set_variable = { name = mm_answer_cooldown value = yes days = 60 }
+			if = {
+				limit = { scope:answer = 1 }
+				change_variable = { name = mm_recovery add = 10 }
+				clamp_variable = { name = mm_recovery min = 0 max = 100 }
+			}
+		}
+	}
+}
+
+# The row's tooltip: the effect is described, never run.
+mm_member_tt_sgui = {
+	scope = country
+	saved_scopes = { member }
+
+	effect = {
+		custom_tooltip_no_bullet = mm_member_tt_head          # "#header [SCOPE.sCountry('member').GetName]#!"
+		if = {
+			limit = { scope:member = { has_variable = mm_answer_cooldown } }
+			custom_tooltip = mm_member_tt_locked
+		}
+	}
+}
+```
+
+```
+# gui/journal_entry_widgets/mm_widgets.gui      (no BOM needed)
+types mm_types
+{
+	type mm_button = button {
+		using = default_button
+		size = { 70 24 }
+
+		textbox = {
+			parentanchor = center
+			autoresize = yes
+			align = center|nobaseline
+			fontsize = 14
+			block "mm_button_text" { raw_text = "?" }
+		}
+	}
+
+	type mm_member_row = widget {
+		size = { 520 64 }
+		datacontext = "[Scope.GetCountry]"
+		tooltip = "[GetScriptedGui('mm_member_tt_sgui').ExecuteTooltip(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('member', Scope.GetCountry.MakeScope).End)]"
+
+		background = { using = entry_bg_simple }
+
+		flowcontainer = {                                  # line 1, left: who
+			position = { 8 6 }
+			spacing = 8
+
+			tiny_flag = { parentanchor = vcenter }
+
+			textbox = {
+				size = { 250 22 }
+				parentanchor = vcenter
+				align = left|nobaseline
+				elide = right
+				raw_text = "#b [Country.GetNameNoFormatting]#!"
+			}
+		}
+
+		flowcontainer = {                                  # line 1, right: the state as a word, a clock while locked
+			parentanchor = right
+			position = { -10 6 }
+			spacing = 6
+			ignoreinvisible = yes
+
+			icon = {
+				visible = "[Scope.Var('mm_answer_cooldown').IsSet]"
+				size = { 20 20 }
+				parentanchor = vcenter
+				texture = "gfx/interface/icons/generic_icons/clock.dds"
+				tooltip = "mm_locked_tt"
+			}
+
+			textbox = {
+				visible = "[EqualTo_CFixedPoint(Scope.Var('mm_answer').GetValue, '(CFixedPoint)1')]"
+				autoresize = yes
+				parentanchor = vcenter
+				align = nobaseline
+				text = "mm_status_approved"                # "#P Approved#!"
+			}
+
+			textbox = {
+				visible = "[EqualTo_CFixedPoint(Scope.Var('mm_answer').GetValue, '(CFixedPoint)2')]"
+				autoresize = yes
+				parentanchor = vcenter
+				align = nobaseline
+				text = "mm_status_rejected"                # "#N Rejected#!"
+			}
+		}
+
+		flowcontainer = {                                  # line 2, left: a bar with its own label and figure
+			position = { 8 34 }
+
+			default_progressbar_horizontal = {
+				size = { 200 22 }
+				parentanchor = vcenter
+
+				blockoverride "values" {
+					value = "[FixedPointToFloat(Scope.Var('mm_recovery').GetValue)]"
+					min = 0
+					max = 100
+				}
+
+				textbox = {
+					parentanchor = center
+					autoresize = yes
+					align = center|nobaseline
+					fontsize = 13
+					raw_text = "Recovery [Scope.Var('mm_recovery').GetValue|0]"
+				}
+			}
+		}
+
+		flowcontainer = {                                  # line 2, right: one scripted GUI, two answers
+			parentanchor = right
+			position = { -8 33 }
+			spacing = 4
+
+			mm_button = {
+				enabled = "[GetScriptedGui('mm_answer_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('member', Scope.GetCountry.MakeScope).AddScope('answer', MakeScopeValue('(CFixedPoint)1')).End)]"
+				onclick = "[GetScriptedGui('mm_answer_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('member', Scope.GetCountry.MakeScope).AddScope('answer', MakeScopeValue('(CFixedPoint)1')).End)]"
+				tooltip = "mm_approve_tt"
+				blockoverride "mm_button_text" { text = "mm_approve" }
+			}
+
+			mm_button = {
+				enabled = "[GetScriptedGui('mm_answer_sgui').IsValid(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('member', Scope.GetCountry.MakeScope).AddScope('answer', MakeScopeValue('(CFixedPoint)2')).End)]"
+				onclick = "[GetScriptedGui('mm_answer_sgui').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('member', Scope.GetCountry.MakeScope).AddScope('answer', MakeScopeValue('(CFixedPoint)2')).End)]"
+				tooltip = "mm_reject_tt"
+				blockoverride "mm_button_text" { text = "mm_reject" }
+			}
+		}
+	}
+}
+
+flowcontainer = {
+	name = "mm_programme_panel"
+	ignoreinvisible = yes
+
+	flowcontainer = {
+		direction = vertical
+		spacing = 4
+		margin = { 0 8 }
+
+		default_header_2texts_clean = {                    # a title on the left, the row count on the right
+			blockoverride "size" { size = { 520 34 } }
+			blockoverride "text1" { text = "mm_members_title" }
+			blockoverride "text2" { raw_text = "[GetDataModelSize(JournalEntry.GetCountry.MakeScope.GetList('mm_members'))] members" }
+		}
+
+		scrollarea = {                                     # four rows visible, the rest scroll
+			size = { 544 268 }
+			scrollbarpolicy_horizontal = always_off
+
+			scrollwidget = {
+				flowcontainer = {
+					direction = vertical
+					spacing = 3
+					datamodel = "[JournalEntry.GetCountry.MakeScope.GetList('mm_members')]"
+
+					item = {
+						mm_member_row = {}
+					}
+				}
+			}
+
+			scrollbar_vertical = { using = vertical_scrollbar }
+		}
+	}
+}
+```
+
+Points that are easy to get wrong:
+
+* Inside `item`, the row is a `Scope`. Hand it on as `Scope.GetCountry.MakeScope`, never `Scope.Self`.
+* The same `GuiScope…End` expression goes into `enabled` and `onclick` (and `visible` with `IsShown` when a
+  button should disappear).
+* `mm_recovery` and `mm_answer` are shown by the GUI only; the `has_variable` lines in `is_valid` are the
+  script reads that stop "set but never used" at load.
+* For rows of goods use `datacontext = "[Scope.GetGoods]"`, `texture = "[Goods.GetTexture]"` and
+  `AddScope('good', Scope.GetGoods.MakeScope)`.
+* To let the AI act, give it a scripted GUI of its own with no saved scopes (`ai_is_valid`,
+  `ai_chance = { base = N }`, `ai_frequency = N`) that picks the member in script.
+
+## 18. A standalone window with an opener button and tabs
+
+Every technique here was run in the game [GAME, tested in 1.15.2 on 2026-11-21] in `mod/CWP Scripted GUI Test`; this
+recipe is that mod's window cut down to two tabs and renamed, and the cut-down text itself was not run. No
+vanilla file is overwritten. Open and tab state live in the GUI's own variable system: they are not saved and script cannot
+read them.
+
+```
+# gui/scripted_widgets/mm_widgets.txt          (with BOM; one widget per line, created at startup)
+gui/mm_window.gui = mm_opener
+gui/mm_window.gui = mm_window
+```
+
+```
+# gui/mm_window.gui
+window = {                                             # a small window, so it can be dragged by its left edge
+	name = "mm_opener"
+	using = hud_visibility                             # in game, no Escape menu, no game-over screen
+	parentanchor = top|right
+	widgetanchor = top|right
+	position = { -380 4 }
+	size = { 200 36 }
+	movable = yes
+	layer = layer_minimap
+
+	background = { using = default_background }
+
+	button = {
+		using = default_button
+		parentanchor = right|vcenter
+		position = { -4 0 }
+		size = { 160 28 }
+		tooltip = "mm_opener_tt"
+		onclick = "[GetVariableSystem.Toggle('mm_window_open')]"
+
+		textbox = {
+			parentanchor = center
+			autoresize = yes
+			align = center|nobaseline
+			text = "mm_opener"
+		}
+	}
+}
+
+default_popup = {
+	name = "mm_window"
+	visible = "[And(And(IsInGame, And(Not(IsPauseMenuShown), Not(IsGameOverScreenShown))), GetVariableSystem.Exists('mm_window_open'))]"
+
+	state = {                                          # hidden for any reason means closed: no reopening after Escape
+		name = _hide
+		on_start = "[GetVariableSystem.Clear('mm_window_open')]"
+	}
+
+	blockoverride "sound" {}                           # default_popup plays a sound on creation, i.e. at startup
+	blockoverride "window_header_name" { text = "mm_window_title" }
+	blockoverride "header_close_button_visibility" { visible = yes }
+
+	blockoverride "minimize" {                         # own close button, without vanilla's Escape shortcut
+		close_button_large = {
+			parentanchor = center
+			onclick = "[GetVariableSystem.Clear('mm_window_open')]"
+		}
+	}
+
+	blockoverride "entire_scrollarea" {
+		flowcontainer = {
+			direction = vertical
+			spacing = 8
+
+			widget = {
+				size = { 548 44 }
+
+				tab_buttons = {                            # vanilla's tab bar; five tabs at most
+					size = { 100% 100% }
+
+					blockoverride "first_button" { text = "mm_tab_world" }
+					blockoverride "first_button_selected" { text = "mm_tab_world_selected" }          # "#bold World#!"
+					blockoverride "first_button_tooltip" { tooltip = "mm_tab_world_tt" }
+					blockoverride "first_button_click" { onclick = "[GetVariableSystem.Set('mm_tab', 'world')]" }
+					blockoverride "first_button_visibility" { visible = "[Or(Not(GetVariableSystem.Exists('mm_tab')), GetVariableSystem.HasValue('mm_tab', 'world'))]" }
+					blockoverride "first_button_visibility_checked" { visible = "[Not(Or(Not(GetVariableSystem.Exists('mm_tab')), GetVariableSystem.HasValue('mm_tab', 'world')))]" }
+
+					blockoverride "second_button" { text = "mm_tab_ledger" }
+					blockoverride "second_button_selected" { text = "mm_tab_ledger_selected" }
+					blockoverride "second_button_tooltip" { tooltip = "mm_tab_ledger_tt" }
+					blockoverride "second_button_click" { onclick = "[GetVariableSystem.Set('mm_tab', 'ledger')]" }
+					blockoverride "second_button_visibility" { visible = "[GetVariableSystem.HasValue('mm_tab', 'ledger')]" }
+					blockoverride "second_button_visibility_checked" { visible = "[Not(GetVariableSystem.HasValue('mm_tab', 'ledger'))]" }
+				}
+			}
+
+			widget = {                                     # one fixed size: the window keeps its shape from tab to tab
+				size = { 548 400 }
+
+				flowcontainer = {
+					visible = "[Or(Not(GetVariableSystem.Exists('mm_tab')), GetVariableSystem.HasValue('mm_tab', 'world'))]"
+					direction = vertical
+					spacing = 8
+
+					flowcontainer = {                      # a label, a bar carrying its own figure
+						spacing = 8
+						tooltip = "mm_confidence_tt"
+
+						textbox = {
+							size = { 110 22 }
+							parentanchor = vcenter
+							align = left|nobaseline
+							text = "mm_confidence"
+						}
+
+						default_progressbar_horizontal = {
+							size = { 270 22 }
+							parentanchor = vcenter
+
+							blockoverride "values" {
+								value = "[FixedPointToFloat(GetGlobalVariable('mm_confidence').GetValue)]"
+								min = 0
+								max = 100
+							}
+
+							textbox = {
+								parentanchor = center
+								autoresize = yes
+								align = center|nobaseline
+								raw_text = "[GetGlobalVariable('mm_confidence').GetValue|1] / 100"
+							}
+						}
+					}
+				}
+
+				flowcontainer = {
+					visible = "[GetVariableSystem.HasValue('mm_tab', 'ledger')]"
+					direction = vertical
+					# … the scroll list of recipe 17, with datamodel = "[GetGlobalList('mm_world_members')]"
+				}
+			}
+		}
+	}
+}
+```
+
+The first tab is also the one shown before any tab was chosen, hence the `Or(Not(Exists…), HasValue…)`. For a
+tab that exists only while something is true, put `And(condition, …)` into both of its visibilities, where the
+condition is a scripted GUI's `IsValid`, and let the first tab take over when that condition goes while the
+tab is selected. Guard every read of a global variable that may not exist yet behind such a condition too.

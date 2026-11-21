@@ -305,6 +305,29 @@ custom_tooltip = { text = mm_canal_requirement_tt  <triggers or effects> }
 Trigger tooltips are shown with a pass/fail mark automatically; write them as a plain statement of the
 requirement. Effect tooltips should say what happens ("Gain …", "Lose …").
 
+`custom_tooltip_no_bullet = key` is the same without the bullet: a heading or a plain line. Two or more
+tooltip lines inside a scope change (`scope:x = { custom_tooltip = a  custom_tooltip = b }`) gain a heading
+line naming that scope; one line does not. To avoid the heading, keep the lines at root level and put only
+the checks inside the scope [GAME, tested in 1.15.2 on 2026-11-21].
+
+## Text in a custom GUI [GAME, tested in 1.15.2 on 2026-11-21]
+
+* A widget's `text = "my_key"` looks the key up with the widget's data context: inside a list row,
+  `[Scope.Var('x').GetValue|0]`, `[Goods.GetNameNoFormatting]` or `[Country.GetName]` in the localization
+  resolve to that row. `raw_text = "…"` takes the same brackets without a key.
+* A list as text: `[GetScriptedGui('k').ExecuteTooltip(GuiScope.SetRoot(GetPlayer.MakeScope).End)]` in any key
+  prints the tooltip of that scripted GUI's `effect`, one `custom_tooltip` line per list entry
+  (`[THIS.GetCountry.GetName]` inside the line). A saved scope handed to the scripted GUI is
+  `[SCOPE.sCountry('member').GetName]`, `[SCOPE.sGoods('good').GetName]` in the line's text.
+* Styles that read well in a panel: `#N` and `#P` for bad and good, `#gold` for the middle state, `#title`
+  (grey) for column titles and hints, `#bold`, `#v` for figures, `#header` for the first line of a tooltip.
+  Styles nest: `#N #bold Tight#!#!`.
+* "Use in localization doesn't count": the load-time check that reports a variable as "set but never used"
+  ignores localization and GUI files. A variable shown only on screen needs one read in script.
+* A `debug_log` text may use data functions, but `[TimeKeeper.GetCurrentDate.GetString]` inside a scripted
+  GUI's effect logged an assertion when the player pressed the button. `[THIS.GetCountry.…]`,
+  `[SCOPE.sCountry('x').…]` and `[GetGlobalVariable('x').GetValue]` were fine there.
+
 ## Script localization: tooltips that adapt to context
 
 `custom_tooltip` shows one fixed string. **Script localization** lets a scripted effect or trigger describe

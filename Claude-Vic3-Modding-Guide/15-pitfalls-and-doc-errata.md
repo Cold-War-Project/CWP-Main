@@ -50,7 +50,12 @@ differ from the 1.15.1 game files. Entries marked [GAME] were confirmed against 
 | Journal entry written with `complete` / `on_complete` / `fail` / `on_fail` / `on_timeout` | Those blocks no longer exist; 1.15 uses `outcome = { }` blocks (chapter 10) |
 | `event_image = { texture = … }` | Vanilla events only use `video = "…"` |
 | Building-group keys in a state region's `arable_resources` / `capped_resources` | 1.15 lists **building** keys there (`building_rye_farm`, `building_iron_mine = 60`) |
-| A BOM added to a `.gui` file | Vanilla `.gui` files have none |
+| Expecting a BOM to matter in a `.gui` file | It does not: 185 vanilla `.gui` files have none, 22 have one [GAME]. `gui/scripted_widgets/*.txt` does want one |
+| `AddScope('x', Scope.Self)` to hand a list row to a scripted GUI | Returns nothing; error.log fills every frame. Use `Scope.GetCountry.MakeScope`, `Scope.GetGoods.MakeScope` [GAME, tested in 1.15.2 on 2026-11-21] |
+| A variable or flag that only a `.gui` or localization file uses | "set but never used" / "used but never set" at load. Read the variable once in script; pass numbers, not flags, from a GUI [GAME, tested in 1.15.2 on 2026-11-21] |
+| A custom window with `visible = "[IsInGame]"` | Stays up over the Escape menu, and with a remembered open state it reopens afterwards. Use vanilla's three HUD conditions and a `_hide` state (chapter 13) [GAME, tested in 1.15.2 on 2026-11-21] |
+| A block where a scripted GUI field wants one word (`confirm_title = { … }`, `ai_frequency = { … }`) | The brace is read as the value and the following `}` closes the whole scripted GUI: everything after it, the `effect` included, is lost without a clear error [GAME, tested in 1.15.2 on 2026-11-21] |
+| Several tooltip lines inside a scope change | A heading line with the scope's name appears above them (chapter 12) |
 | `effect = { }` in an on-action expecting its saved scopes in the events it fires | The effect runs alongside the events, not before; scopes do not carry over (chapter 09) |
 | Event text uses a saved scope that `immediate` may fail to set | Blank or error text |
 | `random_country`/`random_scope_state` finds nothing, later script assumes the scope exists | Errors, silent no-ops |
@@ -60,6 +65,9 @@ differ from the 1.15.1 game files. Entries marked [GAME] were confirmed against 
 | New good with no producer or consumer | Inert |
 | New building not listed in any state region's resources | Cannot be built anywhere |
 | History change tested on an old save | No visible effect; history runs only for new campaigns |
+| `add_journal_entry` for a country-context JE the country already holds as an inactive (potential) instance | Refused, logged as "<Country> already has a journal entry of type <key>" (seen in game, 2026-11-19). Activation of potential JEs is periodic, not instant: a JE whose `possible` becomes true on 1 January was active by March in the same test |
+| A hidden `invalid_outcome` with bare `has_global_variable` triggers | The JE panel still lists them under "Will become invalid if" as "does not have the variable in question"; wrap the trigger in `custom_tooltip` |
+| `set_owner_of_provinces` used to hand over a thinly populated part of a state region | Pops, capped resources and arable land are divided by each split state's share of the region's provinces, not by where people live (user observation in game, 2026-11-19; uncapped buildings probably the same, [VERIFY]). Move pops back afterwards with `move_partial_pop` (they arrive unemployed) |
 | Copying a vanilla file to change one line | Breaks on the next patch; conflicts with other mods |
 | Redefining a vanilla law, building, PM or similar in a new file with no keyword | An error, not an override: most `common/` folders need `REPLACE:` or `INJECT:` (chapter 01) [WIKI 1.13] |
 | `INJECT:` placed inside an object, or used to add a block the object already has | Keywords work on top-level keys only, and inject only appends [WIKI 1.13] |
@@ -188,6 +196,9 @@ These slips were found while compiling this guide; there may be others.
 | `political_movement` | description mentions interest group scope, which is not among its input scopes |
 | `goods` | described as "goods traded by a trade route"; it is the goods of a market goods / state goods scope |
 | `total_export_value`, `total_import_value` | examples show `total_trade_value` |
+| `market_goods_pricier`, `market_goods_cheaper` | tested in play 2026-11-21: `market_goods_pricier` is signed (price / base price - 1, negative when the good is cheap) and `market_goods_cheaper` is its negative, so market price = `goods.base_price` x (1 + `market_goods_pricier`) |
+| `goods.base_price` inside `every_market_goods` in a script value | tested in play 2026-11-21: written directly in the loop it logs "Invalid scope types for event target link" at load; read it through a nested script value instead. `every_market_goods` itself works in a script value |
+| `market_goods_imports`, `market_goods_exports` | tested in play 2026-11-21: they include treaty goods transfers; subtract `treaty_imports` / `treaty_exports` to match the country links `total_import_value` / `total_export_value` |
 
 ### Iterators
 
@@ -195,6 +206,7 @@ These slips were found while compiling this guide; there may be others.
 |---|---|
 | `any/every/random/ordered_province` | scopes and target are swapped: it iterates the **provinces** of the scoped **state** |
 | `…_neighbouring_state` | described as "states neighbouring a state region" but also listed for country, state and strategic region scopes |
+| `every_province` / `any_province` / `random_province` / `ordered_province` | the docs and `reference/iterators.md` print "Supported Scopes: province, Supported Targets: state", which is swapped. **They run from a state and iterate its provinces** [GAME: vanilla `common/script_values/occupation_values.txt`, root = state; used that way in the war-end test of 2026-11-21]. From a state region: `every_scope_state = { every_province = { } }` |
 | all `…_in_<geographic region>` iterators | description text is unrelated scripted-trigger source or binary junk; the iterators themselves are real (see `reference/iterators.md`) |
 
 ### On-actions
@@ -221,6 +233,20 @@ The `.md` files in the game folder are far more reliable than the script docs, b
 | `construction_points = int32` | `required_construction = <script value>` (84 buildings) |
 
 When a shipped doc and vanilla data disagree, follow the data.
+
+`common/scripted_guis/scripted_guis.md` describes five fields that no vanilla scripted GUI uses, and three of
+the descriptions do not match what the game accepts [GAME, tested in 1.15.2 on 2026-11-21]:
+
+| Doc says | What loads and works |
+|---|---|
+| `confirm_title = {}`, `confirm_text = {}` | a plain localization key: `confirm_title = my_key` |
+| `ai_chance = { }` "script value between 1 and 100" | a weight block: `ai_chance = { base = 100 modifier = { trigger = { … } add = -50 } }`; `value =` logs "unknown command 'value' for MTTH" |
+| `ai_frequency = {}` "named value … in months" | a bare number: `ai_frequency = 1` |
+| `ai_is_valid = { trigger }` | as documented |
+
+`gui/scripted_widgets/scripted_widgets.md` is right as far as it goes (`gui/file.gui = widget_name`, one per
+line); it does not say that the file wants a BOM, nor that the widgets are created at startup, before a game
+is loaded, and so need a visibility condition [GAME, tested in 1.15.2 on 2026-11-21].
 
 ### Things that changed from older versions (and older guides)
 

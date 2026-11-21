@@ -31,6 +31,9 @@ per-object checklists at the ends of chapters 04, 05, 06 and 08 go into more det
 8. Pulse lists have an empty slot or `chance_to_happen`; pulse events have a cooldown, a trigger and a
    `cancellation_trigger`.
 9. Staged events are guarded by a variable set before the event fires.
+10. A custom panel: every row passes its item with the typed object's `MakeScope` (never `Scope.Self`); the
+    same expression is in `visible`, `enabled` and `onclick`; every variable it shows is read once in script;
+    it sends numbers, not flags; each row action has a root-only scripted GUI for the AI (06).
 
 ## C. Text
 
@@ -56,6 +59,8 @@ Ask of the finished design, one at a time (09):
 7. What if two countries qualify at once?
 8. What if the DLC whose objects it uses is absent?
 9. What if it is added to a save already in progress?
+10. For a panel: what if a row's country or good ceases to exist? What does the panel show before its data
+    exists?
 
 Each answer is one of: handled by a guard, handled by the invalidation outcome, handled by the timeout,
 harmless, or a known limit written in the hand-over.
@@ -71,6 +76,8 @@ harmless, or a known limit written in the hand-over.
 3. Sizes compared with `reference/generated/modifier_magnitudes.md`; signs checked for the types where
    negative is good.
 4. Bar fill time: slowest, typical and fastest worked out and compared with the timeout.
+5. A custom panel cannot be verified statically beyond brace balance. It is not done until it has been seen
+   in the game and `error.log` and `error.1.log` read. Say so in the hand-over.
 
 ## F. Hand-over
 
@@ -98,3 +105,7 @@ Stop and redesign if any of these is true.
 | More than four buttons or more than one bar for a size M topic | Over-built; go back to chapter 02 |
 | An atrocity grants a bonus with no cost | Redesign with chapter 01's guidance |
 | The same vanilla reward is given again | Read the neighbouring vanilla content |
+| A panel carries paragraphs of explanation | The text belongs in tooltips; the layout is not doing its job (06, layout rules) |
+| The same button is in a different place on different rows | Missing fixed slots |
+| A panel for fewer than about six fixed actions | Scripted buttons would do (02) |
+| A panel the AI has no way to work | Missing root-only scripted GUIs (09) |

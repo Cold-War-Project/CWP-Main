@@ -1,0 +1,485 @@
+﻿# CWP scripted GUI test: the script side of every button, state check and generated text.
+# Fields used here all appear in vanilla's scripted GUIs or in scripted_guis.md.
+# The two fields nobody uses in vanilla (confirm_*, ai_*) are kept apart in cwp_sgt_sguis_risky.txt,
+# so that a mistake there cannot take this file down with it.
+# Root is the player's country unless a comment says otherwise.
+
+### State checks (used as "visible" and "enabled" by the GUI)
+
+cwp_sgt_ready_sgui = {
+	scope = country
+
+	is_valid = {
+		has_variable = cwp_sgt_ready
+	}
+}
+
+cwp_sgt_conference_on_sgui = {
+	scope = country
+
+	is_valid = {
+		has_global_variable = cwp_sgt_conference
+	}
+}
+
+cwp_sgt_ai_on_sgui = {
+	scope = country
+
+	is_valid = {
+		has_global_variable = cwp_sgt_ai_on
+	}
+}
+
+### T03, T04: a plain button, and one that appears at 3 and unlocks at 5
+
+cwp_sgt_counter_sgui = {
+	scope = country
+
+	is_valid = {
+		has_variable = cwp_sgt_counter
+	}
+
+	effect = {
+		change_variable = { name = cwp_sgt_counter add = 1 }
+		debug_log = "CWP_SGT T03 counter;[THIS.GetCountry.GetNameNoFormatting];now=[THIS.GetCountry.MakeScope.Var('cwp_sgt_counter').GetValue|0]"
+	}
+}
+
+cwp_sgt_counter_reset_sgui = {
+	scope = country
+
+	is_shown = {
+		has_variable = cwp_sgt_counter
+		var:cwp_sgt_counter >= 3
+	}
+
+	is_valid = {
+		has_variable = cwp_sgt_counter
+		var:cwp_sgt_counter >= 5
+	}
+
+	effect = {
+		set_variable = { name = cwp_sgt_counter value = 0 }
+		debug_log = "CWP_SGT T04 counter reset;[THIS.GetCountry.GetNameNoFormatting]"
+	}
+}
+
+### T06 to T08: one scripted GUI for every member row and all three answers
+# scope:member is the row's country, scope:answer is 1 (approve), 2 (trim) or 3 (reject).
+
+cwp_sgt_answer_sgui = {
+	scope = country
+	saved_scopes = { member answer }
+
+	is_shown = {
+		exists = scope:member
+	}
+
+	is_valid = {
+		has_variable = cwp_sgt_ready
+		scope:member = {
+			has_variable = cwp_sgt_recovery
+			NOT = { has_variable = cwp_sgt_answer_cd }
+		}
+	}
+
+	effect = {
+		scope:member = {
+			set_variable = { name = cwp_sgt_answer value = scope:answer }
+			# T08: a variable with a lifetime is the cooldown. It removes itself after 60 days.
+			set_variable = { name = cwp_sgt_answer_cd value = yes days = 60 }
+			if = {
+				limit = { scope:answer = 1 }
+				change_variable = { name = cwp_sgt_recovery add = 10 }
+				change_variable = { name = cwp_sgt_alignment add = 5 }
+			}
+			else_if = {
+				limit = { scope:answer = 2 }
+				change_variable = { name = cwp_sgt_recovery add = 5 }
+				change_variable = { name = cwp_sgt_alignment subtract = 3 }
+			}
+			else = {
+				change_variable = { name = cwp_sgt_alignment subtract = 10 }
+			}
+			clamp_variable = { name = cwp_sgt_recovery min = 0 max = 100 }
+			clamp_variable = { name = cwp_sgt_alignment min = 0 max = 100 }
+		}
+		debug_log = "CWP_SGT T06 answer;root=[THIS.GetCountry.GetNameNoFormatting];member=[SCOPE.sCountry('member').GetNameNoFormatting];answer=[SCOPE.sCountry('member').MakeScope.Var('cwp_sgt_answer').GetValue|0];recovery=[SCOPE.sCountry('member').MakeScope.Var('cwp_sgt_recovery').GetValue|0]"
+	}
+}
+
+### T09: a tooltip built per row. The effect is not run, only described.
+
+cwp_sgt_member_tt_sgui = {
+	scope = country
+	saved_scopes = { member }
+
+	# The lines sit at root level and only the checks go into scope:member. Two or more lines inside
+	# a scope:member block gain a heading line with the country's name.
+	effect = {
+		custom_tooltip_no_bullet = cwp_sgt_member_tt_head
+		custom_tooltip = cwp_sgt_member_tt_score
+		if = {
+			limit = {
+				scope:member = {
+					has_variable = cwp_sgt_recovery
+					var:cwp_sgt_recovery >= 50
+				}
+			}
+			custom_tooltip = cwp_sgt_member_tt_good
+		}
+		else = {
+			custom_tooltip = cwp_sgt_member_tt_bad
+		}
+		if = {
+			limit = {
+				scope:member = { has_variable = cwp_sgt_answer_cd }
+			}
+			custom_tooltip = cwp_sgt_member_tt_cooling
+		}
+	}
+}
+
+### T10: root is the row's country, not the player
+
+cwp_sgt_poke_sgui = {
+	scope = country
+
+	is_valid = {
+		has_variable = cwp_sgt_pokes
+	}
+
+	effect = {
+		change_variable = { name = cwp_sgt_pokes add = 1 }
+		debug_log = "CWP_SGT T10 poke;root=[THIS.GetCountry.GetNameNoFormatting];pokes=[THIS.GetCountry.MakeScope.Var('cwp_sgt_pokes').GetValue|0]"
+	}
+}
+
+### T12, T13: one scripted GUI for every good and all three ration-book buttons
+# scope:good is a goods scope, scope:action is 1 (ease), 2 (tighten) or 3 (ration).
+
+cwp_sgt_ration_sgui = {
+	scope = country
+	saved_scopes = { good action }
+
+	is_shown = {
+		trigger_if = {
+			limit = { scope:action = 1 }
+			OR = {
+				cwp_sgt_good_is_tight = yes
+				cwp_sgt_good_is_standard = yes
+			}
+		}
+		trigger_else_if = {
+			limit = { scope:action = 2 }
+			cwp_sgt_good_is_standard = yes
+		}
+		trigger_else = {
+			cwp_sgt_good_is_tight = no
+			cwp_sgt_good_is_standard = no
+		}
+	}
+
+	is_valid = {
+		cwp_sgt_good_on_cooldown = no
+	}
+
+	effect = {
+		if = {
+			limit = { scope:action = 1 }
+			if = {
+				limit = { cwp_sgt_good_is_tight = yes }
+				remove_list_variable = { name = cwp_sgt_ration_tight target = scope:good }
+				add_to_variable_list = { name = cwp_sgt_ration_standard target = scope:good }
+			}
+			else_if = {
+				limit = { cwp_sgt_good_is_standard = yes }
+				remove_list_variable = { name = cwp_sgt_ration_standard target = scope:good }
+			}
+		}
+		else_if = {
+			limit = {
+				scope:action = 2
+				cwp_sgt_good_is_standard = yes
+			}
+			remove_list_variable = { name = cwp_sgt_ration_standard target = scope:good }
+			add_to_variable_list = { name = cwp_sgt_ration_tight target = scope:good }
+		}
+		else_if = {
+			limit = {
+				scope:action = 3
+				cwp_sgt_good_is_tight = no
+				cwp_sgt_good_is_standard = no
+			}
+			add_to_variable_list = { name = cwp_sgt_ration_standard target = scope:good }
+		}
+		# T13: a list entry with a lifetime is the per-good cooldown. Two months.
+		add_to_variable_list = { name = cwp_sgt_ration_cd target = scope:good months = 2 }
+		debug_log = "CWP_SGT T12 ration;[THIS.GetCountry.GetNameNoFormatting];good=[SCOPE.sGoods('good').GetNameNoFormatting]"
+	}
+}
+
+# scope:level is 0 (free), 1 (standard) or 2 (tight). True when the good is at that level.
+cwp_sgt_level_sgui = {
+	scope = country
+	saved_scopes = { good level }
+
+	is_valid = {
+		trigger_if = {
+			limit = { scope:level = 2 }
+			cwp_sgt_good_is_tight = yes
+		}
+		trigger_else_if = {
+			limit = { scope:level = 1 }
+			cwp_sgt_good_is_standard = yes
+		}
+		trigger_else = {
+			cwp_sgt_good_is_tight = no
+			cwp_sgt_good_is_standard = no
+		}
+	}
+}
+
+cwp_sgt_good_cd_sgui = {
+	scope = country
+	saved_scopes = { good }
+
+	is_valid = {
+		cwp_sgt_good_on_cooldown = yes
+	}
+}
+
+### T14: a goods-row tooltip. The GUI passes the list item itself (Scope.Self) as scope:good.
+
+cwp_sgt_good_tt_sgui = {
+	scope = country
+	saved_scopes = { good }
+
+	effect = {
+		custom_tooltip_no_bullet = cwp_sgt_good_tt_head
+		if = {
+			limit = { cwp_sgt_good_is_tight = yes }
+			custom_tooltip = cwp_sgt_good_tt_tight
+		}
+		else_if = {
+			limit = { cwp_sgt_good_is_standard = yes }
+			custom_tooltip = cwp_sgt_good_tt_standard
+		}
+		else = {
+			custom_tooltip = cwp_sgt_good_tt_free
+		}
+		if = {
+			limit = { cwp_sgt_good_on_cooldown = yes }
+			custom_tooltip = cwp_sgt_good_tt_cooling
+		}
+	}
+}
+
+### T15b: a per-row number as text. The script picks the right variable for the good.
+
+cwp_sgt_good_months_sgui = {
+	scope = country
+	saved_scopes = { good }
+
+	effect = {
+		if = {
+			limit = { scope:good = g:grain }
+			custom_tooltip_no_bullet = cwp_sgt_months_grain
+		}
+		else_if = {
+			limit = { scope:good = g:meat }
+			custom_tooltip_no_bullet = cwp_sgt_months_meat
+		}
+		else_if = {
+			limit = { scope:good = g:sugar }
+			custom_tooltip_no_bullet = cwp_sgt_months_sugar
+		}
+		else_if = {
+			limit = { scope:good = g:tea }
+			custom_tooltip_no_bullet = cwp_sgt_months_tea
+		}
+		else_if = {
+			limit = { scope:good = g:coffee }
+			custom_tooltip_no_bullet = cwp_sgt_months_coffee
+		}
+		else_if = {
+			limit = { scope:good = g:tobacco }
+			custom_tooltip_no_bullet = cwp_sgt_months_tobacco
+		}
+		else = {
+			custom_tooltip_no_bullet = cwp_sgt_months_unknown
+		}
+	}
+}
+
+### T17: a list as text, for a journal entry description or an event
+
+cwp_sgt_list_sgui = {
+	scope = country
+
+	effect = {
+		if = {
+			limit = { has_variable_list = cwp_sgt_members }
+			every_in_list = {
+				variable = cwp_sgt_members
+				custom_tooltip = cwp_sgt_list_entry
+			}
+		}
+		else = {
+			custom_tooltip = cwp_sgt_list_empty
+		}
+	}
+}
+
+### T23: world numbers. scope:direction 1 raises Confidence, anything else lowers it, by scope:amount.
+
+cwp_sgt_world_sgui = {
+	scope = country
+	saved_scopes = { direction amount }
+
+	is_valid = {
+		has_global_variable = cwp_sgt_confidence
+		has_global_variable = cwp_sgt_liquidity
+	}
+
+	effect = {
+		if = {
+			limit = { scope:direction = 1 }
+			change_global_variable = { name = cwp_sgt_confidence add = scope:amount }
+			change_global_variable = { name = cwp_sgt_liquidity subtract = 5 }
+		}
+		else = {
+			change_global_variable = { name = cwp_sgt_confidence subtract = scope:amount }
+			change_global_variable = { name = cwp_sgt_liquidity add = 5 }
+		}
+		change_global_variable = { name = cwp_sgt_confidence max = 0 }
+		change_global_variable = { name = cwp_sgt_confidence min = 100 }
+		change_global_variable = { name = cwp_sgt_liquidity max = 0 }
+		change_global_variable = { name = cwp_sgt_liquidity min = 100 }
+		debug_log = "CWP_SGT T23 world;confidence=[GetGlobalVariable('cwp_sgt_confidence').GetValue|0];liquidity=[GetGlobalVariable('cwp_sgt_liquidity').GetValue|0]"
+	}
+}
+
+### T22: a conference sits or rises. The fifth tab of the window follows it.
+
+cwp_sgt_conference_sgui = {
+	scope = country
+
+	effect = {
+		if = {
+			limit = { has_global_variable = cwp_sgt_conference }
+			remove_global_variable = cwp_sgt_conference
+		}
+		else = {
+			set_global_variable = { name = cwp_sgt_conference value = yes }
+		}
+	}
+}
+
+### T26: hand-written rows. No goods scope: scope:idx names the row, scope:action 1 lowers the level.
+
+cwp_sgt_idx_sgui = {
+	scope = country
+	saved_scopes = { idx action }
+
+	is_valid = {
+		trigger_if = {
+			limit = { scope:idx = 1 }
+			cwp_sgt_idx_can_step = { VAR = cwp_sgt_lvl_grain }
+		}
+		trigger_else = {
+			cwp_sgt_idx_can_step = { VAR = cwp_sgt_lvl_meat }
+		}
+	}
+
+	effect = {
+		if = {
+			limit = { scope:idx = 1 }
+			cwp_sgt_idx_step = { VAR = cwp_sgt_lvl_grain }
+		}
+		else = {
+			cwp_sgt_idx_step = { VAR = cwp_sgt_lvl_meat }
+		}
+	}
+}
+
+### T27: a three-way switch with a cooldown. scope:stance is 1 (easy), 2 (neutral) or 3 (tight).
+
+cwp_sgt_stance_sgui = {
+	scope = country
+	saved_scopes = { stance }
+
+	is_valid = {
+		has_variable = cwp_sgt_stance
+		NOT = { has_variable = cwp_sgt_stance_cd }
+		NOT = { var:cwp_sgt_stance = scope:stance }
+	}
+
+	effect = {
+		set_variable = { name = cwp_sgt_stance value = scope:stance }
+		set_variable = { name = cwp_sgt_stance_cd value = yes days = 90 }
+		debug_log = "CWP_SGT T27 stance;[THIS.GetCountry.GetNameNoFormatting];now=[THIS.GetCountry.MakeScope.Var('cwp_sgt_stance').GetValue|0]"
+	}
+}
+
+### T28: a row of icons, one per tranche. Six, then back to none.
+
+cwp_sgt_tranche_sgui = {
+	scope = country
+
+	is_valid = {
+		has_variable = cwp_sgt_tranches
+	}
+
+	effect = {
+		if = {
+			limit = { var:cwp_sgt_tranches >= 6 }
+			set_variable = { name = cwp_sgt_tranches value = 0 }
+		}
+		else = {
+			change_variable = { name = cwp_sgt_tranches add = 1 }
+		}
+	}
+}
+
+### T29: a flag passed from the GUI. Result 1 = ease, 2 = tighten, 9 = something else arrived.
+
+cwp_sgt_flag_sgui = {
+	scope = country
+	saved_scopes = { action }
+
+	is_valid = {
+		has_variable = cwp_sgt_flag_result
+	}
+
+	effect = {
+		if = {
+			limit = { scope:action = flag:ease }
+			set_variable = { name = cwp_sgt_flag_result value = 1 }
+		}
+		else_if = {
+			limit = { scope:action = flag:tighten }
+			set_variable = { name = cwp_sgt_flag_result value = 2 }
+		}
+		else = {
+			set_variable = { name = cwp_sgt_flag_result value = 9 }
+		}
+		debug_log = "CWP_SGT T29 flag;result=[THIS.GetCountry.MakeScope.Var('cwp_sgt_flag_result').GetValue|0]"
+	}
+}
+
+### T31: lets the AI test run or stops it
+
+cwp_sgt_ai_toggle_sgui = {
+	scope = country
+
+	effect = {
+		if = {
+			limit = { has_global_variable = cwp_sgt_ai_on }
+			remove_global_variable = cwp_sgt_ai_on
+		}
+		else = {
+			set_global_variable = { name = cwp_sgt_ai_on value = yes }
+		}
+	}
+}

@@ -153,6 +153,33 @@ Tooltips refer to game concepts with concept links (`[concept_journal_entry]`,
 `[Concept('concept_loyalist','$concept_loyalists|q$')]`) and highlight names and numbers with `#b` or `#v`.
 Formats are in the modding guide, chapter 12.
 
+### Text in a custom panel
+
+A panel is read at a glance, many times. Its text is labels, not prose [GAME, tested in 1.15.2 on 2026-11-21] (the forms below are
+the ones the test mod settled on after three rounds of screenshots; formats are in the modding guide,
+chapter 12).
+
+| Text | Form | Example |
+|---|---|---|
+| Section header | Title case, two or three words | "The Ration Book", "Programme Members", "Money Stance" |
+| Header figure | A count with its noun, or two labelled counts | "16 members"; "Tight 3  Standard 5"; "4 of 6 received" |
+| Column title | One or two words, small and grey | "Good", "Level", "On the ration", "Change" |
+| State word | One word, capitalised, in its colour | "#N Tight#!", "#gold Standard#!", "#P Free#!"; "Awaiting an answer" in grey |
+| Figure with a unit | Number and noun | "14 months", "70.0 / 100"; inside a bar: "Recovery 28" |
+| Button | A verb, one word if possible | "Ease", "Tighten", "Ration", "Approve", "Trim", "Reject"; the entry's main action may be a phrase: "Open the Ledger" |
+| Button tooltip | A heading, a plain sentence, then the changes with signs and colours | "#header Approve#!\nGrants the request in full.\nRecovery #P +10#!, Alignment #P +5#!" |
+| Waiting tooltip | What happened and when it ends, no blame | "Changed within the last two months. It can be changed again when that time has passed." |
+| Key | State word, two spaces, a fragment | "#P Free#!  sold without limit" |
+| Hint | One sentence, the rule that would otherwise surprise | "After a change, a good cannot be changed again for two months." |
+
+* No instructions, no test labels, no "click here". If a sentence explains how to use the panel, it is a
+  tooltip.
+* The same word everywhere for the same state: the column, the key, the tooltip and the event text that
+  mentions it.
+* Period voice belongs in the header and the tooltips' first lines, not in column titles and buttons.
+* Budget for one table: one header, three to five column titles, one word per state, one tooltip per button
+  and one per row, up to three key lines, one hint.
+
 ## Period voice
 
 * **Use the vocabulary of the time and place.** "Navvies", not "construction workers"; "the Board of Works",
@@ -246,7 +273,8 @@ twice.
 6. Every scope used in text is saved before the text is shown.
 7. No pronoun for a character is written by hand.
 8. No anachronisms; no mechanics in prose; no "you".
-9. Tooltips match what the script does, with the same numbers.
+9. Tooltips match what the script does, with the same numbers. In a panel that includes every button's
+   tooltip; the state words in the table, the key and the tooltips are the same words.
 10. Line breaks are `\n`. Quotation marks inside a text are written plainly, as vanilla does in well over a
     thousand lines: `gs_events.1.f: ""The river is a sewer," he said."`. The game reads the text from the
     first quotation mark on the line to the last. (`\"` also occurs in vanilla, in 24 lines.)
