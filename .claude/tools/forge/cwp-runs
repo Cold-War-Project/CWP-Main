@@ -123,7 +123,9 @@ LAUNCHER_SETTINGS = Path.home() / ".steam/steam/steamapps/common/Victoria 3/laun
 # Game auto-updates seen on Forge: (version, first moment it ran). A sample with no version recorded in it
 # (an econ JSON from before econ_bench stored game_version, a run whose saves are gone) is dated by file time.
 # Same list as tools/econ_bench/aggregate.py BUILD_CHANGES; add each new update to both.
-BUILD_CHANGES = [("1.15.2", 1795224300.0)]   # 2026-11-20 20:25 EST
+# The moment is when Steam INSTALLED the update (appmanifest LastUpdated), not when it downloaded it: saves
+# written between the 20:25 download and the 22:22:51 install still say 1.15.1.
+BUILD_CHANGES = [("1.15.2", 1795231371.0)]   # 2026-11-20 22:22:51 EST
 FIRST_VERSION = "1.15.1"
 _version = None
 
@@ -153,12 +155,13 @@ JSON_VERSION = re.compile(rb'"game_version":\s*"([^"]+)"')
 
 
 def file_version(f):
-    """Game version a save or econ sample was written by: its header / game_version field, else its mtime.
-    Cached by path, size and mtime, since econ samples are ~1.3 MB each."""
-    global _vcache
+    """Game version a save or econ sample was written by: the save header's version="..." or the sample's
+    "game_version" field; failing that, the file time against BUILD_CHANGES. Only what was read from the file
+    is cached (by path, size and mtime; econ samples are ~1.3 MB), so a corrected BUILD_CHANGES applies at once."""
+    global _vcache, _vdirty
     if _vcache is None:
         try:
-            _vcache = json.loads((RUNS / "version-cache.json").read_text())
+            _vcache = json.loads((RUNS / "version-cache-v2.json").read_text())
         except (OSError, ValueError):
             _vcache = {}
     try:
@@ -166,33 +169,35 @@ def file_version(f):
     except OSError:
         return None
     key = f"{f}:{st.st_size}:{int(st.st_mtime)}"
-    if key in _vcache:
-        return _vcache[key]
-    v = None
-    try:
-        if f.suffix == ".v3":
+    if key not in _vcache:
+        v = ""
+        try:
             with open(f, "rb") as fh:
-                m = SAVE_VERSION.search(fh.read(4000))
-        else:
-            with open(f, "rb") as fh:   # game_version sits near the end of econ_bench's JSON
-                fh.seek(max(0, st.st_size - 4000))
-                m = JSON_VERSION.search(fh.read())
-        v = m.group(1).decode() if m else None
-    except OSError:
-        pass
-    v = v or version_at(st.st_mtime)
-    _vcache[key] = v
-    return v
+                if f.suffix == ".v3":
+                    m = SAVE_VERSION.search(fh.read(4000))
+                else:   # the whole sample: game_version sits before the ~280 KB geo section, not at the end
+                    m = JSON_VERSION.search(fh.read())
+            v = m.group(1).decode() if m else ""
+        except OSError:
+            pass
+        _vcache[key] = v   # "" = the file records no version
+        _vdirty = True
+    return _vcache[key] or version_at(st.st_mtime)
+
+
+_vdirty = False
 
 
 def save_version_cache():
-    if _vcache is None:
+    global _vdirty
+    if _vcache is None or not _vdirty:
         return
-    f = RUNS / "version-cache.json"
+    f = RUNS / "version-cache-v2.json"
     tmp = f.with_name(f"version-cache.{os.getpid()}.tmp")
     try:
         tmp.write_text(json.dumps(_vcache))
         tmp.replace(f)
+        _vdirty = False
     except OSError:
         pass
 
@@ -443,7 +448,8 @@ def index_econ(d):
         return None
     st = meta.get("status")
     status = "ok" if st == "done" else "partial" if st in ("yielded", "time_limit", "straddled") else "failed"
-    versions = run_versions(sorted(d.glob("[0-9]*.json"))) or [version_at((d / "meta.json").stat().st_mtime)]
+    versions = run_versions(sorted(d.glob("[0-9]*.json")) + sorted(d.glob("*.v3"))) \
+        or [version_at((d / "meta.json").stat().st_mtime)]
     years = meta.get("last_year") or years_in([d], DATE_JSON)
     data = ["econ"] + (["saves"] if any(d.glob("*.v3")) else [])
     wt = meta.get("worktree", "")
@@ -673,14 +679,22 @@ def reevaluate(cat, quiet=False):
                 write_json(req_path(req["id"]), req)
                 continue
             sha = resolve_request_sha(req)
-            updated = req.get("game_version") != game_version()
+            updated = req.get("game_version") != game_version() and game_version() != "unknown"
+            if (req["kind"] == "measure" and str(req.get("baseline") or "").startswith("accept:")
+                    and req["state"] == "pending"):
+                why = proxy_problem(req["baseline_gh"], cat)
+                if why and (updated or not any(r.get("gh") == req["baseline_gh"] for r in cat.values())):
+                    # A proxy baseline can't follow a game update (no run of it exists on the new version).
+                    req["state"], req["rehash_note"] = "cancelled", f"proxy baseline no longer valid: {why}; resubmit"
+                    req["notify_pending"] = True
+                    req["result"] = str(write_result(req, False, evaluate(req, cat)[1]))
+                    write_json(req_path(req["id"]), req)
+                    continue
             if sha != req["sha"] or updated:
                 if updated and req["kind"] == "measure":   # smoke/observe match by commit, not by hash
                     req["rehash_note"] = (f"the game was updated ({req.get('game_version') or 'version unrecorded'} -> "
                                           f"{game_version()}); "
-                                          "only runs on the new build count"
-                                          + (" (the accepted proxy baseline keeps its old hash)"
-                                             if str(req.get("baseline") or "").startswith("accept:") else ""))
+                                          "only runs on the new build count")
                 req["sha"], req["gh"], req["game_version"] = sha, gameplay_hash(sha), game_version()
                 if req["kind"] == "measure" and not str(req.get("baseline") or "").startswith("accept:"):
                     fill_baseline(req)
@@ -711,7 +725,9 @@ def cmd_notify(a=None):
     with runs_lock():
         for req in load_requests():
             if req.get("notify_pending"):
-                what = req["state"] if req["state"] == "done" else "a run including it FAILED"
+                what = (req["state"] if req["state"] == "done"
+                        else f"CANCELLED ({req.get('rehash_note')})" if req["state"] == "cancelled"
+                        else "a run including it FAILED")
                 out.append(f"notify {req.get('session') or '(no session; thread ' + req['thread'] + ')'}: "
                            f"{req['id']} {what} -> {req.get('result')}")
                 if not (a and getattr(a, "peek", False)):
@@ -722,6 +738,19 @@ def cmd_notify(a=None):
 
 
 # ---------------------------------------------------------------- requests
+
+def proxy_problem(gh, cat):
+    """Why runs with this hash can't be a proxy baseline for a request on the installed game, or None."""
+    rows = [r for r in cat.values() if r.get("gh") == gh]
+    if not rows:
+        return f"no catalogued run has hash {gh} (hashes changed on 21 Nov 2026; look it up again with cwp-runs runs)"
+    if any(r.get("straddled") for r in rows):
+        return f"the runs with hash {gh} span two game versions"
+    vs = {v for r in rows for v in r.get("game_versions") or []}
+    if vs != {game_version()}:
+        return f"the runs with hash {gh} were played on {', '.join(sorted(vs))}, the game is now {game_version()}"
+    return None
+
 
 def fill_baseline(req):
     if req["kind"] != "measure":
@@ -781,6 +810,9 @@ def cmd_submit(a):
         die("treatment and baseline have the same gameplay hash (the branch changes nothing the simulation reads, "
             "or is already in the baseline): there is nothing to measure")
     if measure and req.get("baseline_sha") is None:   # proxy baseline: only existing runs can serve it
+        why = proxy_problem(req["baseline_gh"], index_dirs(candidate_dirs()))
+        if why:
+            die(f"proxy baseline refused: {why}")
         have = len(arm_runs(index_dirs(candidate_dirs()), req["baseline_gh"], a.until))
         if have == 0 or (have < reps and not a.underpowered):
             die(f"only {have} run(s) of proxy baseline {req['baseline_gh']} reach {a.until}; "
@@ -840,7 +872,8 @@ def cmd_runs(a):
             continue
         if a.branch and not any(m["branch"] == a.branch for m in r["members"]):
             continue
-        print(f"{r['gh']}  {r['status']:8} {str(r['years_reached']):>4}  {r['kind']:5} {r['sha'][:9]}  {r['outdir']}")
+        ver = "+".join(r.get("game_versions") or []) + (" STRADDLED" if r.get("straddled") else "")
+        print(f"{r['gh']}  {r['status']:8} {str(r['years_reached']):>4}  {r['kind']:5} {r['sha'][:9]}  {ver:18} {r['outdir']}")
 
 
 def cmd_catalog(a):
