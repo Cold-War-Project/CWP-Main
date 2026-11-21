@@ -2,7 +2,7 @@
 
 Forge has one game slot. A thread that queues its own observer game makes everyone behind it wait, and small changes used to get whole 10-year runs to themselves. **Don't queue your own multi-year run. Submit a request**, and the staging thread turns all requests into as few games as possible (Jack, 2026-11-20).
 
-`cwp-runs` is on `PATH` (`~/.local/bin/cwp-runs`, installed 20 Nov 2026; source `.claude/tools/forge/cwp-runs`, reinstall with `install -m 755 .claude/tools/forge/cwp-runs ~/.local/bin/`). It never takes the game lock, launches a game, or moves or deletes run folders.
+`cwp-runs` is on `PATH` (`~/.local/bin/cwp-runs`, installed 20 Nov 2026; source `.claude/tools/forge/cwp-runs`; the integration owner reinstalls with `install -m 755 .claude/tools/forge/cwp-runs ~/.local/bin/`). It never takes the game lock, launches a game, or moves or deletes run folders.
 
 ## Pick the kind of request
 
