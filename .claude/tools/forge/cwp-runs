@@ -1450,7 +1450,7 @@ def main(argv=None):
         x.add_argument("id")
     rn = sub.add_parser("renew")
     rn.add_argument("id")
-    rn.add_argument("--hours", type=float, default=48)
+    rn.add_argument("--hours", type=float, default=None, help="default: 168 for measure requests, 48 otherwise")
     nt = sub.add_parser("notify")
     nt.add_argument("--peek", action="store_true", help="print without marking them passed on")
     stt = sub.add_parser("start")
@@ -1487,7 +1487,8 @@ def main(argv=None):
     elif a.cmd == "release":
         set_state(a.id, "pending", only_from=("held",))
     elif a.cmd == "renew":
-        set_state(a.id, "pending", only_from=("pending", "expired"), expires=iso(now() + dt.timedelta(hours=a.hours)))
+        hours = a.hours or (168 if load_request(a.id).get("kind") == "measure" else 48)
+        set_state(a.id, "pending", only_from=("pending", "expired"), expires=iso(now() + dt.timedelta(hours=hours)))
     elif a.cmd == "notify":
         cmd_notify(a)
     elif a.cmd == "start":
