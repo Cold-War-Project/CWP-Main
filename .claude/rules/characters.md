@@ -14,7 +14,7 @@ paths:
 
 # Characters
 
-`character_templates` is in `replace_paths` (mod-only: `00_default_template.txt`, `colonial_governor_templates.txt`, `test_template.txt`, `cwp_vanilla_script_templates.txt` for keys live vanilla script creates, and `cwp_1946_<tag>.txt` for the 1946 roster). Traits are vanilla plus `zz_vanilla_character_traits.txt` / `zz_vanilla_character_skills.txt`; interactions are same-name overwrites of `00_`/`01_`/`02_` plus `zz_vanilla_character_interactions.txt`; roles, DNA, ethnicities and genes are pure vanilla.
+`character_templates` is in `replace_paths` (mod-only: `00_default_template.txt`, `colonial_governor_templates.txt`, `test_template.txt`, `cwp_vanilla_script_templates.txt` for keys live vanilla script creates, and `cwp_1946_<tag>.txt` for the 1946 roster). Traits are vanilla plus `zz_vanilla_character_traits.txt` / `zz_vanilla_character_skills.txt`; interactions are same-name overwrites of `00_`/`01_`/`02_` plus `zz_vanilla_character_interactions.txt`; roles are vanilla plus `cwp_crown_roles.txt` (background monarch, heir to the throne, regent, governor-general: [docs/agents/areas/constitutional-monarchy.md](../../docs/agents/areas/constitutional-monarchy.md)); DNA, ethnicities and genes are pure vanilla.
 
 ## Templates (`common/character_templates`)
 

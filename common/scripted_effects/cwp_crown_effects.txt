@@ -1,0 +1,533 @@
+﻿# Cold War Project: parliamentary crowns. The Prime Minister holds the ruler slot (transfer_of_power =
+# parliamentary_elective); the monarch, the heir to the throne, a regent and a governor-general are background
+# characters with the roles in common/character_roles/cwp_crown_roles.txt. Generalises vanilla Japan's Emperor
+# under the Shogunate (emperor_var, country_restore_japanese_emperor, character_japan_imperial_succession_chain_effect).
+# Country variables: cwp_monarch_var (the reigning monarch, ruling or not), cwp_crown_heir_var, cwp_crown_regent_var,
+# cwp_gg_var, cwp_crown_pretender_var (exiled ex-monarch), cwp_crown_restore_var (between the two type-change hooks).
+# Notes: docs/agents/areas/constitutional-monarchy.md.
+
+############################################################
+# Government type hooks (country scope). Each type's on_government_type_change runs while
+# government_transfer_of_power still reports the old type; on_post_government_type_change after the switch.
+############################################################
+
+# Into a Prime-Minister type: the reigning monarch steps back from the ruler slot.
+cwp_crown_change_to_parliamentary = {
+	if = {
+		limit = { government_transfer_of_power = hereditary }
+		if = {
+			limit = { has_gov_regency = yes }
+			# Vanilla regency: the ruler is the regent, the heir the child monarch.
+			heir ?= { save_scope_as = cwp_crown_scope_monarch }
+			ruler ?= { save_scope_as = cwp_crown_scope_regent }
+			remove_regency_modifier = yes
+		}
+		else = {
+			ruler ?= { save_scope_as = cwp_crown_scope_monarch }
+			heir ?= { save_scope_as = cwp_crown_scope_heir }
+		}
+		if = {
+			limit = { exists = scope:cwp_crown_scope_heir }
+			set_variable = { name = cwp_crown_heir_var value = scope:cwp_crown_scope_heir }
+			scope:cwp_crown_scope_heir = {
+				disinherit_character = yes
+				add_character_role = character_role_cwp_crown_heir
+			}
+		}
+		if = {
+			limit = { exists = scope:cwp_crown_scope_regent }
+			set_variable = { name = cwp_crown_regent_var value = scope:cwp_crown_scope_regent }
+			scope:cwp_crown_scope_regent = {
+				add_character_role = character_role_cwp_regent
+			}
+		}
+		if = {
+			limit = { exists = scope:cwp_crown_scope_monarch }
+			set_variable = { name = cwp_monarch_var value = scope:cwp_crown_scope_monarch }
+			scope:cwp_crown_scope_monarch = {
+				if = {
+					limit = { is_heir_of_own_country = yes }
+					disinherit_character = yes
+				}
+				if = {
+					limit = { is_interest_group_leader = yes }
+					remove_as_interest_group_leader = yes
+				}
+				add_character_role = character_role_cwp_monarch
+			}
+		}
+	}
+	else_if = {
+		limit = { government_transfer_of_power = dictatorial }
+		# A governor-general who ruled (dominions before responsible government) moves to the background.
+		if = {
+			limit = {
+				cwp_crown_is_dominion_realm = yes
+				exists = ruler
+				NOT = { var:cwp_monarch_var ?= ruler }
+			}
+			ruler = {
+				save_scope_as = cwp_crown_scope_gg
+				add_character_role = character_role_cwp_governor_general
+			}
+			set_variable = { name = cwp_gg_var value = scope:cwp_crown_scope_gg }
+		}
+		# A monarch who ruled under occupation keeps the throne in the background.
+		var:cwp_monarch_var ?= {
+			if = {
+				limit = { NOT = { has_role = character_role_cwp_monarch } }
+				add_character_role = character_role_cwp_monarch
+			}
+		}
+	}
+}
+
+cwp_crown_post_change_to_parliamentary = {
+	post_change_to_parliamentary_elective = yes
+	if = {
+		limit = { cwp_crown_is_dominion_realm = yes }
+		cwp_crown_ensure_gg = yes
+	}
+	else = {
+		cwp_crown_ensure_monarch = yes
+		cwp_crown_ensure_heir = yes
+	}
+}
+
+# Into the governor-general type (a realm of the shared crown without an elected parliament, or occupied):
+# the governor-general takes the ruler slot.
+cwp_crown_post_change_to_governor = {
+	if = {
+		limit = {
+			cwp_crown_is_dominion_realm = yes
+			var:cwp_gg_var ?= { is_character_alive = yes }
+		}
+		var:cwp_gg_var = {
+			if = {
+				limit = { is_interest_group_leader = yes }
+				remove_as_interest_group_leader = yes
+			}
+			set_character_as_ruler = yes
+		}
+	}
+	else = {
+		post_change_to_dictatorial = yes
+	}
+}
+
+# Into a type where the monarch rules: seat the background monarch, as country_restore_japanese_emperor does.
+cwp_crown_change_to_monarch_rule = {
+	save_scope_as = cwp_crown_scope_realm
+	if = {
+		limit = {
+			NOT = { government_transfer_of_power = hereditary }
+			var:cwp_monarch_var ?= {
+				is_character_alive = yes
+				owner ?= scope:cwp_crown_scope_realm
+				is_ruler_of_own_country = no
+			}
+		}
+		set_variable = { name = cwp_crown_restore_var value = var:cwp_monarch_var }
+	}
+	else_if = {
+		# Restoration: the exiled pretender comes home to reign and rule.
+		limit = {
+			NOT = { exists = var:cwp_monarch_var }
+			var:cwp_crown_pretender_var ?= { is_character_alive = yes }
+		}
+		var:cwp_crown_pretender_var = { cwp_crown_bring_home = yes }
+		set_variable = { name = cwp_crown_restore_var value = var:cwp_crown_pretender_var }
+		remove_variable = cwp_crown_pretender_var
+	}
+	else = {
+		change_to_hereditary = yes
+	}
+}
+
+cwp_crown_post_change_to_monarch_rule = {
+	if = {
+		limit = { has_variable = cwp_crown_restore_var }
+		var:cwp_crown_restore_var = {
+			remove_character_role = character_role_cwp_monarch
+			if = {
+				limit = { is_interest_group_leader = yes }
+				remove_as_interest_group_leader = yes
+			}
+			set_character_as_ruler = yes
+		}
+		var:cwp_crown_heir_var ?= {
+			remove_character_role = character_role_cwp_crown_heir
+		}
+		if = {
+			limit = { var:cwp_crown_heir_var ?= { is_character_alive = yes } }
+			set_heir = var:cwp_crown_heir_var
+		}
+		var:cwp_crown_regent_var ?= {
+			remove_character_role = character_role_cwp_regent
+			if = {
+				limit = { NOT = { has_role = character_role_politician } }
+				add_character_role = character_role_politician
+			}
+		}
+		remove_variable = cwp_crown_restore_var
+		remove_variable = cwp_crown_heir_var
+		remove_variable = cwp_crown_regent_var
+		# The engine now handles the ruling monarch and his heirs (on_actions keep the variable in step).
+		remove_variable = cwp_monarch_var
+		remove_variable = cwp_monarch_absent_var
+	}
+	else = {
+		post_change_to_hereditary = yes
+	}
+}
+
+############################################################
+# Succession and appointments (country scope)
+############################################################
+
+# The reigning monarch has died or abdicated: the heir accedes, or a member of the house is found.
+cwp_crown_succession = {
+	remove_variable = cwp_monarch_var
+	remove_variable = cwp_monarch_absent_var
+	if = {
+		limit = {
+			var:cwp_crown_heir_var ?= { is_character_alive = yes }
+		}
+		var:cwp_crown_heir_var = {
+			save_scope_as = cwp_crown_scope_new
+			remove_character_role = character_role_cwp_crown_heir
+			add_character_role = character_role_cwp_monarch
+		}
+		set_variable = { name = cwp_monarch_var value = scope:cwp_crown_scope_new }
+		remove_variable = cwp_crown_heir_var
+	}
+	else = {
+		cwp_crown_ensure_monarch = yes
+	}
+	cwp_crown_ensure_heir = yes
+	var:cwp_monarch_var ?= {
+		if = {
+			limit = { is_adult = no }
+			owner = { cwp_crown_appoint_regent = yes }
+		}
+	}
+	if = {
+		limit = { is_player = yes }
+		trigger_event = { id = cwp_crown.1 popup = yes }
+	}
+}
+
+# Make sure a living monarch exists (restoration from a republic, or a broken line).
+cwp_crown_ensure_monarch = {
+	save_scope_as = cwp_crown_scope_realm
+	if = {
+		limit = {
+			NOT = { var:cwp_monarch_var ?= { is_character_alive = yes } }
+		}
+		remove_variable = cwp_monarch_var
+		# A pretender in exile comes home.
+		if = {
+			limit = {
+				var:cwp_crown_pretender_var ?= { is_character_alive = yes }
+			}
+			var:cwp_crown_pretender_var = {
+				cwp_crown_bring_home = yes
+				save_scope_as = cwp_crown_scope_new
+			}
+		}
+		else = {
+			create_character = {
+				noble = yes
+				age = 42
+				ideology = ideology_moderate
+				interest_group = ig_landowners
+				on_created = { cwp_crown_on_created = { ROLE = character_role_cwp_monarch VAR = cwp_monarch_var } }
+			}
+		}
+		scope:cwp_crown_scope_new ?= {
+			add_character_role = character_role_cwp_monarch
+		}
+		if = {
+			limit = { exists = scope:cwp_crown_scope_new }
+			set_variable = { name = cwp_monarch_var value = scope:cwp_crown_scope_new }
+		}
+		remove_variable = cwp_crown_pretender_var
+	}
+}
+
+# Make sure the line of succession has a living heir.
+cwp_crown_ensure_heir = {
+	if = {
+		limit = {
+			NOT = { var:cwp_crown_heir_var ?= { is_character_alive = yes } }
+		}
+		remove_variable = cwp_crown_heir_var
+		random_list = {
+			2 = {
+				create_character = {
+					noble = yes
+					female = no
+					age = 17
+					ideology = ideology_moderate
+					interest_group = ig_landowners
+					on_created = { cwp_crown_on_created = { ROLE = character_role_cwp_crown_heir VAR = cwp_crown_heir_var } }
+				}
+			}
+			1 = {
+				create_character = {
+					noble = yes
+					female = yes
+					age = 17
+					ideology = ideology_moderate
+					interest_group = ig_landowners
+					on_created = { cwp_crown_on_created = { ROLE = character_role_cwp_crown_heir VAR = cwp_crown_heir_var } }
+				}
+			}
+		}
+	}
+}
+
+# A minor on the throne: a senior member of the house acts as regent until the monarch comes of age.
+cwp_crown_appoint_regent = {
+	if = {
+		limit = {
+			NOT = { var:cwp_crown_regent_var ?= { is_character_alive = yes } }
+		}
+		create_character = {
+			noble = yes
+			female = no
+			age = 52
+			ideology = ideology_moderate
+			interest_group = ig_landowners
+			on_created = { cwp_crown_on_created = { ROLE = character_role_cwp_regent VAR = cwp_crown_regent_var } }
+		}
+	}
+}
+
+cwp_crown_end_regency = {
+	var:cwp_crown_regent_var ?= {
+		remove_character_role = character_role_cwp_regent
+		if = {
+			limit = { NOT = { has_role = character_role_politician } }
+			add_character_role = character_role_politician
+		}
+	}
+	remove_variable = cwp_crown_regent_var
+	remove_variable = cwp_monarch_absent_var
+}
+
+# A new governor-general for a realm that shares the crown, appointed on the realm's advice: a local figure,
+# as became the rule in Australia (1931 on), Canada (1952) and New Zealand (1967).
+cwp_crown_appoint_gg = {
+	save_scope_as = cwp_crown_scope_realm
+	var:cwp_gg_var ?= {
+		if = {
+			limit = { has_role = character_role_cwp_governor_general }
+			remove_character_role = character_role_cwp_governor_general
+		}
+		if = {
+			limit = { is_ruler_of_own_country = no }
+			retire_character = yes
+		}
+	}
+	remove_variable = cwp_gg_var
+	# Created in the realm itself (create_character is resolved after the effect, so the new character
+	# cannot be moved here in the same pass); the engine picks a primary culture of the realm.
+	create_character = {
+		age = 62
+		ideology = ideology_moderate
+		interest_group = ig_intelligentsia
+		on_created = {
+			add_character_role = character_role_cwp_governor_general
+			owner ?= { set_variable = { name = cwp_gg_var value = PREV } }
+		}
+	}
+	set_variable = { name = cwp_gg_term_var years = 6 } # the customary five-year term, often extended
+}
+
+cwp_crown_ensure_gg = {
+	if = {
+		limit = {
+			NOT = { var:cwp_gg_var ?= { is_character_alive = yes } }
+		}
+		cwp_crown_appoint_gg = yes
+	}
+}
+
+# The monarchy is abolished: the royal family goes into exile, the governor-general is recalled.
+cwp_crown_depose = {
+	var:cwp_crown_heir_var ?= {
+		remove_character_role = character_role_cwp_crown_heir
+		exile_character = yes
+	}
+	var:cwp_crown_regent_var ?= {
+		remove_character_role = character_role_cwp_regent
+		if = {
+			limit = { NOT = { has_role = character_role_politician } }
+			add_character_role = character_role_politician
+		}
+	}
+	var:cwp_gg_var ?= {
+		remove_character_role = character_role_cwp_governor_general
+		if = {
+			limit = { is_ruler_of_own_country = no }
+			retire_character = yes
+		}
+	}
+	var:cwp_monarch_var ?= {
+		save_scope_as = cwp_crown_scope_old
+		remove_character_role = character_role_cwp_monarch
+	}
+	if = {
+		limit = {
+			scope:cwp_crown_scope_old ?= { is_ruler_of_own_country = no }
+		}
+		set_variable = { name = cwp_crown_pretender_var value = scope:cwp_crown_scope_old }
+		scope:cwp_crown_scope_old = { exile_character = yes }
+	}
+	remove_variable = cwp_monarch_var
+	remove_variable = cwp_crown_heir_var
+	remove_variable = cwp_crown_regent_var
+	remove_variable = cwp_gg_var
+	remove_variable = cwp_monarch_absent_var
+	remove_variable = cwp_crown_start_var
+}
+
+# The reigning background monarch abdicates (the heir accedes). Under a monarch-ruled type the ruler goes.
+cwp_crown_abdicate = {
+	if = {
+		limit = { exists = var:cwp_monarch_var }
+		var:cwp_monarch_var = {
+			remove_character_role = character_role_cwp_monarch
+			exile_character = yes
+		}
+		cwp_crown_succession = yes
+	}
+	else = {
+		ruler ?= { exile_character = yes }
+	}
+}
+
+# Save the reigning monarch, ruling or not, as scope:$NAME$.
+cwp_crown_save_monarch_scope = {
+	if = {
+		limit = { exists = var:cwp_monarch_var }
+		var:cwp_monarch_var = { save_scope_as = $NAME$ }
+	}
+	else_if = {
+		limit = { government_transfer_of_power = hereditary }
+		ruler ?= { save_scope_as = $NAME$ }
+	}
+}
+
+# Character: give a generated member of the royal house the dynasty's name.
+cwp_crown_set_house_name = {
+	owner ?= { save_scope_as = cwp_crown_scope_house_country }
+	if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { c:GBR ?= this } }
+		set_last_name = Windsor
+	}
+	else_if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { OR = { c:DEN ?= this c:NOR ?= this c:GRE ?= this } } }
+		set_last_name = of_Glucksburg
+	}
+	else_if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { c:SWE ?= this } }
+		set_last_name = Bernadotte
+	}
+	else_if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { c:NET ?= this } }
+		set_last_name = van_Oranje-Nassau
+	}
+	else_if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { c:BEL ?= this } }
+		set_last_name = of_Saxe-Coburg-Gotha
+	}
+	else_if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { c:LUX ?= this } }
+		set_last_name = von_Nassau-Weilburg
+	}
+	else_if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { c:ITA ?= this } }
+		set_last_name = of_Savoy
+	}
+	else_if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { c:ROM ?= this } }
+		set_last_name = of_Hohenzollern-Sigmaringen
+	}
+	else_if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { c:JAP ?= this } }
+		set_last_name = Yamato
+	}
+	else_if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { c:PER ?= this } }
+		set_last_name = Pahlavi
+	}
+	else_if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { c:BUL ?= this } }
+		set_last_name = of_Saxe-Coburg-Gotha
+	}
+	else_if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { c:THA ?= this } }
+		set_last_name = Mahidol
+	}
+}
+
+############################################################
+# Start of game and upkeep (country scope)
+############################################################
+
+# Idempotent: repair the crown variables and roles. Runs monthly (cwp_crown_monthly_pulse_country).
+cwp_crown_sync = {
+	if = {
+		limit = {
+			OR = {
+				cwp_country_has_parliamentary_crown = yes
+				has_variable = cwp_monarch_var
+			}
+			has_law = law_type:law_monarchy
+			NOT = { cwp_crown_is_dominion_realm = yes }
+			NOT = { government_transfer_of_power = hereditary }
+		}
+		var:cwp_monarch_var ?= {
+			if = {
+				limit = {
+					is_character_alive = yes
+					NOT = { has_role = character_role_cwp_monarch }
+					is_ruler_of_own_country = no
+				}
+				add_character_role = character_role_cwp_monarch
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_variable = cwp_crown_start_var
+			cwp_crown_amendment = yes
+		}
+		remove_variable = cwp_crown_start_var
+	}
+}
+
+# Character, an exiled member of the royal house: return to scope:cwp_crown_scope_realm (transfer first, as
+# vanilla does, so the exile clean-up runs with an owner).
+cwp_crown_bring_home = {
+	if = {
+		limit = { is_in_exile_pool = yes }
+		set_variable = cwp_crown_was_exiled_var
+	}
+	transfer_character = scope:cwp_crown_scope_realm
+	if = {
+		limit = { has_variable = cwp_crown_was_exiled_var }
+		remove_variable = cwp_crown_was_exiled_var
+		free_from_exile_effect = yes
+	}
+}
+
+# Character, inside create_character's on_created: the new character exists only once the creating effect
+# has finished, so its role, house name and the country variable are set here, not by the caller.
+cwp_crown_on_created = {
+	cwp_crown_set_house_name = yes
+	add_character_role = $ROLE$
+	owner ?= { set_variable = { name = $VAR$ value = PREV } }
+}

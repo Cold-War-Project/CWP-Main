@@ -1,0 +1,79 @@
+﻿# Cold War Project: parliamentary crowns (Prime Minister rules, monarch in the background).
+# Notes: docs/agents/areas/constitutional-monarchy.md.
+
+# Country: an elected parliament (any voting franchise).
+cwp_crown_has_elected_parliament = {
+	OR = {
+		has_law_or_variant = law_type:law_universal_suffrage
+		has_law_or_variant = law_type:law_census_voting
+		has_law_or_variant = law_type:law_wealth_voting
+		has_law_or_variant = law_type:law_landed_voting
+	}
+}
+
+# Country: holds an amendment that takes executive power from the crown.
+cwp_crown_amendment = {
+	any_active_law = {
+		OR = {
+			has_amendment = amendment_type:cwp_amendment_constitutional_monarchy
+			has_amendment = amendment_type:cwp_amendment_symbol_emperor
+		}
+	}
+}
+
+# Country: the Prime Minister governs and the monarch reigns. cwp_crown_start_var bridges the start of the
+# game, before common/history/global adds the 1946 amendments; the monthly pulse removes it.
+cwp_country_has_parliamentary_crown = {
+	has_law = law_type:law_monarchy
+	cwp_crown_has_elected_parliament = yes
+	OR = {
+		cwp_crown_amendment = yes
+		has_variable = cwp_crown_start_var
+	}
+}
+
+# Country: a self-governing realm that shares the British crown (the monarch is represented by a
+# governor-general). The tag list covers game start, before the variable exists.
+cwp_crown_is_dominion_realm = {
+	has_law_or_variant = law_type:law_monarchy
+	OR = {
+		has_variable = cwp_shared_crown_var
+		c:CAN ?= this
+		c:AST ?= this
+		c:NZL ?= this
+		c:SAF ?= this
+		c:MTB ?= this
+	}
+}
+
+# Country: a realm sharing the crown that governs itself through an elected parliament (gov_cwp_dominion).
+cwp_crown_is_self_governing_realm = {
+	cwp_crown_is_dominion_realm = yes
+	cwp_crown_has_elected_parliament = yes
+	NOT = { is_subject_type = subject_type_military_occupation }
+}
+
+# Character: a member of a royal house who reigns or stands in line (for portraits, ideology guards).
+cwp_crown_is_royal = {
+	OR = {
+		has_role = character_role_cwp_monarch
+		has_role = character_role_cwp_crown_heir
+		AND = {
+			OR = {
+				is_ruler_of_own_country = yes
+				is_heir_of_own_country = yes
+			}
+			owner ?= {
+				government_transfer_of_power = hereditary
+			}
+		}
+	}
+}
+
+# Country: has an heir to the throne, either the engine heir or the background crown heir.
+cwp_country_has_crown_heir = {
+	OR = {
+		exists = heir
+		exists = var:cwp_crown_heir_var
+	}
+}
