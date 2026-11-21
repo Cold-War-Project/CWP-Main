@@ -54,7 +54,7 @@ Three mechanisms, in order of preference:
 **A. `replace_paths` (in `.metadata/metadata.json`).** Vanilla files in a listed folder are not loaded at all, so the mod must define everything that folder needs, and database keywords must not be used there (nothing exists to replace). Currently replaced:
 
 - `common/`: achievements, ai_strategies, building_groups, buildings, buy_packages, character_templates, combat_unit_groups, combat_unit_types, company_types, country_creation, country_definitions, cultures, dynamic_country_names, goods, government_types, ideologies, institutions, interest_groups, law_groups, laws, objective_subgoals, objectives, parties, pop_needs, pop_types, power_bloc_names, prestige_goods, production_method_groups, production_methods, ship_groups, ship_modification_slots, ship_modifications, ship_name_definitions, ship_types, technology
-- `common/history/`: ai, buildings, characters, conscription, countries, cultures, diplomacy, diplomatic_plays, global, lobbies, military_deployments, military_formations, political_movements, pops, population, power_blocs, production_methods, states, trade, treaties
+- `common/history/`: ai, buildings, characters, conscription, countries, cultures, diplomacy, diplomatic_plays, global, governments, lobbies, military_deployments, military_formations, political_movements, pops, population, power_blocs, production_methods, states, trade, treaties
 - `gfx/`: map/army_dioramas, map/fleet_dioramas, map/fleet_entities, map/front_entities, map/spline_network/military_route_graphics, map/spline_network/route_graphics, portraits/portrait_animations, portraits/portrait_modifiers
 - `map_data`, `map_data/state_regions`
 
