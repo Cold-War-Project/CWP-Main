@@ -106,3 +106,11 @@ Evidence is from the shared 1946-1990 observer run f30e83cd6 unless stated.
 | staging 16ccecae3 | integration incl. stage 1 | to 1960: defaults 16 (25 in d84f9452d), USA still ~50% brick (engineer shortage, see F8). Stage 1 landed on CWP2 (627e6205e). |
 | ai-base-b5bcea972 | plain CWP2 b5bcea972 | clean baseline to 1962 |
 | ai-ebb01b142 (really 9cf3e81e6) | stage 1+2 | to 1962 vs baseline: GDP USA 1336 vs 1252 (+7%), USSR 358 vs 303 (+18%), UK 389 vs 366, Japan 146 vs 132; France 143 vs 221 (lost 8M people to a 1954 split, path noise). US pool 8M vs 616M, USSR debt 60M vs 283M, US construction 2034 vs 1662 levels, defaults 15-17 vs 16-27 (1958-62). Two new log lines fixed in 2940ec183. One game each, so treat as a signal. |
+
+## Scripted button ai_chance (measured)
+
+Probe (test branch, 2026-11-21, 138 AI countries, always-possible one-shot buttons): share that pressed by
+10 months / 3 years: ai_chance 1: 33% / 43%; 3: 51% / 70%; 5: 75% / 90%; 10: 93% / 95%; 25 and 50: ~100%.
+No hard threshold: the weight acts as a probability per AI evaluation, and evaluations are frequent soon
+after a journal entry appears and rare later. A button the AI is meant to press needs ai_chance >= 10
+(about 93% within a year), >= 25 to be near-certain; 1-5 fires early or rarely at all.
