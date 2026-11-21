@@ -241,14 +241,16 @@ cwp_crown_ensure_monarch = {
 				age = 42
 				ideology = ideology_moderate
 				interest_group = ig_landowners
-				on_created = { save_scope_as = cwp_crown_scope_new }
+				on_created = { cwp_crown_on_created = { ROLE = character_role_cwp_monarch VAR = cwp_monarch_var } }
 			}
-			scope:cwp_crown_scope_new = { cwp_crown_set_house_name = yes }
 		}
 		scope:cwp_crown_scope_new ?= {
 			add_character_role = character_role_cwp_monarch
 		}
-		set_variable = { name = cwp_monarch_var value = scope:cwp_crown_scope_new }
+		if = {
+			limit = { exists = scope:cwp_crown_scope_new }
+			set_variable = { name = cwp_monarch_var value = scope:cwp_crown_scope_new }
+		}
 		remove_variable = cwp_crown_pretender_var
 	}
 }
@@ -257,7 +259,6 @@ cwp_crown_ensure_monarch = {
 cwp_crown_ensure_heir = {
 	if = {
 		limit = {
-			exists = var:cwp_monarch_var
 			NOT = { var:cwp_crown_heir_var ?= { is_character_alive = yes } }
 		}
 		remove_variable = cwp_crown_heir_var
@@ -269,7 +270,7 @@ cwp_crown_ensure_heir = {
 					age = 17
 					ideology = ideology_moderate
 					interest_group = ig_landowners
-					on_created = { save_scope_as = cwp_crown_scope_heir }
+					on_created = { cwp_crown_on_created = { ROLE = character_role_cwp_crown_heir VAR = cwp_crown_heir_var } }
 				}
 			}
 			1 = {
@@ -279,15 +280,10 @@ cwp_crown_ensure_heir = {
 					age = 17
 					ideology = ideology_moderate
 					interest_group = ig_landowners
-					on_created = { save_scope_as = cwp_crown_scope_heir }
+					on_created = { cwp_crown_on_created = { ROLE = character_role_cwp_crown_heir VAR = cwp_crown_heir_var } }
 				}
 			}
 		}
-		scope:cwp_crown_scope_heir = {
-			cwp_crown_set_house_name = yes
-			add_character_role = character_role_cwp_crown_heir
-		}
-		set_variable = { name = cwp_crown_heir_var value = scope:cwp_crown_scope_heir }
 	}
 }
 
@@ -303,13 +299,8 @@ cwp_crown_appoint_regent = {
 			age = 52
 			ideology = ideology_moderate
 			interest_group = ig_landowners
-			on_created = { save_scope_as = cwp_crown_scope_regent }
+			on_created = { cwp_crown_on_created = { ROLE = character_role_cwp_regent VAR = cwp_crown_regent_var } }
 		}
-		scope:cwp_crown_scope_regent = {
-			cwp_crown_set_house_name = yes
-			add_character_role = character_role_cwp_regent
-		}
-		set_variable = { name = cwp_crown_regent_var value = scope:cwp_crown_scope_regent }
 	}
 }
 
@@ -325,8 +316,8 @@ cwp_crown_end_regency = {
 	remove_variable = cwp_monarch_absent_var
 }
 
-# A new governor-general for a realm that shares the crown. As self-government grows (liberty desire),
-# the appointment goes more often to a local figure, as it did in Australia (1931), Canada (1952) and New Zealand (1967).
+# A new governor-general for a realm that shares the crown, appointed on the realm's advice: a local figure,
+# as became the rule in Australia (1931 on), Canada (1952) and New Zealand (1967).
 cwp_crown_appoint_gg = {
 	save_scope_as = cwp_crown_scope_realm
 	var:cwp_gg_var ?= {
@@ -340,55 +331,18 @@ cwp_crown_appoint_gg = {
 		}
 	}
 	remove_variable = cwp_gg_var
-	if = {
-		limit = {
-			OR = {
-				is_subject = no
-				liberty_desire >= 50
-			}
-		}
-		create_character = {
-			age = 62
-			ideology = ideology_moderate
-			interest_group = ig_intelligentsia
-			on_created = { save_scope_as = cwp_crown_scope_gg }
+	# Created in the realm itself (create_character is resolved after the effect, so the new character
+	# cannot be moved here in the same pass); the engine picks a primary culture of the realm.
+	create_character = {
+		age = 62
+		ideology = ideology_moderate
+		interest_group = ig_intelligentsia
+		on_created = {
+			add_character_role = character_role_cwp_governor_general
+			owner ?= { set_variable = { name = cwp_gg_var value = PREV } }
 		}
 	}
-	else = {
-		random_list = {
-			3 = {
-				overlord ?= {
-					create_character = {
-						noble = yes
-						age = 62
-						ideology = ideology_moderate
-						interest_group = ig_landowners
-						on_created = { save_scope_as = cwp_crown_scope_gg }
-					}
-				}
-			}
-			1 = {
-				create_character = {
-					age = 62
-					ideology = ideology_moderate
-					interest_group = ig_intelligentsia
-					on_created = { save_scope_as = cwp_crown_scope_gg }
-				}
-			}
-		}
-	}
-	scope:cwp_crown_scope_gg ?= {
-		if = {
-			limit = { NOT = { owner ?= scope:cwp_crown_scope_realm } }
-			transfer_character = scope:cwp_crown_scope_realm
-		}
-		add_character_role = character_role_cwp_governor_general
-	}
-	if = {
-		limit = { exists = scope:cwp_crown_scope_gg }
-		set_variable = { name = cwp_gg_var value = scope:cwp_crown_scope_gg }
-		set_variable = { name = cwp_gg_term_var years = 6 } # the customary five-year term, often extended
-	}
+	set_variable = { name = cwp_gg_term_var years = 6 } # the customary five-year term, often extended
 }
 
 cwp_crown_ensure_gg = {
@@ -568,4 +522,12 @@ cwp_crown_bring_home = {
 		remove_variable = cwp_crown_was_exiled_var
 		free_from_exile_effect = yes
 	}
+}
+
+# Character, inside create_character's on_created: the new character exists only once the creating effect
+# has finished, so its role, house name and the country variable are set here, not by the caller.
+cwp_crown_on_created = {
+	cwp_crown_set_house_name = yes
+	add_character_role = $ROLE$
+	owner ?= { set_variable = { name = $VAR$ value = PREV } }
 }
