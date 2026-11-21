@@ -681,14 +681,15 @@ def reevaluate(cat, quiet=False):
             sha = resolve_request_sha(req)
             updated = req.get("game_version") != game_version() and game_version() != "unknown"
             if (req["kind"] == "measure" and str(req.get("baseline") or "").startswith("accept:")
-                    and req["state"] == "pending"):
+                    and req["state"] in ("pending", "held")):
                 why = proxy_problem(req["baseline_gh"], cat)
-                if why and (updated or not any(r.get("gh") == req["baseline_gh"] for r in cat.values())):
+                if why:
                     # A proxy baseline can't follow a game update (no run of it exists on the new version).
                     req["state"], req["rehash_note"] = "cancelled", f"proxy baseline no longer valid: {why}; resubmit"
                     req["notify_pending"] = True
                     req["result"] = str(write_result(req, False, evaluate(req, cat)[1]))
                     write_json(req_path(req["id"]), req)
+                    newly.append((req, Path(req["result"])))
                     continue
             if sha != req["sha"] or updated:
                 if updated and req["kind"] == "measure":   # smoke/observe match by commit, not by hash
@@ -726,7 +727,7 @@ def cmd_notify(a=None):
         for req in load_requests():
             if req.get("notify_pending"):
                 what = (req["state"] if req["state"] == "done"
-                        else f"CANCELLED ({req.get('rehash_note')})" if req["state"] == "cancelled"
+                        else f"CANCELLED ({req.get('rehash_note') or 'by hand'})" if req["state"] == "cancelled"
                         else "a run including it FAILED")
                 out.append(f"notify {req.get('session') or '(no session; thread ' + req['thread'] + ')'}: "
                            f"{req['id']} {what} -> {req.get('result')}")
@@ -959,7 +960,7 @@ def cmd_wait(a):
             print(f"{a.id}: done -> {req['result']}")
             return 0
         if req["state"] in ("cancelled", "expired"):
-            print(f"{a.id}: {req['state']}")
+            print(f"{a.id}: {req['state']}" + (f" ({req['rehash_note']})" if req.get("rehash_note") else ""))
             return 1
         if a.year:
             for d in in_progress_observer_dirs():
