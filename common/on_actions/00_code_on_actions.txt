@@ -2379,20 +2379,6 @@ on_diplo_play_war_start = {
 }
 
 # Root = Diplomatic Play
-on_diplo_play_subject_released = {
-	effect = {
-		post_notification = diplo_play_subject_released_notification
-	}
-}
-
-# Root = Diplomatic Play
-on_diplo_play_subject_released_overlord = {
-	effect = {
-		post_notification = diplo_play_subject_released_overlord_notification
-	}
-}
-
-# Root = Diplomatic Play
 # country = Country switched to
 # previous = Country switched from
 on_diplo_play_switch_sides = {
@@ -2542,6 +2528,12 @@ on_law_enactment_started = {
 			}
 			set_variable = unanimity_achievement_possible
 		}
+		if = {
+			limit = {
+				has_variable = sps_dominant_party_ig_var
+			}
+			remove_variable = sps_dominant_party_ig_var
+		}
 	}
 }
 
@@ -2556,6 +2548,12 @@ on_law_checkpoint_success = {
 			}
 			trigger_event = { id = law_notification.4 days = 0 }
 		}
+	}
+	events = {
+		single_party_state.8
+	}
+	on_actions = {
+		sps_law_checkpoint_cancellation
 	}
 }
 
@@ -2671,6 +2669,12 @@ on_law_checkpoint_advance = {
 		10 = subjecthood_events.3
 		10 = subjecthood_events.4
 	}
+	events = {
+		single_party_state.8
+	}
+	on_actions = {
+		sps_law_checkpoint_cancellation
+	}
 }
 
 # Root = owner Country of the Law
@@ -2777,10 +2781,14 @@ on_law_checkpoint_debate = {
 		10 = subjecthood_events.2
 	}
 	events = {
+		single_party_state.8
 		tanzimat_events.1
 		tanzimat_events.2
 		tanzimat_events.4
 		tanzimat_events.10
+	}
+	on_actions = {
+		sps_law_checkpoint_cancellation
 	}
 }
 
@@ -2882,6 +2890,38 @@ on_law_checkpoint_stall = {
 		10 = labour_associations_events.5
 		10 = subjecthood_events.1
 		10 = subjecthood_events.5
+	}
+	on_actions = {
+		sps_law_checkpoint_cancellation
+	}
+}
+
+# Triggered by on_law_checkpoint_success, on_law_checkpoint_advance, on_law_checkpoint_debate and on_law_checkpoint_stall
+# Root = owner Country of the Law
+sps_law_checkpoint_cancellation = {
+	trigger = {
+		is_enacting_law = law_type:law_single_party_state
+		OR = {
+			var:sps_dominant_party_ig_var ?= {
+				party ?= {
+					party_has_insurrectionary_member = yes
+				}
+			}
+			AND = {
+				any_active_party = { always = yes }	# Cold War Project: the mod's law_single_party_state may be enacted without parties (no voting franchise); don't cancel those enactments
+				NOT = {
+					any_interest_group = {
+						is_in_government = yes
+						party ?= {
+							party_has_insurrectionary_member = no
+						}
+					}
+				}
+			}
+		}
+	}
+	effect = {
+		trigger_event = { id = single_party_state.9 days = 1 }
 	}
 }
 

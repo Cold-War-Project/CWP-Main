@@ -218,16 +218,24 @@ conservative_party = {
 	}
 
 	available_for_interest_group = {
-		owner = {
-			country_has_voting_franchise = yes
-			OR = {
-				ig:ig_landowners ?= { is_marginal = no }
-				ig:ig_devout ?= { is_marginal = no }
-				ig:ig_petty_bourgeoisie ?= { is_marginal = no }
+		trigger_if = {
+			limit = {
+				ig_is_member_of_dominant_party = { PARTY = conservative }
 			}
+			always = yes
 		}
-		# unions can never be conservative
-		NOT = { is_interest_group_type = ig_trade_unions }
+		trigger_else = {
+			owner = {
+				country_has_voting_franchise = yes
+				OR = {
+					ig:ig_landowners ?= { is_marginal = no }
+					ig:ig_devout ?= { is_marginal = no }
+					ig:ig_petty_bourgeoisie ?= { is_marginal = no }
+				}
+			}
+			# unions can never be conservative
+			NOT = { is_interest_group_type = ig_trade_unions }
+		}
 	}
 
 	# Root - IG considering joining
@@ -628,6 +636,15 @@ conservative_party = {
 			multiply = {
 				value = 0.0
 				desc = "from_more_than_three_prior_members"
+			}
+		}
+		if = { # 1.15.2: the dominant party of a single-party state keeps its members
+			limit = {
+				ig_is_member_of_dominant_party = { PARTY = conservative }
+			}
+			add = {
+				value = 1000
+				desc = "amendment_conservative_party_dominance"
 			}
 		}
 	}

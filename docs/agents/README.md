@@ -16,6 +16,7 @@ Start with [`AGENTS.md`](../../AGENTS.md) at the repo root, then the file for yo
 | [je-design-patterns.md](je-design-patterns.md) | Designing a journal entry: shapes beyond bars, condition lists, missions, twists |
 | [rebuild-crash-fix.md](rebuild-crash-fix.md) | Before your first PR: what the rebuild changed to stop the crash, and what must not be undone (written by the crash-fix thread) |
 | `areas/<area>.md` | Your area's port inventory and decisions (one per area thread: politics, history-setup, economy, military, tech, events-logic, gui-art, characters) |
+| `areas/vanilla-updates.md` | Following Paradox patches: the `~/forge/vanilla` snapshot repo, the porting procedure, and what each patch (1.15.2) needed |
 | `areas/economy-benchmarks.md` | Historical economy ranges for observer runs, and the `tools/econ_bench` tool that measures runs against them |
 
 House rules for writing mod script (encoding, override mechanisms, verification) stay in the root [`CLAUDE.md`](../../CLAUDE.md) and `.claude/rules/`. This folder covers how agents work on the project; it does not repeat them.

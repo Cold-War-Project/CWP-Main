@@ -209,31 +209,45 @@ social_democrat_party = {
 	}
 
 	available_for_interest_group = {
-		owner = {
-			country_has_voting_franchise = yes
-			OR = {
-				any_interest_group = {
-					is_marginal = no
-					leader ?= { cwp_social_democrat_party_character = yes }
+		trigger_if = { # Cold War Project: ig_is_member_of_dominant_party = { PARTY = socialist } inlined, because the mod's party is social_democrat_party
+			limit = {
+				party ?= { is_party_type = social_democrat_party }
+				owner ?= {
+					OR = {
+						any_active_law = { has_amendment = amendment_type:amendment_socialist_party_dominance }
+						currently_enacting_law ?= { has_amendment = amendment_type:amendment_socialist_party_dominance }
+					}
 				}
-				ig:ig_trade_unions ?= { is_marginal = no }
 			}
+			always = yes
 		}
-		NOT = { is_interest_group_type = ig_industrialists } # inherently anti-worker
-		OR = { # landowners too, except the Solid South in the New Deal coalition
-			NOT = { is_interest_group_type = ig_landowners }
-			owner = { c:USA ?= this }
-		}
-		OR = { # the New Deal coalition takes conservative Southern leaders too
-			owner = { c:USA ?= this }
-			leader ?= { # fascists and conservatives hate social democracy
-				NOT = {
-					has_ideology = ideology:ideology_fascist
-					has_ideology = ideology:ideology_integralist
-					has_ideology = ideology:ideology_ethno_nationalist
-					has_ideology = ideology:ideology_traditionalist
-					has_ideology = ideology:ideology_royalist
-					has_ideology = ideology:ideology_theocrat
+		trigger_else = {
+			owner = {
+				country_has_voting_franchise = yes
+				OR = {
+					any_interest_group = {
+						is_marginal = no
+						leader ?= { cwp_social_democrat_party_character = yes }
+					}
+					ig:ig_trade_unions ?= { is_marginal = no }
+				}
+			}
+			NOT = { is_interest_group_type = ig_industrialists } # inherently anti-worker
+			OR = { # landowners too, except the Solid South in the New Deal coalition
+				NOT = { is_interest_group_type = ig_landowners }
+				owner = { c:USA ?= this }
+			}
+			OR = { # the New Deal coalition takes conservative Southern leaders too
+				owner = { c:USA ?= this }
+				leader ?= { # fascists and conservatives hate social democracy
+					NOT = {
+						has_ideology = ideology:ideology_fascist
+						has_ideology = ideology:ideology_integralist
+						has_ideology = ideology:ideology_ethno_nationalist
+						has_ideology = ideology:ideology_traditionalist
+						has_ideology = ideology:ideology_royalist
+						has_ideology = ideology:ideology_theocrat
+					}
 				}
 			}
 		}
@@ -658,6 +672,21 @@ social_democrat_party = {
 			multiply = {
 				value = 0.0
 				desc = "from_more_than_three_prior_members"
+			}
+		}
+		if = { # 1.15.2: the dominant party of a single-party state keeps its members
+			limit = {
+				party ?= { is_party_type = social_democrat_party }
+				owner ?= {
+					OR = {
+						any_active_law = { has_amendment = amendment_type:amendment_socialist_party_dominance }
+						currently_enacting_law ?= { has_amendment = amendment_type:amendment_socialist_party_dominance }
+					}
+				}
+			}
+			add = {
+				value = 1000
+				desc = "amendment_socialist_party_dominance"
 			}
 		}
 	}

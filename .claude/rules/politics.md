@@ -35,7 +35,7 @@ lawgroup_judiciary = {
 	base_enactment_days = 150                # optional
 	enactment_approval_mult = 2.0            # optional
 	ideological_opinion_impact = 1.0
-	affected_by_regime_change = yes          # optional
+	regime_change_min_progressiveness_difference = 50   # optional (1.15.2; replaced affected_by_regime_change): a regime change imposes the holder's law in this group if progressiveness differs by at least this; absent or 0 = never
 	change_allowed_trigger = { }             # optional, country scope
 	linked_social_hierarchy = x              # optional
 }

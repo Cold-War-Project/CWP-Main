@@ -14,7 +14,7 @@ paths:
 
 # Map: provinces, state regions, regions, terrain
 
-`map_data` and `map_data/state_regions` are in `replace_paths`. The map is vanilla 1.15.1 by decision (`docs/agents/plan.md`; dev's custom map is not ported): every `map_data` file except `state_regions/00_*`..`15_*.txt` is byte-identical to vanilla, and the state regions have vanilla's regions, ids, names, provinces and impassables. The mod changes only resources (arable land and resources, capped, discoverable), traits, a few hub provinces (Akmolinsk, Alentejo, East and West Bengal, Formosa, Laristan, Panama, Ryukyu Islands, Samara, West Micronesia), and drops `prime_land` in Dagestan and Greater Caucasus. Re-diff against vanilla after a game patch.
+`map_data` and `map_data/state_regions` are in `replace_paths`. The map is vanilla 1.15.1 by decision (`docs/agents/plan.md`; dev's custom map is not ported): every `map_data` file except `state_regions/00_*`..`15_*.txt` is byte-identical to vanilla 1.15.1, and the state regions have vanilla's regions, ids, names, provinces and impassables. The mod changes only resources (arable land and resources, capped, discoverable), traits, a few hub provinces (Akmolinsk, Alentejo, East and West Bengal, Formosa, Laristan, Panama, Ryukyu Islands, Samara, West Micronesia), and drops `prime_land` in Dagestan and Greater Caucasus. Re-diff against vanilla after a game patch. 1.15.2 changed vanilla's `provinces.png` by 17 sea pixels (Baltic Entrances to Southern Baltic Sea, no province added or removed); the mod still ships the 1.15.1 file ([docs/agents/areas/vanilla-updates.md](../../docs/agents/areas/vanilla-updates.md)).
 
 ## Files in `map_data`
 

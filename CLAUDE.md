@@ -1,6 +1,6 @@
 # Cold War Project - Rebuild (Victoria 3 mod)
 
-Total-overhaul mod for **Victoria 3 1.15.1**. Campaign runs **1946.1.1 to 2046.1.1** (`common/defines/cwp_defines.txt`). Almost every vanilla database is replaced with Cold War content: own goods, buildings, production methods, laws, technologies (eras `era_1`..`era_12`), countries, cultures, combat units, ships, history.
+Total-overhaul mod for **Victoria 3 1.15.2** (built on 1.15.1; the guides' [GAME] and [STATS] marks still refer to 1.15.1). Campaign runs **1946.1.1 to 2046.1.1** (`common/defines/cwp_defines.txt`). Almost every vanilla database is replaced with Cold War content: own goods, buildings, production methods, laws, technologies (eras `era_1`..`era_12`), countries, cultures, combat units, ships, history.
 
 **Agents: read [`AGENTS.md`](AGENTS.md) and [`docs/agents/`](docs/agents/README.md) first** (branches, worktrees, testing on Forge, PRs). This file holds the rules for writing mod script.
 
