@@ -128,6 +128,60 @@ def sub_values(block: str, name: str) -> dict:
     return {k: float(v) for k, v in re.findall(r"(\w+)=" + NUM, m.group(1))}
 
 
+def goods_base() -> dict:
+    from .sectors import goods_list
+    return {i: c for i, (_, c) in enumerate(goods_list())}
+
+
+# weekly_income slots that are taxes (1.15.1, read off a 1951 USA save against
+# country_building_budget.incomes: 1 = income tax, 4 = dividends tax, 7 = consumption tax; 0, 2, 3, 5, 6
+# are the other tax kinds, zero in that save). 8 (minting), 9 (tariffs) and 10 (government share
+# dividends) are left out. The slot meanings other than 1, 4, 7, 9, 10 are inferred, not documented.
+TAX_SLOTS = (0, 1, 2, 3, 4, 5, 6, 7)
+
+
+def extract_capacity(text: str, countries: dict) -> None:
+    """State-capacity fields per country (institutions-as-state-capacity thread, 2026-11-19):
+    institutions {key: level} and institution_sum, authority (total) and authority_free,
+    bureaucracy_produced / bureaucracy_used (weekly), tax_take (weekly taxes), tax_waste (tax lost
+    over tax capacity, weekly) and tax_waste_share. Tax capacity itself isn't in the save; the
+    waste share is its observable: a state taxing past its capacity loses the excess."""
+    for _, b in db_entries(top_section(text, "institutions")):
+        cid, key = field(b, "country"), field(b, "institution")
+        if cid in countries and key:
+            lv = fnum(b, "investment")
+            c = countries[cid]
+            c.setdefault("institutions", {})[key.replace("institution_", "")] = lv
+            c["institution_sum"] = c.get("institution_sum", 0.0) + lv
+    # The AI's spending_variables carry authority and bureaucracy. Country ids there are typed
+    # (0x2000000 + the country_manager id).
+    ai = top_section(text, "ai")
+    for m in re.finditer(r"spending_variables=\{", ai):
+        sv = ai[m.end():match_brace(ai, m.end() - 1) - 1]
+        cid = field(sv, "country", 2)
+        if cid is None:
+            continue
+        cid = str(int(cid) & 0xFFFFFF)
+        if cid not in countries:
+            continue
+        c = countries[cid]
+        c["authority"] = fnum(sv, "authority", 2)
+        c["authority_free"] = fnum(sv, "authority_balance", 2)
+        c["bureaucracy_produced"] = fnum(sv, "bureaucracy_income", 2)
+        c["bureaucracy_used"] = fnum(sv, "bureaucracy_expenses", 2)
+        c["population_incorporated_share"] = (fnum(sv, "population_incorporated", 2) / fnum(sv, "population_total", 2)
+                                              if fnum(sv, "population_total", 2) else None)
+
+
+def _tax_fields(budget: str) -> dict:
+    wi = re.search(r"weekly_income=\{([^}]*)\}", budget)
+    vals = [float(x.split("=")[-1]) for x in wi.group(1).split()] if wi else []
+    take = sum(v for i, v in enumerate(vals) if i in TAX_SLOTS)
+    waste = fnum(budget, "building_tax_waste", 2)
+    return {"tax_take": take, "tax_waste": waste,
+            "tax_waste_share": waste / (take + waste) if take + waste > 0 else None}
+
+
 def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
     text = read_text(path)
     date = re.search(r"^date=([\d.]+)", text, re.M).group(1)
@@ -157,6 +211,7 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
             "money": fnum(budget, "money", 2),
             "debt": fnum(budget, "principal", 2),
             "credit": fnum(budget, "credit", 2),
+            "investment_pool": fnum(budget, "investment_pool", 2),
             "in_default": field(body, "in_default") is not None,
             "last_bankruptcy": field(body, "last_bankruptcy_date"),
             "weekly_income": sum(float(x.split("=")[-1]) for x in wi.group(1).split()) if wi else 0.0,
@@ -164,8 +219,14 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
             "military_spend": mil,
             "construction": cons,
             "government": field(body, "government"),
+            # Recorder variables from a probe on_action (cwp_stat_sol, cwp_stat_exp_sol, ...), if the build has one.
+            "stat_vars": {k: int(v) / 100000 for k, v in re.findall(
+                r"flag=(cwp_stat_\w+)\s*data=\{\s*type=value\s*identity=(-?\d+)", sub_block(body, "variables"))},
             "buildings": {},
+            **_tax_fields(budget),
         }
+
+    extract_capacity(text, countries)
 
     for entry in re.findall(r"\{([^{}]*)\}", top_section(text, "country_rankings")):
         rk, cid = re.search(r"\brank=(\w+)", entry), re.search(r"\bcountry=(\d+)", entry)
@@ -173,18 +234,84 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
             countries[cid.group(1)]["rank"] = rk.group(1)
 
     state_owner = {}
+    over_infra = states_n = 0
     for sid, body in db_entries(top_section(text, "states")):
         c = field(body, "country")
+        inf, use = field(body, "infrastructure"), field(body, "infrastructure_usage")
+        if inf is not None and use is not None:
+            states_n += 1
+            over_infra += float(use) > float(inf)
         if c:
             state_owner[sid] = c
+            # Population from the states: the country-level pop_statistics can lag badly (India read
+            # 126M against 315M in its states in a 1950 save), so the states are the reliable count.
+            ps = sub_block(body, "pop_statistics")
+            if c in countries:
+                countries[c]["_state_pop"] = countries[c].get("_state_pop", 0.0) + sum(
+                    fnum(ps, k, 2) for k in ("population_lower_strata", "population_middle_strata", "population_upper_strata"))
+                for k, name in (("population_radicals", "radicals"), ("population_loyalists", "loyalists"),
+                                ("population_unemployed_workforce", "unemployed"),
+                                ("population_subsisting_workforce", "subsisting"),
+                                ("population_salaried_workforce", "salaried")):
+                    countries[c][name] = countries[c].get(name, 0.0) + fnum(ps, k, 2)
+
+    # Famines in progress: deaths so far per country (the famine manager keeps one entry per state).
+    for _, b in db_entries(top_section(text, "famine_manager")):
+        cid = state_owner.get(field(b, "state", default=""))
+        if cid in countries:
+            c = countries[cid]
+            c["famine_deaths"] = c.get("famine_deaths", 0.0) + fnum(b, "num_deaths")
+            c["famine_states"] = c.get("famine_states", 0) + 1
+
+    for c in countries.values():
+        sp = c.pop("_state_pop", 0.0)
+        if sp > 0:
+            c["population"] = sp
+            c["gdp_per_capita"] = c["gdp"] / sp
 
     owned = set(state_owner.values())
     countries = {cid: c for cid, c in countries.items() if cid in owned}
     by_gdp = sorted(countries, key=lambda k: -countries[k]["gdp"])
     want_pm = {cid for cid in by_gdp[:pm_top]} | {cid for cid, c in countries.items() if c["tag"] in set(pm_tags)}
 
+    # World market proxies: a good's price from every single-output building (sales / quantity, weighted
+    # by quantity), and how many buildings are short of inputs. The save stores no price per good.
+    price_num, price_qty = {}, {}
+    shortage_n = shortage_total = 0
+    shortage_vals, real_vals = [], []
+    by_type = {}
+    unstaffed_n = 0
     for _, body in db_entries(top_section(text, "building_manager")):
         btype = field(body, "building")
+        sh_v = field(body, "input_goods_shortage")
+        if sh_v is not None:  # the field is only written for buildings that buy inputs
+            shortage_total += 1
+            x = float(sh_v)
+            lv = fnum(body, "levels")
+            staffed = lv > 0 and fnum(body, "staffing") / lv > 0.5
+            # 0.05 is a floor (the building buys 100-120% of its inputs); 0.75 means unstaffed
+            # (economy thread, 2026-11-18). Real shortage: in between, at a staffed building.
+            if x >= 0.75:
+                unstaffed_n += 1
+            elif x > 0.05 and staffed:
+                real_vals.append(x)
+                # Which inputs: the save keeps no shortage per good, only the building's input
+                # demand by good, so record what short buildings of each type buy (and how short).
+                bt = by_type.setdefault(btype, {"n": 0, "short": [], "inputs": {}})
+                bt["n"] += 1
+                bt["short"].append(x)
+                for g, v in re.findall(r"(\d+)=\{\s*value=([\d.]+)", sub_block(body, "input_goods")):
+                    bt["inputs"][g] = bt["inputs"].get(g, 0.0) + float(v)
+            shortage_vals.append(x)
+            if float(sh_v) > 0.05:
+                shortage_n += 1
+        og = sub_block(body, "output_goods")
+        outs = re.findall(r"(\d+)=\{\s*value=([\d.]+)", og)
+        sales = fnum(body, "goods_sales")
+        if len(outs) == 1 and sales > 0 and float(outs[0][1]) > 0:
+            g, q = outs[0][0], float(outs[0][1])
+            price_num[g] = price_num.get(g, 0.0) + sales
+            price_qty[g] = price_qty.get(g, 0.0) + q
         cid = state_owner.get(field(body, "state", default=""))
         if not btype or cid not in countries:
             continue
@@ -196,6 +323,16 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
         b["sales"] += fnum(body, "goods_sales")
         b["inputs"] += fnum(body, "goods_cost")
         b["profit"] += fnum(body, "profit_after_reserves")
+        # PPP-style value added: output minus inputs, both at base prices (common/goods cost), for
+        # producing buildings. Market prices make cheap subsistence food read low against Maddison.
+        if outs or og.strip():
+            base = goods_base()
+            ob = sum(float(q) * (base.get(int(g)) or 0) for g, q in re.findall(r"(\d+)=\{\s*value=([\d.]+)", og))
+            ib = sum(float(q) * (base.get(int(g)) or 0) for g, q in
+                     re.findall(r"(\d+)=\{\s*value=([\d.]+)", sub_block(body, "input_goods")))
+            if ob > 0:
+                b["out_base"] = b.get("out_base", 0.0) + ob
+                b["in_base"] = b.get("in_base", 0.0) + ib
         if cid in want_pm:
             pms = re.search(r"^\tproduction_methods=\{([^}]*)\}", body, re.M)
             if pms:
@@ -206,10 +343,34 @@ def extract(path: str, pm_tags=(), pm_top: int = 15) -> dict:
     out = {}
     for cid, c in countries.items():
         tag = c["tag"]
-        if tag in out:  # duplicate tags (dead/revived): keep the bigger one
-            if out[tag]["gdp"] >= c["gdp"]:
-                continue
+        # Two live countries with one tag are the two sides of a civil war (seen: India 1950). Keep
+        # both: the bigger one under the tag, the other as "TAG~<id>"; entity views add them up.
+        if tag in out:
+            small, big = sorted((out[tag], c), key=lambda x: x["gdp"])
+            out[tag] = big
+            out[f"{tag}~{cid if small is c else 'x'}"] = small
+            continue
         out[tag] = c
+    from .sectors import goods_list
+    names = goods_list()
+    sv = sorted(shortage_vals)
+    market = {"shortage_buildings": shortage_n, "buildings_with_inputs": shortage_total,
+              "shortage_median": sv[len(sv) // 2] if sv else None,
+              "shortage_over_half": sum(1 for x in sv if x > 0.5),
+              "real_shortage": len(real_vals),
+              "real_shortage_median": sorted(real_vals)[len(real_vals) // 2] if real_vals else None,
+              "unstaffed": unstaffed_n,
+              "short_at_half": sum(1 for x in real_vals if abs(x - 0.5) < 1e-6),
+              "states_over_infrastructure": over_infra, "states": states_n,
+              "short_by_type": {
+                  bt: {"n": v["n"], "median_shortage": sorted(v["short"])[len(v["short"]) // 2],
+                       "inputs": {(names[int(g)][0] if int(g) < len(names) else g): round(q, 2)
+                                  for g, q in sorted(v["inputs"].items(), key=lambda kv: -kv[1])}}
+                  for bt, v in sorted(by_type.items(), key=lambda kv: -kv[1]["n"])[:25]},
+              "prices": {(names[int(g)][0] if int(g) < len(names) else g):
+                         {"price": price_num[g] / price_qty[g],
+                          "base": names[int(g)][1] if int(g) < len(names) else None}
+                         for g in price_num}}
     from .geo import extract_geo
-    return {"save": path.rsplit("/", 1)[-1], "date": date, "year": int(date.split(".")[0]), "countries": out,
+    return {"save": path.rsplit("/", 1)[-1], "date": date, "year": int(date.split(".")[0]), "countries": out, "market": market,
             "geo": extract_geo(text, tag_of, owned)}

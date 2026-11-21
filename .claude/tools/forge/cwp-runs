@@ -1,0 +1,1338 @@
+#!/usr/bin/env python3
+"""cwp-runs: request test runs on Forge instead of queueing your own game.
+
+Forge has one game slot. Threads used to queue their own observer runs, so a small change waited hours for
+its own 10-year game and A/B baselines were re-run that already existed. cwp-runs keeps a catalog of every
+finished run, keyed by a *gameplay hash* (the commit's files minus paths that cannot change the simulation),
+and turns requests into as few runs as possible:
+
+  smoke    loads? new error lines? does my event/JE fire?   -> rides the next staging batch
+  observe  qualitative: what did the AI do, did it trigger? -> rides the next staging batch (co-tenants listed)
+  measure  quantitative A/B (GDP, debt, war counts)          -> solo arms, >=3 runs each, existing runs reused
+
+Commands (docs: docs/agents/run-requests.md):
+  cwp-runs submit --thread T --kind K --branch B --until Y [--quick] [--replicates N] [--baseline auto|<sha>|accept:<GH>:<why>]
+                  [--session ID] [--note TEXT] [--pin|--no-pin] [--underpowered] [--yield-ok] [--hours H]
+  cwp-runs baselines <branch|sha> [--until Y]   runs that already sample the branch's base (CWP2 merge-base)
+  cwp-runs runs [--gh GH | --sha SHA | --branch B]  catalog rows
+  cwp-runs plan [--json]                        the next runs, in order (and the steps already in flight)
+  cwp-runs start <n>                            record plan step n as in flight; print the commands that run it
+  cwp-runs done [<run outdir> ...] [--no-ingest] catalog finished runs, ingest their econ data, write results
+  cwp-runs notify [--peek]                      results not yet passed on to their requesters (done prints them)
+  cwp-runs catalog [--backfill]                 index ~/forge/observer and ~/forge/econ-runs (idempotent)
+  cwp-runs wait <id> [--year Y] [--timeout S]   block until served (exit 0); 3 a run with it failed; 2 timeout
+  cwp-runs unstart <token>                      drop an in-flight step that will not run (job never started)
+  cwp-runs show [id] | cancel <id> | hold <id> | release <id> | renew <id> [--hours H]
+  cwp-runs gh <commit>                          print a commit's gameplay hash
+
+Data: ~/forge/runs/{requests,results,started,builds,batches}/, catalog.jsonl (append-only; newest row per outdir wins),
+notify.txt. Nothing here takes the game lock, launches a game, or moves or deletes run folders.
+"""
+import argparse
+import contextlib
+import datetime as dt
+import fcntl
+import hashlib
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+FORGE = Path(os.environ.get("FORGE", Path.home() / "forge"))
+RUNS = Path(os.environ.get("CWP_RUNS", FORGE / "runs"))
+REPO = Path(os.environ.get("CWP_REPO", FORGE / "CWP-Main"))
+BASE = os.environ.get("CWP_BASE", "CWP2")
+BASE_REF = f"origin/{BASE}"
+OBSERVER = Path(os.environ.get("CWP_OBSERVER_DIR", FORGE / "observer"))
+ECON = Path(os.environ.get("CWP_ECON_DIR", FORGE / "econ-runs"))
+QUEUEF = Path(os.environ.get("CWP_STAGING_QUEUE", FORGE / "staging-queue.txt"))
+ECON_BENCH = Path(os.environ.get("CWP_ECON_BENCH", FORGE / "worktrees/econ-bench"))
+INTEGRATION = Path(os.environ.get("CWP_INTEGRATION", FORGE / "worktrees/integration"))
+APPMANIFEST = Path.home() / ".steam/steam/steamapps/appmanifest_529340.acf"
+START_YEAR = 1946
+STAGING_UNTIL = int(os.environ.get("CWP_RUNS_STAGING_UNTIL", 1952))   # a staging round's usual end year
+BATCH_CAP = int(os.environ.get("CWP_RUNS_BATCH_CAP", 1962))           # longer requests get their own run
+# A probe this short (game years) goes first; --quick is allowed up to QUICK_MAX_YEARS. Both stay below a
+# staging round's length, so a quick build can never pass for one.
+QUICK_MAX_YEARS = min(int(os.environ.get("CWP_RUNS_QUICK_MAX_YEARS", 4)), STAGING_UNTIL - 1 - START_YEAR)
+QUICK_YEARS = min(int(os.environ.get("CWP_RUNS_QUICK_YEARS", 2)), QUICK_MAX_YEARS)
+RUNNING_GRACE = 20 * 60   # an observer folder without an end marker, touched this recently, is still running
+
+# Paths that cannot change the simulation. Everything else (common/, events/, history via common/history,
+# map_data/, .metadata/, unknown paths) is gameplay. Localization, GUI and gfx can still log load errors,
+# so branches touching them ride smoke batches; they just never change the gameplay hash.
+INERT_TOP = {".claude", ".github", ".gitattributes", ".gitignore", "docs", "tools",
+             "Claude-Vic3-Content-Design-Guide", "Claude-Vic3-Modding-Guide",
+             "localization", "gfx", "gui", "fonts", "thumbnail.png", "credits.txt"}
+# Inert paths that the game never even reads: a branch touching only these needs no game at all.
+NOGAME_TOP = {".claude", ".github", ".gitattributes", ".gitignore", "docs", "tools",
+              "Claude-Vic3-Content-Design-Guide", "Claude-Vic3-Modding-Guide", "credits.txt"}
+OK_FOR_PREFIX = {"ok", "partial"}   # statuses whose years_reached can be trusted as samples
+
+
+def die(msg):
+    print(f"cwp-runs: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def now():
+    return dt.datetime.now().astimezone()
+
+
+def iso(t=None):
+    return (t or now()).isoformat(timespec="seconds")
+
+
+def parse_iso(s):
+    return dt.datetime.fromisoformat(s)
+
+
+# ---------------------------------------------------------------- git and the gameplay hash
+
+def git(*args, check=True):
+    r = subprocess.run(["git", "-C", str(REPO), *args], capture_output=True, text=True)
+    if check and r.returncode:
+        raise RuntimeError(f"git {' '.join(args)}: {r.stderr.strip()}")
+    return r.stdout
+
+
+def resolve(ref):
+    """Full sha of a commit-ish, or None."""
+    r = subprocess.run(["git", "-C", str(REPO), "rev-parse", "-q", "--verify", f"{ref}^{{commit}}"],
+                       capture_output=True, text=True)
+    return r.stdout.strip() or None
+
+
+def merge_base(sha):
+    r = subprocess.run(["git", "-C", str(REPO), "merge-base", BASE_REF, sha], capture_output=True, text=True)
+    return r.stdout.strip() or None
+
+
+def is_inert(path):
+    return path.split("/", 1)[0] in INERT_TOP or path.endswith(".md")
+
+
+def is_nogame(path):
+    return path.split("/", 1)[0] in NOGAME_TOP or path.endswith(".md")
+
+
+_buildid = None
+
+
+def game_buildid():
+    global _buildid
+    if _buildid is None:
+        try:
+            m = re.search(r'"buildid"\s+"(\d+)"', APPMANIFEST.read_text())
+            _buildid = m.group(1) if m else "unknown"
+        except OSError:
+            _buildid = "unknown"
+    return _buildid
+
+
+_ghcache = None
+
+
+def gameplay_hash(sha):
+    """sha1 over the game build id and `git ls-tree -r` of the commit minus inert paths (12 hex)."""
+    global _ghcache
+    cache_f = RUNS / "gh-cache.json"
+    if _ghcache is None:
+        try:
+            _ghcache = json.loads(cache_f.read_text())
+        except (OSError, ValueError):
+            _ghcache = {}
+    key = f"{sha}:{game_buildid()}"
+    if key in _ghcache:
+        return _ghcache[key]
+    h = hashlib.sha1(game_buildid().encode() + b"\n")
+    for line in git("ls-tree", "-r", "--full-tree", sha).splitlines():
+        meta, path = line.split("\t", 1)
+        if not is_inert(path):
+            h.update(line.encode() + b"\n")
+    gh = h.hexdigest()[:12]
+    _ghcache[key] = gh
+    RUNS.mkdir(parents=True, exist_ok=True)
+    tmp = cache_f.with_name(f"gh-cache.{os.getpid()}.tmp")
+    try:   # a cache: losing a concurrent writer's entries only costs a recompute
+        tmp.write_text(json.dumps(_ghcache))
+        tmp.replace(cache_f)
+    except OSError:
+        pass
+    return gh
+
+
+def changed_files(sha):
+    """Files the commit changes relative to its merge-base with the base branch."""
+    mb = merge_base(sha)
+    if not mb:
+        return None, []
+    return mb, [f for f in git("diff", "--name-only", mb, sha).splitlines() if f]
+
+
+# ---------------------------------------------------------------- storage
+
+@contextlib.contextmanager
+def runs_lock():
+    RUNS.mkdir(parents=True, exist_ok=True)
+    with open(RUNS / ".lock", "w") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(f, fcntl.LOCK_UN)
+
+
+def write_json(path, obj):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(json.dumps(obj, indent=1) + "\n")
+    tmp.replace(path)
+
+
+def load_catalog():
+    """Newest row per outdir."""
+    rows = {}
+    f = RUNS / "catalog.jsonl"
+    if f.exists():
+        for line in f.read_text().splitlines():
+            try:
+                r = json.loads(line)
+            except ValueError:
+                continue
+            rows[r["outdir"]] = r
+    return rows
+
+
+def append_catalog(row):
+    with open(RUNS / "catalog.jsonl", "a") as f:
+        f.write(json.dumps(row, separators=(",", ":")) + "\n")
+
+
+def req_path(rid):
+    return RUNS / "requests" / f"{rid}.json"
+
+
+def load_requests():
+    out = []
+    d = RUNS / "requests"
+    for f in sorted(d.glob("*.json")) if d.exists() else []:
+        try:
+            out.append(json.loads(f.read_text()))
+        except ValueError:
+            print(f"cwp-runs: skipping unreadable request {f.name}", file=sys.stderr)
+    return out
+
+
+def load_request(rid):
+    try:
+        return json.loads(req_path(rid).read_text())
+    except OSError:
+        die(f"no request {rid} (cwp-runs show lists them)")
+
+
+def staging_items():
+    """(branch, note) for each live line of the staging queue."""
+    out = []
+    try:
+        for line in QUEUEF.read_text().splitlines():
+            s = line.strip()
+            if not s or s.startswith("#"):
+                continue
+            branch, _, note = s.partition("#")
+            out.append((branch.split()[0], note.strip()))
+    except OSError:
+        pass
+    return out
+
+
+# ---------------------------------------------------------------- indexing runs
+
+SHA_IN_NAME = re.compile(r"(?:^|-)([0-9a-f]{7,12})(?:-|$)")
+DATE_V3 = re.compile(r"^(\d{4})\.\d+\.\d+\.v3$")
+DATE_JSON = re.compile(r"^(\d{4})-\d+-\d+\.json$")
+
+
+def years_in(dirs, pat):
+    ys = []
+    for d in dirs:
+        if d.is_dir():
+            for f in d.iterdir():
+                m = pat.match(f.name)
+                if m:
+                    ys.append(int(m.group(1)))
+    return max(ys) if ys else None
+
+
+def sha_from_name(name):
+    for m in SHA_IN_NAME.finditer(name):
+        s = resolve(m.group(1))
+        if s:
+            return s
+    return None
+
+
+def parse_build_txt(d):
+    """(tree, short sha, branch, started, [(item, branch, result)]) from cwp-observe's BUILD.txt."""
+    tree = sha = branch = started = None
+    items = []
+    try:
+        lines = (d / "BUILD.txt").read_text().splitlines()
+    except OSError:
+        return None
+    in_prs = False
+    for line in lines:
+        if line.startswith("tree: "):
+            tree = line[6:].strip()
+        elif line.startswith("build: "):
+            m = re.match(r"build: (\S+) \((.*)\)", line)
+            if m:
+                sha, branch = m.group(1), m.group(2)
+        elif line.startswith("started: "):
+            started = line[9:].strip()
+        elif line.startswith("PRs"):
+            in_prs = True
+        elif in_prs and "\t" in line:
+            parts = line.split("\t")
+            items.append((parts[0], parts[1] if len(parts) > 1 else parts[0], parts[2] if len(parts) > 2 else ""))
+    return tree, sha, branch, started, items
+
+
+def index_observer(d, running_ok=False):
+    """Catalog row for a cwp-observe output folder, or None (still running, or no resolvable commit)."""
+    ended = any((d / f).exists() for f in ("errors_end.txt", "CRASH", "FAILED", "DISKFULL"))
+    if not ended and not running_ok:
+        newest = max((p.stat().st_mtime for p in [d, d / "saves", d / "progress.txt"] if p.exists()), default=0)
+        if time.time() - newest < RUNNING_GRACE:
+            return None   # still running
+    b = parse_build_txt(d)
+    sha = sha_source = None
+    tree = branch = started = None
+    items = []
+    if b:
+        tree, short, branch, started, items = b
+        sha = resolve(short) if short else None
+        sha_source = "build"
+    if not sha:
+        sha, sha_source = sha_from_name(d.name), "name"
+    if not sha:
+        return None
+    members = []
+    for item, br, result in items:
+        m = re.search(r"merged @ ([0-9a-f]+)", result)
+        if m:
+            members.append({"branch": br, "tested_sha": resolve(m.group(1)) or m.group(1)})
+    is_batch = bool(items) or (tree or "").rstrip("/").endswith("integration")
+    if not is_batch:
+        members = [{"branch": branch if branch and branch != "HEAD" else "", "tested_sha": sha}]
+    nudges = 0
+    if (d / "STALLS").exists():
+        nudges = sum(1 for _ in (d / "STALLS").read_text().splitlines())
+    years = years_in([d / "saves"], DATE_V3) or years_in([d], DATE_JSON)
+    if (d / "CRASH").exists():
+        status = "crash"
+    elif (d / "FAILED").exists():
+        status = "stalled" if nudges else "failed"   # the watchdog gave up (or the game never started)
+    elif (d / "DISKFULL").exists():
+        status = "partial"   # stopped for low disk, not the branch's fault: samples count up to `years`
+    elif (d / "errors_end.txt").exists():
+        status = "ok"
+    else:
+        status = "partial"   # runner died before the end (restart, kill): its samples still count up to `years`
+    data = ["errors", "dumps"] + (["perf"] if (d / "perf.csv").exists() else [])
+    econ_dir = ECON / f"obs-{d.name}" / "run-001"
+    if econ_dir.is_dir() and any(econ_dir.glob("*.json")):
+        data.append("econ")
+    if (d / "saves").is_dir() and any((d / "saves").glob("*.v3")):
+        data.append("saves")
+    return {"run": d.name, "outdir": str(d), "source": "observer", "sha": sha, "sha_source": sha_source,
+            "kind": "batch" if is_batch else "solo", "members": members, "tree": tree, "started": started,
+            "years_reached": years, "status": status, "nudges": nudges, "data": data,
+            "econ_dir": str(econ_dir) if "econ" in data else None}
+
+
+def index_econ(d):
+    """Catalog row for an econ_bench run-NNN folder. Only finished runs (meta.json) count: folders without one
+    are ingests of observer runs (already catalogued as those runs) or runs still in progress."""
+    try:
+        meta = json.loads((d / "meta.json").read_text())
+    except (OSError, ValueError):
+        return None
+    sha = resolve(meta["sha"]) if meta.get("sha") else None
+    sha_source = "meta"
+    if not sha:
+        sha, sha_source = sha_from_name(d.parent.name), "name"
+    if not sha:
+        return None
+    st = meta.get("status")
+    status = "ok" if st == "done" else "partial" if st in ("yielded", "time_limit") else "failed"
+    years = meta.get("last_year") or years_in([d], DATE_JSON)
+    data = ["econ"] + (["saves"] if any(d.glob("*.v3")) else [])
+    wt = meta.get("worktree", "")
+    return {"run": f"{d.parent.name}/{d.name}", "outdir": str(d), "source": "econ_bench", "sha": sha,
+            "sha_source": sha_source, "kind": "solo", "members": [{"branch": "", "tested_sha": sha}],
+            "tree": wt, "started": None, "years_reached": years, "status": status, "nudges": 0,
+            "data": data, "econ_dir": str(d)}
+
+
+ECON_SKIP = re.compile(r"^(combined|shared|staging-shared|borrowed|obs-|ingest-|bin$)")
+
+
+def candidate_dirs():
+    if OBSERVER.is_dir():
+        for d in sorted(OBSERVER.iterdir()):
+            if d.is_dir() and not d.is_symlink():
+                yield "observer", d
+    if ECON.is_dir():
+        for b in sorted(ECON.iterdir()):
+            if not b.is_dir() or b.is_symlink() or ECON_SKIP.match(b.name):
+                continue
+            for d in sorted(b.iterdir()):
+                if d.is_dir() and not d.is_symlink() and (d / "meta.json").exists():
+                    yield "econ", d
+
+
+def finish_row(row):
+    row["gh"] = gameplay_hash(row["sha"])
+    row["base_sha"] = merge_base(row["sha"])
+    row["base_gh"] = gameplay_hash(row["base_sha"]) if row["base_sha"] else None
+    row["buildid"] = game_buildid()
+    row["indexed_at"] = iso()
+    return row
+
+
+SAME_KEYS = ("sha", "years_reached", "status", "data", "nudges")
+
+
+def index_dirs(dirs, verbose=False):
+    """Index the given (source, dir) pairs; append rows that are new or changed. Returns the catalog."""
+    with runs_lock():
+        cat = load_catalog()
+        added = 0
+        for source, d in dirs:
+            try:
+                row = index_observer(d) if source == "observer" else index_econ(d)
+            except (OSError, RuntimeError) as e:
+                print(f"cwp-runs: cannot index {d}: {e}", file=sys.stderr)
+                continue
+            if row is None:
+                if verbose:
+                    print(f"  skip {d} (running, or no resolvable commit)")
+                continue
+            old = cat.get(row["outdir"])
+            if old and all(old.get(k) == row.get(k) for k in SAME_KEYS):
+                continue
+            if old and old.get("sha") == row["sha"] and old.get("gh"):
+                # Same commit: keep the hash from when the run was first indexed, so a later game update
+                # does not re-file runs played on the old build under the new build's hash.
+                row.update({k: old.get(k) for k in ("gh", "base_sha", "base_gh", "buildid")})
+                row["indexed_at"] = iso()
+            else:
+                finish_row(row)
+            append_catalog(row)
+            cat[row["outdir"]] = row
+            added += 1
+            if verbose:
+                print(f"  {row['status']:8} {row['years_reached']}  gh {row['gh']}  {row['run']}")
+        if verbose:
+            print(f"catalog: {len(cat)} runs ({added} new or changed)")
+        return cat
+
+
+# ---------------------------------------------------------------- matching requests to runs
+
+def sample_ok(row, until):
+    return row["status"] in OK_FOR_PREFIX and (row.get("years_reached") or 0) >= until
+
+
+def arm_runs(cat, gh, until):
+    return sorted((r for r in cat.values() if r.get("gh") == gh and sample_ok(r, until)), key=lambda r: r["outdir"])
+
+
+def run_started(row):
+    """When the run started, as an aware datetime (BUILD.txt 'started:' or the folder's mtime)."""
+    s = row.get("started")
+    if s:
+        for fmt in ("%Y-%m-%d %H:%M:%S %Z", "%Y-%m-%d %H:%M:%S"):
+            try:
+                return dt.datetime.strptime(s, fmt).astimezone()
+            except ValueError:
+                pass
+    try:
+        return dt.datetime.fromtimestamp(Path(row["outdir"]).stat().st_mtime).astimezone()
+    except OSError:
+        return None
+
+
+def is_ancestor(a, b):
+    return subprocess.run(["git", "-C", str(REPO), "merge-base", "--is-ancestor", a, b],
+                          capture_output=True).returncode == 0
+
+
+def tested_it(req, tested_sha):
+    """A run that merged `tested_sha` of the request's branch tested the request if that commit contains the
+    commit the request was made for (the branch may have moved on since; an older head does not count)."""
+    return tested_sha == req["sha"] or is_ancestor(req["sha"], tested_sha)
+
+
+def runs_including(cat, req):
+    """Observer runs (any status) that loaded this request's commit: the tree the run built contains it (a batch
+    that merged the branch at that commit or later, a run of CWP2 once the branch is in CWP2, a solo run of the
+    commit). Only observer runs count: they carry the error capture and dumps; econ_bench runs do not."""
+    out = []
+    for r in cat.values():
+        if r.get("source") != "observer" or not tested_it(req, r["sha"]):
+            continue
+        tested = next((m["tested_sha"] for m in r.get("members", []) if m["branch"] == req["branch"]), r["sha"])
+        out.append((r, tested))
+    return sorted(out, key=lambda x: x[0]["outdir"])
+
+
+def evaluate(req, cat):
+    """-> (served: bool, detail dict)."""
+    if req["kind"] == "measure":
+        t = arm_runs(cat, req["gh"], req["until"])
+        bgh = req.get("baseline_gh")
+        b = arm_runs(cat, bgh, req["until"]) if bgh else []
+        n = req["replicates"]
+        nb = req.get("replicates_baseline", n)
+        return len(t) >= n and len(b) >= nb, {"treatment": t, "baseline": b}
+    inc = runs_including(cat, req)
+    good = [(r, s) for r, s in inc if sample_ok(r, req["until"])
+            and (req["kind"] != "smoke" or r["status"] == "ok")]   # smoke needs the end-of-run error capture
+    created = parse_iso(req["created"]) - dt.timedelta(hours=12)   # a crash before the request isn't its attempt
+    bad = [(r, s) for r, s in inc if r["status"] in ("crash", "failed", "stalled")
+           and (run_started(r) or created) >= created]
+    return bool(good), {"served": good, "failed": bad}
+
+
+def resolve_request_sha(req):
+    """Unpinned requests follow their branch head until served."""
+    if req.get("pin"):
+        return req["sha"]
+    s = resolve(req["branch"])
+    return s or req["sha"]
+
+
+def attribution_excerpt(outdir, branch):
+    try:
+        text = (Path(outdir) / "attribution.txt").read_text()
+    except OSError:
+        return None
+    out, on = [], False
+    for line in text.splitlines():
+        if line.startswith("== "):
+            on = branch in [x.strip() for x in line[3:].split(":", 1)[0].split(",")]
+        if on:
+            out.append(line)
+    return "\n".join(out[:40]) if out else f"(no section for {branch}: no error lines attributed to it)"
+
+
+def write_result(req, served, detail):
+    lines = [f"# {req['id']}: {req['kind']} {req['branch']} to {req['until']}", "",
+             f"- state: **{'done' if served else req['state']}** (evaluated {iso()})",
+             f"- thread: {req['thread']}" + (f", session {req['session']}" if req.get("session") else ""),
+             f"- branch: {req['branch']} @ {req['sha'][:9]}" + (" (pinned)" if req.get("pin") else ""),
+             f"- gameplay hash: {req['gh']}" + (" (inert-only change: same as its base)" if req.get("inert_only") else "")]
+    if req.get("note"):
+        lines.append(f"- note: {req['note']}")
+    if req.get("rehash_note"):
+        lines.append(f"- caveat: {req['rehash_note']}")
+    lines.append("")
+    if req["kind"] == "measure":
+        for arm, gh in (("treatment", req["gh"]), ("baseline", req.get("baseline_gh"))):
+            rs = detail[arm]
+            lines.append(f"## {arm} arm (gh {gh}): {len(rs)} of {req['replicates']} runs reaching {req['until']}")
+            for r in rs:
+                lines.append(f"- {r['outdir']}  ({r['source']}, {r['sha'][:9]}, to {r['years_reached']}, {r['status']}"
+                             + (f", econ: {r['econ_dir']}" if r.get("econ_dir") else "") + ")")
+            lines.append("")
+        if req.get("baseline_note"):
+            lines += [f"Baseline caveat: {req['baseline_note']}", ""]
+        if req.get("underpowered"):
+            lines += ["Caveat: underpowered (fewer than 3 runs per arm); one AI run is noisy.", ""]
+        dirs = [r["econ_dir"] for arm in ("baseline", "treatment") for r in detail[arm] if r.get("econ_dir")]
+        if dirs:
+            lines += ["Compare (read every run of each arm side by side; never judge from one run):", "",
+                      f"    python3 {ECON / 'bin/compare.py'} " + " ".join(dirs), ""]
+    else:
+        lines.append(f"## Runs that tested it ({len(detail['served'])} reaching {req['until']})")
+        for r, tested in detail["served"]:
+            others = [m["branch"] for m in r.get("members", []) if m["tested_sha"] != tested and m["branch"]]
+            lines.append(f"- {r['outdir']}  (tested {tested[:9]}, to {r['years_reached']}, {r['status']})")
+            if others:
+                lines.append(f"  - gameplay co-tenants in this build: {', '.join(others)}")
+            ex = attribution_excerpt(r["outdir"], req["branch"])
+            if ex:
+                lines += ["  - error lines attributed to this branch:", "", "```", ex, "```"]
+            lines.append(f"  - dumps: {r['outdir']}/<date>.md; errors: errors_menu.txt, errors_end.txt")
+        if detail["failed"]:
+            lines += ["", "## Failed attempts (crash / stall)"]
+            for r, tested in detail["failed"]:
+                lines.append(f"- {r['outdir']}  ({r['status']}, tested {tested[:9]}, reached {r['years_reached']})")
+    p = RUNS / "results" / f"{req['id']}.md"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text("\n".join(lines) + "\n")
+    return p
+
+
+def reevaluate(cat, quiet=False):
+    """Check every pending request against the catalog; write results; return [(req, path)] newly served."""
+    newly = []
+    with runs_lock():
+        for req in load_requests():
+            if req["state"] not in ("pending", "held"):
+                continue
+            if req["state"] == "pending" and parse_iso(req["expires"]) < now():
+                req["state"] = "expired"
+                write_json(req_path(req["id"]), req)
+                continue
+            sha = resolve_request_sha(req)
+            updated = req["kind"] == "measure" and req.get("buildid", "pre-buildid") != game_buildid()
+            if sha != req["sha"] or updated:
+                if updated:
+                    req["rehash_note"] = (f"the game was updated (build {req.get('buildid')} -> {game_buildid()}); "
+                                          "only runs on the new build count"
+                                          + (" (the accepted proxy baseline keeps its old hash)"
+                                             if str(req.get("baseline") or "").startswith("accept:") else ""))
+                req["sha"], req["gh"], req["buildid"] = sha, gameplay_hash(sha), game_buildid()
+                if req["kind"] == "measure" and not str(req.get("baseline") or "").startswith("accept:"):
+                    fill_baseline(req)
+            served, detail = evaluate(req, cat)
+            failed_now = [r["outdir"] for r, _ in detail.get("failed", [])]
+            if served or failed_now != req.get("failed_runs", []):
+                path = write_result(req, served, detail)
+                if served:
+                    req["state"], req["served_at"] = "done", iso()
+                    newly.append((req, path))
+                elif failed_now:
+                    newly.append((req, path))   # tell the requester about the failed attempt
+                if served or failed_now:
+                    req["notify_pending"] = True   # cleared by `cwp-runs notify` (which `done` runs)
+                req["failed_runs"] = failed_now
+                req["result"] = str(path)
+            write_json(req_path(req["id"]), req)
+    if newly:
+        with open(RUNS / "notify.txt", "a") as f:
+            for req, path in newly:
+                f.write(f"{iso()}\t{req.get('session') or '-'}\t{req['thread']}\t{req['id']}\t{req['state']}\t{path}\n")
+    return newly
+
+
+def cmd_notify(a=None):
+    """Print every result not yet passed on to its requester, and mark it passed on."""
+    out = []
+    with runs_lock():
+        for req in load_requests():
+            if req.get("notify_pending"):
+                what = req["state"] if req["state"] == "done" else "a run including it FAILED"
+                out.append(f"notify {req.get('session') or '(no session; thread ' + req['thread'] + ')'}: "
+                           f"{req['id']} {what} -> {req.get('result')}")
+                if not (a and getattr(a, "peek", False)):
+                    req["notify_pending"] = False
+                    write_json(req_path(req["id"]), req)
+    print("\n".join(out) if out else "nothing to pass on")
+    return out
+
+
+# ---------------------------------------------------------------- requests
+
+def fill_baseline(req):
+    if req["kind"] != "measure":
+        return
+    b = req.get("baseline", "auto")
+    if b.startswith("accept:"):
+        _, gh, *why = b.split(":", 2)
+        req["baseline_gh"], req["baseline_sha"] = gh, None
+        req["baseline_note"] = f"proxy baseline accepted by {req['thread']}: {why[0] if why else '(no reason given)'}"
+        return
+    bsha = merge_base(req["sha"]) if b == "auto" else resolve(b)
+    if not bsha:
+        die(f"cannot resolve baseline {b!r}")
+    req["baseline_sha"], req["baseline_gh"] = bsha, gameplay_hash(bsha)
+
+
+def cmd_submit(a):
+    subprocess.run(["git", "-C", str(REPO), "fetch", "-q", "origin", BASE], capture_output=True, timeout=120)
+    if a.kind not in ("smoke", "observe", "measure"):
+        die("--kind must be smoke, observe or measure")
+    if not 1946 < a.until <= 2046:
+        die("--until is an in-game year (1947..2046)")
+    sha = resolve(a.branch)
+    if not sha:
+        die(f"{a.branch} is not a commit in {REPO} (commit your work; requests test commits, never dirty trees)")
+    measure = a.kind == "measure"
+    reps = a.replicates or (3 if measure else 1)
+    if measure and reps < 3 and not a.underpowered:
+        die("a measurement needs at least 3 runs per arm (AI runs vary); pass --underpowered to accept fewer")
+    if a.quick and (measure or a.until > START_YEAR + QUICK_MAX_YEARS):
+        die(f"--quick is for smoke/observe probes of at most {QUICK_MAX_YEARS} game years "
+            f"(--until {START_YEAR + QUICK_MAX_YEARS} or earlier); probes of {QUICK_YEARS} years or less go first anyway")
+    if not measure and a.pin:
+        die("--pin is for measure requests: a smoke/observe request rides the batch, which merges the branch head")
+    pin = measure if a.pin is None else a.pin
+    mb, files = changed_files(sha)
+    if mb is None:
+        die(f"{a.branch} shares no history with {BASE_REF}")
+    is_branch = resolve(f"refs/heads/{a.branch}") is not None
+    if not measure and not is_branch and files:
+        die(f"{a.branch} is not a local branch: smoke/observe requests ride the staging batch, which merges "
+            "local branches only (cwp-integrate build). Create a branch for it.")
+    if measure and files and all(is_inert(f) for f in files):
+        die("this branch changes no gameplay files, so both arms would be the same experiment; "
+            "submit a smoke request for its load errors instead")
+    rid = a.id or f"{re.sub(r'[^A-Za-z0-9_-]+', '-', a.thread)}-{now():%Y%m%d%H%M%S}"
+    req = {"id": rid, "thread": a.thread, "session": a.session, "kind": a.kind, "branch": a.branch,
+           "sha": sha, "pin": pin, "until": a.until, "replicates": reps,
+           "baseline": a.baseline if measure else None, "underpowered": bool(a.underpowered and reps < 3),
+           "yield_ok": a.yield_ok, "quick": bool(a.quick), "note": a.note, "state": "pending", "created": iso(),
+           "expires": iso(now() + dt.timedelta(hours=a.hours or (168 if measure else 48))),
+           "base_sha": mb, "gh": gameplay_hash(sha), "buildid": game_buildid(), "changed": len(files),
+           "gameplay_files": [f for f in files if not is_inert(f)][:200],
+           "inert_only": all(is_inert(f) for f in files)}
+    fill_baseline(req)
+    if measure and req["baseline_gh"] == req["gh"]:
+        die("treatment and baseline have the same gameplay hash (the branch changes nothing the simulation reads, "
+            "or is already in the baseline): there is nothing to measure")
+    if measure and req.get("baseline_sha") is None:   # proxy baseline: only existing runs can serve it
+        have = len(arm_runs(index_dirs(candidate_dirs()), req["baseline_gh"], a.until))
+        if have == 0 or (have < reps and not a.underpowered):
+            die(f"only {have} run(s) of proxy baseline {req['baseline_gh']} reach {a.until}; "
+                f"{reps} needed (cwp-runs cannot schedule a proxy build), or pass --underpowered (at least 1)")
+        req["replicates_baseline"] = min(reps, have)
+        if have < reps:
+            req["underpowered"] = True
+    if files and all(is_nogame(f) for f in files):
+        print("note: this branch only touches files the game never reads (tools/docs); it needs no game run.")
+    if not files:
+        print(f"note: {a.branch} is already contained in {BASE_REF}; any finished observer run of {BASE} "
+              "since it landed has loaded it.")
+    (RUNS / "requests").mkdir(parents=True, exist_ok=True)
+    with runs_lock():
+        try:   # O_EXCL: two submits in the same second must not overwrite each other
+            fd = os.open(req_path(rid), os.O_WRONLY | os.O_CREAT | os.O_EXCL)
+            os.close(fd)
+        except FileExistsError:
+            die(f"request {rid} already exists (pass --id, or retry in a second)")
+        write_json(req_path(rid), req)
+    cat = index_dirs(candidate_dirs())
+    served, detail = evaluate(req, cat)
+    print(f"request {rid}: {a.kind} {a.branch} @ {sha[:9]} to {a.until}, gh {req['gh']}, "
+          f"{len(files)} changed files ({len(req['gameplay_files'])} gameplay)")
+    if measure:
+        print(f"  treatment runs already in the catalog: {len(detail['treatment'])}/{reps}")
+        print(f"  baseline (gh {req['baseline_gh']}) runs already in the catalog: "
+              f"{len(detail['baseline'])}/{req.get('replicates_baseline', reps)}")
+    reevaluate(cat)
+    req = load_request(rid)
+    if req["state"] == "done":
+        print(f"already served by existing runs: {req['result']}")
+    else:
+        print("queued; see `cwp-runs plan`. Wake yourself with a background `cwp-runs wait " + rid + "`.")
+
+
+def cmd_baselines(a):
+    sha = resolve(a.ref) or die(f"cannot resolve {a.ref}")
+    mb = merge_base(sha) or die(f"no merge-base with {BASE_REF}")
+    cat = index_dirs(candidate_dirs())
+    gh = gameplay_hash(mb)
+    print(f"base of {a.ref}: {mb[:9]}, gameplay hash {gh}")
+    rows = arm_runs(cat, gh, a.until or 1947)
+    for r in rows:
+        print(f"  {r['status']:8} to {r['years_reached']}  {r['source']:10} {r['outdir']}"
+              + (f"  econ: {r['econ_dir']}" if r.get("econ_dir") else ""))
+    print(f"{len(rows)} run(s)" + (f" reaching {a.until}" if a.until else ""))
+
+
+def cmd_runs(a):
+    cat = index_dirs(candidate_dirs())
+    sha = resolve(a.sha) if a.sha else None
+    for r in sorted(cat.values(), key=lambda r: r["outdir"]):
+        if a.gh and r.get("gh") != a.gh:
+            continue
+        if sha and r["sha"] != sha and not any(m["tested_sha"] == sha for m in r["members"]):
+            continue
+        if a.branch and not any(m["branch"] == a.branch for m in r["members"]):
+            continue
+        print(f"{r['gh']}  {r['status']:8} {str(r['years_reached']):>4}  {r['kind']:5} {r['sha'][:9]}  {r['outdir']}")
+
+
+def cmd_catalog(a):
+    index_dirs(candidate_dirs(), verbose=True)
+    reevaluate(load_catalog())
+
+
+def snapshot_integration(row):
+    """Keep the build's .integration state, so `cwp-integrate land` can land this run's tested shas later
+    even after the integration tree has been rebuilt for another round."""
+    tree = Path(row.get("tree") or "")
+    st = tree / ".integration"
+    if row["kind"] != "batch" or not st.is_dir():
+        return None
+    try:
+        tree_head = subprocess.run(["git", "-C", str(tree), "rev-parse", "HEAD"], capture_output=True,
+                                   text=True).stdout.strip()
+    except OSError:
+        return None
+    if tree_head != row["sha"]:
+        return None   # the tree has been rebuilt since; its state belongs to a newer round
+    dst = RUNS / "builds" / row["run"] / ".integration"
+    if not dst.exists():
+        shutil.copytree(st, dst)
+    return dst.parent
+
+
+def ingest(row):
+    if row["source"] != "observer" or "econ" in row["data"] or "saves" not in row["data"]:
+        return
+    if not (ECON_BENCH / "tools/econ_bench").is_dir():
+        print(f"cwp-runs: no econ_bench at {ECON_BENCH}; skipping econ ingest", file=sys.stderr)
+        return
+    out = ECON / f"obs-{row['run']}"
+    print(f"ingesting econ data from {row['outdir']}/saves -> {out}/run-001 ...")
+    r = subprocess.run([sys.executable, "-m", "tools.econ_bench", "ingest", f"{row['outdir']}/saves",
+                        "--out", str(out), "--name", "run-001"], cwd=ECON_BENCH, capture_output=True, text=True)
+    if r.returncode:
+        print(f"cwp-runs: ingest failed: {r.stderr.strip()[-400:]}", file=sys.stderr)
+
+
+def cmd_done(a):
+    if a.outdirs:
+        dirs = []
+        for o in a.outdirs:
+            p = Path(o).expanduser().resolve()
+            if (p / "meta.json").exists():
+                dirs.append(("econ", p))
+            elif (p / "BUILD.txt").exists() or p.parent == OBSERVER.resolve():
+                dirs.append(("observer", p))
+            else:
+                die(f"{p} is neither a cwp-observe folder nor an econ_bench run-NNN folder")
+    else:
+        dirs = list(candidate_dirs())
+        a.no_ingest = True   # re-index only: ingest is for the runs you name
+    cat = index_dirs(dirs)
+    for _, d in dirs:
+        row = cat.get(str(d))
+        if not row:
+            print(f"cwp-runs: {d} is not finished (or has no resolvable commit); not indexed", file=sys.stderr)
+            continue
+        quick_build = any(rec.get("step", {}).get("quick") and rec["outdir"] == str(d) for rec in all_started())
+        snap = None if quick_build else snapshot_integration(row)
+        if quick_build and row.get("kind") == "batch":
+            print("quick build: not a staging round, so its build state is not kept for landing")
+        if snap:
+            print(f"build state kept: CWP_INTEGRATION={snap} cwp-integrate land <items>")
+        if not a.no_ingest:
+            ingest(row)
+    cat = index_dirs(dirs)
+    reevaluate(cat)
+    with runs_lock():
+        clear_started(cat)
+    cmd_notify()
+
+
+def cmd_wait(a):
+    deadline = time.time() + a.timeout
+    seen = set(load_request(a.id).get("failed_runs") or [])   # failures already known when we started
+    while True:
+        req = load_request(a.id)
+        if req["state"] == "done":
+            print(f"{a.id}: done -> {req['result']}")
+            return 0
+        if req["state"] in ("cancelled", "expired"):
+            print(f"{a.id}: {req['state']}")
+            return 1
+        if a.year:
+            for d in in_progress_observer_dirs():
+                row = index_observer(d, running_ok=True)
+                if not row or (run_started(row) or now()) < parse_iso(req["created"]) - dt.timedelta(hours=12):
+                    continue
+                row["gh"] = gameplay_hash(row["sha"])
+                if runs_including({row["outdir"]: row}, req) and (row["years_reached"] or 0) >= a.year:
+                    print(f"{a.id}: running build {d} has reached {row['years_reached']} (data so far in {d})")
+                    return 0
+        cat = index_dirs(candidate_dirs())
+        reevaluate(cat, quiet=True)
+        req = load_request(a.id)
+        if req["state"] == "done":
+            continue
+        if set(req.get("failed_runs") or []) - seen:
+            print(f"{a.id}: a run including it failed -> {req['result']}")
+            return 3
+        if time.time() > deadline:
+            print(f"{a.id}: still {req['state']} (timeout; run wait again)")
+            return 2
+        time.sleep(max(1, min(60, deadline - time.time())))
+
+
+def in_progress_observer_dirs():
+    """Observer folders with no end marker whose saves are still being written (live runs only)."""
+    if not OBSERVER.is_dir():
+        return []
+    out = []
+    for d in OBSERVER.iterdir():
+        if d.is_dir() and not any((d / f).exists() for f in ("errors_end.txt", "CRASH", "FAILED", "DISKFULL")):
+            newest = max((p.stat().st_mtime for p in [d, d / "saves", d / "progress.txt"] if p.exists()), default=0)
+            if time.time() - newest < RUNNING_GRACE:
+                out.append(d)
+    return out
+
+
+def set_state(rid, state, only_from=None, **extra):
+    with runs_lock():
+        req = load_request(rid)
+        if only_from and req["state"] not in only_from:
+            die(f"{rid} is {req['state']}; this only applies to {'/'.join(only_from)} requests")
+        req["state"] = state
+        req.update(extra)
+        write_json(req_path(rid), req)
+    print(f"{rid}: {state}")
+
+
+def cmd_show(a):
+    if a.id:
+        req = load_request(a.id)
+        print(json.dumps(req, indent=1))
+        if req.get("result"):
+            print(Path(req["result"]).read_text())
+        return
+    cat = load_catalog()
+    for req in load_requests():
+        if req["state"] in ("cancelled", "expired") and not a.all:
+            continue
+        served, d = evaluate(req, cat)
+        prog = (f"t {len(d['treatment'])}/{req['replicates']} b {len(d['baseline'])}/"
+                f"{req.get('replicates_baseline', req['replicates'])}"
+                if req["kind"] == "measure" else f"{len(d['served'])} run(s)")
+        q = " quick" if is_quick(req) else ""
+        print(f"{req['state']:9} {req['kind']:8} {req['until']}  {req['id']:32} {req['branch']:34} {prog}{q}")
+
+
+# ---------------------------------------------------------------- planning
+
+def all_started():
+    d = RUNS / "started"
+    out = []
+    for f in sorted(d.glob("*.json")) if d.exists() else []:
+        try:
+            out.append(json.loads(f.read_text()))
+        except ValueError:
+            pass
+    return out
+
+
+def load_started():
+    """Steps handed out by `cwp-runs start` whose run has not been catalogued yet (in flight)."""
+    d = RUNS / "started"
+    out = []
+    for f in sorted(d.glob("*.json")) if d.exists() else []:
+        try:
+            rec = json.loads(f.read_text())
+        except ValueError:
+            continue
+        if not rec.get("closed"):
+            out.append(rec)
+    return out
+
+
+def clear_started(cat):
+    """Close in-flight records whose run is now in the catalog, or that are older than 36 h (never run).
+    Caller holds runs_lock."""
+    for rec in load_started():
+        rows = [r for o, r in cat.items() if o == rec["outdir"] or o.startswith(rec["outdir"] + "/")]
+        # An econ_bench session that yielded the game is catalogued as partial but its job resumes it:
+        # only a finished row closes the record.
+        done = any(r["status"] != "partial" or r["source"] == "observer" for r in rows)
+        age = now() - parse_iso(rec["started_at"])
+        stale = age > dt.timedelta(hours=36)
+        # Its job has ended: no output after 6 h (time to launch the printed command), or a partial row
+        # (an econ session that yielded) whose job is no longer there to resume it.
+        gone = (not job_active(rec["token"]) and
+                ((not rows and not Path(rec["outdir"]).exists() and age > dt.timedelta(hours=6))
+                 or (rows and age > dt.timedelta(minutes=30))))
+        if done or stale or gone:
+            rec["closed"] = ("catalogued" if done else "stale (36 h without a finished run)" if stale
+                             else "its job is not running and produced no output folder")
+            write_json(RUNS / "started" / f"{rec['token']}.json", rec)
+
+
+def job_active(token):
+    """Is the systemd --user unit of `cwp-vic job runs-<token>` loaded and not finished?"""
+    try:
+        r = subprocess.run(["systemctl", "--user", "is-active", f"cwp-job-runs-{token}"], capture_output=True,
+                           text=True, timeout=10)
+    except (OSError, subprocess.TimeoutExpired):
+        return True   # can't tell: assume it is
+    return r.stdout.strip() in ("active", "activating", "reloading")
+
+
+def plan(cat, inflight=None):
+    """Deterministic: the ordered list of runs that would serve every pending request and the staging queue,
+    given the catalog and the steps already started (in flight). Reads only; changes nothing."""
+    inflight = load_started() if inflight is None else inflight
+    reqs = [r for r in load_requests() if r["state"] == "pending" and parse_iso(r["expires"]) >= now()]
+    staging = staging_items()
+    steps = []
+    fly_batches = [rec for rec in inflight if rec["step"]["type"] == "batch"]
+    planned = {}   # gh -> arm steps already planned; another request needing the same build reuses them
+
+    counted = {o for o, r in cat.items() if sample_ok(r, 0)}
+
+    quick_end = START_YEAR + QUICK_YEARS
+
+    def flying(gh, until, quick=None):
+        # A long run in flight doesn't count for a probe: the probe would wait for it.
+        quick = until <= quick_end if quick is None else quick
+        limit = START_YEAR + QUICK_MAX_YEARS
+        return sum(1 for rec in inflight if rec["step"]["type"] in ("arm", "solo") and rec["step"].get("gh") == gh
+                   and rec["step"]["until"] >= until
+                   and (not quick or rec["step"]["until"] <= limit)
+                   and not any(o == rec["outdir"] or o.startswith(rec["outdir"] + "/")
+                               for o in counted if (cat[o].get("years_reached") or 0) >= until))
+
+    def arm_steps(req):
+        served, d = evaluate(req, cat)
+        if served:
+            return []
+        n = req["replicates"]
+        done_t = len(d["treatment"]) + flying(req["gh"], req["until"])
+        done_b = len(d["baseline"]) + flying(req.get("baseline_gh"), req["until"])
+        need_t, need_b = max(0, n - done_t), max(0, n - done_b)
+        if req.get("baseline_sha") is None:
+            need_b = 0   # proxy baseline: only existing runs serve it (submit checked there are enough)
+        econ = req["thread"].startswith("econ")
+        out = []
+        while need_t or need_b:   # interleave arms: whichever has fewer runs goes next, baseline on ties
+            side = "baseline" if need_b and (done_b <= done_t or not need_t) else "treatment"
+            gh = req["baseline_gh"] if side == "baseline" else req["gh"]
+            sha = req["baseline_sha"] if side == "baseline" else req["sha"]
+            # One run of a build is a sample for every request that needs that build. A cwp-observe run gives
+            # every area its data (econ by ingest), so anyone may reuse and extend it. An econ_bench run (econ
+            # priority, yields to others) is reused by a non-econ request only if that doesn't extend it; it
+            # then runs as cwp-observe so the other thread gets its dumps.
+            def fits(st):
+                if req["id"] in {x for x, _ in st["serves"]}:
+                    return False
+                # A quick probe (<= QUICK_YEARS) never rides a long run, and never stretches into one.
+                if (req["until"] <= START_YEAR + QUICK_YEARS) != (st["until"] <= START_YEAR + QUICK_YEARS):
+                    return False
+                return not st["econ_only"] or econ or req["until"] <= st["until"]
+            reuse = next((st for st in planned.get(gh, []) if fits(st)), None)
+            if reuse:
+                reuse["until"] = max(reuse["until"], req["until"])
+                reuse["econ_only"] = reuse["econ_only"] and econ
+                reuse["serves"].append((req["id"], side))
+            else:
+                st = {"type": "arm", "gh": gh, "sha": sha, "until": req["until"], "serves": [(req["id"], side)],
+                      "thread": req["thread"], "econ_only": econ,
+                      "econ_priority": econ and not req.get("yield_ok")}
+                planned.setdefault(gh, []).append(st)
+                out.append(st)
+            if side == "baseline":
+                need_b, done_b = need_b - 1, done_b + 1
+            else:
+                need_t, done_t = need_t - 1, done_t + 1
+        return out
+
+    measures = sorted((r for r in reqs if r["kind"] == "measure"), key=lambda r: r["created"])
+    econ_first = [r for r in measures if r["thread"].startswith("econ") and not r.get("yield_ok")]
+    for r in econ_first:
+        steps += arm_steps(r)
+
+    # The batch: the staging queue plus every pending smoke/observe request that fits under the cap,
+    # minus what a batch already in flight covers.
+    def in_flight_batch(branch, created=None, full_only=False):
+        return any(branch in rec["step"]["items"] and (created is None or parse_iso(created) <= parse_iso(rec["started_at"]))
+                   and not (full_only and rec["step"].get("quick")) for rec in fly_batches)
+
+    riders = [r for r in sorted(reqs, key=lambda r: r["created"]) if r["kind"] in ("smoke", "observe")
+              and not evaluate(r, cat)[0] and not in_flight_batch(r["branch"], r["created"])]
+    # Quick probes (<= QUICK_YEARS game years, or --quick) don't wait behind long runs. With the integration
+    # tree free they share a short batch of their own, which runs first; with a batch in flight each runs
+    # solo (a detached tree of its branch head), since the tree is busy.
+    quick = [r for r in riders if is_quick(r) and resolve(f"refs/heads/{r['branch']}")]
+    riders = [r for r in riders if r not in quick]
+    quick = [r for r in quick if not flying(r["gh"], r["until"], quick=True)]   # already running solo
+    staging_due = [br for br, _ in staging if not in_flight_batch(br, full_only=True)]
+    quick_steps = []
+    # The integration tree goes to a quick batch only when no full batch is due (no staging branch or other
+    # rider waiting), so probes never hold back a staging round and a quick build never holds a staging branch.
+    if quick and not fly_batches and not staging_due and not [r for r in riders if r["until"] <= BATCH_CAP
+                                                              and resolve(f"refs/heads/{r['branch']}")]:
+        qitems = list(dict.fromkeys(r["branch"] for r in quick))
+        quick_steps.append({"type": "batch", "items": qitems, "until": max(r["until"] for r in quick),
+                            "serves": [r["id"] for r in quick], "staging": [], "quick": True})
+    else:
+        for r in quick:
+            quick_steps.append({"type": "solo", "serves": [(r["id"], "solo")], "thread": r["thread"],
+                                "sha": resolve_request_sha(r), "gh": r["gh"], "branch": r["branch"],
+                                "until": r["until"], "econ_only": False, "econ_priority": False, "quick": True})
+    fit = [r for r in riders if r["until"] <= BATCH_CAP]
+    items, seen = [], set()
+    for br, _ in staging:   # a quick batch is no staging round: its staging branches stay in the full batch
+        if br not in seen and not in_flight_batch(br, full_only=True):
+            items.append(br)
+            seen.add(br)
+    serves = []
+    for r in fit:
+        if not resolve(f"refs/heads/{r['branch']}"):
+            continue   # not a local branch (submit refuses these; an old request may still have one)
+        if r["branch"] not in seen:
+            items.append(r["branch"])
+            seen.add(r["branch"])
+        serves.append(r["id"])
+    if items and fly_batches:   # one integration tree: the next batch waits until this one is catalogued
+        steps.append({"type": "wait-batch", "items": items, "serves": serves})
+    elif items:
+        end = max([STAGING_UNTIL] * bool(set(items) & {b for b, _ in staging}) + [r["until"] for r in fit if r["id"] in serves])
+        steps.append({"type": "batch", "items": items, "until": min(end, BATCH_CAP), "serves": serves,
+                      "staging": [b for b, _ in staging]})
+    for r in riders:
+        if r["until"] > BATCH_CAP:   # long observe: its own run (solo, its branch only)
+            if flying(r["gh"], r["until"]):
+                continue
+            steps.append({"type": "solo", "serves": [(r["id"], "solo")], "thread": r["thread"],
+                          "sha": resolve_request_sha(r), "gh": r["gh"], "branch": r["branch"], "until": r["until"],
+                          "econ_only": False, "econ_priority": False})
+    for r in measures:
+        if r not in econ_first:
+            steps += arm_steps(r)
+    # Quick steps go first: the quick batch or solos, then measure arms no longer than QUICK_YEARS,
+    # in the order they were planned (econ first, then by age). Everything else keeps its order.
+    for st in steps:
+        if st["type"] == "arm" and st["until"] <= START_YEAR + QUICK_YEARS:
+            st["quick"] = True
+    return quick_steps + [st for st in steps if st.get("quick")] + [st for st in steps if not st.get("quick")]
+
+
+def is_quick(req):
+    return bool(req.get("quick")) or req["until"] <= START_YEAR + QUICK_YEARS
+
+
+def step_outdir(st, token):
+    if st["type"] == "arm" and st["econ_only"]:
+        return str(ECON / f"runs-{st['sha'][:9]}-{token}" / "run-001")
+    return str(OBSERVER / f"{now():%Y%m%d-%H%M}-{token}")
+
+
+def step_commands(st, token, outdir):
+    """Shell commands for the staging thread. Each run gets its own output folder, so replicates never collide."""
+    job = f"runs-{token}"
+    if st["type"] == "batch":
+        return [f"cwp-integrate build {' '.join(st['items'])}   # explicit items only (a bare build adds open PRs)",
+                f"CWP_AGENT=observer cwp-vic job {job} -- cwp-observe {INTEGRATION} {st['until']} {outdir}",
+                f"cwp-runs done {outdir}   # when the job has finished"]
+    wt = FORGE / "worktrees" / f"runs-{st['sha'][:9]}"
+    cmds = [f"[ -d {wt} ] || git -C {REPO} worktree add --detach {wt} {st['sha']}"]
+    if st["type"] == "arm" and st["econ_only"]:
+        cmds.append(f"cd {ECON_BENCH} && CWP_AGENT=econ cwp-vic job {job} -- python3 -m tools.econ_bench run "
+                    f"--worktree {wt} --runs 1 --end-year {st['until']} --out {Path(outdir).parent}")
+    else:   # cwp-observe: dumps for every area; `cwp-runs done` adds the econ data by ingest
+        cmds.append(f"CWP_AGENT=observer cwp-vic job {job} -- cwp-observe {wt} {st['until']} {outdir}")
+    cmds.append(f"cwp-runs done {outdir}   # when the job has finished")
+    return cmds
+
+
+def describe(i, st):
+    q = " [quick]" if st.get("quick") else ""
+    if st["type"] == "wait-batch":
+        return [f"{i}. NEXT BATCH (after the batch in flight is done; one integration tree): " + ", ".join(st["items"])]
+    if st["type"] == "batch":
+        lines = [f"{i}. BATCH{q} to {st['until']}: {BASE} + {len(st['items'])} branch(es)"]
+        lines += [f"     {b}" + ("   [staging]" if b in st["staging"] else "") for b in st["items"]]
+        if st["serves"]:
+            lines.append(f"   serves requests: {', '.join(st['serves'])}")
+        return lines
+    who = ", ".join(f"{side} of {rid}" for rid, side in st["serves"])
+    kind = "SOLO observe" if st["type"] == "solo" else "ARM"
+    runner = "econ_bench" if st["econ_only"] else "cwp-observe"
+    return [f"{i}. {kind}{q} {st['sha'][:9]} (gh {st['gh']}) to {st['until']} via {runner}"
+            f"{' [econ priority]' if st['econ_priority'] else ''}: {who}"]
+
+
+def fresh_plan():
+    cat = index_dirs(candidate_dirs())
+    reevaluate(cat, quiet=True)
+    cat = load_catalog()
+    with runs_lock():
+        clear_started(cat)
+    return cat, plan(cat)
+
+
+def cmd_plan(a):
+    cat, steps = fresh_plan()
+    inflight = load_started()
+    if a.json:
+        print(json.dumps({"in_flight": inflight, "steps": steps}, indent=1))
+        return
+    if free_gb() < MIN_FREE_GB:
+        print(f"WARNING: only {free_gb():.1f} GB free on the Forge disk; `start` refuses below {MIN_FREE_GB:g} GB\n")
+    for rec in inflight:
+        print(f"in flight since {rec['started_at']}: {rec['token']} -> {rec['outdir']}")
+        for line in describe("-", rec["step"]):
+            print("   " + line)
+    if not steps:
+        print("nothing (more) to run: no unserved requests and the staging queue is covered")
+        return
+    for i, st in enumerate(steps, 1):
+        print("\n".join(describe(i, st)))
+    print("\nStart a step with `cwp-runs start <n>`: it records the step as in flight (so the next plan doesn't"
+          " book it again) and prints the commands.")
+
+
+def cmd_start(a):
+    # A separate lock file (runs_lock is taken inside fresh_plan): two starts can't plan and record at once.
+    with open(RUNS / ".start.lock", "w") as lf:
+        fcntl.flock(lf, fcntl.LOCK_EX)
+        return start_locked(a)
+
+
+MIN_FREE_GB = float(os.environ.get("CWP_RUNS_MIN_FREE_GB", "20"))   # an observer run writes 1-3 GB of saves and dumps
+
+
+def free_gb(path=os.path.expanduser("~/forge")):
+    return shutil.disk_usage(path).free / 1e9
+
+
+def start_locked(a):
+    if free_gb() < MIN_FREE_GB:
+        die(f"only {free_gb():.1f} GB free on the Forge disk (need {MIN_FREE_GB:g}; CWP_RUNS_MIN_FREE_GB): "
+            "free space first (landed, clean worktrees; caches), never by deleting run outputs")
+    cat, steps = fresh_plan()
+    if not 1 <= a.step <= len(steps):
+        die(f"no step {a.step} in the current plan ({len(steps)} steps)")
+    st = steps[a.step - 1]
+    if st["type"] == "wait-batch":
+        die("that batch waits for the batch in flight (one integration tree); `cwp-runs done` that one first")
+    tag = st["sha"][:9] if st.get("sha") else "batch"
+    token = f"{now():%m%d%H%M%S}-{tag}-{os.urandom(2).hex()}"
+    outdir = step_outdir(st, token)
+    rec = {"token": token, "started_at": iso(), "outdir": outdir, "step": st}
+    (RUNS / "started").mkdir(parents=True, exist_ok=True)
+    with runs_lock():
+        fd = os.open(RUNS / "started" / f"{token}.json", os.O_WRONLY | os.O_CREAT | os.O_EXCL)
+        os.close(fd)
+        write_json(RUNS / "started" / f"{token}.json", rec)
+        if st["type"] == "batch":
+            (RUNS / "batches").mkdir(parents=True, exist_ok=True)
+            (RUNS / "batches" / f"{token}.items").write_text("\n".join(st["items"]) + "\n")
+    print("\n".join(describe(a.step, st)))
+    print(f"recorded as in flight: {token} (output {outdir})\nrun:")
+    for c in step_commands(st, token, outdir):
+        print(f"  {c}")
+    return 0
+
+
+# ---------------------------------------------------------------- main
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(prog="cwp-runs", description=__doc__.split("\n\n")[0])
+    sub = ap.add_subparsers(dest="cmd")
+    s = sub.add_parser("submit")
+    s.add_argument("--thread", required=True)
+    s.add_argument("--kind", required=True)
+    s.add_argument("--branch", required=True, help="local branch or sha")
+    s.add_argument("--until", required=True, type=int, help="in-game year the data must reach")
+    s.add_argument("--replicates", type=int)
+    s.add_argument("--baseline", default="auto", help="measure: auto (merge-base with CWP2), a sha, or accept:<GH>:<why>")
+    s.add_argument("--session", help="session id the result should be sent to")
+    s.add_argument("--note")
+    s.add_argument("--id")
+    s.add_argument("--pin", dest="pin", action="store_true", default=None)
+    s.add_argument("--no-pin", dest="pin", action="store_false")
+    s.add_argument("--underpowered", action="store_true")
+    s.add_argument("--quick", action="store_true",
+                   help=f"smoke/observe up to {QUICK_MAX_YEARS} game years: run ahead of long runs (a short probe)")
+    s.add_argument("--yield-ok", action="store_true", help="econ measure only: don't jump ahead of the staging batch")
+    s.add_argument("--hours", type=float, help="expiry (default 48 h, measure 7 days)")
+    b = sub.add_parser("baselines")
+    b.add_argument("ref")
+    b.add_argument("--until", type=int)
+    r = sub.add_parser("runs")
+    r.add_argument("--gh")
+    r.add_argument("--sha")
+    r.add_argument("--branch")
+    p = sub.add_parser("plan")
+    p.add_argument("--json", action="store_true")
+    d = sub.add_parser("done")
+    d.add_argument("outdirs", nargs="*")
+    d.add_argument("--no-ingest", action="store_true")
+    c = sub.add_parser("catalog")
+    c.add_argument("--backfill", action="store_true", help="(same as no flag: indexing is always idempotent)")
+    w = sub.add_parser("wait")
+    w.add_argument("id")
+    w.add_argument("--year", type=int, help="return as soon as a running build with this branch reaches this year")
+    w.add_argument("--timeout", type=float, default=6900)
+    sh = sub.add_parser("show")
+    sh.add_argument("id", nargs="?")
+    sh.add_argument("--all", action="store_true")
+    for name in ("cancel", "hold", "release"):
+        x = sub.add_parser(name)
+        x.add_argument("id")
+    rn = sub.add_parser("renew")
+    rn.add_argument("id")
+    rn.add_argument("--hours", type=float, default=48)
+    nt = sub.add_parser("notify")
+    nt.add_argument("--peek", action="store_true", help="print without marking them passed on")
+    stt = sub.add_parser("start")
+    stt.add_argument("step", type=int, help="step number from `cwp-runs plan`")
+    us = sub.add_parser("unstart")
+    us.add_argument("token", help="the in-flight token `cwp-runs plan` shows")
+    g = sub.add_parser("gh")
+    g.add_argument("ref")
+    a = ap.parse_args(argv)
+    if a.cmd is None:
+        print(__doc__)
+        return 0
+    RUNS.mkdir(parents=True, exist_ok=True)
+    if a.cmd == "submit":
+        cmd_submit(a)
+    elif a.cmd == "baselines":
+        cmd_baselines(a)
+    elif a.cmd == "runs":
+        cmd_runs(a)
+    elif a.cmd == "plan":
+        cmd_plan(a)
+    elif a.cmd == "done":
+        cmd_done(a)
+    elif a.cmd == "catalog":
+        cmd_catalog(a)
+    elif a.cmd == "wait":
+        return cmd_wait(a)
+    elif a.cmd == "show":
+        cmd_show(a)
+    elif a.cmd == "cancel":
+        set_state(a.id, "cancelled")
+    elif a.cmd == "hold":
+        set_state(a.id, "held")
+    elif a.cmd == "release":
+        set_state(a.id, "pending", only_from=("held",))
+    elif a.cmd == "renew":
+        set_state(a.id, "pending", only_from=("pending", "expired"), expires=iso(now() + dt.timedelta(hours=a.hours)))
+    elif a.cmd == "notify":
+        cmd_notify(a)
+    elif a.cmd == "start":
+        return cmd_start(a)
+    elif a.cmd == "unstart":
+        if not re.fullmatch(r"[0-9a-z-]+", a.token):
+            die("a token looks like 1120142117-695c666fc-81b5 (see cwp-runs plan)")
+        f = RUNS / "started" / f"{a.token}.json"
+        if not f.exists():
+            die(f"no started step {a.token} (cwp-runs plan lists the ones in flight)")
+        with runs_lock():
+            rec = json.loads(f.read_text())
+            rec["closed"] = "unstarted by hand"
+            write_json(f, rec)
+        print(f"{a.token}: no longer in flight; the next plan books it again if it is still needed")
+    elif a.cmd == "gh":
+        sha = resolve(a.ref) or die(f"cannot resolve {a.ref}")
+        print(gameplay_hash(sha))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

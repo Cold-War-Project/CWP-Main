@@ -6,9 +6,10 @@ Run from the mod root (stdlib only):
   python3 -m tools.econ_bench ingest <dir of .v3 saves> [--out DIR]   # e.g. a cwp-observe run's saves/
   python3 -m tools.econ_bench extract <save.v3>                       # one save as JSON on stdout
   python3 -m tools.econ_bench report <out dir>                        # aggregate, compare, chart
+  python3 -m tools.econ_bench summary <out dir> <findings.md>         # one-page HTML + PNG for sharing
 
 Output goes to ~/forge/econ-runs/<date>-<sha>/ by default: run-NNN/<date>.json per sample, then
-REPORT.md, report.html (and report.png when headless Firefox is available), aggregate.json.
+REPORT.md, report.html and aggregate.json; `summary` adds SUMMARY.html and SUMMARY.png.
 See docs/agents/areas/economy-benchmarks.md.
 """
 import argparse
@@ -52,10 +53,16 @@ def main(argv=None):
     e.add_argument("save")
     p = sub.add_parser("report")
     p.add_argument("out")
+    sm = sub.add_parser("summary", help="one-page HTML/PNG: your findings Markdown plus headline charts")
+    sm.add_argument("out")
+    sm.add_argument("findings")
     a = ap.parse_args(argv)
 
     if a.cmd == "extract":
         json.dump(extract(a.save, pm_tags=PM_TAGS), sys.stdout, indent=1)
+    elif a.cmd == "summary":
+        from . import summary
+        print(summary.build(Path(a.out).expanduser(), Path(a.findings).expanduser()))
     elif a.cmd == "report":
         print(report.build(Path(a.out).expanduser()))
     elif a.cmd == "ingest":

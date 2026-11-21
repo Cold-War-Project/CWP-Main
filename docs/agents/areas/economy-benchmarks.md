@@ -115,11 +115,14 @@ python3 -m tools.econ_bench run --worktree ~/forge/worktrees/integration --runs 
 python3 -m tools.econ_bench ingest ~/forge/observer/<run>/saves   # reuse a cwp-observe run's saves
 python3 -m tools.econ_bench report ~/forge/econ-runs/<date>-<sha>
 python3 -m tools.econ_bench extract <save.v3>                      # one save as JSON
+python3 -m tools.econ_bench summary <out dir> <findings.md>        # one page for the team: findings + headline charts, HTML and PNG
 ```
 
 - `run` takes the `cwp-vic` lock at normal priority (never `--priority`), starts a new game, types `observe`, runs at speed 5, and once per in-game year copies the newest autosave, extracts it and deletes the copy. It ends at the end year, on a crash, before the lock's two-hour hold limit, or **as soon as another thread queues for the game**, releasing the lock. `--when-idle` waits for a free, empty queue before each run. One game at a time.
 - Output: `~/forge/econ-runs/<date>-<sha>/run-NNN/<date>.json`, then `REPORT.md`, `report.html` (SVG small multiples: median, p25 to p75 spread across runs, historical range) and `aggregate.json`.
 - `REPORT.md` lists the points off the historical range, the building types behind each GDP miss (value added compared with the benchmark ratio times the USA's), money-losing producing buildings per great power, production methods in use for the USA and USSR's biggest buildings, and debt against the credit limit.
+- Several build folders can be combined by symlinking their `run-*` folders into one directory and running `report` on it. Runs that stop at 1956 count only for the early years.
+- Snap Firefox (the PNG) can only write under the home folder, so keep output in `~/forge/econ-runs`.
 - Saves must be plain text (debug mode, which `cwp-vic launch` uses). Extraction takes a few seconds per save.
 - A run that yields or hits the time limit stops early; the report counts how many runs reach each year (`n`), so short runs only weigh on the early years. Resuming a run from its last save is not built yet.
 

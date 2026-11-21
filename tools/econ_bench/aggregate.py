@@ -24,7 +24,8 @@ def load_runs(outdir: Path) -> dict:
 def entity_view(countries: dict, entity: str):
     """Sum the tags that stand for entity (first alternative that exists); None if none exists."""
     for tags in B.ENTITIES[entity]:
-        cs = [countries[t] for t in tags if t in countries and countries[t]["population"] > 0]
+        cs = [countries[k] for k in countries for t in tags
+              if (k == t or k.startswith(t + "~")) and countries[k]["population"] > 0]
         if cs:
             break
     else:
@@ -36,6 +37,7 @@ def entity_view(countries: dict, entity: str):
         for k, b in c["buildings"].items():
             x = bld.setdefault(k, {"levels": 0.0, "va": 0.0, "profit": 0.0, "sales": 0.0})
             x["sales"] += b["sales"] * 52
+            x["ppp_va"] = x.get("ppp_va", 0.0) + (b.get("out_base", 0.0) - b.get("in_base", 0.0)) * 52
             x["levels"] += b["levels"]
             x["va"] += (b["sales"] - b["inputs"]) * 52
             x["profit"] += b["profit"] * 52
@@ -45,18 +47,37 @@ def entity_view(countries: dict, entity: str):
             for pm, lv in d.items():
                 pms.setdefault(bt, {}).setdefault(pm, 0.0)
                 pms[bt][pm] += lv
+    from .sectors import shares as _shares
+    sec = _shares(bld)
     sol = [c["sol"] for c in cs if c["sol"] is not None]
+    ppp = sum(x.get("ppp_va", 0.0) for x in bld.values())
+    subs = sum(x["sales"] for k, x in bld.items() if k.startswith("building_subsistence"))
     return {
-        "tags": [c["tag"] for c in cs], "gdp": gdp, "population": pop, "gdppc": gdp / pop if pop else 0,
+        "tags": [c["tag"] for c in cs], "gdp": gdp, "ppp_gdp": ppp, "gdp_ex_subsistence": gdp - subs, "population": pop, "gdppc": gdp / pop if pop else 0,
         "sol": sum(s * c["population"] for s, c in zip(sol, cs)) / pop if sol and pop else None,
         "debt": sum(c["debt"] for c in cs), "credit": sum(c["credit"] for c in cs),
         "money": sum(c["money"] for c in cs),
+        "investment_pool_share": sum(c.get("investment_pool", 0) for c in cs) / gdp if gdp else 0,
         "debt_ratio": (sum(c["debt"] for c in cs) / sum(c["credit"] for c in cs)) if sum(c["credit"] for c in cs) else 0,
         "in_default": any(c["in_default"] for c in cs),
         "bankruptcies": sorted({c["last_bankruptcy"] for c in cs if c["last_bankruptcy"]}),
+        "unemployment": (lambda u, w: u / w if w else None)(sum(c.get("unemployed", 0) for c in cs),
+                                                            sum(c.get("unemployed", 0) + c.get("subsisting", 0) + c.get("salaried", 0) for c in cs)),
+        "radicals_share": sum(c.get("radicals", 0) for c in cs) / pop if pop else None,
+        "loyalists_share": sum(c.get("loyalists", 0) for c in cs) / pop if pop else None,
+        "famine_deaths": sum(c.get("famine_deaths", 0) for c in cs),
         "military_share": sum(c["military_spend"] for c in cs) * 52 / gdp if gdp else 0,
         "rank": cs[0].get("rank"),
+        # State capacity (capacity.py); None for saves extracted before these fields existed.
+        "institution_sum": sum(c["institution_sum"] for c in cs) if all("institution_sum" in c for c in cs) else None,
+        "authority": sum(c["authority"] for c in cs) if all("authority" in c for c in cs) else None,
+        "bureaucracy_produced": sum(c.get("bureaucracy_produced", 0) for c in cs) if any("bureaucracy_produced" in c for c in cs) else None,
+        "bureaucracy_used": sum(c.get("bureaucracy_used", 0) for c in cs) if any("bureaucracy_used" in c for c in cs) else None,
+        "tax_share": (sum(c["tax_take"] for c in cs) * 52 / gdp) if gdp and all("tax_take" in c for c in cs) else None,
+        "tax_waste_share": (lambda w, t: w / (w + t) if w + t > 0 else None)(sum(c.get("tax_waste", 0) for c in cs), sum(c.get("tax_take", 0) for c in cs)) if all("tax_take" in c for c in cs) else None,
         "buildings": bld, "production_methods": pms,
+        "primary_share": sec.get("primary"), "secondary_share": sec.get("secondary"),
+        "tertiary_share": sec.get("tertiary"), "va_shares": sec.get("by_building", {}),
     }
 
 
@@ -75,6 +96,9 @@ def per_run_series(runs: dict) -> dict:
                 if usa:
                     v["gdp_vs_usa"] = v["gdp"] / usa["gdp"] if usa["gdp"] else None
                     v["gdppc_vs_usa"] = v["gdppc"] / usa["gdppc"] if usa["gdppc"] else None
+                    v["ppp_vs_usa"] = v["ppp_gdp"] / usa["ppp_gdp"] if usa.get("ppp_gdp") else None
+                    v["ppppc_vs_usa"] = ((v["ppp_gdp"] / v["population"]) / (usa["ppp_gdp"] / usa["population"])
+                                         if usa.get("ppp_gdp") and v["population"] and usa["population"] else None)
                 if year == 1950:
                     base[e] = v["gdp"]
                 v["growth_since_1950"] = v["gdp"] / base[e] if base.get(e) else None
@@ -105,7 +129,8 @@ def summary(vals):
 
 
 METRICS = ["gdp", "population", "gdppc", "sol", "debt_ratio", "military_share",
-           "gdp_vs_usa", "gdppc_vs_usa", "growth_since_1950"]
+           "gdp_vs_usa", "gdppc_vs_usa", "growth_since_1950", "primary_share", "secondary_share", "tertiary_share", "investment_pool_share", "famine_deaths", "unemployment", "radicals_share", "loyalists_share", "ppp_gdp", "ppp_vs_usa", "ppppc_vs_usa", "gdp_ex_subsistence",
+           "institution_sum", "authority", "bureaucracy_produced", "bureaucracy_used", "tax_share", "tax_waste_share"]
 
 
 def aggregate(series: dict) -> dict:
@@ -223,3 +248,14 @@ def pm_mix(series: dict, entity: str, year: int, buildings: list[str]) -> dict:
             # one PM per group per building, so a share is the part of the levels running that PM
             out[b] = sorted(((pm, lv / levels) for pm, lv in tot.items()), key=lambda x: -x[1])[:8]
     return out
+
+
+def top_shares(series: dict, entity: str, year: int, top: int = 12) -> list:
+    """[(building, median share of value added)] for the entity's biggest building types."""
+    per = {}
+    for r in series.values():
+        v = r.get(year, {}).get("entities", {}).get(entity)
+        for b, x in (v or {}).get("va_shares", {}).items():
+            per.setdefault(b, []).append(x)
+    rows = [(b, statistics.median(xs)) for b, xs in per.items()]
+    return sorted(rows, key=lambda r: -r[1])[:top]

@@ -102,3 +102,38 @@ def band(table: dict, entity: str, year: int):
     hi = min(y for y in ys if y > year)
     f = (year - lo) / (hi - lo)
     return tuple(a + (b - a) * f for a, b in zip(pts[lo], pts[hi]))
+
+# Shares of value added by sector (primary: agriculture, forestry, fishing, mining, oil and gas;
+# secondary: manufacturing and utilities, construction left out). Tertiary is the rest. Approximate,
+# from national accounts histories and World Bank WDI (from 1960); USSR from Western reconstructions.
+# The game leaves government services and construction out of the base (see sectors.py), so its
+# tertiary share runs low; the primary and secondary ranges are the ones to compare.
+SECTOR_SHARES = {
+    "primary": {
+        "USA":          {1950: (0.08, 0.11), 1960: (0.05, 0.08), 1970: (0.04, 0.06), 1980: (0.05, 0.07), 1990: (0.03, 0.05)},
+        "USSR":         {1950: (0.25, 0.35), 1970: (0.15, 0.22), 1990: (0.12, 0.18)},
+        "UK":           {1950: (0.08, 0.11), 1970: (0.04, 0.06), 1990: (0.03, 0.06)},
+        "France":       {1950: (0.14, 0.20), 1970: (0.07, 0.10), 1990: (0.04, 0.06)},
+        "West Germany": {1950: (0.10, 0.14), 1970: (0.04, 0.06), 1990: (0.02, 0.03)},
+        "Japan":        {1955: (0.20, 0.24), 1970: (0.07, 0.09), 1990: (0.03, 0.04)},
+        "China":        {1952: (0.50, 0.58), 1970: (0.35, 0.42), 1990: (0.27, 0.32)},
+        "India":        {1950: (0.52, 0.60), 1970: (0.42, 0.48), 1990: (0.31, 0.36)},
+    },
+    "secondary": {
+        "USA":          {1950: (0.31, 0.35), 1960: (0.29, 0.33), 1970: (0.25, 0.29), 1980: (0.22, 0.26), 1990: (0.19, 0.22)},
+        "USSR":         {1950: (0.30, 0.40), 1970: (0.38, 0.45), 1990: (0.38, 0.45)},
+        "UK":           {1950: (0.36, 0.40), 1970: (0.30, 0.35), 1990: (0.21, 0.25)},
+        "France":       {1950: (0.30, 0.36), 1970: (0.27, 0.31), 1990: (0.20, 0.24)},
+        "West Germany": {1950: (0.38, 0.44), 1970: (0.38, 0.43), 1990: (0.30, 0.34)},
+        "Japan":        {1955: (0.26, 0.30), 1970: (0.34, 0.38), 1990: (0.27, 0.30)},
+        "China":        {1952: (0.15, 0.22), 1970: (0.30, 0.38), 1990: (0.33, 0.38)},
+        "India":        {1950: (0.10, 0.14), 1970: (0.13, 0.17), 1990: (0.17, 0.21)},
+    },
+}
+TABLES["primary_share"] = ("Primary sector share of value added", SECTOR_SHARES["primary"])
+TABLES["secondary_share"] = ("Manufacturing and utilities share of value added", SECTOR_SHARES["secondary"])
+
+# The same historical ranges, read against the PPP-style view (value added at base prices), which is
+# the closer match to Maddison's international dollars (economy thread, 2026-11-19).
+TABLES["ppp_vs_usa"] = ("PPP-style GDP (base prices) relative to the USA", GDP_VS_USA)
+TABLES["ppppc_vs_usa"] = ("PPP-style GDP per capita relative to the USA", GDPPC_VS_USA)
