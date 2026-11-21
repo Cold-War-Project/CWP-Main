@@ -70,6 +70,10 @@ Run batch-d204 (1946-1962): the tide was historical (tier 3 in 1957, tier 4 in 1
 
 Run r22 (7830ccc5e): the DRV sat at liberty desire 100 as a French dominion from 1947, then became a puppet in 1948 with no FRA-DAI war. The accords event's dp_independence play was a plain play; the DRV AI backed down and France's reduce_autonomy war goal was enforced without a shot. The play now has `war = yes`, as the independent-DRV branch of the same event already had (branch fix/indochina-war-yes). After an independent review the option also checks `can_start_play_against_overlord` and peace, and a DRV already reduced to a puppet (which vanilla `dp_independence` refuses while `can_increase_autonomy` holds) first fights a `dp_increase_autonomy` war, so the struggle can resume after a lost round.
 
+## AI button weights (2026-11-21)
+
+The AI thread's probe: `ai_chance` acts as a chance per AI evaluation, frequent in a JE's first months and rare later; pressed within about a year at weight 1: 33%, 5: 75%, 10: 93%, 25+: about 100%. Checked the three low weights in this area: `cwp_katanga_recognise_button` 1 -> 0 (the Congo never recognised Katanga; the player can still do it); `cwp_woc_hold_the_line_button` (3, +10 imperialist, x0.2 anticolonial) and `cwp_india_restore_order_button` (2, +6 imperialist, x0.25 anticolonial) are meant to be rare outside imperialist governments and stay.
+
 ## Naming
 
 Player-visible names use established terms from the historical and strategic literature where one exists (Jack, 2026-11-18), otherwise plain description, in American spelling except verbatim titles and party names (Labour). Built on the quality audit's wording (fix/scholarly-prose, 2026-11-18). Examples: the Transfer of Power, the Cabinet Mission, police actions, the Round Table, protracted war and the general counter-offensive (Giap's stages), the Constantine Plan, the pieds-noirs, the Coussey Committee, the Mau Mau uprising, ONUC, the colonatos, the Afro-Asian Conference, the Tydings-McDuffie Act. The global bar is shown as "Anti-Colonial Nationalism" (the scripts still call it the tide).
