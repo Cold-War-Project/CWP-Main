@@ -37,8 +37,12 @@ git -C ~/forge/CWP-Main fetch -q origin CWP2
 git -C "$WT" checkout -q --detach origin/CWP2
 for br in $branches; do git -C "$WT" merge -q --no-ff --no-edit -m "gui-batch: $br" "$br" >/dev/null 2>&1 \
   || { git -C "$WT" merge --abort; echo "branch $br: CONFLICT, skipped" | tee -a "$D/$stamp-batch.log"; }; done
-cwp-vic link "$WT" >/dev/null && cwp-vic launch >/dev/null 2>&1
+# A failed launch or game start keeps the bookings for the next hour (20 Nov: a launch that never
+# happened produced black screenshots and the bookings were deleted).
+keep() { echo "$(date +%T) $1; bookings kept for the next batch" | tee -a "$D/$stamp-batch.log"; exit 1; }
+cwp-vic link "$WT" >/dev/null && cwp-vic launch > "$D/$stamp-launch.txt" 2>&1 || keep "LAUNCH FAILED (see $stamp-launch.txt)"
 sleep 200
+cwp-vic status | grep -q "game:    pid" || keep "GAME NOT RUNNING after launch"
 for w in $(xdotool search --name "Unlock Keyring|Authentication required" 2>/dev/null); do xdotool windowclose "$w"; done
 raise_game() { local w; w=$(xdotool search --name "^Victoria 3" 2>/dev/null | tail -1); [[ -n "$w" ]] && xdotool windowactivate --sync "$w" 2>/dev/null; }
 raise_game; vic-shot >/dev/null
@@ -55,6 +59,7 @@ if [[ -n "$needs_game" ]]; then
       [[ -n "$f" && "$f" -nt "$D/.$stamp-start" ]] && break 2; done
     echo "game start attempt $try failed" | tee -a "$D/$stamp-batch.log"; vic-shot --full | tail -1 >> "$D/$stamp-batch.log"
     raise_game; vic-key Escape >/dev/null; sleep 2; vic-key Escape >/dev/null; sleep 5
+    (( try == 2 )) && keep "GAME DID NOT START (needs-game)"
   done
   raise_game; vic-key space >/dev/null   # pause for the checks
 fi
