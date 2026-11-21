@@ -16,6 +16,7 @@ differ from the 1.15.1 game files. Entries marked [GAME] were confirmed against 
 | Using `activate_law` on a `law` scope from `any_active_law` | Law effects take **law types**; convert with `type` / `law_type` |
 | Using `from`, `fromfrom`, `FROM` | Do not exist. Save scopes explicitly |
 | Relying on `prev` across nested blocks or inside scripted effects | Save a temporary scope instead |
+| Passing `prev` (or `this`) as `TARGET` to vanilla's `has_treaty_*_with` triggers (`00_diplomacy_triggers.txt`) | The trigger pastes `TARGET` inside `any_scope_treaty = { binds = $TARGET$ }`, where `prev` is the treaty iterator's parent, not the country you meant, so it matches a treaty with anyone [GAME, found 2026-11-21]. Pass a saved scope, `root`, or a scope link such as `scope:target_country`, or write the `any_scope_treaty` block yourself (see `cwp_nuclear_triggers.txt`) |
 | Reading `scope:x` that only an earlier, unrelated event saved | Saved scopes travel only down an unbroken chain; otherwise store a variable |
 | Using a link that can be empty without a guard (`overlord`, `heir`, `power_bloc`, `c:TAG`) | `exists = …`, `?=`, or `trigger_if` |
 | Setting a variable on one object and reading it on another | Variables live on the scope where `set_variable` ran |
