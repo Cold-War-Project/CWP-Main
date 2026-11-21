@@ -18,7 +18,7 @@ One AI run is noisy. Never report one run per arm as a result unless you passed 
 
 ## The gameplay hash: why existing runs count
 
-Every run is catalogued by the **gameplay hash** (GH) of the commit it ran: the game build plus `git ls-tree` of the commit, leaving out paths the simulation never reads (`.claude/`, `.github/`, `docs/`, `tools/`, both `Claude-Vic3-*` guides, `localization/`, `gfx/`, `gui/`, `fonts/`, `thumbnail.png`, `credits.txt`, `*.md`). Two commits with the same GH are the same experiment. For example, CWP2 after a tools-only landing has the same GH as before it, so every earlier run of CWP2 is still a valid baseline.
+Every run is catalogued by the **gameplay hash** (GH) of the commit it ran: the game version the run was played on plus `git ls-tree` of the commit, leaving out paths the simulation never reads (`.claude/`, `.github/`, `docs/`, `tools/`, both `Claude-Vic3-*` guides, `localization/`, `gfx/`, `gui/`, `fonts/`, `thumbnail.png`, `credits.txt`, `*.md`). Two commits with the same GH are the same experiment. For example, CWP2 after a tools-only landing has the same GH as before it, so every earlier run of CWP2 is still a valid baseline.
 
 Two more rules make reuse sound:
 
@@ -115,7 +115,10 @@ What gets indexed:
 - **econ_bench runs:** `~/forge/econ-runs/<batch>/run-NNN` folders that have a `meta.json`. Folders without one are skipped: they are ingests of observer runs, or runs still going.
 - **Status:** `ok` (finished normally), `partial` (stopped early; still counts up to the year it reached), `crash`, `failed`, `stalled` (the watchdog gave up). Only `ok` and `partial` count as samples. Crashed runs are left out entirely, so a treatment that crashes often looks better than it is: report the crashes next to the numbers.
 - **Caveats for backfilled runs:** the sha of a run started before 20 Nov 2026 is what BUILD.txt or econ_bench's `meta.json` recorded. econ_bench writes `meta.json` at the end of each session, so a run that resumed in a worktree someone committed to in the meantime is filed under the later commit, and nobody recorded dirty trees. Runs started through `cwp-runs start` use clean detached worktrees and don't have this problem.
-- **A run keeps the gameplay hash from its first indexing**, which includes the game's Steam build id. Runs played before a game update don't mix with runs played after it.
+- **Game versions never mix** (21 Nov 2026, after the 1.15.2 auto-update at 20:25 EST on 20 Nov). Every save header and every econ_bench sample records the version it was written by. Samples that predate that are dated by file time against the update list, `BUILD_CHANGES`, which is kept the same in `cwp-runs` and `tools/econ_bench/aggregate.py`: add each new update to both.
+  - The gameplay hash includes the version the run was played on, so a 1.15.1 run is never a sample for a 1.15.2 request, and requests are re-hashed for the installed version.
+  - A run whose samples span two versions (an econ_bench run resumed after an update) is marked `straddled`. Its hash matches no request, so it never counts as an arm. It can still serve smoke and observe requests, which match by commit.
+  - A proxy baseline hash (`accept:<GH>`) from before 21 Nov 2026 is stale: look up the run's new hash with `cwp-runs runs --sha <sha>` and resubmit.
 
 ## Not built yet
 

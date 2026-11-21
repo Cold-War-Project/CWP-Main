@@ -52,7 +52,6 @@ ECON = Path(os.environ.get("CWP_ECON_DIR", FORGE / "econ-runs"))
 QUEUEF = Path(os.environ.get("CWP_STAGING_QUEUE", FORGE / "staging-queue.txt"))
 ECON_BENCH = Path(os.environ.get("CWP_ECON_BENCH", FORGE / "worktrees/econ-bench"))
 INTEGRATION = Path(os.environ.get("CWP_INTEGRATION", FORGE / "worktrees/integration"))
-APPMANIFEST = Path.home() / ".steam/steam/steamapps/appmanifest_529340.acf"
 START_YEAR = 1946
 STAGING_UNTIL = int(os.environ.get("CWP_RUNS_STAGING_UNTIL", 1952))   # a staging round's usual end year
 BATCH_CAP = int(os.environ.get("CWP_RUNS_BATCH_CAP", 1962))           # longer requests get their own run
@@ -120,25 +119,94 @@ def is_nogame(path):
     return path.split("/", 1)[0] in NOGAME_TOP or path.endswith(".md")
 
 
-_buildid = None
+LAUNCHER_SETTINGS = Path.home() / ".steam/steam/steamapps/common/Victoria 3/launcher/launcher-settings.json"
+# Game auto-updates seen on Forge: (version, first moment it ran). A sample with no version recorded in it
+# (an econ JSON from before econ_bench stored game_version, a run whose saves are gone) is dated by file time.
+# Same list as tools/econ_bench/aggregate.py BUILD_CHANGES; add each new update to both.
+BUILD_CHANGES = [("1.15.2", 1795224300.0)]   # 2026-11-20 20:25 EST
+FIRST_VERSION = "1.15.1"
+_version = None
 
 
-def game_buildid():
-    global _buildid
-    if _buildid is None:
+def game_version():
+    """The installed game's version (launcher-settings.json rawVersion), e.g. 1.15.2."""
+    global _version
+    if _version is None:
         try:
-            m = re.search(r'"buildid"\s+"(\d+)"', APPMANIFEST.read_text())
-            _buildid = m.group(1) if m else "unknown"
-        except OSError:
-            _buildid = "unknown"
-    return _buildid
+            _version = json.loads(LAUNCHER_SETTINGS.read_text()).get("rawVersion") or "unknown"
+        except (OSError, ValueError):
+            _version = "unknown"
+    return _version
+
+
+def version_at(t):
+    ver = FIRST_VERSION
+    for v, since in BUILD_CHANGES:
+        if t >= since:
+            ver = v
+    return ver
+
+
+_vcache = None
+SAVE_VERSION = re.compile(rb'\bversion="([^"]+)"')
+JSON_VERSION = re.compile(rb'"game_version":\s*"([^"]+)"')
+
+
+def file_version(f):
+    """Game version a save or econ sample was written by: its header / game_version field, else its mtime.
+    Cached by path, size and mtime, since econ samples are ~1.3 MB each."""
+    global _vcache
+    if _vcache is None:
+        try:
+            _vcache = json.loads((RUNS / "version-cache.json").read_text())
+        except (OSError, ValueError):
+            _vcache = {}
+    try:
+        st = f.stat()
+    except OSError:
+        return None
+    key = f"{f}:{st.st_size}:{int(st.st_mtime)}"
+    if key in _vcache:
+        return _vcache[key]
+    v = None
+    try:
+        if f.suffix == ".v3":
+            with open(f, "rb") as fh:
+                m = SAVE_VERSION.search(fh.read(4000))
+        else:
+            with open(f, "rb") as fh:   # game_version sits near the end of econ_bench's JSON
+                fh.seek(max(0, st.st_size - 4000))
+                m = JSON_VERSION.search(fh.read())
+        v = m.group(1).decode() if m else None
+    except OSError:
+        pass
+    v = v or version_at(st.st_mtime)
+    _vcache[key] = v
+    return v
+
+
+def save_version_cache():
+    if _vcache is None:
+        return
+    f = RUNS / "version-cache.json"
+    tmp = f.with_name(f"version-cache.{os.getpid()}.tmp")
+    try:
+        tmp.write_text(json.dumps(_vcache))
+        tmp.replace(f)
+    except OSError:
+        pass
+
+
+def run_versions(files):
+    return sorted({v for v in (file_version(f) for f in files) if v})
 
 
 _ghcache = None
 
 
-def gameplay_hash(sha):
-    """sha1 over the game build id and `git ls-tree -r` of the commit minus inert paths (12 hex)."""
+def gameplay_hash(sha, version=None):
+    """sha1 over the game version and `git ls-tree -r` of the commit minus inert paths (12 hex). The version
+    is the one a run was played on (default: the installed game, for requests)."""
     global _ghcache
     cache_f = RUNS / "gh-cache.json"
     if _ghcache is None:
@@ -146,10 +214,11 @@ def gameplay_hash(sha):
             _ghcache = json.loads(cache_f.read_text())
         except (OSError, ValueError):
             _ghcache = {}
-    key = f"{sha}:{game_buildid()}"
+    version = version or game_version()
+    key = f"{sha}:v{version}"
     if key in _ghcache:
         return _ghcache[key]
-    h = hashlib.sha1(game_buildid().encode() + b"\n")
+    h = hashlib.sha1(b"version " + version.encode() + b"\n")
     for line in git("ls-tree", "-r", "--full-tree", sha).splitlines():
         meta, path = line.split("\t", 1)
         if not is_inert(path):
@@ -349,7 +418,11 @@ def index_observer(d, running_ok=False):
         data.append("econ")
     if (d / "saves").is_dir() and any((d / "saves").glob("*.v3")):
         data.append("saves")
+    saves = sorted((d / "saves").glob("*.v3")) if (d / "saves").is_dir() else []
+    versions = run_versions(saves or [f for f in d.iterdir() if DATE_JSON.match(f.name)]) \
+        or [version_at(d.stat().st_mtime)]   # no samples at all: date the folder
     return {"run": d.name, "outdir": str(d), "source": "observer", "sha": sha, "sha_source": sha_source,
+            "game_versions": versions, "straddled": len(versions) > 1,
             "kind": "batch" if is_batch else "solo", "members": members, "tree": tree, "started": started,
             "years_reached": years, "status": status, "nudges": nudges, "data": data,
             "econ_dir": str(econ_dir) if "econ" in data else None}
@@ -369,11 +442,13 @@ def index_econ(d):
     if not sha:
         return None
     st = meta.get("status")
-    status = "ok" if st == "done" else "partial" if st in ("yielded", "time_limit") else "failed"
+    status = "ok" if st == "done" else "partial" if st in ("yielded", "time_limit", "straddled") else "failed"
+    versions = run_versions(sorted(d.glob("[0-9]*.json"))) or [version_at((d / "meta.json").stat().st_mtime)]
     years = meta.get("last_year") or years_in([d], DATE_JSON)
     data = ["econ"] + (["saves"] if any(d.glob("*.v3")) else [])
     wt = meta.get("worktree", "")
     return {"run": f"{d.parent.name}/{d.name}", "outdir": str(d), "source": "econ_bench", "sha": sha,
+            "game_versions": versions, "straddled": len(versions) > 1 or st == "straddled",
             "sha_source": sha_source, "kind": "solo", "members": [{"branch": "", "tested_sha": sha}],
             "tree": wt, "started": None, "years_reached": years, "status": status, "nudges": 0,
             "data": data, "econ_dir": str(d)}
@@ -396,16 +471,25 @@ def candidate_dirs():
                     yield "econ", d
 
 
+def run_version_key(row):
+    """The version a run's hash is built on. A run whose samples span two game versions (an auto-update
+    between sessions) measures neither: it gets a hash no request asks for, so it is never an arm."""
+    vs = row.get("game_versions") or []
+    if row.get("straddled"):
+        return "straddled:" + "+".join(vs)
+    return vs[0] if vs else FIRST_VERSION
+
+
 def finish_row(row):
-    row["gh"] = gameplay_hash(row["sha"])
+    v = run_version_key(row)
+    row["gh"] = gameplay_hash(row["sha"], v)
     row["base_sha"] = merge_base(row["sha"])
-    row["base_gh"] = gameplay_hash(row["base_sha"]) if row["base_sha"] else None
-    row["buildid"] = game_buildid()
+    row["base_gh"] = gameplay_hash(row["base_sha"], v) if row["base_sha"] else None
     row["indexed_at"] = iso()
     return row
 
 
-SAME_KEYS = ("sha", "years_reached", "status", "data", "nudges")
+SAME_KEYS = ("sha", "years_reached", "status", "data", "nudges", "game_versions", "straddled")
 
 
 def index_dirs(dirs, verbose=False):
@@ -426,18 +510,15 @@ def index_dirs(dirs, verbose=False):
             old = cat.get(row["outdir"])
             if old and all(old.get(k) == row.get(k) for k in SAME_KEYS):
                 continue
-            if old and old.get("sha") == row["sha"] and old.get("gh"):
-                # Same commit: keep the hash from when the run was first indexed, so a later game update
-                # does not re-file runs played on the old build under the new build's hash.
-                row.update({k: old.get(k) for k in ("gh", "base_sha", "base_gh", "buildid")})
-                row["indexed_at"] = iso()
-            else:
-                finish_row(row)
+            # The hash depends on the commit and on the game version the run was played on (read from its
+            # saves or samples), never on the version installed now.
+            finish_row(row)
             append_catalog(row)
             cat[row["outdir"]] = row
             added += 1
             if verbose:
                 print(f"  {row['status']:8} {row['years_reached']}  gh {row['gh']}  {row['run']}")
+        save_version_cache()
         if verbose:
             print(f"catalog: {len(cat)} runs ({added} new or changed)")
         return cat
@@ -592,14 +673,15 @@ def reevaluate(cat, quiet=False):
                 write_json(req_path(req["id"]), req)
                 continue
             sha = resolve_request_sha(req)
-            updated = req["kind"] == "measure" and req.get("buildid", "pre-buildid") != game_buildid()
+            updated = req.get("game_version") != game_version()
             if sha != req["sha"] or updated:
-                if updated:
-                    req["rehash_note"] = (f"the game was updated (build {req.get('buildid')} -> {game_buildid()}); "
+                if updated and req["kind"] == "measure":   # smoke/observe match by commit, not by hash
+                    req["rehash_note"] = (f"the game was updated ({req.get('game_version') or 'version unrecorded'} -> "
+                                          f"{game_version()}); "
                                           "only runs on the new build count"
                                           + (" (the accepted proxy baseline keeps its old hash)"
                                              if str(req.get("baseline") or "").startswith("accept:") else ""))
-                req["sha"], req["gh"], req["buildid"] = sha, gameplay_hash(sha), game_buildid()
+                req["sha"], req["gh"], req["game_version"] = sha, gameplay_hash(sha), game_version()
                 if req["kind"] == "measure" and not str(req.get("baseline") or "").startswith("accept:"):
                     fill_baseline(req)
             served, detail = evaluate(req, cat)
@@ -691,7 +773,7 @@ def cmd_submit(a):
            "baseline": a.baseline if measure else None, "underpowered": bool(a.underpowered and reps < 3),
            "yield_ok": a.yield_ok, "quick": bool(a.quick), "note": a.note, "state": "pending", "created": iso(),
            "expires": iso(now() + dt.timedelta(hours=a.hours or (168 if measure else 48))),
-           "base_sha": mb, "gh": gameplay_hash(sha), "buildid": game_buildid(), "changed": len(files),
+           "base_sha": mb, "gh": gameplay_hash(sha), "game_version": game_version(), "changed": len(files),
            "gameplay_files": [f for f in files if not is_inert(f)][:200],
            "inert_only": all(is_inert(f) for f in files)}
     fill_baseline(req)
