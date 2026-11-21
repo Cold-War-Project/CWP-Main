@@ -1,6 +1,6 @@
 # Testing on Forge: launch, error.log, observer runs, performance
 
-Forge is the shared Linux test machine with Victoria 3 1.15.2 installed (Steam auto-updated from 1.15.1 on 20 Nov 2026) (one GPU, X11 display `:0`). Agents launch the game themselves; nobody needs to ask Jack to test. Only **one** Victoria 3 may run at a time, and many agents share the machine, so every game session goes through the lock.
+Forge is the shared Linux test machine with Victoria 3 1.15.2 installed (one GPU, X11 display `:0`; Steam auto-updated it from 1.15.1 on 20 Nov 2026). Agents launch the game themselves; nobody needs to ask Jack to test. Only **one** Victoria 3 may run at a time, and many agents share the machine, so every game session goes through the lock.
 
 ## Paths on Forge
 

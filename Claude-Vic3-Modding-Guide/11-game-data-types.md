@@ -317,7 +317,8 @@ Law groups (`common/law_groups/00_laws.txt`):
 lawgroup_trade_policy = {
 	law_group_category = economy       # power_structure / economy / human_rights
 	ideological_opinion_impact = 1.0
-	# base_enactment_days = 200   enactment_approval_mult = 2.0   affected_by_regime_change = yes
+	# base_enactment_days = 200   enactment_approval_mult = 2.0
+	# regime_change_min_progressiveness_difference = 25   (1.15.2 [GAME]; 1.15.1 had affected_by_regime_change = yes)
 	# change_allowed_trigger = { … }
 }
 ```
