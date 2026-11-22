@@ -1,6 +1,6 @@
 # Regime change: which laws it imposes
 
-In 1.15.2 a regime change (the `regime_change` war goal, and `force_regime_change` for power-bloc leaders on members of their own bloc) installs a government like the enforcer's. It also imposes the enforcer's law in each law group where the two laws' progressiveness differs by at least that group's `regime_change_min_progressiveness_difference` (`common/law_groups/00_laws.txt`; absent or 0 means never). The concept text says at most `NPolitics|NUM_REVOLUTIONARY_LAW_CHANGES` laws change. That define is engine-side and not in any text file, so the cap is unknown, and so is which groups win when more qualify. A USSR regime change on a Western democracy qualifies five groups. Test in game before relying on the whole package landing (console regime change from RUS onto FIN, then count the changed laws).
+In 1.15.2 a regime change (the `regime_change` war goal, and `force_regime_change` for power-bloc leaders on members of their own bloc) installs a government like the enforcer's. It also imposes the enforcer's law in each law group where the two laws' progressiveness differs by at least that group's `regime_change_min_progressiveness_difference` (`common/law_groups/00_laws.txt`; absent or 0 means never). The concept text says at most `NPolitics|NUM_REVOLUTIONARY_LAW_CHANGES` laws change. That define is engine-side and not in any text file; see "In-game test" below for what it is and whether `can_enact`, `is_visible` and `can_impose` gate the imposed laws.
 
 The same rule limits who can be targeted. A target is valid only if:
 - at least one group would change ("A regime change would not change any laws in ...");
@@ -19,7 +19,7 @@ Jack chose to retune per law group (2026-11-22). Goals:
 | Governance principles | 100 | Council republic (200) is 100 from a republic and 175 from a monarchy (25). A republic and a monarchy are 75 apart, so neither is imposed on the other. |
 | Distribution of power | 100 | Universal suffrage vs single-party state, wealth and landed voting, oligarchy and autocracy (and anarchy). Census voting vs oligarchy, technocracy, organic regulation and autocracy, so census-voting and oligarchy countries (27 and 46 at start) are each other's targets. Not census vs universal suffrage (50). Not among the non-elective laws: autocracy moved to -90 so that it is 90 from single-party state, not exactly 100. |
 | Internal security | 30 | Secret police (-30) vs no home affairs law (0), national guard (10) and domestic intelligence agency (20). Not among those three. |
-| Judiciary | 150 | Puppet vs independent judiciary (150), arbitrary legalism vs independent (200). Not judicial interference (100 or less from either). |
+| Judiciary | 200 | Only arbitrary legalism vs independent judiciary. Jack (2026-11-22) trimmed the Soviet package to four laws, without puppet judiciary. The gap is symmetric, so 150 would also have imposed puppet judiciary. At 200 the West still gives an independent judiciary to arbitrary-legalism dictatorships, but no longer to communist states (puppet judiciary). The alternative, moving puppet judiciary's progressiveness, would change AI law steps. |
 | Economic system | 50 | Command economy and cooperative ownership (100) vs interventionism and laissez-faire (50). Also a market economy vs agrarianism and extraction (0): the Latin American census-voting republics are therefore Western targets. Pushing that above 50 would have raised command economy above 100, which takes the move from agrarianism or extraction to command economy out of reach of the socialist AI strategies. |
 | Trade policy | 100 | Both blocs start protectionist. Only isolationism vs free trade or protectionism. |
 | Labour associations | 75 | Vanilla 1.15.2's value. Corporatized unions vs right to associate is only 25, so neither bloc imposes its unions. |
@@ -59,46 +59,45 @@ Council republic (200), single-party state (0) and command economy (100) were le
 - **IG and character `average_progressiveness`**, read by vanilla's favourite-appointment values (`script_values/politics_values.txt`). Assuming the engine derives it from the progressiveness of the laws an ideology supports, monarchist, security-minded and secret-police ideologies shift by a few points.
 - **Not affected:** IG approval, law stances and movements, which are ideology-based. No `can_enact` or AI weight in `common/laws` compares progressiveness. The other script readers in the mod (Iwakura, tsarpoints, the Chinese golpista check, the Russian revolution values) are disabled Victorian content.
 
+## Guards in script (Jack, 2026-11-22)
+
+- **No imposed monarchy.** A regime change imposes the enforcer's governance law, so a crowned enforcer (GBR, the Benelux and Nordic monarchies, JAP) would install `law_monarchy` on a communist state. No threshold can stop this while council republic is still imposed on monarchies, because the gap is symmetric. The war goal's `on_enforced` (vanilla's `regime_change` entry, REPLACEd in `common/war_goal_types/zz_vanilla_war_goal_types.txt`) and `force_regime_change` both call `cwp_regime_change_mark_target_effect` (`common/scripted_effects/cwp_regime_change_effects.txt`).
+  - That effect marks the target, and `cwp_regime_change.1` (`events/cwp_regime_change_events.txt`) runs a day later, so it does not matter whether `on_enforced` runs before or after the engine's law changes.
+  - If the target then has `law_monarchy` but no monarchy tradition, the event enacts a parliamentary republic (when the enforcer is a parliamentary crown) or a presidential republic.
+  - Monarchy tradition is `cwp_monarchy_tradition_var`, set in `common/history/global/cwp_global_variables.txt` for every 1946 country with `law_monarchy`, and yearly (`common/on_actions/cwp_regime_change_on_actions.txt`) for any later monarchy that a regime change did not just impose. A country whose crown was deposed (`cwp_crown_pretender_var` from the constitutional-monarchy code) also counts.
+  - So RUS, YUG, ALB and HUN, whose monarchies ended before 1946, get a republic.
+- **Council republics do not regime-change each other.** `regime_change_target_allowed_trigger` (the war goal's `valid` and `force_regime_change`'s `possible`) fails when both countries have `law_council_republic`. This covers the 1946 communist states (RUS, ALB, YUG, MGL, DDR, NRK, DAI, PRC) and any later ones. The USSR can still target a coalition republic such as POL.
+
 ## What the 1946 start gives
 
-Computed from `common/scripted_effects/00_starting_law_packages.txt` plus the `activate_law` overrides in each `common/history/countries` file. Later law changes alter all of this.
+Computed from `common/scripted_effects/00_starting_law_packages.txt` plus each `common/history/countries` file's `activate_law` overrides. It includes the history thread's start-law review (`local/history-start-laws-review`, not landed when this was written): universal suffrage for ARG, URU, CUB, MEX, CLM, COS and PNM; interventionism for ARG, URU, MEX, BRZ and CHL; command economy for DDR and NRK; single-party state for NRK; oligarchy for IDS.
 
 | Targets | USSR (RUS) imposes | USA imposes |
 |---|---|---|
-| Western democracies: GBR, FRA, ITA, BEL, NET, LUX, DEN, NOR, SWE, FIN, ICL, IRE, AUS, SWI, GRE, JAP, CAN, AST, NZL, NEW, IDS, LEB | council republic, autocracy, puppet judiciary, secret police, command economy | not targetable |
-| CZH, HUN (postwar democracy with intelligence agency) | same five laws | not targetable |
-| POL, AZR, KUR, XIN (people's democracy coalition) | council republic, autocracy, command economy (they already have secret police) | no home affairs law |
-| BUL, ROM (the same package as monarchies) | council republic, autocracy, command economy | no home affairs law |
-| Latin American census-voting republics (ARG, BRZ, CHL, CLM, COS, CUB, MEX, PEU, PNM, PRG, URU) | council republic, autocracy, secret police, command economy | interventionism |
+| Western democracies (GBR, FRA, ITA, the Benelux and Nordic countries, ICL, IRE, AUS, SWI, GRE, JAP, the dominions, LEB) and ARG, MEX, URU | council republic, autocracy, secret police, command economy | not targetable |
+| CZH, HUN | the same four | not targetable |
+| CLM, COS, CUB, PNM (universal suffrage, agrarianism) | the same four | interventionism |
+| BRZ, CHL, PHI (census voting) | the same four | not targetable |
+| PEU, PRG (census voting, agrarianism) | the same four | interventionism |
+| SAF, NAM, MTB | the same four | not targetable |
+| POL, AZR, KUR, XIN, and BUL and ROM | council republic, autocracy, command economy (they already have secret police) | no home affairs law |
 | Latin American dictatorships (BOL, DCR, ECU, ELS, GUA, HAI, HON, NIC, VNZ) | council republic, secret police, command economy | universal suffrage, independent judiciary |
-| POR, SPA | council republic, command economy | universal suffrage, independent judiciary, no home affairs law |
-| TUR | council republic, secret police, command economy | universal suffrage |
-| PHI | council republic, autocracy, puppet judiciary, secret police, command economy | not targetable |
-| SAF, NAM, MTB | council republic, autocracy, secret police, command economy | not targetable |
-| Occupation zones AOZ, BOZ, FOZ, STK | council republic, secret police, command economy (their autocracy already matches) | universal suffrage, independent judiciary |
-| Colonies | council republic, secret police, command economy | republic and universal suffrage (plus interventionism where they have an extraction economy) |
-| RUS, ALB, YUG, MGL | not targetable | republic, universal suffrage, independent judiciary, no home affairs law, interventionism |
-| DDR, NRK, DAI | not targetable (DAI: command economy, because its history sets interventionism) | republic, universal suffrage, independent judiciary, no home affairs law (DDR and NRK also interventionism) |
+| POR, SPA | council republic, command economy | universal suffrage, no home affairs law |
+| TUR, IDS | council republic, secret police, command economy | universal suffrage |
+| Occupation zones AOZ, BOZ, FOZ, STK | council republic, secret police, command economy | universal suffrage |
+| Colonies | council republic, secret police, command economy | republic, universal suffrage (plus interventionism where they have an extraction economy) |
+| RUS, ALB, YUG, MGL | blocked (council republics) | republic, universal suffrage, no home affairs law, interventionism |
+| DDR, NRK | blocked | republic, universal suffrage, no home affairs law, interventionism |
+| DAI | blocked | republic, universal suffrage, no home affairs law |
 | 39 countries with traditionalism (the Gulf and other Islamic monarchies, protectorates, the South Asian dominions, EGY, IRQ, PER, SYR, THA, ROC, PRC, LIB, TIB...) | immune | immune |
 
-Totals: 93 valid USSR targets and 70 valid US targets out of 138 starting countries.
+Totals: 92 valid USSR targets and 66 valid US targets out of 138 starting countries. A GBR-led regime change gives a communist state a parliamentary republic (after the guard), universal suffrage and no home affairs law.
 
 ## Pairings Jack may want to look at
 
-- **Communist states can still target each other through history quirks.**
-  - DAI (interventionism in its history file) is a USSR target, and DAI can impose interventionism on RUS, ALB, YUG, MGL, DDR and NRK.
-  - DDR and NRK (oligarchy, cooperative ownership) can impose both on POL, BUL, ROM, AZR, KUR and XIN.
-  - A communist state that enacts factory councils (Yugoslav-style self-management, 75 from corporatized unions, vanilla's threshold) becomes a USSR target.
-- **Start laws behind some results:**
-  - Census voting in the Latin American constitutional package makes the USSR impose autocracy there, though ARG, URU, CUB and MEX had broad male suffrage by 1946.
-  - Agrarianism for ARG, BRZ and MEX makes them US targets (interventionism), though Perón's and Vargas's economies and PEMEX were state-led.
-  - IDS counts as a Western democracy.
-  - The US zone AOZ is a US target (universal suffrage, independent judiciary).
-
-  This is the history thread's call, not checked against sources here.
-
-- **The power-bloc action works only inside a bloc.** At start the USSR can force its package on POL, ROM, CZH and HUN, which fits 1947-48. The US could force universal suffrage, an independent judiciary and no home affairs on POR if Portugal is in its bloc. That was already possible before this branch, through the 200-point distribution-of-power gap. Guarding against it would need a script condition, not a threshold.
-- **A monarchy enforcer installs a monarchy on a communist state.** A GBR-led regime change on RUS or DDR imposes `law_monarchy` (175 from a council republic). No threshold avoids this while council republic is still imposed on monarchies. A scripted guard would.
-- **Colonies of allies** are valid US targets (oligarchy and colonial administration), as is Turkey (oligarchy). GBR can likewise target its own colonies.
+- **The power-bloc action works only inside a bloc.** At start the USSR can force its package on POL, ROM, CZH and HUN, which fits 1947-48. The US could force universal suffrage and no home affairs on POR if Portugal is in its bloc (this already existed before the retune).
+- **DDR and NRK vs the coalition republics.** DDR and NRK (council republics) can still impose oligarchy or single-party state, and command economy, on POL, BUL, ROM, AZR, KUR and XIN, which are not council republics yet.
+- **Factory councils** (Yugoslav-style self-management, 75 from corporatized unions, vanilla's labour threshold) make a non-council socialist state a USSR target. Between council republics the guard blocks it.
+- **Colonies of allies** are valid US targets (oligarchy and colonial administration), as are Turkey and Indonesia (oligarchy). GBR can likewise target its own colonies.
 
 To recompute the matrix: list each country's laws per group (package, then `activate_law` overrides in file order) and compare the gaps with the thresholds. The script used for this note is about 60 lines of Python and is not in the repo.
