@@ -75,6 +75,15 @@ cwp_china_war_support = {
 				add = 2
 				desc = "cwp_ccw_war_support_strait"
 			}
+			# Run 1122081642-batch-199e: after the retreat the ROC still fell to war support 5 (bankruptcy, devastation) and was
+			# annexed with Formosa in 1949. Behind the strait it holds like the people's war does.
+			if = {
+				limit = { scope:war = { has_war_support = { target = root value < 50 } } }
+				add = {
+					value = 10
+					desc = "cwp_ccw_war_support_strait"
+				}
+			}
 		}
 		# Decisive phase: the side the balance favours by 25 or more keeps its will to fight (victory is in sight), so its
 		# own casualties do not make it sue for peace in the middle of its offensive (observer 2026-11-18)
@@ -138,6 +147,21 @@ cwp_china_war_support = {
 # a tenth while the American-brokered ceasefire holds: the Carlist skirmish phase without freezing the map entirely.
 cwp_china_battle_victory_factor = {
 	value = 1
+	# The Communist base areas hold as long as the Nationalists have not gained the upper hand (bar above -25), in either
+	# phase: batch 1122100449-batch-a3b9 had the PRC launch its offensive at +26.5 and then lose every state to an army
+	# three times its size, folding at once (AI_CAPITULATE_COMPLETELY_DEFEATED).
+	if = {
+		limit = {
+			NOT = { has_global_variable = cwp_ccw_peoples_war_phase }
+			has_global_variable = cwp_ccw_active
+			global_var:cwp_ccw_balance > -25
+			province ?= { owner ?= { c:PRC ?= this } }
+		}
+		multiply = {
+			value = 0
+			desc = "cwp_ccw_occupation_base_areas"
+		}
+	}
 	if = {
 		limit = {
 			has_global_variable = cwp_ccw_peoples_war_phase
@@ -145,7 +169,19 @@ cwp_china_battle_victory_factor = {
 				owner ?= { cwp_ccw_is_belligerent = yes }
 			}
 		}
+		# The Communist base areas cannot be occupied in the people's war (the Carlist skirmish phase's 0). The AI
+		# capitulates at once when 100% occupied (AI_CAPITULATE_COMPLETELY_DEFEATED), and the PRC's 9 small states were
+		# fully overrun at 52 war support in run 1122091440-batch-3ea9 even at a quarter of the usual ground.
 		if = {
+			limit = {
+				province ?= { owner ?= { c:PRC ?= this } }
+			}
+			multiply = {
+				value = 0
+				desc = "cwp_ccw_occupation_base_areas"
+			}
+		}
+		else_if = {
 			limit = { has_global_variable = cwp_ccw_ceasefire }
 			multiply = {
 				value = 0.1
