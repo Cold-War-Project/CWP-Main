@@ -28,6 +28,8 @@ WT=~/forge/worktrees/gui-batch
 if [[ ! -d $WT ]]; then git -C ~/forge/CWP-Main worktree add -q --detach "$WT" origin/CWP2; fi
 cwp-vic lock --owner-pid $$ --priority "gui-batch: screenshot checks (~15 min)" || exit 1
 trap 'cwp-vic unlock >/dev/null' EXIT
+# vic-shot leaves a PNG per call in the 1.5 GB /run/user tmpfs; a full tmpfs breaks every screenshot (21 Nov).
+find "${XDG_RUNTIME_DIR:-/tmp}/vic" -maxdepth 1 -name 'shot-*.png' -mmin +120 -delete 2>/dev/null
 # Bookings and branch heads are read only now that the game is ours, so late bookings and new commits count.
 mapfile -t books < <(ls -1 "$B"/*.sh 2>/dev/null)
 (( ${#books[@]} )) || { echo "no bookings"; exit 0; }
