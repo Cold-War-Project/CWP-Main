@@ -67,6 +67,8 @@ je_cwp_example = {
 }
 ```
 - Scopes: `root` = owning country (country context) or none (contextless); `scope:journal_entry`; `scope:target` when added with `add_journal_entry = { type = x target = <scope> }`. Contextless JEs use `should_be_involved`, `should_show_when_not_involved`, `immediate_all_involved`, `effect_all_involved`, `on_become_involved_after_activation`, `on_no_longer_involved`.
+- `should_be_involved` is read once, when a contextless JE activates. Countries that qualify later are added from script (`je:<key> ?= { add_involved_country = scope:x }`, `remove_involved_country`); otherwise the entry runs with nobody involved and shows in no journal (tested 2026-11-22, `mod/CWP International Organisations Test`).
+- A decision's `when_taken` is walked for its tooltip before it runs, `hidden_effect` included: guard every variable read in it with `has_variable`, or one hover logs thousands of lines (same test).
 - `disable_evaluation = { }` permanently drops the JE for a country; use only cheap, permanent identity checks.
 - Variables set on the JE itself are read with `je:je_key ?= { has_variable = x }` or `scope:journal_entry`.
 - Map colouring (`map_color`, `map_color_second`, `map_tooltip`) and custom widgets (`widget = { gui = "gui/x.gui" name = "..." container = "custom_widget_container_1" }`; tested in game with `custom_widget_container_3`, see "Scripted GUIs" below) are optional; the full reference is vanilla `common/journal_entries/journal_entries.md`.

@@ -1,0 +1,91 @@
+﻿# CWP international organisations test. Country scope (the player) unless a comment says otherwise.
+
+# The organisation is in the phase asked for: 0 recess, 1 in session.
+cwp_iot_phase_is = {
+	has_global_variable = cwp_iot_$ORG$_phase
+	global_var:cwp_iot_$ORG$_phase = $PHASE$
+}
+
+# Figures that only the window reads. One read each, per organisation, keeps the game from reporting
+# them as "set but never used" (run 4).
+cwp_iot_figures_exist = {
+	has_global_variable = cwp_iot_$ORG$_for_pct
+	has_global_variable = cwp_iot_$ORG$_against_pct
+	has_global_variable = cwp_iot_$ORG$_abstain_pct
+	has_global_variable = cwp_iot_$ORG$_chair_vote
+	has_global_variable = cwp_iot_$ORG$_councn
+	has_global_variable = cwp_iot_$ORG$_treaties
+	has_global_variable = cwp_iot_$ORG$_admin
+	has_global_variable = cwp_iot_$ORG$_collected
+	has_global_variable = cwp_iot_$ORG$_budget
+	has_global_variable = cwp_iot_$ORG$_acount
+	cwp_iot_slot_figures = { ORG = $ORG$ SLOT = 1 }
+	cwp_iot_slot_figures = { ORG = $ORG$ SLOT = 2 }
+	cwp_iot_slot_figures = { ORG = $ORG$ SLOT = 3 }
+	cwp_iot_slot_figures = { ORG = $ORG$ SLOT = 4 }
+	cwp_iot_slot_figures = { ORG = $ORG$ SLOT = 5 }
+}
+
+# The place holds the very proposal described by scope:cwp_iot_t_mtype, _t_param (and _t_target).
+cwp_iot_slot_same = {
+	global_var:cwp_iot_$ORG$_a$SLOT$_mtype = scope:cwp_iot_t_mtype
+	global_var:cwp_iot_$ORG$_a$SLOT$_param = scope:cwp_iot_t_param
+	trigger_if = {
+		limit = { scope:cwp_iot_t_mtype <= 6 }
+		has_global_variable = cwp_iot_$ORG$_a$SLOT$_target
+		global_var:cwp_iot_$ORG$_a$SLOT$_target = scope:cwp_iot_t_target
+	}
+}
+
+cwp_iot_agenda_has = {
+	OR = {
+		cwp_iot_slot_same = { ORG = $ORG$ SLOT = 1 }
+		cwp_iot_slot_same = { ORG = $ORG$ SLOT = 2 }
+		cwp_iot_slot_same = { ORG = $ORG$ SLOT = 3 }
+		cwp_iot_slot_same = { ORG = $ORG$ SLOT = 4 }
+		cwp_iot_slot_same = { ORG = $ORG$ SLOT = 5 }
+	}
+}
+
+# Figures of a place on the agenda that only the window reads.
+cwp_iot_slot_figures = {
+	has_global_variable = cwp_iot_$ORG$_a$SLOT$_pct
+	has_global_variable = cwp_iot_$ORG$_a$SLOT$_backers
+}
+
+# The country holds a seat and has not been suspended.
+cwp_iot_can_vote = {
+	has_variable = cwp_iot_$ORG$_status
+	NOT = { var:cwp_iot_$ORG$_status = 3 }
+}
+
+# scope:member is under the organisation's sanctions.
+cwp_iot_is_sanctioned = {
+	has_global_variable_list = cwp_iot_$ORG$_sanctioned
+	is_target_in_global_variable_list = { name = cwp_iot_$ORG$_sanctioned target = scope:member }
+}
+
+# The player may lobby scope:member with scope:action (1 persuade, 2 aid, 3 favour, 4 lean on).
+cwp_iot_can_lobby = {
+	cwp_iot_phase_is = { ORG = $ORG$ PHASE = 1 }
+	cwp_iot_can_vote = { ORG = $ORG$ }
+	has_variable = cwp_iot_$ORG$_vote
+	var:cwp_iot_$ORG$_vote >= 1
+	var:cwp_iot_$ORG$_vote <= 2
+	NOT = { scope:member = root }
+	scope:member = {
+		has_variable = cwp_iot_$ORG$_push
+		NOT = { has_variable = cwp_iot_lobby_cd }
+	}
+	trigger_if = {
+		limit = { scope:action = 1 }
+		var:cwp_iot_$ORG$_standing >= 5
+	}
+	trigger_else_if = {
+		limit = { scope:action = 3 }
+		scope:member = { owes_obligation_to = root }
+	}
+	trigger_else = {
+		always = yes
+	}
+}

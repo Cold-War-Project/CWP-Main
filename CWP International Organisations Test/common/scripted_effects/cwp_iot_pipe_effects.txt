@@ -1,0 +1,356 @@
+﻿# CWP international organisations test: what a passed motion does to the game.
+# scope:cwp_iot_sp is the sponsor, scope:cwp_iot_tg the country the motion is about (saved by cwp_iot_apply).
+# Each effect is one "pipe" the real framework needs: infamy, embargo pacts, ending a war, treaties.
+
+### P01 censure: infamy, relations, standing
+cwp_iot_do_censure = {
+	scope:cwp_iot_tg = {
+		debug_log = "CWP_IOT P01 censure;[THIS.GetCountry.GetNameNoFormatting]"
+	}
+	scope:cwp_iot_tg = {
+		change_infamy = 5
+		if = {
+			limit = { NOT = { this = scope:cwp_iot_sp } }
+			change_relations = { country = scope:cwp_iot_sp value = -20 }
+		}
+		if = {
+			limit = { has_variable = cwp_iot_$ORG$_standing }
+			change_variable = { name = cwp_iot_$ORG$_standing add = -10 }
+			clamp_variable = { name = cwp_iot_$ORG$_standing min = 0 max = 100 }
+		}
+	}
+}
+
+### P02 sanctions: every member that voted for the motion places an embargo; the others lose standing
+cwp_iot_do_sanction = {
+	scope:cwp_iot_tg = {
+		debug_log = "CWP_IOT P02 sanctions;[THIS.GetCountry.GetNameNoFormatting]"
+	}
+	every_in_global_list = {
+		variable = cwp_iot_$ORG$_members
+		limit = {
+			NOT = { this = scope:cwp_iot_tg }
+			has_variable = cwp_iot_$ORG$_vote
+		}
+		if = {
+			limit = {
+				var:cwp_iot_$ORG$_vote = 1
+				NOT = {
+					has_diplomatic_pact = {
+						who = scope:cwp_iot_tg
+						type = embargo
+					}
+				}
+			}
+			create_diplomatic_pact = {
+				country = scope:cwp_iot_tg
+				type = embargo
+			}
+			change_global_variable = { name = cwp_iot_$ORG$_embargoes add = 1 }
+		}
+		else_if = {
+			limit = { NOT = { var:cwp_iot_$ORG$_vote = 1 } }
+			change_variable = { name = cwp_iot_$ORG$_standing add = -5 }
+			clamp_variable = { name = cwp_iot_$ORG$_standing min = 0 max = 100 }
+		}
+	}
+	add_to_global_variable_list = { name = cwp_iot_$ORG$_sanctioned target = scope:cwp_iot_tg }
+	scope:cwp_iot_tg = {
+		set_variable = { name = cwp_iot_$ORG$_sanc value = yes }
+	}
+}
+
+### P03 sanctions lifted: every member's embargo on the country is removed
+cwp_iot_do_lift = {
+	scope:cwp_iot_tg = {
+		debug_log = "CWP_IOT P03 sanctions lifted;[THIS.GetCountry.GetNameNoFormatting]"
+	}
+	every_in_global_list = {
+		variable = cwp_iot_$ORG$_members
+		limit = {
+			NOT = { this = scope:cwp_iot_tg }
+			has_diplomatic_pact = {
+				who = scope:cwp_iot_tg
+				type = embargo
+				is_initiator = yes
+			}
+		}
+		remove_diplomatic_pact = {
+			country = scope:cwp_iot_tg
+			type = embargo
+		}
+		change_global_variable = { name = cwp_iot_$ORG$_embargoes add = -1 }
+	}
+	if = {
+		limit = {
+			has_global_variable_list = cwp_iot_$ORG$_sanctioned
+			is_target_in_global_variable_list = { name = cwp_iot_$ORG$_sanctioned target = scope:cwp_iot_tg }
+		}
+		remove_list_global_variable = { name = cwp_iot_$ORG$_sanctioned target = scope:cwp_iot_tg }
+		scope:cwp_iot_tg = {
+			if = {
+				limit = { has_variable = cwp_iot_$ORG$_sanc }
+				remove_variable = cwp_iot_$ORG$_sanc
+			}
+		}
+	}
+}
+
+### P04 ceasefire. With the first power (peacekeeping) adopted the named country's wars are ended and a
+### two-year truce set with each enemy. Without it the resolution only costs the country infamy.
+cwp_iot_do_ceasefire = {
+	scope:cwp_iot_tg = {
+		debug_log = "CWP_IOT P04 ceasefire;[THIS.GetCountry.GetNameNoFormatting]"
+	}
+	if = {
+		limit = { global_var:cwp_iot_$ORG$_comp1 = 1 }
+		if = {
+			limit = { has_global_variable_list = cwp_iot_enemies }
+			clear_global_variable_list = cwp_iot_enemies
+		}
+		every_country = {
+			limit = { has_war_with = scope:cwp_iot_tg }
+			add_to_global_variable_list = { name = cwp_iot_enemies target = this }
+		}
+		scope:cwp_iot_tg = {
+			every_scope_war = {
+				diplomatic_play = {
+					end_play = yes
+				}
+			}
+		}
+		if = {
+			limit = { has_global_variable_list = cwp_iot_enemies }
+			every_in_global_list = {
+				variable = cwp_iot_enemies
+				create_bidirectional_truce = { country = scope:cwp_iot_tg months = 24 }
+				debug_log = "CWP_IOT P04 war ended and truce set with;[THIS.GetCountry.GetNameNoFormatting]"
+			}
+			clear_global_variable_list = cwp_iot_enemies
+		}
+		change_global_variable = { name = cwp_iot_$ORG$_wars add = 1 }
+	}
+	else = {
+		scope:cwp_iot_tg = {
+			if = {
+				limit = { is_at_war = yes }
+				change_infamy = 3
+			}
+		}
+	}
+}
+
+### P05 admission
+cwp_iot_do_admit = {
+	scope:cwp_iot_tg = {
+		debug_log = "CWP_IOT P05 admitted;[THIS.GetCountry.GetNameNoFormatting]"
+	}
+	scope:cwp_iot_tg = {
+		if = {
+			limit = {
+				has_global_variable_list = cwp_iot_$ORG$_candidates
+				is_target_in_global_variable_list = { name = cwp_iot_$ORG$_candidates target = this }
+			}
+			remove_list_global_variable = { name = cwp_iot_$ORG$_candidates target = this }
+			change_global_variable = { name = cwp_iot_$ORG$_cands add = -1 }
+		}
+		cwp_iot_seat = { ORG = $ORG$ }
+	}
+	cwp_iot_bars = { ORG = $ORG$ }
+}
+
+### suspension: the seat is kept, the vote is lost
+cwp_iot_do_suspend = {
+	scope:cwp_iot_tg = {
+		debug_log = "CWP_IOT suspended;[THIS.GetCountry.GetNameNoFormatting]"
+	}
+	scope:cwp_iot_tg = {
+		if = {
+			limit = { has_variable = cwp_iot_$ORG$_status }
+			set_variable = { name = cwp_iot_$ORG$_status value = 3 }
+			change_variable = { name = cwp_iot_$ORG$_standing add = -20 }
+			clamp_variable = { name = cwp_iot_$ORG$_standing min = 0 max = 100 }
+		}
+	}
+}
+
+### a power is adopted: the charter changes, and for four of the six powers the game changes with it
+cwp_iot_do_adopt = {
+	if = {
+		limit = { global_var:cwp_iot_$ORG$_param = 1 }
+		set_global_variable = { name = cwp_iot_$ORG$_comp1 value = 1 }
+	}
+	else = {
+		set_global_variable = { name = cwp_iot_$ORG$_comp2 value = 1 }
+	}
+	if = {
+		limit = {
+			global_var:cwp_iot_$ORG$_id = 2
+			global_var:cwp_iot_$ORG$_param = 1
+		}
+		cwp_iot_pipe_free_trade = yes
+	}
+	else_if = {
+		limit = {
+			global_var:cwp_iot_$ORG$_id = 2
+			global_var:cwp_iot_$ORG$_param = 2
+		}
+		cwp_iot_pipe_standards = yes
+	}
+	else_if = {
+		limit = {
+			global_var:cwp_iot_$ORG$_id = 3
+			global_var:cwp_iot_$ORG$_param = 1
+		}
+		cwp_iot_pipe_defence = yes
+	}
+	else_if = {
+		limit = {
+			global_var:cwp_iot_$ORG$_id = 3
+			global_var:cwp_iot_$ORG$_param = 2
+		}
+		cwp_iot_pipe_bases = yes
+	}
+}
+
+### the next step of the ladder: passed in the chamber, then ratified at home by every member.
+### A member in poor standing refuses half the time; one refusal stops the treaty.
+cwp_iot_do_deepen = {
+	set_global_variable = { name = cwp_iot_$ORG$_refusals value = 0 }
+	every_in_global_list = {
+		variable = cwp_iot_$ORG$_members
+		limit = {
+			has_variable = cwp_iot_$ORG$_standing
+			var:cwp_iot_$ORG$_standing < 35
+		}
+		random = {
+			chance = 50
+			change_global_variable = { name = cwp_iot_$ORG$_refusals add = 1 }
+		}
+	}
+	if = {
+		limit = { global_var:cwp_iot_$ORG$_refusals < 1 }
+		change_global_variable = { name = cwp_iot_$ORG$_step add = 1 }
+		cwp_iot_bars = { ORG = $ORG$ }
+	}
+	else = {
+		set_global_variable = { name = cwp_iot_$ORG$_last value = 4 }
+		change_global_variable = { name = cwp_iot_$ORG$_bar2 add = -10 }
+	}
+}
+
+### P07 Customs League, power 1: a treaty between the leader and every member with one no-tariffs
+### article each way. The article is per good in 1.15, so the test uses fabric only.
+cwp_iot_pipe_free_trade = {
+	global_var:cwp_iot_2_leader = { save_scope_as = cwp_iot_ld }
+	every_in_global_list = {
+		variable = cwp_iot_2_members
+		limit = { NOT = { this = scope:cwp_iot_ld } }
+		save_scope_as = cwp_iot_mb
+		create_treaty = {
+			name = cwp_iot_treaty_2
+			first_country = scope:cwp_iot_ld
+			second_country = scope:cwp_iot_mb
+			is_draft = no
+			binding_period = { years = 5 }
+			articles_to_create = {
+				{
+					article = no_tariffs
+					source_country = scope:cwp_iot_ld
+					target_country = scope:cwp_iot_mb
+					inputs = {
+						{ goods = g:fabric }
+					}
+				}
+				{
+					article = no_tariffs
+					source_country = scope:cwp_iot_mb
+					target_country = scope:cwp_iot_ld
+					inputs = {
+						{ goods = g:fabric }
+					}
+				}
+			}
+		}
+		change_global_variable = { name = cwp_iot_2_treaties add = 1 }
+	}
+}
+
+### P08 Customs League, power 2: every member that has Mercantilism commits to keeping it
+cwp_iot_pipe_standards = {
+	global_var:cwp_iot_2_leader = { save_scope_as = cwp_iot_ld }
+	every_in_global_list = {
+		variable = cwp_iot_2_members
+		limit = {
+			NOT = { this = scope:cwp_iot_ld }
+			has_law_or_variant = law_type:law_mercantilism
+		}
+		save_scope_as = cwp_iot_mb
+		create_treaty = {
+			name = cwp_iot_treaty_2b
+			first_country = scope:cwp_iot_ld
+			second_country = scope:cwp_iot_mb
+			is_draft = no
+			binding_period = { years = 5 }
+			articles_to_create = {
+				{
+					article = law_commitment
+					source_country = scope:cwp_iot_mb
+					target_country = scope:cwp_iot_ld
+					inputs = {
+						{ law_type = law_type:law_mercantilism }
+					}
+				}
+			}
+		}
+		change_global_variable = { name = cwp_iot_2_treaties add = 1 }
+	}
+}
+
+### P09 Defence Pact, power 1: the guarantor signs a defensive pact with every member (hub and spoke)
+cwp_iot_pipe_defence = {
+	global_var:cwp_iot_3_leader = { save_scope_as = cwp_iot_ld }
+	every_in_global_list = {
+		variable = cwp_iot_3_members
+		limit = { NOT = { this = scope:cwp_iot_ld } }
+		save_scope_as = cwp_iot_mb
+		create_treaty = {
+			name = cwp_iot_treaty_3
+			first_country = scope:cwp_iot_ld
+			second_country = scope:cwp_iot_mb
+			is_draft = no
+			binding_period = { years = 5 }
+			articles_to_create = {
+				{
+					article = defensive_pact
+				}
+			}
+		}
+		change_global_variable = { name = cwp_iot_3_treaties add = 1 }
+	}
+}
+
+### P10 Defence Pact, power 2: every member gives the guarantor military access
+cwp_iot_pipe_bases = {
+	global_var:cwp_iot_3_leader = { save_scope_as = cwp_iot_ld }
+	every_in_global_list = {
+		variable = cwp_iot_3_members
+		limit = { NOT = { this = scope:cwp_iot_ld } }
+		save_scope_as = cwp_iot_mb
+		create_treaty = {
+			name = cwp_iot_treaty_3b
+			first_country = scope:cwp_iot_ld
+			second_country = scope:cwp_iot_mb
+			is_draft = no
+			binding_period = { years = 5 }
+			articles_to_create = {
+				{
+					article = military_access
+					source_country = scope:cwp_iot_mb
+					target_country = scope:cwp_iot_ld
+				}
+			}
+		}
+		change_global_variable = { name = cwp_iot_3_treaties add = 1 }
+	}
+}

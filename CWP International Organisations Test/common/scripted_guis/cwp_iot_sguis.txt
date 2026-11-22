@@ -1,0 +1,995 @@
+﻿# CWP international organisations test: the scripted GUIs of each organisation.
+# One set per organisation, all calling the same scripted effects with ORG = <n>. Written by build_iot.py.
+# Root is the player's country; the row's country arrives as scope:member, choices as numbers.
+
+##### Organisation 1
+
+# the player holds a seat here
+cwp_iot_seat_1_sgui = {
+	scope = country
+
+	is_valid = {
+		has_variable = cwp_iot_1_status
+	}
+}
+
+# the player's own vote: scope:choice 1 for, 2 against, 3 abstain
+cwp_iot_vote_1_sgui = {
+	scope = country
+	saved_scopes = { choice }
+
+	is_valid = {
+		cwp_iot_phase_is = { ORG = 1 PHASE = 1 }
+		cwp_iot_can_vote = { ORG = 1 }
+		has_variable = cwp_iot_1_myvote
+		NOT = { var:cwp_iot_1_myvote = scope:choice }
+		# only a delegation told to ask is voted by hand
+		has_variable = cwp_iot_1_deleg
+		var:cwp_iot_1_deleg = 1
+	}
+
+	effect = {
+		set_variable = { name = cwp_iot_1_myvote value = scope:choice }
+		cwp_iot_count = { ORG = 1 }
+		cwp_iot_log_1 = yes
+	}
+}
+
+# delegation instructions: scope:mode 1 ask me, 2 vote the national interest, 3 follow the presiding country
+cwp_iot_deleg_1_sgui = {
+	scope = country
+	saved_scopes = { mode }
+
+	is_valid = {
+		has_variable = cwp_iot_1_deleg
+		NOT = { var:cwp_iot_1_deleg = scope:mode }
+	}
+
+	effect = {
+		set_variable = { name = cwp_iot_1_deleg value = scope:mode }
+		if = {
+			limit = { cwp_iot_phase_is = { ORG = 1 PHASE = 1 } }
+			cwp_iot_count = { ORG = 1 }
+		}
+	}
+}
+
+# lobbying a member: scope:action 1 persuade, 2 aid, 3 call in a favour, 4 lean on
+cwp_iot_lobby_1_sgui = {
+	scope = country
+	saved_scopes = { member action }
+
+	is_shown = {
+		exists = scope:member
+		NOT = { scope:member = root }
+		cwp_iot_phase_is = { ORG = 1 PHASE = 1 }
+		trigger_if = {
+			limit = { scope:action = 3 }
+			scope:member = { owes_obligation_to = root }
+		}
+		trigger_else = {
+			always = yes
+		}
+	}
+
+	is_valid = {
+		cwp_iot_can_lobby = { ORG = 1 }
+	}
+
+	effect = {
+		cwp_iot_lobby = { ORG = 1 }
+		debug_log = "CWP_IOT L lobby;org=1;member=[SCOPE.sCountry('member').GetNameNoFormatting];lean=[SCOPE.sCountry('member').MakeScope.Var('cwp_iot_1_lean').GetValue|0];push=[SCOPE.sCountry('member').MakeScope.Var('cwp_iot_1_push').GetValue|0]"
+		cwp_iot_log_1 = yes
+	}
+}
+
+# sponsoring a motion about a country: scope:mtype 1 censure, 2 sanctions, 3 lift them, 5 admit, 6 suspend
+cwp_iot_propose_1_sgui = {
+	scope = country
+	saved_scopes = { member mtype }
+
+	is_shown = {
+		exists = scope:member
+		NOT = { scope:member = root }
+		trigger_if = {
+			limit = { scope:mtype = 2 }
+			NOT = { cwp_iot_is_sanctioned = { ORG = 1 } }
+		}
+		trigger_else_if = {
+			limit = { scope:mtype = 3 }
+			cwp_iot_is_sanctioned = { ORG = 1 }
+		}
+		trigger_else = {
+			always = yes
+		}
+	}
+
+	is_valid = {
+		cwp_iot_can_vote = { ORG = 1 }
+		var:cwp_iot_1_standing >= 10
+		global_var:cwp_iot_1_afree >= 1
+		NOT = { scope:member = root }
+		trigger_if = {
+			limit = { scope:mtype = 6 }
+			scope:member = {
+				has_variable = cwp_iot_1_status
+				NOT = { var:cwp_iot_1_status = 3 }
+			}
+		}
+		trigger_else = {
+			always = yes
+		}
+	}
+
+	effect = {
+		cwp_iot_propose = { ORG = 1 }
+		debug_log = "CWP_IOT C02 tabled;org=1;about=[SCOPE.sCountry('member').GetNameNoFormatting];free_places=[GetGlobalVariable('cwp_iot_1_afree').GetValue|0]"
+		cwp_iot_log_1 = yes
+	}
+}
+
+# sponsoring charter business: scope:comp 1 or 2 adopts that power, 9 proposes the next ladder step
+cwp_iot_charter_1_sgui = {
+	scope = country
+	saved_scopes = { comp }
+
+	is_shown = {
+		has_global_variable = cwp_iot_1_comp1
+		trigger_if = {
+			limit = { scope:comp = 1 }
+			global_var:cwp_iot_1_comp1 = 0
+		}
+		trigger_else_if = {
+			limit = { scope:comp = 2 }
+			global_var:cwp_iot_1_comp2 = 0
+		}
+		trigger_else = {
+			global_var:cwp_iot_1_step < 7
+		}
+	}
+
+	is_valid = {
+		cwp_iot_can_vote = { ORG = 1 }
+		var:cwp_iot_1_standing >= 10
+		global_var:cwp_iot_1_afree >= 1
+	}
+
+	effect = {
+		cwp_iot_propose_charter = { ORG = 1 }
+		cwp_iot_log_1 = yes
+	}
+}
+
+# test control: open the regular session now, or go straight to the vote
+cwp_iot_now_1_sgui = {
+	scope = country
+
+	is_valid = {
+		has_global_variable = cwp_iot_1_phase
+		has_global_variable = cwp_iot_1_leader
+		cwp_iot_figures_exist = { ORG = 1 }
+	}
+
+	effect = {
+		cwp_iot_now = { ORG = 1 }
+		cwp_iot_log_1 = yes
+	}
+}
+
+# backing a proposal on the agenda: scope:slot is its place, 1 to 5
+cwp_iot_back_1_sgui = {
+	scope = country
+	saved_scopes = { slot }
+
+	is_valid = {
+		cwp_iot_can_vote = { ORG = 1 }
+		has_variable = cwp_iot_1_back
+		NOT = { var:cwp_iot_1_back = scope:slot }
+	}
+
+	effect = {
+		set_variable = { name = cwp_iot_1_back value = scope:slot }
+		cwp_iot_backing = { ORG = 1 }
+		debug_log = "CWP_IOT B01 backs;org=1;place=[THIS.GetCountry.MakeScope.Var('cwp_iot_1_back').GetValue|0];leading=[GetGlobalVariable('cwp_iot_1_alead').GetValue|0]"
+	}
+}
+
+# lobbying a member for the proposal we back: scope:action 1 persuade, 2 aid, 3 favour, 4 lean on
+cwp_iot_pull_1_sgui = {
+	scope = country
+	saved_scopes = { member action }
+
+	is_valid = {
+		cwp_iot_can_vote = { ORG = 1 }
+		has_variable = cwp_iot_1_back
+		var:cwp_iot_1_back >= 1
+		NOT = { scope:member = root }
+		scope:member = {
+			has_variable = cwp_iot_1_pull
+			NOT = { has_variable = cwp_iot_lobby_cd }
+		}
+		trigger_if = {
+			limit = { scope:action = 1 }
+			var:cwp_iot_1_standing >= 5
+		}
+		trigger_else_if = {
+			limit = { scope:action = 3 }
+			scope:member = { owes_obligation_to = root }
+		}
+		trigger_else = {
+			always = yes
+		}
+	}
+
+	effect = {
+		cwp_iot_pull_player = { ORG = 1 }
+		debug_log = "CWP_IOT B08 pulled;org=1;member=[SCOPE.sCountry('member').GetNameNoFormatting];toward=[SCOPE.sCountry('member').MakeScope.Var('cwp_iot_1_pull').GetValue|0];by=[SCOPE.sCountry('member').MakeScope.Var('cwp_iot_1_pull_amt').GetValue|0];now_backs=[SCOPE.sCountry('member').MakeScope.Var('cwp_iot_1_back').GetValue|0]"
+	}
+}
+
+# a row of "Who Backs What": its tooltip. The effect is described, not run.
+cwp_iot_back_tt_1_sgui = {
+	scope = country
+	saved_scopes = { member }
+
+	effect = {
+		custom_tooltip_no_bullet = cwp_iot_row_tt_head
+		custom_tooltip = cwp_iot_back_tt_1_weight
+		if = {
+			limit = {
+				scope:member = {
+					has_variable = cwp_iot_1_pull
+					has_variable = cwp_iot_1_pull_by
+					NOT = { var:cwp_iot_1_pull = 0 }
+				}
+			}
+			custom_tooltip = cwp_iot_back_tt_1_pull
+		}
+		if = {
+			limit = {
+				scope:member = { owes_obligation_to = root }
+			}
+			custom_tooltip = cwp_iot_row_tt_favour
+		}
+		if = {
+			limit = {
+				scope:member = { has_variable = cwp_iot_lobby_cd }
+			}
+			custom_tooltip = cwp_iot_row_tt_cooling
+		}
+	}
+}
+
+# a member row's tooltip. The effect is described, not run.
+cwp_iot_row_tt_1_sgui = {
+	scope = country
+	saved_scopes = { member }
+
+	effect = {
+		custom_tooltip_no_bullet = cwp_iot_row_tt_head
+		if = {
+			limit = {
+				scope:member = {
+					has_variable = cwp_iot_1_status
+					var:cwp_iot_1_status = 2
+				}
+			}
+			custom_tooltip = cwp_iot_row_tt_council
+		}
+		custom_tooltip = cwp_iot_row_tt_1_standing
+		if = {
+			limit = { cwp_iot_phase_is = { ORG = 1 PHASE = 1 } }
+			custom_tooltip = cwp_iot_row_tt_1_lean
+		}
+		if = {
+			limit = {
+				cwp_iot_phase_is = { ORG = 1 PHASE = 1 }
+				scope:member = {
+					has_variable = cwp_iot_1_lob1
+					has_variable = cwp_iot_1_lob1_amt
+				}
+			}
+			custom_tooltip = cwp_iot_row_tt_1_lob1
+		}
+		if = {
+			limit = {
+				cwp_iot_phase_is = { ORG = 1 PHASE = 1 }
+				scope:member = {
+					has_variable = cwp_iot_1_lob2
+					has_variable = cwp_iot_1_lob2_amt
+				}
+			}
+			custom_tooltip = cwp_iot_row_tt_1_lob2
+		}
+		if = {
+			limit = {
+				cwp_iot_phase_is = { ORG = 1 PHASE = 1 }
+				scope:member = {
+					has_variable = cwp_iot_1_lob3
+					has_variable = cwp_iot_1_lob3_amt
+				}
+			}
+			custom_tooltip = cwp_iot_row_tt_1_lob3
+		}
+		if = {
+			limit = {
+				scope:member = { owes_obligation_to = root }
+			}
+			custom_tooltip = cwp_iot_row_tt_favour
+		}
+		if = {
+			limit = {
+				scope:member = { has_variable = cwp_iot_absent }
+			}
+			custom_tooltip = cwp_iot_row_tt_absent
+		}
+		if = {
+			limit = {
+				scope:member = { has_variable = cwp_iot_lobby_cd }
+			}
+			custom_tooltip = cwp_iot_row_tt_cooling
+		}
+	}
+}
+
+
+##### Organisation 2
+
+# the player holds a seat here
+cwp_iot_seat_2_sgui = {
+	scope = country
+
+	is_valid = {
+		has_variable = cwp_iot_2_status
+	}
+}
+
+# the player's own vote: scope:choice 1 for, 2 against, 3 abstain
+cwp_iot_vote_2_sgui = {
+	scope = country
+	saved_scopes = { choice }
+
+	is_valid = {
+		cwp_iot_phase_is = { ORG = 2 PHASE = 1 }
+		cwp_iot_can_vote = { ORG = 2 }
+		has_variable = cwp_iot_2_myvote
+		NOT = { var:cwp_iot_2_myvote = scope:choice }
+		# only a delegation told to ask is voted by hand
+		has_variable = cwp_iot_2_deleg
+		var:cwp_iot_2_deleg = 1
+	}
+
+	effect = {
+		set_variable = { name = cwp_iot_2_myvote value = scope:choice }
+		cwp_iot_count = { ORG = 2 }
+		cwp_iot_log_2 = yes
+	}
+}
+
+# delegation instructions: scope:mode 1 ask me, 2 vote the national interest, 3 follow the presiding country
+cwp_iot_deleg_2_sgui = {
+	scope = country
+	saved_scopes = { mode }
+
+	is_valid = {
+		has_variable = cwp_iot_2_deleg
+		NOT = { var:cwp_iot_2_deleg = scope:mode }
+	}
+
+	effect = {
+		set_variable = { name = cwp_iot_2_deleg value = scope:mode }
+		if = {
+			limit = { cwp_iot_phase_is = { ORG = 2 PHASE = 1 } }
+			cwp_iot_count = { ORG = 2 }
+		}
+	}
+}
+
+# lobbying a member: scope:action 1 persuade, 2 aid, 3 call in a favour, 4 lean on
+cwp_iot_lobby_2_sgui = {
+	scope = country
+	saved_scopes = { member action }
+
+	is_shown = {
+		exists = scope:member
+		NOT = { scope:member = root }
+		cwp_iot_phase_is = { ORG = 2 PHASE = 1 }
+		trigger_if = {
+			limit = { scope:action = 3 }
+			scope:member = { owes_obligation_to = root }
+		}
+		trigger_else = {
+			always = yes
+		}
+	}
+
+	is_valid = {
+		cwp_iot_can_lobby = { ORG = 2 }
+	}
+
+	effect = {
+		cwp_iot_lobby = { ORG = 2 }
+		debug_log = "CWP_IOT L lobby;org=2;member=[SCOPE.sCountry('member').GetNameNoFormatting];lean=[SCOPE.sCountry('member').MakeScope.Var('cwp_iot_2_lean').GetValue|0];push=[SCOPE.sCountry('member').MakeScope.Var('cwp_iot_2_push').GetValue|0]"
+		cwp_iot_log_2 = yes
+	}
+}
+
+# sponsoring a motion about a country: scope:mtype 1 censure, 2 sanctions, 3 lift them, 5 admit, 6 suspend
+cwp_iot_propose_2_sgui = {
+	scope = country
+	saved_scopes = { member mtype }
+
+	is_shown = {
+		exists = scope:member
+		NOT = { scope:member = root }
+		trigger_if = {
+			limit = { scope:mtype = 2 }
+			NOT = { cwp_iot_is_sanctioned = { ORG = 2 } }
+		}
+		trigger_else_if = {
+			limit = { scope:mtype = 3 }
+			cwp_iot_is_sanctioned = { ORG = 2 }
+		}
+		trigger_else = {
+			always = yes
+		}
+	}
+
+	is_valid = {
+		cwp_iot_can_vote = { ORG = 2 }
+		var:cwp_iot_2_standing >= 10
+		global_var:cwp_iot_2_afree >= 1
+		NOT = { scope:member = root }
+		trigger_if = {
+			limit = { scope:mtype = 6 }
+			scope:member = {
+				has_variable = cwp_iot_2_status
+				NOT = { var:cwp_iot_2_status = 3 }
+			}
+		}
+		trigger_else = {
+			always = yes
+		}
+	}
+
+	effect = {
+		cwp_iot_propose = { ORG = 2 }
+		debug_log = "CWP_IOT C02 tabled;org=2;about=[SCOPE.sCountry('member').GetNameNoFormatting];free_places=[GetGlobalVariable('cwp_iot_2_afree').GetValue|0]"
+		cwp_iot_log_2 = yes
+	}
+}
+
+# sponsoring charter business: scope:comp 1 or 2 adopts that power, 9 proposes the next ladder step
+cwp_iot_charter_2_sgui = {
+	scope = country
+	saved_scopes = { comp }
+
+	is_shown = {
+		has_global_variable = cwp_iot_2_comp1
+		trigger_if = {
+			limit = { scope:comp = 1 }
+			global_var:cwp_iot_2_comp1 = 0
+		}
+		trigger_else_if = {
+			limit = { scope:comp = 2 }
+			global_var:cwp_iot_2_comp2 = 0
+		}
+		trigger_else = {
+			global_var:cwp_iot_2_step < 7
+		}
+	}
+
+	is_valid = {
+		cwp_iot_can_vote = { ORG = 2 }
+		var:cwp_iot_2_standing >= 10
+		global_var:cwp_iot_2_afree >= 1
+	}
+
+	effect = {
+		cwp_iot_propose_charter = { ORG = 2 }
+		cwp_iot_log_2 = yes
+	}
+}
+
+# test control: open the regular session now, or go straight to the vote
+cwp_iot_now_2_sgui = {
+	scope = country
+
+	is_valid = {
+		has_global_variable = cwp_iot_2_phase
+		has_global_variable = cwp_iot_2_leader
+		cwp_iot_figures_exist = { ORG = 2 }
+	}
+
+	effect = {
+		cwp_iot_now = { ORG = 2 }
+		cwp_iot_log_2 = yes
+	}
+}
+
+# backing a proposal on the agenda: scope:slot is its place, 1 to 5
+cwp_iot_back_2_sgui = {
+	scope = country
+	saved_scopes = { slot }
+
+	is_valid = {
+		cwp_iot_can_vote = { ORG = 2 }
+		has_variable = cwp_iot_2_back
+		NOT = { var:cwp_iot_2_back = scope:slot }
+	}
+
+	effect = {
+		set_variable = { name = cwp_iot_2_back value = scope:slot }
+		cwp_iot_backing = { ORG = 2 }
+		debug_log = "CWP_IOT B01 backs;org=2;place=[THIS.GetCountry.MakeScope.Var('cwp_iot_2_back').GetValue|0];leading=[GetGlobalVariable('cwp_iot_2_alead').GetValue|0]"
+	}
+}
+
+# lobbying a member for the proposal we back: scope:action 1 persuade, 2 aid, 3 favour, 4 lean on
+cwp_iot_pull_2_sgui = {
+	scope = country
+	saved_scopes = { member action }
+
+	is_valid = {
+		cwp_iot_can_vote = { ORG = 2 }
+		has_variable = cwp_iot_2_back
+		var:cwp_iot_2_back >= 1
+		NOT = { scope:member = root }
+		scope:member = {
+			has_variable = cwp_iot_2_pull
+			NOT = { has_variable = cwp_iot_lobby_cd }
+		}
+		trigger_if = {
+			limit = { scope:action = 1 }
+			var:cwp_iot_2_standing >= 5
+		}
+		trigger_else_if = {
+			limit = { scope:action = 3 }
+			scope:member = { owes_obligation_to = root }
+		}
+		trigger_else = {
+			always = yes
+		}
+	}
+
+	effect = {
+		cwp_iot_pull_player = { ORG = 2 }
+		debug_log = "CWP_IOT B08 pulled;org=2;member=[SCOPE.sCountry('member').GetNameNoFormatting];toward=[SCOPE.sCountry('member').MakeScope.Var('cwp_iot_2_pull').GetValue|0];by=[SCOPE.sCountry('member').MakeScope.Var('cwp_iot_2_pull_amt').GetValue|0];now_backs=[SCOPE.sCountry('member').MakeScope.Var('cwp_iot_2_back').GetValue|0]"
+	}
+}
+
+# a row of "Who Backs What": its tooltip. The effect is described, not run.
+cwp_iot_back_tt_2_sgui = {
+	scope = country
+	saved_scopes = { member }
+
+	effect = {
+		custom_tooltip_no_bullet = cwp_iot_row_tt_head
+		custom_tooltip = cwp_iot_back_tt_2_weight
+		if = {
+			limit = {
+				scope:member = {
+					has_variable = cwp_iot_2_pull
+					has_variable = cwp_iot_2_pull_by
+					NOT = { var:cwp_iot_2_pull = 0 }
+				}
+			}
+			custom_tooltip = cwp_iot_back_tt_2_pull
+		}
+		if = {
+			limit = {
+				scope:member = { owes_obligation_to = root }
+			}
+			custom_tooltip = cwp_iot_row_tt_favour
+		}
+		if = {
+			limit = {
+				scope:member = { has_variable = cwp_iot_lobby_cd }
+			}
+			custom_tooltip = cwp_iot_row_tt_cooling
+		}
+	}
+}
+
+# a member row's tooltip. The effect is described, not run.
+cwp_iot_row_tt_2_sgui = {
+	scope = country
+	saved_scopes = { member }
+
+	effect = {
+		custom_tooltip_no_bullet = cwp_iot_row_tt_head
+		if = {
+			limit = {
+				scope:member = {
+					has_variable = cwp_iot_2_status
+					var:cwp_iot_2_status = 2
+				}
+			}
+			custom_tooltip = cwp_iot_row_tt_council
+		}
+		custom_tooltip = cwp_iot_row_tt_2_standing
+		if = {
+			limit = { cwp_iot_phase_is = { ORG = 2 PHASE = 1 } }
+			custom_tooltip = cwp_iot_row_tt_2_lean
+		}
+		if = {
+			limit = {
+				cwp_iot_phase_is = { ORG = 2 PHASE = 1 }
+				scope:member = {
+					has_variable = cwp_iot_2_lob1
+					has_variable = cwp_iot_2_lob1_amt
+				}
+			}
+			custom_tooltip = cwp_iot_row_tt_2_lob1
+		}
+		if = {
+			limit = {
+				cwp_iot_phase_is = { ORG = 2 PHASE = 1 }
+				scope:member = {
+					has_variable = cwp_iot_2_lob2
+					has_variable = cwp_iot_2_lob2_amt
+				}
+			}
+			custom_tooltip = cwp_iot_row_tt_2_lob2
+		}
+		if = {
+			limit = {
+				cwp_iot_phase_is = { ORG = 2 PHASE = 1 }
+				scope:member = {
+					has_variable = cwp_iot_2_lob3
+					has_variable = cwp_iot_2_lob3_amt
+				}
+			}
+			custom_tooltip = cwp_iot_row_tt_2_lob3
+		}
+		if = {
+			limit = {
+				scope:member = { owes_obligation_to = root }
+			}
+			custom_tooltip = cwp_iot_row_tt_favour
+		}
+		if = {
+			limit = {
+				scope:member = { has_variable = cwp_iot_absent }
+			}
+			custom_tooltip = cwp_iot_row_tt_absent
+		}
+		if = {
+			limit = {
+				scope:member = { has_variable = cwp_iot_lobby_cd }
+			}
+			custom_tooltip = cwp_iot_row_tt_cooling
+		}
+	}
+}
+
+
+##### Organisation 3
+
+# the player holds a seat here
+cwp_iot_seat_3_sgui = {
+	scope = country
+
+	is_valid = {
+		has_variable = cwp_iot_3_status
+	}
+}
+
+# the player's own vote: scope:choice 1 for, 2 against, 3 abstain
+cwp_iot_vote_3_sgui = {
+	scope = country
+	saved_scopes = { choice }
+
+	is_valid = {
+		cwp_iot_phase_is = { ORG = 3 PHASE = 1 }
+		cwp_iot_can_vote = { ORG = 3 }
+		has_variable = cwp_iot_3_myvote
+		NOT = { var:cwp_iot_3_myvote = scope:choice }
+		# only a delegation told to ask is voted by hand
+		has_variable = cwp_iot_3_deleg
+		var:cwp_iot_3_deleg = 1
+	}
+
+	effect = {
+		set_variable = { name = cwp_iot_3_myvote value = scope:choice }
+		cwp_iot_count = { ORG = 3 }
+		cwp_iot_log_3 = yes
+	}
+}
+
+# delegation instructions: scope:mode 1 ask me, 2 vote the national interest, 3 follow the presiding country
+cwp_iot_deleg_3_sgui = {
+	scope = country
+	saved_scopes = { mode }
+
+	is_valid = {
+		has_variable = cwp_iot_3_deleg
+		NOT = { var:cwp_iot_3_deleg = scope:mode }
+	}
+
+	effect = {
+		set_variable = { name = cwp_iot_3_deleg value = scope:mode }
+		if = {
+			limit = { cwp_iot_phase_is = { ORG = 3 PHASE = 1 } }
+			cwp_iot_count = { ORG = 3 }
+		}
+	}
+}
+
+# lobbying a member: scope:action 1 persuade, 2 aid, 3 call in a favour, 4 lean on
+cwp_iot_lobby_3_sgui = {
+	scope = country
+	saved_scopes = { member action }
+
+	is_shown = {
+		exists = scope:member
+		NOT = { scope:member = root }
+		cwp_iot_phase_is = { ORG = 3 PHASE = 1 }
+		trigger_if = {
+			limit = { scope:action = 3 }
+			scope:member = { owes_obligation_to = root }
+		}
+		trigger_else = {
+			always = yes
+		}
+	}
+
+	is_valid = {
+		cwp_iot_can_lobby = { ORG = 3 }
+	}
+
+	effect = {
+		cwp_iot_lobby = { ORG = 3 }
+		debug_log = "CWP_IOT L lobby;org=3;member=[SCOPE.sCountry('member').GetNameNoFormatting];lean=[SCOPE.sCountry('member').MakeScope.Var('cwp_iot_3_lean').GetValue|0];push=[SCOPE.sCountry('member').MakeScope.Var('cwp_iot_3_push').GetValue|0]"
+		cwp_iot_log_3 = yes
+	}
+}
+
+# sponsoring a motion about a country: scope:mtype 1 censure, 2 sanctions, 3 lift them, 5 admit, 6 suspend
+cwp_iot_propose_3_sgui = {
+	scope = country
+	saved_scopes = { member mtype }
+
+	is_shown = {
+		exists = scope:member
+		NOT = { scope:member = root }
+		trigger_if = {
+			limit = { scope:mtype = 2 }
+			NOT = { cwp_iot_is_sanctioned = { ORG = 3 } }
+		}
+		trigger_else_if = {
+			limit = { scope:mtype = 3 }
+			cwp_iot_is_sanctioned = { ORG = 3 }
+		}
+		trigger_else = {
+			always = yes
+		}
+	}
+
+	is_valid = {
+		cwp_iot_can_vote = { ORG = 3 }
+		var:cwp_iot_3_standing >= 10
+		global_var:cwp_iot_3_afree >= 1
+		NOT = { scope:member = root }
+		trigger_if = {
+			limit = { scope:mtype = 6 }
+			scope:member = {
+				has_variable = cwp_iot_3_status
+				NOT = { var:cwp_iot_3_status = 3 }
+			}
+		}
+		trigger_else = {
+			always = yes
+		}
+	}
+
+	effect = {
+		cwp_iot_propose = { ORG = 3 }
+		debug_log = "CWP_IOT C02 tabled;org=3;about=[SCOPE.sCountry('member').GetNameNoFormatting];free_places=[GetGlobalVariable('cwp_iot_3_afree').GetValue|0]"
+		cwp_iot_log_3 = yes
+	}
+}
+
+# sponsoring charter business: scope:comp 1 or 2 adopts that power, 9 proposes the next ladder step
+cwp_iot_charter_3_sgui = {
+	scope = country
+	saved_scopes = { comp }
+
+	is_shown = {
+		has_global_variable = cwp_iot_3_comp1
+		trigger_if = {
+			limit = { scope:comp = 1 }
+			global_var:cwp_iot_3_comp1 = 0
+		}
+		trigger_else_if = {
+			limit = { scope:comp = 2 }
+			global_var:cwp_iot_3_comp2 = 0
+		}
+		trigger_else = {
+			global_var:cwp_iot_3_step < 7
+		}
+	}
+
+	is_valid = {
+		cwp_iot_can_vote = { ORG = 3 }
+		var:cwp_iot_3_standing >= 10
+		global_var:cwp_iot_3_afree >= 1
+	}
+
+	effect = {
+		cwp_iot_propose_charter = { ORG = 3 }
+		cwp_iot_log_3 = yes
+	}
+}
+
+# test control: open the regular session now, or go straight to the vote
+cwp_iot_now_3_sgui = {
+	scope = country
+
+	is_valid = {
+		has_global_variable = cwp_iot_3_phase
+		has_global_variable = cwp_iot_3_leader
+		cwp_iot_figures_exist = { ORG = 3 }
+	}
+
+	effect = {
+		cwp_iot_now = { ORG = 3 }
+		cwp_iot_log_3 = yes
+	}
+}
+
+# backing a proposal on the agenda: scope:slot is its place, 1 to 5
+cwp_iot_back_3_sgui = {
+	scope = country
+	saved_scopes = { slot }
+
+	is_valid = {
+		cwp_iot_can_vote = { ORG = 3 }
+		has_variable = cwp_iot_3_back
+		NOT = { var:cwp_iot_3_back = scope:slot }
+	}
+
+	effect = {
+		set_variable = { name = cwp_iot_3_back value = scope:slot }
+		cwp_iot_backing = { ORG = 3 }
+		debug_log = "CWP_IOT B01 backs;org=3;place=[THIS.GetCountry.MakeScope.Var('cwp_iot_3_back').GetValue|0];leading=[GetGlobalVariable('cwp_iot_3_alead').GetValue|0]"
+	}
+}
+
+# lobbying a member for the proposal we back: scope:action 1 persuade, 2 aid, 3 favour, 4 lean on
+cwp_iot_pull_3_sgui = {
+	scope = country
+	saved_scopes = { member action }
+
+	is_valid = {
+		cwp_iot_can_vote = { ORG = 3 }
+		has_variable = cwp_iot_3_back
+		var:cwp_iot_3_back >= 1
+		NOT = { scope:member = root }
+		scope:member = {
+			has_variable = cwp_iot_3_pull
+			NOT = { has_variable = cwp_iot_lobby_cd }
+		}
+		trigger_if = {
+			limit = { scope:action = 1 }
+			var:cwp_iot_3_standing >= 5
+		}
+		trigger_else_if = {
+			limit = { scope:action = 3 }
+			scope:member = { owes_obligation_to = root }
+		}
+		trigger_else = {
+			always = yes
+		}
+	}
+
+	effect = {
+		cwp_iot_pull_player = { ORG = 3 }
+		debug_log = "CWP_IOT B08 pulled;org=3;member=[SCOPE.sCountry('member').GetNameNoFormatting];toward=[SCOPE.sCountry('member').MakeScope.Var('cwp_iot_3_pull').GetValue|0];by=[SCOPE.sCountry('member').MakeScope.Var('cwp_iot_3_pull_amt').GetValue|0];now_backs=[SCOPE.sCountry('member').MakeScope.Var('cwp_iot_3_back').GetValue|0]"
+	}
+}
+
+# a row of "Who Backs What": its tooltip. The effect is described, not run.
+cwp_iot_back_tt_3_sgui = {
+	scope = country
+	saved_scopes = { member }
+
+	effect = {
+		custom_tooltip_no_bullet = cwp_iot_row_tt_head
+		custom_tooltip = cwp_iot_back_tt_3_weight
+		if = {
+			limit = {
+				scope:member = {
+					has_variable = cwp_iot_3_pull
+					has_variable = cwp_iot_3_pull_by
+					NOT = { var:cwp_iot_3_pull = 0 }
+				}
+			}
+			custom_tooltip = cwp_iot_back_tt_3_pull
+		}
+		if = {
+			limit = {
+				scope:member = { owes_obligation_to = root }
+			}
+			custom_tooltip = cwp_iot_row_tt_favour
+		}
+		if = {
+			limit = {
+				scope:member = { has_variable = cwp_iot_lobby_cd }
+			}
+			custom_tooltip = cwp_iot_row_tt_cooling
+		}
+	}
+}
+
+# a member row's tooltip. The effect is described, not run.
+cwp_iot_row_tt_3_sgui = {
+	scope = country
+	saved_scopes = { member }
+
+	effect = {
+		custom_tooltip_no_bullet = cwp_iot_row_tt_head
+		if = {
+			limit = {
+				scope:member = {
+					has_variable = cwp_iot_3_status
+					var:cwp_iot_3_status = 2
+				}
+			}
+			custom_tooltip = cwp_iot_row_tt_council
+		}
+		custom_tooltip = cwp_iot_row_tt_3_standing
+		if = {
+			limit = { cwp_iot_phase_is = { ORG = 3 PHASE = 1 } }
+			custom_tooltip = cwp_iot_row_tt_3_lean
+		}
+		if = {
+			limit = {
+				cwp_iot_phase_is = { ORG = 3 PHASE = 1 }
+				scope:member = {
+					has_variable = cwp_iot_3_lob1
+					has_variable = cwp_iot_3_lob1_amt
+				}
+			}
+			custom_tooltip = cwp_iot_row_tt_3_lob1
+		}
+		if = {
+			limit = {
+				cwp_iot_phase_is = { ORG = 3 PHASE = 1 }
+				scope:member = {
+					has_variable = cwp_iot_3_lob2
+					has_variable = cwp_iot_3_lob2_amt
+				}
+			}
+			custom_tooltip = cwp_iot_row_tt_3_lob2
+		}
+		if = {
+			limit = {
+				cwp_iot_phase_is = { ORG = 3 PHASE = 1 }
+				scope:member = {
+					has_variable = cwp_iot_3_lob3
+					has_variable = cwp_iot_3_lob3_amt
+				}
+			}
+			custom_tooltip = cwp_iot_row_tt_3_lob3
+		}
+		if = {
+			limit = {
+				scope:member = { owes_obligation_to = root }
+			}
+			custom_tooltip = cwp_iot_row_tt_favour
+		}
+		if = {
+			limit = {
+				scope:member = { has_variable = cwp_iot_absent }
+			}
+			custom_tooltip = cwp_iot_row_tt_absent
+		}
+		if = {
+			limit = {
+				scope:member = { has_variable = cwp_iot_lobby_cd }
+			}
+			custom_tooltip = cwp_iot_row_tt_cooling
+		}
+	}
+}

@@ -1,0 +1,70 @@
+﻿# CWP international organisations test: engine probes. Kept apart, so that a form the game rejects
+# here cannot take the rest of the test down with it. Each probe has a line in the window's
+# "Engine probes" section and a row in the README (X1 to X9).
+
+### Root is the player. Run from the "Run the probes" button, not from the Start decision.
+cwp_iot_probe_setup = {
+	set_variable = { name = cwp_iot_probes_ran value = yes }
+	set_variable = { name = cwp_iot_probe_num value = 0 }
+	set_variable = { name = cwp_iot_je_link value = 0 }
+
+	# X4: can a list hold plain numbers?
+	if = {
+		limit = { has_global_variable_list = cwp_iot_numbers }
+		clear_global_variable_list = cwp_iot_numbers
+	}
+	add_to_global_variable_list = { name = cwp_iot_numbers target = 7 }
+	add_to_global_variable_list = { name = cwp_iot_numbers target = 11 }
+	add_to_global_variable_list = { name = cwp_iot_numbers target = 13 }
+
+	# X5: a country variable that holds a journal entry
+	if = {
+		limit = { has_global_variable = cwp_iot_org_1 }
+		set_variable = { name = cwp_iot_view value = global_var:cwp_iot_org_1 }
+	}
+
+	# X7: a list kept on the journal entry itself
+	if = {
+		limit = { has_global_variable = cwp_iot_org_1 }
+		global_var:cwp_iot_org_1 = {
+			add_to_variable_list = { name = cwp_iot_je_list target = root }
+		}
+	}
+
+	# X8: the je: link from a country, and the count of involved countries
+	je:cwp_iot_je_1 ?= {
+		root = {
+			set_variable = { name = cwp_iot_je_link value = 1 }
+		}
+	}
+
+	# X8: a country that holds no seat is made involved directly, the way vanilla's London conference does
+	if = {
+		limit = {
+			has_global_variable = cwp_iot_org_1
+			has_global_variable_list = cwp_iot_1_candidates
+		}
+		random_in_global_list = {
+			variable = cwp_iot_1_candidates
+			save_scope_as = cwp_iot_outsider
+		}
+		global_var:cwp_iot_org_1 = {
+			add_involved_country = scope:cwp_iot_outsider
+		}
+	}
+	cwp_iot_probe_recount = yes
+}
+
+### Root is the player. Counts the countries the Congress's journal entry holds as involved.
+cwp_iot_probe_recount = {
+	set_variable = { name = cwp_iot_inv_1 value = 0 }
+	if = {
+		limit = { has_global_variable = cwp_iot_org_1 }
+		global_var:cwp_iot_org_1 = {
+			every_scope_je_involved = {
+				root = { change_variable = { name = cwp_iot_inv_1 add = 1 } }
+			}
+		}
+	}
+	debug_log = "CWP_IOT X8 involved;counted=[THIS.GetCountry.MakeScope.Var('cwp_iot_inv_1').GetValue|0];members=[GetGlobalVariable('cwp_iot_1_count').GetValue|0];je_link=[THIS.GetCountry.MakeScope.Var('cwp_iot_je_link').GetValue|0]"
+}

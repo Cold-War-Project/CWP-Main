@@ -202,7 +202,7 @@ order declared.
 | `highlight = yes` | Larger highlighted button within its group. |
 | `transferable`, `can_revolution_inherit` | Whether the JE follows the player through a country switch / is inherited by a victorious revolution. |
 | `should_be_pinned_by_default_uninvolved_or_context`, `should_be_pinned_by_default_involved` | Pinned in the outliner by default. |
-| `should_be_involved`, `should_show_when_not_involved`, `on_become_involved_after_activation`, `on_no_longer_involved` | Contextless JEs: which countries take part. |
+| `should_be_involved`, `should_show_when_not_involved`, `on_become_involved_after_activation`, `on_no_longer_involved` | Contextless JEs: which countries take part. **`should_be_involved` is read once, when the entry activates** (`journal_entries.md`: "whether a country should become involved when a contextless JE activates"). A country that meets it later does not join: the entry ran its pulses with nobody involved and showed in no journal [GAME, tested in 1.15.2 on 2026-11-22, test mod `CWP International Organisations Test`]. Add later members from script: `je:<key> ?= { add_involved_country = scope:x }`, as `events/treaty_of_london_events.txt` does. |
 | `map_color`, `map_color_second`, `map_tooltip` | Optional JE map mode (root: state). |
 | `widget = { gui = … name = … container = … }` | Custom GUI widget inside the JE panel. Repeatable. Tested with a mod's own `.gui` file and `container = "custom_widget_container_3"` [GAME, tested in 1.15.2 on 2026-11-21]; chapter 13 lists the containers and what a widget can do, recipe 17 is a working panel. |
 | `how_tutorial`, `why_tutorial`, `dlc`, `is_shown_in_lobby` | Tutorial links, DLC badge, lobby display. |

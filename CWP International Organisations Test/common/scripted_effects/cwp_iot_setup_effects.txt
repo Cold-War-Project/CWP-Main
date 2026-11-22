@@ -1,0 +1,475 @@
+﻿# CWP international organisations test: founding, seats and the test controls.
+#
+# Per organisation <n> (1 World Congress, 2 Customs League, 3 Defence Pact), all global:
+#   numbers  cwp_iot_<n>_id, _rule, _bar1, _bar2, _step, _budget, _count, _cands, _phase, _weeks, _recess,
+#            _mtype, _param, _for, _against, _abstain, _vetoes, _swingn, _last, _passed, _failed,
+#            _comp1, _comp2, _treaties, _embargoes, _wars, _refusals
+#   scopes   cwp_iot_<n>_leader, _sponsor, _target (countries), cwp_iot_org_<n> (the journal entry)
+#   lists    cwp_iot_<n>_members, _candidates, _council, _swing, _floor_sponsor, _floor_target, _sanctioned
+# Per member country: cwp_iot_<n>_status (1 member, 2 council, 3 suspended), _standing, _base, _push,
+#   _lean, _leanw (1 for .. 5 against), _vote (1 for, 2 against, 3 abstain), _dues
+# On the player only: cwp_iot_<n>_myvote, cwp_iot_<n>_deleg (1 ask me, 2 national interest, 3 follow)
+# Rules: 1 simple majority, 2 two-thirds, 3 unanimity, 4 weighted by rank, 5 council with vetoes.
+
+### An organisation's starting figures.
+cwp_iot_found = {
+	set_global_variable = { name = cwp_iot_$ORG$_id value = $ORG$ }
+	set_global_variable = { name = cwp_iot_$ORG$_rule value = $RULE$ }
+	set_global_variable = { name = cwp_iot_$ORG$_bar1 value = $BAR1$ }
+	set_global_variable = { name = cwp_iot_$ORG$_bar2 value = $BAR2$ }
+	set_global_variable = { name = cwp_iot_$ORG$_step value = $STEP$ }
+	set_global_variable = { name = cwp_iot_$ORG$_recess value = $RECESS$ }
+	set_global_variable = { name = cwp_iot_$ORG$_budget value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_count value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_cands value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_phase value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_weeks value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_mtype value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_param value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_for value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_against value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_abstain value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_vetoes value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_swingn value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_last value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_passed value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_failed value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_comp1 value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_comp2 value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_treaties value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_embargoes value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_wars value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_refusals value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_forecast value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_for_pct value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_against_pct value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_abstain_pct value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_chair_vote value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_councn value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_income value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_admin value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_solidarity value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_collected value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_alead value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_abest value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_atotal value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_acount value = 0 }
+	set_global_variable = { name = cwp_iot_$ORG$_afree value = 5 }
+	cwp_iot_slot_clear = { ORG = $ORG$ SLOT = 1 }
+	cwp_iot_slot_clear = { ORG = $ORG$ SLOT = 2 }
+	cwp_iot_slot_clear = { ORG = $ORG$ SLOT = 3 }
+	cwp_iot_slot_clear = { ORG = $ORG$ SLOT = 4 }
+	cwp_iot_slot_clear = { ORG = $ORG$ SLOT = 5 }
+}
+
+### Empties an organisation, so the decision can be taken again.
+cwp_iot_wipe = {
+	every_country = {
+		limit = { has_variable = cwp_iot_$ORG$_status }
+		remove_variable = cwp_iot_$ORG$_status
+		if = {
+			limit = { is_involved_in_journal_entry = cwp_iot_je_$ORG$ }
+			save_temporary_scope_as = cwp_iot_unseated
+			je:cwp_iot_je_$ORG$ ?= {
+				remove_involved_country = scope:cwp_iot_unseated
+			}
+		}
+	}
+	if = {
+		limit = { has_global_variable_list = cwp_iot_$ORG$_members }
+		clear_global_variable_list = cwp_iot_$ORG$_members
+	}
+	if = {
+		limit = { has_global_variable_list = cwp_iot_$ORG$_candidates }
+		clear_global_variable_list = cwp_iot_$ORG$_candidates
+	}
+	if = {
+		limit = { has_global_variable_list = cwp_iot_$ORG$_council }
+		clear_global_variable_list = cwp_iot_$ORG$_council
+	}
+	if = {
+		limit = { has_global_variable_list = cwp_iot_$ORG$_swing }
+		clear_global_variable_list = cwp_iot_$ORG$_swing
+	}
+	if = {
+		limit = { has_global_variable_list = cwp_iot_$ORG$_floor_sponsor }
+		clear_global_variable_list = cwp_iot_$ORG$_floor_sponsor
+	}
+	if = {
+		limit = { has_global_variable_list = cwp_iot_$ORG$_floor_target }
+		clear_global_variable_list = cwp_iot_$ORG$_floor_target
+	}
+	if = {
+		limit = { has_global_variable_list = cwp_iot_$ORG$_sanctioned }
+		clear_global_variable_list = cwp_iot_$ORG$_sanctioned
+	}
+	if = {
+		limit = { has_global_variable_list = cwp_iot_$ORG$_chair }
+		clear_global_variable_list = cwp_iot_$ORG$_chair
+	}
+	if = {
+		limit = { has_global_variable = cwp_iot_$ORG$_target }
+		remove_global_variable = cwp_iot_$ORG$_target
+	}
+	if = {
+		limit = { has_global_variable = cwp_iot_$ORG$_sponsor }
+		remove_global_variable = cwp_iot_$ORG$_sponsor
+	}
+	if = {
+		limit = { has_global_variable = cwp_iot_$ORG$_leader }
+		remove_global_variable = cwp_iot_$ORG$_leader
+	}
+}
+
+### Marks on countries that the window reads directly.
+cwp_iot_wipe_marks = {
+	every_country = {
+		limit = { has_variable = cwp_iot_$ORG$_sanc }
+		remove_variable = cwp_iot_$ORG$_sanc
+	}
+}
+
+### The presiding country, as a one-entry list the window can show with its flag.
+cwp_iot_set_chair = {
+	if = {
+		limit = { has_global_variable_list = cwp_iot_$ORG$_chair }
+		clear_global_variable_list = cwp_iot_$ORG$_chair
+	}
+	if = {
+		limit = { has_global_variable = cwp_iot_$ORG$_leader }
+		add_to_global_variable_list = { name = cwp_iot_$ORG$_chair target = global_var:cwp_iot_$ORG$_leader }
+	}
+}
+
+### Country scope: the country takes a seat.
+cwp_iot_seat = {
+	if = {
+		limit = {
+			NOT = { has_variable = cwp_iot_$ORG$_status }
+		}
+		set_variable = { name = cwp_iot_$ORG$_status value = 1 }
+		set_variable = { name = cwp_iot_$ORG$_standing value = 50 }
+		set_variable = { name = cwp_iot_$ORG$_base value = 0 }
+		set_variable = { name = cwp_iot_$ORG$_push value = 0 }
+		set_variable = { name = cwp_iot_$ORG$_lean value = 0 }
+		set_variable = { name = cwp_iot_$ORG$_leanw value = 3 }
+		set_variable = { name = cwp_iot_$ORG$_vote value = 0 }
+		set_variable = { name = cwp_iot_$ORG$_dues value = 0 }
+		set_variable = { name = cwp_iot_$ORG$_received value = 0 }
+		set_variable = { name = cwp_iot_$ORG$_back value = 0 }
+		set_variable = { name = cwp_iot_$ORG$_weight value = 1 }
+		set_variable = { name = cwp_iot_$ORG$_pull value = 0 }
+		set_variable = { name = cwp_iot_$ORG$_pull_amt value = 0 }
+		add_to_global_variable_list = { name = cwp_iot_$ORG$_members target = this }
+		change_global_variable = { name = cwp_iot_$ORG$_count add = 1 }
+		# should_be_involved is read only when the entry activates (run 1): later members are added by hand,
+		# the way vanilla's treaty_of_london_events.txt does it
+		if = {
+			limit = { NOT = { is_involved_in_journal_entry = cwp_iot_je_$ORG$ } }
+			save_temporary_scope_as = cwp_iot_seated
+			je:cwp_iot_je_$ORG$ ?= {
+				add_involved_country = scope:cwp_iot_seated
+			}
+		}
+	}
+}
+
+### Country scope: the country's own choices, kept on the player only.
+cwp_iot_player_seat = {
+	set_variable = { name = cwp_iot_$ORG$_myvote value = 0 }
+	set_variable = { name = cwp_iot_$ORG$_deleg value = 1 }
+}
+
+### Country scope: the country waits at the door.
+cwp_iot_candidate = {
+	add_to_global_variable_list = { name = cwp_iot_$ORG$_candidates target = this }
+	change_global_variable = { name = cwp_iot_$ORG$_cands add = 1 }
+}
+
+### The bars that are computed and not moved by events.
+cwp_iot_bars = {
+	# World Congress: Universality is the share of known countries that hold a seat
+	if = {
+		limit = {
+			has_global_variable = cwp_iot_$ORG$_id
+			global_var:cwp_iot_$ORG$_id = 1
+		}
+		set_global_variable = {
+			name = cwp_iot_$ORG$_bar2
+			value = {
+				value = global_var:cwp_iot_$ORG$_count
+				multiply = 100
+				divide = {
+					value = global_var:cwp_iot_$ORG$_count
+					add = global_var:cwp_iot_$ORG$_cands
+					min = 1
+				}
+			}
+		}
+	}
+	# Customs League: Integration is the ladder step out of seven
+	if = {
+		limit = {
+			has_global_variable = cwp_iot_$ORG$_id
+			global_var:cwp_iot_$ORG$_id = 2
+		}
+		set_global_variable = {
+			name = cwp_iot_$ORG$_bar1
+			value = {
+				value = global_var:cwp_iot_$ORG$_step
+				multiply = 100
+				divide = 7
+			}
+		}
+	}
+}
+
+### The decision. Root is the player.
+cwp_iot_setup = {
+	cwp_iot_wipe = { ORG = 1 }
+	cwp_iot_wipe = { ORG = 2 }
+	cwp_iot_wipe = { ORG = 3 }
+	cwp_iot_wipe_marks = { ORG = 1 }
+	cwp_iot_wipe_marks = { ORG = 2 }
+	cwp_iot_wipe_marks = { ORG = 3 }
+	cwp_iot_found = { ORG = 1 RULE = 5 BAR1 = 40 BAR2 = 50 STEP = 0 RECESS = 2 }
+	cwp_iot_found = { ORG = 2 RULE = 2 BAR1 = 14 BAR2 = 60 STEP = 1 RECESS = 3 }
+	cwp_iot_found = { ORG = 3 RULE = 1 BAR1 = 50 BAR2 = 60 STEP = 0 RECESS = 4 }
+
+	set_variable = { name = cwp_iot_ready value = yes }
+	set_variable = { name = cwp_iot_seed value = 0 }
+	set_variable = { name = cwp_iot_tmp value = 0 }
+	set_variable = { name = cwp_iot_amt value = 0 }
+	set_variable = { name = cwp_iot_withdrawn value = 0 }
+
+	if = {
+		limit = { NOT = { has_global_variable = cwp_iot_org_1 } }
+		add_contextless_journal_entry = cwp_iot_je_1
+	}
+	if = {
+		limit = { NOT = { has_global_variable = cwp_iot_org_2 } }
+		add_contextless_journal_entry = cwp_iot_je_2
+	}
+	if = {
+		limit = { NOT = { has_global_variable = cwp_iot_org_3 } }
+		add_contextless_journal_entry = cwp_iot_je_3
+	}
+
+	# The player sits in all three and leads the League and the Pact.
+	cwp_iot_seat = { ORG = 1 }
+	cwp_iot_seat = { ORG = 2 }
+	cwp_iot_seat = { ORG = 3 }
+	cwp_iot_player_seat = { ORG = 1 }
+	cwp_iot_player_seat = { ORG = 2 }
+	cwp_iot_player_seat = { ORG = 3 }
+	set_global_variable = { name = cwp_iot_2_leader value = root }
+	set_global_variable = { name = cwp_iot_3_leader value = root }
+	set_global_variable = { name = cwp_iot_1_leader value = root }
+
+	# The forty largest other economies sit in the Congress; slices of them in the League and the Pact.
+	ordered_country = {
+		limit = {
+			NOT = { this = root }
+			NOT = { is_country_type = decentralized }
+		}
+		order_by = gdp
+		max = 46
+		check_range_bounds = no
+
+		root = { change_variable = { name = cwp_iot_seed add = 1 } }
+		if = {
+			limit = {
+				root = { has_variable = cwp_iot_seed }
+				root.var:cwp_iot_seed <= 40
+			}
+			cwp_iot_seat = { ORG = 1 }
+		}
+		if = {
+			limit = {
+				root = { has_variable = cwp_iot_seed }
+				root.var:cwp_iot_seed >= 5
+				root.var:cwp_iot_seed <= 11
+			}
+			cwp_iot_seat = { ORG = 2 }
+		}
+		if = {
+			limit = {
+				root = { has_variable = cwp_iot_seed }
+				root.var:cwp_iot_seed >= 12
+				root.var:cwp_iot_seed <= 16
+			}
+			cwp_iot_seat = { ORG = 3 }
+		}
+		if = {
+			limit = {
+				root = { has_variable = cwp_iot_seed }
+				root.var:cwp_iot_seed >= 17
+				root.var:cwp_iot_seed <= 19
+			}
+			cwp_iot_candidate = { ORG = 2 }
+		}
+		if = {
+			limit = {
+				root = { has_variable = cwp_iot_seed }
+				root.var:cwp_iot_seed >= 20
+				root.var:cwp_iot_seed <= 22
+			}
+			cwp_iot_candidate = { ORG = 3 }
+		}
+	}
+
+	# The Congress council: every great power with a seat holds a veto. The largest of them presides.
+	every_in_global_list = {
+		variable = cwp_iot_1_members
+		limit = { country_rank >= rank_value:great_power }
+		set_variable = { name = cwp_iot_1_status value = 2 }
+		add_to_global_variable_list = { name = cwp_iot_1_council target = this }
+		change_global_variable = { name = cwp_iot_1_councn add = 1 }
+	}
+	if = {
+		limit = { has_global_variable_list = cwp_iot_1_council }
+		ordered_in_global_list = {
+			variable = cwp_iot_1_council
+			order_by = gdp
+			set_global_variable = { name = cwp_iot_1_leader value = this }
+		}
+	}
+
+	# Everyone else waits at the Congress's door.
+	every_country = {
+		limit = {
+			NOT = { is_country_type = decentralized }
+			NOT = { has_variable = cwp_iot_1_status }
+		}
+		cwp_iot_candidate = { ORG = 1 }
+	}
+
+	cwp_iot_bars = { ORG = 1 }
+	cwp_iot_bars = { ORG = 2 }
+	cwp_iot_set_chair = { ORG = 1 }
+	cwp_iot_set_chair = { ORG = 2 }
+	cwp_iot_set_chair = { ORG = 3 }
+	cwp_iot_backing = { ORG = 1 }
+	cwp_iot_backing = { ORG = 2 }
+	cwp_iot_backing = { ORG = 3 }
+	debug_log = "CWP_IOT SETUP;[THIS.GetCountry.GetNameNoFormatting];congress=[GetGlobalVariable('cwp_iot_1_count').GetValue|0];candidates=[GetGlobalVariable('cwp_iot_1_cands').GetValue|0];league=[GetGlobalVariable('cwp_iot_2_count').GetValue|0];pact=[GetGlobalVariable('cwp_iot_3_count').GetValue|0]"
+}
+
+### Test controls. Root is the player; scope:what picks the control.
+
+# 1: every candidate is seated in the Congress at once (the ledger then has every country in the world)
+cwp_iot_tc_admit_all = {
+	if = {
+		limit = { has_global_variable_list = cwp_iot_1_candidates }
+		every_in_global_list = {
+			variable = cwp_iot_1_candidates
+			cwp_iot_seat = { ORG = 1 }
+		}
+		clear_global_variable_list = cwp_iot_1_candidates
+		set_global_variable = { name = cwp_iot_1_cands value = 0 }
+		cwp_iot_bars = { ORG = 1 }
+	}
+	debug_log = "CWP_IOT M05 admit all;members=[GetGlobalVariable('cwp_iot_1_count').GetValue|0]"
+}
+
+# 2: five Congress members now owe the player a favour (vanilla's obligations)
+cwp_iot_tc_favours = {
+	set_variable = { name = cwp_iot_seed value = 0 }
+	every_in_global_list = {
+		variable = cwp_iot_1_members
+		limit = {
+			NOT = { this = root }
+			NOT = { owes_obligation_to = root }
+		}
+		# the count is checked inside the loop: a limit may be read before the first pass changes it
+		if = {
+			limit = {
+				root = { has_variable = cwp_iot_seed }
+				root.var:cwp_iot_seed < 5
+			}
+			set_owes_obligation_to = { country = root setting = yes }
+			root = { change_variable = { name = cwp_iot_seed add = 1 } }
+			debug_log = "CWP_IOT L04 favour owed by;[THIS.GetCountry.GetNameNoFormatting]"
+		}
+	}
+	cwp_iot_count = { ORG = 1 }
+}
+
+# 3: one ordinary Congress member becomes infamous, so the next regular session censures it
+cwp_iot_tc_infamy = {
+	random_in_global_list = {
+		variable = cwp_iot_1_members
+		limit = {
+			NOT = { this = root }
+			has_variable = cwp_iot_1_status
+			var:cwp_iot_1_status = 1
+			infamy < 25
+		}
+		change_infamy = 30
+		debug_log = "CWP_IOT A03 made infamous;[THIS.GetCountry.GetNameNoFormatting]"
+	}
+}
+
+# 4: one council power other than the player walks out for a year: its veto does not count
+cwp_iot_tc_walkout = {
+	if = {
+		limit = { has_global_variable_list = cwp_iot_1_council }
+		random_in_global_list = {
+			variable = cwp_iot_1_council
+			limit = {
+				NOT = { this = root }
+				NOT = { has_variable = cwp_iot_absent }
+			}
+			set_variable = { name = cwp_iot_absent value = yes days = 365 }
+			debug_log = "CWP_IOT C09 walks out;[THIS.GetCountry.GetNameNoFormatting]"
+		}
+		cwp_iot_count = { ORG = 1 }
+	}
+}
+
+# 5: one Pact member leaves. Its treaties with the player that carry a defensive pact are withdrawn from.
+cwp_iot_tc_release = {
+	random_in_global_list = {
+		variable = cwp_iot_3_members
+		limit = { NOT = { this = root } }
+		save_scope_as = cwp_iot_leaver
+		every_scope_treaty = {
+			limit = {
+				any_scope_article = { has_type = defensive_pact }
+				OR = {
+					first_country = root
+					second_country = root
+				}
+			}
+			withdraw = { country = scope:cwp_iot_leaver }
+			root = { change_variable = { name = cwp_iot_withdrawn add = 1 } }
+		}
+		cwp_iot_unseat = { ORG = 3 }
+		debug_log = "CWP_IOT P06 released;[THIS.GetCountry.GetNameNoFormatting]"
+	}
+}
+
+# 6: every lobbying cooldown is cleared, so the lobbying buttons can be tried again at once
+cwp_iot_tc_cooldowns = {
+	every_country = {
+		limit = { has_variable = cwp_iot_lobby_cd }
+		remove_variable = cwp_iot_lobby_cd
+	}
+}
+
+### Country scope: the country gives up its seat.
+cwp_iot_unseat = {
+	if = {
+		limit = { has_variable = cwp_iot_$ORG$_status }
+		remove_variable = cwp_iot_$ORG$_status
+		remove_list_global_variable = { name = cwp_iot_$ORG$_members target = this }
+		change_global_variable = { name = cwp_iot_$ORG$_count add = -1 }
+		if = {
+			limit = { is_involved_in_journal_entry = cwp_iot_je_$ORG$ }
+			save_temporary_scope_as = cwp_iot_unseated
+			je:cwp_iot_je_$ORG$ ?= {
+				remove_involved_country = scope:cwp_iot_unseated
+			}
+		}
+	}
+}

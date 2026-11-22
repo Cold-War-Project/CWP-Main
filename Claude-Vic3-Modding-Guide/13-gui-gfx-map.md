@@ -168,7 +168,40 @@ one-line goods row 520 x 38; window content 548 x 400; the opener 200 x 36 at `p
 * A failing data expression is re-evaluated every frame while its widget is visible or hovered: one mistake
   fills error.log within seconds and pushes the load-time errors into `error.1.log` (chapter 14).
 
-**Not tested:** multiplayer; a list entry whose object has ceased to exist; more than about twenty rows.
+**More forms, tested in game** [GAME, tested in 1.15.2 on 2026-11-22] with the test mod
+`mod/CWP International Organisations Test` (prefix `cwp_iot_`; its `RESULTS.md` has every run):
+
+| Need | Form that worked |
+|---|---|
+| A variable name built from the window's own selection | `GetGlobalVariable(Concatenate(Concatenate('pre_', GetVariableSystem.Get('my_org')), '_bar1')).GetValue`: `GetVariableSystem.Get` returns the stored text. One page can then serve many objects whose variables differ only by a key |
+| A variable that holds an object, used as that object | `GetGlobalVariable('x').Var('y').GetValue`, `GetPlayer.MakeScope.Var('x').Var('y').GetValue`, `GetGlobalVariable('x').GetCountry.GetNameNoFormatting`, `GetGlobalVariable('x').GetJournalEntry.GetName` |
+| A journal entry as a list row | a global list of journal entries (added with `target = scope:journal_entry`); in the row `Scope.Var('y').GetValue` and `Scope.GetJournalEntry.GetName` |
+| A list of plain numbers | `add_to_global_variable_list = { name = l target = 7 }`; in the row `Scope.GetValue` |
+| Passing a number the GUI read | `AddScope('number', MakeScopeValue(GetGlobalVariable('x').GetValue))`, not only a literal |
+| A script value of the player | `GetPlayer.MakeScope.ScriptValue('name')` in a `raw_text`, with `\|0` |
+| Showing only some rows of a list | `visible = "[…]"` on the row type and `ignoreinvisible = yes` on the list's `flowcontainer`; the condition may mix `GetVariableSystem.HasValue` (a filter button) with `Scope.Var(...)` comparisons. Worked with 291 rows |
+| Coloured bars | `green_progressbar_horizontal`, `bad_progressbar_horizontal` (red), beside `default_` and `gold_`; all take `blockoverride "values"` |
+| Several actions on one click | repeat `onclick = "[…]"` lines on the button: each runs (set an organisation, set a tab, open the window) |
+| A sixth tab | `tab_buttons` has five. Put a button beside it: a `widget` holding the button and, at an x offset, a narrower `widget` with the `tab_buttons` |
+| A wide window | content 1360 x 760 inside `default_popup` works; with a 46-high banner, a 44-high tab row and the popup's frame the window is about 1430 x 1000 |
+| A header of a given width | a type per width: `type h_640 = default_header_2texts_clean { blockoverride "size" { size = { 640 34 } } }` |
+| A panel in a contextless journal entry | the same `widget = { … }` field; `JournalEntry.MakeScope.Var('x').GetValue` reads a variable kept on the entry (vanilla does this for the London conference) |
+
+**What a long list costs** [GAME, measured in 1.15.2 on 2026-11-22, frame rate capped at 120]. A 291-row list
+whose every row called `GetScriptedGui(...).IsShown(...)` and `.IsValid(...)` for four buttons ran at about 50
+frames a second paused and 40 running, against 100 to 120 with the window closed; a list of the same length
+whose rows only read variables cost almost nothing. A scripted GUI's trigger is evaluated every frame for
+every visible use, so in a list **the row must not ask script anything**: write `visible` and `enabled` as
+expressions on variables (`Scope.Var('flag').IsSet`, `EqualTo_CFixedPoint(...)`, `Country.IsLocalPlayer` to
+leave the player's own row bare), have script maintain the flags those read, and keep the scripted GUI for
+`onclick` (its `is_valid` still guards the effect). `ExecuteTooltip` on a row is asked only under the cursor.
+Also: in a `debug_log`, `[SCOPE.sCountry('name')...]` names a scope the GUI passed in, but prints nothing for a
+scope saved by script with `save_scope_as`; change into the scope and use `[THIS.GetCountry...]`.
+
+Script-side facts from the same test are in chapter 10 (`should_be_involved`) and chapter 15.
+
+**Not tested:** multiplayer; a list entry whose object has ceased to exist; frame rate with several hundred
+rows (291 rows displayed without error, no figure taken).
 
 For most gameplay mods, **journal entries with scripted buttons, and decisions, give a UI without writing any
 GUI code** (chapter 10). Reach for custom GUI only when those cannot express the design.
