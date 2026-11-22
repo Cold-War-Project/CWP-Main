@@ -10,6 +10,8 @@ WT=$(readlink -f "${1:?usage: cwp-observe <worktree> [end_year] [outdir]}"); END
 export CWP_VIC_MAX_HOLD=${CWP_VIC_MAX_HOLD:-$(( (END - 1946) * 240 + 3600 ))}   # hold long enough for the whole run
 cwp-vic lock --owner-pid $$ --wait "${CWP_OBSERVE_WAIT:-14400}" ${CWP_OBSERVE_PRIORITY:+--priority} "observer: shared run $(basename "$WT") to $END" || exit 1
 trap 'cwp-vic unlock >/dev/null' EXIT
+# vic-shot leaves a PNG per call in the 1.5 GB /run/user tmpfs; a full tmpfs breaks every screenshot (21 Nov).
+find "${XDG_RUNTIME_DIR:-/tmp}/vic" -maxdepth 1 -name 'shot-*.png' -mmin +120 -delete 2>/dev/null
 # Disk guard: a run writes 1-3 GB (save copies, dumps) and the game's own autosaves fail on a full disk.
 free_gb() { local v; v=$(df -P --block-size=1G "$HOME/forge" 2>/dev/null | awk 'NR==2{print $4}'); [[ $v =~ ^[0-9]+$ ]] && echo "$v" || echo 999; }
 if (( $(free_gb) < ${CWP_OBSERVE_MIN_FREE_GB:-10} )); then
@@ -92,5 +94,7 @@ declare -A AREA=(
   [decolonization]='cwp_tide|cwp_india|cwp_indonesia|cwp_indochina|cwp_algeria|decoloni|winds_of_change|war_support_from_journal_entries|cwp_former_colony'
 )
 for a in "${!AREA[@]}"; do grep -E -B2 -A3 "${AREA[$a]}" "$OUT/errors_end.txt" > "$OUT/errors_$a.txt" 2>/dev/null; done
+# Keep the screenshots the *_shot.txt files point at: the tmpfs copies are pruned after 2 hours.
+for t in "$OUT"/*_shot.txt; do [[ -f "$t" ]] || continue; p=$(grep -m1 '\.png$' "$t"); [[ -f "$p" ]] && cp "$p" "${t%.txt}.png"; done
 ls "$OUT"/*.md | sort > "$OUT/INDEX.txt"
 echo "$OUT"
