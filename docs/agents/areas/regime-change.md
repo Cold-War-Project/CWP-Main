@@ -19,7 +19,7 @@ Jack chose to retune per law group (2026-11-22). Goals:
 | Governance principles | 100 | Council republic (200) is 100 from a republic and 175 from a monarchy (25). A republic and a monarchy are 75 apart, so neither is imposed on the other. |
 | Distribution of power | 100 | Universal suffrage vs single-party state, wealth and landed voting, oligarchy and autocracy (and anarchy). Census voting vs oligarchy, technocracy, organic regulation and autocracy, so census-voting and oligarchy countries (27 and 46 at start) are each other's targets. Not census vs universal suffrage (50). Not among the non-elective laws: autocracy moved to -90 so that it is 90 from single-party state, not exactly 100. |
 | Internal security | 30 | Secret police (-30) vs no home affairs law (0), national guard (10) and domestic intelligence agency (20). Not among those three. |
-| Judiciary | 200 | Only arbitrary legalism vs independent judiciary. Jack (2026-11-22) trimmed the Soviet package to four laws, without puppet judiciary. The gap is symmetric, so 150 would also have imposed puppet judiciary. At 200 the West still gives an independent judiciary to arbitrary-legalism dictatorships, but no longer to communist states (puppet judiciary). The alternative, moving puppet judiciary's progressiveness, would change AI law steps. |
+| Judiciary | 200 | Only arbitrary legalism vs independent judiciary. Jack (2026-11-22) trimmed the Soviet package to four laws, without puppet judiciary. The gap is symmetric, so 150 would also have imposed puppet judiciary. At 200 the West still gives an independent judiciary to arbitrary-legalism dictatorships, but no longer to puppet-judiciary states: the communist states, POR, SPA and the occupation zones. The alternative, moving puppet judiciary's progressiveness, would change AI law steps. |
 | Economic system | 50 | Command economy and cooperative ownership (100) vs interventionism and laissez-faire (50). Also a market economy vs agrarianism and extraction (0): the Latin American census-voting republics are therefore Western targets. Pushing that above 50 would have raised command economy above 100, which takes the move from agrarianism or extraction to command economy out of reach of the socialist AI strategies. |
 | Trade policy | 100 | Both blocs start protectionist. Only isolationism vs free trade or protectionism. |
 | Labour associations | 75 | Vanilla 1.15.2's value. Corporatized unions vs right to associate is only 25, so neither bloc imposes its unions. |
@@ -61,12 +61,13 @@ Council republic (200), single-party state (0) and command economy (100) were le
 
 ## Guards in script (Jack, 2026-11-22)
 
-- **No imposed monarchy.** A regime change imposes the enforcer's governance law, so a crowned enforcer (GBR, the Benelux and Nordic monarchies, JAP) would install `law_monarchy` on a communist state. No threshold can stop this while council republic is still imposed on monarchies, because the gap is symmetric. The war goal's `on_enforced` (vanilla's `regime_change` entry, REPLACEd in `common/war_goal_types/zz_vanilla_war_goal_types.txt`) and `force_regime_change` both call `cwp_regime_change_mark_target_effect` (`common/scripted_effects/cwp_regime_change_effects.txt`).
-  - That effect marks the target, and `cwp_regime_change.1` (`events/cwp_regime_change_events.txt`) runs a day later, so it does not matter whether `on_enforced` runs before or after the engine's law changes.
+- **No imposed monarchy.** A regime change imposes the enforcer's governance law, so a crowned enforcer (GBR, the Benelux and Nordic monarchies, ITA, GRE, BUL, ROM, JAP, the dominions, the Middle Eastern monarchies) would install `law_monarchy` on a communist state. No threshold can stop this while council republic is still imposed on monarchies, because the gap is symmetric. The war goal's `on_enforced` (vanilla's `regime_change` entry, REPLACEd in `common/war_goal_types/zz_vanilla_war_goal_types.txt`) and `force_regime_change` both call `cwp_regime_change_mark_target_effect` (`common/scripted_effects/cwp_regime_change_effects.txt`).
+  - That effect marks the target for 30 days. `cwp_regime_change.1` (`events/cwp_regime_change_events.txt`) checks one day and again seven days later, so it does not matter whether `on_enforced` runs before or after the engine's law changes, or whether they take a few days.
   - If the target then has `law_monarchy` but no monarchy tradition, the event enacts a parliamentary republic (when the enforcer is a parliamentary crown) or a presidential republic.
-  - Monarchy tradition is `cwp_monarchy_tradition_var`, set in `common/history/global/cwp_global_variables.txt` for every 1946 country with `law_monarchy`, and yearly (`common/on_actions/cwp_regime_change_on_actions.txt`) for any later monarchy that a regime change did not just impose. A country whose crown was deposed (`cwp_crown_pretender_var` from the constitutional-monarchy code) also counts.
-  - So RUS, YUG, ALB and HUN, whose monarchies ended before 1946, get a republic.
-- **Council republics do not regime-change each other.** `regime_change_target_allowed_trigger` (the war goal's `valid` and `force_regime_change`'s `possible`) fails when both countries have `law_council_republic`. This covers the 1946 communist states (RUS, ALB, YUG, MGL, DDR, NRK, DAI, PRC) and any later ones. The USSR can still target a coalition republic such as POL.
+  - Monarchy tradition is `cwp_monarchy_tradition_var`, set in `common/history/global/cwp_global_variables.txt` for every 1946 country with `law_monarchy`, and monthly (`common/on_actions/cwp_regime_change_on_actions.txt`) for any later monarchy that a regime change did not just impose. A country whose crown was deposed (`cwp_crown_pretender_var` from the constitutional-monarchy code) also counts.
+  - So the 1946 communist states (RUS, YUG, ALB), whose monarchies ended before 1946, get a republic, while ITA, BUL and ROM keep a tradition for good: a crowned enforcer can restore their crowns. The 1946 cut-off is the open question for Jack.
+  - If the crown code seated and deposed a monarch during the imposed days, `cwp_regime_change.2` (one day after the conversion) drops the resulting pretender. A real pretender existed before the regime change and is kept.
+- **The 1946 communist states do not regime-change each other.** `regime_change_target_allowed_trigger` (the war goal's `valid` and `force_regime_change`'s `possible`) fails when both countries have `cwp_communist_state_1946_var`, set in history global on RUS, ALB, YUG, MGL, DDR, NRK, DAI and PRC. Later communist states are not covered: a 1956 or 1968 Brezhnev-doctrine regime change, or Vietnam in Kampuchea in 1979, stays possible. The USSR can still target a coalition republic such as POL.
 
 ## What the 1946 start gives
 
@@ -86,18 +87,18 @@ Computed from `common/scripted_effects/00_starting_law_packages.txt` plus each `
 | TUR, IDS | council republic, secret police, command economy | universal suffrage |
 | Occupation zones AOZ, BOZ, FOZ, STK | council republic, secret police, command economy | universal suffrage |
 | Colonies | council republic, secret police, command economy | republic, universal suffrage (plus interventionism where they have an extraction economy) |
-| RUS, ALB, YUG, MGL | blocked (council republics) | republic, universal suffrage, no home affairs law, interventionism |
+| RUS, ALB, YUG, MGL | blocked (1946 communist states) | republic, universal suffrage, no home affairs law, interventionism |
 | DDR, NRK | blocked | republic, universal suffrage, no home affairs law, interventionism |
 | DAI | blocked | republic, universal suffrage, no home affairs law |
 | 39 countries with traditionalism (the Gulf and other Islamic monarchies, protectorates, the South Asian dominions, EGY, IRQ, PER, SYR, THA, ROC, PRC, LIB, TIB...) | immune | immune |
 
-Totals: 92 valid USSR targets and 66 valid US targets out of 138 starting countries. A GBR-led regime change gives a communist state a parliamentary republic (after the guard), universal suffrage and no home affairs law.
+Totals: 92 valid USSR targets and 66 valid US targets out of 138 starting countries. A GBR-led regime change gives a 1946 communist state a parliamentary republic (after the guard), universal suffrage, no home affairs law and (except DAI) interventionism.
 
 ## Pairings Jack may want to look at
 
 - **The power-bloc action works only inside a bloc.** At start the USSR can force its package on POL, ROM, CZH and HUN, which fits 1947-48. The US could force universal suffrage and no home affairs on POR if Portugal is in its bloc (this already existed before the retune).
-- **DDR and NRK vs the coalition republics.** DDR and NRK (council republics) can still impose oligarchy or single-party state, and command economy, on POL, BUL, ROM, AZR, KUR and XIN, which are not council republics yet.
-- **Factory councils** (Yugoslav-style self-management, 75 from corporatized unions, vanilla's labour threshold) make a non-council socialist state a USSR target. Between council republics the guard blocks it.
+- **DDR and NRK vs the coalition republics.** DDR and NRK can still impose oligarchy or single-party state, and command economy, on POL, BUL, ROM, AZR, KUR and XIN, which are not council republics yet.
+- **Factory councils** (Yugoslav-style self-management, 75 from corporatized unions, vanilla's labour threshold) make a non-council socialist state a USSR target. Between the 1946 communist states the guard blocks it.
 - **Colonies of allies** are valid US targets (oligarchy and colonial administration), as are Turkey and Indonesia (oligarchy). GBR can likewise target its own colonies.
 
 To recompute the matrix: list each country's laws per group (package, then `activate_law` overrides in file order) and compare the gaps with the thresholds. The script used for this note is about 60 lines of Python and is not in the repo.
