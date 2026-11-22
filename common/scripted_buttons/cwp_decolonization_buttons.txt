@@ -276,16 +276,15 @@ cwp_woc_managed_withdrawal_button = {
 		cwp_has_tracked_colonies = yes
 	}
 
+	# Run batch-d204 (2026-11-21): colonies' liberty desire stayed at a median of 5-20 even with the tide at
+	# 75-100 (the engine's own factors outweigh the tide), so a gate at liberty desire 75 left Britain and France
+	# with 43 colonial subjects in 1962. In the 1957-62 'wind of change' metropoles let colonies go as policy, not because
+	# each one was in revolt: the gate now falls with the tide (see cwp_withdrawal_candidate), and a press hands
+	# over more colonies once the tide is high.
 	possible = {
 		custom_tooltip = {
 			text = cwp_woc_managed_withdrawal_button_possible_tt
-			any_direct_subject = {
-				cwp_is_tracked_colony = yes
-				OR = {
-					liberty_desire >= 75
-					has_variable = cwp_independence_promised
-				}
-			}
+			any_direct_subject = { cwp_withdrawal_candidate = yes }
 		}
 		custom_tooltip = {
 			text = cwp_button_cooldown_tt
@@ -294,20 +293,51 @@ cwp_woc_managed_withdrawal_button = {
 	}
 
 	effect = {
-		set_variable = {
-			name = cwp_woc_managed_withdrawal_button_cd
-			months = 12
+		# 12 months between handovers, 6 once anti-colonial nationalism is at its height (tier 4).
+		if = {
+			limit = {
+				has_global_variable = cwp_tide_tier
+				global_var:cwp_tide_tier >= 4
+			}
+			set_variable = {
+				name = cwp_woc_managed_withdrawal_button_cd
+				months = 6
+			}
+		}
+		else = {
+			set_variable = {
+				name = cwp_woc_managed_withdrawal_button_cd
+				months = 12
+			}
 		}
 		ordered_direct_subject = {
-			limit = {
-				cwp_is_tracked_colony = yes
-				OR = {
-					liberty_desire >= 75
-					has_variable = cwp_independence_promised
+			limit = { cwp_withdrawal_candidate = yes }
+			order_by = liberty_desire
+			max = {
+				value = 1
+				if = {
+					limit = {
+						has_global_variable = cwp_tide_tier
+						global_var:cwp_tide_tier >= 3
+					}
+					add = 1
+				}
+				if = {
+					limit = {
+						has_global_variable = cwp_tide_tier
+						global_var:cwp_tide_tier >= 4
+					}
+					add = 1
+				}
+				# Never more than there are candidates: the engine logs an error when max exceeds the list.
+				max = {
+					value = 0
+					every_direct_subject = {
+						limit = { cwp_withdrawal_candidate = yes }
+						add = 1
+					}
 				}
 			}
-			order_by = liberty_desire
-			max = 1
 			cwp_decolonization_negotiated_independence = { METROPOLE = root }
 		}
 		add_modifier = {
@@ -326,6 +356,35 @@ cwp_woc_managed_withdrawal_button = {
 		if = { limit = { any_direct_subject = { cwp_is_tracked_colony = yes liberty_desire >= 95 } } add = 30 }
 		if = { limit = { cwp_has_imperialist_leaning_government = yes } multiply = 0.25 }
 		if = { limit = { any_direct_subject = { has_variable = cwp_independence_promised } } add = 50 }
+		# The wind of change: once the tide is high, holding on looks futile even to a conservative cabinet, less
+		# so to an imperialist one, and not at all to a dictatorship (Salazar's Portugal kept its empire).
+		if = {
+			limit = {
+				has_global_variable = cwp_tide_tier
+				global_var:cwp_tide_tier >= 3
+				NOR = {
+					has_law = law_type:law_autocracy
+					has_law = law_type:law_single_party_state
+				}
+			}
+			if = {
+				limit = { cwp_has_imperialist_leaning_government = yes }
+				add = 8
+			}
+			else = {
+				add = 20
+			}
+			if = {
+				limit = { global_var:cwp_tide_tier >= 4 }
+				if = {
+					limit = { cwp_has_imperialist_leaning_government = yes }
+					add = 6
+				}
+				else = {
+					add = 15
+				}
+			}
+		}
 	}
 }
 

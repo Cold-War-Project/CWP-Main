@@ -256,3 +256,93 @@ cwp_indochina_war_turned = {
 		}
 	}
 }
+
+# Country scope: a colony its metropole can hand over through Transfer Power. The liberty desire it takes falls
+# as the tide rises (75 below tier 2, 40 at tier 2, 20 at tier 3, 10 at tier 4), or the colony was promised
+# independence (the Philippines). Colonies whose own JE is running go through that JE instead, and the long
+# holdouts (entrepots, Pacific dependencies, settler-ruled or annexation-bound territories) are not offered: their
+# road out ran through other mechanisms than a negotiated handover (independent review, 2026-11-21).
+cwp_withdrawal_candidate = {
+	cwp_is_tracked_colony = yes
+	NOT = { cwp_has_own_decolonization_path = yes }
+	NOT = { cwp_is_long_holdout_colony = yes }
+	OR = {
+		has_variable = cwp_independence_promised
+		liberty_desire >= 75
+		AND = {
+			has_global_variable = cwp_tide_tier
+			global_var:cwp_tide_tier >= 2
+			liberty_desire >= 40
+		}
+		AND = {
+			has_global_variable = cwp_tide_tier
+			global_var:cwp_tide_tier >= 3
+			liberty_desire >= 20
+		}
+		AND = {
+			has_global_variable = cwp_tide_tier
+			global_var:cwp_tide_tier >= 4
+			liberty_desire >= 10
+		}
+	}
+}
+
+# Country scope: the colony's own decolonization JE is running.
+cwp_has_own_decolonization_path = {
+	OR = {
+		AND = {
+			c:HND ?= this
+			has_global_variable = cwp_india_active
+		}
+		AND = {
+			OR = {
+				c:VNM ?= this
+				c:DAI ?= this
+			}
+			has_global_variable = cwp_indochina_active
+		}
+		AND = {
+			c:GLC ?= this
+			has_global_variable = cwp_gold_active
+		}
+		AND = {
+			c:KKY ?= this
+			has_global_variable = cwp_kenya_active
+		}
+		AND = {
+			c:CNG ?= this
+			has_global_variable = cwp_congo_active
+		}
+		# Portugal's provinces leave through their own JE, and the Estado Novo does not hand them over before it
+		# opens either (batch-8c95 released Mozambique in 1954 and Angola in 1956 this way).
+		AND = {
+			OR = {
+				c:OVM ?= this
+				c:MKU ?= this
+				c:GNB ?= this
+			}
+			OR = {
+				has_global_variable = cwp_portugal_active
+				c:POR ?= {
+					OR = {
+						has_law = law_type:law_autocracy
+						has_law = law_type:law_single_party_state
+					}
+				}
+			}
+		}
+	}
+}
+
+# Country scope: colonies that historically stayed under their metropole long after the African wave, or left
+# by another road (Hong Kong 1997, Macau 1999, Rhodesia's UDI, South West Africa 1990, West New Guinea to
+# Indonesia).
+cwp_is_long_holdout_colony = {
+	OR = {
+		c:HKN ?= this
+		c:MAO ?= this
+		c:MTB ?= this
+		c:NAM ?= this
+		c:WPP ?= this
+	}
+}
