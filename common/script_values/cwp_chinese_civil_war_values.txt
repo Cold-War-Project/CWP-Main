@@ -35,18 +35,6 @@ cwp_china_war_support = {
 					desc = "cwp_ccw_war_support_peoples_war"
 				}
 			}
-			# Gap fill from staging run 1121110313: the PRC still fell from 99 to 49 by 1947.8 and capitulated before
-			# 1948.5 inside the people's war. Below 30 the Communists fall back on the base areas instead of giving up.
-			if = {
-				limit = {
-					c:PRC = this
-					scope:war = { has_war_support = { target = root value < 30 } }
-				}
-				add = {
-					value = 10
-					desc = "cwp_ccw_war_support_peoples_war"
-				}
-			}
 			# Nationalist war-weariness: while hyperinflation runs, the Nationalist war effort loses support every beat.
 			if = {
 				limit = {
@@ -153,45 +141,37 @@ cwp_china_war_support = {
 }
 
 # Called from REPLACE:battle_victory_score (zz_vanilla_script_values.txt). Same scope as that value (the battle's winning
-# side, with a province link). In the people's war a won battle takes a quarter of the usual ground in either China,
-# a tenth while the American-brokered ceasefire holds: the Carlist skirmish phase without freezing the map entirely.
+# side, with a province link). Applies only to provinces owned by one of the two Chinas while the war runs.
+# - Either China's last half cannot be taken by occupation: the AI folds at once when 100% occupied
+#   (AI_CAPITULATE_COMPLETELY_DEFEATED, 00_ai.txt), which decided several runs regardless of war support. Keyed on the
+#   owner's occupation, not on the tag (fresh review 2026-11-22), so it protects whichever side is being overrun; the war
+#   is then decided by war support and capitulation.
+# - People's war: a won battle takes a quarter of the usual ground, a tenth under the American-brokered ceasefire.
 cwp_china_battle_victory_factor = {
 	value = 1
-	# The Communist base areas hold as long as the Nationalists have not gained the upper hand (bar above -25), in either
-	# phase: batch 1122100449-batch-a3b9 had the PRC launch its offensive at +26.5 and then lose every state to an army
-	# three times its size, folding at once (AI_CAPITULATE_COMPLETELY_DEFEATED).
 	if = {
 		limit = {
-			NOT = { has_global_variable = cwp_ccw_peoples_war_phase }
 			has_global_variable = cwp_ccw_active
-			global_var:cwp_ccw_balance > -25
-			province ?= { owner ?= { c:PRC ?= this } }
+			province ?= {
+				owner ?= {
+					cwp_ccw_is_belligerent = yes
+					enemy_occupation >= 0.5
+				}
+			}
 		}
 		multiply = {
 			value = 0
-			desc = "cwp_ccw_occupation_base_areas"
+			desc = "cwp_ccw_occupation_last_half"
 		}
 	}
-	if = {
+	else_if = {
 		limit = {
 			has_global_variable = cwp_ccw_peoples_war_phase
 			province ?= {
 				owner ?= { cwp_ccw_is_belligerent = yes }
 			}
 		}
-		# The Communist base areas cannot be occupied in the people's war (the Carlist skirmish phase's 0). The AI
-		# capitulates at once when 100% occupied (AI_CAPITULATE_COMPLETELY_DEFEATED), and the PRC's 9 small states were
-		# fully overrun at 52 war support in run 1122091440-batch-3ea9 even at a quarter of the usual ground.
 		if = {
-			limit = {
-				province ?= { owner ?= { c:PRC ?= this } }
-			}
-			multiply = {
-				value = 0
-				desc = "cwp_ccw_occupation_base_areas"
-			}
-		}
-		else_if = {
 			limit = { has_global_variable = cwp_ccw_ceasefire }
 			multiply = {
 				value = 0.1
@@ -206,4 +186,3 @@ cwp_china_battle_victory_factor = {
 		}
 	}
 }
-
