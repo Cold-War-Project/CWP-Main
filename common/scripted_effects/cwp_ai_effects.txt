@@ -390,7 +390,8 @@ cwp_ai_superpower_bloc_update = {
 # industry shrank from 2,000 to 1,919 levels by 1962. A planner builds what the economy is short of.
 # Each month, for an AI command economy with real construction capacity (50+ sector levels) that
 # owns its market (a customs-union member would react to the leader's prices), is solvent and has a
-# short queue: walk the key industrial goods in order and queue one level of the building for each
+# short queue: walk the key goods (consumer and heavy industry interleaved) and queue one level of the
+# building for each
 # good that is not glutted (no more than 10% under base price) and whose main input is not scarce,
 # at most 8 levels a month, in the
 # most populous incorporated state with spare infrastructure. Electricity is left out (a local good,
@@ -413,20 +414,20 @@ cwp_ai_planned_economy = {
 			construction_queue_government_duration < 26
 		}
 		set_local_variable = { name = cwp_planned value = 0 }
+		cwp_ai_plan_industry = { GOODS = groceries BUILDING = building_food_industry INPUT = grain }
 		cwp_ai_plan_industry = { GOODS = steel BUILDING = building_steelworks INPUT = iron }
+		cwp_ai_plan_industry = { GOODS = clothes BUILDING = building_textile_manufactories INPUT = fabric }
 		cwp_ai_plan_industry = { GOODS = coal BUILDING = building_coal_mine INPUT = tools }
-		cwp_ai_plan_industry = { GOODS = iron BUILDING = building_iron_mine INPUT = tools }
-		cwp_ai_plan_industry = { GOODS = tools BUILDING = building_tool_manufactories INPUT = wood }
 		cwp_ai_plan_industry = { GOODS = cement BUILDING = building_cement_plants INPUT = coal }
+		cwp_ai_plan_industry = { GOODS = iron BUILDING = building_iron_mine INPUT = tools }
+		cwp_ai_plan_industry = { GOODS = refined_fuel BUILDING = building_oil_refineries INPUT = oil }
 		cwp_ai_plan_industry = { GOODS = chemicals BUILDING = building_chemical_plants INPUT = sulfur }
+		cwp_ai_plan_industry = { GOODS = tools BUILDING = building_tool_manufactories INPUT = wood }
 		cwp_ai_plan_industry = { GOODS = engines BUILDING = building_motor_industry INPUT = steel }
+		cwp_ai_plan_industry = { GOODS = paper BUILDING = building_paper_manufactories INPUT = wood }
 		cwp_ai_plan_industry = { GOODS = glass BUILDING = building_glassworks INPUT = coal }
 		cwp_ai_plan_industry = { GOODS = explosives BUILDING = building_explosives_industry INPUT = chemicals }
 		cwp_ai_plan_industry = { GOODS = aluminum BUILDING = building_aluminum_refinery INPUT = bauxite }
-		cwp_ai_plan_industry = { GOODS = refined_fuel BUILDING = building_oil_refineries INPUT = oil }
-		cwp_ai_plan_industry = { GOODS = paper BUILDING = building_paper_manufactories INPUT = wood }
-		cwp_ai_plan_industry = { GOODS = clothes BUILDING = building_textile_manufactories INPUT = fabric }
-		cwp_ai_plan_industry = { GOODS = groceries BUILDING = building_food_industry INPUT = grain }
 	}
 }
 
@@ -436,6 +437,14 @@ cwp_ai_plan_industry = {
 	if = {
 		limit = {
 			local_var:cwp_planned < 8
+			# at most 3 projects of a type at a time, so prices can answer before more (review)
+			NOT = {
+				any_scope_building = {
+					count >= 3
+					is_building_type = $BUILDING$
+					is_under_construction = yes
+				}
+			}
 			market ?= {
 				# Not glutted (a plan grows output wherever the market still pays at least ~base price;
 				# observer 8e7224176: at "25% above base" the USSR planner fired once in ten years while
@@ -447,6 +456,13 @@ cwp_ai_plan_industry = {
 				is_incorporated = yes
 				infrastructure > infrastructure_usage
 				can_construct_building = $BUILDING$
+				# not where the existing plant of this type is already half empty
+				NOT = {
+					any_scope_building = {
+						is_building_type = $BUILDING$
+						occupancy < 0.5
+					}
+				}
 			}
 		}
 		ordered_scope_state = {
@@ -454,6 +470,13 @@ cwp_ai_plan_industry = {
 				is_incorporated = yes
 				infrastructure > infrastructure_usage
 				can_construct_building = $BUILDING$
+				# not where the existing plant of this type is already half empty
+				NOT = {
+					any_scope_building = {
+						is_building_type = $BUILDING$
+						occupancy < 0.5
+					}
+				}
 			}
 			order_by = state_population
 			position = 0
