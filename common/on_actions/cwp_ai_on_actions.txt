@@ -28,3 +28,43 @@ cwp_ai_monthly_all = {
 		cwp_ai_superpower_bloc_update = yes
 	}
 }
+
+# Cold War camps start cohesive. Bloc cohesion begins near 0 at game start whatever history sets (an
+# add_cohesion_number in history/power_blocs was reset) and climbs 1 a week, so in March 1946, when the
+# 6-month join lock from the 1945.9.2 founding runs out, it is still under 20. Below 20 the stay check
+# (invite_to_power_bloc accept_score) counts cohesion about x8 (~ -200 net), and members walk out.
+# Applies to the same blocs as cwp_superpower_bloc. Fires once, after the lobby.
+on_game_started_after_lobby = {
+	on_actions = { cwp_ai_cold_war_blocs_start }
+}
+
+cwp_ai_cold_war_blocs_start = {
+	effect = {
+		every_country = {
+			limit = {
+				is_power_bloc_leader = yes
+				country_rank >= rank_value:great_power
+				power_bloc ?= { NOT = { has_identity = identity:identity_sovereign_empire } }
+			}
+			save_scope_as = cwp_sp_leader
+			if = {
+				limit = {
+					any_country = {
+						is_power_bloc_leader = yes
+						NOT = { this = scope:cwp_sp_leader }
+						OR = {
+							has_diplomatic_pact = { who = scope:cwp_sp_leader type = rivalry }
+							scope:cwp_sp_leader = { has_diplomatic_pact = { who = prev type = rivalry } }
+						}
+					}
+				}
+				power_bloc = { add_cohesion_number = 50 }
+			}
+		}
+		# Grant cwp_superpower_bloc at once too: the monthly pulse can land weeks in, and Italy left on
+		# 1946.1.4 before the bloc had its stay bonus.
+		every_country = {
+			cwp_ai_superpower_bloc_update = yes
+		}
+	}
+}
