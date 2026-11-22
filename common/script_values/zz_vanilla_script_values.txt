@@ -2657,11 +2657,23 @@ REPLACE:wanted_army_size_script_value = {
 		limit = {
 			in_default = yes
 			is_at_war = no
+			NOT = { has_modifier = cwp_guerrilla_war }
 		}
 		multiply = 0.5
 	}
 
 	min = 1
+
+	# Liberation movements (cwp_guerrilla_war) raise armies from their population, not their GDP: the DRV's
+	# GDP-based target was 2-3 levels and it cut its 1946 barracks from 7 to 2 (batch 2bcb).
+	if = {
+		limit = { has_modifier = cwp_guerrilla_war }
+		min = {
+			value = cached_ai_incorporated_population
+			divide = 1000000
+			max = 15
+		}
+	}
 
 	# Population is a true final ceiling, applied after every economic,
 	# strategic, political, and rivalry modifier. The curve is adapted from the
@@ -2689,7 +2701,12 @@ REPLACE:wanted_army_size_script_value = {
 	# Not while at war: insurgents and colonial wars (the DRV, the Indonesian Republic) disbanded
 	# their armies within months of 1946 because of this cap, and the wars stopped being fought.
 	if = {
-		limit = { is_at_war = no }
+		limit = {
+			is_at_war = no
+			# Liberation movements between rounds of fighting keep their forces (the DRV fell from ~15k to under 1k
+			# manpower after its first war and lost every later one within months).
+			NOT = { has_modifier = cwp_guerrilla_war }
+		}
 		max = {
 			value = gdp
 			divide = 1500000
@@ -3189,6 +3206,7 @@ REPLACE:battle_victory_score = {
 
 	# Cold War Project areas
 	multiply = cwp_china_battle_victory_factor
+	multiply = cwp_indochina_battle_victory_factor
 }
 
 # ---- generated error-cleanup overrides (Victorian content neutralised / remapped to mod content) ----
