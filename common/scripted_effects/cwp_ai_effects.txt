@@ -391,7 +391,8 @@ cwp_ai_superpower_bloc_update = {
 # Each month, for an AI command economy with real construction capacity (50+ sector levels) that
 # owns its market (a customs-union member would react to the leader's prices), is solvent and has a
 # short queue: walk the key industrial goods in order and queue one level of the building for each
-# good priced 25%+ above base whose main input is not itself short, at most 3 levels a month, in the
+# good that is not glutted (no more than 10% under base price) and whose main input is not scarce,
+# at most 8 levels a month, in the
 # most populous incorporated state with spare infrastructure. Electricity is left out (a local good,
 # priced per state). Independent review 2026-11-20 shaped these gates.
 # Monthly from on_monthly_pulse_country (root = country).
@@ -428,15 +429,18 @@ cwp_ai_planned_economy = {
 	}
 }
 
-# $GOODS$ short in our market (25%+ above base) and its main input $INPUT$ not short -> queue one level
-# of $BUILDING$, while fewer than 3 were queued this month.
+# $GOODS$ not glutted in our market and its main input $INPUT$ not scarce -> queue one level of
+# $BUILDING$, while fewer than 8 were queued this month.
 cwp_ai_plan_industry = {
 	if = {
 		limit = {
-			local_var:cwp_planned < 3
+			local_var:cwp_planned < 8
 			market ?= {
-				mg:$GOODS$ ?= { market_goods_pricier > 0.25 }
-				NOT = { mg:$INPUT$ ?= { market_goods_pricier > 0.25 } }
+				# Not glutted (a plan grows output wherever the market still pays at least ~base price;
+				# observer 8e7224176: at "25% above base" the USSR planner fired once in ten years while
+				# its market sat at or below base and 424M lay idle) and its main input not scarce.
+				NOT = { mg:$GOODS$ ?= { market_goods_cheaper > 0.1 } }
+				NOT = { mg:$INPUT$ ?= { market_goods_pricier > 0.5 } }
 			}
 			any_scope_state = {
 				is_incorporated = yes
