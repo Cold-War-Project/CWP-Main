@@ -17,7 +17,7 @@ Jack chose to retune per law group (2026-11-22). Goals:
 | Law group | Threshold | Why |
 |---|---|---|
 | Governance principles | 100 | Council republic (200) is 100 from a republic and 175 from a monarchy (25). A republic and a monarchy are 75 apart, so neither is imposed on the other. |
-| Distribution of power | 100 | Universal suffrage vs autocracy, oligarchy, landed and wealth voting, and single-party state; census voting vs autocracy. Not census vs universal suffrage (50). Among the non-elective laws, only autocracy vs single-party state is 100 apart. |
+| Distribution of power | 100 | Universal suffrage vs single-party state, wealth and landed voting, oligarchy and autocracy (and anarchy). Census voting vs oligarchy, technocracy, organic regulation and autocracy, so census-voting and oligarchy countries (27 and 46 at start) are each other's targets. Not census vs universal suffrage (50). Not among the non-elective laws: autocracy moved to -90 so that it is 90 from single-party state, not exactly 100. |
 | Internal security | 30 | Secret police (-30) vs no home affairs law (0), national guard (10) and domestic intelligence agency (20). Not among those three. |
 | Judiciary | 150 | Puppet vs independent judiciary (150), arbitrary legalism vs independent (200). Not judicial interference (100 or less from either). |
 | Economic system | 50 | Command economy and cooperative ownership (100) vs interventionism and laissez-faire (50). Also a market economy vs agrarianism and extraction (0): the Latin American census-voting republics are therefore Western targets. Pushing that above 50 would have raised command economy above 100, which takes the move from agrarianism or extraction to command economy out of reach of the socialist AI strategies. |
@@ -31,6 +31,7 @@ Jack chose to retune per law group (2026-11-22). Goals:
 | Law | Was | Now |
 |---|---|---|
 | `law_monarchy` | 0 | 25 |
+| `law_autocracy`, `law_neo_absolutism` | -100 | -90 (at -100 a communist state that enacts single-party state, which communist ideologies favour, would have been exactly 100 from RUS, ALB, YUG and MGL, so they could have imposed autocracy on each other) |
 | `law_secret_police` | 0 | -30 (it was equal to no home affairs law, so it could never be imposed or removed) |
 | `law_national_guard` | 25 | 10 |
 | `law_domestic_intelligence_agency` | 50 | 20 |
@@ -40,16 +41,20 @@ Council republic (200), single-party state (0) and command economy (100) were le
 ### What else reads progressiveness
 
 - **AI law changes.** Every political strategy in `common/ai_strategies/03_political_strategies.txt` caps how far, in progressiveness, one law change may go: `max_progressiveness` and `max_regressiveness`, default 25, from 5 up to 1000 per strategy. With the new values:
-  - Every move to secret police stays within 50, so the authoritarian strategies (hardline, conservative communist, autocratic, juntaist, security, nationalist, anti-communist, reactionary) keep their routes to it from all three other laws. The liberal, socialist, welfare, human rights, progressive and reformist strategies lose the move from no home affairs to secret police.
-  - Moves away from secret police are now 30-50 points. The authoritarian strategies lose them, which is in character.
-  - The authoritarian strategies gain no home affairs to domestic intelligence agency in one step (20, was 50).
-  - Governance changes only rare moves: chiefdom to monarchy (125), monarchy to theocracy (50) and back, monarchy to colonial administration (-25), and corporate state to monarchy (now 0).
-- **AI ideological opinion** (`NAI|IDEOLOGICAL_OPINION_*`, weighted by each group's `ideological_opinion_impact`, 2.0 for these groups). Per group, laws 25 or less apart count as "same" (+2.5); otherwise -0.05 per point.
-  - Secret police vs no home affairs moves from "same" to -1.5.
-  - Monarchy vs republic improves from -5 to -3.75.
-  - Domestic intelligence agency vs no home affairs moves from -2.5 to "same".
-  - All of these are small next to the existing gaps.
-- **Power-bloc cohesion** (`identity_ideological_union`, the East bloc) uses the worst gap in governance principles and distribution of power. The USSR vs BUL and ROM governance gap falls from 200 to 175. The bloc's worst gap at start is still the 200 between autocracy and universal suffrage.
+  - **Moves to secret police:** every one stays within 50 (from no home affairs 30, national guard 40, intelligence agency 50). Hardline and conservative communist, autocratic, juntaist, security, nationalist and reactionary keep all three routes. Anti-communist (regressiveness limit 45) loses intelligence agency to secret police. Strategies with a limit under 30 lose every route: conservative and default (25), progressive (25), reformist communist (15), socialist, welfare, liberal and human rights (5) and egalitarian (0). Before, conservative, progressive and default could reach it from no home affairs (0) and national guard (25).
+  - **Moves away from secret police** are now 30-50 points. Hardline (30) and conservative communist (35) keep secret police to no home affairs, and nationalist (50) keeps all three. Autocratic, juntaist, security, anti-communist and reactionary (25) lose them.
+  - **Easier moves:** intelligence agency to no home affairs (-20) is now in reach for the strategies with a limit of 25, and no home affairs to intelligence agency (+20) for the authoritarian ones.
+  - **Distribution of power:** anti-communist gains oligarchy, technocracy and organic regulation to autocracy (-40). No other strategy's reach changes.
+  - **Governance:** only rare moves change. Chiefdom to monarchy (+125) leaves the reach of the 100-limit strategies; theocracy to monarchy (+50) leaves the 25-35 ones; monarchy to theocracy (-50) leaves those limited to 25 and 45; monarchy to colonial administration is -25; corporate state to monarchy is now 0.
+  - The civil-war aversion flexibility (`NAI|CHANGE_LAW_CIVIL_WAR_AVERSION_LAW_DIRECTION_FLEXIBILITY`) can stretch these limits when a revolution threatens.
+- **AI ideological opinion** (`NAI|IDEOLOGICAL_OPINION_*`, counted once for current and once for ideal laws, and presumably weighted by each group's `ideological_opinion_impact`, 2.0 here). Per group, laws 25 or less apart count as "same" (+2.5); otherwise -0.05 per point. Unweighted, once:
+  - secret police vs no home affairs: from "same" to -1.5;
+  - secret police vs national guard: 25 to 40, from "same" to -2;
+  - intelligence agency vs no home affairs: 50 to 20, from -2.5 to "same";
+  - monarchy vs republic: -5 to -3.75;
+  - monarchy vs theocracy: 25 to 50, from "same" to -2.5;
+  - autocracy vs anything: 10 points closer.
+- **Power-bloc cohesion** (`identity_ideological_union`, the East bloc) uses the worst gap in governance principles and distribution of power. The USSR vs BUL and ROM governance gap falls from 200 to 175. The bloc's worst distribution-of-power gap at start is now 190 (autocracy vs universal suffrage), if the engine takes the larger of the two groups' gaps. Whether it sums them instead is engine-side and not verified.
 - **Radical petitions** (`NPolitics|GOVERNMENT_RADICAL_PETITION_THRESHOLD = 100`). Monarchy vs republic drops from 100 to 75, so a petition to abolish the monarchy is no longer "radical". No new pair reaches 100. The engine's `is_reasonable_law_for_petition` also looks at the size of the step.
 - **IG and character `average_progressiveness`**, read by vanilla's favourite-appointment values (`script_values/politics_values.txt`). Assuming the engine derives it from the progressiveness of the laws an ideology supports, monarchist, security-minded and secret-police ideologies shift by a few points.
 - **Not affected:** IG approval, law stances and movements, which are ideology-based. No `can_enact` or AI weight in `common/laws` compares progressiveness. The other script readers in the mod (Iwakura, tsarpoints, the Chinese golpista check, the Russian revolution values) are disabled Victorian content.
@@ -70,7 +75,7 @@ Computed from `common/scripted_effects/00_starting_law_packages.txt` plus the `a
 | TUR | council republic, secret police, command economy | universal suffrage |
 | PHI | council republic, autocracy, puppet judiciary, secret police, command economy | not targetable |
 | SAF, NAM, MTB | council republic, autocracy, secret police, command economy | not targetable |
-| Occupation zones AOZ, BOZ, FOZ (STK: no autocracy) | council republic, secret police, command economy | universal suffrage, independent judiciary |
+| Occupation zones AOZ, BOZ, FOZ, STK | council republic, secret police, command economy (their autocracy already matches) | universal suffrage, independent judiciary |
 | Colonies | council republic, secret police, command economy | republic and universal suffrage (plus interventionism where they have an extraction economy) |
 | RUS, ALB, YUG, MGL | not targetable | republic, universal suffrage, independent judiciary, no home affairs law, interventionism |
 | DDR, NRK, DAI | not targetable (DAI: command economy, because its history sets interventionism) | republic, universal suffrage, independent judiciary, no home affairs law (DDR and NRK also interventionism) |
@@ -79,6 +84,18 @@ Computed from `common/scripted_effects/00_starting_law_packages.txt` plus the `a
 Totals: 93 valid USSR targets and 70 valid US targets out of 138 starting countries.
 
 ## Pairings Jack may want to look at
+
+- **Communist states can still target each other through history quirks.**
+  - DAI (interventionism in its history file) is a USSR target, and DAI can impose interventionism on RUS, ALB, YUG, MGL, DDR and NRK.
+  - DDR and NRK (oligarchy, cooperative ownership) can impose both on POL, BUL, ROM, AZR, KUR and XIN.
+  - A communist state that enacts factory councils (Yugoslav-style self-management, 75 from corporatized unions, vanilla's threshold) becomes a USSR target.
+- **Start laws behind some results:**
+  - Census voting in the Latin American constitutional package makes the USSR impose autocracy there, though ARG, URU, CUB and MEX had broad male suffrage by 1946.
+  - Agrarianism for ARG, BRZ and MEX makes them US targets (interventionism), though Perón's and Vargas's economies and PEMEX were state-led.
+  - IDS counts as a Western democracy.
+  - The US zone AOZ is a US target (universal suffrage, independent judiciary).
+
+  This is the history thread's call, not checked against sources here.
 
 - **The power-bloc action works only inside a bloc.** At start the USSR can force its package on POL, ROM, CZH and HUN, which fits 1947-48. The US could force universal suffrage, an independent judiciary and no home affairs on POR if Portugal is in its bloc. That was already possible before this branch, through the 200-point distribution-of-power gap. Guarding against it would need a script condition, not a threshold.
 - **A monarchy enforcer installs a monarchy on a communist state.** A GBR-led regime change on RUS or DDR imposes `law_monarchy` (175 from a council republic). No threshold avoids this while council republic is still imposed on monarchies. A scripted guard would.
