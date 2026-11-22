@@ -59,6 +59,13 @@ Council republic (200), single-party state (0) and command economy (100) were le
 - **IG and character `average_progressiveness`**, read by vanilla's favourite-appointment values (`script_values/politics_values.txt`). Assuming the engine derives it from the progressiveness of the laws an ideology supports, monarchist, security-minded and secret-police ideologies shift by a few points.
 - **Not affected:** IG approval, law stances and movements, which are ideology-based. No `can_enact` or AI weight in `common/laws` compares progressiveness. The other script readers in the mod (Iwakura, tsarpoints, the Chinese golpista check, the Russian revolution values) are disabled Victorian content.
 
+## In-game test (22 Nov 2026)
+
+A console test (test-only branch `test/regime-change-probe`, GUI batch `~/forge/gui-checks/done/20261122-1620-regime-change-probe`) ran `regime_change` from RUS on FIN in an observer game. Thresholds were lowered on that branch so that seven groups qualified, and three of the Soviet laws carried a block: `can_enact = { always = no }` on secret police, `is_visible = { always = no }` on command economy, `can_impose = { always = no }` on autocracy.
+- **No cap in practice.** All seven qualifying groups changed at once (governance, distribution of power, internal security, economic system, judiciary, church and state, bureaucracy). `[GetDefine('NPolitics','NUM_REVOLUTIONARY_LAW_CHANGES')]` prints 0. The define is unset or 0, which evidently means unlimited, so the whole package always lands.
+- **No gates.** Regime change imposed all three blocked laws, so it ignores `can_enact`, `is_visible` and `can_impose`. Only the thresholds (and the script guards below) decide what is imposed.
+- **Laws change at once.** In the same effect, right after `regime_change`, the target already has the new laws. A GBR regime change on DDR set `law_monarchy` immediately, which is what the monarchy guard below catches.
+
 ## Guards in script (Jack, 2026-11-22)
 
 - **No imposed monarchy.** A regime change imposes the enforcer's governance law, so a crowned enforcer (GBR, the Benelux and Nordic monarchies, ITA, GRE, BUL, ROM, JAP, the dominions, the Middle Eastern monarchies) would install `law_monarchy` on a communist state. No threshold can stop this while council republic is still imposed on monarchies, because the gap is symmetric. The war goal's `on_enforced` (vanilla's `regime_change` entry, REPLACEd in `common/war_goal_types/zz_vanilla_war_goal_types.txt`) and `force_regime_change` both call `cwp_regime_change_mark_target_effect` (`common/scripted_effects/cwp_regime_change_effects.txt`).
