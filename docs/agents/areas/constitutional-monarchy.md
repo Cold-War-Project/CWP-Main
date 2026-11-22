@@ -41,3 +41,7 @@ Uses of `ruler`/`heir` that meant the monarch were changed: the institutional qu
 - Nepal's Rana regime (vanilla's Shogun pattern: hereditary Rana PM ruling, the King in the background) is a possible follow-up.
 - A head-of-state portrait in the politics panel would need an override of the vanilla `politics_panel_overview.gui`.
 - Decolonization: when a colony becomes a dominion that keeps the crown (India 1947, Pakistan, Ceylon), set `cwp_shared_crown_var` so it gets `gov_cwp_dominion` and a governor-general.
+
+## Monarchy tradition (Jack, 2026-11-22)
+
+Only countries with a monarchy tradition may enact `law_monarchy`, and the law's `can_impose` refuses targets without one, so that a regime change led by a monarchy does not crown a king in a country that never had one. `cwp_crown_has_monarchy_tradition` (country) is true for a current monarchy or a country with `cwp_crown_tradition_var` (set in `common/history/global/cwp_crown_1946.txt` for every 1946 monarchy plus ALB, YUG and HUN, and by `on_law_activated` whenever the monarchy law is activated), a pretender in exile or a shared crown. Whether the engine's regime change consults `can_impose` or `can_enact` is not confirmed; the regime-change fallback in `docs/agents/areas/regime-change.md` (a republic for targets without a tradition) should use this trigger.
