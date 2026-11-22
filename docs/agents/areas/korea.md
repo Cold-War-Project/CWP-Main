@@ -78,6 +78,10 @@ Opens when chapter 1 ends with both Koreas standing (armistice or the line holds
 - South Korean democratisation is left to the politics simulation; no scripted events yet.
 - Occupation-era names for `STK`/`NRK` (history thread).
 
+## Annex timer (2026-11-22)
+
+Vanilla `annex_country` is occupation-timer enforceable (`mirrored_wargoal`): holding half of a Korea's three states for about 20 weeks annexed the whole country, which bypassed the stalemate armistice. The China thread found and fixed the same problem (fix/ccw-no-annex-timer). `dp_cwp_korean_war` now uses `cwp_korea_annex_country` (`common/war_goal_types/cwp_korea_war_goals.txt`), a copy of vanilla's goal without the mirror block, so annexation needs capitulation. The per-state `conquer_state` goals remain timer-enforceable on purpose: a frozen front hands over the states each side has held.
+
 ## Player-visible terms (Jack, 2026-11-18)
 
 Use names from the historical and strategic literature, not invented ones. Applied: "The Korean Question" (UN usage, 1947), "Inter-Korean Military Balance", "Mutual Deterrence", "Neutralization of Korea", "Reunification by Force", "Inter-Korean Tension", "Armed Provocation", "Alliance Restraint", "Engagement Policy" (the Sunshine Policy is named in the description), "Inter-Korean Economic Cooperation", "Lost Credibility", "Communist Insurgency", "Rejection of the Armistice". "The Two Koreas" is Oberdorfer's title and the common term. Script keys are unchanged.
