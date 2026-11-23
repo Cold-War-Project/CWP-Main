@@ -10,3 +10,8 @@ What the branch does, for every CWP journal entry except Energy Crisis and Red S
 - Keys are unchanged; only new keys were added.
 
 Not done here: `NOT = { has_modifier = X }` conditions are left as vanilla renders them (readable); effect tooltips (what a button does) keep their one or two sentences; JE `_reason` text is the loc-prose thread's.
+
+
+## Purpose pass (2026-11-23)
+
+Jack asked for each element to serve its vanilla purpose, not just be short. Map and audit: [../je-gui-purposes.md](../je-gui-purposes.md). Branch `ui/je-purposes`: thresholds out of `second_desc`, the Chinese civil war bar's look (so its pole legend shows), named outcome headers where several endings shared "Will complete if:", `$EFFECT$` restored in the German, Saar and Austrian effect headers, `historical` only on multi-path JEs, 46 factor descs as noun phrases, 8 button names cut to 30 characters, rules moved out of the NATO and Warsaw Pact status lines.
