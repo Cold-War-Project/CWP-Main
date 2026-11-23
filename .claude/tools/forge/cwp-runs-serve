@@ -179,7 +179,21 @@ def start(steps, want):
 
 def prune():
     """Disk relief before the 20 GB floor stops the queue: remove clean `runs-<sha9>` worktrees that no
-    running job or open step uses (cwp-runs start re-creates them), then gzip finished runs' saves."""
+    running job or open step uses (cwp-runs start re-creates them), then gzip finished runs' saves.
+    Holds cwp-runs' own start lock throughout, so no `cwp-runs start` (by anyone) can book a tree meanwhile."""
+    global LAST_COMPRESS
+    with open(RUNS / ".start.lock", "w") as lf:
+        fcntl.flock(lf, fcntl.LOCK_EX)
+        prune_locked()
+    if time.time() - LAST_COMPRESS > 3600:   # at most hourly: it can take a while
+        LAST_COMPRESS = time.time()
+        sh(f"bash {HOME}/forge/admin/compress-old-saves.sh", timeout=3600)
+
+
+LAST_COMPRESS = 0
+
+
+def prune_locked():
     busy = set()
     for rec in started_records():
         if not rec.get("closed") or unit_active(rec["token"]):
@@ -210,7 +224,6 @@ def prune():
             removed.append(w.name)
     if removed:
         log(f"pruned {len(removed)} idle arm worktrees: {' '.join(removed)}")
-    sh(f"bash {HOME}/forge/admin/compress-old-saves.sh", timeout=3600)
 
 
 def tick():
