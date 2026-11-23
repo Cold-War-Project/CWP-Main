@@ -32,7 +32,7 @@ A local git repo (not part of CWP-Main) holding the text files of the installed 
 | New alert `naval_mission_no_area_alert` | Ported into `00_alert_types.txt` |
 | New modifier `country_can_conscript_protected_subsistence_employment_bool`: conscription centres skip subsistence jobs protected by `building_minimum_incorporated_subsistence_employment_add` unless the country has it | Added to `law_peasant_levies` as in vanilla (the mod's `law_serfdom` sets that protection) |
 | `russian_socialist_laws_value` now reads the vanilla tech `socialism` | Stubbed in `zz_vanilla_script_values.txt` |
-| `provinces.png`: 17 sea pixels moved from Baltic Entrances to Southern Baltic Sea | Not ported: the mod ships the 1.15.1 file (binary map files stay as they are; Jack can decide to take the new file, which needs no state-region change) |
+| `provinces.png`: 17 sea pixels moved from Baltic Entrances to Southern Baltic Sea | Taken on Jack's call (22 Nov 2026, branch `feat/vanilla-1.15.2-baltic-map`): the mod's file is vanilla 1.15.2's again. Both sea provinces remain, and the state regions and adjacencies are unchanged |
 
 **Regime-change thresholds:** retuned per law group on Jack's call of 22 Nov 2026, with four progressiveness changes; see [regime-change.md](regime-change.md).
 
