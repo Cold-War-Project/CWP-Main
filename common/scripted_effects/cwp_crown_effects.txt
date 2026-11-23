@@ -148,6 +148,7 @@ cwp_crown_post_change_to_monarch_rule = {
 	if = {
 		limit = { has_variable = cwp_crown_restore_var }
 		var:cwp_crown_restore_var = {
+			set_variable = cwp_crown_restored_var
 			remove_character_role = character_role_cwp_monarch
 			if = {
 				limit = { is_interest_group_leader = yes }
@@ -469,6 +470,42 @@ cwp_crown_set_house_name = {
 		limit = { scope:cwp_crown_scope_house_country ?= { c:THA ?= this } }
 		set_last_name = Mahidol
 	}
+	else_if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { OR = { c:RUS ?= this c:RSF ?= this } } }
+		set_last_name = cwp_claimant_name_romanov
+	}
+	else_if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { OR = { c:FRA ?= this } } }
+		set_last_name = cwp_claimant_name_d_orleans
+	}
+	else_if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { OR = { c:POR ?= this } } }
+		set_last_name = cwp_claimant_name_of_braganza
+	}
+	else_if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { OR = { c:AUS ?= this c:HUN ?= this } } }
+		set_last_name = cwp_claimant_name_von_habsburg
+	}
+	else_if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { OR = { c:GER ?= this } } }
+		set_last_name = cwp_claimant_name_von_hohenzollern
+	}
+	else_if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { OR = { c:BRZ ?= this } } }
+		set_last_name = cwp_claimant_name_of_orleans_braganza
+	}
+	else_if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { OR = { c:DAI ?= this } } }
+		set_last_name = cwp_claimant_name_nguyen
+	}
+	else_if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { OR = { c:ALB ?= this } } }
+		set_last_name = cwp_claimant_name_zogu
+	}
+	else_if = {
+		limit = { scope:cwp_crown_scope_house_country ?= { OR = { c:YUG ?= this } } }
+		set_last_name = cwp_claimant_name_karadjordjevic
+	}
 }
 
 ############################################################
@@ -484,9 +521,11 @@ cwp_crown_restore_dynasty = {
 			has_law = law_type:law_monarchy
 			government_transfer_of_power = hereditary
 			has_gov_regency = no
-			ruler ?= { is_historical = no }
+			ruler ?= {
+				is_historical = no
+				NOT = { has_variable = cwp_crown_restored_var } # a monarch brought back by cwp_crown_post_change_to_monarch_rule
+			}
 		}
-		ruler = { set_variable = cwp_crown_usurped_var }
 		cwp_crown_create_claimant = { MODE = ruler }
 	}
 }
@@ -556,135 +595,103 @@ cwp_crown_on_created = {
 	owner ?= { set_variable = { name = $VAR$ value = PREV } }
 }
 
-# Country: create the rightful claimant of a restored crown (Jack, 2026-11-22). $MODE$ = ruler (a monarch-ruled
-# government) or monarch (a background monarch under a Prime Minister). The claimant alive on the current date is used;
-# otherwise a member of the house is generated (cwp_crown_set_house_name). create_character resolves after this effect,
-# so the new character is set up in on_created.
+# Country: seat the rightful claimant of a restored crown (Jack, 2026-11-22). $MODE$ = ruler (a monarch-ruled
+# government) or monarch (a background monarch under a Prime Minister). The first claimant of the house alive on the date
+# is used: an existing character (at home, abroad or in exile) is brought home, otherwise the template is created.
+# create_character resolves after this effect, so a new claimant is set up in on_created. Under a Prime Minister a
+# member of the house is generated when no claimant applies; under a ruling monarch the sitting ruler then stays.
 cwp_crown_create_claimant = {
+	save_scope_as = cwp_crown_scope_realm
 	if = {
-		limit = { c:RUS ?= this }
-		if = {
-			limit = { game_date >= 1917.8.30 NOT = { is_template_used = RUS_cwp_claimant_vladimir_romanov } game_date < 1992.4.21 }
-			create_character = { template = RUS_cwp_claimant_vladimir_romanov on_created = { cwp_crown_claimant_$MODE$ = yes } }
-		}
-		else_if = {
-			limit = { game_date >= 1953.12.23 NOT = { is_template_used = RUS_cwp_claimant_maria_romanov } }
-			create_character = { template = RUS_cwp_claimant_maria_romanov on_created = { cwp_crown_claimant_$MODE$ = yes } }
-		}
-		else = { cwp_crown_create_generic_monarch = { MODE = $MODE$ } }
+		limit = { OR = { c:RUS ?= this c:RSF ?= this } }
+		cwp_crown_try_claimant = { T = RUS_cwp_claimant_vladimir_romanov B = 1917.8.30 E = 1992.4.21 MODE = $MODE$ }
+		cwp_crown_try_claimant = { T = RUS_cwp_claimant_maria_romanov B = 1953.12.23 E = 2100.1.1 MODE = $MODE$ }
 	}
 	else_if = {
 		limit = { c:FRA ?= this }
-		if = {
-			limit = { game_date >= 1908.7.5 NOT = { is_template_used = FRA_cwp_claimant_henri_orleans } game_date < 1999.6.19 }
-			create_character = { template = FRA_cwp_claimant_henri_orleans on_created = { cwp_crown_claimant_$MODE$ = yes } }
-		}
-		else_if = {
-			limit = { game_date >= 1933.6.14 NOT = { is_template_used = FRA_cwp_claimant_henri_orleans_ii } }
-			create_character = { template = FRA_cwp_claimant_henri_orleans_ii on_created = { cwp_crown_claimant_$MODE$ = yes } }
-		}
-		else = { cwp_crown_create_generic_monarch = { MODE = $MODE$ } }
+		cwp_crown_try_claimant = { T = FRA_cwp_claimant_henri_orleans B = 1908.7.5 E = 1999.6.19 MODE = $MODE$ }
+		cwp_crown_try_claimant = { T = FRA_cwp_claimant_henri_orleans_ii B = 1933.6.14 E = 2019.1.21 MODE = $MODE$ }
 	}
 	else_if = {
 		limit = { c:POR ?= this }
-		if = {
-			limit = { game_date >= 1907.9.23 NOT = { is_template_used = POR_cwp_claimant_duarte_nuno_braganza } game_date < 1976.12.24 }
-			create_character = { template = POR_cwp_claimant_duarte_nuno_braganza on_created = { cwp_crown_claimant_$MODE$ = yes } }
-		}
-		else_if = {
-			limit = { game_date >= 1945.5.15 NOT = { is_template_used = POR_cwp_claimant_duarte_pio_braganza } }
-			create_character = { template = POR_cwp_claimant_duarte_pio_braganza on_created = { cwp_crown_claimant_$MODE$ = yes } }
-		}
-		else = { cwp_crown_create_generic_monarch = { MODE = $MODE$ } }
+		cwp_crown_try_claimant = { T = POR_cwp_claimant_duarte_nuno_braganza B = 1907.9.23 E = 1976.12.24 MODE = $MODE$ }
+		cwp_crown_try_claimant = { T = POR_cwp_claimant_duarte_pio_braganza B = 1945.5.15 E = 2100.1.1 MODE = $MODE$ }
 	}
 	else_if = {
-		limit = { c:AUS ?= this }
-		if = {
-			limit = { game_date >= 1912.11.20 NOT = { is_template_used = AUS_cwp_claimant_otto_habsburg } game_date < 2011.7.4 }
-			create_character = { template = AUS_cwp_claimant_otto_habsburg on_created = { cwp_crown_claimant_$MODE$ = yes } }
-		}
-		else_if = {
-			limit = { game_date >= 1961.1.11 NOT = { is_template_used = AUS_cwp_claimant_karl_habsburg } }
-			create_character = { template = AUS_cwp_claimant_karl_habsburg on_created = { cwp_crown_claimant_$MODE$ = yes } }
-		}
-		else = { cwp_crown_create_generic_monarch = { MODE = $MODE$ } }
-	}
-	else_if = {
-		limit = { c:HUN ?= this }
-		if = {
-			limit = { game_date >= 1912.11.20 NOT = { is_template_used = HUN_cwp_claimant_otto_habsburg_hun } game_date < 2011.7.4 }
-			create_character = { template = HUN_cwp_claimant_otto_habsburg_hun on_created = { cwp_crown_claimant_$MODE$ = yes } }
-		}
-		else_if = {
-			limit = { game_date >= 1961.1.11 NOT = { is_template_used = HUN_cwp_claimant_karl_habsburg_hun } }
-			create_character = { template = HUN_cwp_claimant_karl_habsburg_hun on_created = { cwp_crown_claimant_$MODE$ = yes } }
-		}
-		else = { cwp_crown_create_generic_monarch = { MODE = $MODE$ } }
+		limit = { OR = { c:AUS ?= this c:HUN ?= this } }
+		cwp_crown_try_claimant = { T = AUS_cwp_claimant_otto_habsburg B = 1912.11.20 E = 2011.7.4 MODE = $MODE$ }
+		cwp_crown_try_claimant = { T = AUS_cwp_claimant_karl_habsburg B = 1961.1.11 E = 2100.1.1 MODE = $MODE$ }
 	}
 	else_if = {
 		limit = { c:GER ?= this }
-		if = {
-			limit = { game_date >= 1907.11.9 NOT = { is_template_used = GER_cwp_claimant_louis_ferdinand_hohenzollern } game_date < 1994.9.26 }
-			create_character = { template = GER_cwp_claimant_louis_ferdinand_hohenzollern on_created = { cwp_crown_claimant_$MODE$ = yes } }
-		}
-		else_if = {
-			limit = { game_date >= 1976.6.10 NOT = { is_template_used = GER_cwp_claimant_georg_friedrich_hohenzollern } }
-			create_character = { template = GER_cwp_claimant_georg_friedrich_hohenzollern on_created = { cwp_crown_claimant_$MODE$ = yes } }
-		}
-		else = { cwp_crown_create_generic_monarch = { MODE = $MODE$ } }
+		cwp_crown_try_claimant = { T = GER_cwp_claimant_wilhelm_hohenzollern B = 1882.5.6 E = 1951.7.20 MODE = $MODE$ }
+		cwp_crown_try_claimant = { T = GER_cwp_claimant_louis_ferdinand_hohenzollern B = 1907.11.9 E = 1994.9.26 MODE = $MODE$ }
+		cwp_crown_try_claimant = { T = GER_cwp_claimant_georg_friedrich_hohenzollern B = 1976.6.10 E = 2100.1.1 MODE = $MODE$ }
 	}
 	else_if = {
 		limit = { c:BRZ ?= this }
-		if = {
-			limit = { game_date >= 1909.9.13 NOT = { is_template_used = BRZ_cwp_claimant_pedro_henrique_orleans_braganza } game_date < 1981.7.5 }
-			create_character = { template = BRZ_cwp_claimant_pedro_henrique_orleans_braganza on_created = { cwp_crown_claimant_$MODE$ = yes } }
-		}
-		else_if = {
-			limit = { game_date >= 1938.6.6 NOT = { is_template_used = BRZ_cwp_claimant_luiz_orleans_braganza } }
-			create_character = { template = BRZ_cwp_claimant_luiz_orleans_braganza on_created = { cwp_crown_claimant_$MODE$ = yes } }
-		}
-		else = { cwp_crown_create_generic_monarch = { MODE = $MODE$ } }
+		cwp_crown_try_claimant = { T = BRZ_cwp_claimant_pedro_henrique_orleans_braganza B = 1909.9.13 E = 1981.7.5 MODE = $MODE$ }
+		cwp_crown_try_claimant = { T = BRZ_cwp_claimant_luiz_orleans_braganza B = 1938.6.6 E = 2022.7.15 MODE = $MODE$ }
 	}
 	else_if = {
 		limit = { c:DAI ?= this }
-		if = {
-			limit = { game_date >= 1913.10.22 NOT = { is_template_used = DAI_cwp_claimant_bao_dai_nguyen } game_date < 1997.7.30 }
-			create_character = { template = DAI_cwp_claimant_bao_dai_nguyen on_created = { cwp_crown_claimant_$MODE$ = yes } }
-		}
-		else_if = {
-			limit = { game_date >= 1936.1.4 NOT = { is_template_used = DAI_cwp_claimant_bao_long_nguyen } }
-			create_character = { template = DAI_cwp_claimant_bao_long_nguyen on_created = { cwp_crown_claimant_$MODE$ = yes } }
-		}
-		else = { cwp_crown_create_generic_monarch = { MODE = $MODE$ } }
+		cwp_crown_try_claimant = { T = VNM_bao_dai B = 1913.10.22 E = 1997.7.30 MODE = $MODE$ }
+		cwp_crown_try_claimant = { T = DAI_cwp_claimant_bao_long_nguyen B = 1936.1.4 E = 2007.7.28 MODE = $MODE$ }
 	}
 	else_if = {
 		limit = { c:ALB ?= this }
-		if = {
-			limit = { game_date >= 1895.10.8 NOT = { is_template_used = ALB_cwp_claimant_zog_zogu } game_date < 1961.4.9 }
-			create_character = { template = ALB_cwp_claimant_zog_zogu on_created = { cwp_crown_claimant_$MODE$ = yes } }
-		}
-		else_if = {
-			limit = { game_date >= 1939.4.5 NOT = { is_template_used = ALB_cwp_claimant_leka_zogu } }
-			create_character = { template = ALB_cwp_claimant_leka_zogu on_created = { cwp_crown_claimant_$MODE$ = yes } }
-		}
-		else = { cwp_crown_create_generic_monarch = { MODE = $MODE$ } }
+		cwp_crown_try_claimant = { T = ALB_cwp_claimant_zog_zogu B = 1895.10.8 E = 1961.4.9 MODE = $MODE$ }
+		cwp_crown_try_claimant = { T = ALB_cwp_claimant_leka_zogu B = 1939.4.5 E = 2011.11.30 MODE = $MODE$ }
 	}
 	else_if = {
 		limit = { c:YUG ?= this }
-		if = {
-			limit = { game_date >= 1923.9.6 NOT = { is_template_used = YUG_cwp_claimant_petar_karadjordjevic } game_date < 1970.11.3 }
-			create_character = { template = YUG_cwp_claimant_petar_karadjordjevic on_created = { cwp_crown_claimant_$MODE$ = yes } }
-		}
-		else_if = {
-			limit = { game_date >= 1945.7.17 NOT = { is_template_used = YUG_cwp_claimant_aleksandar_karadjordjevic } }
-			create_character = { template = YUG_cwp_claimant_aleksandar_karadjordjevic on_created = { cwp_crown_claimant_$MODE$ = yes } }
-		}
-		else = { cwp_crown_create_generic_monarch = { MODE = $MODE$ } }
+		cwp_crown_try_claimant = { T = YUG_cwp_claimant_petar_karadjordjevic B = 1923.9.6 E = 1970.11.3 MODE = $MODE$ }
+		cwp_crown_try_claimant = { T = YUG_cwp_claimant_aleksandar_karadjordjevic B = 1945.7.17 E = 2100.1.1 MODE = $MODE$ }
 	}
-	else = { cwp_crown_create_generic_monarch = { MODE = $MODE$ } }
+	if = {
+		limit = { NOT = { has_variable = cwp_crown_claimant_done_var } }
+		cwp_crown_generic_claimant_$MODE$ = yes
+	}
+	remove_variable = cwp_crown_claimant_done_var
 }
 
-cwp_crown_create_generic_monarch = {
+# Country: one candidate claimant (template $T$, alive from $B$ to $E$). Sets cwp_crown_claimant_done_var when used.
+cwp_crown_try_claimant = {
+	if = {
+		limit = {
+			NOT = { has_variable = cwp_crown_claimant_done_var }
+			game_date >= $B$
+			game_date < $E$
+			OR = {
+				any_character = { has_template = $T$ is_character_alive = yes }
+				any_character_in_exile_pool = { has_template = $T$ is_character_alive = yes }
+				NOT = { is_template_used = $T$ }
+			}
+		}
+		set_variable = cwp_crown_claimant_done_var
+		if = {
+			limit = { any_character = { has_template = $T$ is_character_alive = yes } }
+			random_character = {
+				limit = { has_template = $T$ is_character_alive = yes }
+				cwp_crown_bring_home = yes
+				cwp_crown_claimant_$MODE$ = yes
+			}
+		}
+		else_if = {
+			limit = { any_character_in_exile_pool = { has_template = $T$ is_character_alive = yes } }
+			random_character_in_exile_pool = {
+				limit = { has_template = $T$ is_character_alive = yes }
+				cwp_crown_bring_home = yes
+				cwp_crown_claimant_$MODE$ = yes
+			}
+		}
+		else = {
+			create_character = { template = $T$ on_created = { cwp_crown_claimant_$MODE$ = yes } }
+		}
+	}
+}
+
+cwp_crown_generic_claimant_monarch = {
 	create_character = {
 		noble = yes
 		age = 42
@@ -692,24 +699,32 @@ cwp_crown_create_generic_monarch = {
 		interest_group = ig_landowners
 		on_created = {
 			cwp_crown_set_house_name = yes
-			cwp_crown_claimant_$MODE$ = yes
+			cwp_crown_claimant_monarch = yes
 		}
 	}
 }
 
-# Character (on_created): the claimant takes the throne and rules.
+cwp_crown_generic_claimant_ruler = {
+	# No claimant: the sitting ruler stays.
+}
+
+# Character: the claimant takes the throne and rules; the generated ruler he replaces retires.
 cwp_crown_claimant_ruler = {
-	owner ?= {
-		every_scope_character = {
-			limit = { has_variable = cwp_crown_usurped_var }
-			remove_variable = cwp_crown_usurped_var
+	owner ?= { ruler ?= { save_scope_as = cwp_crown_scope_old_ruler } }
+	set_character_as_ruler = yes
+	set_variable = cwp_crown_restored_var
+	scope:cwp_crown_scope_old_ruler ?= {
+		if = {
+			limit = {
+				is_ruler_of_own_country = no
+				is_historical = no
+			}
 			retire_character = yes
 		}
 	}
-	set_character_as_ruler = yes
 }
 
-# Character (on_created): the claimant reigns in the background under a Prime Minister.
+# Character: the claimant reigns in the background under a Prime Minister.
 cwp_crown_claimant_monarch = {
 	add_character_role = character_role_cwp_monarch
 	owner ?= { set_variable = { name = cwp_monarch_var value = PREV } }
