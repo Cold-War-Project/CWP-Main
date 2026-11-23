@@ -11,7 +11,7 @@ It never lands anything (landing needs GUI checks and judgement), never takes th
 (each step is an ordinary `cwp-vic job` that waits in the queue), never stops or kills a process, and
 starts nothing when the disk is low (`cwp-runs start` refuses below 20 GB). One instance only.
 """
-import fcntl, json, os, re, subprocess, sys, time
+import fcntl, json, os, re, shutil, subprocess, sys, time
 from pathlib import Path
 
 HOME = Path.home()
@@ -26,9 +26,34 @@ def log(msg):
         f.write(time.strftime("%F %T ") + msg + "\n")
 
 
-def sh(cmd, timeout=600, env=None):
-    p = subprocess.run(["bash", "-c", cmd], capture_output=True, text=True, timeout=timeout, env=env)
-    return p.returncode, p.stdout + p.stderr
+def sh(cmd, timeout=600, env=None, split=False):
+    try:
+        p = subprocess.run(["bash", "-c", cmd], capture_output=True, text=True, timeout=timeout, env=env,
+                           start_new_session=True)
+    except subprocess.TimeoutExpired as e:
+        return 124, ("", f"timeout: {cmd[:80]}") if split else f"timeout: {cmd[:80]}"
+    return p.returncode, (p.stdout, p.stderr) if split else p.stdout + p.stderr
+
+
+DONE_SET = RUNS / "serve-done.txt"
+FAILS = {}   # step key -> (count, last failure time); a step failing 3 times rests for 6 hours
+
+
+def done_set():
+    try:
+        return set(DONE_SET.read_text().split())
+    except OSError:
+        return set()
+
+
+def started_records():
+    out = []
+    for f in sorted((RUNS / "started").glob("*.json")):
+        try:
+            out.append(json.loads(f.read_text()))
+        except (OSError, ValueError):
+            pass
+    return out
 
 
 def plan():
@@ -51,18 +76,55 @@ def finished(outdir):
     return any((d / m).exists() for m in ("errors_end.txt", "CRASH", "FAILED", "DISKFULL")) or (d / "meta.json").exists()
 
 
-def catalogue(in_flight):
-    for rec in in_flight:
+def catalogue():
+    """`cwp-runs done` every finished step exactly once, straight from started/ (a plan may already have
+    closed the record): this keeps the batch's build state for landing and writes the notify lines."""
+    seen = done_set()
+    for rec in started_records():
         tok, outdir = rec["token"], rec["outdir"]
-        if unit_active(tok) or not finished(outdir):
+        if outdir in seen or unit_active(tok) or not finished(outdir):
             continue
         rc, out = sh(f"cwp-runs done {outdir}", timeout=1800)
         notes = [l for l in out.splitlines() if l.startswith("notify")]
-        log(f"done {tok} rc={rc}" + ("".join("\n    " + n for n in notes)))
+        log(f"done {tok} rc={rc}" + "".join("\n    " + n for n in notes))
+        if rc == 0:
+            with open(DONE_SET, "a") as f:
+                f.write(outdir + "\n")
+
+
+def integration_free():
+    """No batch job running and every batch catalogued: only then may a new batch rebuild the tree."""
+    seen = done_set()
+    for rec in started_records():
+        if rec["step"]["type"] != "batch":
+            continue
+        if unit_active(rec["token"]):
+            return False
+        if Path(rec["outdir"]).exists() and rec["outdir"] not in seen:
+            return False
+    return True
+
+
+def bump_unit(token):
+    """Move this job's lock ticket to the front: the ticket is named after the pid of a process in the unit."""
+    for _ in range(12):
+        _, cg = sh(f"systemctl --user show -p ControlGroup --value cwp-job-runs-{token}", timeout=30)
+        try:
+            pids = set((Path("/sys/fs/cgroup") / cg.strip().lstrip("/") / "cgroup.procs").read_text().split())
+        except OSError:
+            pids = set()
+        for t in os.listdir(HOME / "forge" / ".vic3.queue") if (HOME / "forge" / ".vic3.queue").is_dir() else []:
+            pid = t.rsplit("-", 1)[-1]
+            if pid in pids:
+                sh(f"cwp-vic bump {pid}", timeout=60)
+                log(f"{token}: moved to the front of the game queue")
+                return
+        time.sleep(5)
+    log(f"{token}: no lock ticket found to move up (it may already hold the game)")
 
 
 def step_key(st):
-    return (st["type"], st.get("sha"), st.get("until"), tuple(sorted(st.get("items") or [])))
+    return (st["type"], st.get("sha"), st.get("until"), st.get("econ_only"), tuple(sorted(st.get("items") or [])))
 
 
 def start(steps, want):
@@ -70,17 +132,26 @@ def start(steps, want):
     p = plan()
     if not p:
         return False
-    keys = [step_key(s) for s in p["steps"]]
-    if step_key(want) not in keys:
+    k = step_key(want)
+    c, t = FAILS.get(k, (0, 0))
+    if c >= 3 and time.time() - t < 6 * 3600:
         return False
-    n = keys.index(step_key(want)) + 1
-    rc, out = sh(f"cwp-runs start {n}", timeout=300)
+    keys = [step_key(s) for s in p["steps"]]
+    if k not in keys:
+        return False
+    n = keys.index(k) + 1
+    rc, (out, err) = sh(f"cwp-runs start {n}", timeout=300, split=True)
     m = re.search(r"recorded as in flight: (\S+)", out)
     if rc != 0 or not m:
-        log(f"start {n} refused: {out.strip()[-300:]}")
-        return False
+        log(f"start {n} refused: {(out + err).strip()[-300:]}")
+        return None   # refused (disk, lock file): stop starting more this tick
     token = m.group(1)
-    cmds = [l.strip() for l in out.split("run:", 1)[1].splitlines() if l.strip() and not l.strip().startswith("cwp-runs done")]
+    try:   # what was actually recorded, in case the plan shifted under us
+        want = json.loads((RUNS / "started" / f"{token}.json").read_text())["step"]
+    except (OSError, ValueError, KeyError):
+        pass
+    body = out.split("\nrun:\n", 1)[1] if "\nrun:\n" in out else ""
+    cmds = [l.strip() for l in body.splitlines() if l.startswith("  ") and not l.strip().startswith("cwp-runs done")]
     env = dict(os.environ, CWP_OBSERVE_WAIT="86400")
     for c in cmds:
         c = c.split("   #", 1)[0]
@@ -88,42 +159,41 @@ def start(steps, want):
         if rc != 0:
             log(f"{token}: command failed rc={rc}: {c[:120]}: {o.strip()[-300:]}")
             sh(f"cwp-runs unstart {token}", timeout=120)   # nothing queued; let the next plan book it again
+            FAILS[k] = (FAILS.get(k, (0, 0))[0] + 1, time.time())
             return False
+    FAILS.pop(k, None)
     log(f"started {token}: {want['type']} {want.get('sha', '')[:9]} to {want.get('until')}"
         + (" [quick]" if want.get("quick") else ""))
     if want.get("quick") or want["type"] == "batch":
-        time.sleep(5)
-        tag = "integration to" if want["type"] == "batch" else f"runs-{want['sha'][:9]}"
-        _, q = sh("cwp-vic queue", timeout=60)
-        for line in q.splitlines():
-            if tag in line:
-                pid = line.split()[0].rsplit("-", 1)[-1]
-                sh(f"cwp-vic bump {pid}", timeout=60)
-                log(f"{token}: moved to the front of the game queue")
+        bump_unit(token)
     return True
 
 
 def tick():
-    p = plan()
-    if not p:
+    catalogue()
+    free = shutil.disk_usage(HOME / "forge").free / 1e9
+    if free < 20:
+        log(f"only {free:.0f} GB free: starting nothing")
         return
-    catalogue(p["in_flight"])
     p = plan()
     if not p:
         return
     flying = p["in_flight"]
     arms_flying = sum(1 for r in flying if r["step"]["type"] in ("arm", "solo") and not r["step"].get("quick"))
-    batch_flying = any(r["step"]["type"] == "batch" for r in flying)
-    for st in [s for s in p["steps"] if s.get("quick")]:
-        start(p["steps"], st)
-    if not batch_flying:
+    for st in [s for s in p["steps"] if s.get("quick") and s["type"] != "batch"]:
+        if start(p["steps"], st) is None:
+            return
+    if integration_free():
         b = next((s for s in p["steps"] if s["type"] == "batch"), None)
-        if b:
-            start(p["steps"], b)
+        if b and start(p["steps"], b) is None:
+            return
     for st in [s for s in p["steps"] if s["type"] in ("arm", "solo") and not s.get("quick")]:
         if arms_flying >= MAX_ARMS:
             break
-        if start(p["steps"], st):
+        r = start(p["steps"], st)
+        if r is None:
+            return
+        if r:
             arms_flying += 1
 
 
@@ -135,6 +205,8 @@ def main():
     except OSError:
         print("cwp-runs-serve is already running", file=sys.stderr)
         return 1
+    if not DONE_SET.exists():   # first start: everything already finished was catalogued by hand
+        DONE_SET.write_text("".join(r["outdir"] + "\n" for r in started_records() if finished(r["outdir"])))
     log(f"serve started (max {MAX_ARMS} arms, tick {TICK}s)")
     once = "--once" in sys.argv
     while True:
