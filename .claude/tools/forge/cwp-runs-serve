@@ -36,6 +36,7 @@ def sh(cmd, timeout=600, env=None, split=False):
 
 
 DONE_SET = RUNS / "serve-done.txt"
+DONE_FAILS = {}
 FAILS = {}   # step key -> (count, last failure time); a step failing 3 times rests for 6 hours
 
 
@@ -82,12 +83,19 @@ def catalogue():
     seen = done_set()
     for rec in started_records():
         tok, outdir = rec["token"], rec["outdir"]
-        if outdir in seen or unit_active(tok) or not finished(outdir):
+        if outdir in seen or unit_active(tok):
+            continue
+        # finished normally, or the runner died and the plan closed the record (done indexes it as partial)
+        if not (finished(outdir) or rec.get("closed")):
             continue
         rc, out = sh(f"cwp-runs done {outdir}", timeout=1800)
         notes = [l for l in out.splitlines() if l.startswith("notify")]
         log(f"done {tok} rc={rc}" + "".join("\n    " + n for n in notes))
-        if rc == 0:
+        fails = DONE_FAILS.get(outdir, 0) + (rc != 0)
+        DONE_FAILS[outdir] = fails
+        if rc == 0 or fails >= 3:   # never let one broken folder block the batches for good
+            if rc != 0:
+                log(f"done {tok} failed 3 times; giving up on it: {out.strip()[-200:]}")
             with open(DONE_SET, "a") as f:
                 f.write(outdir + "\n")
 
@@ -96,11 +104,9 @@ def integration_free():
     """No batch job running and every batch catalogued: only then may a new batch rebuild the tree."""
     seen = done_set()
     for rec in started_records():
-        if rec["step"]["type"] != "batch":
+        if rec["step"]["type"] != "batch" or rec["outdir"] in seen:
             continue
-        if unit_active(rec["token"]):
-            return False
-        if Path(rec["outdir"]).exists() and rec["outdir"] not in seen:
+        if unit_active(rec["token"]) or Path(rec["outdir"]).exists():
             return False
     return True
 
@@ -109,10 +115,12 @@ def bump_unit(token):
     """Move this job's lock ticket to the front: the ticket is named after the pid of a process in the unit."""
     for _ in range(12):
         _, cg = sh(f"systemctl --user show -p ControlGroup --value cwp-job-runs-{token}", timeout=30)
-        try:
-            pids = set((Path("/sys/fs/cgroup") / cg.strip().lstrip("/") / "cgroup.procs").read_text().split())
-        except OSError:
-            pids = set()
+        pids = set()
+        if cg.strip():
+            try:
+                pids = set((Path("/sys/fs/cgroup") / cg.strip().lstrip("/") / "cgroup.procs").read_text().split())
+            except OSError:
+                pass
         for t in os.listdir(HOME / "forge" / ".vic3.queue") if (HOME / "forge" / ".vic3.queue").is_dir() else []:
             pid = t.rsplit("-", 1)[-1]
             if pid in pids:
@@ -129,12 +137,12 @@ def step_key(st):
 
 def start(steps, want):
     """Start the plan step equal to `want`; re-plan first because step numbers shift."""
-    p = plan()
-    if not p:
-        return False
     k = step_key(want)
     c, t = FAILS.get(k, (0, 0))
     if c >= 3 and time.time() - t < 6 * 3600:
+        return False
+    p = plan()
+    if not p:
         return False
     keys = [step_key(s) for s in p["steps"]]
     if k not in keys:
@@ -206,7 +214,9 @@ def main():
         print("cwp-runs-serve is already running", file=sys.stderr)
         return 1
     if not DONE_SET.exists():   # first start: everything already finished was catalogued by hand
-        DONE_SET.write_text("".join(r["outdir"] + "\n" for r in started_records() if finished(r["outdir"])))
+        old = time.time() - 3600   # closed more than an hour ago: catalogued by hand before the serve existed
+        DONE_SET.write_text("".join(r["outdir"] + "\n" for r in started_records()
+                                    if r.get("closed") and Path(RUNS / "started" / f"{r['token']}.json").stat().st_mtime < old))
     log(f"serve started (max {MAX_ARMS} arms, tick {TICK}s)")
     once = "--once" in sys.argv
     while True:
