@@ -65,6 +65,7 @@ A console test (test-only branch `test/regime-change-probe`, GUI batch `~/forge/
 - **No cap in practice.** All seven qualifying groups changed at once (governance, distribution of power, internal security, economic system, judiciary, church and state, bureaucracy). `[GetDefine('NPolitics','NUM_REVOLUTIONARY_LAW_CHANGES')]` prints 0. The define is unset or 0, which evidently means unlimited, so the whole package always lands.
 - **No gates.** Regime change imposed all three blocked laws, so it ignores `can_enact`, `is_visible` and `can_impose`. Only the thresholds (and the script guards below) decide what is imposed.
 - **Laws change at once.** In the same effect, right after `regime_change`, the target already has the new laws. A GBR regime change on DDR set `law_monarchy` immediately, which is what the monarchy guard below catches.
+- **The monarchy guard works.** GBR on DDR imposed monarchy, universal suffrage, no home affairs law and interventionism. `cwp_regime_change.1` then replaced the monarchy with a parliamentary republic ("Changed from Monarchy"; `~/forge/gui-checks/done/20261122-2020-regime-change-probe`). In the GUI batch the game sits paused behind the escape menu, so the guard event was fired from the console rather than waiting its day.
 
 ## Guards in script (Jack, 2026-11-22)
 
