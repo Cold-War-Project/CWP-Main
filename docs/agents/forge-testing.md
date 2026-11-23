@@ -104,7 +104,7 @@ cwp-integrate land fix/y            # push the TESTED commit of each passing ite
 
 ## Other projects on Forge
 
-Forge may also host a second, lightweight project (Godot, Nov 2026). The contract is in `~/FORGE-SHARED.md`. For CWP agents it means: anything holding the game lock may be a Godot session using the real screen (note `godot: ...`), so wait for it like any other run; a Godot process is never yours to stop; clean-up stays inside `~/forge`, `/run/user/1000/vic` and your own `cwp-job-*` units.
+Forge may also host a second, lightweight project (Godot, Nov 2026). The contract is in `~/FORGE-SHARED.md`. For CWP agents it means: anything holding the game lock may be a Godot session using the real screen (note `godot: ...`), so wait for it like any other run; a Godot process is never yours to stop; clean-up stays inside `~/forge`, `~/.local/share/Paradox Interactive`, `/run/user/1000/vic` and your own `cwp-job-*` units.
 
 ## Run game jobs outside your session
 

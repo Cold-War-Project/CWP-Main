@@ -212,7 +212,9 @@ cmd_launch() {
 cmd_stop() {   # stops the game this lock holder launched; --all stops every Victoria 3
   local pids
   if [[ "${1:-}" == "--all" ]]; then pids=$(game_pids)
-  else pids=$(cat "$GAMEPID" 2>/dev/null); [[ -n "$pids" ]] && ! kill -0 "$pids" 2>/dev/null && pids=""; fi
+  else pids=$(cat "$GAMEPID" 2>/dev/null)
+    # Only a live Victoria 3: a stale pid file must never hit a recycled pid (another project's process).
+    [[ -n "$pids" ]] && [[ "$(readlink "/proc/$pids/exe" 2>/dev/null)" != */binaries/victoria3 ]] && pids=""; fi
   [[ -z "$pids" ]] && { echo "no game of ours running (see cwp-vic status; --all stops every instance)"; rm -f "$GAMEPID"; return 0; }
   kill -INT $pids 2>/dev/null
   for _ in $(seq 1 20); do kill -0 $pids 2>/dev/null || break; sleep 1; done
