@@ -1,0 +1,83 @@
+﻿# Cold War Project: regime change aftermath (docs/agents/areas/regime-change.md).
+# Root = the enforcer, scope:target_country = the target. Called from the regime_change war goal's on_enforced
+# (common/war_goal_types/zz_vanilla_war_goal_types.txt) and after regime_change in force_regime_change.
+# A regime change imposes the enforcer's governance law, so a crowned enforcer installs a monarchy. That is allowed
+# only where the target has a monarchy tradition (cwp_crown_has_monarchy_tradition, Jack 2026-11-22), judged as it
+# was BEFORE the regime change: the imposed crown itself would otherwise count (law_monarchy, and the tradition
+# variable that cwp_crown_on_monarchy_activated records). Whether on_enforced runs before or after the engine's law
+# changes is not known, so a target that already holds law_monarchy here is judged by the monthly snapshot
+# (cwp_regime_change_snapshot_monthly_effect; force_regime_change marks before it calls regime_change, so it is always live). cwp_regime_change.1 replaces a monarchy imposed without tradition.
+cwp_regime_change_mark_target_effect = {
+	scope:target_country ?= {
+		set_variable = { name = cwp_regime_change_window_var days = 30 }
+		set_variable = { name = cwp_regime_change_enforcer_var value = root days = 30 }
+		if = {
+			limit = {
+				OR = {
+					AND = {
+						NOT = { has_law = law_type:law_monarchy }
+						cwp_crown_has_monarchy_tradition = yes
+					}
+					AND = {
+						has_law = law_type:law_monarchy
+						NOT = { has_variable = cwp_regime_change_no_tradition_snapshot_var }
+					}
+				}
+			}
+			if = {
+				limit = { has_variable = cwp_regime_change_no_tradition_var }
+				remove_variable = cwp_regime_change_no_tradition_var
+			}
+		}
+		else = {
+			set_variable = { name = cwp_regime_change_no_tradition_var days = 30 }
+			# A royal-claim country without tradition has settled the question (Stamp Out Monarchism); the imposed
+			# crown's activation hook clears that flag, so remember it.
+			if = {
+				limit = {
+					OR = {
+						AND = {
+							NOT = { has_law = law_type:law_monarchy }
+							has_variable = cwp_crown_republic_settled_var
+						}
+						AND = {
+							has_law = law_type:law_monarchy
+							has_variable = cwp_regime_change_settled_snapshot_var
+						}
+					}
+				}
+				set_variable = { name = cwp_regime_change_was_settled_var days = 30 }
+			}
+		}
+		# Checked twice in case the engine applies the imposed laws over several days
+		trigger_event = { id = cwp_regime_change.1 days = 1 }
+		trigger_event = { id = cwp_regime_change.1 days = 7 }
+	}
+}
+
+# Root = country. Monthly (common/on_actions/cwp_regime_change_on_actions.txt) and at game start
+# (common/history/global/cwp_global_variables.txt): the tradition as it stands, for a regime change that finds the
+# target already holding an imposed crown. Not updated while a regime change is being sorted out.
+cwp_regime_change_snapshot_monthly_effect = {
+	if = {
+		limit = { NOT = { has_variable = cwp_regime_change_window_var } }
+		# Negative snapshot: a country without one (formed or released since the last pulse) keeps its crown,
+		# so a real crown is never wiped.
+		if = {
+			limit = { cwp_crown_has_monarchy_tradition = no }
+			set_variable = cwp_regime_change_no_tradition_snapshot_var
+		}
+		else_if = {
+			limit = { has_variable = cwp_regime_change_no_tradition_snapshot_var }
+			remove_variable = cwp_regime_change_no_tradition_snapshot_var
+		}
+		if = {
+			limit = { has_variable = cwp_crown_republic_settled_var }
+			set_variable = cwp_regime_change_settled_snapshot_var
+		}
+		else_if = {
+			limit = { has_variable = cwp_regime_change_settled_snapshot_var }
+			remove_variable = cwp_regime_change_settled_snapshot_var
+		}
+	}
+}

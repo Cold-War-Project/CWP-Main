@@ -1,0 +1,99 @@
+﻿namespace = cwp_regime_change
+
+# Root = a country that was the target of a regime change a day (or a week) ago (cwp_regime_change_mark_target_effect).
+# It holds an imposed crown but had no monarchy tradition before the regime change: it gets a republic, and what the
+# imposed crown recorded is undone (the tradition variable, a cleared settled flag, an invented pretender).
+cwp_regime_change.1 = {
+	type = country_event
+	hidden = yes
+
+	trigger = {
+		has_variable = cwp_regime_change_window_var
+		has_variable = cwp_regime_change_no_tradition_var
+		has_law = law_type:law_monarchy
+	}
+
+	immediate = {
+		# The crown code may have seated a monarch and heir for the imposed crown; the swap below exiles them.
+		if = {
+			limit = { exists = var:cwp_monarch_var }
+			set_variable = { name = cwp_regime_change_invented_monarch_var value = var:cwp_monarch_var days = 10 }
+		}
+		if = {
+			limit = { exists = var:cwp_crown_heir_var }
+			set_variable = { name = cwp_regime_change_invented_heir_var value = var:cwp_crown_heir_var days = 10 }
+		}
+		if = {
+			limit = {
+				var:cwp_regime_change_enforcer_var ?= { cwp_country_has_parliamentary_crown = yes }
+			}
+			activate_law = law_type:law_parliamentary_republic
+		}
+		else = {
+			activate_law = law_type:law_presidential_republic
+		}
+		set_variable = { name = cwp_regime_change_converted_var days = 10 }
+		trigger_event = { id = cwp_regime_change.2 days = 1 }
+	}
+}
+
+# Root = a country whose imposed crown cwp_regime_change.1 replaced, a day later (after the crown code's hooks).
+cwp_regime_change.2 = {
+	type = country_event
+	hidden = yes
+
+	trigger = {
+		has_variable = cwp_regime_change_converted_var
+	}
+
+	immediate = {
+		# No tradition before the regime change means no pretender and no tradition variable then: the royals the
+		# crown code invented for the imposed days leave the game. A historical claimant seated by the dynasty code
+		# (crown dynasties, e.g. the Count of Paris) is not killed: he goes into exile, where a later restoration
+		# finds him again. He is not kept as cwp_crown_pretender_var, which would itself make a monarchy tradition
+		# out of the crown this guard refused.
+		var:cwp_regime_change_invented_monarch_var ?= {
+			if = {
+				limit = { is_historical = yes }
+				if = {
+					limit = { is_in_exile_pool = no }
+					exile_character = yes
+				}
+			}
+			else = {
+				kill_character = { hidden = yes }
+			}
+		}
+		var:cwp_regime_change_invented_heir_var ?= {
+			if = {
+				limit = { is_historical = no }
+				kill_character = { hidden = yes }
+			}
+		}
+		if = {
+			limit = { has_variable = cwp_regime_change_invented_monarch_var }
+			remove_variable = cwp_regime_change_invented_monarch_var
+		}
+		if = {
+			limit = { has_variable = cwp_regime_change_invented_heir_var }
+			remove_variable = cwp_regime_change_invented_heir_var
+		}
+		if = {
+			limit = { has_variable = cwp_crown_pretender_var }
+			remove_variable = cwp_crown_pretender_var
+		}
+		if = {
+			limit = { has_variable = cwp_crown_tradition_var }
+			remove_variable = cwp_crown_tradition_var
+		}
+		if = {
+			limit = { has_variable = cwp_regime_change_was_settled_var }
+			set_variable = cwp_crown_republic_settled_var
+			remove_variable = cwp_regime_change_was_settled_var
+		}
+		remove_variable = cwp_regime_change_converted_var
+		remove_variable = cwp_regime_change_no_tradition_var
+		remove_variable = cwp_regime_change_window_var
+		remove_variable = cwp_regime_change_enforcer_var
+	}
+}
