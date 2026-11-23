@@ -214,7 +214,7 @@ Audit of the 67 CWP journal entries on CWP2 against this map. "Fixed" items are 
 
 | # | CWP practice found | Vanilla purpose | Status |
 |---|---|---|---|
-| D1 | `_reason` in an encyclopedic third person (loc-style.md voice, Jack 18 Nov) | 59% first person plural: the country speaking about its situation | **Jack's call** (asked 23 Nov). Recommended: keep the sourced vocabulary and facts, write country JEs from the owner's side ("Our territory is still divided..."), keep third person for contextless JEs shared by several countries |
+| D1 | `_reason` in an encyclopedic third person (loc-style.md voice, Jack 18 Nov) | 59% first person plural: the country speaking about its situation | **Fixed** (Jack, 23 Nov: "Our side, sourced wording"). The 12 single-country JEs that were in third person now speak as the government; shared JEs stay third person (loc-style.md) |
 | D2 | `second_desc` held thresholds ("Basic Law at 60", "Regime falls at 100", "Referendum at 100", "First device at 100") | Opposite pole only | **Fixed.** Removed; the thresholds are in the outcome conditions and the bar's `_explain_tt` |
 | D3 | `second_desc` on a `default` bar (Chinese civil war balance), so never drawn | Drawn only on `default_green` and script-defined looks | **Fixed.** The bar now uses explicit textures like the Korean balance bar |
 | D4 | Bar `desc` is `#tooltippable` with a hand-written `<bar>_explain_tt` | Hover is the engine breakdown | **Kept, deliberate.** Fixed real playtest confusion (18 Nov). Use it only to say what the quantity is and what its ends mean; drivers go in factor descs |
