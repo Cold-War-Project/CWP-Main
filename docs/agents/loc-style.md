@@ -7,6 +7,7 @@ Jack's brief (2026-11-18): our period is recent and heavily documented, so write
 ## The voice
 
 - **A good general history or encyclopedia, told from inside the moment.** Think of a Wikipedia article or a narrative historian (Gaddis, Judt, Westad, Cumings) written in the present tense. Events read like a contemporary dispatch or briefing: who did what, where, and what it means for us.
+- **Journal entry `_reason`: the country speaks** (Jack, 2026-11-23). A JE owned by one country at a time (even if many countries can each have one) is written from the country's side, its government speaking, in the first person plural, as 59% of vanilla's are: "The war has discredited our crown...", "Fuel is selling far above its normal price, and our factories... feel it". Keep the sourced vocabulary and facts. JEs shared by several involved countries (`should_be_involved`: international organizations, decolonization, Germany, Korea, China, the Cold War) stay in the encyclopedic third person, where "we" would be ambiguous. Event text, buttons and tooltips are unaffected. The bloc objective JEs keep their impersonal doctrinal voice.
 - **Present tense for the situation, past tense for background.** "The Supreme People's Assembly has proclaimed..." / "In August 1945 the United States proposed the 38th parallel..."
 - **Concrete over abstract.** Name the institution, the place, the law, the number. "Elections to the central legislature in December 1945 gave the Muslim League every Muslim seat" beats "the League's strength has grown".
 - **Use the words contemporaries and historians used.** Iron Curtain, fellow travelers, transfer of power, trusteeship, loyalty program, emergency, police action, Third World (from 1952), non-alignment (from the 1950s). Check that a term was in use at the time the text can appear; when in doubt use the plain description. Never coin a phrase (see the literature-terms rule in AGENTS.md).
@@ -26,13 +27,18 @@ Match vanilla. Rough ceilings:
 
 ### Journal entry interface text (Jack, 2026-11-18)
 
+**Each element has one purpose, the one it has in vanilla** (Jack, 2026-11-23): a bar's `second_desc` names the other side, a status line says where things stand, a factor completes "+1 from ___". The full map, the auditor rules and the deliberate deviations are in [je-gui-purposes.md](je-gui-purposes.md); the limits below are the length side of it.
+
 These strings sit in fixed-width widgets, so they are limits, not ceilings. Check every change in an in-game screenshot ([forge-testing.md](forge-testing.md), "GUI screenshot checks").
 
 | String | Limit |
 |---|---|
 | Scripted bar `desc` | Drawn **on the bar** (504 px, one line): `Name: value`, about 40 characters, e.g. `#tooltippable;tooltip:[GetPlayer.GetTooltipTag],<bar>_explain_tt Western integration#!: #v [JournalEntry.GetCurrentBarValue(ScriptedProgressBar.Self)\|0]#!`. The explanation goes in `<bar>_explain_tt`, shown on hover |
-| Scripted bar `second_desc` | Right-aligned on the same line; only drawn on `default_green` and dynamic-texture bars. About 25 characters: thresholds such as `Basic Law at 60` |
-| `status_desc` | One line, about 50 characters, stating the situation |
+| Scripted bar `second_desc` | Right-aligned on the same line; only drawn on `default_green` and script-defined (texture) bars. **The other pole of a two-sided bar only** ("Against", "Nationalists - · Communists +"); never thresholds or hints, which go in the outcome conditions and `_explain_tt` |
+| `status_desc` | One line, about 50 characters (60 at most), stating where things stand now: a stage or a live value. It is the only authored line in the outliner. No rules, goals or background; a JE with no meaningful stage may have none |
+| Bar factor `desc` | A noun phrase that completes "+1 from ___" ("American support for self-determination"), no full stop |
+| Outcome `header` / `effect_header` | Standard keys for one success and one failure. Several distinct endings get custom headers naming each: `The #b crown survives#! if:\n` / `If the #b crown survives#!:\n$EFFECT$` (or vanilla's `To achieve a #b X#! victory:\n` / `On a #b X#! victory:\n$EFFECT$`). A custom `effect_header` must contain `$EFFECT$`, or the effects are not shown |
+| `conclusion_desc` | One or two short sentences on how it ended (CWP deviation D13 in je-gui-purposes.md) |
 | Scripted button `name` | About 30 characters; longer names are cut off with "..." on the button |
 | Outcome and button conditions | One short line per condition. Wrap every `has_variable`, `has_global_variable`, bar comparison, `any_*` list and CWP scripted trigger in a `custom_tooltip` that says what it means to the player ("The fighting has ended", not "has global variable cwp_ccw_settled"). Prefer several one-line conditions to one long tooltip, so the player sees which one fails. Shared scripted triggers carry their own `custom_tooltip` |
 | Money and derived numbers | Never show a raw computed sum: round the script value, or state it as a share ("Costs #v 2%#! of our GDP") in a `custom_tooltip` |

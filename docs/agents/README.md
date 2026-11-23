@@ -13,6 +13,7 @@ Start with [`AGENTS.md`](../../AGENTS.md) at the repo root, then the file for yo
 | [privacy.md](privacy.md) | Before your first commit: what must never reach the public repo, and the pre-push check |
 | [advisor.md](advisor.md) | You hit an ambiguous call and want a second opinion or an audit |
 | [instruction-changes.md](instruction-changes.md) | You work the old Windows way, or wonder why `CLAUDE.md` / `.claude/` differ from Maddie's originals |
+| [je-gui-purposes.md](je-gui-purposes.md) | What each journal entry GUI element (title, reason, status, bars, buttons, outcomes) is for in vanilla, the rule an auditor checks, and CWP's deliberate deviations |
 | [je-design-patterns.md](je-design-patterns.md) | Designing a journal entry: shapes beyond bars, condition lists, missions, twists |
 | [rebuild-crash-fix.md](rebuild-crash-fix.md) | Before your first PR: what the rebuild changed to stop the crash, and what must not be undone (written by the crash-fix thread) |
 | `areas/<area>.md` | Your area's port inventory and decisions (one per area thread: politics, history-setup, economy, military, tech, events-logic, gui-art, characters) |

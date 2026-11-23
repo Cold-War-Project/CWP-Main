@@ -51,6 +51,10 @@ One bar per JE is a sensible ceiling unless the content is a genuine tug-of-war 
 - Are its outcomes conditions the player can see (`custom_tooltip`), and does no outcome follow from the calendar?
 - Guard every `je:<key>` in an event option with `has_journal_entry`: an AI can resolve an event after the JE has concluded.
 
+## What each panel element is for
+
+Every element of the journal entry panel serves the purpose it has in vanilla and no other (Jack, 2026-11-23): see [je-gui-purposes.md](je-gui-purposes.md). In particular, a scripted bar is never a currency that buttons spend, `flags = { historical }` only marks the real branch of a JE with several endings, and gold/blue outcome colors mean good/bad for the owner.
+
 ## Names and status text
 
 Use terms from the academic, historical and strategic literature; do not invent them (Jack, 2026-11-18). Journal entry titles, bar names, status lines, event titles, modifier names and buttons should use the phrase historians, political scientists or strategists actually use (Wikipedia-level sources are fine: "containment", "salami tactics", "positive neutralism", "decolonization", "chilling effect"), or a real period slogan or quotation. Avoid invented, AI-sounding phrases such as "Containment holds", "The Line Holds", "The Tide Rises" or "China at the Crossroads". When no established term exists, describe the situation plainly. Status lines describe the state of affairs ("A ceasefire is in force", "Decolonization is accelerating"); they do not editorialize ("An uneasy truce holds", "The colonial order is collapsing"). A sweep on 2026-11-18 replaced 67 such labels across the CWP loc.
