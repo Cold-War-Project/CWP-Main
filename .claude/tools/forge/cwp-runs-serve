@@ -1,0 +1,151 @@
+#!/usr/bin/env python3
+"""cwp-runs-serve: drive `cwp-runs plan` unattended, so Forge never sits idle.
+
+Runs as one long-lived job (`cwp-vic job runs-serve -- cwp-runs-serve`). Every minute it:
+  1. catalogues finished steps (`cwp-runs done <outdir>`; this also keeps the build snapshot for landing),
+  2. starts what the plan says should run next, by the staging thread's rules:
+       - quick probes at once, moved to the front of the game queue;
+       - the staging batch as soon as no batch is in flight, moved to the front (after quick probes);
+       - measure arms in plan order, at most CWP_SERVE_MAX_ARMS (default 4) in flight at a time.
+It never lands anything (landing needs GUI checks and judgement), never takes the game lock itself
+(each step is an ordinary `cwp-vic job` that waits in the queue), never stops or kills a process, and
+starts nothing when the disk is low (`cwp-runs start` refuses below 20 GB). One instance only.
+"""
+import fcntl, json, os, re, subprocess, sys, time
+from pathlib import Path
+
+HOME = Path.home()
+RUNS = HOME / "forge" / "runs"
+LOG = RUNS / "serve.log"
+MAX_ARMS = int(os.environ.get("CWP_SERVE_MAX_ARMS", "4"))
+TICK = int(os.environ.get("CWP_SERVE_TICK", "60"))
+
+
+def log(msg):
+    with open(LOG, "a") as f:
+        f.write(time.strftime("%F %T ") + msg + "\n")
+
+
+def sh(cmd, timeout=600, env=None):
+    p = subprocess.run(["bash", "-c", cmd], capture_output=True, text=True, timeout=timeout, env=env)
+    return p.returncode, p.stdout + p.stderr
+
+
+def plan():
+    rc, out = sh("cwp-runs plan --json 2>/dev/null", timeout=300)
+    try:
+        return json.loads(out[out.index("{"):])
+    except (ValueError, json.JSONDecodeError):
+        log(f"plan failed rc={rc}: {out[-300:]}")
+        return None
+
+
+def unit_active(token):
+    rc, _ = sh(f"systemctl --user is-active -q cwp-job-runs-{token}", timeout=30)
+    return rc == 0
+
+
+def finished(outdir):
+    d = Path(outdir)
+    # observer runs end with one of these; econ_bench runs write meta.json at the end of a session
+    return any((d / m).exists() for m in ("errors_end.txt", "CRASH", "FAILED", "DISKFULL")) or (d / "meta.json").exists()
+
+
+def catalogue(in_flight):
+    for rec in in_flight:
+        tok, outdir = rec["token"], rec["outdir"]
+        if unit_active(tok) or not finished(outdir):
+            continue
+        rc, out = sh(f"cwp-runs done {outdir}", timeout=1800)
+        notes = [l for l in out.splitlines() if l.startswith("notify")]
+        log(f"done {tok} rc={rc}" + ("".join("\n    " + n for n in notes)))
+
+
+def step_key(st):
+    return (st["type"], st.get("sha"), st.get("until"), tuple(sorted(st.get("items") or [])))
+
+
+def start(steps, want):
+    """Start the plan step equal to `want`; re-plan first because step numbers shift."""
+    p = plan()
+    if not p:
+        return False
+    keys = [step_key(s) for s in p["steps"]]
+    if step_key(want) not in keys:
+        return False
+    n = keys.index(step_key(want)) + 1
+    rc, out = sh(f"cwp-runs start {n}", timeout=300)
+    m = re.search(r"recorded as in flight: (\S+)", out)
+    if rc != 0 or not m:
+        log(f"start {n} refused: {out.strip()[-300:]}")
+        return False
+    token = m.group(1)
+    cmds = [l.strip() for l in out.split("run:", 1)[1].splitlines() if l.strip() and not l.strip().startswith("cwp-runs done")]
+    env = dict(os.environ, CWP_OBSERVE_WAIT="86400")
+    for c in cmds:
+        c = c.split("   #", 1)[0]
+        rc, o = sh(c, timeout=1800, env=env)
+        if rc != 0:
+            log(f"{token}: command failed rc={rc}: {c[:120]}: {o.strip()[-300:]}")
+            sh(f"cwp-runs unstart {token}", timeout=120)   # nothing queued; let the next plan book it again
+            return False
+    log(f"started {token}: {want['type']} {want.get('sha', '')[:9]} to {want.get('until')}"
+        + (" [quick]" if want.get("quick") else ""))
+    if want.get("quick") or want["type"] == "batch":
+        time.sleep(5)
+        tag = "integration to" if want["type"] == "batch" else f"runs-{want['sha'][:9]}"
+        _, q = sh("cwp-vic queue", timeout=60)
+        for line in q.splitlines():
+            if tag in line:
+                pid = line.split()[0].rsplit("-", 1)[-1]
+                sh(f"cwp-vic bump {pid}", timeout=60)
+                log(f"{token}: moved to the front of the game queue")
+    return True
+
+
+def tick():
+    p = plan()
+    if not p:
+        return
+    catalogue(p["in_flight"])
+    p = plan()
+    if not p:
+        return
+    flying = p["in_flight"]
+    arms_flying = sum(1 for r in flying if r["step"]["type"] in ("arm", "solo") and not r["step"].get("quick"))
+    batch_flying = any(r["step"]["type"] == "batch" for r in flying)
+    for st in [s for s in p["steps"] if s.get("quick")]:
+        start(p["steps"], st)
+    if not batch_flying:
+        b = next((s for s in p["steps"] if s["type"] == "batch"), None)
+        if b:
+            start(p["steps"], b)
+    for st in [s for s in p["steps"] if s["type"] in ("arm", "solo") and not s.get("quick")]:
+        if arms_flying >= MAX_ARMS:
+            break
+        if start(p["steps"], st):
+            arms_flying += 1
+
+
+def main():
+    RUNS.mkdir(parents=True, exist_ok=True)
+    lock = open(RUNS / ".serve.lock", "w")
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        print("cwp-runs-serve is already running", file=sys.stderr)
+        return 1
+    log(f"serve started (max {MAX_ARMS} arms, tick {TICK}s)")
+    once = "--once" in sys.argv
+    while True:
+        try:
+            tick()
+        except Exception as e:   # keep serving; one bad tick must not stop the queue
+            log(f"tick error: {e!r}")
+        if once:
+            return 0
+        time.sleep(TICK)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
