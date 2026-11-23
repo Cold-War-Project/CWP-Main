@@ -1,17 +1,16 @@
 ﻿namespace = cwp_regime_change
 
 # Root = a country that was the target of a regime change a day (or a week) ago (cwp_regime_change_mark_target_effect).
-# A monarchy is kept only where one existed in or after 1946: cwp_monarchy_tradition_var (set at game start and
-# monthly for countries with law_monarchy), or an exiled pretender of a deposed crown.
+# It holds an imposed crown but had no monarchy tradition before the regime change: it gets a republic, and what the
+# imposed crown recorded is undone (the tradition variable, a cleared settled flag, an invented pretender).
 cwp_regime_change.1 = {
 	type = country_event
 	hidden = yes
 
 	trigger = {
 		has_variable = cwp_regime_change_window_var
+		has_variable = cwp_regime_change_no_tradition_var
 		has_law = law_type:law_monarchy
-		NOT = { has_variable = cwp_monarchy_tradition_var }
-		NOT = { has_variable = cwp_regime_change_had_pretender_var }
 	}
 
 	immediate = {
@@ -29,8 +28,7 @@ cwp_regime_change.1 = {
 	}
 }
 
-# Root = a country whose imposed monarchy cwp_regime_change.1 replaced. The crown code may have seated and then
-# deposed a monarch for the imposed days: forget that pretender (a real one existed before: cwp_regime_change_had_pretender_var).
+# Root = a country whose imposed crown cwp_regime_change.1 replaced, a day later (after the crown code's hooks).
 cwp_regime_change.2 = {
 	type = country_event
 	hidden = yes
@@ -40,14 +38,22 @@ cwp_regime_change.2 = {
 	}
 
 	immediate = {
+		# No tradition before the regime change means no pretender and no tradition variable then.
 		if = {
-			limit = {
-				has_variable = cwp_crown_pretender_var
-				NOT = { has_variable = cwp_regime_change_had_pretender_var }
-			}
+			limit = { has_variable = cwp_crown_pretender_var }
 			remove_variable = cwp_crown_pretender_var
 		}
+		if = {
+			limit = { has_variable = cwp_crown_tradition_var }
+			remove_variable = cwp_crown_tradition_var
+		}
+		if = {
+			limit = { has_variable = cwp_regime_change_was_settled_var }
+			set_variable = cwp_crown_republic_settled_var
+			remove_variable = cwp_regime_change_was_settled_var
+		}
 		remove_variable = cwp_regime_change_converted_var
+		remove_variable = cwp_regime_change_no_tradition_var
 		remove_variable = cwp_regime_change_window_var
 		remove_variable = cwp_regime_change_enforcer_var
 	}
