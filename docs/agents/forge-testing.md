@@ -102,6 +102,10 @@ cwp-integrate land fix/y            # push the TESTED commit of each passing ite
 - Attribution is by file: a line naming a file that one PR touched goes to that PR, a line naming a file several PRs touched goes to all of them, and lines naming no file (engine asserts, crashes) are listed separately. To confirm a suspect, rebuild without it (`cwp-integrate build <the other PRs>`) and compare.
 - If the combined build crashes, bisect: build with half the PRs, then half again.
 
+## Other projects on Forge
+
+Forge may also host a second, lightweight project (Godot, Nov 2026). The contract is in `~/FORGE-SHARED.md`. For CWP agents it means: anything holding the game lock may be a Godot session using the real screen (note `godot: ...`), so wait for it like any other run; a Godot process is never yours to stop; clean-up stays inside `~/forge`, `~/.local/share/Paradox Interactive`, `/run/user/1000/vic` and your own `cwp-job-*` units.
+
 ## Run game jobs outside your session
 
 Claude sessions on Forge restart, and a restart kills every process they started, including a background `Bash`. A runner killed mid-game leaves an orphaned game and a lost slot. **Start every observer, benchmark or other long game job with `cwp-vic job`**, which runs it as a `systemd --user` unit outside the Claude process tree:
