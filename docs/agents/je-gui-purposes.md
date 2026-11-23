@@ -159,7 +159,7 @@ All visible outcomes are drawn, expanded, in declared order. Vanilla declares co
 
 ### 9d. `effect_header` and outcome effects
 - **Purpose:** what happens on this ending. Standard "If completed:\n$EFFECT$" / "If failed:\n$EFFECT$"; custom "On a #b X#! victory:\n$EFFECT$" or "#title If concluded with a #b X#! victory:#!\n$EFFECT$". Effect tooltips are future tense (66% "will"). `event_outcome_desc` previews the options of the event an outcome fires (97 vanilla JEs).
-- **Auditor rule:** custom only when the header is custom; contains `$EFFECT$`; an outcome that only fires an event says what the event is about (effect tooltip or `event_outcome_desc`).
+- **Auditor rule:** an outcome whose effect only sets variables or runs cleanup shows nothing under its effect header, so it carries a `custom_tooltip = <key>_result_tt` line saying what follows ("The #v Die Wende#! [concept_journal_entry] will begin") or what is closed; custom only when the header is custom; contains `$EFFECT$`; an outcome that only fires an event says what the event is about (effect tooltip or `event_outcome_desc`).
 
 ### 9e. `conclusion_desc`
 - **Purpose:** the one line left on the concluded page: how it ended.
@@ -231,6 +231,7 @@ Audit of the 67 CWP journal entries on CWP2 against this map. "Fixed" items are 
 | D15 | Objective JEs caption the native bar with a `custom_tooltip` instead of `_goal` | `_goal` via bare `is_goal_complete` | **Kept** (reads the same to the player) |
 | D16 | Native bar without `_goal`, or native plus scripted bar (Winds of Change, Indonesia, Gold Coast, Belgian Congo) | As D15 and section 6 | **Open**, decolonization redesign thread |
 | D17 | Bars that are checklists or button currencies | Never a currency | **Open**, already CWP policy (je-design-patterns.md); owner threads |
+| D19 | Endings whose effect is only bookkeeping showed an empty "If ...:" line (Germany, Two Germanies, Die Wende, Institutional Question, Japan, France, Newfoundland, Royal Question, Ending the Occupation, Atomic Monopoly) | Every visible outcome says what it leads to | **Fixed** (branch `ui/je-outcome-results`): one `_result_tt` line each, checked against what the script actually does |
 | D18 | Titles over the list-row width ("Conference on Safeguarding Peace and Security in Europe") | 2 to 4 words, max 39 characters | **Fixed** for that one; others are 31 to 38 characters, inside vanilla's range |
 
 New CWP journal entries follow the auditor rules above with no new deviations unless the area doc names one and says why.
