@@ -48,9 +48,28 @@ cwp_regime_change.2 = {
 
 	immediate = {
 		# No tradition before the regime change means no pretender and no tradition variable then: the royals the
-		# crown code invented for the imposed days leave the game.
-		var:cwp_regime_change_invented_monarch_var ?= { kill_character = { hidden = yes } }
-		var:cwp_regime_change_invented_heir_var ?= { kill_character = { hidden = yes } }
+		# crown code invented for the imposed days leave the game. A historical claimant seated by the dynasty code
+		# (crown dynasties, e.g. the Count of Paris) is not killed: he goes into exile as the pretender, so a later
+		# restoration brings him back (and the house keeps its claim).
+		var:cwp_regime_change_invented_monarch_var ?= {
+			if = {
+				limit = { is_historical = yes }
+				save_scope_as = cwp_regime_change_scope_claimant
+				if = {
+					limit = { exists = owner }
+					exile_character = yes
+				}
+			}
+			else = {
+				kill_character = { hidden = yes }
+			}
+		}
+		var:cwp_regime_change_invented_heir_var ?= {
+			if = {
+				limit = { is_historical = no }
+				kill_character = { hidden = yes }
+			}
+		}
 		if = {
 			limit = { has_variable = cwp_regime_change_invented_monarch_var }
 			remove_variable = cwp_regime_change_invented_monarch_var
@@ -60,6 +79,10 @@ cwp_regime_change.2 = {
 			remove_variable = cwp_regime_change_invented_heir_var
 		}
 		if = {
+			limit = { exists = scope:cwp_regime_change_scope_claimant }
+			set_variable = { name = cwp_crown_pretender_var value = scope:cwp_regime_change_scope_claimant }
+		}
+		else_if = {
 			limit = { has_variable = cwp_crown_pretender_var }
 			remove_variable = cwp_crown_pretender_var
 		}
