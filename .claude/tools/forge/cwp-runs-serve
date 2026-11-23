@@ -177,8 +177,59 @@ def start(steps, want):
     return True
 
 
+def prune():
+    """Disk relief before the 20 GB floor stops the queue: remove clean `runs-<sha9>` worktrees that no
+    running job or open step uses (cwp-runs start re-creates them), then gzip finished runs' saves.
+    Holds cwp-runs' own start lock throughout, so no `cwp-runs start` (by anyone) can book a tree meanwhile."""
+    global LAST_COMPRESS
+    with open(RUNS / ".start.lock", "w") as lf:
+        fcntl.flock(lf, fcntl.LOCK_EX)
+        prune_locked()
+    if time.time() - LAST_COMPRESS > 3600:   # at most hourly: it can take a while
+        LAST_COMPRESS = time.time()
+        sh(f"bash {HOME}/forge/admin/compress-old-saves.sh", timeout=3600)
+
+
+LAST_COMPRESS = 0
+
+
+def prune_locked():
+    busy = set()
+    for rec in started_records():
+        if not rec.get("closed") or unit_active(rec["token"]):
+            sha = rec["step"].get("sha")
+            if sha:
+                busy.add(f"runs-{sha[:9]}")
+    _, units = sh("systemctl --user list-units 'cwp-job-*' --no-legend --plain | awk '{print $1}'", timeout=60)
+    for u in units.split():
+        _, ex = sh(f"systemctl --user show -p ExecStart --value {u}", timeout=30)
+        busy.update(re.findall(r"worktrees/(runs-[0-9a-f]{9})\b", ex))
+    cwds = set()
+    for d in Path("/proc").iterdir():
+        try:
+            cwds.add(os.readlink(d / "cwd"))
+        except OSError:
+            pass
+    removed = []
+    for w in sorted((HOME / "forge" / "worktrees").glob("runs-*")):
+        if not re.fullmatch(r"runs-[0-9a-f]{9}", w.name) or w.name in busy:
+            continue
+        if any(c == str(w) or c.startswith(str(w) + "/") for c in cwds):
+            continue
+        rc, st = sh(f"git -C {w} status --porcelain", timeout=120)
+        if rc != 0 or st.strip():
+            continue
+        rc, _ = sh(f"git -C {HOME}/forge/CWP-Main worktree remove {w}", timeout=300)   # refuses dirty trees
+        if rc == 0:
+            removed.append(w.name)
+    if removed:
+        log(f"pruned {len(removed)} idle arm worktrees: {' '.join(removed)}")
+
+
 def tick():
     catalogue()
+    if shutil.disk_usage(HOME / "forge").free / 1e9 < 30:
+        prune()
     free = shutil.disk_usage(HOME / "forge").free / 1e9
     if free < 20:
         log(f"only {free:.0f} GB free: starting nothing")
