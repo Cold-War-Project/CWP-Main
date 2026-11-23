@@ -99,7 +99,7 @@ ship_type_destroyer = {
 
 ## Formations at start
 
-The mod has no start-date formations yet: `history/military_formations` is replaced and empty, `history/military_deployments` is an empty stub. Creating them is new work; the syntax is below.
+`history/military_formations` (replaced) holds only the 1946 Chinese Civil War field armies (`cwp_chinese_civil_war_1946.txt`); every other country starts with one formation per HQ, built from its barracks, which the AI tags as the garrison. At war the AI does not split that formation, so a war at start needs history field armies or the front stalls. `history/military_deployments` is an empty stub. Syntax below.
 
 `history/military_formations`: `create_military_formation = { type = army  hq_region = sr:region_x  name = key  combat_unit = { type = unit_type:combat_unit_type_x  state_region = s:STATE_X  count = N } }`; fleets are `type = fleet` with `ship = { type = ship_type:ship_type_x  count = N }` entries, and single named ships can be added with `create_ship = { type = ship_type:x  fleet = scope:saved_fleet  name = sn_key }` after `save_scope_as` on the formation. Units need a barracks/naval base able to support them in that state region, and the HQ region must be one where the country has land. `military_formation_flags` supplies `{ icon type = army/navy }` identities.
 
