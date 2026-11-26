@@ -30,7 +30,7 @@ The setting is **1946 to 2046**. Countries, formables and other content that did
 
 ## Working rules
 
-1. One thread per worktree (`~/forge/worktrees/<area>`), one coherent slice per branch. **Remove your worktree when you are done with it** (Forge's disk is shared and keeps filling): once your branch has landed on `CWP2` and no queued run or request uses it, run `git -C ~/forge/CWP-Main worktree remove ~/forge/worktrees/<area>`. The branch stays; `git worktree add` brings the tree back when you need it.
+1. One thread per worktree (`~/forge/worktrees/<area>`), one coherent slice per branch. **Remove your worktree when you are done with it** (Forge's disk is shared and keeps filling): once your branch has landed on `CWP2` and no `cwp-runs` request uses it, run `git -C ~/forge/CWP-Main worktree remove ~/forge/worktrees/<area>`. The branch stays; `git worktree add` brings the tree back when you need it.
 2. Shared files (`.metadata/metadata.json`, `zz_vanilla_*.txt`, `common/on_actions`, shared loc) have one writer at a time; say so in the staging-queue note.
 3. **Port Cold War changes, not rewrites.** Where the rebuild re-enabled a vanilla system that dev had rewritten, vanilla 1.15 is the base; port only dev's real Cold War changes on top (see [plan.md](docs/agents/plan.md)).
 4. Jack decides: goals, `replace_paths` changes, dropping whole features, merges into `master`. Landing on `CWP2` needs no approval once the branch passed a real staging run on Forge ([landing-work.md](docs/agents/landing-work.md)). Everything that can be undone, agents decide and report.

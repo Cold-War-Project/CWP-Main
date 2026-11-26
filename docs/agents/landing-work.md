@@ -48,7 +48,7 @@ cwp-integrate dequeue <branch> ...
 
 No approval needed for this (Jack, 2026-11-17). Commits made after the build wait for the next round. The integration owner lands; threads do not push to `CWP2` themselves. After a landing that touched shared files, the coordinator tells the other threads to rebase.
 
-**Then clean up your worktree.** Once your branch is on `CWP2` and no queued run or `cwp-runs` request still uses it, remove it: `git -C ~/forge/CWP-Main worktree remove ~/forge/worktrees/<area>` (it refuses a tree with uncommitted changes, so commit or discard first). The branch stays. Each worktree is about 2 GB on a shared disk that the test runs need.
+**Then clean up your worktree.** Once your branch is on `CWP2` and no queued run or `cwp-runs` request still uses it, remove it: `git -C ~/forge/CWP-Main worktree remove ~/forge/worktrees/<area>` (it refuses a tree with uncommitted changes, so commit or discard first). Never remove `integration`, `land` or `runs-<sha>` trees (staging and the `cwp-runs` dispatcher own them). The branch stays. Each worktree is about 2 GB on a shared disk that the test runs need.
 
 ## Changelog
 
