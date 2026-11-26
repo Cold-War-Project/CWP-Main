@@ -226,6 +226,43 @@ def prune_locked():
         log(f"pruned {len(removed)} idle arm worktrees: {' '.join(removed)}")
 
 
+BATCH_SEEN = RUNS / "serve-batches.txt"
+
+
+def batch_signature(st):
+    """The batch's items at their current heads plus the requests it serves: an identical batch tests
+    nothing new, so it is not run again (24 Nov: the same unlanded batch ran about 51 times)."""
+    heads = []
+    for b in sorted(st.get("items") or []):
+        rc, h = sh(f"git -C {HOME}/forge/CWP-Main rev-parse --verify -q {b}", timeout=60)
+        heads.append(f"{b}@{h.strip() if rc == 0 else '?'}")
+    rc, base = sh(f"git -C {HOME}/forge/CWP-Main rev-parse --verify -q origin/CWP2", timeout=60)
+    return "|".join([base.strip()] + heads + sorted(st.get("serves") or []))
+
+
+def batch_seen(st):
+    sig = batch_signature(st)
+    try:
+        seen = set(BATCH_SEEN.read_text().splitlines())
+    except OSError:
+        seen = set()
+    if sig in seen:
+        if time.time() - LAST_SKIP_LOG.get(sig, 0) > 3600:
+            LAST_SKIP_LOG[sig] = time.time()
+            log("staging batch unchanged since its last run (same CWP2, branch heads and requests): "
+                "not running it again; land or dequeue what passed")
+        return True
+    return False
+
+
+def remember_batch(st):
+    with open(BATCH_SEEN, "a") as f:
+        f.write(batch_signature(st) + "\n")
+
+
+LAST_SKIP_LOG = {}
+
+
 def tick():
     catalogue()
     if shutil.disk_usage(HOME / "forge").free / 1e9 < 30:
@@ -244,8 +281,14 @@ def tick():
             return
     if integration_free():
         b = next((s for s in p["steps"] if s["type"] == "batch"), None)
-        if b and start(p["steps"], b) is None:
-            return
+        if b and batch_seen(b):
+            b = None
+        if b:
+            r = start(p["steps"], b)
+            if r is None:
+                return
+            if r:
+                remember_batch(b)
     for st in [s for s in p["steps"] if s["type"] in ("arm", "solo") and not s.get("quick")]:
         if arms_flying >= MAX_ARMS:
             break
