@@ -11,7 +11,7 @@ It never lands anything (landing needs GUI checks and judgement), never takes th
 (each step is an ordinary `cwp-vic job` that waits in the queue), never stops or kills a process, and
 starts nothing when the disk is low (`cwp-runs start` refuses below 20 GB). One instance only.
 """
-import fcntl, json, os, re, shutil, subprocess, sys, time
+import fcntl, json, os, re, shlex, shutil, subprocess, sys, time
 from pathlib import Path
 
 HOME = Path.home()
@@ -174,7 +174,7 @@ def start(steps, want):
         + (" [quick]" if want.get("quick") else ""))
     if want.get("quick") or want["type"] == "batch":
         bump_unit(token)
-    return True
+    return token
 
 
 def prune():
@@ -234,19 +234,28 @@ def batch_signature(st):
     nothing new, so it is not run again (24 Nov: the same unlanded batch ran about 51 times)."""
     heads = []
     for b in sorted(st.get("items") or []):
-        rc, h = sh(f"git -C {HOME}/forge/CWP-Main rev-parse --verify -q {b}", timeout=60)
+        rc, h = sh(f"git -C {HOME}/forge/CWP-Main rev-parse --verify -q {shlex.quote('refs/heads/' + b)}", timeout=60)
         heads.append(f"{b}@{h.strip() if rc == 0 else '?'}")
     rc, base = sh(f"git -C {HOME}/forge/CWP-Main rev-parse --verify -q origin/CWP2", timeout=60)
     return "|".join([base.strip()] + heads + sorted(st.get("serves") or []))
 
 
 def batch_seen(st):
+    """True if this exact batch already ran to a clean finish (a crashed or failed run may run again)."""
     sig = batch_signature(st)
+    clean = False
     try:
-        seen = set(BATCH_SEEN.read_text().splitlines())
+        for line in BATCH_SEEN.read_text().splitlines():
+            parts = line.split("\t")
+            if len(parts) == 3 and parts[0] == sig:
+                d = Path(parts[2])
+                if (d / "errors_end.txt").exists() and not any((d / m).exists() for m in ("CRASH", "FAILED", "DISKFULL")):
+                    clean = True
+                elif unit_active(parts[1]):
+                    clean = True   # still waiting or running: don't start a second copy either
     except OSError:
-        seen = set()
-    if sig in seen:
+        pass
+    if clean:
         if time.time() - LAST_SKIP_LOG.get(sig, 0) > 3600:
             LAST_SKIP_LOG[sig] = time.time()
             log("staging batch unchanged since its last run (same CWP2, branch heads and requests): "
@@ -255,9 +264,13 @@ def batch_seen(st):
     return False
 
 
-def remember_batch(st):
+def remember_batch(sig, token):
+    try:
+        outdir = json.loads((RUNS / "started" / f"{token}.json").read_text())["outdir"]
+    except (OSError, ValueError, KeyError):
+        return
     with open(BATCH_SEEN, "a") as f:
-        f.write(batch_signature(st) + "\n")
+        f.write(f"{sig}\t{token}\t{outdir}\n")
 
 
 LAST_SKIP_LOG = {}
@@ -284,11 +297,12 @@ def tick():
         if b and batch_seen(b):
             b = None
         if b:
+            sig = batch_signature(b)
             r = start(p["steps"], b)
             if r is None:
                 return
             if r:
-                remember_batch(b)
+                remember_batch(sig, r)
     for st in [s for s in p["steps"] if s["type"] in ("arm", "solo") and not s.get("quick")]:
         if arms_flying >= MAX_ARMS:
             break
