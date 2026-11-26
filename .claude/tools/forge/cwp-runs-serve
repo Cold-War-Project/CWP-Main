@@ -19,6 +19,7 @@ RUNS = HOME / "forge" / "runs"
 LOG = RUNS / "serve.log"
 MAX_ARMS = int(os.environ.get("CWP_SERVE_MAX_ARMS", "4"))
 TICK = int(os.environ.get("CWP_SERVE_TICK", "60"))
+PRUNE_BELOW_GB = float(os.environ.get("CWP_SERVE_PRUNE_BELOW_GB", "60"))   # start freeing space well above the 20 GB floor
 
 
 def log(msg):
@@ -187,7 +188,7 @@ def prune():
         prune_locked()
     if time.time() - LAST_COMPRESS > 3600:   # at most hourly: it can take a while
         LAST_COMPRESS = time.time()
-        sh(f"bash {HOME}/forge/admin/compress-old-saves.sh", timeout=3600)
+        sh(f"CWP_COMPRESS_MIN_AGE_HOURS=2 bash {HOME}/forge/admin/compress-old-saves.sh", timeout=3600)
 
 
 LAST_COMPRESS = 0
@@ -278,7 +279,7 @@ LAST_SKIP_LOG = {}
 
 def tick():
     catalogue()
-    if shutil.disk_usage(HOME / "forge").free / 1e9 < 30:
+    if shutil.disk_usage(HOME / "forge").free / 1e9 < PRUNE_BELOW_GB:
         prune()
     free = shutil.disk_usage(HOME / "forge").free / 1e9
     if free < 20:
