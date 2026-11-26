@@ -41,7 +41,7 @@ Rules:
 - Stay current: `git fetch origin CWP2 && git rebase origin/CWP2` before opening a PR and after any PR touching shared files merges. 
 - For a second slice while the first PR is in review, branch the next one off your first branch or off `origin/CWP2` in the same worktree; don't make a second worktree for the same area unless the coordinator agrees.
 - The git stash is shared by all worktrees. Use WIP commits, not `git stash`.
-- Remove a worktree only after its branch is merged: `git worktree remove ~/forge/worktrees/<area>`.
+- Remove your worktree once its branch has landed on `CWP2` and no `cwp-runs` request uses it: `git -C ~/forge/CWP-Main worktree remove ~/forge/worktrees/<area>` ([landing-work.md](landing-work.md), section 5). Never remove `integration`, `land` or `runs-<sha>` trees; the staging thread and the `cwp-runs` dispatcher own those.
 
 ## Reading dev and master without checking them out
 
