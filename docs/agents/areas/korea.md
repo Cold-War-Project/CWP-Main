@@ -85,3 +85,18 @@ Vanilla `annex_country` is occupation-timer enforceable (`mirrored_wargoal`): ho
 ## Player-visible terms (Jack, 2026-11-18)
 
 Use names from the historical and strategic literature, not invented ones. Applied: "The Korean Question" (UN usage, 1947), "Inter-Korean Military Balance", "Mutual Deterrence", "Neutralization of Korea", "Reunification by Force", "Inter-Korean Tension", "Armed Provocation", "Alliance Restraint", "Engagement Policy" (the Sunshine Policy is named in the description), "Inter-Korean Economic Cooperation", "Lost Credibility", "Communist Insurgency", "Rejection of the Armistice". "The Two Koreas" is Oberdorfer's title and the common term. Script keys are unchanged.
+
+## Release run 43ec6372b (2026-11-27)
+
+Two Koreas existed in only about 2% of the samples from 1946 to 1990. Trace:
+- The US referred Korea to the UN by 1946-08 (historically September 1947), so partition came a year early.
+- The balance reached +48 by 1949. The invasion came on 1949-04-22 (historically 25 June 1950).
+- The US intervened under a UN mandate, joined by Japan and Italy. The South won: KOR was formed from STK (`previous_definitions={ STK }` in the 1950-05 save).
+- China did not enter, even though it had pledged volunteers and was at peace (the civil war ended "divided"). `cwp_korea_prc_asked` was never set while the war ran, so the North collapsed before it was more than 40% occupied at a monthly check.
+
+Changes:
+- Chinese entry now triggers at 25% occupation, and the PRC AI enters at base 70.
+- UN referral AI weight is 2, rising to 12 once US-Soviet relations are -25 or worse.
+- `cwp_korea_prc_asked` is no longer cleared, so dumps show whether Beijing was asked.
+
+Open (history thread): check the 1946 armies of NRK and STK. Historically the KPA had about 135,000 men and Soviet T-34s against a ROK army of about 98,000 without tanks, yet in this run the North collapsed within a year.
