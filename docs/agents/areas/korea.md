@@ -100,3 +100,11 @@ Changes:
 - `cwp_korea_prc_asked` is no longer cleared, so dumps show whether Beijing was asked.
 
 Open (history thread): check the 1946 armies of NRK and STK. Historically the KPA had about 135,000 men and Soviet T-34s against a ROK army of about 98,000 without tanks, yet in this run the North collapsed within a year.
+
+## Army build-up, 1946-1950 (2026-11-27)
+
+Neither Korean army existed on 1 January 1946. The rebuilt start gives NRK about 4 barracks levels (Soviet-funded, exempt from the income cap) and STK none. The 1950 imbalance (KPA about 135,000 men with T-34s; ROK army about 98,000 without tanks) now comes from the patrons' choices, not from history files:
+- Each "Arm the Korean People's Army" package (RUS) raises NRK's capital-state barracks to 7, then 10, then 13 levels, and cuts its military goods cost by 30% for two years.
+- Each "Aid the Southern Government" package (USA) raises STK's to 3, then 6, then at most 8 levels, with a 15% cut. Washington withheld tanks and combat aircraft.
+- `cwp_korea_army_buildup_effect` counts packages in the country variable `cwp_korea_army_stage`. `create_building` never lowers an existing level.
+- No package is automatic. A Soviet Union that does not arm the North, or a US that arms the South, changes the balance.
