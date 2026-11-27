@@ -11,7 +11,7 @@ It never lands anything (landing needs GUI checks and judgement), never takes th
 (each step is an ordinary `cwp-vic job` that waits in the queue), never stops or kills a process, and
 starts nothing when the disk is low (`cwp-runs start` refuses below 20 GB). One instance only.
 """
-import fcntl, json, os, re, shlex, shutil, subprocess, sys, time
+import datetime, fcntl, json, os, re, shlex, shutil, subprocess, sys, time
 from pathlib import Path
 
 HOME = Path.home()
@@ -277,8 +277,47 @@ def remember_batch(sig, token):
 LAST_SKIP_LOG = {}
 
 
+AGE_CAP_H = float(os.environ.get("CWP_SERVE_AGE_CAP_HOURS", "4"))
+STARVE_H = float(os.environ.get("CWP_SERVE_STARVE_HOURS", "12"))
+
+
+def age_cap():
+    """A normal game-queue ticket that has waited more than AGE_CAP_H hours goes to the front (once), so
+    quick probes and batches, which are always moved up, cannot starve a long run for good."""
+    q = HOME / "forge" / ".vic3.queue"
+    if not q.is_dir():
+        return
+    for t in sorted(os.listdir(q)):
+        m = re.fullmatch(r"5(\d+)-(\d+)", t)
+        if not m:
+            continue
+        waited = time.time() - int(m.group(1)) / 1e9
+        if waited > AGE_CAP_H * 3600:
+            # rename exactly as `cwp-vic bump` does (the waiter finds its ticket by the pid suffix); by name,
+            # not through bump's pid-or-note-text match, which could pick another ticket
+            try:
+                os.rename(q / t, q / f"0{time.time_ns()}-{m.group(2)}")
+                log(f"ticket {t} waited {waited / 3600:.1f} h: moved to the front")
+            except OSError as e:
+                log(f"ticket {t}: could not move it up: {e}")
+
+
+def starved(st):
+    """An arm whose request is older than STARVE_H hours and has nothing in flight may start past the cap."""
+    for rid, _side in st.get("serves") or []:
+        try:
+            created = json.loads((RUNS / "requests" / f"{rid}.json").read_text())["created"]
+            t = datetime.datetime.fromisoformat(created).timestamp()
+        except (OSError, ValueError, KeyError):
+            continue
+        if time.time() - t > STARVE_H * 3600:
+            return rid
+    return None
+
+
 def tick():
     catalogue()
+    age_cap()
     if shutil.disk_usage(HOME / "forge").free / 1e9 < PRUNE_BELOW_GB:
         prune()
     free = shutil.disk_usage(HOME / "forge").free / 1e9
@@ -304,9 +343,15 @@ def tick():
                 return
             if r:
                 remember_batch(sig, r)
+    flying_reqs = {sv[0] for r in flying if r["step"]["type"] in ("arm", "solo")
+                   for sv in (r["step"].get("serves") or []) if isinstance(sv, list)}
     for st in [s for s in p["steps"] if s["type"] in ("arm", "solo") and not s.get("quick")]:
         if arms_flying >= MAX_ARMS:
-            break
+            rid = starved(st)
+            if not rid or rid in flying_reqs:
+                continue
+            log(f"request {rid} waited over {STARVE_H:g} h with nothing running: one arm starts past the cap")
+            flying_reqs.add(rid)
         r = start(p["steps"], st)
         if r is None:
             return
