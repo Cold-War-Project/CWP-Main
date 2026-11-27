@@ -86,6 +86,10 @@ Evidence is from the shared 1946-1990 observer run f30e83cd6 unless stated.
    trims one institution level per half year for broke states short of bureaucracy, least essential first,
    never administration, skipping institutions the AI is expanding.
 
+10. (institutions thread, branch `fix/institution-affordability`) `wanted_construction_output`: while the country is in
+    default, borrowing at 25%+ scaled debt, or at 50%+ scaled debt (`cwp_ai_state_affordable = no`), the budget-funded
+    terms are capped at income/10000 instead of income/2500 (x1.25 under the industrial strategies; pool and GDP-base terms uncapped). The PRC ran construction at 0.9-1.2x income in debt and defaulted five times by 1962.
+
 ## Workshop AI mods
 
 - Anbeeld's Revision of AI (MIT, last for 1.3.6) switches off vanilla money spending, tax changes
