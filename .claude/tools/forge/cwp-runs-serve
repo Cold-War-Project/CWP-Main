@@ -287,6 +287,23 @@ def age_cap():
     q = HOME / "forge" / ".vic3.queue"
     if not q.is_dir():
         return
+    names = sorted(os.listdir(q))
+    for t in names:
+        # --priority tickets (prio 1: the hourly GUI batch, about 15 min) would otherwise wait behind every
+        # bumped ticket: put them at the very front, just ahead of the first ticket in line.
+        m1 = re.fullmatch(r"1(\d+)-(\d+)", t)
+        try:
+            is_gui = (q / t).read_text().startswith("gui-batch:")   # only the short GUI batch, not long priority runs
+        except OSError:
+            is_gui = False
+        if m1 and is_gui:
+            first = next((n for n in sorted(os.listdir(q)) if n.startswith("0")), None)
+            ns = int(first[1:].split("-")[0]) - 1 if first else int(m1.group(1))
+            try:
+                os.rename(q / t, q / f"0{ns:019d}-{m1.group(2)}")
+                log(f"priority ticket {t} (GUI batch) moved to the front")
+            except OSError as e:
+                log(f"priority ticket {t}: could not move it up: {e}")
     for t in sorted(os.listdir(q)):
         m = re.fullmatch(r"5(\d+)-(\d+)", t)
         if not m:
