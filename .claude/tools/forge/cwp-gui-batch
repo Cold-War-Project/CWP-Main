@@ -43,13 +43,22 @@ load_save=""
 for bk in "${books[@]}"; do v=$(save_of "$bk"); [[ -n "$v" ]] && { load_save=$v; break; }; done
 if [[ -n "$load_save" ]]; then
   mine=(); for bk in "${books[@]}"; do [[ "$(save_of "$bk")" == "$load_save" ]] && mine+=("$bk"); done
-  if [[ ! -f "$load_save" ]]; then   # a broken booking must not block the queue: set it aside and stop
+  # Saves of finished runs get compressed after a while: accept the .zst or .gz of a named .v3.
+  for alt in "$load_save" "$load_save.zst" "$load_save.gz"; do [[ -f "$alt" ]] && { found=$alt; break; }; done
+  if [[ -z "${found:-}" ]]; then   # a broken booking must not block the queue: set it aside, run the rest
     for bk in "${mine[@]}"; do mkdir -p "$D/$stamp-$(basename "$bk" .sh)"; mv "$bk" "$D/$stamp-$(basename "$bk" .sh)/"; done
-    echo "$(date +%T) load-save: $load_save not found; booking(s) moved to done/ unrun" | tee -a "$D/$stamp-batch.log"; exit 1
+    echo "$(date +%T) load-save: $load_save not found; booking(s) moved to done/ unrun" | tee -a "$D/$stamp-batch.log"
+    rest=(); for bk in "$B"/*.sh; do [[ -f "$bk" && -z "$(save_of "$bk")" ]] && rest+=("$bk"); done   # other saves wait an hour
+    books=("${rest[@]}")
+    (( ${#books[@]} )) || exit 0
+    load_save=""; needs_game=$(grep -lh '^# needs-game: yes' "${books[@]}" | head -1)
+    branches=$(grep -h '^# branch:' "${books[@]}" | awk '{print $3}' | awk '!s[$0]++')
+  else
+    load_save=$found
+    books=("${mine[@]}")
+    needs_game=""
+    branches=$(grep -h '^# branch:' "${books[@]}" | awk '{print $3}' | awk '!s[$0]++')
   fi
-  books=("${mine[@]}")
-  needs_game=""
-  branches=$(grep -h '^# branch:' "${books[@]}" | awk '{print $3}' | awk '!s[$0]++')
 fi
 git -C ~/forge/CWP-Main fetch -q origin CWP2
 git -C "$WT" checkout -q --detach origin/CWP2
