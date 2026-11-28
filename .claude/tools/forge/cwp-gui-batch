@@ -38,9 +38,16 @@ needs_game=$(grep -lh '^# needs-game: yes' "${books[@]}" | head -1)
 SAVES="$HOME/.local/share/Paradox Interactive/Victoria 3/save games"
 # "# load-save: <path>" (a .v3, .v3.gz or .v3.zst, e.g. an observer run's saves/1980.6.1.v3.zst): this batch
 # loads that save instead of starting a new game, and runs only the bookings that name the same save.
-load_save=$(grep -h '^# load-save:' "${books[@]}" | head -1 | sed 's/^# load-save: *//')
+save_of() { grep -m1 '^# load-save:' "$1" | sed 's/^# load-save: *//; s/[[:space:]]*$//; s/\r$//; s|^~/|'"$HOME"'/|'; }
+load_save=""
+for bk in "${books[@]}"; do v=$(save_of "$bk"); [[ -n "$v" ]] && { load_save=$v; break; }; done
 if [[ -n "$load_save" ]]; then
-  mapfile -t books < <(grep -lxF "# load-save: $load_save" "${books[@]}")
+  mine=(); for bk in "${books[@]}"; do [[ "$(save_of "$bk")" == "$load_save" ]] && mine+=("$bk"); done
+  if [[ ! -f "$load_save" ]]; then   # a broken booking must not block the queue: set it aside and stop
+    for bk in "${mine[@]}"; do mkdir -p "$D/$stamp-$(basename "$bk" .sh)"; mv "$bk" "$D/$stamp-$(basename "$bk" .sh)/"; done
+    echo "$(date +%T) load-save: $load_save not found; booking(s) moved to done/ unrun" | tee -a "$D/$stamp-batch.log"; exit 1
+  fi
+  books=("${mine[@]}")
   needs_game=""
   branches=$(grep -h '^# branch:' "${books[@]}" | awk '{print $3}' | awk '!s[$0]++')
 fi
@@ -52,7 +59,6 @@ for br in $branches; do git -C "$WT" merge -q --no-ff --no-edit -m "gui-batch: $
 # happened produced black screenshots and the bookings were deleted).
 keep() { echo "$(date +%T) $1; bookings kept for the next batch" | tee -a "$D/$stamp-batch.log"; exit 1; }
 if [[ -n "$load_save" ]]; then   # stage it as the game's "last save" for --continuelastsave (as econ_bench does)
-  [[ -f "$load_save" ]] || keep "load-save: $load_save not found"
   case "$load_save" in
     *.zst) zstd -dcq "$load_save" > "$SAVES/gui_load.v3" ;;
     *.gz)  zcat "$load_save" > "$SAVES/gui_load.v3" ;;
